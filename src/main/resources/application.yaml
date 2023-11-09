@@ -1,0 +1,11 @@
+server:
+  port: 18080
+
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://0.0.0.0:3306
+
+logging:
+  level:
+    root: INFO
