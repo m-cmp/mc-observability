@@ -7,7 +7,7 @@
         SELECT COUNT(*)
         FROM (
             SELECT 1
-            FROM cmp_agent_host
+            FROM m_cmp_agent_host
             <include refid="hostPageableWhere"/>
         <include refid="mcmp.mc.observability.agent.pageFilter" />
         ) AS A
@@ -27,7 +27,7 @@
             EX,
             DESCRIPTION,
             SYNC_YN
-        FROM cmp_agent_host
+        FROM m_cmp_agent_host
         <include refid="hostPageableWhere"/>
         <include refid="mcmp.mc.observability.agent.pageFilter" />
         <include refid="mcmp.mc.observability.agent.orderBy" />
@@ -38,7 +38,7 @@
         SELECT
             HOST_SEQ AS seq,
             COUNT(1) AS count
-        FROM cmp_agent_host_item
+        FROM m_cmp_agent_host_item
         <where>
             <if test="seq != null and seq != 0">
                 AND HOST_SEQ=#{seq}
@@ -52,7 +52,7 @@
         SELECT
             HOST_SEQ AS seq,
             COUNT(1) AS count
-        FROM cmp_agent_host_storage
+        FROM m_cmp_agent_host_storage
         <where>
             <if test="seq != null and seq != 0">
                 AND HOST_SEQ=#{seq}
@@ -63,7 +63,7 @@
     </select>
 
     <insert id="insertHost" parameterType="HostInfo">
-        insert into cmp_agent_host (  UUID
+        insert into m_cmp_agent_host (  UUID
                                     , OS
                                     , MONITORING_YN
                                     , STATE
@@ -99,7 +99,7 @@
     </sql>
 
     <update id="updateHost" parameterType="HostInfo">
-        update cmp_agent_host
+        update m_cmp_agent_host
         <trim prefix="SET" suffixOverrides=",">
             <if test='name != null'>
                 NAME = #{name},
@@ -144,22 +144,22 @@
             EX,
             DESCRIPTION,
             SYNC_YN
-        FROM cmp_agent_host
+        FROM m_cmp_agent_host
         WHERE SEQ = #{seq}
     </select>
 
     <select id="getHostSeq" resultType="Long">
         SELECT
             SEQ
-        FROM cmp_agent_host
+        FROM m_cmp_agent_host
         WHERE UUID = #{uuid}
     </select>
 
     <update id="turnMonitoringYn">
-        UPDATE cmp_agent_host SET MONITORING_YN=3^MONITORING_YN WHERE SEQ=#{seq}
+        UPDATE m_cmp_agent_host SET MONITORING_YN=3^MONITORING_YN WHERE SEQ=#{seq}
     </update>
 
     <update id="updateTelegrafState">
-        UPDATE cmp_agent_host SET TELEGRAF_STATE=#{telegrafState} WHERE SEQ=#{seq}
+        UPDATE m_cmp_agent_host SET TELEGRAF_STATE=#{telegrafState} WHERE SEQ=#{seq}
     </update>
 </mapper>
