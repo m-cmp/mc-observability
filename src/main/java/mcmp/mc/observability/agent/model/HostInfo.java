@@ -1,7 +1,9 @@
 package mcmp.mc.observability.agent.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import mcmp.mc.observability.agent.enums.HostState;
 import mcmp.mc.observability.agent.enums.OS;
@@ -13,6 +15,8 @@ import java.util.Map;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HostInfo {
     private Long seq = 0L;
     private String name;
