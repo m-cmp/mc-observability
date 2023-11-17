@@ -34,8 +34,9 @@ public class HostController {
         return res;
     }
 
-    @PutMapping("")
-    public ResBody update(@RequestBody HostInfo hostInfo) {
+    @PutMapping("/{hostSeq}")
+    public ResBody update(@PathVariable("hostSeq") Long seq, @RequestBody HostInfo hostInfo) {
+        hostInfo.setSeq(seq);
         ResBody res = hostService.updateHost(hostInfo);
         return res;
     }
