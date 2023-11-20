@@ -1,10 +1,8 @@
 package mcmp.mc.observability.agent.controller;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.dto.PageableReqBody;
-import mcmp.mc.observability.agent.dto.PageableResBody;
 import mcmp.mc.observability.agent.dto.ResBody;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
 import mcmp.mc.observability.agent.service.HostStorageService;
