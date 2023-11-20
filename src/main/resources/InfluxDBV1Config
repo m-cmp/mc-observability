@@ -1,0 +1,6 @@
+[[outputs.influxdb]]
+@IS_URL  urls = ["@URL"]
+@IS_DATABASE  database = "@DATABASE"
+@IS_RETENTION_POLICY  retention_policy = "@RETENTION_POLICY"
+@IS_USERNAME  username = "@USERNAME"
+@IS_PASSWORD  password = "@PASSWORD"
