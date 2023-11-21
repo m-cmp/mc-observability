@@ -73,15 +73,12 @@
 
     <insert id="insertStorage">
         INSERT INTO m_cmp_agent_host_storage(HOST_SEQ, KIND, NAME, INFO)
-        VALUES
-        <foreach collection="list" item="item" separator=",">
-            (
-            #{item.hostSeq}
-            , #{item.kind}
-            , #{item.name}
-            , #{item.info}
-            )
-        </foreach>
+        VALUES (
+            #{hostSeq}
+            , #{kind}
+            , #{name}
+            , #{info}
+        )
     </insert>
 
     <update id="deleteStorage">

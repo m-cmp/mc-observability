@@ -44,14 +44,12 @@ public class HostStorageService {
         return mapper.getStorageDetail(hostSeq, seq);
     }
 
-    public ResBody insertStorage(Long hostSeq, List<HostStorageInfo> list) {
+    public ResBody insertStorage(Long hostSeq, HostStorageInfo info) {
         ResBody resBody = new ResBody();
         try {
-            for( HostStorageInfo info : list ) {
-                info.setHostSeq(hostSeq);
-            }
+            info.setHostSeq(hostSeq);
 
-            int result = mapper.insertStorage(list);
+            int result = mapper.insertStorage(info);
             if (result <= 0) {
                 throw new ResultCodeException(ResultCode.INVALID_ERROR, "Host Storage insert error QueryResult={}", result);
             }

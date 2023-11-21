@@ -15,8 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(Constants.PREFIX_V1 + "/host/{hostSeq}/storage")
 @RequiredArgsConstructor
@@ -42,8 +40,8 @@ public class HostStorageController {
     }
 
     @PostMapping("")
-    public ResBody create(@PathVariable("hostSeq") Long hostSeq, @RequestBody List<HostStorageInfo> list) {
-        return hostStorageService.insertStorage(hostSeq, list);
+    public ResBody create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostStorageInfo info) {
+        return hostStorageService.insertStorage(hostSeq, info);
     }
 
     @DeleteMapping("/{storageSeq}")

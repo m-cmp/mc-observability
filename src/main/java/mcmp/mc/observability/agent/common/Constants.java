@@ -9,4 +9,5 @@ public class Constants {
     public static final String COLLECTOR_CONFIG_DIR_PATH = "./conf";
     public static final Integer INTERVAL_MIN = 10;
     public static final String UUID_PROPERTY_KEY = "m-cmp-agent.uuid";
+    public static final String EXTENSION_PROPERTY_KEY = "m-cmp-agent.ex";
 }

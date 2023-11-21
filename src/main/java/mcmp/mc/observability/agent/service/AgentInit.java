@@ -49,10 +49,9 @@ public class AgentInit implements InitializingBean, DisposableBean {
         try {
 
             if( datasourceUrl.contains(Constants.EMPTY_HOST) ) return;
-            // CMP Agent가 설치 된 호스트 타입 (cmp/virtual-machine/node)
 
-            String ex = System.getProperty("m-cmp-agent.ex");
-            log.info("m-cmp-agent.ex : {}", ex);
+            String ex = System.getProperty(Constants.EXTENSION_PROPERTY_KEY);
+            log.info("{} : {}", Constants.EXTENSION_PROPERTY_KEY, ex);
             Gson gson = new Gson();
             JsonObject jsonEx = (ex == null? new JsonObject(): gson.fromJson(ex, JsonElement.class).getAsJsonObject());
 

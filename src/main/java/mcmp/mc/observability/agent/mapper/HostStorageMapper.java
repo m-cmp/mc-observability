@@ -14,7 +14,7 @@ public interface HostStorageMapper {
     HostStorageInfo getStorageDetail(Long hostSeq, Long seq);
     List<HostStorageInfo> getHostStorageList(Map<String, Object> params);
 
-    Integer insertStorage(List<HostStorageInfo> list);
+    Integer insertStorage(HostStorageInfo info);
     Integer deleteStorage(Long hostSeq, Long seq);
 
     Integer updateStorageConf(Long seq);
