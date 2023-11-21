@@ -21,4 +21,5 @@ public interface HostStorageMapper {
     Integer deleteStorageRow(Long seq);
 
     Integer turnMonitoringYn(Long hostSeq, Long seq);
+    void syncHost(Long hostSeq);
 }

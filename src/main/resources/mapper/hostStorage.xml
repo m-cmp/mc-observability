@@ -104,4 +104,10 @@
         WHERE SEQ=#{seq}
           AND HOST_SEQ = #{hostSeq}
     </update>
+
+    <update id="syncHost">
+        UPDATE m_cmp_agent_host_storage
+        SET STATE = "${@mcmp.mc.observability.agent.enums.StateOption@UPDATE}"
+        WHERE HOST_SEQ=#{hostSeq}
+    </update>
 </mapper>
