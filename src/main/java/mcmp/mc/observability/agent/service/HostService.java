@@ -9,7 +9,9 @@ import mcmp.mc.observability.agent.enums.ResultCode;
 import mcmp.mc.observability.agent.enums.StateYN;
 import mcmp.mc.observability.agent.enums.TelegrafState;
 import mcmp.mc.observability.agent.exception.ResultCodeException;
+import mcmp.mc.observability.agent.mapper.HostItemMapper;
 import mcmp.mc.observability.agent.mapper.HostMapper;
+import mcmp.mc.observability.agent.mapper.HostStorageMapper;
 import mcmp.mc.observability.agent.model.HostInfo;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +26,8 @@ import java.util.Map;
 public class HostService {
 
     private final HostMapper hostMapper;
+    private final HostItemMapper hostItemMapper;
+    private final HostStorageMapper hostStorageMapper;
 
     public PageableResBody<List<HostInfo>> getList(PageableReqBody reqBody) {
         PageableResBody<List<HostInfo>> result = new PageableResBody<>();
@@ -152,6 +156,8 @@ public class HostService {
         ResBody resBody = new ResBody();
 
         hostMapper.updateHost(HostInfo.builder().seq(hostSeq).syncYN(StateYN.N).build());
+        hostItemMapper.syncHost(hostSeq);
+        hostStorageMapper.syncHost(hostSeq);
 
         return resBody;
     }

@@ -20,4 +20,5 @@ public interface HostItemMapper {
     void deleteItem(Map<String, Object> params);
     void deleteItemRow(Long seq);
     void turnMonitoringYn(Long hostSeq, Long seq);
+    void syncHost(Long hostSeq);
 }

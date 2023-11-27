@@ -33,6 +33,19 @@ CREATE TABLE IF NOT EXISTS `m_cmp_agent_host_item` (
     CONSTRAINT `FK_ITEM_SEQ_HOST_SEQ` FOREIGN KEY (`HOST_SEQ`) REFERENCES `m_cmp_agent_host` (`SEQ`) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='호스트에 등록된 모니터링 항목';
 
+CREATE TABLE IF NOT EXISTS `m_cmp_agent_host_storage` (
+    `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '고유번호',
+    `HOST_SEQ` int(10) unsigned NOT NULL COMMENT '호스트 고유 번호',
+    `NAME` varchar(100) NOT NULL DEFAULT '' COMMENT '저장소 명',
+    `MONITORING_YN` enum('Y','N') NOT NULL DEFAULT 'Y' COMMENT '모니터링 YN',
+    `KIND` enum('INFLUXDB_V1') NOT NULL COMMENT '저장소 분류',
+    `INFO` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '저장소 정보',
+    `STATE` enum('NONE','ADD','UPDATE','DELETE') NOT NULL DEFAULT 'ADD',
+    PRIMARY KEY (`SEQ`),
+    KEY `FK_STORAGE_SEQ_HOST_SEQ` (`HOST_SEQ`),
+    CONSTRAINT `FK_STORAGE_SEQ_HOST_SEQ` FOREIGN KEY (`HOST_SEQ`) REFERENCES `m_cmp_agent_host` (`SEQ`) ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='호스트에 등록된 저장소';
+
 CREATE TABLE IF NOT EXISTS `m_cmp_agent_plugin_def` (
     `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '고유번호',
     `NAME` varchar(50) NOT NULL COMMENT '플러그인 명',
