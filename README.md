@@ -13,7 +13,87 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 
 ## How to Use
 
-- 
+### Development environment
+  - MariaDB (10.7.6)
+  - InfluxDB (1.8.10)
+  - Telegraf (1.28.5)
+  - Java (1.8)
+
+### Get Sourcecode
+```bash
+git clone https://github.com/m-cmp/mc-observability.git
+```
+
+### Download Telegraf Binary
+- [Telegraf (Linux 64)](https://dl.influxdata.com/telegraf/releases/telegraf-1.28.5_linux_amd64.tar.gz)
+```bash
+tar xf telegraf-1.28.5_linux_amd64.tar.gz
+mv telegraf-1.28.5/usr/bin/telegraf ./
+```
+
+### Build project
+```bash
+mvn clean install
+```
+### File composition
+
+1. File Tree (M-CMP Observability Agent Manager)
+```
+-/ {{any directory}}
+└ - m-cmp-agent.jar
+└ - m-cmp-agent.conf
+└ - application-{{profile}}.yaml
+```
+- m-cmp-agent.conf
+```
+RUN_ARGS="--spring.profiles.active=api,{{profile}}"
+```
+- application-{{profile}}.yaml
+```
+# Required
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://{{ip}}:{{port}}/{{databaseName}}?{{options}}
+    username: {{username}}
+    password: {{password}}
+```
+
+2. File Tree (M-CMP Observability Agent)
+```
+-/ {{any directory}}
+└ - m-cmp-agent.jar
+└ - m-cmp-agent.conf
+└ - application-{{profile}}.yaml
+└ - telegraf (Download Binary)
+```
+- m-cmp-agent.conf
+```
+RUN_ARGS="--spring.profiles.active={{profile}}"
+```
+- application-{{profile}}.yaml
+```
+# Required
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://{{ip}}:{{port}}/{{databaseName}}?{{options}}
+    username: {{username}}
+    password: {{password}}
+
+# Optional
+scheduler:
+  expression:
+    health-check: "*/5 * * * * ?" # Collector HealthCheck Scheduler cron expression
+    config-check: "*/30 * * * * ?" # Collector config updater Scheduler cron expression
+```
+
+### Run Jar
+```bash
+./m-cmp-agent.jar start &
+```
+
+#### [API Postman Example](./m-cmp-observability-agent.postman_collection.json)
 
 ## How to Contribute
 
