@@ -11,6 +11,8 @@ import lombok.ToString;
 import mcmp.mc.observability.agent.enums.StateOption;
 import mcmp.mc.observability.agent.enums.StateYN;
 import mcmp.mc.observability.agent.enums.StorageKind;
+import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
+import mcmp.mc.observability.agent.model.dto.HostStorageUpdateDTO;
 
 @Getter
 @Setter
@@ -51,5 +53,28 @@ public class HostStorageInfo {
         if( this.getPassword() != null ) json.addProperty("password", this.getPassword());
 
         return json.toString();
+    }
+
+    @JsonIgnore
+    public void setCreateDto(HostStorageCreateDTO dto) {
+        this.hostSeq = dto.getHostSeq();
+        this.name = dto.getName();
+        this.url = dto.getUrl();
+        this.database = dto.getDatabase();
+        this.retentionPolicy = dto.getRetentionPolicy();
+        this.username = dto.getUsername();
+        this.password = dto.getPassword();
+    }
+
+    @JsonIgnore
+    public void setUpdateDto(HostStorageUpdateDTO dto) {
+        this.seq = dto.getSeq();
+        this.hostSeq = dto.getHostSeq();
+        this.name = dto.getName();
+        this.url = dto.getUrl();
+        this.database = dto.getDatabase();
+        this.retentionPolicy = dto.getRetentionPolicy();
+        this.username = dto.getUsername();
+        this.password = dto.getPassword();
     }
 }

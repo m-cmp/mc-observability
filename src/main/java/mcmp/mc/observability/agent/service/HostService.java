@@ -2,9 +2,9 @@ package mcmp.mc.observability.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.agent.dto.PageableReqBody;
-import mcmp.mc.observability.agent.dto.PageableResBody;
-import mcmp.mc.observability.agent.dto.ResBody;
+import mcmp.mc.observability.agent.model.dto.PageableReqBody;
+import mcmp.mc.observability.agent.model.dto.PageableResBody;
+import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.enums.ResultCode;
 import mcmp.mc.observability.agent.enums.StateYN;
 import mcmp.mc.observability.agent.enums.TelegrafState;
@@ -13,6 +13,7 @@ import mcmp.mc.observability.agent.mapper.HostItemMapper;
 import mcmp.mc.observability.agent.mapper.HostMapper;
 import mcmp.mc.observability.agent.mapper.HostStorageMapper;
 import mcmp.mc.observability.agent.model.HostInfo;
+import mcmp.mc.observability.agent.model.dto.HostUpdateDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class HostService {
     private final HostItemMapper hostItemMapper;
     private final HostStorageMapper hostStorageMapper;
 
-    public PageableResBody<List<HostInfo>> getList(PageableReqBody reqBody) {
+    public PageableResBody<List<HostInfo>> getList(PageableReqBody<HostInfo> reqBody) {
         PageableResBody<List<HostInfo>> result = new PageableResBody<>();
         result.setRecords(hostMapper.getListCount(reqBody));
 
@@ -67,13 +68,12 @@ public class HostService {
     private Map<Long, Long> convertList(List<Map<String, Long>> list) {
         Map<Long, Long> result = new HashMap<>();
         for( Map<String, Long> row : list ) {
-            result.put(row.get("seq"), (result.get("seq") != null? result.get("seq"): 0) + row.get("count"));
+            result.put(row.get("seq"), (result.get(row.get("seq")) != null? result.get(row.get("seq")): 0) + row.get("count"));
         }
         return result;
     }
 
-    public ResBody insertHost(HostInfo hostInfo) {
-        ResBody resBody = new ResBody();
+    public void insertHost(HostInfo hostInfo) {
         try {
             if (hostInfo.getUuid() == null || hostInfo.getUuid().isEmpty()) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Monitoring Host UUID is null/empty");
@@ -85,13 +85,18 @@ public class HostService {
         }
         catch (ResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
         }
-        return resBody;
     }
 
-    public ResBody updateHost(HostInfo hostInfo) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> updateHost(HostUpdateDTO dto) {
+        HostInfo hostInfo = new HostInfo();
+        hostInfo.setUpdateHostDTO(dto);
+        return updateHost(hostInfo);
+    }
+
+    public ResBody<?> updateHost(HostInfo hostInfo) {
+        ResBody<?> resBody = new ResBody<>();
+
         try {
             if( hostInfo.getSeq() != null && getDetail(hostInfo.getSeq()) == null ) {
                 throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Target Host No such data from Database");
@@ -110,7 +115,7 @@ public class HostService {
         return resBody;
     }
 
-    public ResBody getDetail(ResBody<HostInfo> resBody, Long seq) {
+    public ResBody<HostInfo> getDetail(ResBody<HostInfo> resBody, Long seq) {
         HostInfo hostInfo = getDetail(seq);
         if( hostInfo == null ) {
             resBody.setCode(ResultCode.INVALID_REQUEST);
@@ -136,8 +141,8 @@ public class HostService {
         return hostMapper.getHostSeq(uuid);
     }
 
-    public ResBody turnMonitoringYn(Long seq) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> turnMonitoringYn(Long seq) {
+        ResBody<?> resBody = new ResBody<>();
         try {
             if( seq <= 0 ) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Sequence Error");
@@ -152,8 +157,8 @@ public class HostService {
         return resBody;
     }
 
-    public ResBody synchronizeAll(Long hostSeq) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> synchronizeAll(Long hostSeq) {
+        ResBody<?> resBody = new ResBody<>();
 
         hostMapper.updateHost(HostInfo.builder().seq(hostSeq).syncYN(StateYN.N).build());
         hostItemMapper.syncHost(hostSeq);
@@ -162,7 +167,7 @@ public class HostService {
         return resBody;
     }
 
-    public int updateTelegrafState(Long seq, TelegrafState telegrafState) {
-        return hostMapper.updateTelegrafState(seq, telegrafState);
+    public void updateTelegrafState(Long seq, TelegrafState telegrafState) {
+        hostMapper.updateTelegrafState(seq, telegrafState);
     }
 }
