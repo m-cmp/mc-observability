@@ -1,15 +1,14 @@
 package mcmp.mc.observability.agent.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.agent.common.Constants;
-import mcmp.mc.observability.agent.model.dto.PageableReqBody;
-import mcmp.mc.observability.agent.model.dto.PageableResBody;
-import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.model.HostItemInfo;
 import mcmp.mc.observability.agent.model.dto.HostItemCreateDTO;
 import mcmp.mc.observability.agent.model.dto.HostItemUpdateDTO;
+import mcmp.mc.observability.agent.model.dto.PageableReqBody;
+import mcmp.mc.observability.agent.model.dto.PageableResBody;
+import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.service.HostItemService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -29,9 +29,9 @@ public class HostItemController {
 
     private final HostItemService hostItemService;
 
-    @Operation(summary = "Get Host item all list")
+    @ApiOperation(value = "Get Host item all list")
     @GetMapping("")
-    public ResBody<PageableResBody<List<HostItemInfo>>> list(@PathVariable("hostSeq") Long hostSeq, @Parameter(hidden = true) PageableReqBody<HostItemInfo> req) {
+    public ResBody<PageableResBody<List<HostItemInfo>>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostItemInfo> req) {
         req.setData(new HostItemInfo());
         req.getData().setHostSeq(hostSeq);
         ResBody<PageableResBody<List<HostItemInfo>>> res = new ResBody<>();
@@ -39,14 +39,14 @@ public class HostItemController {
         return res;
     }
 
-    @Operation(summary = "Create request Host item")
+    @ApiOperation(value = "Create request Host item")
     @PostMapping("")
     public ResBody<?> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostItemCreateDTO info) {
         info.setHostSeq(hostSeq);
         return hostItemService.insertItem(info);
     }
 
-    @Operation(summary = "Update request Host item")
+    @ApiOperation(value = "Update request Host item")
     @PutMapping("/{itemSeq}")
     public ResBody<?> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq, @RequestBody HostItemUpdateDTO info) {
         info.setHostSeq(hostSeq);
@@ -54,19 +54,19 @@ public class HostItemController {
         return hostItemService.updateItem(info);
     }
 
-    @Operation(summary = "Delete request Host item")
+    @ApiOperation(value = "Delete request Host item")
     @DeleteMapping("/{itemSeq}")
     public ResBody<?> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.deleteItem(hostSeq, seq);
     }
 
-    @Operation(hidden = true)
+    @ApiOperation(value = "", hidden = true)
     @GetMapping("/{itemSeq}")
     public ResBody<HostItemInfo> detail(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.getDetail(new ResBody<>(), hostSeq,  seq);
     }
 
-    @Operation(summary = "Update request Host item monitoring state on/off")
+    @ApiOperation(value = "Update request Host item monitoring state on/off")
     @PutMapping("/{itemSeq}/turnMonitoringYn")
     public ResBody<?> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.turnMonitoringYn(hostSeq, seq);

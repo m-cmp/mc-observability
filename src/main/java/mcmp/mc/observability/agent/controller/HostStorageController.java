@@ -1,7 +1,6 @@
 package mcmp.mc.observability.agent.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import springfox.documentation.annotations.ApiIgnore;
 
 import java.util.List;
 
@@ -29,9 +29,9 @@ public class HostStorageController {
 
     private final HostStorageService hostStorageService;
 
-    @Operation(summary = "Get Host storage all list")
+    @ApiOperation(value = "Get Host storage all list")
     @GetMapping("")
-    public ResBody<PageableResBody<List<HostStorageInfo>>> list(@PathVariable("hostSeq") Long hostSeq, PageableReqBody<HostStorageInfo> req) {
+    public ResBody<PageableResBody<List<HostStorageInfo>>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostStorageInfo> req) {
         if( req.getData() == null ) req.setData(new HostStorageInfo());
         req.getData().setHostSeq(hostSeq);
         ResBody<PageableResBody<List<HostStorageInfo>>> res = new ResBody<>();
@@ -39,7 +39,7 @@ public class HostStorageController {
         return res;
     }
 
-    @Operation(hidden = true)
+    @ApiOperation(value = "", hidden = true)
     @GetMapping("/{storageSeq}")
     public ResBody<HostStorageInfo> detail(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
 
@@ -48,14 +48,14 @@ public class HostStorageController {
         return res;
     }
 
-    @Operation(summary = "Create request Host storage")
+    @ApiOperation(value = "Create request Host storage")
     @PostMapping("")
     public ResBody<?> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostStorageCreateDTO info) {
         info.setHostSeq(hostSeq);
         return hostStorageService.createStorage(info);
     }
 
-    @Operation(summary = "Update request Host storage")
+    @ApiOperation(value = "Update request Host storage")
     @PutMapping("/{storageSeq}")
     public ResBody<?> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq, @RequestBody HostStorageUpdateDTO info) {
         info.setSeq(seq);
@@ -63,13 +63,13 @@ public class HostStorageController {
         return hostStorageService.updateStorage(info);
     }
 
-    @Operation(summary = "Delete request Host storage")
+    @ApiOperation(value = "Delete request Host storage")
     @DeleteMapping("/{storageSeq}")
     public ResBody<?> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
         return hostStorageService.deleteStorage(hostSeq, seq);
     }
 
-    @Operation(summary = "Update request Host storage monitoring state on/off")
+    @ApiOperation(value = "Update request Host storage monitoring state on/off")
     @PutMapping("/{storageSeq}/turnMonitoringYn")
     public ResBody<?> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
         return hostStorageService.turnMonitoringYn(hostSeq, seq);
