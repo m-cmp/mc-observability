@@ -95,6 +95,8 @@ scheduler:
 
 #### [API Postman Example](./m-cmp-observability-agent.postman_collection.json)
 
+#### [API Docs](https://petstore.swagger.io/?url=http://github.com/hyeon-inno/mc-observability/blob/initialize/swagger.yaml)
+
 ## How to Contribute
 
 - Issues/Discussions/Ideas: Utilize issue of mc-observability
