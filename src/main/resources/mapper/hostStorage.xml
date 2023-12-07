@@ -71,7 +71,7 @@
           AND SEQ = #{seq}
     </select>
 
-    <insert id="insertStorage">
+    <insert id="createStorage" parameterType="HostStorageInfo">
         INSERT INTO m_cmp_agent_host_storage(HOST_SEQ, KIND, NAME, INFO)
         VALUES (
             #{hostSeq}
@@ -80,6 +80,15 @@
             , #{info}
         )
     </insert>
+
+    <update id="updateStorage" parameterType="HostStorageInfo">
+        UPDATE m_cmp_agent_host_storage SET
+            `STATE` = "${@mcmp.mc.observability.agent.enums.StateOption@UPDATE}",
+            NAME = #{name},
+            INFO = #{info}
+        WHERE
+            SEQ = #{seq} AND HOST_SEQ = {hostSeq}
+    </update>
 
     <update id="deleteStorage">
         UPDATE m_cmp_agent_host_storage SET

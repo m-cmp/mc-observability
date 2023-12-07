@@ -95,7 +95,9 @@ scheduler:
 ./m-cmp-agent.jar start &
 ```
 
-#### [API Postman Example](./m-cmp-observability-agent.postman_collection.json)
+[//]: # (#### [API Postman Example]&#40;./m-cmp-observability-agent.postman_collection.json&#41;)
+
+#### [API Docs yaml](./swagger.yaml)
 
 ## How to Contribute
 

@@ -1,6 +1,6 @@
 package mcmp.mc.observability.agent.mapper;
 
-import mcmp.mc.observability.agent.dto.PageableReqBody;
+import mcmp.mc.observability.agent.model.dto.PageableReqBody;
 import mcmp.mc.observability.agent.enums.TelegrafState;
 import mcmp.mc.observability.agent.model.HostInfo;
 import org.apache.ibatis.annotations.Mapper;
