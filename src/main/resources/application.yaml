@@ -5,6 +5,15 @@ spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://0.0.0.0:3306
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+springdoc:
+  swagger-ui:
+    path: apis.html
+  paths-to-match:
+    - /api/**
 
 mybatis:
   mapper-locations: mapper/*.xml
