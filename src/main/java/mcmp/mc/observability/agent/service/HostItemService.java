@@ -3,9 +3,9 @@ package mcmp.mc.observability.agent.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.Constants;
-import mcmp.mc.observability.agent.dto.PageableReqBody;
-import mcmp.mc.observability.agent.dto.PageableResBody;
-import mcmp.mc.observability.agent.dto.ResBody;
+import mcmp.mc.observability.agent.model.dto.PageableReqBody;
+import mcmp.mc.observability.agent.model.dto.PageableResBody;
+import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.enums.ResultCode;
 import mcmp.mc.observability.agent.exception.ResultCodeException;
 import mcmp.mc.observability.agent.loader.PluginLoader;
@@ -14,6 +14,8 @@ import mcmp.mc.observability.agent.mapper.HostMapper;
 import mcmp.mc.observability.agent.model.HostInfo;
 import mcmp.mc.observability.agent.model.HostItemInfo;
 import mcmp.mc.observability.agent.model.PluginDefInfo;
+import mcmp.mc.observability.agent.model.dto.HostItemCreateDTO;
+import mcmp.mc.observability.agent.model.dto.HostItemUpdateDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -46,8 +48,10 @@ public class HostItemService {
         return hostItemMapper.getHostItemList(params);
     }
 
-    public ResBody insertItem(HostItemInfo info) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> insertItem(HostItemCreateDTO dto) {
+        ResBody<?> resBody = new ResBody<>();
+        HostItemInfo info = new HostItemInfo();
+        info.setCreateDto(dto);
         try {
             if (info.getName() == null || info.getName().isEmpty()) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Name is null/empty");
@@ -80,8 +84,10 @@ public class HostItemService {
         return resBody;
     }
 
-    public ResBody updateItem(HostItemInfo info) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> updateItem(HostItemUpdateDTO dto) {
+        ResBody<?> resBody = new ResBody<>();
+        HostItemInfo info = new HostItemInfo();
+        info.setUpdateDto(dto);
         try {
             if( info.getSeq() <= 0 ) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Sequence Error");
@@ -95,9 +101,6 @@ public class HostItemService {
             if( hostItemInfo == null ) {
                 throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Target Host Item No such data from Database");
             }
-
-            if(hostItemInfo == null)
-                throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Host Item Sequence Error");
 
             int result = hostItemMapper.updateItem(info);
 
@@ -113,12 +116,12 @@ public class HostItemService {
         return resBody;
     }
 
-    public int updateItemConf(Long seq) {
-        return hostItemMapper.updateItemConf(seq);
+    public void updateItemConf(Long seq) {
+        hostItemMapper.updateItemConf(seq);
     }
 
-    public ResBody deleteItem(Long hostSeq, Long seq) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> deleteItem(Long hostSeq, Long seq) {
+        ResBody<?> resBody = new ResBody<>();
         try {
             if( seq <= 0 )
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Sequence Error");
@@ -146,7 +149,7 @@ public class HostItemService {
         hostItemMapper.deleteItemRow(seq);
     }
 
-    public ResBody getDetail(ResBody<HostItemInfo> resBody, Long hostSeq, Long seq) {
+    public ResBody<HostItemInfo> getDetail(ResBody<HostItemInfo> resBody, Long hostSeq, Long seq) {
         HostItemInfo hostItemInfo = getDetail(hostSeq, seq);
         if( hostItemInfo == null ) {
             resBody.setCode(ResultCode.INVALID_REQUEST);
@@ -164,8 +167,8 @@ public class HostItemService {
         return hostItemMapper.getDetail(params);
     }
 
-    public ResBody turnMonitoringYn(Long hostSeq, Long seq) {
-        ResBody resBody = new ResBody();
+    public ResBody<?> turnMonitoringYn(Long hostSeq, Long seq) {
+        ResBody<?> resBody = new ResBody<>();
         try {
             if (seq <= 0) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Sequence Error");

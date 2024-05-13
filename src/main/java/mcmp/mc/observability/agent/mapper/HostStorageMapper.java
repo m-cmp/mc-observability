@@ -1,6 +1,6 @@
 package mcmp.mc.observability.agent.mapper;
 
-import mcmp.mc.observability.agent.dto.PageableReqBody;
+import mcmp.mc.observability.agent.model.dto.PageableReqBody;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -14,7 +14,8 @@ public interface HostStorageMapper {
     HostStorageInfo getStorageDetail(Long hostSeq, Long seq);
     List<HostStorageInfo> getHostStorageList(Map<String, Object> params);
 
-    Integer insertStorage(HostStorageInfo info);
+    Integer createStorage(HostStorageInfo info);
+    Integer updateStorage(HostStorageInfo info);
     Integer deleteStorage(Long hostSeq, Long seq);
 
     Integer updateStorageConf(Long seq);

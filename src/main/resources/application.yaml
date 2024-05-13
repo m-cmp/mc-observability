@@ -9,6 +9,12 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
 
+springdoc:
+  swagger-ui:
+    path: apis.html
+  paths-to-match:
+    - /api/**
+
 mybatis:
   mapper-locations: mapper/*.xml
   configuration:

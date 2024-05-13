@@ -1,4 +1,4 @@
-package mcmp.mc.observability.agent.dto;
+package mcmp.mc.observability.agent.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
