@@ -1,4 +1,6 @@
 # mc-observability
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fm-cmp%2Fmc-observability.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fm-cmp%2Fmc-observability?ref=badge_shield)
+
 
 This repository provides a Monitoring system of M-CMP.
 
@@ -100,3 +102,7 @@ scheduler:
 ## How to Contribute
 
 - Issues/Discussions/Ideas: Utilize issue of mc-observability
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fm-cmp%2Fmc-observability.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fm-cmp%2Fmc-observability?ref=badge_large)
