@@ -38,7 +38,7 @@ public class HostController {
 
     @ApiOperation(value = "Update request Host")
     @PutMapping("/{hostSeq}")
-    public ResBody<?> update(@PathVariable("hostSeq") Long seq, @RequestBody HostUpdateDTO hostInfo) {
+    public ResBody<Void> update(@PathVariable("hostSeq") Long seq, @RequestBody HostUpdateDTO hostInfo) {
         hostInfo.setSeq(seq);
         return hostService.updateHost(hostInfo);
     }
@@ -51,13 +51,13 @@ public class HostController {
 
     @ApiOperation(value = "Update request Host monitoring state on/off")
     @PutMapping("/{hostSeq}/turnMonitoringYn")
-    public ResBody<?> turnMonitoringYn(@PathVariable("hostSeq") Long seq) {
+    public ResBody<Void> turnMonitoringYn(@PathVariable("hostSeq") Long seq) {
         return hostService.turnMonitoringYn(seq);
     }
 
     @ApiOperation(value = "Update request Host all config")
     @PutMapping("/{hostSeq}/synchronize")
-    public ResBody<?> synchronizeAll(@PathVariable("hostSeq") Long hostSeq) {
+    public ResBody<Void> synchronizeAll(@PathVariable("hostSeq") Long hostSeq) {
         return hostService.synchronizeAll(hostSeq);
     }
 }

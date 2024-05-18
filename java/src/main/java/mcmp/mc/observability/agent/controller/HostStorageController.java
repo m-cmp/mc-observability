@@ -50,14 +50,14 @@ public class HostStorageController {
 
     @ApiOperation(value = "Create request Host storage")
     @PostMapping("")
-    public ResBody<?> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostStorageCreateDTO info) {
+    public ResBody<Void> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostStorageCreateDTO info) {
         info.setHostSeq(hostSeq);
         return hostStorageService.createStorage(info);
     }
 
     @ApiOperation(value = "Update request Host storage")
     @PutMapping("/{storageSeq}")
-    public ResBody<?> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq, @RequestBody HostStorageUpdateDTO info) {
+    public ResBody<Void> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq, @RequestBody HostStorageUpdateDTO info) {
         info.setSeq(seq);
         info.setHostSeq(hostSeq);
         return hostStorageService.updateStorage(info);
@@ -65,13 +65,13 @@ public class HostStorageController {
 
     @ApiOperation(value = "Delete request Host storage")
     @DeleteMapping("/{storageSeq}")
-    public ResBody<?> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
+    public ResBody<Void> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
         return hostStorageService.deleteStorage(hostSeq, seq);
     }
 
     @ApiOperation(value = "Update request Host storage monitoring state on/off")
     @PutMapping("/{storageSeq}/turnMonitoringYn")
-    public ResBody<?> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
+    public ResBody<Void> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
         return hostStorageService.turnMonitoringYn(hostSeq, seq);
     }
 }

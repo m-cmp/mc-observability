@@ -48,8 +48,8 @@ public class HostItemService {
         return hostItemMapper.getHostItemList(params);
     }
 
-    public ResBody<?> insertItem(HostItemCreateDTO dto) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> insertItem(HostItemCreateDTO dto) {
+        ResBody<Void> resBody = new ResBody<>();
         HostItemInfo info = new HostItemInfo();
         info.setCreateDto(dto);
         try {
@@ -84,8 +84,8 @@ public class HostItemService {
         return resBody;
     }
 
-    public ResBody<?> updateItem(HostItemUpdateDTO dto) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> updateItem(HostItemUpdateDTO dto) {
+        ResBody<Void> resBody = new ResBody<>();
         HostItemInfo info = new HostItemInfo();
         info.setUpdateDto(dto);
         try {
@@ -120,8 +120,8 @@ public class HostItemService {
         hostItemMapper.updateItemConf(seq);
     }
 
-    public ResBody<?> deleteItem(Long hostSeq, Long seq) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> deleteItem(Long hostSeq, Long seq) {
+        ResBody<Void> resBody = new ResBody<>();
         try {
             if( seq <= 0 )
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Sequence Error");
@@ -167,8 +167,8 @@ public class HostItemService {
         return hostItemMapper.getDetail(params);
     }
 
-    public ResBody<?> turnMonitoringYn(Long hostSeq, Long seq) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> turnMonitoringYn(Long hostSeq, Long seq) {
+        ResBody<Void> resBody = new ResBody<>();
         try {
             if (seq <= 0) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Item Sequence Error");

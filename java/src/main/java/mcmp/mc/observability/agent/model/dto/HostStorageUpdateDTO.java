@@ -12,9 +12,5 @@ public class HostStorageUpdateDTO {
     @JsonIgnore
     private Long hostSeq = 0L;
     private String name;
-    private String url;
-    private String database;
-    private String retentionPolicy;
-    private String username;
-    private String password;
+    private String setting;
 }

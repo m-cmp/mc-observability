@@ -1,7 +1,5 @@
 package mcmp.mc.observability.agent.util;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.Constants;
@@ -19,7 +17,6 @@ import mcmp.mc.observability.agent.service.HostStorageService;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -42,27 +39,6 @@ public class CollectorExecutor {
     private final GlobalProperties globalProperties;
     private Process AGENT_PROCESS = null;
     private final ClassPathResource globalConfigResource = new ClassPathResource("defaultGlobalConfig");
-    private final ClassPathResource influxDBV1ConfigResource = new ClassPathResource("InfluxDBV1Config");
-    private String defaultInfluxDBV1Config;
-
-    @PostConstruct
-    private void setDefaultInfluxDBV1Config() {
-        if(!influxDBV1ConfigResource.exists()){
-            log.error("Invalid filePath : InfluxDBV1Config");
-            throw new IllegalArgumentException();
-        }
-
-        log.info("file path exists = {}", influxDBV1ConfigResource.exists());
-
-        try (InputStream is = new BufferedInputStream(influxDBV1ConfigResource.getInputStream())) {
-            defaultInfluxDBV1Config = new BufferedReader(
-                    new InputStreamReader(is, StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining("\n"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @PreDestroy
     public void stopAgent() {
@@ -236,19 +212,12 @@ public class CollectorExecutor {
     }
 
     private String makeStorageConfig(HostStorageInfo hostStorageInfo) {
-        JsonObject info = new Gson().fromJson(hostStorageInfo.getInfo(), JsonObject.class);
-        return defaultInfluxDBV1Config
-                .replaceAll("@IS_URL",              (info.get("url") == null? "#": ""))
-                .replaceAll("@IS_DATABASE",         (info.get("database") == null? "#": ""))
-                .replaceAll("@IS_RETENTION_POLICY", (info.get("retentionPolicy") == null? "#": ""))
-                .replaceAll("@IS_USERNAME",         (info.get("username") == null? "#": ""))
-                .replaceAll("@IS_PASSWORD",         (info.get("password") == null? "#": ""))
-                .replaceAll("@URL",              (info.get("url") == null? "":             info.get("url").getAsString()))
-                .replaceAll("@DATABASE",         (info.get("database") == null? "":        info.get("database").getAsString()))
-                .replaceAll("@RETENTION_POLICY", (info.get("retentionPolicy") == null? "": info.get("retentionPolicy").getAsString()))
-                .replaceAll("@USERNAME",         (info.get("username") == null? "":        info.get("username").getAsString()))
-                .replaceAll("@PASSWORD",         (info.get("password") == null? "":        info.get("password").getAsString()))
-                ;
+        PluginDefInfo pluginDefInfo = pluginLoader.getPluginDefInfo(hostStorageInfo.getPluginSeq());
+        StringBuilder sb = new StringBuilder("");
+        sb.append(pluginDefInfo.getPluginId()).append("\n")
+                .append(hostStorageInfo.getSetting());
+
+        return sb.toString();
     }
 
     private void rewriteTelegrafConf() {
