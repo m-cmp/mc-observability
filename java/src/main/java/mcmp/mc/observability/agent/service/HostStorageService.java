@@ -26,9 +26,9 @@ public class HostStorageService {
     private final HostStorageMapper mapper;
     private final PluginLoader pluginLoader;
 
-    public PageableResBody<List<HostStorageInfo>> getList(PageableReqBody<HostStorageInfo> reqBody) {
+    public PageableResBody<HostStorageInfo> getList(PageableReqBody<HostStorageInfo> reqBody) {
 
-        PageableResBody<List<HostStorageInfo>> result = new PageableResBody<>();
+        PageableResBody<HostStorageInfo> result = new PageableResBody<>();
         result.setRecords(mapper.getListCount(reqBody));
 
         if( result.getRecords() > 0 ) {
