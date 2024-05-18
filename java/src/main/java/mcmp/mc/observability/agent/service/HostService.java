@@ -88,14 +88,14 @@ public class HostService {
         }
     }
 
-    public ResBody<?> updateHost(HostUpdateDTO dto) {
+    public ResBody<Void> updateHost(HostUpdateDTO dto) {
         HostInfo hostInfo = new HostInfo();
         hostInfo.setUpdateHostDTO(dto);
         return updateHost(hostInfo);
     }
 
-    public ResBody<?> updateHost(HostInfo hostInfo) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> updateHost(HostInfo hostInfo) {
+        ResBody<Void> resBody = new ResBody<>();
 
         try {
             if( hostInfo.getSeq() != null && getDetail(hostInfo.getSeq()) == null ) {
@@ -141,8 +141,8 @@ public class HostService {
         return hostMapper.getHostSeq(uuid);
     }
 
-    public ResBody<?> turnMonitoringYn(Long seq) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> turnMonitoringYn(Long seq) {
+        ResBody<Void> resBody = new ResBody<>();
         try {
             if( seq <= 0 ) {
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Sequence Error");
@@ -157,8 +157,8 @@ public class HostService {
         return resBody;
     }
 
-    public ResBody<?> synchronizeAll(Long hostSeq) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> synchronizeAll(Long hostSeq) {
+        ResBody<Void> resBody = new ResBody<>();
 
         hostMapper.updateHost(HostInfo.builder().seq(hostSeq).syncYN(StateYN.N).build());
         hostItemMapper.syncHost(hostSeq);

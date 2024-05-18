@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -33,11 +34,19 @@ public class PluginLoader {
         pluginMap = pluginMapper.getAllPlugin();
     }
 
+    public void refresh() {
+        init();
+    }
+
     public PluginDefInfo getPluginDefInfo(Long seq) {
         return pluginMap.get(seq);
     }
 
     public List<PluginDefInfo> getPluginDefList() {
         return new ArrayList<>(pluginMap.values());
+    }
+
+    public List<PluginDefInfo> getPluginDefList(String type) {
+        return pluginMap.values().stream().filter(f -> f.getPluginType().equals(type)).collect(Collectors.toList());
     }
 }

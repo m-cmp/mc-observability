@@ -9,6 +9,7 @@ import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.util.CollectorExecutor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -22,9 +23,9 @@ public class SystemController {
 
     @ApiOperation(value = "Get all available config list")
     @GetMapping("/plugins")
-    public ResBody<List<PluginDefInfo>> getPlugins() {
+    public ResBody<List<PluginDefInfo>> getPlugins(@RequestParam(required = false) String type) {
         ResBody<List<PluginDefInfo>> resBody = new ResBody<>();
-        resBody.setData(pluginLoader.getPluginDefList());
+        resBody.setData(type != null? pluginLoader.getPluginDefList(type): pluginLoader.getPluginDefList());
         return resBody;
     }
 

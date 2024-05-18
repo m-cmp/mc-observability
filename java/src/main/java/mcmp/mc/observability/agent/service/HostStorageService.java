@@ -2,6 +2,7 @@ package mcmp.mc.observability.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.agent.loader.PluginLoader;
 import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
 import mcmp.mc.observability.agent.model.dto.HostStorageUpdateDTO;
 import mcmp.mc.observability.agent.model.dto.PageableReqBody;
@@ -23,6 +24,7 @@ import java.util.Map;
 public class HostStorageService {
 
     private final HostStorageMapper mapper;
+    private final PluginLoader pluginLoader;
 
     public PageableResBody<List<HostStorageInfo>> getList(PageableReqBody<HostStorageInfo> reqBody) {
 
@@ -46,10 +48,10 @@ public class HostStorageService {
         return mapper.getStorageDetail(hostSeq, seq);
     }
 
-    public ResBody<?> createStorage(HostStorageCreateDTO dto) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> createStorage(HostStorageCreateDTO dto) {
+        ResBody<Void> resBody = new ResBody<>();
         HostStorageInfo info = new HostStorageInfo();
-        info.setCreateDto(dto);
+        info.setCreateDto(dto, pluginLoader.getPluginDefInfo(dto.getPluginSeq()));
 
         try {
             int result = mapper.createStorage(info);
@@ -64,8 +66,8 @@ public class HostStorageService {
         return resBody;
     }
 
-    public ResBody<?> updateStorage(HostStorageUpdateDTO dto) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> updateStorage(HostStorageUpdateDTO dto) {
+        ResBody<Void> resBody = new ResBody<>();
         HostStorageInfo info = new HostStorageInfo();
         info.setUpdateDto(dto);
 
@@ -86,8 +88,8 @@ public class HostStorageService {
         return resBody;
     }
 
-    public ResBody<?> deleteStorage(Long hostSeq, Long seq) {
-        ResBody<?> resBody = new ResBody<>();
+    public ResBody<Void> deleteStorage(Long hostSeq, Long seq) {
+        ResBody<Void> resBody = new ResBody<>();
         try {
             if( seq <= 0 )
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Host Storage Sequence Error");
@@ -109,9 +111,9 @@ public class HostStorageService {
         mapper.deleteStorageRow(seq);
     }
 
-    public ResBody<?> turnMonitoringYn(Long hostSeq, Long seq) {
+    public ResBody<Void> turnMonitoringYn(Long hostSeq, Long seq) {
 
-        ResBody<?> resBody = new ResBody<>();
+        ResBody<Void> resBody = new ResBody<>();
         try {
             if( seq <= 0 )
                 throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Storage Sequence Error");

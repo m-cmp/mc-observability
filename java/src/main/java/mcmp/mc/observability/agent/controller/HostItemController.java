@@ -41,14 +41,14 @@ public class HostItemController {
 
     @ApiOperation(value = "Create request Host item")
     @PostMapping("")
-    public ResBody<?> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostItemCreateDTO info) {
+    public ResBody<Void> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostItemCreateDTO info) {
         info.setHostSeq(hostSeq);
         return hostItemService.insertItem(info);
     }
 
     @ApiOperation(value = "Update request Host item")
     @PutMapping("/{itemSeq}")
-    public ResBody<?> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq, @RequestBody HostItemUpdateDTO info) {
+    public ResBody<Void> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq, @RequestBody HostItemUpdateDTO info) {
         info.setHostSeq(hostSeq);
         info.setSeq(seq);
         return hostItemService.updateItem(info);
@@ -56,7 +56,7 @@ public class HostItemController {
 
     @ApiOperation(value = "Delete request Host item")
     @DeleteMapping("/{itemSeq}")
-    public ResBody<?> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
+    public ResBody<Void> delete(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.deleteItem(hostSeq, seq);
     }
 
@@ -68,7 +68,7 @@ public class HostItemController {
 
     @ApiOperation(value = "Update request Host item monitoring state on/off")
     @PutMapping("/{itemSeq}/turnMonitoringYn")
-    public ResBody<?> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
+    public ResBody<Void> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.turnMonitoringYn(hostSeq, seq);
     }
 

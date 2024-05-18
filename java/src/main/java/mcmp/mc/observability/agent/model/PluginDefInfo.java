@@ -13,6 +13,7 @@ public class PluginDefInfo {
     private Long seq;
     private String name;
     private String pluginId;
+    private String pluginType;
     private List<OS> os;
     public void setOs(String os) {
         if( os == null || os.isEmpty() ) return;
