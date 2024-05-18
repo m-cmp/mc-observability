@@ -2,6 +2,8 @@ package mcmp.mc.observability.agent.controller;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import mcmp.mc.observability.agent.annotation.Base64Decode;
+import mcmp.mc.observability.agent.annotation.Base64Encode;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
 import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(Constants.PREFIX_V1 + "/host/{hostSeq}/storage")
 @RequiredArgsConstructor
@@ -30,16 +30,18 @@ public class HostStorageController {
     private final HostStorageService hostStorageService;
 
     @ApiOperation(value = "Get Host storage all list")
+    @Base64Encode
     @GetMapping("")
-    public ResBody<PageableResBody<List<HostStorageInfo>>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostStorageInfo> req) {
+    public ResBody<PageableResBody<HostStorageInfo>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostStorageInfo> req) {
         if( req.getData() == null ) req.setData(new HostStorageInfo());
         req.getData().setHostSeq(hostSeq);
-        ResBody<PageableResBody<List<HostStorageInfo>>> res = new ResBody<>();
+        ResBody<PageableResBody<HostStorageInfo>> res = new ResBody<>();
         res.setData(hostStorageService.getList(req));
         return res;
     }
 
     @ApiOperation(value = "", hidden = true)
+    @Base64Encode
     @GetMapping("/{storageSeq}")
     public ResBody<HostStorageInfo> detail(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
 
@@ -49,6 +51,7 @@ public class HostStorageController {
     }
 
     @ApiOperation(value = "Create request Host storage")
+    @Base64Decode(HostStorageCreateDTO.class)
     @PostMapping("")
     public ResBody<Void> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostStorageCreateDTO info) {
         info.setHostSeq(hostSeq);
@@ -56,6 +59,7 @@ public class HostStorageController {
     }
 
     @ApiOperation(value = "Update request Host storage")
+    @Base64Decode(HostStorageUpdateDTO.class)
     @PutMapping("/{storageSeq}")
     public ResBody<Void> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq, @RequestBody HostStorageUpdateDTO info) {
         info.setSeq(seq);

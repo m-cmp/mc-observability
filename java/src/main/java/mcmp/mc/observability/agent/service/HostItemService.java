@@ -32,8 +32,8 @@ public class HostItemService {
     private final HostMapper hostMapper;
     private final PluginLoader pluginLoader;
 
-    public PageableResBody<List<HostItemInfo>> getList(PageableReqBody reqBody) {
-        PageableResBody<List<HostItemInfo>> result = new PageableResBody<>();
+    public PageableResBody<HostItemInfo> getList(PageableReqBody reqBody) {
+        PageableResBody<HostItemInfo> result = new PageableResBody<>();
         result.setRecords(hostItemMapper.getListCount(reqBody));
 
         if( result.getRecords() > 0 ) {

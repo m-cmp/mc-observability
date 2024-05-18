@@ -30,8 +30,8 @@ public class HostService {
     private final HostItemMapper hostItemMapper;
     private final HostStorageMapper hostStorageMapper;
 
-    public PageableResBody<List<HostInfo>> getList(PageableReqBody<HostInfo> reqBody) {
-        PageableResBody<List<HostInfo>> result = new PageableResBody<>();
+    public PageableResBody<HostInfo> getList(PageableReqBody<HostInfo> reqBody) {
+        PageableResBody<HostInfo> result = new PageableResBody<>();
         result.setRecords(hostMapper.getListCount(reqBody));
 
         if( result.getRecords() > 0 ) {

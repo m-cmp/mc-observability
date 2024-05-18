@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
+import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import mcmp.mc.observability.agent.enums.ResultCode;
 
 @Setter
@@ -11,6 +12,7 @@ import mcmp.mc.observability.agent.enums.ResultCode;
 public class ResBody<T> {
     @JsonIgnore
     private ResultCode code = ResultCode.SUCCESS;
+    @Base64EncodeField
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
 

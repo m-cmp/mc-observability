@@ -2,6 +2,10 @@ package mcmp.mc.observability.agent.controller;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import mcmp.mc.observability.agent.annotation.Base64Decode;
+import mcmp.mc.observability.agent.annotation.Base64DecodeField;
+import mcmp.mc.observability.agent.annotation.Base64Encode;
+import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.model.HostInfo;
 import mcmp.mc.observability.agent.model.dto.HostUpdateDTO;
@@ -27,16 +31,18 @@ public class HostController {
     private final HostService hostService;
 
     @ApiOperation(value = "Get Host all list")
+    @Base64Encode
     @GetMapping("")
-    public ResBody<PageableResBody<List<HostInfo>>> list(@ApiIgnore PageableReqBody<HostInfo> req) {
+    public ResBody<PageableResBody<HostInfo>> list(@ApiIgnore PageableReqBody<HostInfo> req) {
         if( req.getData() == null ) req.setData(new HostInfo());
 
-        ResBody<PageableResBody<List<HostInfo>>> res = new ResBody<>();
+        ResBody<PageableResBody<HostInfo>> res = new ResBody<>();
         res.setData(hostService.getList(req));
         return res;
     }
 
     @ApiOperation(value = "Update request Host")
+    @Base64Decode(HostUpdateDTO.class)
     @PutMapping("/{hostSeq}")
     public ResBody<Void> update(@PathVariable("hostSeq") Long seq, @RequestBody HostUpdateDTO hostInfo) {
         hostInfo.setSeq(seq);
@@ -44,6 +50,7 @@ public class HostController {
     }
 
     @ApiOperation(value = "", hidden = true)
+    @Base64Encode
     @GetMapping("/{hostSeq}")
     public ResBody<HostInfo> detail(@PathVariable("hostSeq") Long seq) {
         return hostService.getDetail(new ResBody<>(), seq);

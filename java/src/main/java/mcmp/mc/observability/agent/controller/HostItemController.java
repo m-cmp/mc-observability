@@ -2,6 +2,8 @@ package mcmp.mc.observability.agent.controller;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import mcmp.mc.observability.agent.annotation.Base64Decode;
+import mcmp.mc.observability.agent.annotation.Base64Encode;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.model.HostItemInfo;
 import mcmp.mc.observability.agent.model.dto.HostItemCreateDTO;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(Constants.PREFIX_V1 + "/host/{hostSeq}/item")
 @RequiredArgsConstructor
@@ -30,16 +30,18 @@ public class HostItemController {
     private final HostItemService hostItemService;
 
     @ApiOperation(value = "Get Host item all list")
+    @Base64Encode
     @GetMapping("")
-    public ResBody<PageableResBody<List<HostItemInfo>>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostItemInfo> req) {
+    public ResBody<PageableResBody<HostItemInfo>> list(@PathVariable("hostSeq") Long hostSeq, @ApiIgnore PageableReqBody<HostItemInfo> req) {
         req.setData(new HostItemInfo());
         req.getData().setHostSeq(hostSeq);
-        ResBody<PageableResBody<List<HostItemInfo>>> res = new ResBody<>();
+        ResBody<PageableResBody<HostItemInfo>> res = new ResBody<>();
         res.setData(hostItemService.getList(req));
         return res;
     }
 
     @ApiOperation(value = "Create request Host item")
+    @Base64Decode(HostItemCreateDTO.class)
     @PostMapping("")
     public ResBody<Void> create(@PathVariable("hostSeq") Long hostSeq, @RequestBody HostItemCreateDTO info) {
         info.setHostSeq(hostSeq);
@@ -47,6 +49,7 @@ public class HostItemController {
     }
 
     @ApiOperation(value = "Update request Host item")
+    @Base64Decode(HostItemUpdateDTO.class)
     @PutMapping("/{itemSeq}")
     public ResBody<Void> update(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq, @RequestBody HostItemUpdateDTO info) {
         info.setHostSeq(hostSeq);
@@ -61,6 +64,7 @@ public class HostItemController {
     }
 
     @ApiOperation(value = "", hidden = true)
+    @Base64Encode
     @GetMapping("/{itemSeq}")
     public ResBody<HostItemInfo> detail(@PathVariable("hostSeq") Long hostSeq, @PathVariable("itemSeq") Long seq) {
         return hostItemService.getDetail(new ResBody<>(), hostSeq,  seq);

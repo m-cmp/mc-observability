@@ -64,11 +64,6 @@
             <version>2.23</version>
         </dependency>
         <dependency>
-            <groupId>com.github.miwurster</groupId>
-            <artifactId>spring-data-influxdb</artifactId>
-            <version>1.8</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
@@ -95,6 +90,10 @@
             <version>3.0.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>

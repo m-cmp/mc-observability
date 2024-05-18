@@ -1,11 +1,13 @@
 package mcmp.mc.observability.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import mcmp.mc.observability.agent.enums.HostState;
 import mcmp.mc.observability.agent.enums.OS;
 import mcmp.mc.observability.agent.enums.StateYN;
@@ -21,6 +23,8 @@ import java.util.Map;
 @AllArgsConstructor
 public class HostInfo {
     private Long seq = 0L;
+    @ApiModelProperty(value = "Base64 Encoded value")
+    @Base64EncodeField
     private String name;
     private String uuid;
     private OS os;

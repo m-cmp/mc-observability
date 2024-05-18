@@ -1,9 +1,11 @@
 package mcmp.mc.observability.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import mcmp.mc.observability.agent.enums.StateOption;
 import mcmp.mc.observability.agent.enums.StateYN;
 import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
@@ -17,7 +19,11 @@ public class HostStorageInfo {
     private Long hostSeq = 0L;
     private Long pluginSeq;
     private String pluginName;
+    @ApiModelProperty(value = "Base64 Encoded value")
+    @Base64EncodeField
     private String name;
+    @ApiModelProperty(value = "Base64 Encoded value")
+    @Base64EncodeField
     private String setting;
     private StateOption state;
     private StateYN monitoringYn;
