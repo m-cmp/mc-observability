@@ -1,6 +1,8 @@
 package mcmp.mc.observability.agent.model;
 
+import io.swagger.models.auth.In;
 import lombok.Getter;
+import lombok.Setter;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 
@@ -8,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
+@Setter
 public class InfluxDBConnector {
     private InfluxDB influxDB;
     private String url;
@@ -15,6 +18,8 @@ public class InfluxDBConnector {
     private String retentionPolicy;
     private String username;
     private String password;
+
+    public InfluxDBConnector() {}
 
     public InfluxDBConnector(String setting) {
         setting = setting.replaceAll(" ", "");
