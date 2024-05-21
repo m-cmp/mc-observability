@@ -8,7 +8,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class InfluxDBUtils {
     private static final Logger logger = LoggerFactory.getLogger(InfluxDBUtils.class);
@@ -16,7 +15,7 @@ public class InfluxDBUtils {
     private InfluxDBUtils() throws IllegalStateException {
         throw new IllegalStateException("Utility class");
     }
-    public static <T> List<MeasurementFieldInfo> metricMapping(List<QueryResult.Series> seriesList) {
+    public static <T> List<MeasurementFieldInfo> measurementAndFieldsMapping(List<QueryResult.Series> seriesList) {
         List<MeasurementFieldInfo> result = new ArrayList<>();
         try {
             if(CollectionUtils.isEmpty(seriesList))

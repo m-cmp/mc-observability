@@ -84,7 +84,33 @@ public class InfluxDBService {
         InfluxDB db = getDB(influxDBConnector);
         QueryResult qr = db.query(qb.create(), TimeUnit.MILLISECONDS);
 
-        return InfluxDBUtils.metricMapping(qr.getResults().get(0).getSeries());
+        return InfluxDBUtils.measurementAndFieldsMapping(qr.getResults().get(0).getSeries());
     }
 
+    public List<Map<String, Object>> getTags(InfluxDBConnector influxDBConnector) {
+        String query = String.format("show tag keys on %s", influxDBConnector.getDatabase());
+        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery(query).forDatabase(influxDBConnector.getDatabase());
+
+        InfluxDB db = getDB(influxDBConnector);
+        QueryResult qr = db.query(qb.create(), TimeUnit.MILLISECONDS);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        List<QueryResult.Series> seriesList = qr.getResults().get(0).getSeries();
+
+        if(CollectionUtils.isEmpty(seriesList))
+            return null;
+
+        for( QueryResult.Series series : seriesList) {
+            Map<String, Object> measurementTags = new HashMap<>();
+            List<String> tagList = new ArrayList<>();
+            for( List<Object> row : series.getValues() ) {
+                tagList.add(row.get(0).toString());
+            }
+            measurementTags.put(series.getName(), tagList);
+
+            result.add(measurementTags);
+        }
+
+        return result;
+    }
 }

@@ -33,4 +33,12 @@ public class InfluxDBController {
         res.setData(influxDBService.getMeasurementAndFields(influxDBConnector));
         return res;
     }
+
+    @ApiOperation(value = "Get InfluxDB tag list")
+    @GetMapping("/tags")
+    public ResBody getTags(@ModelAttribute("influxDBConnector") InfluxDBConnector influxDBConnector) {
+        ResBody res = new ResBody();
+        res.setData(influxDBService.getTags(influxDBConnector));
+        return res;
+    }
 }
