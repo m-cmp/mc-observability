@@ -7,9 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface MiningDBMapper {
 
-    int insertMiningDB(MiningDBSetDTO info);
-
     MiningDBInfo getDetail();
 
-    int deleteMiningDB(Long seq);
+    int updateMiningDB(MiningDBSetDTO info);
 }

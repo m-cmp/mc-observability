@@ -19,11 +19,6 @@ public class MiningDBService {
 
     public ResBody detail(ResBody<MiningDBInfo> resBody) {
         MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
-        if( miningDBInfo == null ) {
-            resBody.setCode(ResultCode.INVALID_REQUEST);
-            return resBody;
-        }
-
         resBody.setData(miningDBInfo);
         return resBody;
     }
@@ -32,12 +27,18 @@ public class MiningDBService {
         ResBody<Void> resBody = new ResBody<>();
         try {
             MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
-            if(miningDBInfo != null)
-                miningDBMapper.deleteMiningDB(miningDBInfo.getSeq());
+            if(miningDBInfo == null)
+                throw new ResultCodeException(ResultCode.INVALID_ERROR, "No Mining DB info");
 
-            int result = miningDBMapper.insertMiningDB(info);
+            info.setOldUrl(miningDBInfo.getUrl());
+            info.setOldDatabase(miningDBInfo.getDatabase());
+            info.setOldRetentionPolicy(miningDBInfo.getRetentionPolicy());
+            info.setOldUsername(miningDBInfo.getUsername());
+            info.setOldPassword(miningDBInfo.getPassword());
+
+            int result = miningDBMapper.updateMiningDB(info);
             if (result <= 0) {
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "MiningDB insert error QueryResult={}", result);
+                throw new ResultCodeException(ResultCode.INVALID_ERROR, "MiningDB update error QueryResult={}", result);
             }
         } catch (ResultCodeException e) {
             resBody.setCode(e.getResultCode());

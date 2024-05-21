@@ -5,7 +5,6 @@
 
     <select id="getDetail" resultType="MiningDBInfo">
         SELECT
-            `SEQ`,
             `URL`,
             `DATABASE`,
             `RETENTION_POLICY`,
@@ -14,19 +13,18 @@
         FROM m_cmp_agent_mining_db
     </select>
 
-    <insert id="insertMiningDB">
-        INSERT INTO m_cmp_agent_mining_db(`URL`, `DATABASE`, `RETENTION_POLICY`, `USERNAME`, `PASSWORD`)
-        VALUES (
-                 #{url}
-               , #{database}
-               , #{retentionPolicy}
-               , #{username}
-               , #{password}
-               )
+    <insert id="updateMiningDB">
+        UPDATE m_cmp_agent_mining_db
+        SET `URL` = #{url},
+            `DATABASE` = #{database},
+            `RETENTION_POLICY` = #{retentionPolicy},
+            `USERNAME` = #{username},
+            `PASSWORD` = #{password}
+        WHERE
+            `URL` = #{oldUrl} AND
+            `DATABASE` = #{oldDatabase} AND
+            `RETENTION_POLICY` = #{oldRetentionPolicy} AND
+            `USERNAME` = #{oldUsername} AND
+            `PASSWORD` = #{oldPassword}
     </insert>
-
-    <delete id="deleteMiningDB">
-        DELETE FROM m_cmp_agent_mining_db WHERE SEQ=#{seq}
-    </delete>
-
 </mapper>

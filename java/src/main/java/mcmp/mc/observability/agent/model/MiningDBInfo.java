@@ -10,7 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 public class MiningDBInfo {
 
-    @JsonIgnore
     private Long seq = 0L;
     private String url;
     private String database;
