@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class MiningDBCreateDTO {
+public class MiningDBSetDTO {
     private String url;
     private String database;
     private String retentionPolicy;

@@ -6,7 +6,7 @@ import mcmp.mc.observability.agent.enums.ResultCode;
 import mcmp.mc.observability.agent.exception.ResultCodeException;
 import mcmp.mc.observability.agent.mapper.MiningDBMapper;
 import mcmp.mc.observability.agent.model.MiningDBInfo;
-import mcmp.mc.observability.agent.model.dto.MiningDBCreateDTO;
+import mcmp.mc.observability.agent.model.dto.MiningDBSetDTO;
 import mcmp.mc.observability.agent.model.dto.ResBody;
 import org.springframework.stereotype.Service;
 
@@ -28,12 +28,12 @@ public class MiningDBService {
         return resBody;
     }
 
-    public ResBody create(MiningDBCreateDTO info) {
+    public ResBody setMiningDB(MiningDBSetDTO info) {
         ResBody<Void> resBody = new ResBody<>();
         try {
             MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
             if(miningDBInfo != null)
-                throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Only one MiningDB can be registered.");
+                miningDBMapper.deleteMiningDB(miningDBInfo.getSeq());
 
             int result = miningDBMapper.insertMiningDB(info);
             if (result <= 0) {

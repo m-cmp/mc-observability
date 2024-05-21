@@ -5,6 +5,7 @@
 
     <select id="getDetail" resultType="MiningDBInfo">
         SELECT
+            `SEQ`,
             `URL`,
             `DATABASE`,
             `RETENTION_POLICY`,
@@ -23,5 +24,9 @@
                , #{password}
                )
     </insert>
+
+    <delete id="deleteMiningDB">
+        DELETE FROM m_cmp_agent_mining_db WHERE SEQ=#{seq}
+    </delete>
 
 </mapper>

@@ -4,7 +4,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.Constants;
-import mcmp.mc.observability.agent.model.dto.MiningDBCreateDTO;
+import mcmp.mc.observability.agent.model.dto.MiningDBSetDTO;
 import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.service.MiningDBService;
 import org.springframework.web.bind.annotation.*;
@@ -24,9 +24,9 @@ public class MiningDBController {
     }
 
     @ApiOperation(value = "Create Mining DB info")
-    @PostMapping
-    public ResBody create(@RequestBody MiningDBCreateDTO info) {
-        return miningDBService.create(info);
+    @PutMapping
+    public ResBody setMiningDB(@RequestBody MiningDBSetDTO info) {
+        return miningDBService.setMiningDB(info);
     }
 
 }
