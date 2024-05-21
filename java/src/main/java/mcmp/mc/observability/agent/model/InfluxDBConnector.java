@@ -1,6 +1,6 @@
 package mcmp.mc.observability.agent.model;
 
-import io.swagger.models.auth.In;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import org.influxdb.InfluxDB;
@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 @Getter
 @Setter
 public class InfluxDBConnector {
+    @JsonIgnore
     private InfluxDB influxDB;
     private String url;
     private String database;

@@ -17,6 +17,15 @@ public class InfluxDBController {
 
     private final InfluxDBService influxDBService;
 
+
+    @ApiOperation(value = "")
+    @GetMapping("/list")
+    public ResBody getList() {
+        ResBody res = new ResBody();
+        res.setData(influxDBService.getList());
+        return res;
+    }
+
     @ApiOperation(value = "")
     @GetMapping("/info")
     public ResBody getMeasurementAndFields(@ModelAttribute("influxDBConnector") InfluxDBConnector influxDBConnector) {
