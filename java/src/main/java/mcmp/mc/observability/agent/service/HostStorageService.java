@@ -3,6 +3,9 @@ package mcmp.mc.observability.agent.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.loader.PluginLoader;
+import mcmp.mc.observability.agent.mapper.HostMapper;
+import mcmp.mc.observability.agent.model.HostInfluxDBInfo;
+import mcmp.mc.observability.agent.model.HostInfo;
 import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
 import mcmp.mc.observability.agent.model.dto.HostStorageUpdateDTO;
 import mcmp.mc.observability.agent.model.dto.PageableReqBody;
@@ -15,6 +18,7 @@ import mcmp.mc.observability.agent.model.HostStorageInfo;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HostStorageService {
 
+    private final HostMapper hostMapper;
     private final HostStorageMapper mapper;
     private final PluginLoader pluginLoader;
 
@@ -121,6 +126,26 @@ public class HostStorageService {
             mapper.turnMonitoringYn(hostSeq, seq);
         }
         catch (ResultCodeException e) {
+            log.error(e.getMessage(), e.getObjects());
+            resBody.setCode(e.getResultCode());
+        }
+        return resBody;
+    }
+
+    public ResBody<HostInfluxDBInfo> getHostInfluxDbInfo(ResBody<HostInfluxDBInfo> resBody, Long hostSeq) {
+
+        try {
+            HostInfo hostInfo = hostMapper.getDetail(hostSeq);
+            if(hostInfo == null)
+                throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Cannot found HostInfo");
+
+            List<HostStorageInfo> storageInfoList = mapper.getHostStorageList(Collections.singletonMap("hostSeq", hostInfo.getSeq()));
+
+            HostInfluxDBInfo hostInfluxDBInfo = new HostInfluxDBInfo(hostInfo.getSeq(), hostInfo.getUuid());
+            hostInfluxDBInfo.mappingInfluxDbInfo(storageInfoList);
+
+            resBody.setData(hostInfluxDBInfo);
+        } catch (ResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
             resBody.setCode(e.getResultCode());
         }

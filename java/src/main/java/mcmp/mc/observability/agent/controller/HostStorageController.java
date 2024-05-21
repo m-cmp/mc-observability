@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.agent.annotation.Base64Decode;
 import mcmp.mc.observability.agent.annotation.Base64Encode;
 import mcmp.mc.observability.agent.common.Constants;
+import mcmp.mc.observability.agent.model.HostInfluxDBInfo;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
 import mcmp.mc.observability.agent.model.dto.HostStorageCreateDTO;
 import mcmp.mc.observability.agent.model.dto.HostStorageUpdateDTO;
@@ -78,4 +79,11 @@ public class HostStorageController {
     public ResBody<Void> turnMonitoringYn(@PathVariable("hostSeq") Long hostSeq, @PathVariable("storageSeq") Long seq) {
         return hostStorageService.turnMonitoringYn(hostSeq, seq);
     }
+
+    @ApiOperation(value = "Get Host Storage Info")
+    @GetMapping("/influxdb")
+    public ResBody<HostInfluxDBInfo> getHostInfluxDbInfo(@PathVariable("hostSeq") Long hostSeq) {
+        return hostStorageService.getHostInfluxDbInfo(new ResBody<>(), hostSeq);
+    }
+
 }
