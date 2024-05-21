@@ -18,7 +18,7 @@ public class InfluxDBController {
     private final InfluxDBService influxDBService;
 
 
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Get InfluxDB list")
     @GetMapping("/list")
     public ResBody getList() {
         ResBody res = new ResBody();
@@ -26,7 +26,7 @@ public class InfluxDBController {
         return res;
     }
 
-    @ApiOperation(value = "")
+    @ApiOperation(value = "Get InfluxDB measurement, field list")
     @GetMapping("/info")
     public ResBody getMeasurementAndFields(@ModelAttribute("influxDBConnector") InfluxDBConnector influxDBConnector) {
         ResBody res = new ResBody();
