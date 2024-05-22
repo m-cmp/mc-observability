@@ -1,8 +1,7 @@
 package mcmp.mc.observability.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 
@@ -21,6 +20,14 @@ public class InfluxDBConnector {
     private String password;
 
     public InfluxDBConnector() {}
+
+    public InfluxDBConnector(MetricParamInfo metricParamInfo) {
+        this.url = metricParamInfo.getUrl();
+        this.database = metricParamInfo.getDatabase();
+        this.retentionPolicy = metricParamInfo.getRetentionPolicy();
+        this.username = metricParamInfo.getUsername();
+        this.password = metricParamInfo.getPassword();
+    }
 
     public InfluxDBConnector(String setting) {
         setting = setting.replaceAll(" ", "");
