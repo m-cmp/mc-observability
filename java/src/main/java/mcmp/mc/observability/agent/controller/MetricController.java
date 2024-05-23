@@ -18,8 +18,7 @@ public class MetricController {
 
     private final MetricService metricService;
 
-    @ApiOperation(value = "Get Host storage all list")
-    @Base64Encode
+    @ApiOperation(value = "Get metrics")
     @GetMapping("")
     public ResBody getMetrics(@Valid @ModelAttribute MetricParamInfo metricParamInfo) {
         ResBody res = new ResBody();

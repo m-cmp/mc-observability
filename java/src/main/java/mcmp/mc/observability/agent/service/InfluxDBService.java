@@ -122,11 +122,7 @@ public class InfluxDBService {
     public Object getMetrics(MetricParamInfo metricParamInfo) {
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(metricParamInfo);
 
-        Long groupSec = getGroupTimeSec(influxDBConnector, metricParamInfo.getMeasurement(), metricParamInfo.getField(), metricParamInfo.getUuid(), metricParamInfo.getRange() + "h");
-        if( groupSec < 0 ) {
-            return null;
-        }
-        String queryString = String.format("select time as timestamp, mean(%s) as %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit 30", metricParamInfo.getField(), metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange()+"h", groupSec + "s");
+        String queryString = String.format("select time as timestamp, mean(%s) as %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit 30", metricParamInfo.getField(), metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange(), metricParamInfo.getGroupTime());
         BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder
                 .newQuery(queryString)
                 .forDatabase(influxDBConnector.getDatabase());

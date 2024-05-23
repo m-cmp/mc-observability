@@ -26,6 +26,8 @@ public class MetricParamInfo {
     @NotBlank
     private String field;
     @NotBlank
-    private String range;
+    private String range; // 1s, 1m, 1h...
+    @NotBlank
+    private String groupTime;
 
 }
