@@ -85,7 +85,9 @@ public class MetricDataParamInfo {
                 sb.append(" and ")
                         .append(conditionInfo.getCondition())
                         .append("=")
-                        .append(conditionInfo.getValue());
+                        .append("'")
+                        .append(conditionInfo.getValue())
+                        .append("'");
             }
         }
 
