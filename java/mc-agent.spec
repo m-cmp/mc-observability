@@ -37,7 +37,7 @@ chmod 755 $LOG_DIR
 chown -R -L %{name}:%{name} %{_bindir}/%{name}
 chmod 755 -R %{_bindir}/%{name}
 
-chown -R -L root:%{name} $RPM_BUILD_ROOT/usr/lib/%{name}
+chown -R -L root:%{name} usr/lib/%{name}
 
 if [[ -d /run/systemd/system ]]; then
     systemctl enable %{name}
