@@ -29,5 +29,7 @@ public class MetricParamInfo {
     private String range; // 1s, 1m, 1h...
     @NotBlank
     private String groupTime;
+    @NotBlank
+    private String limit;
 
 }

@@ -2,10 +2,7 @@ package mcmp.mc.observability.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.agent.model.HostStorageInfo;
-import mcmp.mc.observability.agent.model.MeasurementFieldInfo;
-import mcmp.mc.observability.agent.model.InfluxDBConnector;
-import mcmp.mc.observability.agent.model.MetricParamInfo;
+import mcmp.mc.observability.agent.model.*;
 import mcmp.mc.observability.agent.util.InfluxDBUtils;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
@@ -122,7 +119,7 @@ public class InfluxDBService {
     public Object getMetrics(MetricParamInfo metricParamInfo) {
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(metricParamInfo);
 
-        String queryString = String.format("select time as timestamp, mean(%s) as %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit 30", metricParamInfo.getField(), metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange(), metricParamInfo.getGroupTime());
+        String queryString = String.format("select time as timestamp, mean(%s) as %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit %s", metricParamInfo.getField(), metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange(), metricParamInfo.getGroupTime(), metricParamInfo.getLimit());
         BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder
                 .newQuery(queryString)
                 .forDatabase(influxDBConnector.getDatabase());
@@ -149,20 +146,32 @@ public class InfluxDBService {
         return result;
     }
 
-    private Long getGroupTimeSec(InfluxDBConnector vo, String measurement, String field, String agentUuid, String shiftTime) {
-        String query = String.format("select last(%s) from %s where time >= now() - %s and agent_uuid=$agentUuid; select first(%s) from %s where time >= now() - %s and agent_uuid=$agentUuid", field, measurement, shiftTime, field, measurement, shiftTime);
+    public Object getMetricDatas(MetricDataParamInfo metricDataParamInfo) {
+        InfluxDBConnector influxDBConnector = new InfluxDBConnector(metricDataParamInfo);
+        String queryString = metricDataParamInfo.makeQueryString();
 
-        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery(query).forDatabase(vo.getDatabase());
-        qb.bind("agentUuid", agentUuid);
-        QueryResult qr = getDB(vo).query(qb.create(), TimeUnit.SECONDS);
+        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder
+                .newQuery(queryString)
+                .forDatabase(influxDBConnector.getDatabase());
 
-        if( qr.hasError() || qr.getResults().get(0).getSeries() == null || qr.getResults().get(1).getSeries() == null ) {
-            return -1L;
+        QueryResult queryResult = getDB(influxDBConnector).query(qb.create());
+
+        List<QueryResult.Result> influxResults = queryResult.getResults();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        if (influxResults.size() > 0 && influxResults.get(0).getSeries() != null) {
+            for (int i = 0; i < influxResults.size(); i++) {
+                for (int j = 0; j < influxResults.get(i).getSeries().size() ; j++) {
+                    Map<String, Object> dataMap = new HashMap<>();
+                    dataMap.put("name", influxResults.get(i).getSeries().get(j).getName());
+                    dataMap.put("columns", influxResults.get(i).getSeries().get(j).getColumns());
+                    dataMap.put("tags", influxResults.get(i).getSeries().get(j).getTags());
+                    dataMap.put("values", influxResults.get(i).getSeries().get(j).getValues());
+                    result.add(dataMap);
+                }
+            }
         }
 
-        Long lastTime = new BigDecimal(qr.getResults().get(0).getSeries().get(0).getValues().get(0).get(0).toString()).longValue();
-        Long firstTime = new BigDecimal(qr.getResults().get(1).getSeries().get(0).getValues().get(0).get(0).toString()).longValue();
-
-        return (long) (Math.ceil((lastTime - firstTime) / 30.0));
+        return result;
     }
 }

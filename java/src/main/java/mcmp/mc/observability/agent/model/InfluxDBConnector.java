@@ -29,6 +29,14 @@ public class InfluxDBConnector {
         this.password = metricParamInfo.getPassword();
     }
 
+    public InfluxDBConnector(MetricDataParamInfo metricDataParamInfo) {
+        this.url = metricDataParamInfo.getUrl();
+        this.database = metricDataParamInfo.getDatabase();
+        this.retentionPolicy = metricDataParamInfo.getRetentionPolicy();
+        this.username = metricDataParamInfo.getUsername();
+        this.password = metricDataParamInfo.getPassword();
+    }
+
     public InfluxDBConnector(String setting) {
         setting = setting.replaceAll(" ", "");
 
