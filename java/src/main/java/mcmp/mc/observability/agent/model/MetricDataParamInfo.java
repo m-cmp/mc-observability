@@ -36,7 +36,6 @@ public class MetricDataParamInfo {
     private String groupTime;
     private List<FieldFunctionInfo> fieldFunctionInfoList;
     private List<ConditionInfo> conditionInfoList;
-    @NotNull
     private Long limit;
 
     @Getter
@@ -98,10 +97,10 @@ public class MetricDataParamInfo {
         }
 
         sb.append(" fill(null)")
-            .append(" order by time desc ")
-            .append("limit ")
-            .append(limit);
+            .append(" order by time desc ");
 
+        if(limit != null)
+            sb.append("limit ").append(limit);
 
         return sb.toString();
     }
