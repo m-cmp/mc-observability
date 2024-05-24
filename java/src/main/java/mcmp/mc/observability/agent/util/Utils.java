@@ -1,12 +1,11 @@
 package mcmp.mc.observability.agent.util;
 
+import mcmp.mc.observability.agent.enums.CmdResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -50,5 +49,47 @@ public class Utils {
         File file = new File(path);
         if(file.exists())
             file.delete();
+    }
+
+
+    public static CmdResult runCommand(String[] command, Output output)
+            throws IOException, InterruptedException {
+        String commandLog = "";
+        for (String token : command) {
+            commandLog += " " + token;
+        }
+        logger.debug("Process Executing : " + commandLog);
+
+        Runtime runtime = Runtime.getRuntime();
+        Process process = runtime.exec(command);
+        InputStream is = process.getInputStream();
+        InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+        BufferedReader br = new BufferedReader(isr);
+        InputStream isErr = process.getErrorStream();
+        InputStreamReader isrErr = new InputStreamReader(isErr, "UTF-8");
+        BufferedReader brErr = new BufferedReader(isrErr);
+
+        String line;
+        StringBuilder stringBuilder = new StringBuilder();
+        while ((line = br.readLine()) != null) {
+            logger.debug("Command Output: " + line);
+            stringBuilder.append(line);
+            stringBuilder.append("\n");
+        }
+
+        while ((line = brErr.readLine()) != null) {
+            logger.error("Error Output: " + line);
+            stringBuilder.append(line);
+            stringBuilder.append("\n");
+        }
+
+        output.setText(stringBuilder.toString());
+        process.waitFor();
+
+        CmdResult result = CmdResult.FAILED;
+        if (process.exitValue() == 0) {
+            result = CmdResult.SUCCESS;
+        }
+        return result;
     }
 }
