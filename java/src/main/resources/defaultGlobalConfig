@@ -12,4 +12,4 @@
   precision = ""
   hostname = ""
   omit_hostname = false
-  logfile="/var/log/telegraf.log"
+  logfile="/var/log/mc-agent/mc-agent-collector.log"

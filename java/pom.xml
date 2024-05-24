@@ -10,13 +10,13 @@
     </parent>
 
     <groupId>mcmp.mc.observability</groupId>
-    <artifactId>agent</artifactId>
-    <version>0.1.0</version>
+    <artifactId>mc-agent</artifactId>
+    <version>0.2.0</version>
     <name>agent</name>
     <description>agent-backend</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <spring-cloud.version>2021.0.5</spring-cloud.version>
     </properties>
 
@@ -130,7 +130,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <packaging>jar</packaging>
 
 </project>

@@ -22,7 +22,7 @@ public class CollectorHealthChecker {
     private final HostService hostService;
 
     @Scheduled(cron = "${scheduler.expression.health-check:*/3 * * * * ?}")
-    public void telegrafHealthCheck() {
+    public void check() {
         try {
             TelegrafState telegrafState = collectorExecutor.getTelegrafState();
 
@@ -34,6 +34,6 @@ public class CollectorHealthChecker {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        log.info("Telegraf Health Check end");
+        log.info("Collector Health Check end");
     }
 }
