@@ -88,8 +88,6 @@ mkdir -p $LIB_DIR/
 tar xfpz jdk-17.tar.gz -C $LIB_DIR/ --strip-components=1
 chmod -R 644 $LIB_DIR
 
-cp setup $RPM_BUILD_ROOT/%{_bindir}/%{name}
-
 cp README $RPM_BUILD_ROOT/usr/share/doc/%{name}/
 
 if [[ -L /etc/init.d/%{name} ]]; then
