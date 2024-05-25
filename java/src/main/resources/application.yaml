@@ -1,3 +1,6 @@
+project:
+  version: 0.2.0
+
 server:
   port: 18080
 
@@ -32,3 +35,6 @@ mybatis:
 logging:
   level:
     root: INFO
+  file:
+    path: /var/log/mc-agent
+    name: mc-agent.log
