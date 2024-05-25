@@ -32,10 +32,8 @@ public class Utils {
     }
 
     public static String readFile(String path) throws IOException {
-        String content = Files.lines(Paths.get(path), StandardCharsets.UTF_8)
+        return Files.lines(Paths.get(path), StandardCharsets.UTF_8)
                 .collect(Collectors.joining(System.lineSeparator()));
-
-        return content;
     }
 
     public static void writeFile(String context, String path) throws IOException {

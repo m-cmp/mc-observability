@@ -45,6 +45,10 @@ public class HostStorageService {
         return result;
     }
 
+    public List<HostStorageInfo> getAllList() {
+        return mapper.getHostStorageList();
+    }
+
     public List<HostStorageInfo> getList(Map<String, Object> params) {
         return mapper.getHostStorageList(params);
     }

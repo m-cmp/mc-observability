@@ -30,24 +30,6 @@ public class InfluxDBConnector {
         setInfluxDB();
     }
 
-    public InfluxDBConnector(MetricParamInfo metricParamInfo) {
-        this.url = metricParamInfo.getUrl();
-        this.database = metricParamInfo.getDatabase();
-        this.retentionPolicy = metricParamInfo.getRetentionPolicy();
-        this.username = metricParamInfo.getUsername();
-        this.password = metricParamInfo.getPassword();
-        setInfluxDB();
-    }
-
-    public InfluxDBConnector(MetricDataParamInfo metricDataParamInfo) {
-        this.url = metricDataParamInfo.getUrl();
-        this.database = metricDataParamInfo.getDatabase();
-        this.retentionPolicy = metricDataParamInfo.getRetentionPolicy();
-        this.username = metricDataParamInfo.getUsername();
-        this.password = metricDataParamInfo.getPassword();
-        setInfluxDB();
-    }
-
     public InfluxDBConnector(String setting) {
         setting = setting.replaceAll(" ", "");
 

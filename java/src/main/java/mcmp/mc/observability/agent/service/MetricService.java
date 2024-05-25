@@ -1,9 +1,10 @@
 package mcmp.mc.observability.agent.service;
 
 import lombok.RequiredArgsConstructor;
-import mcmp.mc.observability.agent.model.MetricDataParamInfo;
+import mcmp.mc.observability.agent.enums.ResultCode;
 import mcmp.mc.observability.agent.model.MetricInfo;
-import mcmp.mc.observability.agent.model.MetricParamInfo;
+import mcmp.mc.observability.agent.model.MetricsInfo;
+import mcmp.mc.observability.agent.model.dto.ResBody;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,11 +15,18 @@ public class MetricService {
 
     private final InfluxDBService influxDBService;
 
-    public List<MetricInfo> getMetrics(MetricParamInfo metricParamInfo) {
-        return influxDBService.getMetrics(metricParamInfo);
-    }
+    public ResBody<List<MetricInfo>> getMetrics(MetricsInfo metricsInfo) {
+        metricsInfo.convertObject();
 
-    public List<MetricInfo> getMetricDatas(MetricDataParamInfo metricDataParamInfo) {
-        return influxDBService.getMetricDatas(metricDataParamInfo);
+        ResBody<List<MetricInfo>> res = new ResBody<>();
+
+        if( !metricsInfo.isVaild() ) {
+            res.setCode(ResultCode.INVAILD_PARAMETER);
+            return res;
+        }
+
+        res.setData(influxDBService.getMetrics(metricsInfo));
+
+        return res;
     }
 }

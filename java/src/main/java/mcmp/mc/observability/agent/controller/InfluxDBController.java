@@ -25,8 +25,8 @@ public class InfluxDBController {
 
     @ApiOperation(value = "Get InfluxDB list")
     @GetMapping("/list")
-    public ResBody<List<InfluxDBConnector>> getList() {
-        ResBody<List<InfluxDBConnector>> res = new ResBody<>();
+    public ResBody<List<InfluxDBInfo>> getList() {
+        ResBody<List<InfluxDBInfo>> res = new ResBody<>();
         res.setData(influxDBService.getList());
         return res;
     }
