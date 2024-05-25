@@ -3,9 +3,7 @@ package mcmp.mc.observability.agent.controller;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.agent.annotation.Base64Decode;
-import mcmp.mc.observability.agent.annotation.Base64DecodeField;
 import mcmp.mc.observability.agent.annotation.Base64Encode;
-import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import mcmp.mc.observability.agent.common.Constants;
 import mcmp.mc.observability.agent.model.HostInfo;
 import mcmp.mc.observability.agent.model.dto.HostUpdateDTO;
@@ -20,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

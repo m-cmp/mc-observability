@@ -16,7 +16,6 @@
             SEQ
             , HOST_SEQ
             , NAME
-            , KIND
             , SETTING
             , PLUGIN_SEQ
             , PLUGIN_NAME
@@ -35,7 +34,6 @@
             SEQ
             , HOST_SEQ
             , NAME
-            , KIND
             , SETTING
             , PLUGIN_SEQ
             , PLUGIN_NAME
@@ -66,7 +64,6 @@
             SEQ
              , HOST_SEQ
              , NAME
-             , KIND
              , SETTING
              , PLUGIN_SEQ
              , PLUGIN_NAME
@@ -78,10 +75,9 @@
     </select>
 
     <insert id="createStorage" parameterType="HostStorageInfo">
-        INSERT INTO m_cmp_agent_host_storage(HOST_SEQ, KIND, NAME, SETTING, PLUGIN_SEQ, PLUGIN_NAME)
+        INSERT INTO m_cmp_agent_host_storage(HOST_SEQ, NAME, SETTING, PLUGIN_SEQ, PLUGIN_NAME)
         VALUES (
             #{hostSeq}
-            , #{kind}
             , #{name}
             , #{setting}
             , #{pluginSeq}

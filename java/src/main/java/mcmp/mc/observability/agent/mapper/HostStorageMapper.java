@@ -13,6 +13,7 @@ public interface HostStorageMapper {
     List<HostStorageInfo> getList(PageableReqBody reqBody);
     HostStorageInfo getStorageDetail(Long hostSeq, Long seq);
     List<HostStorageInfo> getHostStorageList(Map<String, Object> params);
+    List<HostStorageInfo> getHostStorageList();
 
     Integer createStorage(HostStorageInfo info);
     Integer updateStorage(HostStorageInfo info);

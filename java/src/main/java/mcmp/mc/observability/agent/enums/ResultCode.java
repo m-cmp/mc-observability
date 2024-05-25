@@ -11,6 +11,7 @@ public enum ResultCode {
 
     FAILED("9994", "실패하였습니다."),
     NOT_FOUND_DATA( "9995", "데이터가 존재하지 않습니다."),
+    INVAILD_PARAMETER("9996", "파라미터를 확인해주세요."),
     NOT_FOUND_REQUIRED("9997", "필수 항목을 확인해주세요."),
     INVALID_REQUEST("9998", "잘못된 요청입니다."),
     INVALID_ERROR("9999", "알 수 없는 오류가 발생했습니다."),
