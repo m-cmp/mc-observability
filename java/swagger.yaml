@@ -2,7 +2,7 @@
 swagger: "2.0"
 info:
   description: Api Documentation
-  version: "1.0"
+  version: "0.2.0"
   title: Api Documentation
   termsOfService: urn:tos
   contact: {}
@@ -18,6 +18,12 @@ tags:
   description: Host Item Controller
 - name: host-storage-controller
   description: Host Storage Controller
+- name: influx-db-controller
+  description: Influx DB Controller
+- name: metric-controller
+  description: Metric Controller
+- name: mining-db-controller
+  description: Mining DB Controller
 - name: system-controller
   description: System Controller
 paths:
@@ -34,7 +40,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«PageableResBody«List«HostInfo»»»'
+            $ref: "#/definitions/ResBody«PageableResBody«HostInfo»»"
         "401":
           description: Unauthorized
         "403":
@@ -57,7 +63,7 @@ paths:
         description: hostInfo
         required: true
         schema:
-          $ref: '#/definitions/HostUpdateDTO'
+          $ref: "#/definitions/HostUpdateDTO"
       - name: hostSeq
         in: path
         description: hostSeq
@@ -68,7 +74,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -96,7 +102,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«PageableResBody«List«HostItemInfo»»»'
+            $ref: "#/definitions/ResBody«PageableResBody«HostItemInfo»»"
         "401":
           description: Unauthorized
         "403":
@@ -124,12 +130,12 @@ paths:
         description: info
         required: true
         schema:
-          $ref: '#/definitions/HostItemCreateDTO'
+          $ref: "#/definitions/HostItemCreateDTO"
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -160,7 +166,7 @@ paths:
         description: info
         required: true
         schema:
-          $ref: '#/definitions/HostItemUpdateDTO'
+          $ref: "#/definitions/HostItemUpdateDTO"
       - name: itemSeq
         in: path
         description: itemSeq
@@ -171,7 +177,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -204,7 +210,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "204":
           description: No Content
         "401":
@@ -238,7 +244,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -266,7 +272,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«PageableResBody«List«HostStorageInfo»»»'
+            $ref: "#/definitions/ResBody«PageableResBody«HostStorageInfo»»"
         "401":
           description: Unauthorized
         "403":
@@ -294,14 +300,40 @@ paths:
         description: info
         required: true
         schema:
-          $ref: '#/definitions/HostStorageCreateDTO'
+          $ref: "#/definitions/HostStorageCreateDTO"
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/host/{hostSeq}/storage/influxdb:
+    get:
+      tags:
+      - host-storage-controller
+      summary: Get Host Storage Info
+      operationId: getHostInfluxDbInfoUsingGET
+      produces:
+      - '*/*'
+      parameters:
+      - name: hostSeq
+        in: path
+        description: hostSeq
+        required: true
+        type: integer
+        format: int64
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«HostInfluxDBInfo»"
         "401":
           description: Unauthorized
         "403":
@@ -330,7 +362,7 @@ paths:
         description: info
         required: true
         schema:
-          $ref: '#/definitions/HostStorageUpdateDTO'
+          $ref: "#/definitions/HostStorageUpdateDTO"
       - name: storageSeq
         in: path
         description: storageSeq
@@ -341,7 +373,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -374,7 +406,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "204":
           description: No Content
         "401":
@@ -408,7 +440,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -438,7 +470,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -468,7 +500,210 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«object»'
+            $ref: "#/definitions/ResBody«Void»"
+        "201":
+          description: Created
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/influxdb/info:
+    get:
+      tags:
+      - influx-db-controller
+      summary: "Get InfluxDB measurement, field list"
+      operationId: getMeasurementAndFieldsUsingGET
+      produces:
+      - '*/*'
+      parameters:
+      - name: database
+        in: query
+        required: false
+        type: string
+      - name: password
+        in: query
+        required: false
+        type: string
+      - name: retentionPolicy
+        in: query
+        required: false
+        type: string
+      - name: seq
+        in: query
+        required: false
+        type: integer
+        format: int64
+      - name: url
+        in: query
+        required: false
+        type: string
+      - name: username
+        in: query
+        required: false
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«List«MeasurementFieldInfo»»"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/influxdb/list:
+    get:
+      tags:
+      - influx-db-controller
+      summary: Get InfluxDB list
+      operationId: getListUsingGET
+      produces:
+      - '*/*'
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«List«InfluxDBInfo»»"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/influxdb/tags:
+    get:
+      tags:
+      - influx-db-controller
+      summary: Get InfluxDB tag list
+      operationId: getTagsUsingGET
+      produces:
+      - '*/*'
+      parameters:
+      - name: database
+        in: query
+        required: false
+        type: string
+      - name: password
+        in: query
+        required: false
+        type: string
+      - name: retentionPolicy
+        in: query
+        required: false
+        type: string
+      - name: seq
+        in: query
+        required: false
+        type: integer
+        format: int64
+      - name: url
+        in: query
+        required: false
+        type: string
+      - name: username
+        in: query
+        required: false
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«List«Map«string,object»»»"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/metric:
+    get:
+      tags:
+      - metric-controller
+      summary: Get metrics
+      operationId: getMetricUsingGET
+      produces:
+      - '*/*'
+      parameters:
+      - name: json
+        in: query
+        description: |-
+          Base64 encoded json string
+          for example)
+          {
+          &nbsp;&nbsp;&nbsp;&nbsp;"influxDBSeq": 1, //(* Require)
+          &nbsp;&nbsp;&nbsp;&nbsp;"measurement": "cpu", //(* Require)
+          &nbsp;&nbsp;&nbsp;&nbsp;"range": "1h", //(* Require)
+          &nbsp;&nbsp;&nbsp;&nbsp;"groupTime": "5m",
+          &nbsp;&nbsp;&nbsp;&nbsp;"groupBy": ["uuid", "cpu"],
+          &nbsp;&nbsp;&nbsp;&nbsp;"fields":[
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"function": "mean", "field": "usage_idle"},
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"function": "min", "field": "usage_idle"},
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"function": "max", "field": "usage_idle"}
+          &nbsp;&nbsp;&nbsp;&nbsp;],
+          &nbsp;&nbsp;&nbsp;&nbsp;"conditions":[
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"key": "uuid", "value": "d8a66509-48a4-6231-13f9-d931a15d75be"},
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{"key": "cpu", "value": "cpu-total"},
+          &nbsp;&nbsp;&nbsp;&nbsp;],
+          &nbsp;&nbsp;&nbsp;&nbsp;"limit": 10
+          }
+        required: false
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«List«MetricInfo»»"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+  /api/v1/agent/miningdb:
+    get:
+      tags:
+      - mining-db-controller
+      summary: Get Mining DB info
+      operationId: detailUsingGET_3
+      produces:
+      - '*/*'
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«MiningDBInfo»"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    put:
+      tags:
+      - mining-db-controller
+      summary: Create Mining DB info
+      operationId: setMiningDBUsingPUT
+      consumes:
+      - application/json
+      produces:
+      - '*/*'
+      parameters:
+      - in: body
+        name: info
+        description: info
+        required: true
+        schema:
+          $ref: "#/definitions/MiningDBSetDTO"
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: "#/definitions/ResBody«Void»"
         "201":
           description: Created
         "401":
@@ -485,12 +720,17 @@ paths:
       operationId: getPluginsUsingGET
       produces:
       - '*/*'
-      parameters: []
+      parameters:
+      - name: type
+        in: query
+        description: type
+        required: false
+        type: string
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ResBody«List«PluginDefInfo»»'
+            $ref: "#/definitions/ResBody«List«PluginDefInfo»»"
         "401":
           description: Unauthorized
         "403":
@@ -498,6 +738,27 @@ paths:
         "404":
           description: Not Found
 definitions:
+  FieldInfo:
+    type: object
+    properties:
+      fieldKey:
+        type: string
+      fieldType:
+        type: string
+    title: FieldInfo
+  HostInfluxDBInfo:
+    type: object
+    properties:
+      hostSeq:
+        type: integer
+        format: int64
+      influxdbInfos:
+        type: array
+        items:
+          $ref: "#/definitions/InfluxDBInfo"
+      uuid:
+        type: string
+    title: HostInfluxDBInfo
   HostInfo:
     type: object
     properties:
@@ -517,6 +778,7 @@ definitions:
         - "Y"
       name:
         type: string
+        description: Base64 Encoded value
       os:
         type: string
         enum:
@@ -560,11 +822,13 @@ definitions:
         format: int32
       name:
         type: string
+        description: Base64 Encoded value
       pluginSeq:
         type: integer
         format: int64
       setting:
         type: string
+        description: Base64 Encoded value
     title: HostItemCreateDTO
   HostItemInfo:
     type: object
@@ -584,6 +848,7 @@ definitions:
         - "Y"
       name:
         type: string
+        description: Base64 Encoded value
       pluginName:
         type: string
       pluginSeq:
@@ -594,6 +859,7 @@ definitions:
         format: int64
       setting:
         type: string
+        description: Base64 Encoded value
       state:
         type: string
         enum:
@@ -612,33 +878,30 @@ definitions:
         format: int32
       name:
         type: string
+        description: Base64 Encoded value
       pluginSeq:
         type: integer
         format: int64
       setting:
         type: string
+        description: Base64 Encoded value
     title: HostItemUpdateDTO
   HostStorageCreateDTO:
     type: object
     properties:
-      database:
-        type: string
       name:
         type: string
-      password:
+        description: Base64 Encoded value
+      pluginSeq:
+        type: integer
+        format: int64
+      setting:
         type: string
-      retentionPolicy:
-        type: string
-      url:
-        type: string
-      username:
-        type: string
+        description: Base64 Encoded value
     title: HostStorageCreateDTO
   HostStorageInfo:
     type: object
     properties:
-      database:
-        type: string
       hostSeq:
         type: integer
         format: int64
@@ -649,13 +912,18 @@ definitions:
         - "Y"
       name:
         type: string
-      password:
+        description: Base64 Encoded value
+      pluginName:
         type: string
-      retentionPolicy:
-        type: string
+      pluginSeq:
+        type: integer
+        format: int64
       seq:
         type: integer
         format: int64
+      setting:
+        type: string
+        description: Base64 Encoded value
       state:
         type: string
         enum:
@@ -663,26 +931,16 @@ definitions:
         - DELETE
         - NONE
         - UPDATE
-      url:
-        type: string
-      username:
-        type: string
     title: HostStorageInfo
   HostStorageUpdateDTO:
     type: object
     properties:
-      database:
-        type: string
       name:
         type: string
-      password:
+        description: Base64 Encoded value
+      setting:
         type: string
-      retentionPolicy:
-        type: string
-      url:
-        type: string
-      username:
-        type: string
+        description: Base64 Encoded value
     title: HostStorageUpdateDTO
   HostUpdateDTO:
     type: object
@@ -691,8 +949,88 @@ definitions:
         type: string
       name:
         type: string
+        description: Base64 Encoded value
     title: HostUpdateDTO
-  PageableResBody«List«HostInfo»»:
+  InfluxDBInfo:
+    type: object
+    properties:
+      database:
+        type: string
+      password:
+        type: string
+      retentionPolicy:
+        type: string
+      seq:
+        type: integer
+        format: int64
+      url:
+        type: string
+      username:
+        type: string
+    title: InfluxDBInfo
+  MeasurementFieldInfo:
+    type: object
+    properties:
+      fields:
+        type: array
+        items:
+          $ref: "#/definitions/FieldInfo"
+      measurement:
+        type: string
+    title: MeasurementFieldInfo
+  MetricInfo:
+    type: object
+    properties:
+      columns:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+      values:
+        type: array
+        items:
+          type: array
+          items:
+            type: object
+            properties: {}
+    title: MetricInfo
+  MiningDBInfo:
+    type: object
+    properties:
+      database:
+        type: string
+      password:
+        type: string
+      retentionPolicy:
+        type: string
+      seq:
+        type: integer
+        format: int64
+      url:
+        type: string
+      username:
+        type: string
+    title: MiningDBInfo
+  MiningDBSetDTO:
+    type: object
+    properties:
+      database:
+        type: string
+      password:
+        type: string
+      retentionPolicy:
+        type: string
+      url:
+        type: string
+      username:
+        type: string
+    title: MiningDBSetDTO
+  PageableResBody«HostInfo»:
     type: object
     properties:
       records:
@@ -701,9 +1039,9 @@ definitions:
       rows:
         type: array
         items:
-          $ref: '#/definitions/HostInfo'
-    title: PageableResBody«List«HostInfo»»
-  PageableResBody«List«HostItemInfo»»:
+          $ref: "#/definitions/HostInfo"
+    title: PageableResBody«HostInfo»
+  PageableResBody«HostItemInfo»:
     type: object
     properties:
       records:
@@ -712,9 +1050,9 @@ definitions:
       rows:
         type: array
         items:
-          $ref: '#/definitions/HostItemInfo'
-    title: PageableResBody«List«HostItemInfo»»
-  PageableResBody«List«HostStorageInfo»»:
+          $ref: "#/definitions/HostItemInfo"
+    title: PageableResBody«HostItemInfo»
+  PageableResBody«HostStorageInfo»:
     type: object
     properties:
       records:
@@ -723,8 +1061,8 @@ definitions:
       rows:
         type: array
         items:
-          $ref: '#/definitions/HostStorageInfo'
-    title: PageableResBody«List«HostStorageInfo»»
+          $ref: "#/definitions/HostStorageInfo"
+    title: PageableResBody«HostStorageInfo»
   PluginDefInfo:
     type: object
     properties:
@@ -742,15 +1080,27 @@ definitions:
           - WINDOWS
       pluginId:
         type: string
+      pluginType:
+        type: string
       seq:
         type: integer
         format: int64
     title: PluginDefInfo
+  ResBody«HostInfluxDBInfo»:
+    type: object
+    properties:
+      data:
+        $ref: "#/definitions/HostInfluxDBInfo"
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody«HostInfluxDBInfo»
   ResBody«HostInfo»:
     type: object
     properties:
       data:
-        $ref: '#/definitions/HostInfo'
+        $ref: "#/definitions/HostInfo"
       rsCode:
         type: string
       rsMsg:
@@ -760,7 +1110,7 @@ definitions:
     type: object
     properties:
       data:
-        $ref: '#/definitions/HostItemInfo'
+        $ref: "#/definitions/HostItemInfo"
       rsCode:
         type: string
       rsMsg:
@@ -770,62 +1120,120 @@ definitions:
     type: object
     properties:
       data:
-        $ref: '#/definitions/HostStorageInfo'
+        $ref: "#/definitions/HostStorageInfo"
       rsCode:
         type: string
       rsMsg:
         type: string
     title: ResBody«HostStorageInfo»
+  ResBody«List«InfluxDBInfo»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/InfluxDBInfo"
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody«List«InfluxDBInfo»»
+  ResBody«List«Map«string,object»»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: "ResBody«List«Map«string,object»»»"
+  ResBody«List«MeasurementFieldInfo»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/MeasurementFieldInfo"
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody«List«MeasurementFieldInfo»»
+  ResBody«List«MetricInfo»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "#/definitions/MetricInfo"
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody«List«MetricInfo»»
   ResBody«List«PluginDefInfo»»:
     type: object
     properties:
       data:
         type: array
         items:
-          $ref: '#/definitions/PluginDefInfo'
+          $ref: "#/definitions/PluginDefInfo"
       rsCode:
         type: string
       rsMsg:
         type: string
     title: ResBody«List«PluginDefInfo»»
-  ResBody«PageableResBody«List«HostInfo»»»:
+  ResBody«MiningDBInfo»:
     type: object
     properties:
       data:
-        $ref: '#/definitions/PageableResBody«List«HostInfo»»'
+        $ref: "#/definitions/MiningDBInfo"
       rsCode:
         type: string
       rsMsg:
         type: string
-    title: ResBody«PageableResBody«List«HostInfo»»»
-  ResBody«PageableResBody«List«HostItemInfo»»»:
+    title: ResBody«MiningDBInfo»
+  ResBody«PageableResBody«HostInfo»»:
     type: object
     properties:
       data:
-        $ref: '#/definitions/PageableResBody«List«HostItemInfo»»'
+        $ref: "#/definitions/PageableResBody«HostInfo»"
       rsCode:
         type: string
       rsMsg:
         type: string
-    title: ResBody«PageableResBody«List«HostItemInfo»»»
-  ResBody«PageableResBody«List«HostStorageInfo»»»:
+    title: ResBody«PageableResBody«HostInfo»»
+  ResBody«PageableResBody«HostItemInfo»»:
     type: object
     properties:
       data:
-        $ref: '#/definitions/PageableResBody«List«HostStorageInfo»»'
+        $ref: "#/definitions/PageableResBody«HostItemInfo»"
       rsCode:
         type: string
       rsMsg:
         type: string
-    title: ResBody«PageableResBody«List«HostStorageInfo»»»
-  ResBody«object»:
+    title: ResBody«PageableResBody«HostItemInfo»»
+  ResBody«PageableResBody«HostStorageInfo»»:
     type: object
     properties:
       data:
-        type: object
-        properties: {}
+        $ref: "#/definitions/PageableResBody«HostStorageInfo»"
       rsCode:
         type: string
       rsMsg:
         type: string
-    title: ResBody«object»
+    title: ResBody«PageableResBody«HostStorageInfo»»
+  ResBody«Void»:
+    type: object
+    properties:
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody«Void»

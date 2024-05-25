@@ -57,6 +57,10 @@
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>2.2.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.influxdb/influxdb-java -->
         <dependency>
             <groupId>org.influxdb</groupId>

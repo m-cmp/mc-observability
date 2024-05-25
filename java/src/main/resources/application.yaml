@@ -1,3 +1,6 @@
+project:
+  version: 0.2.0
+
 server:
   port: 18080
 
@@ -31,4 +34,4 @@ mybatis:
 
 logging:
   level:
-    root: INFO
+    root: DEBUG

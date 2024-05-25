@@ -66,23 +66,22 @@ public class Base64Aspect {
                 Optional<Method> targetGetMethod = methods.stream().filter(method -> method.getName().equals("get" + targetMethodName)).findFirst();
                 Optional<Method> targetSetMethod = methods.stream().filter(method -> method.getName().equals("set" + targetMethodName)).findFirst();
 
-                if( targetGetMethod.isPresent() && targetSetMethod.isPresent() && targetGetMethod.get().invoke(response).getClass().equals(String.class) ) {
+                Object getInvoke = targetGetMethod.get().invoke(response);
+
+                if( targetGetMethod.isPresent() && targetSetMethod.isPresent() && getInvoke != null && targetGetMethod.get().invoke(response).getClass().equals(String.class) ) {
                     String plainText = (String) targetGetMethod.get().invoke(response);
                     if (!StringUtils.isBlank(plainText)) {
                         String encodedText = new String(Base64.getEncoder().encode(plainText.getBytes(StandardCharsets.UTF_8)));
                         targetSetMethod.get().invoke(response, encodedText);
                     }
                 }
-                else if( targetGetMethod.isPresent() && targetGetMethod.get().invoke(response).getClass().equals(ArrayList.class) ) {
+                else if( targetGetMethod.isPresent() && getInvoke != null && targetGetMethod.get().invoke(response).getClass().equals(ArrayList.class) ) {
                     List<Object> list = (List)targetGetMethod.get().invoke(response);
                     for( Object o : list ) base64EncodeString(jp, o);
                 }
-                else if( targetGetMethod.isPresent() ) {
-                    Object o = targetGetMethod.get().invoke(response);
-                    base64EncodeString(jp, o);
+                else if( targetGetMethod.isPresent() && getInvoke != null ) {
+                    base64EncodeString(jp, getInvoke);
                 }
-
-                System.out.println(field.toString());
             }
         }
     }
