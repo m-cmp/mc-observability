@@ -34,4 +34,7 @@ mybatis:
 
 logging:
   level:
-    root: DEBUG
+    root: INFO
+  file:
+    path: /var/log/mc-agent
+    name: mc-agent.log
