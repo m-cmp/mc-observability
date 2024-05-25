@@ -8,6 +8,7 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.BoundParameterQuery;
 import org.influxdb.dto.Pong;
+import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -24,32 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InfluxDBService {
-    private static final Map<Integer, InfluxDB> influxDBMap = new HashMap<>();
+//    private static final Map<Integer, InfluxDB> influxDBMap = new HashMap<>();
     private final HostStorageService hostStorageService;
-
-    public InfluxDB getDB(String setting) {
-        InfluxDBConnector vo = new InfluxDBConnector(setting);
-        return getDB(vo);
-    }
-
-    public InfluxDB getDB(InfluxDBConnector influxDBConnector) {
-        if( influxDBMap.get(influxDBConnector.hashCode()) == null ) {
-            InfluxDB influxDB = ((influxDBConnector.getUsername() == null || influxDBConnector.getUsername().isEmpty())?
-                    InfluxDBFactory.connect(influxDBConnector.getUrl()):
-                    InfluxDBFactory.connect(influxDBConnector.getUrl(), influxDBConnector.getUsername(), influxDBConnector.getPassword()))
-                    .setDatabase(influxDBConnector.getDatabase())
-                    .setRetentionPolicy(influxDBConnector.getRetentionPolicy());
-            try {
-                Pong pong = influxDB.ping();
-                log.debug("influx new connection ping version={}", pong.getVersion());
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
-            influxDBMap.put(influxDBConnector.hashCode(), influxDB);
-        }
-
-        return influxDBMap.get(influxDBConnector.hashCode());
-    }
 
     public List<InfluxDBConnector> getList() {
             List<HostStorageInfo> storageInfoList = hostStorageService.getList(new HashMap<>());
@@ -65,13 +42,11 @@ public class InfluxDBService {
         List<InfluxDBConnector> uniqueList = new ArrayList<>();
 
         try {
-            uniqueList = influxDBConnectorList.stream()
+            uniqueList = new ArrayList<>(influxDBConnectorList.stream()
                     .collect(Collectors.toMap(
                             connector -> Arrays.asList(connector.getUrl(), connector.getDatabase(), connector.getUsername(), connector.getPassword()),
                             connector -> connector, (existing, replacement) -> existing))
-                    .values()
-                    .stream()
-                    .collect(Collectors.toList());
+                    .values());
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -80,21 +55,17 @@ public class InfluxDBService {
     }
 
     public List<MeasurementFieldInfo> getMeasurementAndFields(InfluxDBConnector influxDBConnector) {
-        String query = String.format("show field keys on %s", influxDBConnector.getDatabase());
-        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery(query).forDatabase(influxDBConnector.getDatabase());
+        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery("show field keys").forDatabase(influxDBConnector.getDatabase());
 
-        InfluxDB db = getDB(influxDBConnector);
-        QueryResult qr = db.query(qb.create(), TimeUnit.MILLISECONDS);
+        QueryResult qr = influxDBConnector.getInfluxDB().query(qb.create());
 
         return InfluxDBUtils.measurementAndFieldsMapping(qr.getResults().get(0).getSeries());
     }
 
     public List<Map<String, Object>> getTags(InfluxDBConnector influxDBConnector) {
-        String query = String.format("show tag keys on %s", influxDBConnector.getDatabase());
-        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery(query).forDatabase(influxDBConnector.getDatabase());
+        BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery("show tag keys").forDatabase(influxDBConnector.getDatabase());
 
-        InfluxDB db = getDB(influxDBConnector);
-        QueryResult qr = db.query(qb.create(), TimeUnit.MILLISECONDS);
+        QueryResult qr = influxDBConnector.getInfluxDB().query(qb.create());
 
         List<Map<String, Object>> result = new ArrayList<>();
         List<QueryResult.Series> seriesList = qr.getResults().get(0).getSeries();
@@ -116,37 +87,22 @@ public class InfluxDBService {
         return result;
     }
 
-    public Object getMetrics(MetricParamInfo metricParamInfo) {
+    public List<MetricInfo> getMetrics(MetricParamInfo metricParamInfo) {
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(metricParamInfo);
 
-        String queryString = String.format("select time as timestamp, mean(%s) as %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit %s", metricParamInfo.getField(), metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange(), metricParamInfo.getGroupTime(), metricParamInfo.getLimit());
+        String queryString = String.format("select time as timestamp, %s from %s where time > now() - %s and uuid=$uuid group by time(%s), * fill(null) order by time desc limit %s"
+                , metricParamInfo.getField(), metricParamInfo.getMeasurement(), metricParamInfo.getRange(), metricParamInfo.getGroupTime(), metricParamInfo.getLimit());
+
         BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder
                 .newQuery(queryString)
                 .forDatabase(influxDBConnector.getDatabase());
+
         qb.bind("uuid", metricParamInfo.getUuid());
 
-        QueryResult queryResult = getDB(influxDBConnector).query(qb.create());
-
-        List<QueryResult.Result> influxResults = queryResult.getResults();
-        List<Map<String, Object>> result = new ArrayList<>();
-
-        if (influxResults.size() > 0 && influxResults.get(0).getSeries() != null) {
-            for (int i = 0; i < influxResults.size(); i++) {
-                for (int j = 0; j < influxResults.get(i).getSeries().size() ; j++) {
-                    Map<String, Object> dataMap = new HashMap<>();
-                    dataMap.put("name", influxResults.get(i).getSeries().get(j).getName());
-                    dataMap.put("columns", influxResults.get(i).getSeries().get(j).getColumns());
-                    dataMap.put("tags", influxResults.get(i).getSeries().get(j).getTags());
-                    dataMap.put("values", influxResults.get(i).getSeries().get(j).getValues());
-                    result.add(dataMap);
-                }
-            }
-        }
-
-        return result;
+        return getMetricInfos(qb.create(), influxDBConnector);
     }
 
-    public Object getMetricDatas(MetricDataParamInfo metricDataParamInfo) {
+    public List<MetricInfo> getMetricDatas(MetricDataParamInfo metricDataParamInfo) {
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(metricDataParamInfo);
         String queryString = metricDataParamInfo.makeQueryString();
 
@@ -154,23 +110,21 @@ public class InfluxDBService {
                 .newQuery(queryString)
                 .forDatabase(influxDBConnector.getDatabase());
 
-        QueryResult queryResult = getDB(influxDBConnector).query(qb.create());
+        return getMetricInfos(qb.create(), influxDBConnector);
+    }
+
+    private List<MetricInfo> getMetricInfos(Query query, InfluxDBConnector influxDBConnector) {
+
+        QueryResult queryResult = influxDBConnector.getInfluxDB().query(query);
 
         List<QueryResult.Result> influxResults = queryResult.getResults();
-        List<Map<String, Object>> result = new ArrayList<>();
+        List<MetricInfo> result = new ArrayList<>();
 
-        if (influxResults.size() > 0 && influxResults.get(0).getSeries() != null) {
-            for (int i = 0; i < influxResults.size(); i++) {
-                for (int j = 0; j < influxResults.get(i).getSeries().size() ; j++) {
-                    Map<String, Object> dataMap = new HashMap<>();
-                    dataMap.put("name", influxResults.get(i).getSeries().get(j).getName());
-                    dataMap.put("columns", influxResults.get(i).getSeries().get(j).getColumns());
-                    dataMap.put("tags", influxResults.get(i).getSeries().get(j).getTags());
-                    dataMap.put("values", influxResults.get(i).getSeries().get(j).getValues());
-                    result.add(dataMap);
-                }
-            }
+        if( influxResults.isEmpty() || influxResults.get(0).getSeries() == null ) {
+            return result;
         }
+
+        influxResults.forEach(f -> f.getSeries().forEach(f2 -> result.add(new MetricInfo(f2.getName(), f2.getColumns(), f2.getTags(), f2.getValues()))));
 
         return result;
     }
