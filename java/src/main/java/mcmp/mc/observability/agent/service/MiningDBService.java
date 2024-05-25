@@ -17,13 +17,13 @@ public class MiningDBService {
 
     private final MiningDBMapper miningDBMapper;
 
-    public ResBody detail(ResBody<MiningDBInfo> resBody) {
+    public ResBody<MiningDBInfo> detail(ResBody<MiningDBInfo> resBody) {
         MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
         resBody.setData(miningDBInfo);
         return resBody;
     }
 
-    public ResBody setMiningDB(MiningDBSetDTO info) {
+    public ResBody<Void> setMiningDB(MiningDBSetDTO info) {
         ResBody<Void> resBody = new ResBody<>();
         try {
             MiningDBInfo miningDBInfo = miningDBMapper.getDetail();

@@ -1,7 +1,7 @@
 package mcmp.mc.observability.agent.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 
@@ -9,17 +9,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
-@Setter
 public class InfluxDBConnector {
-    @JsonIgnore
     private InfluxDB influxDB;
-    private String url;
-    private String database;
-    private String retentionPolicy;
-    private String username;
-    private String password;
+    private final String url;
+    private final String database;
+    private final String retentionPolicy;
+    private final String username;
+    private final String password;
 
-    public InfluxDBConnector() {}
+    private void setInfluxDB() {
+        influxDB = (StringUtils.isBlank(username) && StringUtils.isBlank(password))? InfluxDBFactory.connect(url): InfluxDBFactory.connect(url, username, password);
+    }
+
+    public InfluxDBConnector(InfluxDBInfo influxDBInfo) {
+        this.url = influxDBInfo.getUrl();
+        this.database = influxDBInfo.getDatabase();
+        this.retentionPolicy = influxDBInfo.getRetentionPolicy();
+        this.username = influxDBInfo.getUsername();
+        this.password = influxDBInfo.getPassword();
+        setInfluxDB();
+    }
 
     public InfluxDBConnector(MetricParamInfo metricParamInfo) {
         this.url = metricParamInfo.getUrl();
@@ -27,6 +36,7 @@ public class InfluxDBConnector {
         this.retentionPolicy = metricParamInfo.getRetentionPolicy();
         this.username = metricParamInfo.getUsername();
         this.password = metricParamInfo.getPassword();
+        setInfluxDB();
     }
 
     public InfluxDBConnector(MetricDataParamInfo metricDataParamInfo) {
@@ -35,6 +45,7 @@ public class InfluxDBConnector {
         this.retentionPolicy = metricDataParamInfo.getRetentionPolicy();
         this.username = metricDataParamInfo.getUsername();
         this.password = metricDataParamInfo.getPassword();
+        setInfluxDB();
     }
 
     public InfluxDBConnector(String setting) {
@@ -45,8 +56,7 @@ public class InfluxDBConnector {
         this.retentionPolicy = parseRegex(setting, "(retention_policy=\".*\")", "(retention_policy=)|\\[|\\]|\"");
         this.username = parseRegex(setting, "(username=\".*\")", "(username=)|\\[|\\]|\"");
         this.password = parseRegex(setting, "(password=\".*\")", "(password=)|\\[|\\]|\"");
-
-        influxDB = (username.isEmpty() && password.isEmpty())? InfluxDBFactory.connect(url): InfluxDBFactory.connect(url, username, password);
+        setInfluxDB();
     }
 
     private String parseRegex(String origin, String findRegex, String replaceRegex) {
