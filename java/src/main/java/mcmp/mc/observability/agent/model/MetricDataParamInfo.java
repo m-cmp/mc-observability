@@ -1,18 +1,11 @@
 package mcmp.mc.observability.agent.model;
 
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import mcmp.mc.observability.agent.annotation.Base64DecodeField;
-import mcmp.mc.observability.agent.annotation.Base64EncodeField;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.List;
-
-import static springfox.documentation.schema.property.bean.Accessors.toCamelCase;
 
 @Getter
 @Setter
