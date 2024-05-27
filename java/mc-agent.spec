@@ -54,6 +54,8 @@ test -e /etc/%{name}/uuid || {
 chown -R root:%{name} /usr/lib/%{name}
 chmod 755 -R /usr/lib/%{name}
 
+ln -sf /usr/bin/mc-agent/mc-agent /usr/sbin/mc-agent
+
 echo '%{name} package installed'
 echo '-------------README-------------'
 cat /usr/share/doc/%{name}/README
