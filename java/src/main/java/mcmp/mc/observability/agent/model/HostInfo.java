@@ -22,21 +22,34 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HostInfo {
+    @ApiModelProperty(value = "Sequence by host")
     private Long seq = 0L;
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64EncodeField
     private String name;
+    @ApiModelProperty(value = "Uuid by host")
     private String uuid;
+    @ApiModelProperty(value = "Kind of host (e.g., \"LINUX\", \"WINDOWS\")")
     private OS os;
+    @ApiModelProperty(value = "Status of monitoring activation (e.g., \"Y\", \"N\")")
     private StateYN monitoringYn;
+    @ApiModelProperty(value = "Agent running status (e.g., \"ACTIVE\", \"INACTIVE\")")
     private HostState state;
+    @ApiModelProperty(value = "telegraf running status (e.g., \"RUNNING\", \"STOPPED\", \"FAILED\")")
     private TelegrafState telegrafState;
+    @ApiModelProperty(value = "The time when the host was registered")
     private String createAt;
+    @ApiModelProperty(value = "The time when the host was updated")
     private String updateAt;
+    @ApiModelProperty(value = "Host additional configuration information (e.g., {\"key\" : \"value\"})")
     private String ex;
+    @ApiModelProperty(value = "Host description")
     private String description;
+    @ApiModelProperty(value = "Host sync status (e.g., \"Y\", \"N\")")
     private StateYN syncYN;
+    @ApiModelProperty(value = "Number of items registered to the host")
     private Long itemCount = 0L;
+    @ApiModelProperty(value = "Number of storages registered to the host")
     private Long storageCount = 0L;
 
     public void mappingCount(Map<Long, Long> itemMap, Map<Long, Long> storageMap) {
