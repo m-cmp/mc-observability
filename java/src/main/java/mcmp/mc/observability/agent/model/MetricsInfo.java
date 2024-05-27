@@ -1,7 +1,6 @@
 package mcmp.mc.observability.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -152,6 +151,7 @@ public class MetricsInfo {
         if( fields !=  null && !fields.isEmpty() ) {
             boolean isSimple = false;
             boolean isFunction = false;
+
             for( FieldInfo info : fields) {
                 if( info.getFunction() != null ) isFunction = true;
                 else isSimple = true;
@@ -170,10 +170,10 @@ public class MetricsInfo {
 
     public void convertObject() {
         JsonObject js = JsonParser.parseString(getJson()).getAsJsonObject();
-        asd(js, this.getClass(), this);
+        jsonParser(js, this.getClass(), this);
     }
 
-    private void asd(JsonObject js, Class<?> clazz, Object o) {
+    private void jsonParser(JsonObject js, Class<?> clazz, Object o) {
         List<Field> fieldList = Arrays.asList(clazz.getDeclaredFields());
         for( String key : js.keySet() ) {
             Optional<Field> optionalField = fieldList.stream().filter(f -> f.getName().equals(key)).findAny();
@@ -228,7 +228,7 @@ public class MetricsInfo {
                         List<Object> oList = new ArrayList<>();
                         for( JsonElement je : array.asList() ) {
                             Object o2 = ((Class) types[0]).getConstructor().newInstance();
-                            asd(je.getAsJsonObject(), ((Class) types[0]), o2);
+                            jsonParser(je.getAsJsonObject(), ((Class) types[0]), o2);
                             oList.add(o2);
                         }
                         Arrays.stream(clazz.getDeclaredMethods()).filter(f -> f.getName().equals("set" + targetMethodName)).findAny().get().invoke(this, oList);
@@ -249,9 +249,9 @@ public class MetricsInfo {
         String query = "select time as timestamp @FIELD from @MEASUREMENT where time > now() - @RANGE @CONDITION @GROUP_BY order by time desc @LIMIT";
         query = query.replaceAll("@FIELD", getFieldQuery())
                      .replaceAll("@MEASUREMENT", getMeasurement())
+                     .replaceAll("@RANGE", getRange())
                      .replaceAll("@CONDITION", getConditionQuery())
                      .replaceAll("@GROUP_BY", getGroupByQuery())
-                     .replaceAll("@RANGE", getRange())
                      .replaceAll("@LIMIT", getLimitQuery());
         return query;
     }
