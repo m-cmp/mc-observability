@@ -9,6 +9,7 @@ public enum ResultCode {
     SUCCESS_NO_DATA("0000", "데이터가 없습니다."),
 
 
+    DATABASE_ERROR("9993", "데이터베이스 오류가 발생했습니다."),
     FAILED("9994", "실패하였습니다."),
     NOT_FOUND_DATA( "9995", "데이터가 존재하지 않습니다."),
     INVAILD_PARAMETER("9996", "파라미터를 확인해주세요."),

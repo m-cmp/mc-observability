@@ -4,7 +4,7 @@ import lombok.Getter;
 import mcmp.mc.observability.agent.enums.ResultCode;
 
 @Getter
-public class ResultCodeException extends Exception {
+public class ResultCodeException extends RuntimeException {
     private final ResultCode resultCode;
     private final Object[] objects;
 

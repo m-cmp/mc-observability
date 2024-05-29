@@ -1,20 +1,22 @@
 package mcmp.mc.observability.agent.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@ToString
 public class MiningDBInfo {
-
-    private Long seq = 0L;
+    @ApiModelProperty(value = "Host url", example = "http://localhost:8086")
     private String url;
+    @ApiModelProperty(value = "influxDB measurement name", example = "mc-agent")
     private String database;
+    @ApiModelProperty(value = "influxDB measurement name", example = "autogen")
     private String retentionPolicy;
+    @ApiModelProperty(value = "influxDB measurement name", example = "mc_agent")
     private String username;
+    @ApiModelProperty(value = "influxDB measurement name", example = "mc_agent")
     private String password;
-
 }
