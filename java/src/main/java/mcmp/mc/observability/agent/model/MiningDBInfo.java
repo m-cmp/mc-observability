@@ -11,12 +11,12 @@ import lombok.ToString;
 public class MiningDBInfo {
     @ApiModelProperty(value = "Host url", example = "http://localhost:8086")
     private String url;
-    @ApiModelProperty(value = "influxDB measurement name", example = "mc-agent")
+    @ApiModelProperty(value = "influxDB database name", example = "mc-agent")
     private String database;
-    @ApiModelProperty(value = "influxDB measurement name", example = "autogen")
+    @ApiModelProperty(value = "influxDB retention policy", example = "autogen")
     private String retentionPolicy;
-    @ApiModelProperty(value = "influxDB measurement name", example = "mc_agent")
+    @ApiModelProperty(value = "influxDB username", example = "mc_agent")
     private String username;
-    @ApiModelProperty(value = "influxDB measurement name", example = "mc_agent")
+    @ApiModelProperty(value = "influxDB password", example = "mc_agent")
     private String password;
 }
