@@ -76,6 +76,8 @@ if id %{name} &>/dev/null; then
     userdel -r %{name}
 fi
 
+rm -f /usr/sbin/mc-agent
+
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{_bindir}/%{name}
