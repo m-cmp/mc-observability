@@ -22,34 +22,34 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HostInfo {
-    @ApiModelProperty(value = "Sequence by host")
+    @ApiModelProperty(value = "Sequence by host", example = "1")
     private Long seq = 0L;
-    @ApiModelProperty(value = "Base64 Encoded value")
+    @ApiModelProperty(value = "Base64 Encoded value", example = "localhost")
     @Base64EncodeField
     private String name;
-    @ApiModelProperty(value = "Uuid by host")
+    @ApiModelProperty(value = "Uuid by host", example = "07250583-a9ef-c636-6113-e80289a64ce6")
     private String uuid;
-    @ApiModelProperty(value = "Kind of host (e.g., \"LINUX\", \"WINDOWS\")")
+    @ApiModelProperty(value = "Kind of host (e.g., \"LINUX\", \"WINDOWS\")", example = "LINUX")
     private OS os;
-    @ApiModelProperty(value = "Status of monitoring activation (e.g., \"Y\", \"N\")")
+    @ApiModelProperty(value = "Status of monitoring activation (e.g., \"Y\", \"N\")", example = "Y")
     private StateYN monitoringYn;
-    @ApiModelProperty(value = "Agent running status (e.g., \"ACTIVE\", \"INACTIVE\")")
+    @ApiModelProperty(value = "Agent running status (e.g., \"ACTIVE\", \"INACTIVE\")", example = "ACTIVE")
     private HostState state;
-    @ApiModelProperty(value = "telegraf running status (e.g., \"RUNNING\", \"STOPPED\", \"FAILED\")")
+    @ApiModelProperty(value = "telegraf running status (e.g., \"RUNNING\", \"STOPPED\", \"FAILED\")", example = "RUNNING")
     private TelegrafState telegrafState;
-    @ApiModelProperty(value = "The time when the host was registered")
+    @ApiModelProperty(value = "The time when the host was registered", example = "2024-05-24 11:31:55")
     private String createAt;
     @ApiModelProperty(value = "The time when the host was updated")
     private String updateAt;
-    @ApiModelProperty(value = "Host additional configuration information (e.g., {\"key\" : \"value\"})")
+    @ApiModelProperty(value = "Host additional configuration information (e.g., {\"key\" : \"value\"})", example = "{}")
     private String ex;
-    @ApiModelProperty(value = "Host description")
+    @ApiModelProperty(value = "Host description", example = "description")
     private String description;
-    @ApiModelProperty(value = "Host sync status (e.g., \"Y\", \"N\")")
+    @ApiModelProperty(value = "Host sync status (e.g., \"Y\", \"N\")", example = "Y")
     private StateYN syncYN;
-    @ApiModelProperty(value = "Number of items registered to the host")
+    @ApiModelProperty(value = "Number of items registered to the host", example = "0")
     private Long itemCount = 0L;
-    @ApiModelProperty(value = "Number of storages registered to the host")
+    @ApiModelProperty(value = "Number of storages registered to the host", example = "0")
     private Long storageCount = 0L;
 
     public void mappingCount(Map<Long, Long> itemMap, Map<Long, Long> storageMap) {

@@ -11,6 +11,7 @@ import mcmp.mc.observability.agent.annotation.Base64DecodeField;
 public class HostStorageCreateDTO {
     @JsonIgnore
     private Long hostSeq = 0L;
+    @ApiModelProperty(value = "Sequence by item plugin")
     private Long pluginSeq = 0L;
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64DecodeField

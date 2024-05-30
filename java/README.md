@@ -16,10 +16,11 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 ## How to Use
 
 ### Development environment
+  - SpringBoot (2.7.6)
   - MariaDB (10.7.6)
   - InfluxDB (1.8.10)
-  - Telegraf (1.28.5)
-  - Java (1.8)
+  - Telegraf (1.26.1)
+  - Java (17)
 
 ### Get Sourcecode
 ```bash
@@ -27,10 +28,10 @@ git clone https://github.com/m-cmp/mc-observability.git
 ```
 
 ### Download Telegraf Binary
-- [Telegraf (Linux 64)](https://dl.influxdata.com/telegraf/releases/telegraf-1.28.5_linux_amd64.tar.gz)
+- [Telegraf (Linux 64)](https://dl.influxdata.com/telegraf/releases/telegraf-1.26.1_linux_amd64.tar.gz)
 ```bash
-tar xf telegraf-1.28.5_linux_amd64.tar.gz
-mv telegraf-1.28.5/usr/bin/telegraf ./
+tar xf telegraf-1.26.1_linux_amd64.tar.gz
+mv telegraf-1.26.1/usr/bin/telegraf ./
 ```
 
 ### Build project
@@ -94,8 +95,6 @@ scheduler:
 ```bash
 ./m-cmp-agent.jar start &
 ```
-
-[//]: # (#### [API Postman Example]&#40;./m-cmp-observability-agent.postman_collection.json&#41;)
 
 #### [API Docs yaml](./swagger.yaml)
 
