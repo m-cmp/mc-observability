@@ -10,6 +10,10 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 @EnableSwagger2
 @Configuration
 public class SwaggerConfig {
@@ -18,6 +22,8 @@ public class SwaggerConfig {
 
     @Bean
     public Docket api() {
+        Set<String> defaultProducesAndConsumes = new HashSet<>(Collections.singletonList("application/json"));
+
         return new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(new ApiInfoBuilder().version(version).description("Api Documentation").title("Api Documentation").build())
                 .select()
@@ -25,7 +31,8 @@ public class SwaggerConfig {
                         "mcmp.mc.observability.agent"
                 ))
                 .paths(PathSelectors.any())
-
-                .build();
+                .build()
+                .useDefaultResponseMessages(false)
+                .produces(defaultProducesAndConsumes);
     }
 }

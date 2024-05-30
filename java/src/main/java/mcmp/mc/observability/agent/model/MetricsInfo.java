@@ -66,10 +66,10 @@ public class MetricsInfo {
                     "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;\"conditions\":[\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"uuid\", \"value\": \"d8a66509-48a4-6231-13f9-d931a15d75be\"},\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"cpu\", \"value\": \"cpu-total\"},\n" +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"cpu\", \"value\": \"cpu-total\"}\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;\"limit\": 10\n" +
-                    "}")
+                    "}", example = "eyJpbmZsdXhEQlNlcSI6IDEsIm1lYXN1cmVtZW50IjogImNwdSIsInJhbmdlIjogIjFoIiwiZ3JvdXBUaW1lIjogIjVtIiwiZ3JvdXBCeSI6IFsidXVpZCIsICJjcHUiXSwiZmllbGRzIjpbeyJmdW5jdGlvbiI6Im1lYW4iLCJmaWVsZCI6ICJ1c2FnZV9pZGxlIn0seyJmdW5jdGlvbiI6ICJtaW4iLCAiZmllbGQiOiAidXNhZ2VfaWRsZSJ9LHsiZnVuY3Rpb24iOiAibWF4IiwiZmllbGQiOiAidXNhZ2VfaWRsZSJ9XSwiY29uZGl0aW9ucyI6W3sia2V5IjogInV1aWQiLCAidmFsdWUiOiAiZDhhNjY1MDktNDhhNC02MjMxLTEzZjktZDkzMWExNWQ3NWJlIn0seyJrZXkiOiAiY3B1IiwidmFsdWUiOiAiY3B1LXRvdGFsIn1dLCJsaW1pdCI6IDEwfQ==")
     @Base64DecodeField
     private String json;
 

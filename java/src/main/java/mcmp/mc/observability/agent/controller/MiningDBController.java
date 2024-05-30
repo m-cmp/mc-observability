@@ -21,13 +21,13 @@ public class MiningDBController {
     @ApiOperation(value = "Get Mining DB info")
     @GetMapping
     public ResBody<MiningDBInfo> detail() {
-        return miningDBService.detail(new ResBody<>());
+        return miningDBService.detail();
     }
 
-    @ApiOperation(value = "Create Mining DB info")
+    @ApiOperation(value = "Update Mining DB info")
     @PutMapping
-    public ResBody<Void> setMiningDB(@RequestBody MiningDBSetDTO info) {
-        return miningDBService.setMiningDB(info);
+    public ResBody<Void> updateMiningDB(@RequestBody MiningDBSetDTO info) {
+        return miningDBService.updateMiningDB(info);
     }
 
 }

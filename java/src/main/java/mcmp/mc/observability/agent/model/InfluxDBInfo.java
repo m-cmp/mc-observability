@@ -1,5 +1,7 @@
 package mcmp.mc.observability.agent.model;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,12 +11,19 @@ import java.util.Objects;
 @Getter
 @Setter
 @Builder
+@ApiModel(description = "InfluxDB information")
 public class InfluxDBInfo {
+    @ApiModelProperty(value = "Sequence number")
     private Long seq;
+    @ApiModelProperty(value = "Host url", example = "http://localhost:8086")
     private String url;
+    @ApiModelProperty(value = "Database name", example = "mc-agent")
     private String database;
+    @ApiModelProperty(value = "Data retention policy name", example = "autogen")
     private String retentionPolicy;
+    @ApiModelProperty(value = "Authentication username", example = "mc-agent")
     private String username;
+    @ApiModelProperty(value = "Authentication password", example = "mc-agent")
     private String password;
 
     @Override

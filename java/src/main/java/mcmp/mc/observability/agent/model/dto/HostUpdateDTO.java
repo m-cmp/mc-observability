@@ -14,5 +14,6 @@ public class HostUpdateDTO {
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64DecodeField
     private String name;
+    @ApiModelProperty(value = "Host description", example = "description")
     private String description;
 }

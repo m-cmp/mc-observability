@@ -2,23 +2,24 @@ package mcmp.mc.observability.agent.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.agent.enums.ResultCode;
+import mcmp.mc.observability.agent.exception.ResultCodeException;
 import mcmp.mc.observability.agent.mapper.InfluxDBMapper;
 import mcmp.mc.observability.agent.model.HostStorageInfo;
 import mcmp.mc.observability.agent.model.InfluxDBConnector;
 import mcmp.mc.observability.agent.model.InfluxDBInfo;
 import mcmp.mc.observability.agent.model.MeasurementFieldInfo;
+import mcmp.mc.observability.agent.model.MeasurementTagInfo;
 import mcmp.mc.observability.agent.model.MetricInfo;
 import mcmp.mc.observability.agent.model.MetricsInfo;
+import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.util.InfluxDBUtils;
 import org.influxdb.dto.BoundParameterQuery;
-import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,11 +32,9 @@ public class InfluxDBService {
     private final InfluxDBMapper influxDBMapper;
     private final HostStorageService hostStorageService;
 
-    public List<InfluxDBInfo> getList() {
+    public ResBody<List<InfluxDBInfo>> getList() {
 
         List<HostStorageInfo> storageInfoList = hostStorageService.getAllList();
-        if (CollectionUtils.isEmpty(storageInfoList))
-            return Collections.emptyList();
 
         List<InfluxDBInfo> influxDBInfoList = new ArrayList<>();
         for (HostStorageInfo hostStorageInfo : storageInfoList) {
@@ -53,7 +52,10 @@ public class InfluxDBService {
 
         syncSummaryInfluxDBList(influxDBInfoList.stream().distinct().collect(Collectors.toList()));
 
-        return influxDBMapper.getInfluxDBInfoList();
+        ResBody<List<InfluxDBInfo>> res = new ResBody<>();
+        res.setData(influxDBMapper.getInfluxDBInfoList());
+
+        return res;
     }
 
     private void syncSummaryInfluxDBList(List<InfluxDBInfo> influxDBInfoList) {
@@ -77,41 +79,68 @@ public class InfluxDBService {
 
     }
 
-    public List<MeasurementFieldInfo> getMeasurementAndFields(InfluxDBConnector influxDBConnector) {
+    public ResBody<List<MeasurementFieldInfo>> getFields(Long influxDBSeq) {
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
+
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
+        }
+
+        ResBody<List<MeasurementFieldInfo>> res = new ResBody<>();
+
+        InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
+
         BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery("show field keys").forDatabase(influxDBConnector.getDatabase());
 
         QueryResult qr = influxDBConnector.getInfluxDB().query(qb.create());
 
-        return InfluxDBUtils.measurementAndFieldsMapping(qr.getResults().get(0).getSeries());
+        res.setData(InfluxDBUtils.measurementAndFieldsMapping(qr.getResults().get(0).getSeries()));
+
+        return res;
     }
 
-    public List<Map<String, Object>> getTags(InfluxDBConnector influxDBConnector) {
+    public ResBody<List<MeasurementTagInfo>> getTags(Long influxDBSeq) {
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
+
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
+        }
+
+        ResBody<List<MeasurementTagInfo>> res = new ResBody<>();
+
+        InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
         BoundParameterQuery.QueryBuilder qb = BoundParameterQuery.QueryBuilder.newQuery("show tag keys").forDatabase(influxDBConnector.getDatabase());
 
         QueryResult qr = influxDBConnector.getInfluxDB().query(qb.create());
 
-        List<Map<String, Object>> result = new ArrayList<>();
+        List<MeasurementTagInfo> result = new ArrayList<>();
         List<QueryResult.Series> seriesList = qr.getResults().get(0).getSeries();
 
         if(CollectionUtils.isEmpty(seriesList))
-            return Collections.emptyList();
+            return res;
 
         for( QueryResult.Series series : seriesList) {
-            Map<String, Object> measurementTags = new HashMap<>();
             List<String> tagList = new ArrayList<>();
-            for( List<Object> row : series.getValues() ) {
-                tagList.add(row.get(0).toString());
-            }
-            measurementTags.put(series.getName(), tagList);
+            series.getValues().forEach(f -> tagList.add(f.get(0).toString()));
 
-            result.add(measurementTags);
+            result.add(MeasurementTagInfo.builder()
+                    .measurement(series.getName())
+                    .tags(tagList)
+                    .build());
         }
 
-        return result;
+        res.setData(result);
+
+        return res;
     }
 
     public List<MetricInfo> getMetrics(MetricsInfo metricsInfo) {
         InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(metricsInfo.getInfluxDBSeq());
+
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", metricsInfo.getInfluxDBSeq());
+        }
+
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
         String queryString = metricsInfo.getQuery();
 
@@ -119,12 +148,7 @@ public class InfluxDBService {
                 .newQuery(queryString)
                 .forDatabase(influxDBConnector.getDatabase());
 
-        return getMetricInfos(qb.create(), influxDBConnector);
-    }
-
-    private List<MetricInfo> getMetricInfos(Query query, InfluxDBConnector influxDBConnector) {
-
-        QueryResult queryResult = influxDBConnector.getInfluxDB().query(query);
+        QueryResult queryResult = influxDBConnector.getInfluxDB().query(qb.create());
 
         List<QueryResult.Result> influxResults = queryResult.getResults();
         List<MetricInfo> result = new ArrayList<>();
@@ -133,7 +157,7 @@ public class InfluxDBService {
             return result;
         }
 
-        influxResults.forEach(f -> f.getSeries().forEach(f2 -> result.add(new MetricInfo(f2.getName(), f2.getColumns(), f2.getTags(), f2.getValues()))));
+        influxResults.forEach(f -> f.getSeries().forEach(f2 -> result.add(MetricInfo.builder().name(f2.getName()).columns(f2.getColumns()).tags(f2.getTags()).values(f2.getValues()).build())));
 
         return result;
     }

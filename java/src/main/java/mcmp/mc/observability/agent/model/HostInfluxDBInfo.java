@@ -1,5 +1,6 @@
 package mcmp.mc.observability.agent.model;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import mcmp.mc.observability.agent.util.StringUtils;
@@ -12,8 +13,11 @@ import java.util.List;
 @Getter
 @Setter
 public class HostInfluxDBInfo {
+    @ApiModelProperty(value = "Sequence by host")
     private Long hostSeq;
+    @ApiModelProperty(value = "Uuid by host")
     private String uuid;
+    @ApiModelProperty(value = "Influxdb configuration information")
     private List<InfluxDBInfo> influxdbInfos;
 
     public HostInfluxDBInfo(Long hostSeq, String uuid) {

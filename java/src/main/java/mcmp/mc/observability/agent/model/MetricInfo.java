@@ -1,21 +1,21 @@
 package mcmp.mc.observability.agent.model;
 
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
 import java.util.Map;
 
 @Getter
+@Builder
 public class MetricInfo {
+    @ApiModelProperty(value = "Measurement name")
     private final String name;
+    @ApiModelProperty(value = "Column name of values index")
     private final List<String> columns;
+    @ApiModelProperty(value = "tag list of metric")
     private final Map<String, String> tags;
+    @ApiModelProperty(value = "Sequence by monitoring item")
     private final List<List<Object>> values;
-
-    public MetricInfo(String name, List<String> columns, Map<String, String> tags, List<List<Object>> values) {
-        this.name = name;
-        this.columns = columns;
-        this.tags = tags;
-        this.values = values;
-    }
 }

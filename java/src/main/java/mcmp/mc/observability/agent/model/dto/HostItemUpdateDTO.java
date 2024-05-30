@@ -13,12 +13,16 @@ public class HostItemUpdateDTO {
     private Long seq = 0L;
     @JsonIgnore
     private Long hostSeq = 0L;
+    @ApiModelProperty(value = "Sequence by plugin")
     private Long pluginSeq = 0L;
-    @ApiModelProperty(value = "Base64 Encoded value")
+    @ApiModelProperty(value = "Base64 Encoded value\n" +
+            "Monitoring item name")
     @Base64DecodeField
     private String name;
+    @ApiModelProperty(value = "Plugin collection interval seconds")
     private Integer intervalSec = 10;
-    @ApiModelProperty(value = "Base64 Encoded value")
+    @ApiModelProperty(value = "Base64 Encoded value\n" +
+            "Monitoring item detail configuration (cf. telegraf plugin configuration)")
     @Base64DecodeField
     private String setting;
 }

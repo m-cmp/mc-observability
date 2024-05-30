@@ -8,6 +8,7 @@ import mcmp.mc.observability.agent.mapper.MiningDBMapper;
 import mcmp.mc.observability.agent.model.MiningDBInfo;
 import mcmp.mc.observability.agent.model.dto.MiningDBSetDTO;
 import mcmp.mc.observability.agent.model.dto.ResBody;
+import org.apache.ibatis.exceptions.TooManyResultsException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -17,18 +18,22 @@ public class MiningDBService {
 
     private final MiningDBMapper miningDBMapper;
 
-    public ResBody<MiningDBInfo> detail(ResBody<MiningDBInfo> resBody) {
-        MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
-        resBody.setData(miningDBInfo);
-        return resBody;
+    public ResBody<MiningDBInfo> detail() {
+        ResBody<MiningDBInfo> res = new ResBody<>();
+        try {
+            res.setData(miningDBMapper.getDetail());
+        } catch (TooManyResultsException e) {
+            throw new ResultCodeException(ResultCode.DATABASE_ERROR, "Mining Database TooManyResultsException");
+        }
+        return res;
     }
 
-    public ResBody<Void> setMiningDB(MiningDBSetDTO info) {
+    public ResBody<Void> updateMiningDB(MiningDBSetDTO info) {
         ResBody<Void> resBody = new ResBody<>();
         try {
             MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
             if(miningDBInfo == null)
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "No Mining DB info");
+                throw new ResultCodeException(ResultCode.DATABASE_ERROR, "No Mining DB info");
 
             info.setOldUrl(miningDBInfo.getUrl());
             info.setOldDatabase(miningDBInfo.getDatabase());
@@ -40,10 +45,10 @@ public class MiningDBService {
             if (result <= 0) {
                 throw new ResultCodeException(ResultCode.INVALID_ERROR, "MiningDB update error QueryResult={}", result);
             }
-        } catch (ResultCodeException e) {
-            resBody.setCode(e.getResultCode());
+        } catch (TooManyResultsException e) {
+            throw new ResultCodeException(ResultCode.DATABASE_ERROR, "Mining Database TooManyResultsException");
         } catch (Exception e) {
-            resBody.setCode(ResultCode.INVALID_REQUEST);
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, e.getMessage());
         }
         return resBody;
     }
