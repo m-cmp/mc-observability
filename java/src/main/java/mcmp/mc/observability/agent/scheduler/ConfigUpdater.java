@@ -81,7 +81,7 @@ public class ConfigUpdater {
             case LINUX:
             case UNIX:
                 //  find /home/files/Argos-agent/conf -type f -name "*.conf" | wc -l
-                command = "find " + COLLECTOR_CONFIG_DIR_PATH + " -type f -name "*.conf" | wc -l";
+                command = "find " + COLLECTOR_CONFIG_DIR_PATH + " -type f -name \"*.conf\" | wc -l";
                 Utils.runCommand(new String[]{"/bin/sh", "-c", command}, output);
                 break;
             default:
