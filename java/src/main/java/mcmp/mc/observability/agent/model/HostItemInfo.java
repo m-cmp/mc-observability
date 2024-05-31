@@ -33,8 +33,10 @@ public class HostItemInfo {
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64EncodeField
     private String name;
-    @ApiModelProperty(value = "Item interval setting")
+    @ApiModelProperty(value = "Item interval second")
     private Integer intervalSec = 10;
+    @ApiModelProperty(value = "Item interval setting")
+    private Boolean isInterval;
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64EncodeField
     private String setting;
