@@ -15,18 +15,28 @@ import mcmp.mc.observability.agent.model.dto.HostItemUpdateDTO;
 @Setter
 @ToString
 public class HostItemInfo {
+    @ApiModelProperty(value = "Sequence by monitoring item")
     private Long seq = 0L;
+    @ApiModelProperty(value = "Sequence by host")
     private Long hostSeq = 0L;
     private StateOption state;
+    @ApiModelProperty(value = "Status of monitoring activation (e.g., \"Y\", \"N\")")
     private StateYN monitoringYn;
+    @ApiModelProperty(value = "The time when the item was registered")
     private String createAt;
+    @ApiModelProperty(value = "The time when the item was updated")
     private String updateAt;
+    @ApiModelProperty(value = "Sequence by item plugin")
     private Long pluginSeq = 0L;
+    @ApiModelProperty(value = "Plugin name of item")
     private String pluginName;
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64EncodeField
     private String name;
+    @ApiModelProperty(value = "Item interval second")
     private Integer intervalSec = 10;
+    @ApiModelProperty(value = "Item interval setting")
+    private Boolean isInterval;
     @ApiModelProperty(value = "Base64 Encoded value")
     @Base64EncodeField
     private String setting;

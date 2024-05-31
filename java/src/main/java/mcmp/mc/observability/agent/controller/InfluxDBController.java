@@ -1,18 +1,22 @@
 package mcmp.mc.observability.agent.controller;
 
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.Constants;
-import mcmp.mc.observability.agent.model.InfluxDBConnector;
 import mcmp.mc.observability.agent.model.InfluxDBInfo;
 import mcmp.mc.observability.agent.model.MeasurementFieldInfo;
+import mcmp.mc.observability.agent.model.MeasurementTagInfo;
 import mcmp.mc.observability.agent.model.dto.ResBody;
 import mcmp.mc.observability.agent.service.InfluxDBService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -24,26 +28,34 @@ public class InfluxDBController {
 
 
     @ApiOperation(value = "Get InfluxDB list")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Saved InfluxDB distinct connection information"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+
     @GetMapping("/list")
     public ResBody<List<InfluxDBInfo>> getList() {
-        ResBody<List<InfluxDBInfo>> res = new ResBody<>();
-        res.setData(influxDBService.getList());
-        return res;
+        return influxDBService.getList();
     }
 
     @ApiOperation(value = "Get InfluxDB measurement, field list")
-    @GetMapping("/info")
-    public ResBody<List<MeasurementFieldInfo>> getMeasurementAndFields(@ModelAttribute InfluxDBInfo influxDBInfo) {
-        ResBody<List<MeasurementFieldInfo>> res = new ResBody<>();
-        res.setData(influxDBService.getMeasurementAndFields(new InfluxDBConnector(influxDBInfo)));
-        return res;
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Select influxDB all measurement, field list"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @GetMapping("/fields/{influxDBSeq}")
+    public ResBody<List<MeasurementFieldInfo>> getMeasurementAndFields(@PathVariable Long influxDBSeq) {
+        return influxDBService.getFields(influxDBSeq);
     }
 
     @ApiOperation(value = "Get InfluxDB tag list")
-    @GetMapping("/tags")
-    public ResBody<List<Map<String, Object>>> getTags(@ModelAttribute InfluxDBInfo influxDBInfo) {
-        ResBody<List<Map<String, Object>>> res = new ResBody<>();
-        res.setData(influxDBService.getTags(new InfluxDBConnector(influxDBInfo)));
-        return res;
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Select influxDB all measurement, tag list"),
+            @ApiResponse(code = 404, message = "Not Found")
+    })
+    @GetMapping("/tags/{influxDBSeq}")
+    public ResBody<List<MeasurementTagInfo>> getTags(@PathVariable Long influxDBSeq) {
+
+        return influxDBService.getTags(influxDBSeq);
     }
 }

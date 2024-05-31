@@ -71,15 +71,18 @@ public class ConfigUpdater {
 
     private int getConfFileCount() throws IOException, InterruptedException {
         Output output = new Output();
+        String command = "";
         switch (OS.parseProperty()) {
             case WINDOWS:
                 //  Get-ChildItem -Path filePath -Filter *.conf | Measure-Object | Select-Object -ExpandProperty Count
-                Utils.runCommand(new String[]{"powershell", "/c", "Get-ChildItem", "-Path", COLLECTOR_CONFIG_DIR_PATH, "-Filter *.conf", "|", "Measure-Object", "|", "Select-Object -ExpandProperty Count"}, output);
+                command = "Get-ChildItem -Path " + COLLECTOR_CONFIG_DIR_PATH + " -Filter *.conf | Measure-Object | Select-Object -ExpandProperty Count";
+                Utils.runCommand(new String[]{"powershell", "/c", command}, output);
                 break;
             case LINUX:
             case UNIX:
                 //  find /home/files/Argos-agent/conf -type f -name "*.conf" | wc -l
-                Utils.runCommand(new String[]{"find", COLLECTOR_CONFIG_DIR_PATH, "-type", "f", "-name", "\"*.conf\"", "|", "wc -l"}, output);
+                command = "find " + COLLECTOR_CONFIG_DIR_PATH + " -type f -name \"*.conf\" | wc -l";
+                Utils.runCommand(new String[]{"/bin/sh", "-c", command}, output);
                 break;
             default:
                 return 0;

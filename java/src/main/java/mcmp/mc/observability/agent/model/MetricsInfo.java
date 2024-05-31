@@ -1,7 +1,6 @@
 package mcmp.mc.observability.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -67,10 +66,10 @@ public class MetricsInfo {
                     "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;\"conditions\":[\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"uuid\", \"value\": \"d8a66509-48a4-6231-13f9-d931a15d75be\"},\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"cpu\", \"value\": \"cpu-total\"},\n" +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"cpu\", \"value\": \"cpu-total\"}\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
                     "&nbsp;&nbsp;&nbsp;&nbsp;\"limit\": 10\n" +
-                    "}")
+                    "}", example = "eyJpbmZsdXhEQlNlcSI6IDEsIm1lYXN1cmVtZW50IjogImNwdSIsInJhbmdlIjogIjFoIiwiZ3JvdXBUaW1lIjogIjVtIiwiZ3JvdXBCeSI6IFsidXVpZCIsICJjcHUiXSwiZmllbGRzIjpbeyJmdW5jdGlvbiI6Im1lYW4iLCJmaWVsZCI6ICJ1c2FnZV9pZGxlIn0seyJmdW5jdGlvbiI6ICJtaW4iLCAiZmllbGQiOiAidXNhZ2VfaWRsZSJ9LHsiZnVuY3Rpb24iOiAibWF4IiwiZmllbGQiOiAidXNhZ2VfaWRsZSJ9XSwiY29uZGl0aW9ucyI6W3sia2V5IjogInV1aWQiLCAidmFsdWUiOiAiZDhhNjY1MDktNDhhNC02MjMxLTEzZjktZDkzMWExNWQ3NWJlIn0seyJrZXkiOiAiY3B1IiwidmFsdWUiOiAiY3B1LXRvdGFsIn1dLCJsaW1pdCI6IDEwfQ==")
     @Base64DecodeField
     private String json;
 
@@ -152,6 +151,7 @@ public class MetricsInfo {
         if( fields !=  null && !fields.isEmpty() ) {
             boolean isSimple = false;
             boolean isFunction = false;
+
             for( FieldInfo info : fields) {
                 if( info.getFunction() != null ) isFunction = true;
                 else isSimple = true;
@@ -170,10 +170,10 @@ public class MetricsInfo {
 
     public void convertObject() {
         JsonObject js = JsonParser.parseString(getJson()).getAsJsonObject();
-        asd(js, this.getClass(), this);
+        jsonParser(js, this.getClass(), this);
     }
 
-    private void asd(JsonObject js, Class<?> clazz, Object o) {
+    private void jsonParser(JsonObject js, Class<?> clazz, Object o) {
         List<Field> fieldList = Arrays.asList(clazz.getDeclaredFields());
         for( String key : js.keySet() ) {
             Optional<Field> optionalField = fieldList.stream().filter(f -> f.getName().equals(key)).findAny();
@@ -228,7 +228,7 @@ public class MetricsInfo {
                         List<Object> oList = new ArrayList<>();
                         for( JsonElement je : array.asList() ) {
                             Object o2 = ((Class) types[0]).getConstructor().newInstance();
-                            asd(je.getAsJsonObject(), ((Class) types[0]), o2);
+                            jsonParser(je.getAsJsonObject(), ((Class) types[0]), o2);
                             oList.add(o2);
                         }
                         Arrays.stream(clazz.getDeclaredMethods()).filter(f -> f.getName().equals("set" + targetMethodName)).findAny().get().invoke(this, oList);
@@ -249,9 +249,9 @@ public class MetricsInfo {
         String query = "select time as timestamp @FIELD from @MEASUREMENT where time > now() - @RANGE @CONDITION @GROUP_BY order by time desc @LIMIT";
         query = query.replaceAll("@FIELD", getFieldQuery())
                      .replaceAll("@MEASUREMENT", getMeasurement())
+                     .replaceAll("@RANGE", getRange())
                      .replaceAll("@CONDITION", getConditionQuery())
                      .replaceAll("@GROUP_BY", getGroupByQuery())
-                     .replaceAll("@RANGE", getRange())
                      .replaceAll("@LIMIT", getLimitQuery());
         return query;
     }

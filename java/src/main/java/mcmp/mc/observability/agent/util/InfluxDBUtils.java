@@ -15,7 +15,7 @@ public class InfluxDBUtils {
     private InfluxDBUtils() throws IllegalStateException {
         throw new IllegalStateException("Utility class");
     }
-    public static <T> List<MeasurementFieldInfo> measurementAndFieldsMapping(List<QueryResult.Series> seriesList) {
+    public static List<MeasurementFieldInfo> measurementAndFieldsMapping(List<QueryResult.Series> seriesList) {
         List<MeasurementFieldInfo> result = new ArrayList<>();
         try {
             if(CollectionUtils.isEmpty(seriesList))
