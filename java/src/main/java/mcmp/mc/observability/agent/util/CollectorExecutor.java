@@ -177,9 +177,9 @@ public class CollectorExecutor {
     private String makeItemConfig(HostItemInfo hostItemInfo) {
         PluginDefInfo pluginDefInfo = pluginLoader.getPluginDefInfo(hostItemInfo.getPluginSeq());
         StringBuilder sb = new StringBuilder("");
-        sb.append(pluginDefInfo.getPluginId()).append("\n")
-                .append("  interval = ").append("\"").append(hostItemInfo.getIntervalSec()).append("s\"\n")
-                .append(hostItemInfo.getSetting());
+        sb.append(pluginDefInfo.getPluginId()).append("\n");
+        if( pluginDefInfo.getIsInterval() ) sb.append("  interval = ").append("\"").append(hostItemInfo.getIntervalSec()).append("s\"\n");
+        sb.append(hostItemInfo.getSetting());
 
         return sb.toString();
     }

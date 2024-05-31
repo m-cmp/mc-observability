@@ -38,6 +38,11 @@ public class HostItemService {
 
         if( result.getRecords() > 0 ) {
             List<HostItemInfo> itemList = hostItemMapper.getList(reqBody);
+            for( HostItemInfo info : itemList ) {
+                PluginDefInfo pluginDefInfo = pluginLoader.getPluginDefInfo(info.getPluginSeq());
+                if( pluginDefInfo == null ) continue;
+                info.setIsInterval(pluginDefInfo.getIsInterval());
+            }
             result.setRows(itemList);
         }
 
@@ -45,7 +50,16 @@ public class HostItemService {
     }
 
     public List<HostItemInfo> getList(Map<String, Object> params) {
-        return hostItemMapper.getHostItemList(params);
+        List<HostItemInfo> itemList = hostItemMapper.getHostItemList(params);
+
+        if( itemList == null || itemList.isEmpty() ) return itemList;
+
+        for( HostItemInfo info : itemList ) {
+            PluginDefInfo pluginDefInfo = pluginLoader.getPluginDefInfo(info.getPluginSeq());
+            if( pluginDefInfo == null ) continue;
+            info.setIsInterval(pluginDefInfo.getIsInterval());
+        }
+        return itemList;
     }
 
     public ResBody<Void> insertItem(HostItemCreateDTO dto) {
@@ -164,7 +178,14 @@ public class HostItemService {
         Map<String, Long> params = new HashMap<>();
         params.put("hostSeq", hostSeq);
         params.put("seq", seq);
-        return hostItemMapper.getDetail(params);
+        HostItemInfo info = hostItemMapper.getDetail(params);
+
+        PluginDefInfo pluginDefInfo = pluginLoader.getPluginDefInfo(info.getPluginSeq());
+        if( pluginDefInfo != null ) {
+            info.setIsInterval(pluginDefInfo.getIsInterval());
+        }
+
+        return info;
     }
 
     public ResBody<Void> turnMonitoringYn(Long hostSeq, Long seq) {

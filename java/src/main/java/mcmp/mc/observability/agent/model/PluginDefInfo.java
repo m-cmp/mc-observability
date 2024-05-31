@@ -15,6 +15,8 @@ public class PluginDefInfo {
     private String pluginId;
     private String pluginType;
     private List<OS> os;
+    private Boolean isInterval;
+
     public void setOs(String os) {
         if( os == null || os.isEmpty() ) return;
         if( this.os == null ) this.os = new ArrayList<>();
