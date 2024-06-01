@@ -79,7 +79,7 @@ function argParse() {\
   echo "${SPACE}${SPACE}url: ${DATABASE_URL}" >> application-prd.yml\
   echo "${SPACE}${SPACE}username: ${USERNAME}" >> application-prd.yml\
   echo "${SPACE}${SPACE}password: ${PASSWORD}" >> application-prd.yml\
-  if [[ AGENT_TYPE = "api" ]] ; then\
+  if [[ ${AGENT_TYPE} = "api" ]] ; then\
     echo "${SPACE}config:" >> application-prd.yml\
     echo "${SPACE}${SPACE}on-profile: api" >> application-prd.yml\
   fi\
