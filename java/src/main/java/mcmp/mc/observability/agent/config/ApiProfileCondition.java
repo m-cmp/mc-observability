@@ -7,6 +7,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 public class ApiProfileCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
-        return !context.getEnvironment().acceptsProfiles("api");
+        String prop = context.getEnvironment().getProperty("spring.config.on-profile");
+        return !(prop != null && prop.contains("api"));
     }
 }
