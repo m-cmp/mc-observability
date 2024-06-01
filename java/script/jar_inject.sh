@@ -17,14 +17,16 @@ function help() {\
   echo "  -v, --version       show mc-agent version and exit"\
   echo ""\
   echo "setup Command Options:"\
-  echo "  -d, --datasource    MariaDB jdbc datasource (Required)"\
-  echo "                      e.g single  source) 127.0.0.1:3306/mc-agent"\
-  echo "                      e.g cluster source) 127.0.0.1:3306,127.0.0.2:3306/mc-agent"\
-  echo "                      refer) finally setting is jdbc:mariadb:sequential://\${HOST}?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul"\
+  echo "  -d,   --datasource    MariaDB jdbc datasource (Required)"\
+  echo "                        e.g single  source) 127.0.0.1:3306/mc-agent"\
+  echo "                        e.g cluster source) 127.0.0.1:3306,127.0.0.2:3306/mc-agent"\
+  echo "                        refer) finally setting is jdbc:mariadb:sequential://\${HOST}?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul"\
   echo ""\
-  echo "  -u, --username      MariaDB username (Required)"\
+  echo "  -u,   --username      MariaDB username (Required)"\
   echo ""\
-  echo "  -p, --password      MariaDB password (Required)"\
+  echo "  -p,   --password      MariaDB password (Required)"\
+  echo ""\
+  echo "  -api, --api           If service type Manager(Optional)"\
 }\
 if [[ $1 = "-h" || $1 = "--help" ]] ; then\
   help\
@@ -36,7 +38,7 @@ function argParse() {\
   do\
     KEY=${!i}\
     case ${KEY} in\
-      -d|-u|-p|--datasource|--username|--password)\
+      -d|-u|-p|--datasource|--username|--password|-api|--api)\
         ;;\
       *)\
         echo "setup Options Check"\
@@ -57,6 +59,9 @@ function argParse() {\
       -p|--password)\
         PASSWORD=${VALUE}\
         ;;\
+      -api|--api)\
+        AGENT_TYPE=api\
+        ;;\
       *)\
         echo "setup Options Check"\
         help\
@@ -74,6 +79,10 @@ function argParse() {\
   echo "${SPACE}${SPACE}url: ${DATABASE_URL}" >> application-prd.yml\
   echo "${SPACE}${SPACE}username: ${USERNAME}" >> application-prd.yml\
   echo "${SPACE}${SPACE}password: ${PASSWORD}" >> application-prd.yml\
+  if [[ AGENT_TYPE = "api" ]] ; then\
+    echo "${SPACE}config:" >> application-prd.yml\
+    echo "${SPACE}${SPACE}on-profile: api" >> application-prd.yml\
+  fi\
   \
   mv application-prd.yml /etc/mc-agent/\
   \
