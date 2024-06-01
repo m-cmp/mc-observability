@@ -27,6 +27,7 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 ![](./use_guide/page_03.jpg)
 ![](./use_guide/page_04.jpg)
 ![](./use_guide/page_05.jpg)
+![](./use_guide/page_06.jpg)
 
 ### [Use guide & basic scenario Full pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
 
