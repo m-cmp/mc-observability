@@ -22,7 +22,13 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
   - Telegraf (1.26.1)
   - Java (17)
 
-<embed src="./M-CMP Agent Use guide 20240531.pdf" width="600" height="400" type="application/pdf">
+![](./use_guide/page_01.jpg)
+![](./use_guide/page_02.jpg)
+![](./use_guide/page_03.jpg)
+![](./use_guide/page_04.jpg)
+![](./use_guide/page_05.jpg)
+
+### [Use guide & basic scenario Full pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
 
 ### [API Docs yaml](./swagger.yaml)
 
