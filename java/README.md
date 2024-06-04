@@ -22,81 +22,16 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
   - Telegraf (1.26.1)
   - Java (17)
 
-### Get Sourcecode
-```bash
-git clone https://github.com/m-cmp/mc-observability.git
-```
+![](./use_guide/page_01.jpg)
+![](./use_guide/page_02.jpg)
+![](./use_guide/page_03.jpg)
+![](./use_guide/page_04.jpg)
+![](./use_guide/page_05.jpg)
+![](./use_guide/page_06.jpg)
 
-### Download Telegraf Binary
-- [Telegraf (Linux 64)](https://dl.influxdata.com/telegraf/releases/telegraf-1.26.1_linux_amd64.tar.gz)
-```bash
-tar xf telegraf-1.26.1_linux_amd64.tar.gz
-mv telegraf-1.26.1/usr/bin/telegraf ./
-```
+### Use guide & basic scenario Full [ppt](./M-CMP%20Agent%20Use%20guide.ppt) / [pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
 
-### Build project
-```bash
-mvn clean install
-```
-### File composition
-
-1. File Tree (M-CMP Observability Agent Manager)
-```
--/ {{any directory}}
-└ - m-cmp-agent.jar
-└ - m-cmp-agent.conf
-└ - application-{{profile}}.yaml
-```
-- m-cmp-agent.conf
-```
-RUN_ARGS="--spring.profiles.active=api,{{profile}}"
-```
-- application-{{profile}}.yaml
-```
-# Required
-spring:
-  datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://{{ip}}:{{port}}/{{databaseName}}?{{options}}
-    username: {{username}}
-    password: {{password}}
-```
-
-2. File Tree (M-CMP Observability Agent)
-```
--/ {{any directory}}
-└ - m-cmp-agent.jar
-└ - m-cmp-agent.conf
-└ - application-{{profile}}.yaml
-└ - telegraf (Download Binary)
-```
-- m-cmp-agent.conf
-```
-RUN_ARGS="--spring.profiles.active={{profile}}"
-```
-- application-{{profile}}.yaml
-```
-# Required
-spring:
-  datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://{{ip}}:{{port}}/{{databaseName}}?{{options}}
-    username: {{username}}
-    password: {{password}}
-
-# Optional
-scheduler:
-  expression:
-    health-check: "*/5 * * * * ?" # Collector HealthCheck Scheduler cron expression
-    config-check: "*/30 * * * * ?" # Collector config updater Scheduler cron expression
-```
-
-### Run Jar
-```bash
-./m-cmp-agent.jar start &
-```
-
-#### [API Docs yaml](./swagger.yaml)
+### [API Docs yaml](./swagger.yaml)
 
 ## How to Contribute
 
