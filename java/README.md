@@ -29,7 +29,7 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 ![](./use_guide/page_05.jpg)
 ![](./use_guide/page_06.jpg)
 
-### [Use guide & basic scenario Full pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
+### Use guide & basic scenario Full [ppt](./M-CMP%20Agent%20Use%20guide.ppt) / [pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
 
 ### [API Docs yaml](./swagger.yaml)
 
