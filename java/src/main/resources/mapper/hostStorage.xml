@@ -91,7 +91,7 @@
             NAME = #{name},
             SETTING = #{setting}
         WHERE
-            SEQ = #{seq} AND HOST_SEQ = {hostSeq}
+            SEQ = #{seq} AND HOST_SEQ = #{hostSeq}
     </update>
 
     <update id="deleteStorage">
