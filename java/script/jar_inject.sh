@@ -34,6 +34,46 @@ if [[ $1 = "-h" || $1 = "--help" ]] ; then\
 fi\
 \
 function argParse() {\
+  isValid=true\
+  for ((i=2;i<=$#;i+=2))\
+  do\
+      if [[ ${!i} == "-d" || ${!i} == "--datasource" ]] ; then\
+          isValid=false\
+      fi\
+  done\
+  \
+  if [[ $isValid == true ]] ; then\
+     echo "setup command is -d or --datasource option require"\
+     help\
+     exit 0\
+  fi\
+  isValid=true\
+  for ((i=2;i<=$#;i+=2))\
+  do\
+      if [[ ${!i} == "-u" || ${!i} == "--username" ]] ; then\
+          isValid=false\
+      fi\
+  done\
+  \
+  if [[ $isValid == true ]] ; then\
+     echo "setup command is -u or --username option require"\
+     help\
+     exit 0\
+  fi\
+  isValid=true\
+  for ((i=2;i<=$#;i+=2))\
+  do\
+      if [[ ${!i} == "-p" || ${!i} == "--password" ]] ; then\
+          isValid=false\
+      fi\
+  done\
+  \
+  if [[ $isValid == true ]] ; then\
+     echo "setup command is -p or --password option require"\
+     help\
+     exit 0\
+  fi\
+  \
   for ((i=2;i<=$#;i+=2))\
   do\
     KEY=${!i}\
