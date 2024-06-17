@@ -1,7 +1,7 @@
 package mcmp.mc.observability.agent.common;
 
 public class Constants {
-    public static final String PREFIX_V1 = "/api/observability";
+    public static final String PREFIX_V1 = "/api/o11y";
     public static final String EMPTY_HOST = "0.0.0.0";
     public static final String CONFIG_ROOT_PATH = "/etc/mc-agent";
     public static final String BIN_ROOT_PATH = "/usr/bin/mc-agent";
