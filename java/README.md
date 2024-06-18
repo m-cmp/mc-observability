@@ -22,7 +22,93 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
   - Telegraf (1.26.1)
   - Java (17)
 
-### Use guide
+### System architecture
+```mermaid
+C4Context
+Enterprise_Boundary(boundary0, "M-CMP") {
+  Person(customer0, "M-CMP User")
+  Boundary(boundary1, "M-CMP Observability") {
+    Container(container0, "M-CMP Observability Manager")
+    Deployment_Node(deploy10, "Azure") {
+      Deployment_Node(deploy11, "VM 1") {
+        Container(container11, "M-CMP Observability Agent Manager")
+      }
+      Deployment_Node(deploy12, "VM 2") {
+        Container(container12, "M-CMP Observability Agent")
+      }
+      Deployment_Node(deploy13, "VM 3") {
+        Container(container13, "M-CMP Observability Agent")
+      }
+      ContainerDb(database11, "MariaDB")
+      ContainerDb(database12, "InfluxDB")
+    }
+    Deployment_Node(deploy20, "AWS") {
+      Deployment_Node(deploy21, "VM 1") {
+        Container(container21, "M-CMP Observability Agent Manager")
+      }
+      Deployment_Node(deploy22, "VM 2") {
+        Container(container22, "M-CMP Observability Agent")
+      }
+      Deployment_Node(deploy23, "VM 3") {
+        Container(container23, "M-CMP Observability Agent")
+      }
+      ContainerDb(database21, "MariaDB")
+      ContainerDb(database22, "InfluxDB")
+    }
+    Deployment_Node(deploy30, "Openstack") {
+      Deployment_Node(deploy31, "VM 1") {
+        Container(container31, "M-CMP Observability Agent Manager")
+      }
+      Deployment_Node(deploy32, "VM 2") {
+        Container(container32, "M-CMP Observability Agent")
+      }
+      Deployment_Node(deploy33, "VM 3") {
+        Container(container33, "M-CMP Observability Agent")
+      }
+      ContainerDb(database31, "MariaDB")
+      ContainerDb(database32, "InfluxDB")
+    }
+    BiRel(container0, container11, "REST API")
+    BiRel(container0, container21, "")
+    BiRel(container0, container31, "")
+  }
+}
+BiRel(customer0, container0, "REST API")
+UpdateRelStyle(customer0, container0, $offsetY="-50")
+UpdateRelStyle(container0, container11, $offsetY="-150")
+```
+
+```mermaid
+C4Context
+Deployment_Node(deploy10, "Cloud Service Provider") {
+  Deployment_Node(deploy11, "VM 1") {
+    Container(container11, "M-CMP Observability Agent Manager")
+  }
+  Deployment_Node(deploy12, "VM 2") {
+    Container(container12, "M-CMP Observability Agent")
+  }
+  Deployment_Node(deploy13, "VM 3") {
+    Container(container13, "M-CMP Observability Agent")
+  }
+  ContainerDb(database11, "MariaDB", "Monitoring config Database")
+  ContainerDb(database12, "InfluxDB", "Metrics Database")
+  BiRel(container11, database11, "")
+  BiRel(container12, database11, "")
+  BiRel(container13, database11, "")
+  Rel(database12, container11, "")
+  Rel(container12, database12, "")
+  Rel(container13, database12, "")
+}
+UpdateRelStyle(container11, database11, $lineColor="orange")
+UpdateRelStyle(container12, database11, $lineColor="orange")
+UpdateRelStyle(container13, database11, $lineColor="orange")
+
+UpdateRelStyle(database12, container11, $lineColor="green")
+UpdateRelStyle(container12, database12, $lineColor="green")
+UpdateRelStyle(container13, database12, $lineColor="green")
+```
+
+### API Use guide
 #### Observability Monitoring target setting guide
 
 ```mermaid
@@ -95,9 +181,7 @@ loop Monitoring setting
 end
 ```
 
-### Use guide & basic scenario Full [ppt](./M-CMP%20Agent%20Use%20guide.ppt) / [pdf](./M-CMP%20Agent%20Use%20guide%2020240531.pdf)
-
-### [API Docs yaml](./swagger.yaml)
+### [API Docs](https://m-cmp.github.io/mc-observability/java/swagger)
 
 ## How to Contribute
 
