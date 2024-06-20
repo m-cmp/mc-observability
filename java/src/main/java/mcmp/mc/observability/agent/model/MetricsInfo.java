@@ -26,62 +26,28 @@ import java.util.Optional;
 @Getter
 @Setter
 public class MetricsInfo {
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(required = true, example = "1")
     private Long influxDBSeq;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(required = true, example = "cpu")
     private String measurement;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(required = true, example = "1h", notes = "timeunit s,m,h,d(second, minute, hour, day)")
     private String range;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(example = "1h", notes = "timeunit s,m,h,d(second, minute, hour, day)")
     private String groupTime;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(example = "[\"uuid\",\"cpu\"]")
     private List<String> groupBy;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(example = "10")
     private Long limit;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(example = "[{\"function\":\"mean\",\"field\":\"usage_idle\"}]")
     private List<FieldInfo> fields;
-    @ApiModelProperty(hidden = true)
-    @JsonIgnore
+    @ApiModelProperty(example = "[{\"key\":\"cpu\",\"value\":\"cpu-total\"}]")
     private List<ConditionInfo> conditions;
-
-    @ApiModelProperty(value =   "Base64 encoded json string\n" +
-                    "for example)\n" +
-                    "{\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"influxDBSeq\": 1, //(* Require)\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"measurement\": \"cpu\", //(* Require)\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"range\": \"1h\", //(* Require)\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"groupTime\": \"5m\",\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"groupBy\": [\"uuid\", \"cpu\"],\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"fields\":[\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"function\": \"mean\", \"field\": \"usage_idle\"},\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"function\": \"min\", \"field\": \"usage_idle\"},\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"function\": \"max\", \"field\": \"usage_idle\"}\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"conditions\":[\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"uuid\", \"value\": \"d8a66509-48a4-6231-13f9-d931a15d75be\"},\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{\"key\": \"cpu\", \"value\": \"cpu-total\"}\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;],\n" +
-                    "&nbsp;&nbsp;&nbsp;&nbsp;\"limit\": 10\n" +
-                    "}", example = "eyJpbmZsdXhEQlNlcSI6IDEsIm1lYXN1cmVtZW50IjogImNwdSIsInJhbmdlIjogIjFoIiwiZ3JvdXBUaW1lIjogIjVtIiwiZ3JvdXBCeSI6IFsidXVpZCIsICJjcHUiXSwiZmllbGRzIjpbeyJmdW5jdGlvbiI6Im1lYW4iLCJmaWVsZCI6ICJ1c2FnZV9pZGxlIn0seyJmdW5jdGlvbiI6ICJtaW4iLCAiZmllbGQiOiAidXNhZ2VfaWRsZSJ9LHsiZnVuY3Rpb24iOiAibWF4IiwiZmllbGQiOiAidXNhZ2VfaWRsZSJ9XSwiY29uZGl0aW9ucyI6W3sia2V5IjogInV1aWQiLCAidmFsdWUiOiAiZDhhNjY1MDktNDhhNC02MjMxLTEzZjktZDkzMWExNWQ3NWJlIn0seyJrZXkiOiAiY3B1IiwidmFsdWUiOiAiY3B1LXRvdGFsIn1dLCJsaW1pdCI6IDEwfQ==")
-    @Base64DecodeField
-    private String json;
 
     @Getter
     @Setter
     @NoArgsConstructor
     public static class FieldInfo {
-        @ApiModelProperty(hidden = true)
-        @JsonIgnore
         private String function;
-        @ApiModelProperty(hidden = true)
-        @JsonIgnore
         private String field;
     }
 
@@ -89,11 +55,7 @@ public class MetricsInfo {
     @Setter
     @NoArgsConstructor
     public static class ConditionInfo {
-        @ApiModelProperty(hidden = true)
-        @JsonIgnore
         private String key;
-        @ApiModelProperty(hidden = true)
-        @JsonIgnore
         private String value;
     }
 
@@ -131,11 +93,11 @@ public class MetricsInfo {
 
     private String getGroupByQuery() {
         if( groupTime == null && (groupBy == null || groupBy.isEmpty()) ) return "";
-        StringBuilder sb = new StringBuilder("group by");
+        StringBuilder sb = new StringBuilder("group by ");
 
         if( groupTime != null ) sb.append(" time(").append(groupTime).append(")");
         if( groupBy != null && !groupBy.isEmpty() ) {
-            if( !sb.toString().equals("group by") ) sb.append(",");
+            if( !sb.toString().equals("group by ") ) sb.append(",");
             sb.append(String.join(",", groupBy));
         }
 
@@ -143,7 +105,7 @@ public class MetricsInfo {
     }
 
     private String getLimitQuery() {
-        return (getLimit() > 0? "limit " + getLimit(): "");
+        return (getLimit() != null && getLimit() > 0? "limit " + getLimit(): "");
     }
 
     @ApiModelProperty(hidden = true)
@@ -166,11 +128,6 @@ public class MetricsInfo {
             }
         }
         return true;
-    }
-
-    public void convertObject() {
-        JsonObject js = JsonParser.parseString(getJson()).getAsJsonObject();
-        jsonParser(js, this.getClass(), this);
     }
 
     private void jsonParser(JsonObject js, Class<?> clazz, Object o) {

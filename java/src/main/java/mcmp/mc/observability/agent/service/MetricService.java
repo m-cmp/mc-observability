@@ -16,8 +16,6 @@ public class MetricService {
     private final InfluxDBService influxDBService;
 
     public ResBody<List<MetricInfo>> getMetrics(MetricsInfo metricsInfo) {
-        metricsInfo.convertObject();
-
         ResBody<List<MetricInfo>> res = new ResBody<>();
 
         if( !metricsInfo.isVaild() ) {
