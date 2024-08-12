@@ -16,7 +16,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping(Constants.PREFIX_V1 + "/metric")
+@RequestMapping(Constants.MONITORING_URI + "/metric")
 @RequiredArgsConstructor
 public class MetricController {
 

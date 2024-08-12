@@ -20,7 +20,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(Constants.PREFIX_V1 + "/influxdb")
+@RequestMapping(Constants.MONITORING_URI + "/influxdb")
 @RequiredArgsConstructor
 public class InfluxDBController {
 

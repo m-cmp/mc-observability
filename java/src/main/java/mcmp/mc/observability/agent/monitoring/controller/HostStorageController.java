@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
-@RequestMapping(Constants.PREFIX_V1 + "/host/{hostSeq}/storage")
+@RequestMapping(Constants.MONITORING_URI + "/host/{hostSeq}/storage")
 @RequiredArgsConstructor
 public class HostStorageController {
 

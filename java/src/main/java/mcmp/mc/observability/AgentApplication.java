@@ -1,11 +1,11 @@
-package mcmp.mc.observability.agent;
+package mcmp.mc.observability;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@MapperScan(value = "mcmp.mc.observability.agent")
+@MapperScan
 @EnableScheduling
 @SpringBootApplication
 public class AgentApplication {

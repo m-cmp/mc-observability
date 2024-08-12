@@ -21,7 +21,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(Constants.PREFIX_V1 + "/host")
+@RequestMapping(Constants.MONITORING_URI + "/host")
 public class HostController {
 
     private final HostService hostService;

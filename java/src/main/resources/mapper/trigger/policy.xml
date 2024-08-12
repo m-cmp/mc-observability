@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.trigger.mapper.TriggerPolicyMapper">
+    <update id="updatePolicy"></update>
+
+    <delete id="deletePolicy"></delete>
+
+    <select id="getDetail" resultType="mcmp.mc.observability.trigger.model.TriggerPolicyInfo"></select>
+
+    <select id="getList" resultType="mcmp.mc.observability.trigger.model.TriggerPolicyInfo"></select>
+
+    <select id="getListCount" resultType="java.lang.Long"></select>
+</mapper>

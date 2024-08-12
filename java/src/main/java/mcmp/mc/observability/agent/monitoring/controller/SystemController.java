@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping(Constants.PREFIX_V1)
+@RequestMapping(Constants.MONITORING_URI)
 @RequiredArgsConstructor
 public class SystemController {
     private final PluginLoader pluginLoader;

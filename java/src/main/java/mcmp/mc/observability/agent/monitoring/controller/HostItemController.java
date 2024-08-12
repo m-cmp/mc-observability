@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
-@RequestMapping(Constants.PREFIX_V1 + "/host/{hostSeq}/item")
+@RequestMapping(Constants.MONITORING_URI + "/host/{hostSeq}/item")
 @RequiredArgsConstructor
 public class HostItemController {
 

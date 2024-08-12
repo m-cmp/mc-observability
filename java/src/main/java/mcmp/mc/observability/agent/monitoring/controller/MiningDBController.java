@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping(Constants.PREFIX_V1 + "/miningdb")
+@RequestMapping(Constants.MONITORING_URI + "/miningdb")
 @RequiredArgsConstructor
 public class MiningDBController {
 
