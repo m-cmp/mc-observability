@@ -5,7 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@MapperScan
+@MapperScan(value = "mcmp.mc.observability.agent")
 @EnableScheduling
 @SpringBootApplication
 public class AgentApplication {

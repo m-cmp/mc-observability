@@ -19,7 +19,7 @@ springdoc:
     - /api/**
 
 mybatis:
-  mapper-locations: mapper/*.xml
+  mapper-locations: mapper/**/*.xml
   configuration:
     cache-enabled: true
     lazy-loading-enabled: true
@@ -29,8 +29,8 @@ mybatis:
     default-executor-type: simple
     default-statement-timeout: 100
     map-underscore-to-camel-case: true
-  type-aliases-package: mcmp.mc.observability.agent.model, mcmp.mc.observability.agent.dto
-  type-handlers-package: mcmp.mc.observability.agent.util
+  type-aliases-package: mcmp.mc.observability.agent
+  type-handlers-package: mcmp.mc.observability.agent
 
 logging:
   level:

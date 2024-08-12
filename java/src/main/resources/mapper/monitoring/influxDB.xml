@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.monitoring.mapper.InfluxDBMapper">
+    <select id="getInfluxDBInfo" parameterType="Long" resultType="InfluxDBInfo">
+        select
+            `SEQ`,
+            `URL`,
+            `DATABASE`,
+            `RETENTION_POLICY`,
+            `USERNAME`,
+            `PASSWORD`
+        from
+            m_cmp_agent_summary_influx
+        where SEQ=#{seq}
+    </select>
+
+    <select id="getInfluxDBInfoList" resultType="InfluxDBInfo">
+        select
+            `SEQ`,
+            `URL`,
+            `DATABASE`,
+            `RETENTION_POLICY`,
+            `USERNAME`,
+            `PASSWORD`
+        from
+            m_cmp_agent_summary_influx
+    </select>
+
+    <select id="getInfluxDBInfoMap" resultType="Map">
+        select
+            `SEQ`,
+            `URL`,
+            `DATABASE`,
+            `RETENTION_POLICY`,
+            `USERNAME`,
+            `PASSWORD`
+        from
+            m_cmp_agent_summary_influx
+    </select>
+
+    <insert id="insertInfluxDBInfoList" parameterType="List">
+        insert into m_cmp_agent_summary_influx(`URL`, `DATABASE`, `RETENTION_POLICY`, `USERNAME`, `PASSWORD`)
+        values
+            <foreach collection="list" item="item" separator=",">
+                (
+                    #{item.url},
+                    #{item.database},
+                    #{item.retentionPolicy},
+                    #{item.username},
+                    #{item.password}
+                )
+            </foreach>
+    </insert>
+
+    <delete id="deleteInfluxDBInfoList" parameterType="Long">
+        delete from m_cmp_agent_summary_influx
+               where seq in
+        <foreach collection="list" item="item" open="(" close=")" separator=",">
+                #{item}
+        </foreach>
+    </delete>
+</mapper>
