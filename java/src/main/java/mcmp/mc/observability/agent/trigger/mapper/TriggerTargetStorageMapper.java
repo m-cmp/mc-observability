@@ -1,4 +1,4 @@
-package mcmp.mc.observability.trigger.mapper;
+package mcmp.mc.observability.agent.trigger.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 

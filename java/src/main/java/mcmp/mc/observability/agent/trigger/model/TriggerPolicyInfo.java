@@ -1,10 +1,10 @@
-package mcmp.mc.observability.trigger.model;
+package mcmp.mc.observability.agent.trigger.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
-import mcmp.mc.observability.trigger.model.dto.TriggerPolicyUpdateDto;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 
 import java.util.Map;
 

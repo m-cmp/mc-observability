@@ -1,4 +1,4 @@
-package mcmp.mc.observability.trigger.model.dto;
+package mcmp.mc.observability.agent.trigger.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;

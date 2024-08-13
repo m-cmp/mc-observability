@@ -1,4 +1,4 @@
-package mcmp.mc.observability.trigger.controller;
+package mcmp.mc.observability.agent.trigger.controller;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -8,9 +8,9 @@ import mcmp.mc.observability.agent.common.annotation.Base64Encode;
 import mcmp.mc.observability.agent.common.model.PageableReqBody;
 import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
-import mcmp.mc.observability.trigger.model.TriggerPolicyInfo;
-import mcmp.mc.observability.trigger.model.dto.TriggerPolicyUpdateDto;
-import mcmp.mc.observability.trigger.service.TriggerPolicyService;
+import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
+import mcmp.mc.observability.agent.trigger.service.TriggerPolicyService;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 

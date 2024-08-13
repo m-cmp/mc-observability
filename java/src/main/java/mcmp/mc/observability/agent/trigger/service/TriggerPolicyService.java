@@ -1,4 +1,4 @@
-package mcmp.mc.observability.trigger.service;
+package mcmp.mc.observability.agent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,9 +7,9 @@ import mcmp.mc.observability.agent.common.model.PageableReqBody;
 import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
-import mcmp.mc.observability.trigger.mapper.TriggerPolicyMapper;
-import mcmp.mc.observability.trigger.model.TriggerPolicyInfo;
-import mcmp.mc.observability.trigger.model.dto.TriggerPolicyUpdateDto;
+import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
+import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 import org.springframework.stereotype.Service;
 
 import java.util.*;

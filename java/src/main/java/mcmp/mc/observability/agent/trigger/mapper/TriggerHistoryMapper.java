@@ -1,7 +1,7 @@
-package mcmp.mc.observability.trigger.mapper;
+package mcmp.mc.observability.agent.trigger.mapper;
 
 import mcmp.mc.observability.agent.common.model.PageableReqBody;
-import mcmp.mc.observability.trigger.model.TriggerHistoryInfo;
+import mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;

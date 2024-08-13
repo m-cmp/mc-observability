@@ -1,4 +1,4 @@
-package mcmp.mc.observability.trigger.model;
+package mcmp.mc.observability.agent.trigger.model;
 
 
 import io.swagger.annotations.ApiModelProperty;
