@@ -14,6 +14,9 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 - The overall flow of the integrated system is as follows: Information, Metrics, events, and log details of the monitoring target are collected through the cloud API and agents installed on vitual servers or physical equipment.\
 
 ### System architecture
+<details>
+<summary>접기/펼치기</summary>
+
 ```mermaid
 C4Context
 Enterprise_Boundary(boundary0, "M-CMP") {
@@ -98,6 +101,7 @@ UpdateRelStyle(database12, container11, $lineColor="green")
 UpdateRelStyle(container12, database12, $lineColor="green")
 UpdateRelStyle(container13, database12, $lineColor="green")
 ```
+</details>
 
 ## How to Use
 
@@ -145,8 +149,13 @@ $ script/install.sh
 ### Swagger Docs
 https://m-cmp.github.io/mc-observability/java/swagger
 
+#### [v0.3.0 swagger api preview](https://m-cmp.github.io/mc-observability/java/swagger/index_copy.html)
+
 ### API Use guide (swagger docs linked mermaid contents)
 #### Observability Monitoring target setting guide
+
+<details>
+<summary>접기/펼치기</summary>
 
 ```mermaid
 flowchart TD
@@ -217,6 +226,7 @@ loop Monitoring setting
   MC-O11y-Manager ->> M-CMP User: Response forwarding
 end
 ```
+</details>
 
 ## How to Contribute
 
