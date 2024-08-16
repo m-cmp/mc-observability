@@ -1008,6 +1008,12 @@ definitions:
         type: string
         example: cpu
         description: Trigger target metric
+      field:
+        example: usage_idle
+        type: string
+      statistics:
+        example: min
+        type: string
       name:
         type: string
         description: Base64 Encoded value
