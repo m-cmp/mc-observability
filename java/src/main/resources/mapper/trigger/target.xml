@@ -113,4 +113,9 @@
         DELETE FROM m_cmp_trigger_target
         WHERE SEQ = #{seq}
     </delete>
+
+    <delete id="deleteTriggerTargetByPolicySeq">
+        DELETE FROM m_cmp_trigger_target
+        WHERE POLICY_SEQ = #{policySeq}
+    </delete>
 </mapper>

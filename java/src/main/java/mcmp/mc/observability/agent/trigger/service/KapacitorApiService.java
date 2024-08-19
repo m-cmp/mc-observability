@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.exception.ResultCodeException;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.agent.trigger.client.KapacitorClient;
-import mcmp.mc.observability.agent.trigger.model.KapacitorTaskInfo;
-import mcmp.mc.observability.agent.trigger.model.KapacitorTaskListInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerTargetStorageInfo;
+import mcmp.mc.observability.agent.trigger.model.*;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -46,9 +43,8 @@ public class KapacitorApiService {
 
         KapacitorTaskInfo kapacitorTaskInfo = new KapacitorTaskInfo();
         kapacitorTaskInfo.setId(String.valueOf(triggerPolicyInfo.getSeq()));
-        // TODO: 사용자가 type 선택 할 수 있도록 변경
         kapacitorTaskInfo.setType("stream");
-        kapacitorTaskInfo.setStatus(String.valueOf(triggerPolicyInfo.getIsEnabled()));
+        kapacitorTaskInfo.setStatus(triggerPolicyInfo.getStatus().toString());
         kapacitorTaskInfo.setScript(triggerPolicyInfo.getTickScript());
 
         Map<String, String> dbrps = new HashMap<>();
@@ -72,11 +68,43 @@ public class KapacitorApiService {
         }
     }
 
+    public boolean updateTask(TriggerPolicyInfo info, ManageTriggerTargetStorageInfo targetStorageInfo) {
+        String kapacitorTaskId = String.valueOf(info.getSeq());
 
-    public void deleteTask(Long triggerSeq, String url) {
+        Map<String, String> updateTaskParam = new HashMap<>();
+        updateTaskParam.put("status", info.getStatus().toString());
+        updateTaskParam.put("script", info.getTickScript());
+
+        try {
+            String kapacitorUrl = getKapacitorUrl(targetStorageInfo.getUrl());
+            KapacitorTaskInfo taskInfo = getTask(kapacitorUrl, kapacitorTaskId);
+            if(taskInfo == null)
+                throw new ResultCodeException(ResultCode.FAILED, "Trigger Policy Not Exists");
+
+            updateTask(kapacitorUrl, kapacitorTaskId, updateTaskParam);
+
+            if(info.getStatus().equals("enabled")) {
+                updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "disabled"));
+                updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "enabled"));
+            }
+            return true;
+        } catch (Exception e) {
+            throw new ResultCodeException(ResultCode.FAILED, "Failed to update Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", info.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
+        }
+    }
+
+    public void updateTask(String kapacitorUrl, String kapacitorTaskId, Map<String, String> params) throws URISyntaxException {
+        kapacitorClient.updateTask(
+                getKapacitorURI(kapacitorUrl),
+                kapacitorTaskId,
+                params
+        );
+    }
+
+    public void deleteTask(Long policySeq, String url) {
 
         String kapacitorUrl = getKapacitorUrl(url);
-        String kapacitorTaskId = String.valueOf(triggerSeq);
+        String kapacitorTaskId = String.valueOf(policySeq);
 
         try {
             KapacitorTaskInfo taskInfo = getTask(kapacitorUrl, kapacitorTaskId);
@@ -88,8 +116,7 @@ public class KapacitorApiService {
                     kapacitorTaskId
             );
         } catch (Exception e) {
-            log.error("kapacitor task 삭제 실패! TriggerPolicy >> {}, kapacitorUrl >> {}", triggerSeq, url);
-            throw new ResultCodeException(ResultCode.FAILED, "Failed to delete Trigger Task");
+            throw new ResultCodeException(ResultCode.FAILED, "Failed to delete Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policySeq, url, e.getMessage());
         }
     }
 

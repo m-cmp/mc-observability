@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
+import mcmp.mc.observability.agent.trigger.enums.TaskStatus;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 
@@ -39,7 +40,7 @@ public class TriggerPolicyInfo {
     @Base64EncodeField
     private String threshold;
     @ApiModelProperty(value = "Trigger Policy enablement status")
-    private Boolean isEnabled;
+    private TaskStatus status;
     @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
     private List<String> groupByFields;
     @JsonIgnore
@@ -58,54 +59,60 @@ public class TriggerPolicyInfo {
         this.threshold = dto.getThreshold();
         this.field = dto.getField();
         this.statistics = dto.getStatistics();
-        this.isEnabled = dto.getIsEnabled();
+        this.status = dto.getStatus();
     }
 
     public void setUpdateDto(TriggerPolicyUpdateDto dto) {
-        this.seq = dto.getSeq();
-        this.name = dto.getName();
-        this.description = dto.getDescription();
-        this.metric = dto.getMetric();
-        this.groupByFields = dto.getGroupByFields();
-        this.threshold = dto.getThreshold();
-        this.field = dto.getField();
-        this.statistics = dto.getStatistics();
-        this.isEnabled = dto.getIsEnabled();
+        if(dto.getName() != null)
+            this.name = dto.getName();
+        if (dto.getDescription() != null)
+            this.description = dto.getDescription();
+        if (dto.getMetric() != null)
+            this.metric = dto.getMetric();
+        if (dto.getGroupByFields() != null)
+            this.groupByFields = dto.getGroupByFields();
+        if (dto.getThreshold() != null)
+            this.threshold = dto.getThreshold();
+        if (dto.getField() != null)
+            this.field = dto.getField();
+        if (dto.getStatistics() != null)
+            this.statistics = dto.getStatistics();
+        if (dto.getStatus() != null)
+            this.status = dto.getStatus();
     }
 
     public void makeTickScript(TriggerPolicyInfo triggerPolicy) {
-
         String tickScript =
                 "var db = '@DATABASE'\n" +
-                        "var rp = '@RETENTION_POLICY'\n" +
-                        "var measurement = '@MEASUREMENT'\n" +
-                        "var groupBy = @GROUP_BY\n\n" +
-                        "var streamData = stream\n" +
-                        "    |from()\n" +
-                        "        .database(db)\n" +
-                        "        .retentionPolicy(rp)\n" +
-                        "        .measurement(measurement)\n" +
-                        "        .groupBy(groupBy)\n" +
-                        "        .where(lambda: isPresent(\"@FIELD\")@WHERE_CONDITION)\n" +
-                        "    |eval()\n" +
-                        "        .keep('@FIELD')\n\n" +
-                        "var meanData = streamData\n" +
-                        "    |@STATISTICS('@FIELD')\n" +
-                        "        .as('value')\n\n" +
-                        "var trigger = meanData\n" +
-                        "    |alert()\n" +
-                        "@ALERT_CONDITION" +
-                        "        .id('{{ .TaskName }}')\n" +
-                        "        .stateChangesOnly()\n" +
-                        "        .post('http://192.168.130.26:8080/api/v2/cmp/kapacitor/alert')\n\n" +
-                        "trigger\n" +
-                        "    |httpOut('output');";
+                "var rp = '@RETENTION_POLICY'\n" +
+                "var measurement = '@MEASUREMENT'\n" +
+                "var groupBy = @GROUP_BY\n\n" +
+                "var streamData = stream\n" +
+                "    |from()\n" +
+                "        .database(db)\n" +
+                "        .retentionPolicy(rp)\n" +
+                "        .measurement(measurement)\n" +
+                "        .groupBy(groupBy)\n" +
+                "        .where(lambda: isPresent(\"@FIELD\")@WHERE_CONDITION)\n" +
+                "    |eval()\n" +
+                "        .keep('@FIELD')\n\n" +
+                "var meanData = streamData\n" +
+                "    |@STATISTICS('@FIELD')\n" +
+                "        .as('value')\n\n" +
+                "var trigger = meanData\n" +
+                "    |alert()\n" +
+                "@ALERT_CONDITION" +
+                "        .id('{{ .TaskName }}')\n" +
+                "        .stateChangesOnly()\n" +
+                "        .post('http://192.168.130.26:8080/api/v2/cmp/kapacitor/alert')\n\n" +
+                "trigger\n" +
+                "    |httpOut('output')";
 
         String measurement = triggerPolicy.getMetric();
         String field = triggerPolicy.getField();
         String whereCondition = "";
         if("cpu".equals(measurement))
-            whereCondition = " AND \"cpu\" != 'cpu-total')";
+            whereCondition = " AND \"cpu\" != 'cpu-total'";
         String statistics = triggerPolicy.getStatistics();
         String alertCondition = getAlertCondition(triggerPolicy);
 
@@ -117,6 +124,13 @@ public class TriggerPolicyInfo {
                 .replaceAll("@ALERT_CONDITION", alertCondition);
 
         this.tickScript = tickScript;
+    }
+
+    public void setTickScriptStorageInfo(TriggerTargetStorageInfo targetStorageInfo) {
+        String script = this.tickScript;
+        this.tickScript = script
+                .replaceAll("@DATABASE", targetStorageInfo.getDatabase())
+                .replaceAll("@RETENTION_POLICY", targetStorageInfo.getRetentionPolicy());
     }
 
     public String convertListToString(List<String> groupByFields) {
@@ -158,6 +172,4 @@ public class TriggerPolicyInfo {
             throw new RuntimeException("Failed to parse threshold JSON", e);
         }
     }
-
-
 }

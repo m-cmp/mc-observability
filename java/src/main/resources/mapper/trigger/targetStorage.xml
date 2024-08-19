@@ -31,4 +31,30 @@
         DELETE FROM m_cmp_trigger_target_storage
         WHERE TARGET_SEQ = #{targetSeq}
     </delete>
+
+    <select id="getManageTriggerTargetStorageInfoList" resultType="mcmp.mc.observability.agent.trigger.model.ManageTriggerTargetStorageInfo">
+        SELECT TT.SEQ as targetSeq
+        , TT.POLICY_SEQ
+        , TTS.URL
+        , TTS.`DATABASE`
+        , TTS.RETENTION_POLICY
+        FROM m_cmp_trigger_target_storage TTS
+        LEFT JOIN m_cmp_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+        <where>
+            <if test="policySeq != null">
+                AND POLICY_SEQ = #{policySeq}
+            </if>
+        </where>
+        GROUP BY URL, `DATABASE` , RETENTION_POLICY
+    </select>
+
+    <delete id="deleteTriggerTargetStorageByPolicySeq">
+        DELETE FROM m_cmp_trigger_target_storage
+        WHERE SEQ IN (
+            SELECT TTS.SEQ
+            FROM m_cmp_trigger_target_storage TTS
+                     LEFT JOIN m_cmp_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+            WHERE TT.POLICY_SEQ = #{policySeq}
+        )
+    </delete>
 </mapper>

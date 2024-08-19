@@ -11,7 +11,7 @@
         <result column="field" property="field" />
         <result column="statistics" property="statistics" />
         <result column="tick_script" property="tickScript" />
-        <result column="is_enabled" property="isEnabled" />
+        <result column="status" property="status" />
         <result column="create_at" property="createAt" />
         <result column="update_at" property="updateAt" />
     </resultMap>
@@ -27,8 +27,14 @@
             <if test='metric != null'>
                 AND METRIC = #{metric}
             </if>
-            <if test='isEnabled != null'>
-                AND IS_ENABLED = #{isEnabled}
+            <if test='status != null'>
+                AND STATUS = #{status}
+            </if>
+            <if test='field != null'>
+                AND FIELD = #{field},
+            </if>
+            <if test='statistics != null'>
+                AND STATISTICS = #{statistics},
             </if>
         </where>
     </sql>
@@ -44,8 +50,14 @@
             <if test='data.metric != null'>
                 AND METRIC = #{data.metric}
             </if>
-            <if test='data.isEnabled != null'>
-                AND IS_ENABLED = #{data.isEnabled}
+            <if test='data.field != null'>
+                AND FIELD = #{data.field},
+            </if>
+            <if test='data.statistics != null'>
+                AND STATISTICS = #{data.statistics},
+            </if>
+            <if test='data.status != null'>
+                AND STATUS = #{data.status}
             </if>
         </where>
     </sql>
@@ -56,8 +68,10 @@
                DESCRIPTION,
                METRIC,
                THRESHOLD,
+               FIELD,
+               STATISTICS,
                TICK_SCRIPT,
-               IS_ENABLED,
+               STATUS,
                CREATE_AT,
                UPDATE_AT
         FROM m_cmp_trigger_policy
@@ -70,8 +84,10 @@
                DESCRIPTION,
                METRIC,
                THRESHOLD,
+               FIELD,
+               STATISTICS,
                TICK_SCRIPT,
-               IS_ENABLED,
+               STATUS,
                CREATE_AT,
                UPDATE_AT
         FROM m_cmp_trigger_policy
@@ -92,7 +108,7 @@
     </select>
 
     <insert id="createPolicy" parameterType="TriggerPolicyInfo">
-        INSERT INTO m_cmp_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, STATISTICS, THRESHOLD, TICK_SCRIPT, IS_ENABLED)
+        INSERT INTO m_cmp_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, STATISTICS, THRESHOLD, TICK_SCRIPT, STATUS)
         VALUES (
                 #{seq}
                , #{name}
@@ -102,7 +118,7 @@
                , #{statistics}
                , #{threshold}
                , #{tickScript}
-               , #{isEnabled}
+               , #{status}
                )
     </insert>
 
@@ -130,8 +146,8 @@
             <if test='tickScript != null'>
                 TICK_SCRIPT = #{tickScript},
             </if>
-            <if test='isEnabled != null'>
-                IS_ENABLED = #{isEnabled},
+            <if test='status != null'>
+                STATUS = #{status},
             </if>
             UPDATE_AT = CURRENT_TIMESTAMP,
         </trim>

@@ -5,10 +5,9 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 import mcmp.mc.observability.agent.common.annotation.Base64DecodeField;
-import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
+import mcmp.mc.observability.agent.trigger.enums.TaskStatus;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -33,5 +32,5 @@ public class TriggerPolicyUpdateDto {
     @Base64DecodeField
     private String threshold;
     @ApiModelProperty(value = "Trigger Policy enablement status")
-    private Boolean isEnabled;
+    private TaskStatus status;
 }

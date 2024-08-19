@@ -1,5 +1,6 @@
 package mcmp.mc.observability.agent.trigger.mapper;
 
+import mcmp.mc.observability.agent.trigger.model.ManageTriggerTargetStorageInfo;
 import mcmp.mc.observability.agent.trigger.model.TriggerTargetStorageInfo;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -13,4 +14,8 @@ public interface TriggerTargetStorageMapper {
     List<Map<String, Object>> getRemainTaskStorageCount(Long policySeq);
 
     int deleteTriggerTargetStorageByTargetSeq(Long targetSeq);
+
+    List<ManageTriggerTargetStorageInfo> getManageTriggerTargetStorageInfoList(Map<String, Long> policySeq);
+
+    void deleteTriggerTargetStorageByPolicySeq(Long seq);
 }

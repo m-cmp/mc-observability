@@ -19,4 +19,6 @@ public interface TriggerTargetMapper {
     int createTarget(TriggerTargetInfo triggerTargetInfo);
 
     int deleteTriggerTargetBySeq(Long seq);
+
+    void deleteTriggerTargetByPolicySeq(Long seq);
 }

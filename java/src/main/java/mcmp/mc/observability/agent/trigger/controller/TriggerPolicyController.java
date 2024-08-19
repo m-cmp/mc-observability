@@ -49,7 +49,7 @@ public class TriggerPolicyController {
 
     @ApiOperation(value = "Update request Trigger Policy")
     @Base64Decode(TriggerPolicyUpdateDto.class)
-    @PutMapping("/{policySeq}")
+    @PatchMapping("/{policySeq}")
     public ResBody<Void> update(@PathVariable("policySeq") Long seq, @RequestBody TriggerPolicyUpdateDto triggerPolicyUpdateDto) {
         triggerPolicyUpdateDto.setSeq(seq);
         return triggerPolicyService.updatePolicy(triggerPolicyUpdateDto);

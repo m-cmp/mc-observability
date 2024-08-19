@@ -7,25 +7,29 @@ import mcmp.mc.observability.agent.common.model.PageableReqBody;
 import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
-import mcmp.mc.observability.agent.monitoring.model.HostStorageInfo;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetStorageMapper;
+import mcmp.mc.observability.agent.trigger.model.ManageTriggerTargetStorageInfo;
 import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class TriggerPolicyService {
 
     private final TriggerPolicyMapper triggerPolicyMapper;
     private final TriggerTargetMapper triggerTargetMapper;
     private final TriggerTargetStorageMapper triggerTargetStorageMapper;
+    private final KapacitorApiService kapacitorApiService;
 
     public PageableResBody<TriggerPolicyInfo> getList(PageableReqBody<TriggerPolicyInfo> reqBody) {
         PageableResBody<TriggerPolicyInfo> result = new PageableResBody<>();
@@ -84,17 +88,39 @@ public class TriggerPolicyService {
         info.makeTickScript(info);
 
         try {
-            // TODO: update kapacitor task
             int result = triggerPolicyMapper.updatePolicy(info);
 
             if (result <= 0) {
                 throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy Update None");
             }
+
+            if(hasNonNullFields(dto)) {
+                List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", info.getSeq()));
+                if (CollectionUtils.isEmpty(targetStorageInfoList))
+                    return resBody;
+
+                for(ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
+                    kapacitorApiService.updateTask(info, targetStorageInfo);
+                }
+            }
+
         } catch (ResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
             resBody.setCode(e.getResultCode());
         }
         return resBody;
+    }
+
+    private boolean hasNonNullFields(TriggerPolicyUpdateDto dto) {
+        List<Object> fields = Arrays.asList(
+                dto.getMetric(),
+                dto.getField(),
+                dto.getGroupByFields() != null && !dto.getGroupByFields().isEmpty() ? dto.getGroupByFields() : null,
+                dto.getStatistics(),
+                dto.getThreshold(),
+                dto.getStatus()
+        );
+        return fields.stream().anyMatch(field -> field != null);
     }
 
     public ResBody<Void> deletePolicy(Long seq) {
@@ -107,7 +133,19 @@ public class TriggerPolicyService {
             if(policyInfo == null)
                 throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
-            // TODO: delete target, targetStorage (kapacitor task)
+            List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", seq));
+            if (!CollectionUtils.isEmpty(targetStorageInfoList)) {
+                for (ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
+                    try {
+                        kapacitorApiService.deleteTask(seq, targetStorageInfo.getUrl());
+                    } catch (Exception e) {
+                        log.error("Failed to delete Kapacitor task.");
+                    }
+                }
+            }
+
+            triggerTargetStorageMapper.deleteTriggerTargetStorageByPolicySeq(seq);
+            triggerTargetMapper.deleteTriggerTargetByPolicySeq(seq);
             triggerPolicyMapper.deletePolicy(seq);
         }
         catch (ResultCodeException e) {

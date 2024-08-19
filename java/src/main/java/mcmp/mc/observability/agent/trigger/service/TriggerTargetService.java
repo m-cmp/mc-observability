@@ -122,6 +122,7 @@ public class TriggerTargetService {
                         .retentionPolicy(influxDBConnector.getRetentionPolicy())
                         .build();
 
+                policyInfo.setTickScriptStorageInfo(targetStorageInfo);
                 kapacitorApiService.createTask(policyInfo, targetStorageInfo);
                 triggerTargetStorageMapper.createTargetStorage(targetStorageInfo);
             }
@@ -148,7 +149,7 @@ public class TriggerTargetService {
                     try {
                         kapacitorApiService.deleteTask(targetInfo.getPolicySeq(), String.valueOf(taskStorage.get("url")));
                     } catch (Exception e) {
-
+                        log.error("Failed to delete task. Error : {}, TaskId : {}", e.getMessage(), targetInfo.getPolicySeq());
                     }
                 }
             }
