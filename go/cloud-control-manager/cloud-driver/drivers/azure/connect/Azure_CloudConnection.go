@@ -243,3 +243,15 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
 	return &tagHandler, nil
 	// return nil, errors.New("Azure Driver: not implemented")
 }
+
+func (cloudConn *AzureCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	cblogger.Info("Azure Cloud Driver: called CreateMonitoringHandler()!")
+	monitoringHandler := azrs.AzureMonitoringHandler{
+		CredentialInfo: cloudConn.CredentialInfo,
+		Region:         cloudConn.Region,
+		Ctx:            cloudConn.Ctx,
+		Client:         cloudConn.VMClient,
+		MetricClient:   cloudConn.MetricClient,
+	}
+	return &monitoringHandler, nil
+}

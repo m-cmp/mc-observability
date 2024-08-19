@@ -189,3 +189,7 @@ func (cloudConn *OpenStackCloudConnection) CreateTagHandler() (irs.TagHandler, e
 	}
 	return &tagHandler, nil
 }
+
+func (cloudConn *OpenStackCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, errors.New("OpenStack Driver: not implemented")
+}

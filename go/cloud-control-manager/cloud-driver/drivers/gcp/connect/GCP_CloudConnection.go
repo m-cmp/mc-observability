@@ -181,3 +181,7 @@ func (cloudConn *GCPCloudConnection) CreateTagHandler() (irs.TagHandler, error) 
 
 	return &tagHandler, nil
 }
+
+func (cloudConn *GCPCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, errors.New("GCP Cloud Driver: not implemented")
+}

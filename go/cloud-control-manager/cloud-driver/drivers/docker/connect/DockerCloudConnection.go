@@ -12,7 +12,6 @@ package connect
 
 import (
 	"context"
-
 	cblog "github.com/cloud-barista/cb-log"
 	dkrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/docker/resources"
 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
@@ -120,5 +119,9 @@ func (*DockerCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, er
 }
 
 func (cloudConn *DockerCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+	return nil, errors.New("Docker Driver: not implemented")
+}
+
+func (cloudConn *DockerCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 	return nil, errors.New("Docker Driver: not implemented")
 }

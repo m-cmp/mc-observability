@@ -11,6 +11,7 @@
 package connect
 
 import (
+	"errors"
 	cblog "github.com/cloud-barista/cb-log"
 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
 
@@ -198,4 +199,8 @@ func (cloudConn *AwsCloudConnection) CreateRegionZoneHandler() (irs.RegionZoneHa
 func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, error) {
 	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
 	return &handler, nil
+}
+
+func (cloudConn *AwsCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, errors.New("GCP Cloud Driver: not implemented")
 }

@@ -189,3 +189,7 @@ func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error) 
 	}
 	return &TagHandler, nil
 }
+
+func (cloudConn *IbmCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, errors.New("Ibm Cloud Driver: not implemented")
+}

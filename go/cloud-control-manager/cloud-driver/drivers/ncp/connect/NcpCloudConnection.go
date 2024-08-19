@@ -12,6 +12,7 @@
 package connect
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -158,4 +159,8 @@ func (cloudConn *NcpCloudConnection) Close() error {
 	cblogger.Info("NCP Cloud Driver: called Close()!")
 
 	return nil
+}
+
+func (cloudConn *NcpCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, errors.New("NCP Cloud Driver: not implemented")
 }

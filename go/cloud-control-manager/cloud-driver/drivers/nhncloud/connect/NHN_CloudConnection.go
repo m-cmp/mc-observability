@@ -156,3 +156,7 @@ func (cloudConn *NhnCloudConnection) Close() error {
 func (cloudConn *NhnCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
 	return nil, errors.New("NHN Cloud Driver: not implemented")
 }
+
+func (cloudConn *NhnCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
+	return nil, fmt.Errorf("NHN Cloud Driver: not implemented")
+}

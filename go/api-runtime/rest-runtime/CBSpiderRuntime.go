@@ -441,6 +441,9 @@ func RunServer() {
 		{"GET", "/tag/:Key", GetTag},
 		{"DELETE", "/tag/:Key", RemoveTag},
 
+		//----------Monitoring Handler
+		{"GET", "/monitoring/vm/:VMName/:MetricType", GetVMMetricData},
+
 		//----------Destory All Resources in a Connection
 		{"DELETE", "/destroy", Destroy},
 
