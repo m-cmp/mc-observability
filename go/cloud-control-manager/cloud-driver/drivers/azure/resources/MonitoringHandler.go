@@ -4,9 +4,7 @@
 //
 //      * Cloud-Barista: https://github.com/cloud-barista
 //
-// This is a Cloud Driver Example for PoC Test.
-//
-// by hyokyung.kim@innogrid.co.kr, 2019.07.
+// Azure Monitoring PoC by ish@innogrid.com, 2024.08.
 
 package resources
 
