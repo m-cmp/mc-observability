@@ -443,6 +443,7 @@ func RunServer() {
 
 		//----------Monitoring Handler
 		{"GET", "/monitoring/vm/:VMName/:MetricType", GetVMMetricData},
+		{"GET", "/monitoring/clusternode/:ClusterName/:NodeGroupName/:NodeNumber/:MetricType", GetClusterNodeMetricData},
 
 		//----------Destory All Resources in a Connection
 		{"DELETE", "/destroy", Destroy},

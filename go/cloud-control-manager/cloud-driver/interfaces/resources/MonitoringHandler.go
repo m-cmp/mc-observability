@@ -15,8 +15,17 @@ import (
 	"time"
 )
 
-type MonitoringReqInfo struct {
+type VMMonitoringReqInfo struct {
 	VMIID          IID
+	MetricType     MetricType
+	IntervalMinute string
+	TimeBeforeHour string
+}
+
+type ClusterNodeMonitoringReqInfo struct {
+	ClusterIID     IID
+	NodeGroupID    IID
+	NodeIID        IID
 	MetricType     MetricType
 	IntervalMinute string
 	TimeBeforeHour string
@@ -71,5 +80,6 @@ func StringMetricType(input string) MetricType {
 }
 
 type MonitoringHandler interface {
-	GetVMMetricData(monitoringReqInfo MonitoringReqInfo) (MetricData, error)
+	GetVMMetricData(vmMonitoringReqInfo VMMonitoringReqInfo) (MetricData, error)
+	GetClusterNodeMetricData(clusterMonitoringReqInfo ClusterNodeMonitoringReqInfo) (MetricData, error)
 }

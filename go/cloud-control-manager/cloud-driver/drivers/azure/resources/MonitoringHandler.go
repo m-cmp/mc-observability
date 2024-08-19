@@ -16,6 +16,8 @@ import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v6"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	"strconv"
 	"strings"
 	"time"
@@ -27,11 +29,17 @@ import (
 )
 
 type AzureMonitoringHandler struct {
-	CredentialInfo idrv.CredentialInfo
-	Region         idrv.RegionInfo
-	Ctx            context.Context
-	Client         *armcompute.VirtualMachinesClient
-	MetricClient   *azquery.MetricsClient
+	CredentialInfo                  idrv.CredentialInfo
+	Region                          idrv.RegionInfo
+	Ctx                             context.Context
+	VMClient                        *armcompute.VirtualMachinesClient
+	ManagedClustersClient           *armcontainerservice.ManagedClustersClient
+	SecurityGroupsClient            *armnetwork.SecurityGroupsClient
+	VirtualNetworksClient           *armnetwork.VirtualNetworksClient
+	AgentPoolsClient                *armcontainerservice.AgentPoolsClient
+	VirtualMachineScaleSetsClient   *armcompute.VirtualMachineScaleSetsClient
+	VirtualMachineScaleSetVMsClient *armcompute.VirtualMachineScaleSetVMsClient
+	MetricClient                    *azquery.MetricsClient
 }
 
 var availableIntervalMinutes = []string{
@@ -69,59 +77,7 @@ func toAzureIntervalMinute(intervalMinute string) (string, error) {
 	}
 }
 
-func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqInfo irs.MonitoringReqInfo) (irs.MetricData, error) {
-	intervalMinute, err := strconv.Atoi(monitoringReqInfo.IntervalMinute)
-	if err != nil {
-		if monitoringReqInfo.IntervalMinute == "" {
-			monitoringReqInfo.IntervalMinute = "1"
-			intervalMinute = 1
-		} else {
-			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
-		}
-	}
-
-	interval, err := toAzureIntervalMinute(monitoringReqInfo.IntervalMinute)
-	if err != nil {
-		return irs.MetricData{}, err
-	}
-
-	timeBeforeHour, err := strconv.Atoi(monitoringReqInfo.TimeBeforeHour)
-	if err != nil {
-		if monitoringReqInfo.TimeBeforeHour == "" {
-			monitoringReqInfo.TimeBeforeHour = "1"
-			timeBeforeHour = 1
-		} else {
-			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
-		}
-	}
-	if timeBeforeHour < 0 {
-		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
-	}
-
-	if timeBeforeHour*60 < intervalMinute {
-		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
-	}
-
-	// log HisCall
-	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, monitoringReqInfo.VMIID.NameId, "GetVMMonitoring()")
-	start := call.Start()
-
-	convertedIID, err := ConvertVMIID(monitoringReqInfo.VMIID, monitoringHandler.CredentialInfo, monitoringHandler.Region)
-	if err != nil {
-		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
-		cblogger.Error(getErr.Error())
-		LoggingError(hiscallInfo, getErr)
-		return irs.MetricData{}, getErr
-	}
-
-	vm, err := GetRawVM(convertedIID, monitoringHandler.Region.Region, monitoringHandler.Client, monitoringHandler.Ctx)
-	if err != nil {
-		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
-		cblogger.Error(getErr.Error())
-		LoggingError(hiscallInfo, getErr)
-		return irs.MetricData{}, getErr
-	}
-
+func (monitoringHandler *AzureMonitoringHandler) getMetricData(metricType irs.MetricType, interval string, timeBeforeHour int, resourceID string) (irs.MetricData, error) {
 	endTime := time.Now().UTC()
 	startTime := endTime.Add(time.Duration(-timeBeforeHour) * time.Hour)
 	timespan := azquery.TimeInterval(fmt.Sprintf("%s/%s", startTime.Format(time.RFC3339), endTime.Format(time.RFC3339)))
@@ -129,7 +85,7 @@ func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqIn
 	var metricName = "Percentage CPU" // irs.CPUUsage
 	var aggregation = azquery.AggregationTypeAverage
 
-	switch monitoringReqInfo.MetricType {
+	switch metricType {
 	case irs.MemoryUsage:
 		metricName = "Available Memory Bytes"
 	case irs.DiskRead:
@@ -155,7 +111,7 @@ func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqIn
 	metricNames := strings.Join(metrics, ",")
 	resultType := azquery.ResultTypeData
 
-	resp, err := monitoringHandler.MetricClient.QueryResource(context.Background(), *vm.ID, &azquery.MetricsClientQueryResourceOptions{
+	resp, err := monitoringHandler.MetricClient.QueryResource(context.Background(), resourceID, &azquery.MetricsClientQueryResourceOptions{
 		Aggregation:     []*azquery.AggregationType{&aggregation},
 		Filter:          nil,
 		Interval:        toStrPtr(interval),
@@ -169,11 +125,8 @@ func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqIn
 	if err != nil {
 		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
 		cblogger.Error(getErr.Error())
-		LoggingError(hiscallInfo, getErr)
 		return irs.MetricData{}, getErr
 	}
-
-	LoggingInfo(hiscallInfo, start)
 
 	var vmMonitoringInfo irs.MetricData
 	var timestampValues []irs.TimestampValue
@@ -220,6 +173,166 @@ func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqIn
 	}
 
 	vmMonitoringInfo.TimestampValues = timestampValues
+
+	return vmMonitoringInfo, nil
+}
+
+func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(vmMonitoringReqInfo irs.VMMonitoringReqInfo) (irs.MetricData, error) {
+	intervalMinute, err := strconv.Atoi(vmMonitoringReqInfo.IntervalMinute)
+	if err != nil {
+		if vmMonitoringReqInfo.IntervalMinute == "" {
+			vmMonitoringReqInfo.IntervalMinute = "1"
+			intervalMinute = 1
+		} else {
+			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
+		}
+	}
+
+	interval, err := toAzureIntervalMinute(vmMonitoringReqInfo.IntervalMinute)
+	if err != nil {
+		return irs.MetricData{}, err
+	}
+
+	timeBeforeHour, err := strconv.Atoi(vmMonitoringReqInfo.TimeBeforeHour)
+	if err != nil {
+		if vmMonitoringReqInfo.TimeBeforeHour == "" {
+			vmMonitoringReqInfo.TimeBeforeHour = "1"
+			timeBeforeHour = 1
+		} else {
+			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
+		}
+	}
+	if timeBeforeHour < 0 {
+		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
+	}
+
+	if timeBeforeHour*60 < intervalMinute {
+		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
+	}
+
+	// log HisCall
+	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, vmMonitoringReqInfo.VMIID.NameId, "GetVMMetricData()")
+	start := call.Start()
+
+	convertedIID, err := ConvertVMIID(vmMonitoringReqInfo.VMIID, monitoringHandler.CredentialInfo, monitoringHandler.Region)
+	if err != nil {
+		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	vm, err := GetRawVM(convertedIID, monitoringHandler.Region.Region, monitoringHandler.VMClient, monitoringHandler.Ctx)
+	if err != nil {
+		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	vmMonitoringInfo, err := monitoringHandler.getMetricData(vmMonitoringReqInfo.MetricType, interval, timeBeforeHour, *vm.ID)
+	if err != nil {
+		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	LoggingInfo(hiscallInfo, start)
+
+	return vmMonitoringInfo, nil
+}
+
+func (monitoringHandler *AzureMonitoringHandler) GetClusterNodeMetricData(clusterNodeMonitoringReqInfo irs.ClusterNodeMonitoringReqInfo) (irs.MetricData, error) {
+	intervalMinute, err := strconv.Atoi(clusterNodeMonitoringReqInfo.IntervalMinute)
+	if err != nil {
+		if clusterNodeMonitoringReqInfo.IntervalMinute == "" {
+			clusterNodeMonitoringReqInfo.IntervalMinute = "1"
+			intervalMinute = 1
+		} else {
+			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
+		}
+	}
+
+	interval, err := toAzureIntervalMinute(clusterNodeMonitoringReqInfo.IntervalMinute)
+	if err != nil {
+		return irs.MetricData{}, err
+	}
+
+	timeBeforeHour, err := strconv.Atoi(clusterNodeMonitoringReqInfo.TimeBeforeHour)
+	if err != nil {
+		if clusterNodeMonitoringReqInfo.TimeBeforeHour == "" {
+			clusterNodeMonitoringReqInfo.TimeBeforeHour = "1"
+			timeBeforeHour = 1
+		} else {
+			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
+		}
+	}
+	if timeBeforeHour < 0 {
+		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
+	}
+
+	if timeBeforeHour*60 < intervalMinute {
+		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
+	}
+
+	// log HisCall
+	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, clusterNodeMonitoringReqInfo.ClusterIID.NameId, "GetClusterNodeMetricData()")
+	start := call.Start()
+
+	clusterHandler := AzureClusterHandler{
+		Region:                          monitoringHandler.Region,
+		CredentialInfo:                  monitoringHandler.CredentialInfo,
+		Ctx:                             monitoringHandler.Ctx,
+		ManagedClustersClient:           monitoringHandler.ManagedClustersClient,
+		SecurityGroupsClient:            monitoringHandler.SecurityGroupsClient,
+		VirtualNetworksClient:           monitoringHandler.VirtualNetworksClient,
+		AgentPoolsClient:                monitoringHandler.AgentPoolsClient,
+		VirtualMachineScaleSetsClient:   monitoringHandler.VirtualMachineScaleSetsClient,
+		VirtualMachineScaleSetVMsClient: monitoringHandler.VirtualMachineScaleSetVMsClient,
+	}
+
+	cluster, err := clusterHandler.GetCluster(clusterNodeMonitoringReqInfo.ClusterIID)
+	if err != nil {
+		getErr := errors.New(fmt.Sprintf("Failed to get cluster info. err = %s", err))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	var nodeFound bool
+	var resourceID string
+
+	for _, nodeGroup := range cluster.NodeGroupList {
+		if nodeGroup.IId.NameId == clusterNodeMonitoringReqInfo.NodeGroupID.NameId ||
+			nodeGroup.IId.SystemId == clusterNodeMonitoringReqInfo.NodeGroupID.SystemId {
+			for _, node := range nodeGroup.Nodes {
+				if node.NameId == clusterNodeMonitoringReqInfo.NodeIID.NameId ||
+					node.SystemId == clusterNodeMonitoringReqInfo.NodeIID.SystemId {
+					nodeFound = true
+					resourceID = node.SystemId
+					break
+				}
+			}
+		}
+	}
+
+	if !nodeFound {
+		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = Node not found from the cluster"))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	vmMonitoringInfo, err := monitoringHandler.getMetricData(clusterNodeMonitoringReqInfo.MetricType, interval, timeBeforeHour, resourceID)
+	if err != nil {
+		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
+		cblogger.Error(getErr.Error())
+		LoggingError(hiscallInfo, getErr)
+		return irs.MetricData{}, getErr
+	}
+
+	LoggingInfo(hiscallInfo, start)
 
 	return vmMonitoringInfo, nil
 }
