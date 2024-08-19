@@ -8,9 +8,8 @@ import java.util.List;
 
 @Mapper
 public interface TriggerTargetMapper {
-    Long getListCount(PageableReqBody<TriggerTargetInfo> reqBody);
 
-    List<TriggerTargetInfo> getList(PageableReqBody<TriggerTargetInfo> reqBody);
+    List<TriggerTargetInfo> getList(Long policySeq);
 
     List<TriggerTargetInfo> getListPolicySeq(Long policySeq);
 

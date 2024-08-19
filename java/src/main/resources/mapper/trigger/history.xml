@@ -16,43 +16,6 @@
         <result column="occur_time" property="occurTime" />
     </resultMap>
 
-    <sql id="historyPageableWhere">
-        <where>
-            <if test='data.seq != null'>
-                AND `SEQ` = #{data.seq}
-            </if>
-            <if test='data.policySeq != null'>
-                AND POLICY_SEQ = #{data.policySeq}
-            </if>
-            <if test='data.targetSeq != null'>
-                AND TARGET_SEQ = #{data.targetSeq}
-            </if>
-            <if test='data.hostname != null'>
-                AND HOSTNAME = #{data.hostname}
-            </if>
-            <if test='data.uuid != null'>
-                AND UUID = #{data.uuid}
-            </if>
-            <if test='data.metric != null'>
-                AND METRIC = #{data.metric}
-            </if>
-            <if test='data.level != null'>
-                AND `LEVEL` = #{data.level}
-            </if>
-        </where>
-    </sql>
-
-
-    <select id="getListCount" resultType="Long">
-        SELECT COUNT(*)
-        FROM (
-            SELECT 1
-            FROM m_cmp_trigger_history
-            <include refid="historyPageableWhere"/>
-            <include refid="mcmp.mc.observability.agent.pageFilter" />
-        ) AS A
-    </select>
-
     <select id="getList" resultMap="triggerHistoryResultMap">
         SELECT SEQ,
                POLICY_SEQ,
@@ -66,10 +29,7 @@
                CREATE_AT,
                OCCUR_TIME
         FROM m_cmp_trigger_history
-        <include refid="historyPageableWhere"/>
-        <include refid="mcmp.mc.observability.agent.pageFilter" />
-        <include refid="mcmp.mc.observability.agent.orderBy" />
-        <include refid="mcmp.mc.observability.agent.pageFooter" />
+        WHERE POLICY_SEQ = #{policySeq}
     </select>
 
     <select id="getDetail" resultMap="triggerHistoryResultMap">

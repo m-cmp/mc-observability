@@ -22,21 +22,12 @@ public class TriggerHistoryService {
     private final TriggerPolicyMapper triggerPolicyMapper;
     private final TriggerHistoryMapper triggerHistoryMapper;
 
-    public PageableResBody<TriggerHistoryInfo> getList(PageableReqBody<TriggerHistoryInfo> reqBody) {
-        TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(reqBody.getData().getPolicySeq());
+    public List<TriggerHistoryInfo> getList(Long policySeq) {
+        TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(policySeq);
         if(triggerPolicyInfo == null)
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
-        PageableResBody<TriggerHistoryInfo> result = new PageableResBody<>();
-        result.setRecords(triggerHistoryMapper.getListCount(reqBody));
-
-        if( result.getRecords() > 0 ) {
-            List<TriggerHistoryInfo> list = triggerHistoryMapper.getList(reqBody);
-            if( list == null ) list = new ArrayList<>();
-            result.setRows(list);
-        }
-
-        return result;
+        return triggerHistoryMapper.getList(policySeq);
     }
 
     public ResBody<TriggerHistoryInfo> getDetail(ResBody<TriggerHistoryInfo> resBody, Long seq) {

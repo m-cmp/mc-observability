@@ -31,17 +31,8 @@ public class TriggerPolicyService {
     private final TriggerTargetStorageMapper triggerTargetStorageMapper;
     private final KapacitorApiService kapacitorApiService;
 
-    public PageableResBody<TriggerPolicyInfo> getList(PageableReqBody<TriggerPolicyInfo> reqBody) {
-        PageableResBody<TriggerPolicyInfo> result = new PageableResBody<>();
-        result.setRecords(triggerPolicyMapper.getListCount(reqBody));
-
-        if( result.getRecords() > 0 ) {
-            List<TriggerPolicyInfo> list = triggerPolicyMapper.getList(reqBody);
-            if( list == null ) list = new ArrayList<>();
-            result.setRows(list);
-        }
-
-        return result;
+    public List<TriggerPolicyInfo> getList() {
+        return triggerPolicyMapper.getList();
     }
 
     public ResBody<TriggerPolicyInfo> getDetail(ResBody<TriggerPolicyInfo> resBody, Long seq) {

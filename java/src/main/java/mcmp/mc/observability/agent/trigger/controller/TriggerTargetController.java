@@ -25,11 +25,9 @@ public class TriggerTargetController {
     @ApiOperation(value = "Get Trigger Target all list")
     @Base64Encode
     @GetMapping
-    public ResBody<PageableResBody<TriggerTargetInfo>> list(@RequestParam("policySeq") Long policySeq, @ApiIgnore PageableReqBody<TriggerTargetInfo> req) {
-        if( req.getData() == null ) req.setData(new TriggerTargetInfo());
-        req.getData().setPolicySeq(policySeq);
-        ResBody<PageableResBody<TriggerTargetInfo>> res = new ResBody<>();
-        res.setData(triggerTargetService.getList(req));
+    public ResBody<List<TriggerTargetInfo>> list(@RequestParam("policySeq") Long policySeq) {
+        ResBody<List<TriggerTargetInfo>> res = new ResBody<>();
+        res.setData(triggerTargetService.getList(policySeq));
         return res;
     }
 

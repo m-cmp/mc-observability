@@ -5,15 +5,14 @@ import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface TriggerPolicyMapper {
 
     TriggerPolicyInfo getDetail(Long seq);
 
-    List<TriggerPolicyInfo> getList(PageableReqBody<TriggerPolicyInfo> reqBody);
-
-    Long getListCount(PageableReqBody<TriggerPolicyInfo> reqBody);
+    List<TriggerPolicyInfo> getList();
 
     int createPolicy(TriggerPolicyInfo info);
 

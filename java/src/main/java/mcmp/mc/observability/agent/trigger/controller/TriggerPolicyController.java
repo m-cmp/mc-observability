@@ -15,6 +15,9 @@ import mcmp.mc.observability.agent.trigger.service.TriggerPolicyService;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(Constants.TRIGGER_URI + "/policy")
@@ -25,11 +28,9 @@ public class TriggerPolicyController {
     @ApiOperation(value = "Get Trigger Policy all list")
     @Base64Encode
     @GetMapping
-    public ResBody<PageableResBody<TriggerPolicyInfo>> list(@ApiIgnore PageableReqBody<TriggerPolicyInfo> req) {
-        if( req.getData() == null ) req.setData(new TriggerPolicyInfo());
-
-        ResBody<PageableResBody<TriggerPolicyInfo>> res = new ResBody<>();
-        res.setData(triggerPolicyService.getList(req));
+    public ResBody<List<TriggerPolicyInfo>> list() {
+        ResBody<List<TriggerPolicyInfo>> res = new ResBody<>();
+        res.setData(triggerPolicyService.getList());
         return res;
     }
 

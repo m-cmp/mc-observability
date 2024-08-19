@@ -29,23 +29,6 @@
         </where>
     </sql>
 
-    <sql id="targetPageableWhere">
-        <where>
-            <if test='data.seq != null'>
-                AND SEQ = #{data.seq}
-            </if>
-            <if test='data.policySeq != null'>
-                AND POLICY_SEQ = #{data.policySeq}
-            </if>
-            <if test='data.hostSeq != null'>
-                AND HOST_SEQ = #{data.hostSeq}
-            </if>
-            <if test='data.hostname != null'>
-                AND `HOSTNAME` = #{data.hostname}
-            </if>
-        </where>
-    </sql>
-
     <select id="getDetail" resultMap="triggerTargetResultMap">
         SELECT TT.SEQ,
                TT.POLICY_SEQ,
@@ -59,17 +42,6 @@
         WHERE SEQ = #{seq}
     </select>
 
-    <select id="getListCount" resultType="Long">
-        SELECT COUNT(*)
-        FROM (
-            SELECT 1
-            FROM m_cmp_trigger_target TT
-            LEFT JOIN m_cmp_agent_host AH ON TT.HOST_SEQ = AH.SEQ
-            <include refid="targetPageableWhere"/>
-            <include refid="mcmp.mc.observability.agent.pageFilter" />
-        ) AS A
-    </select>
-
     <select id="getList" resultMap="triggerTargetResultMap">
         SELECT TT.SEQ,
                TT.POLICY_SEQ,
@@ -80,10 +52,7 @@
                TT.UPDATE_AT
         FROM m_cmp_trigger_target TT
         LEFT JOIN m_cmp_agent_host AH ON TT.HOST_SEQ = AH.SEQ
-        <include refid="targetPageableWhere"/>
-        <include refid="mcmp.mc.observability.agent.pageFilter" />
-        <include refid="mcmp.mc.observability.agent.orderBy" />
-        <include refid="mcmp.mc.observability.agent.pageFooter" />
+        WHERE TT.POLICY_SEQ = #{policySeq}
     </select>
 
     <select id="getListPolicySeq" resultMap="triggerTargetResultMap">

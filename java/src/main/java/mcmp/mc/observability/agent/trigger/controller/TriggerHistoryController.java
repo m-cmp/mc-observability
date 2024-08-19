@@ -12,6 +12,8 @@ import mcmp.mc.observability.agent.trigger.service.TriggerHistoryService;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(Constants.TRIGGER_URI + "/history")
@@ -22,11 +24,9 @@ public class TriggerHistoryController {
     @ApiOperation(value = "Get Trigger History all list")
     @Base64Encode
     @GetMapping
-    public ResBody<PageableResBody<TriggerHistoryInfo>> list(@RequestParam("policySeq") Long policySeq, @ApiIgnore PageableReqBody<TriggerHistoryInfo> req) {
-        if( req.getData() == null ) req.setData(new TriggerHistoryInfo());
-        req.getData().setPolicySeq(policySeq);
-        ResBody<PageableResBody<TriggerHistoryInfo>> res = new ResBody<>();
-        res.setData(triggerHistoryService.getList(req));
+    public ResBody<List<TriggerHistoryInfo>> list(@RequestParam("policySeq") Long policySeq) {
+        ResBody<List<TriggerHistoryInfo>> res = new ResBody<>();
+        res.setData(triggerHistoryService.getList(policySeq));
         return res;
     }
 

@@ -39,29 +39,6 @@
         </where>
     </sql>
 
-    <sql id="policyPageableWhere">
-        <where>
-            <if test='data.seq != null'>
-                AND `SEQ` = #{data.seq}
-            </if>
-            <if test='data.name != null'>
-                AND `NAME` = #{data.name}
-            </if>
-            <if test='data.metric != null'>
-                AND METRIC = #{data.metric}
-            </if>
-            <if test='data.field != null'>
-                AND FIELD = #{data.field},
-            </if>
-            <if test='data.statistics != null'>
-                AND STATISTICS = #{data.statistics},
-            </if>
-            <if test='data.status != null'>
-                AND STATUS = #{data.status}
-            </if>
-        </where>
-    </sql>
-
     <select id="getDetail" resultMap="triggerPolicyResultMap">
         SELECT SEQ,
                NAME,
@@ -91,20 +68,6 @@
                CREATE_AT,
                UPDATE_AT
         FROM m_cmp_trigger_policy
-        <include refid="policyPageableWhere"/>
-        <include refid="mcmp.mc.observability.agent.pageFilter" />
-        <include refid="mcmp.mc.observability.agent.orderBy" />
-        <include refid="mcmp.mc.observability.agent.pageFooter" />
-    </select>
-
-    <select id="getListCount" resultType="Long">
-        SELECT COUNT(*)
-        FROM (
-            SELECT 1
-            FROM m_cmp_trigger_policy
-            <include refid="policyPageableWhere"/>
-            <include refid="mcmp.mc.observability.agent.pageFilter" />
-        ) AS A
     </select>
 
     <insert id="createPolicy" parameterType="TriggerPolicyInfo">

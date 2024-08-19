@@ -32,21 +32,12 @@ public class TriggerTargetService {
     private final HostStorageMapper hostStorageMapper;
     private final KapacitorApiService kapacitorApiService;
 
-    public PageableResBody<TriggerTargetInfo> getList(PageableReqBody<TriggerTargetInfo> reqBody) {
-        TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(reqBody.getData().getPolicySeq());
+    public List<TriggerTargetInfo> getList(Long policySeq) {
+        TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(policySeq);
         if(triggerPolicyInfo == null)
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
-        PageableResBody<TriggerTargetInfo> result = new PageableResBody<>();
-        result.setRecords(triggerTargetMapper.getListCount(reqBody));
-
-        if( result.getRecords() > 0 ) {
-            List<TriggerTargetInfo> list = triggerTargetMapper.getList(reqBody);
-            if( list == null ) list = new ArrayList<>();
-            result.setRows(list);
-        }
-
-        return result;
+        return triggerTargetMapper.getList(policySeq);
     }
 
     public ResBody<TriggerTargetInfo> getDetail(ResBody<TriggerTargetInfo> resBody, Long seq) {
