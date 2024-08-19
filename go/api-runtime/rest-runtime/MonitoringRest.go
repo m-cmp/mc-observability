@@ -25,7 +25,7 @@ func GetVMMetricData(c echo.Context) error {
 
 	var req struct {
 		ConnectionName string
-		PeriodMinute   string
+		IntervalMinute string
 		TimeBeforeHour string
 	}
 
@@ -44,17 +44,22 @@ func GetVMMetricData(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Invalid Metric Type")
 	}
 
-	req.PeriodMinute = c.QueryParam("IntervalMinute")
-	if req.PeriodMinute == "" {
-		req.PeriodMinute = "1"
+	if req.IntervalMinute == "" {
+		req.IntervalMinute = c.QueryParam("IntervalMinute")
 	}
-	req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
+	if req.IntervalMinute == "" {
+		req.IntervalMinute = "1"
+	}
+
+	if req.TimeBeforeHour == "" {
+		req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
+	}
 	if req.TimeBeforeHour == "" {
 		req.TimeBeforeHour = "1"
 	}
 
 	// Call common-runtime API
-	result, err := cmrt.GetVMMetricData(req.ConnectionName, c.Param("VMName"), metricType, req.PeriodMinute, req.TimeBeforeHour)
+	result, err := cmrt.GetVMMetricData(req.ConnectionName, c.Param("VMName"), metricType, req.IntervalMinute, req.TimeBeforeHour)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -67,7 +72,7 @@ func GetClusterNodeMetricData(c echo.Context) error {
 
 	var req struct {
 		ConnectionName string
-		PeriodMinute   string
+		IntervalMinute string
 		TimeBeforeHour string
 	}
 
@@ -86,17 +91,22 @@ func GetClusterNodeMetricData(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Invalid Metric Type")
 	}
 
-	req.PeriodMinute = c.QueryParam("IntervalMinute")
-	if req.PeriodMinute == "" {
-		req.PeriodMinute = "1"
+	if req.IntervalMinute == "" {
+		req.IntervalMinute = c.QueryParam("IntervalMinute")
 	}
-	req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
+	if req.IntervalMinute == "" {
+		req.IntervalMinute = "1"
+	}
+
+	if req.TimeBeforeHour == "" {
+		req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
+	}
 	if req.TimeBeforeHour == "" {
 		req.TimeBeforeHour = "1"
 	}
 
 	// Call common-runtime API
-	result, err := cmrt.GetClusterNodeMetricData(req.ConnectionName, c.Param("ClusterName"), c.Param("NodeGroupName"), c.Param("NodeNumber"), metricType, req.PeriodMinute, req.TimeBeforeHour)
+	result, err := cmrt.GetClusterNodeMetricData(req.ConnectionName, c.Param("ClusterName"), c.Param("NodeGroupName"), c.Param("NodeNumber"), metricType, req.IntervalMinute, req.TimeBeforeHour)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

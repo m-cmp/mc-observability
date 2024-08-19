@@ -138,10 +138,6 @@ func (monitoringHandler *AzureMonitoringHandler) getMetricData(metricType irs.Me
 		}
 
 		for _, timeseries := range metric.TimeSeries {
-			for _, val := range timeseries.MetadataValues {
-				fmt.Println(*val.Name, *val.Value)
-			}
-
 			if timeseries.Data == nil {
 				continue
 			}
