@@ -1,20 +1,17 @@
 package mcmp.mc.observability.agent.trigger.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import mcmp.mc.observability.agent.common.annotation.Base64DecodeField;
 import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
-public class TriggerPolicyUpdateDto {
-    @JsonIgnore
-    private Long seq = 0L;
+public class TriggerPolicyCreateDto {
     @ApiModelProperty(value = "Base64 Encoded value", example = "Y3B1IHBvbGljeQ==")
     @Base64DecodeField
     private String name;
@@ -22,6 +19,7 @@ public class TriggerPolicyUpdateDto {
     @Base64DecodeField
     private String description;
     @ApiModelProperty(value = "Trigger target metric", example = "cpu")
+    @Schema(allowableValues = {"cpu", "mem", "disk"})
     private String metric;
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
     private String field;

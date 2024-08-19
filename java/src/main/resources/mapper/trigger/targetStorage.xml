@@ -2,4 +2,33 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerTargetStorageMapper">
+    <insert id="createTargetStorage">
+        INSERT IGNORE INTO m_cmp_trigger_target_storage (
+                TARGET_SEQ,
+                URL,
+                `DATABASE`,
+                RETENTION_POLICY
+        ) VALUES (
+            #{targetSeq},
+            #{url},
+            #{database},
+            #{retentionPolicy}
+        )
+    </insert>
+
+    <select id="getRemainTaskStorageCount" resultType="Map">
+        SELECT COUNT(1) as `count`
+             , URL AS url
+             , `DATABASE` AS `database`
+             , RETENTION_POLICY AS retentionPolicy
+        FROM m_cmp_trigger_target_storage TTS
+        LEFT JOIN m_cmp_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+        WHERE POLICY_SEQ = #{policySeq}
+        GROUP BY URL, `DATABASE`, RETENTION_POLICY
+    </select>
+
+    <delete id="deleteTriggerTargetStorageByTargetSeq" parameterType="Long">
+        DELETE FROM m_cmp_trigger_target_storage
+        WHERE TARGET_SEQ = #{targetSeq}
+    </delete>
 </mapper>

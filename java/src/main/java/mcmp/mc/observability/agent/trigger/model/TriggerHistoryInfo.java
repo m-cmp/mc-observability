@@ -14,9 +14,9 @@ public class TriggerHistoryInfo {
     @ApiModelProperty(value = "Sequence by trigger target", example = "1")
     private Long targetSeq;
     @ApiModelProperty(value = "Uuid by host", example = "07250583-a9ef-c636-6113-e80289a64ce6")
-    private String agentUuid;
+    private String uuid;
     @ApiModelProperty(value = "Trigger event target metric name")
-    private String metricName;
+    private String metric;
     @ApiModelProperty(value = "Trigger event alarm details")
     private String data;
     @ApiModelProperty(value = "Trigger event level")

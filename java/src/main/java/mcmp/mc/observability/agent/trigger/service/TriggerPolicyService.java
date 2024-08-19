@@ -7,8 +7,12 @@ import mcmp.mc.observability.agent.common.model.PageableReqBody;
 import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
+import mcmp.mc.observability.agent.monitoring.model.HostStorageInfo;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
+import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetMapper;
+import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetStorageMapper;
 import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,8 @@ import java.util.*;
 public class TriggerPolicyService {
 
     private final TriggerPolicyMapper triggerPolicyMapper;
+    private final TriggerTargetMapper triggerTargetMapper;
+    private final TriggerTargetStorageMapper triggerTargetStorageMapper;
 
     public PageableResBody<TriggerPolicyInfo> getList(PageableReqBody<TriggerPolicyInfo> reqBody) {
         PageableResBody<TriggerPolicyInfo> result = new PageableResBody<>();
@@ -50,12 +56,35 @@ public class TriggerPolicyService {
         return info;
     }
 
-    public ResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
+    public ResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
         ResBody<Void> resBody = new ResBody<>();
         TriggerPolicyInfo info = new TriggerPolicyInfo();
+        info.setCreateDto(dto);
+        try {
+            if (info.getName() == null || info.getName().isEmpty()) {
+                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Name is null/empty");
+            }
+            info.makeTickScript(info);
+            int result = triggerPolicyMapper.createPolicy(info);
+            if (result <= 0) {
+                throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy insert error QueryResult={}", result);
+            }
+
+        } catch (ResultCodeException e) {
+            log.error(e.getMessage(), e.getObjects());
+            resBody.setCode(e.getResultCode());
+        }
+        return resBody;
+    }
+
+    public ResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
+        ResBody<Void> resBody = new ResBody<>();
+        TriggerPolicyInfo info = triggerPolicyMapper.getDetail(dto.getSeq());
         info.setUpdateDto(dto);
+        info.makeTickScript(info);
 
         try {
+            // TODO: update kapacitor task
             int result = triggerPolicyMapper.updatePolicy(info);
 
             if (result <= 0) {
@@ -78,6 +107,7 @@ public class TriggerPolicyService {
             if(policyInfo == null)
                 throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
+            // TODO: delete target, targetStorage (kapacitor task)
             triggerPolicyMapper.deletePolicy(seq);
         }
         catch (ResultCodeException e) {

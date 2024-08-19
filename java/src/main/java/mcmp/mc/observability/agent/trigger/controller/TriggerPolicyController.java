@@ -9,6 +9,7 @@ import mcmp.mc.observability.agent.common.model.PageableReqBody;
 import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 import mcmp.mc.observability.agent.trigger.service.TriggerPolicyService;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +33,18 @@ public class TriggerPolicyController {
         return res;
     }
 
-    @ApiOperation(value = "", hidden = true)
+    @ApiOperation(value = "")
     @Base64Encode
     @GetMapping("/{policySeq}")
     public ResBody<TriggerPolicyInfo> detail(@PathVariable("policySeq") Long seq) {
         return triggerPolicyService.getDetail(new ResBody<>(), seq);
+    }
+
+    @ApiOperation(value = "Update request Trigger Policy")
+    @Base64Decode(TriggerPolicyCreateDto.class)
+    @PostMapping
+    public ResBody<Void> create(@RequestBody TriggerPolicyCreateDto triggerPolicyCreateDto) {
+        return triggerPolicyService.createPolicy(triggerPolicyCreateDto);
     }
 
     @ApiOperation(value = "Update request Trigger Policy")

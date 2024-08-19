@@ -2,7 +2,89 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerHistoryMapper">
-    <select id="getListCount" resultType="java.lang.Long"></select>
-    <select id="getList" resultType="mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo"></select>
-    <select id="getDetail" resultType="mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo"></select>
+    <resultMap id="triggerHistoryResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo">
+        <result column="seq" property="seq" />
+        <result column="policy_seq" property="policySeq" />
+        <result column="target_seq" property="targetSeq" />
+        <result column="hostname" property="hostname" />
+        <result column="ex" property="ex" />
+        <result column="uuid" property="uuid" />
+        <result column="metric" property="metric" />
+        <result column="data" property="data" />
+        <result column="level" property="level" />
+        <result column="create_at" property="createAt" />
+        <result column="occur_time" property="occurTime" />
+    </resultMap>
+
+    <sql id="historyPageableWhere">
+        <where>
+            <if test='data.seq != null'>
+                AND `SEQ` = #{data.seq}
+            </if>
+            <if test='data.policySeq != null'>
+                AND POLICY_SEQ = #{data.policySeq}
+            </if>
+            <if test='data.targetSeq != null'>
+                AND TARGET_SEQ = #{data.targetSeq}
+            </if>
+            <if test='data.hostname != null'>
+                AND HOSTNAME = #{data.hostname}
+            </if>
+            <if test='data.uuid != null'>
+                AND UUID = #{data.uuid}
+            </if>
+            <if test='data.metric != null'>
+                AND METRIC = #{data.metric}
+            </if>
+            <if test='data.level != null'>
+                AND `LEVEL` = #{data.level}
+            </if>
+        </where>
+    </sql>
+
+
+    <select id="getListCount" resultType="Long">
+        SELECT COUNT(*)
+        FROM (
+            SELECT 1
+            FROM m_cmp_trigger_history
+            <include refid="historyPageableWhere"/>
+            <include refid="mcmp.mc.observability.agent.pageFilter" />
+        ) AS A
+    </select>
+
+    <select id="getList" resultMap="triggerHistoryResultMap">
+        SELECT SEQ,
+               POLICY_SEQ,
+               TARGET_SEQ,
+               HOSTNAME,
+               EX,
+               UUID,
+               METRIC,
+               DATA,
+               LEVEL,
+               CREATE_AT,
+               OCCUR_TIME
+        FROM m_cmp_trigger_history
+        <include refid="historyPageableWhere"/>
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+        <include refid="mcmp.mc.observability.agent.orderBy" />
+        <include refid="mcmp.mc.observability.agent.pageFooter" />
+    </select>
+
+    <select id="getDetail" resultMap="triggerHistoryResultMap">
+        SELECT SEQ,
+               POLICY_SEQ,
+               TARGET_SEQ,
+               HOSTNAME,
+               EX,
+               UUID,
+               METRIC,
+               DATA,
+               LEVEL,
+               CREATE_AT,
+               OCCUR_TIME
+        FROM m_cmp_trigger_history
+        WHERE SEQ = #{seq}
+    </select>
 </mapper>

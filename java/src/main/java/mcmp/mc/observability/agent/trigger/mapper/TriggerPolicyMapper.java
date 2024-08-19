@@ -15,6 +15,8 @@ public interface TriggerPolicyMapper {
 
     Long getListCount(PageableReqBody<TriggerPolicyInfo> reqBody);
 
+    int createPolicy(TriggerPolicyInfo info);
+
     int updatePolicy(TriggerPolicyInfo info);
 
     void deletePolicy(Long seq);

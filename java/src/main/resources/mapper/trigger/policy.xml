@@ -2,13 +2,145 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper">
-    <update id="updatePolicy"></update>
+    <resultMap id="triggerPolicyResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo">
+        <result column="seq" property="seq" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="metric" property="metric" />
+        <result column="threshold" property="threshold" />
+        <result column="field" property="field" />
+        <result column="statistics" property="statistics" />
+        <result column="tick_script" property="tickScript" />
+        <result column="is_enabled" property="isEnabled" />
+        <result column="create_at" property="createAt" />
+        <result column="update_at" property="updateAt" />
+    </resultMap>
 
-    <delete id="deletePolicy"></delete>
+    <sql id="policyWhere">
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='name != null'>
+                AND `NAME` = #{name}
+            </if>
+            <if test='metric != null'>
+                AND METRIC = #{metric}
+            </if>
+            <if test='isEnabled != null'>
+                AND IS_ENABLED = #{isEnabled}
+            </if>
+        </where>
+    </sql>
 
-    <select id="getDetail" resultType="mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo"></select>
+    <sql id="policyPageableWhere">
+        <where>
+            <if test='data.seq != null'>
+                AND `SEQ` = #{data.seq}
+            </if>
+            <if test='data.name != null'>
+                AND `NAME` = #{data.name}
+            </if>
+            <if test='data.metric != null'>
+                AND METRIC = #{data.metric}
+            </if>
+            <if test='data.isEnabled != null'>
+                AND IS_ENABLED = #{data.isEnabled}
+            </if>
+        </where>
+    </sql>
 
-    <select id="getList" resultType="mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo"></select>
+    <select id="getDetail" resultMap="triggerPolicyResultMap">
+        SELECT SEQ,
+               NAME,
+               DESCRIPTION,
+               METRIC,
+               THRESHOLD,
+               TICK_SCRIPT,
+               IS_ENABLED,
+               CREATE_AT,
+               UPDATE_AT
+        FROM m_cmp_trigger_policy
+        WHERE SEQ = #{seq}
+    </select>
 
-    <select id="getListCount" resultType="java.lang.Long"></select>
+    <select id="getList" resultMap="triggerPolicyResultMap">
+        SELECT SEQ,
+               NAME,
+               DESCRIPTION,
+               METRIC,
+               THRESHOLD,
+               TICK_SCRIPT,
+               IS_ENABLED,
+               CREATE_AT,
+               UPDATE_AT
+        FROM m_cmp_trigger_policy
+        <include refid="policyPageableWhere"/>
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+        <include refid="mcmp.mc.observability.agent.orderBy" />
+        <include refid="mcmp.mc.observability.agent.pageFooter" />
+    </select>
+
+    <select id="getListCount" resultType="Long">
+        SELECT COUNT(*)
+        FROM (
+            SELECT 1
+            FROM m_cmp_trigger_policy
+            <include refid="policyPageableWhere"/>
+            <include refid="mcmp.mc.observability.agent.pageFilter" />
+        ) AS A
+    </select>
+
+    <insert id="createPolicy" parameterType="TriggerPolicyInfo">
+        INSERT INTO m_cmp_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, STATISTICS, THRESHOLD, TICK_SCRIPT, IS_ENABLED)
+        VALUES (
+                #{seq}
+               , #{name}
+               , #{description}
+               , #{metric}
+               , #{field}
+               , #{statistics}
+               , #{threshold}
+               , #{tickScript}
+               , #{isEnabled}
+               )
+    </insert>
+
+    <update id="updatePolicy">
+        UPDATE m_cmp_trigger_policy
+        <trim prefix="SET" suffixOverrides=",">
+            <if test='name != null'>
+                `NAME` = #{name},
+            </if>
+            <if test='description != null'>
+                DESCRIPTION = #{description},
+            </if>
+            <if test='metric != null'>
+                METRIC = #{metric},
+            </if>
+            <if test='threshold != null'>
+                THRESHOLD = #{threshold},
+            </if>
+            <if test='field != null'>
+                FIELD = #{field},
+            </if>
+            <if test='statistics != null'>
+                STATISTICS = #{statistics},
+            </if>
+            <if test='tickScript != null'>
+                TICK_SCRIPT = #{tickScript},
+            </if>
+            <if test='isEnabled != null'>
+                IS_ENABLED = #{isEnabled},
+            </if>
+            UPDATE_AT = CURRENT_TIMESTAMP,
+        </trim>
+        WHERE SEQ = #{seq}
+    </update>
+
+    <delete id="deletePolicy">
+        DELETE FROM m_cmp_trigger_policy
+        WHERE SEQ = #{seq}
+    </delete>
+
 </mapper>

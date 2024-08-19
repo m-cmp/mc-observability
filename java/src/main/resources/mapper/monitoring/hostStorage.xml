@@ -56,6 +56,9 @@
             <if test='notState != null'>
                 AND `state` != #{notState}
             </if>
+            <if test='pluginName != null'>
+                AND `PLUGIN_NAME` = #{pluginName}
+            </if>
         </where>
     </select>
 

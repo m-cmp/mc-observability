@@ -1,11 +1,17 @@
 package mcmp.mc.observability.agent.trigger.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
+import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerPolicyUpdateDto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -21,17 +27,21 @@ public class TriggerPolicyInfo {
     @Base64EncodeField
     private String name;
     @ApiModelProperty(value = "Host description", example = "ZGVzY3JpcHRpb24=")
+    @Base64EncodeField
     private String description;
     @ApiModelProperty(value = "Trigger target metric", example = "cpu")
     private String metric;
-//    @ApiModelProperty(value = "Base64 Encoded value",  example = "{\"crit\": \"value > 20\", \"warn\": \"value > 50\"}")
+    @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
+    private String field;
+    @ApiModelProperty(value = "Trigger target metric statistics", example = "min")
+    private String statistics;
     @ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
     @Base64EncodeField
-    private Map<String,Object> threshold;
-//    @JsonIgnore
-//    private String tickScript;
+    private String threshold;
     @ApiModelProperty(value = "Trigger Policy enablement status")
-    private boolean isEnabled;
+    private Boolean isEnabled;
+    @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
+    private List<String> groupByFields;
     @JsonIgnore
     private String tickScript;
 
@@ -40,12 +50,114 @@ public class TriggerPolicyInfo {
     @ApiModelProperty(value = "The time when the trigger policy was updated")
     private String updateAt;
 
+    public void setCreateDto(TriggerPolicyCreateDto dto) {
+        this.name = dto.getName();
+        this.description = dto.getDescription();
+        this.metric = dto.getMetric();
+        this.groupByFields = dto.getGroupByFields();
+        this.threshold = dto.getThreshold();
+        this.field = dto.getField();
+        this.statistics = dto.getStatistics();
+        this.isEnabled = dto.getIsEnabled();
+    }
+
     public void setUpdateDto(TriggerPolicyUpdateDto dto) {
         this.seq = dto.getSeq();
         this.name = dto.getName();
         this.description = dto.getDescription();
         this.metric = dto.getMetric();
+        this.groupByFields = dto.getGroupByFields();
         this.threshold = dto.getThreshold();
-        this.isEnabled = dto.isEnabled();
+        this.field = dto.getField();
+        this.statistics = dto.getStatistics();
+        this.isEnabled = dto.getIsEnabled();
     }
+
+    public void makeTickScript(TriggerPolicyInfo triggerPolicy) {
+
+        String tickScript =
+                "var db = '@DATABASE'\n" +
+                        "var rp = '@RETENTION_POLICY'\n" +
+                        "var measurement = '@MEASUREMENT'\n" +
+                        "var groupBy = @GROUP_BY\n\n" +
+                        "var streamData = stream\n" +
+                        "    |from()\n" +
+                        "        .database(db)\n" +
+                        "        .retentionPolicy(rp)\n" +
+                        "        .measurement(measurement)\n" +
+                        "        .groupBy(groupBy)\n" +
+                        "        .where(lambda: isPresent(\"@FIELD\")@WHERE_CONDITION)\n" +
+                        "    |eval()\n" +
+                        "        .keep('@FIELD')\n\n" +
+                        "var meanData = streamData\n" +
+                        "    |@STATISTICS('@FIELD')\n" +
+                        "        .as('value')\n\n" +
+                        "var trigger = meanData\n" +
+                        "    |alert()\n" +
+                        "@ALERT_CONDITION" +
+                        "        .id('{{ .TaskName }}')\n" +
+                        "        .stateChangesOnly()\n" +
+                        "        .post('http://192.168.130.26:8080/api/v2/cmp/kapacitor/alert')\n\n" +
+                        "trigger\n" +
+                        "    |httpOut('output');";
+
+        String measurement = triggerPolicy.getMetric();
+        String field = triggerPolicy.getField();
+        String whereCondition = "";
+        if("cpu".equals(measurement))
+            whereCondition = " AND \"cpu\" != 'cpu-total')";
+        String statistics = triggerPolicy.getStatistics();
+        String alertCondition = getAlertCondition(triggerPolicy);
+
+        tickScript = tickScript.replaceAll("@MEASUREMENT", measurement)
+                .replaceAll("@FIELD", field)
+                .replaceAll("@GROUP_BY", convertListToString(triggerPolicy.getGroupByFields()))
+                .replaceAll("@WHERE_CONDITION", whereCondition)
+                .replaceAll("@STATISTICS", statistics)
+                .replaceAll("@ALERT_CONDITION", alertCondition);
+
+        this.tickScript = tickScript;
+    }
+
+    public String convertListToString(List<String> groupByFields) {
+        List<String> fields = new ArrayList<>();
+        fields.add("agent");
+
+        if (groupByFields != null && !groupByFields.isEmpty()) {
+            fields.addAll(groupByFields);
+        }
+        String result = "['" + String.join("', '", fields) + "']";
+
+        return result;
+    }
+
+    private String getAlertCondition(TriggerPolicyInfo triggerPolicy) {
+        Map<String, String> thresholds = parseThresholds(triggerPolicy.getThreshold());
+        StringBuilder alertCondition = new StringBuilder();
+        String[] levels = {"crit", "warn", "info"};
+
+        for (String level : levels) {
+            if (thresholds.containsKey(level)) {
+                alertCondition.append("        .")
+                        .append(level)
+                        .append("(lambda: ")
+                        .append(thresholds.get(level).replace("value", "\"value\""))
+                        .append(")\n");
+            }
+        }
+
+        return String.valueOf(alertCondition);
+    }
+
+    private Map<String, String> parseThresholds(String thresholdJson) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.readValue(thresholdJson, new TypeReference<Map<String, String>>() {});
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to parse threshold JSON", e);
+        }
+    }
+
+
 }

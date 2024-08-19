@@ -12,8 +12,11 @@ public interface TriggerTargetMapper {
 
     List<TriggerTargetInfo> getList(PageableReqBody<TriggerTargetInfo> reqBody);
 
-    List<TriggerTargetInfo> getList(Long policySeq);
+    List<TriggerTargetInfo> getListPolicySeq(Long policySeq);
 
     TriggerTargetInfo getDetail(Long seq);
 
+    int createTarget(TriggerTargetInfo triggerTargetInfo);
+
+    int deleteTriggerTargetBySeq(Long seq);
 }
