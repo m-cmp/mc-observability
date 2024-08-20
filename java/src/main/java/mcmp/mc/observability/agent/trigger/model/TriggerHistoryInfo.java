@@ -13,8 +13,10 @@ public class TriggerHistoryInfo {
     private Long policySeq;
     @ApiModelProperty(value = "Sequence by trigger target", example = "1")
     private Long targetSeq;
-    @ApiModelProperty(value = "Uuid by host", example = "07250583-a9ef-c636-6113-e80289a64ce6")
-    private String uuid;
+    @ApiModelProperty(value = "Namespace Id")
+    private String nsId;
+    @ApiModelProperty(value = "Vm Id")
+    private String targetId;
     @ApiModelProperty(value = "Trigger event target metric name")
     private String metric;
     @ApiModelProperty(value = "Trigger event alarm details")
@@ -23,9 +25,7 @@ public class TriggerHistoryInfo {
     private String level;
     @ApiModelProperty(value = "Base64 Encoded value", example = "localhost")
     @Base64EncodeField
-    private String hostname; // cmpAgent Hostname
-    @ApiModelProperty(value = "Host additional configuration information (e.g., {\"key\" : \"value\"})", example = "{}")
-    private String ex; // cmpAgent ex
+    private String name;
     @ApiModelProperty(value = "The time when the history was inserted into the database", example = "2024-05-24 11:31:55")
     private String createAt;
     @ApiModelProperty(value = "The time when the history occurred")

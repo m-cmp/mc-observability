@@ -10,6 +10,7 @@
         <result column="threshold" property="threshold" />
         <result column="field" property="field" />
         <result column="statistics" property="statistics" />
+        <result column="group_fields" property="groupFields" typeHandler="mcmp.mc.observability.agent.trigger.handler.StringListTypeHandler"/>
         <result column="tick_script" property="tickScript" />
         <result column="status" property="status" />
         <result column="create_at" property="createAt" />
@@ -46,12 +47,13 @@
                METRIC,
                THRESHOLD,
                FIELD,
+               GROUP_FIELDS,
                STATISTICS,
                TICK_SCRIPT,
                STATUS,
                CREATE_AT,
                UPDATE_AT
-        FROM m_cmp_trigger_policy
+        FROM mc_o11y_trigger_policy
         WHERE SEQ = #{seq}
     </select>
 
@@ -62,22 +64,24 @@
                METRIC,
                THRESHOLD,
                FIELD,
+               GROUP_FIELDS,
                STATISTICS,
                TICK_SCRIPT,
                STATUS,
                CREATE_AT,
                UPDATE_AT
-        FROM m_cmp_trigger_policy
+        FROM mc_o11y_trigger_policy
     </select>
 
     <insert id="createPolicy" parameterType="TriggerPolicyInfo">
-        INSERT INTO m_cmp_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, STATISTICS, THRESHOLD, TICK_SCRIPT, STATUS)
+        INSERT INTO mc_o11y_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, GROUP_FIELDS, STATISTICS, THRESHOLD, TICK_SCRIPT, STATUS)
         VALUES (
                 #{seq}
                , #{name}
                , #{description}
                , #{metric}
                , #{field}
+               , #{groupFields}
                , #{statistics}
                , #{threshold}
                , #{tickScript}
@@ -86,7 +90,7 @@
     </insert>
 
     <update id="updatePolicy">
-        UPDATE m_cmp_trigger_policy
+        UPDATE mc_o11y_trigger_policy
         <trim prefix="SET" suffixOverrides=",">
             <if test='name != null'>
                 `NAME` = #{name},
@@ -106,6 +110,9 @@
             <if test='statistics != null'>
                 STATISTICS = #{statistics},
             </if>
+            <if test='groupFields != null'>
+                GROUP_FIELDS = #{groupFields},
+            </if>
             <if test='tickScript != null'>
                 TICK_SCRIPT = #{tickScript},
             </if>
@@ -118,7 +125,7 @@
     </update>
 
     <delete id="deletePolicy">
-        DELETE FROM m_cmp_trigger_policy
+        DELETE FROM mc_o11y_trigger_policy
         WHERE SEQ = #{seq}
     </delete>
 

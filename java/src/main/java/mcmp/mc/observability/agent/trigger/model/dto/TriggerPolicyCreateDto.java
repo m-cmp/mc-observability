@@ -24,7 +24,7 @@ public class TriggerPolicyCreateDto {
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
     private String field;
     @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
-    private List<String> groupByFields;
+    private List<String> groupFields;
     @ApiModelProperty(value = "Trigger target metric statistics", example = "min")
     private String statistics;
     @ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")

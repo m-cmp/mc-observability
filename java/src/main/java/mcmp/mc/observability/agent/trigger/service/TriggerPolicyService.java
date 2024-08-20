@@ -3,8 +3,6 @@ package mcmp.mc.observability.agent.trigger.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.exception.ResultCodeException;
-import mcmp.mc.observability.agent.common.model.PageableReqBody;
-import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
@@ -106,7 +104,7 @@ public class TriggerPolicyService {
         List<Object> fields = Arrays.asList(
                 dto.getMetric(),
                 dto.getField(),
-                dto.getGroupByFields() != null && !dto.getGroupByFields().isEmpty() ? dto.getGroupByFields() : null,
+                dto.getGroupFields() != null && !dto.getGroupFields().isEmpty() ? dto.getGroupFields() : null,
                 dto.getStatistics(),
                 dto.getThreshold(),
                 dto.getStatus()

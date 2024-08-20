@@ -56,7 +56,7 @@ public class TriggerPolicyController {
         return triggerPolicyService.updatePolicy(triggerPolicyUpdateDto);
     }
 
-    @ApiOperation(value = "Update request Host monitoring state on/off")
+    @ApiOperation(value = "Delete Request Trigger Policy")
     @DeleteMapping("/{policySeq}")
     public ResBody<Void> delete(@PathVariable("policySeq") Long policySeq) {
         return triggerPolicyService.deletePolicy(policySeq);

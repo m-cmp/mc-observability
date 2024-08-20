@@ -3,19 +3,19 @@ package mcmp.mc.observability.agent.trigger.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.exception.ResultCodeException;
-import mcmp.mc.observability.agent.common.model.PageableReqBody;
-import mcmp.mc.observability.agent.common.model.PageableResBody;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
-import mcmp.mc.observability.agent.monitoring.mapper.HostStorageMapper;
 import mcmp.mc.observability.agent.monitoring.model.HostStorageInfo;
 import mcmp.mc.observability.agent.monitoring.model.InfluxDBConnector;
+import mcmp.mc.observability.agent.trigger.mapper.MonitoringConfigMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetStorageMapper;
+import mcmp.mc.observability.agent.trigger.model.MonitoringConfigInfo;
 import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
 import mcmp.mc.observability.agent.trigger.model.TriggerTargetInfo;
 import mcmp.mc.observability.agent.trigger.model.TriggerTargetStorageInfo;
+import mcmp.mc.observability.agent.trigger.model.dto.ManageTriggerTargetDto;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -29,7 +29,7 @@ public class TriggerTargetService {
     private final TriggerPolicyMapper triggerPolicyMapper;
     private final TriggerTargetMapper triggerTargetMapper;
     private final TriggerTargetStorageMapper triggerTargetStorageMapper;
-    private final HostStorageMapper hostStorageMapper;
+    private final MonitoringConfigMapper monitoringConfigMapper;
     private final KapacitorApiService kapacitorApiService;
 
     public List<TriggerTargetInfo> getList(Long policySeq) {
@@ -56,25 +56,25 @@ public class TriggerTargetService {
         return info;
     }
 
-    public ResBody<Void> setTargets(Long policySeq, List<Long> hostSeqs) {
+    public ResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {
         ResBody<Void> resBody = new ResBody<>();
         TriggerPolicyInfo policyInfo = triggerPolicyMapper.getDetail(policySeq);
         if (policyInfo == null)
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
         List<TriggerTargetInfo> targetInfoList = triggerTargetMapper.getListPolicySeq(policySeq);
-        List<Long> addTargetHostSeqList = new ArrayList<>();
+        List<ManageTriggerTargetDto> addTargetList = new ArrayList<>();
 
-        if(!CollectionUtils.isEmpty(hostSeqs)) {
-            addTargetHostSeqList.addAll(hostSeqs);
+        if(!CollectionUtils.isEmpty(targets)) {
+            addTargetList.addAll(targets);
             if(!CollectionUtils.isEmpty(targetInfoList)) {
-                addTargetHostSeqList.removeIf(a -> targetInfoList.stream().anyMatch(b -> b.getHostSeq() == a));
-                targetInfoList.removeIf(a -> hostSeqs.stream().anyMatch(b -> b == a.getHostSeq()));
+                addTargetList.removeIf(a -> targetInfoList.stream().anyMatch(b -> b.getTargetId().equals(a.getTargetId()) && b.getNsId().equals(a.getNsId())));
+                targetInfoList.removeIf(a -> targets.stream().anyMatch(b -> b.getTargetId().equals(a.getTargetId()) && b.getNsId().equals(a.getNsId())));
             }
         }
 
         try {
-            addTriggerTargets(addTargetHostSeqList, policyInfo);
+            addTriggerTargets(addTargetList, policyInfo);
             deleteTriggerTargets(targetInfoList, policyInfo);
         } catch (Exception e) {
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Set Trigger Target failed");
@@ -83,15 +83,16 @@ public class TriggerTargetService {
         return resBody;
     }
 
-    private void addTriggerTargets(List<Long> addTargetHostSeqList, TriggerPolicyInfo policyInfo) {
-        if (CollectionUtils.isEmpty(addTargetHostSeqList))
+    private void addTriggerTargets(List<ManageTriggerTargetDto> addTargetList, TriggerPolicyInfo policyInfo) {
+        if (CollectionUtils.isEmpty(addTargetList))
             return;
 
         Map<String, Object> params = new HashMap<>();
-        for (Long hostSeq : addTargetHostSeqList) {
+        for (ManageTriggerTargetDto targetDto : addTargetList) {
             TriggerTargetInfo triggerTargetInfo = TriggerTargetInfo.builder()
                     .policySeq(policyInfo.getSeq())
-                    .hostSeq(hostSeq)
+                    .nsId(targetDto.getNsId())
+                    .targetId(targetDto.getTargetId())
                     .build();
 
             triggerTargetMapper.createTarget(triggerTargetInfo);
@@ -99,13 +100,15 @@ public class TriggerTargetService {
             triggerTargetInfo.setSeq(seq);
 
             params.put("pluginName", "influxdb");
-            params.put("hostSeq", hostSeq);
-            List<HostStorageInfo> hostStorageInfoList = hostStorageMapper.getHostStorageList(params);
+            params.put("notState", "DELETE");
+            params.put("targetId", targetDto.getTargetId());
+            params.put("nsId", targetDto.getNsId());
+            List<MonitoringConfigInfo> hostStorageInfoList = monitoringConfigMapper.getHostStorageList(params);
             if (CollectionUtils.isEmpty(hostStorageInfoList))
                 continue;
 
-            for (HostStorageInfo info : hostStorageInfoList) {
-                InfluxDBConnector influxDBConnector = new InfluxDBConnector(info.getSetting());
+            for (MonitoringConfigInfo info : hostStorageInfoList) {
+                InfluxDBConnector influxDBConnector = new InfluxDBConnector(info.getConfig());
                 TriggerTargetStorageInfo targetStorageInfo = TriggerTargetStorageInfo.builder()
                         .targetSeq(triggerTargetInfo.getSeq())
                         .url(influxDBConnector.getUrl())

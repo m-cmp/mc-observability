@@ -37,8 +37,8 @@
                AH.EX,
                TT.CREATE_AT,
                TT.UPDATE_AT
-        FROM m_cmp_trigger_target TT
-        LEFT JOIN m_cmp_agent_host AH ON TT.HOST_SEQ = AH.SEQ
+        FROM mc_o11y_trigger_target TT
+        LEFT JOIN mc_o11y_agent_host AH ON TT.HOST_SEQ = AH.SEQ
         WHERE SEQ = #{seq}
     </select>
 
@@ -50,27 +50,29 @@
                AH.EX,
                TT.CREATE_AT,
                TT.UPDATE_AT
-        FROM m_cmp_trigger_target TT
-        LEFT JOIN m_cmp_agent_host AH ON TT.HOST_SEQ = AH.SEQ
+        FROM mc_o11y_trigger_target TT
+        LEFT JOIN mc_o11y_agent_host AH ON TT.HOST_SEQ = AH.SEQ
         WHERE TT.POLICY_SEQ = #{policySeq}
     </select>
 
     <select id="getListPolicySeq" resultMap="triggerTargetResultMap">
         SELECT SEQ,
                 POLICY_SEQ,
-                HOST_SEQ,
+                NS_ID,
+                TARGET_ID,
                 CREATE_AT,
                 UPDATE_AT
-        FROM m_cmp_trigger_target
+        FROM mc_o11y_trigger_target
         WHERE POLICY_SEQ = #{policySeq}
     </select>
 
     <insert id="createTarget">
-        INSERT INTO m_cmp_trigger_target(SEQ, POLICY_SEQ, HOST_SEQ)
+        INSERT INTO mc_o11y_trigger_target(SEQ, POLICY_SEQ, NS_ID, TARGET_ID)
         VALUES (
                  #{seq}
                , #{policySeq}
-               , #{hostSeq}
+               , #{nsId}
+               , #{targetId}
                )
 
         <selectKey resultType="Long" keyProperty="seq" order="AFTER">
@@ -79,12 +81,12 @@
     </insert>
 
     <delete id="deleteTriggerTargetBySeq" parameterType="Long">
-        DELETE FROM m_cmp_trigger_target
+        DELETE FROM mc_o11y_trigger_target
         WHERE SEQ = #{seq}
     </delete>
 
     <delete id="deleteTriggerTargetByPolicySeq">
-        DELETE FROM m_cmp_trigger_target
+        DELETE FROM mc_o11y_trigger_target
         WHERE POLICY_SEQ = #{policySeq}
     </delete>
 </mapper>

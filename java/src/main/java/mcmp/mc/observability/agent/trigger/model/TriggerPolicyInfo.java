@@ -42,7 +42,7 @@ public class TriggerPolicyInfo {
     @ApiModelProperty(value = "Trigger Policy enablement status")
     private TaskStatus status;
     @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
-    private List<String> groupByFields;
+    private List<String> groupFields;
     @JsonIgnore
     private String tickScript;
 
@@ -55,7 +55,7 @@ public class TriggerPolicyInfo {
         this.name = dto.getName();
         this.description = dto.getDescription();
         this.metric = dto.getMetric();
-        this.groupByFields = dto.getGroupByFields();
+        this.groupFields = dto.getGroupFields();
         this.threshold = dto.getThreshold();
         this.field = dto.getField();
         this.statistics = dto.getStatistics();
@@ -69,8 +69,8 @@ public class TriggerPolicyInfo {
             this.description = dto.getDescription();
         if (dto.getMetric() != null)
             this.metric = dto.getMetric();
-        if (dto.getGroupByFields() != null)
-            this.groupByFields = dto.getGroupByFields();
+        if (dto.getGroupFields() != null)
+            this.groupFields = dto.getGroupFields();
         if (dto.getThreshold() != null)
             this.threshold = dto.getThreshold();
         if (dto.getField() != null)
@@ -118,7 +118,7 @@ public class TriggerPolicyInfo {
 
         tickScript = tickScript.replaceAll("@MEASUREMENT", measurement)
                 .replaceAll("@FIELD", field)
-                .replaceAll("@GROUP_BY", convertListToString(triggerPolicy.getGroupByFields()))
+                .replaceAll("@GROUP_BY", convertListToString(triggerPolicy.getGroupFields()))
                 .replaceAll("@WHERE_CONDITION", whereCondition)
                 .replaceAll("@STATISTICS", statistics)
                 .replaceAll("@ALERT_CONDITION", alertCondition);
