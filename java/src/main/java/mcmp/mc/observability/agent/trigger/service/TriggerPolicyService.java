@@ -104,7 +104,7 @@ public class TriggerPolicyService {
         List<Object> fields = Arrays.asList(
                 dto.getMetric(),
                 dto.getField(),
-                dto.getGroupFields() != null && !dto.getGroupFields().isEmpty() ? dto.getGroupFields() : null,
+                dto.getGroupFields(),
                 dto.getStatistics(),
                 dto.getThreshold(),
                 dto.getStatus()

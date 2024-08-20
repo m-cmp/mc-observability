@@ -25,7 +25,7 @@
             , PLUGIN_NAME
             , PLUGIN_TYPE
             , CONFIG
-        FROM m_cmp_agent_host_storage
+        FROM mc_o11y_agent_target_monitoring_config
         <where>
             <if test='seq != null'>
                 AND SEQ = #{seq}
