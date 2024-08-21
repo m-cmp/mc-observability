@@ -6,8 +6,10 @@ server:
 
 spring:
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://0.0.0.0:3306
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:mariadb://192.168.130.26:3306/mc_observability
+    username: tabcloudit
+    password: tabcloudit
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
