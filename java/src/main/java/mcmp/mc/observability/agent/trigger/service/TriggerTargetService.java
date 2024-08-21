@@ -116,8 +116,7 @@ public class TriggerTargetService {
                         .retentionPolicy(influxDBConnector.getRetentionPolicy())
                         .build();
 
-                policyInfo.setTickScriptStorageInfo(targetStorageInfo);
-                kapacitorApiService.createTask(policyInfo, targetStorageInfo);
+                kapacitorApiService.createTask(policyInfo, targetStorageInfo.getUrl(), targetStorageInfo.getDatabase(), targetStorageInfo.getRetentionPolicy());
                 triggerTargetStorageMapper.createTargetStorage(targetStorageInfo);
             }
         }

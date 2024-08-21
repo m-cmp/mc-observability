@@ -39,20 +39,22 @@ public class KapacitorApiService {
         return kapacitorTaskListInfo.getTasks();
     }
 
-    public void createTask(TriggerPolicyInfo triggerPolicyInfo, TriggerTargetStorageInfo targetStorageInfo) {
+    public void createTask(TriggerPolicyInfo policyInfo, String url, String database, String retentionPolicy) {
 
         KapacitorTaskInfo kapacitorTaskInfo = new KapacitorTaskInfo();
-        kapacitorTaskInfo.setId(String.valueOf(triggerPolicyInfo.getSeq()));
+        kapacitorTaskInfo.setId(String.valueOf(policyInfo.getSeq()));
         kapacitorTaskInfo.setType("stream");
-        kapacitorTaskInfo.setStatus(triggerPolicyInfo.getStatus().toString());
-        kapacitorTaskInfo.setScript(triggerPolicyInfo.getTickScript());
+        kapacitorTaskInfo.setStatus(policyInfo.getStatus().toString());
+
+        policyInfo.setTickScriptStorageInfo(database, retentionPolicy);
+        kapacitorTaskInfo.setScript(policyInfo.getTickScript());
 
         Map<String, String> dbrps = new HashMap<>();
-        dbrps.put("db", targetStorageInfo.getDatabase());
-        dbrps.put("rp", targetStorageInfo.getRetentionPolicy());
+        dbrps.put("db", database);
+        dbrps.put("rp", retentionPolicy);
         kapacitorTaskInfo.setDbrps(Collections.singletonList(dbrps));
 
-        String kapacitorUrl = getKapacitorUrl(targetStorageInfo.getUrl());
+        String kapacitorUrl = getKapacitorUrl(url);
 
         try {
             KapacitorTaskInfo taskInfo = getTask(kapacitorUrl, kapacitorTaskInfo.getId());
@@ -64,16 +66,18 @@ public class KapacitorApiService {
                     kapacitorTaskInfo
             );
         } catch (Exception e) {
-            log.error("Failed to create Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", triggerPolicyInfo.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
+            log.error("Failed to create Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policyInfo.getSeq(), url, e.getMessage());
         }
     }
 
-    public boolean updateTask(TriggerPolicyInfo info, ManageTriggerTargetStorageInfo targetStorageInfo) {
-        String kapacitorTaskId = String.valueOf(info.getSeq());
+    public boolean updateTask(TriggerPolicyInfo policyInfo, ManageTriggerTargetStorageInfo targetStorageInfo) {
+        String kapacitorTaskId = String.valueOf(policyInfo.getSeq());
 
         Map<String, String> updateTaskParam = new HashMap<>();
-        updateTaskParam.put("status", info.getStatus().toString());
-        updateTaskParam.put("script", info.getTickScript());
+        updateTaskParam.put("status", policyInfo.getStatus().toString());
+
+        policyInfo.setTickScriptStorageInfo(targetStorageInfo.getDatabase(), targetStorageInfo.getRetentionPolicy());
+        updateTaskParam.put("script", policyInfo.getTickScript());
 
         try {
             String kapacitorUrl = getKapacitorUrl(targetStorageInfo.getUrl());
@@ -83,13 +87,13 @@ public class KapacitorApiService {
 
             updateTask(kapacitorUrl, kapacitorTaskId, updateTaskParam);
 
-            if(info.getStatus().equals("enabled")) {
+            if(policyInfo.getStatus().equals("enabled")) {
                 updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "disabled"));
                 updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "enabled"));
             }
             return true;
         } catch (Exception e) {
-            throw new ResultCodeException(ResultCode.FAILED, "Failed to update Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", info.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
+            throw new ResultCodeException(ResultCode.FAILED, "Failed to update Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policyInfo.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
         }
     }
 

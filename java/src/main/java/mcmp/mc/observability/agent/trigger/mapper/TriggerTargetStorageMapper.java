@@ -18,4 +18,6 @@ public interface TriggerTargetStorageMapper {
     List<ManageTriggerTargetStorageInfo> getManageTriggerTargetStorageInfoList(Map<String, Long> policySeq);
 
     void deleteTriggerTargetStorageByPolicySeq(Long seq);
+
+    List<Long> getPolicySeqListRegisteredInStorage(Map<String, String> url);
 }

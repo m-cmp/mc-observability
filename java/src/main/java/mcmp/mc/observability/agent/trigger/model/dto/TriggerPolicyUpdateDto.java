@@ -28,6 +28,8 @@ public class TriggerPolicyUpdateDto {
     private List<String> groupFields;
     @ApiModelProperty(value = "Trigger target metric statistics", example = "min")
     private String statistics;
+    @ApiModelProperty(value = "Agent Manager IP", example = "http://localhost:18080")
+    private String agentManagerIp;
     @ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
     @Base64DecodeField
     private String threshold;

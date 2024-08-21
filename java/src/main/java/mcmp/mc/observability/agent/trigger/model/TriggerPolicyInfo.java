@@ -39,6 +39,8 @@ public class TriggerPolicyInfo {
     @ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
     @Base64EncodeField
     private String threshold;
+    @ApiModelProperty(value = "Agent Manager IP", example = "http://localhost:18080")
+    private String agentManagerIp;
     @ApiModelProperty(value = "Trigger Policy enablement status")
     private TaskStatus status;
     @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
@@ -60,6 +62,7 @@ public class TriggerPolicyInfo {
         this.field = dto.getField();
         this.statistics = dto.getStatistics();
         this.status = dto.getStatus();
+        this.agentManagerIp = dto.getAgentManagerIp();
     }
 
     public void setUpdateDto(TriggerPolicyUpdateDto dto) {
@@ -79,6 +82,8 @@ public class TriggerPolicyInfo {
             this.statistics = dto.getStatistics();
         if (dto.getStatus() != null)
             this.status = dto.getStatus();
+        if (dto.getAgentManagerIp() != null)
+            this.agentManagerIp = dto.getAgentManagerIp();
     }
 
     public void makeTickScript(TriggerPolicyInfo triggerPolicy) {
@@ -104,7 +109,7 @@ public class TriggerPolicyInfo {
                 "@ALERT_CONDITION" +
                 "        .id('{{ .TaskName }}')\n" +
                 "        .stateChangesOnly()\n" +
-                "        .post('http://192.168.130.26:8080/api/v2/cmp/kapacitor/alert')\n\n" +
+                "        .post('@AGENT_MANAGER_IP/api/o11y/monitoring/trigger/receiver')\n\n" +
                 "trigger\n" +
                 "    |httpOut('output')";
 
@@ -121,16 +126,17 @@ public class TriggerPolicyInfo {
                 .replaceAll("@GROUP_BY", convertListToString(triggerPolicy.getGroupFields()))
                 .replaceAll("@WHERE_CONDITION", whereCondition)
                 .replaceAll("@STATISTICS", statistics)
-                .replaceAll("@ALERT_CONDITION", alertCondition);
+                .replaceAll("@ALERT_CONDITION", alertCondition)
+                .replaceAll("@AGENT_MANAGER_IP", triggerPolicy.getAgentManagerIp());
 
         this.tickScript = tickScript;
     }
 
-    public void setTickScriptStorageInfo(TriggerTargetStorageInfo targetStorageInfo) {
+    public void setTickScriptStorageInfo(String database, String retentionPolicy) {
         String script = this.tickScript;
         this.tickScript = script
-                .replaceAll("@DATABASE", targetStorageInfo.getDatabase())
-                .replaceAll("@RETENTION_POLICY", targetStorageInfo.getRetentionPolicy());
+                .replaceAll("@DATABASE", database)
+                .replaceAll("@RETENTION_POLICY", retentionPolicy);
     }
 
     public String convertListToString(List<String> groupByFields) {
