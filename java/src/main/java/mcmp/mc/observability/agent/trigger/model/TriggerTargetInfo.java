@@ -22,9 +22,10 @@ public class TriggerTargetInfo {
     private String nsId;
     @ApiModelProperty(value = "Vm Id")
     private String targetId;
-    @ApiModelProperty(value = "Base64 Encoded value", example = "localhost")
-    @Base64EncodeField
+    @ApiModelProperty(value = "Host name", example = "vm1")
     private String name;
+    @ApiModelProperty(value = "Host Alias Name", example = "test-vm")
+    private String aliasName;
     @ApiModelProperty(value = "The time when the trigger target was registered", example = "2024-05-24 11:31:55")
     private String createAt;
     @ApiModelProperty(value = "The time when the trigger target was updated")

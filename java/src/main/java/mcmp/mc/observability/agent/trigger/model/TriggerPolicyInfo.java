@@ -101,15 +101,15 @@ public class TriggerPolicyInfo {
                 "        .where(lambda: isPresent(\"@FIELD\")@WHERE_CONDITION)\n" +
                 "    |eval()\n" +
                 "        .keep('@FIELD')\n\n" +
-                "var meanData = streamData\n" +
+                "var data = streamData\n" +
                 "    |@STATISTICS('@FIELD')\n" +
                 "        .as('value')\n\n" +
-                "var trigger = meanData\n" +
+                "var trigger = data\n" +
                 "    |alert()\n" +
                 "@ALERT_CONDITION" +
                 "        .id('{{ .TaskName }}')\n" +
                 "        .stateChangesOnly()\n" +
-                "        .post('@AGENT_MANAGER_IP/api/o11y/monitoring/trigger/receiver')\n\n" +
+                "        .post('@AGENT_MANAGER_IP/api/o11y/trigger/receiver')\n\n" +
                 "trigger\n" +
                 "    |httpOut('output')";
 

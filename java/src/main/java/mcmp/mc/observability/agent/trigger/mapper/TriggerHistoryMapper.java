@@ -12,4 +12,6 @@ public interface TriggerHistoryMapper {
     List<TriggerHistoryInfo> getList(Long policySeq);
 
     TriggerHistoryInfo getDetail(Long seq);
+
+    void createHistory(TriggerHistoryInfo historyInfo);
 }

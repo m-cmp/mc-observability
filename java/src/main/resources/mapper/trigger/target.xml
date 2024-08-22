@@ -5,14 +5,15 @@
     <resultMap id="triggerTargetResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerTargetInfo">
         <result column="seq" property="seq" />
         <result column="policy_seq" property="policySeq" />
-        <result column="host_seq" property="hostSeq" />
-        <result column="name" property="hostname" />
-        <result column="ex" property="ex" />
+        <result column="target_id" property="targetId" />
+        <result column="ns_id" property="nsId" />
+        <result column="name" property="name" />
+        <result column="alias_name" property="aliasName" />
         <result column="create_at" property="createAt" />
         <result column="update_at" property="updateAt" />
     </resultMap>
 
-    <sql id="targeteWhere">
+    <sql id="targetWhere">
         <where>
             <if test='seq != null'>
                 AND SEQ = #{seq}
@@ -20,11 +21,17 @@
             <if test='policySeq != null'>
                 AND POLICY_SEQ = #{policySeq}
             </if>
-            <if test='hostSeq != null'>
-                AND HOST_SEQ = #{hostSeq}
+            <if test='targetId != null'>
+                AND TARGET_ID = #{targetId}
             </if>
-            <if test='hostname != null'>
-                AND `HOSTNAME` = #{hostname}
+            <if test='nsId != null'>
+                AND NS_ID = #{nsId}
+            </if>
+            <if test='name != null'>
+                AND `NAME` = #{name}
+            </if>
+            <if test='aliasName != null'>
+                AND ALIAS_NAME = #{aliasName}
             </if>
         </where>
     </sql>
@@ -32,30 +39,56 @@
     <select id="getDetail" resultMap="triggerTargetResultMap">
         SELECT TT.SEQ,
                TT.POLICY_SEQ,
-               TT.HOST_SEQ,
-               AH.HOSTNAME,
-               AH.EX,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
                TT.CREATE_AT,
                TT.UPDATE_AT
         FROM mc_o11y_trigger_target TT
-        LEFT JOIN mc_o11y_agent_host AH ON TT.HOST_SEQ = AH.SEQ
+        LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
         WHERE SEQ = #{seq}
+    </select>
+
+    <select id="getTargetDetail" resultMap="triggerTargetResultMap">
+        SELECT TT.SEQ,
+               TT.POLICY_SEQ,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
+               TT.CREATE_AT,
+               TT.UPDATE_AT
+        FROM mc_o11y_trigger_target TT
+                 LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
+        <where>
+            <if test='policySeq != null'>
+                AND TT.POLICY_SEQ = #{policySeq}
+            </if>
+            <if test='targetId != null'>
+                AND TT.TARGET_ID = #{targetId}
+            </if>
+            <if test='nsId != null'>
+                AND TT.NS_ID = #{nsId}
+            </if>
+        </where>
     </select>
 
     <select id="getList" resultMap="triggerTargetResultMap">
         SELECT TT.SEQ,
                TT.POLICY_SEQ,
-               TT.HOST_SEQ,
-               AH.NAME,
-               AH.EX,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
                TT.CREATE_AT,
                TT.UPDATE_AT
         FROM mc_o11y_trigger_target TT
-        LEFT JOIN mc_o11y_agent_host AH ON TT.HOST_SEQ = AH.SEQ
+                 LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
         WHERE TT.POLICY_SEQ = #{policySeq}
     </select>
 
-    <select id="getListPolicySeq" resultMap="triggerTargetResultMap">
+    <select id="getListByPolicySeq" resultMap="triggerTargetResultMap">
         SELECT SEQ,
                 POLICY_SEQ,
                 NS_ID,

@@ -47,4 +47,19 @@
         FROM mc_o11y_trigger_history
         WHERE SEQ = #{seq}
     </select>
+
+    <insert id="createHistory" parameterType="TriggerHistoryInfo">
+        INSERT INTO mc_o11y_trigger_history( POLICY_SEQ, TARGET_SEQ, NAME, NS_ID, TARGET_ID, METRIC, DATA, LEVEL, OCCUR_TIME)
+        VALUES (
+                 #{policySeq}
+               , #{targetSeq}
+               , #{name}
+               , #{nsId}
+               , #{targetId}
+               , #{metric}
+               , #{data}
+               , #{level}
+               , #{occurTime}
+               )
+    </insert>
 </mapper>

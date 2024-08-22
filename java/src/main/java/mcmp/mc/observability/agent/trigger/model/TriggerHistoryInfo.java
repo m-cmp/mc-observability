@@ -1,10 +1,12 @@
 package mcmp.mc.observability.agent.trigger.model;
 
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Builder;
 import lombok.Data;
 import mcmp.mc.observability.agent.common.annotation.Base64EncodeField;
 
 @Data
+@Builder
 public class TriggerHistoryInfo {
 
     @ApiModelProperty(value = "Sequence by history", example = "1")

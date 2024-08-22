@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.agent.common.exception.ResultCodeException;
 import mcmp.mc.observability.agent.common.model.ResBody;
 import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
-import mcmp.mc.observability.agent.monitoring.model.HostStorageInfo;
 import mcmp.mc.observability.agent.monitoring.model.InfluxDBConnector;
 import mcmp.mc.observability.agent.trigger.mapper.MonitoringConfigMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
@@ -62,7 +61,7 @@ public class TriggerTargetService {
         if (policyInfo == null)
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
-        List<TriggerTargetInfo> targetInfoList = triggerTargetMapper.getListPolicySeq(policySeq);
+        List<TriggerTargetInfo> targetInfoList = triggerTargetMapper.getListByPolicySeq(policySeq);
         List<ManageTriggerTargetDto> addTargetList = new ArrayList<>();
 
         if(!CollectionUtils.isEmpty(targets)) {
