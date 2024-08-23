@@ -80,6 +80,39 @@ public class TriggerPolicyAlertService {
         return resBody;
     }
 
+    public ResBody<Void> sendSlack(Long seq, String message) {
+        ResBody<Void> resBody = new ResBody<>();
+        try {
+            TriggerSlackUserInfo slackUser = slackMapper.getSlackUser(seq);
+            if (slackUser == null)
+                throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy Slack User Sequence Error");
+
+            ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+                    .channel(slackUser.getChannel())
+                    .text(message)
+                    .build();
+
+            Slack slack = Slack.getInstance();
+            ChatPostMessageResponse response = slack.methods(slackUser.getToken()).chatPostMessage(request);
+            if (!response.isOk()) {
+                switch (response.getError()) {
+                    case "invalid_auth":
+                        throw new AuthenticationException("Invalid authentication credentials for Slack.");
+                    case "channel_not_found":
+                        throw new Exception("The specified channel was not found.");
+                    default:
+                        throw new Exception("An error occurred with Slack API: " + response.getError());
+                }
+            }
+        } catch (ResultCodeException e) {
+            log.error(e.getMessage(), e.getObjects());
+            resBody.setCode(e.getResultCode());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return resBody;
+    }
+
     public List<TriggerEmailUserInfo> getEmailUserList(Long policySeq) {
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(policySeq);
         if(policyInfo == null)
@@ -117,6 +150,39 @@ public class TriggerPolicyAlertService {
         } catch (ResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
             resBody.setCode(e.getResultCode());
+        }
+        return resBody;
+    }
+
+    public ResBody<Void> sendEmail(Long seq) {
+        ResBody<Void> resBody = new ResBody<>();
+        try {
+            TriggerEmailUserInfo emailUserInfo = emailMapper.getEmailUser(seq);
+            if(emailUserInfo == null)
+                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Email User Sequence Error");
+
+            JavaMailSender emailSender = mailConfig.getJavaMailSender();
+            MimeMessage mimeMessage = emailSender.createMimeMessage();
+
+            Context context = new Context();
+            context.setVariable("username", emailUserInfo.getName());
+            String html = templateEngine.process("WelcomeT.html", context);
+
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+            mimeMessageHelper.setTo(emailUserInfo.getEmail());
+            mimeMessageHelper.setSubject("[Alert] title");
+            mimeMessageHelper.setText(html, true);
+
+            ClassPathResource resource = new ClassPathResource("static/images/mcmp-logo.png");
+            mimeMessageHelper.addInline("logo_png", resource.getFile());
+
+            emailSender.send(mimeMessage);
+
+        } catch (ResultCodeException e) {
+            log.error(e.getMessage(), e.getObjects());
+            resBody.setCode(e.getResultCode());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return resBody;
     }

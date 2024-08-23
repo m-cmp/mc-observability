@@ -41,7 +41,7 @@ public class TriggerPolicyController {
         return triggerPolicyService.getDetail(new ResBody<>(), seq);
     }
 
-    @ApiOperation(value = "Update request Trigger Policy")
+    @ApiOperation(value = "Create request Trigger Policy")
     @Base64Decode(TriggerPolicyCreateDto.class)
     @PostMapping
     public ResBody<Void> create(@RequestBody TriggerPolicyCreateDto triggerPolicyCreateDto) {
