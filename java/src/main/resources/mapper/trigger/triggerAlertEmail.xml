@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerAlertEmailMapper">
+    <resultMap id="emailTokenResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerEmailUserInfo">
+        <result column="seq" property="seq" />
+        <result column="policy_seq" property="policySeq" />
+        <result column="name" property="name" />
+        <result column="email" property="email" />
+    </resultMap>
+
+    <insert id="createEmailUser">
+        INSERT INTO mc_o11y_trigger_alert_email (policy_seq, name, email)
+        VALUES (#{policySeq}, #{name}, #{email})
+    </insert>
+
+    <select id="getEmailUserListByPolicySeq" resultMap="emailTokenResultMap">
+        SELECT seq,
+               policy_seq,
+               name,
+               email
+        FROM mc_o11y_trigger_alert_email
+        WHERE policy_seq = #{policySeq}
+    </select>
+
+    <select id="getEmailUser" resultType="mcmp.mc.observability.agent.trigger.model.TriggerEmailUserInfo">
+        SELECT seq,
+               policy_seq,
+               name,
+               email
+        FROM mc_o11y_trigger_alert_email
+        WHERE seq = #{seq}
+    </select>
+
+    <delete id="deleteEmailUser">
+        DELETE FROM mc_o11y_trigger_alert_email
+        WHERE SEQ = #{seq}
+    </delete>
+</mapper>
