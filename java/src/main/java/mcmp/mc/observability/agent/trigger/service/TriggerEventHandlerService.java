@@ -7,10 +7,7 @@ import mcmp.mc.observability.agent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerHistoryMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerTargetMapper;
-import mcmp.mc.observability.agent.trigger.model.KapacitorAlertInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerTargetInfo;
+import mcmp.mc.observability.agent.trigger.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -29,6 +26,7 @@ public class TriggerEventHandlerService {
     private final TriggerPolicyMapper triggerPolicyMapper;
     private final TriggerTargetMapper triggerTargetMapper;
     private final TriggerHistoryMapper triggerHistoryMapper;
+    private final TriggerPolicyAlertService triggerPolicyAlertService;
 
     public void checkTriggerTarget(KapacitorAlertInfo kapacitorAlertInfo) {
         try {
@@ -64,9 +62,9 @@ public class TriggerEventHandlerService {
                 if(triggerTargetInfo == null)
                     continue;
 
+                Date parsedDate = dateFormat.parse(kapacitorAlertInfo.getTime());
+                Timestamp timestamp = new Timestamp(parsedDate.getTime());
                 try {
-                    Date parsedDate = dateFormat.parse(kapacitorAlertInfo.getTime());
-                    Timestamp timestamp = new Timestamp(parsedDate.getTime());
                     TriggerHistoryInfo historyInfo = TriggerHistoryInfo.builder()
                             .policySeq(policySeq)
                             .targetSeq(triggerTargetInfo.getSeq())
@@ -85,9 +83,23 @@ public class TriggerEventHandlerService {
                     log.error("Failed to record trigger event history. Error : {}", e.getMessage());
                 }
 
+                TriggerAlertInfo alertInfo = TriggerAlertInfo.builder()
+                        .policySeq(policySeq)
+                        .policyName(triggerPolicyInfo.getName())
+                        .targetId(targetId)
+                        .nsId(nsId)
+                        .targetName(triggerTargetInfo.getName())
+                        .metric(seriesInfo.getName())
+                        .data(seriesInfo.toString())
+                        .level(kapacitorAlertInfo.getLevel())
+                        .threshold(triggerPolicyInfo.getThreshold())
+                        .occurTime(String.valueOf(timestamp))
+                        .build();
+
+                triggerPolicyAlertService.sendEventAlert(alertInfo);
             }
         } catch (Exception e) {
-            log.error("Failed to ");
+            log.error("Failed to Trigger Event Alert. Error : {}", e.getMessage());
         }
     }
 }

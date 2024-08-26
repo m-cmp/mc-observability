@@ -12,20 +12,18 @@ import mcmp.mc.observability.agent.trigger.config.MailConfig;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerAlertEmailMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerAlertSlackMapper;
 import mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper;
-import mcmp.mc.observability.agent.trigger.model.TriggerEmailUserInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo;
-import mcmp.mc.observability.agent.trigger.model.TriggerSlackUserInfo;
+import mcmp.mc.observability.agent.trigger.model.*;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerEmailUserCreateDto;
 import mcmp.mc.observability.agent.trigger.model.dto.TriggerSlackUserCreateDto;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import javax.mail.internet.MimeMessage;
-import javax.naming.AuthenticationException;
 import java.util.List;
 
 @Slf4j
@@ -80,39 +78,6 @@ public class TriggerPolicyAlertService {
         return resBody;
     }
 
-    public ResBody<Void> sendSlack(Long seq, String message) {
-        ResBody<Void> resBody = new ResBody<>();
-        try {
-            TriggerSlackUserInfo slackUser = slackMapper.getSlackUser(seq);
-            if (slackUser == null)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy Slack User Sequence Error");
-
-            ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                    .channel(slackUser.getChannel())
-                    .text(message)
-                    .build();
-
-            Slack slack = Slack.getInstance();
-            ChatPostMessageResponse response = slack.methods(slackUser.getToken()).chatPostMessage(request);
-            if (!response.isOk()) {
-                switch (response.getError()) {
-                    case "invalid_auth":
-                        throw new AuthenticationException("Invalid authentication credentials for Slack.");
-                    case "channel_not_found":
-                        throw new Exception("The specified channel was not found.");
-                    default:
-                        throw new Exception("An error occurred with Slack API: " + response.getError());
-                }
-            }
-        } catch (ResultCodeException e) {
-            log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return resBody;
-    }
-
     public List<TriggerEmailUserInfo> getEmailUserList(Long policySeq) {
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(policySeq);
         if(policyInfo == null)
@@ -154,36 +119,79 @@ public class TriggerPolicyAlertService {
         return resBody;
     }
 
-    public ResBody<Void> sendEmail(Long seq) {
-        ResBody<Void> resBody = new ResBody<>();
+
+    public void sendEventAlert(TriggerAlertInfo alertInfo) {
+        sendSlack(alertInfo);
+        sendEmail(alertInfo);
+    }
+
+    public void sendSlack(TriggerAlertInfo alertInfo) {
+        List<TriggerSlackUserInfo> slackUserList = slackMapper.getSlackUserListByPolicySeq(alertInfo.getPolicySeq());
+        if (CollectionUtils.isEmpty(slackUserList))
+            return;
+
+        String message = alertInfo.getAlertMessage();
+        for (TriggerSlackUserInfo slackUser : slackUserList) {
+            try {
+                ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+                        .channel(slackUser.getChannel())
+                        .text(message)
+                        .build();
+
+                Slack slack = Slack.getInstance();
+                ChatPostMessageResponse response = slack.methods(slackUser.getToken()).chatPostMessage(request);
+                if (!response.isOk()) {
+                    switch (response.getError()) {
+                        case "invalid_auth":
+                            log.error("Invalid authentication credentials for Slack.");
+                        case "channel_not_found":
+                            log.error("The specified channel was not found.");
+                        default:
+                            log.error("An error occurred with Slack API: {}", response.getError());
+                    }
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void sendEmail(TriggerAlertInfo alertInfo) {
         try {
-            TriggerEmailUserInfo emailUserInfo = emailMapper.getEmailUser(seq);
-            if(emailUserInfo == null)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Email User Sequence Error");
+            List<TriggerEmailUserInfo> emailUserInfoList = emailMapper.getEmailUserListByPolicySeq(alertInfo.getPolicySeq());
+            if(CollectionUtils.isEmpty(emailUserInfoList))
+                return;
 
             JavaMailSender emailSender = mailConfig.getJavaMailSender();
             MimeMessage mimeMessage = emailSender.createMimeMessage();
 
             Context context = new Context();
-            context.setVariable("username", emailUserInfo.getName());
-            String html = templateEngine.process("WelcomeT.html", context);
+            context.setVariable("policyName", alertInfo.getPolicyName());
+            context.setVariable("targetId", alertInfo.getTargetId());
+            context.setVariable("nsId", alertInfo.getNsId());
+            context.setVariable("targetName", alertInfo.getTargetName());
+            context.setVariable("metric", alertInfo.getMetric());
+            context.setVariable("level", alertInfo.getLevel());
+            context.setVariable("threshold", alertInfo.getThreshold());
+            context.setVariable("occurTime", alertInfo.getOccurTime());
+            String html = templateEngine.process("TriggerAlertTemplate.html", context);
 
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            mimeMessageHelper.setTo(emailUserInfo.getEmail());
-            mimeMessageHelper.setSubject("[Alert] title");
+            mimeMessageHelper.setSubject("[Alert] Trigger event occurred");
             mimeMessageHelper.setText(html, true);
 
             ClassPathResource resource = new ClassPathResource("static/images/mcmp-logo.png");
             mimeMessageHelper.addInline("logo_png", resource.getFile());
 
-            emailSender.send(mimeMessage);
+            for (TriggerEmailUserInfo emailUserInfo : emailUserInfoList) {
+                mimeMessageHelper.setTo(emailUserInfo.getEmail());
+                emailSender.send(mimeMessage);
+            }
 
         } catch (ResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return resBody;
     }
 }
