@@ -215,3 +215,5 @@ retract (
 	v0.3.12
 	v0.3.11
 )
+
+replace github.com/cloud-barista/ktcloudvpc-sdk-go v0.0.0-20240812121947-01daa5e57030 => ./ktcloudvpc-sdk-go
