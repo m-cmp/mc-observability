@@ -13,6 +13,17 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: email
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 springdoc:
   swagger-ui:
@@ -49,3 +60,12 @@ feign:
       default:
         connect-timeout: 5000
         read-timeout: 5000
+
+display_information:
+  name: Demo App
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  is_hosted: false
+  token_rotation_enabled: false
+
