@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.monitoring.mapper.HostItemMapper">
+
+    <sql id="hostItemWhere">
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='hostSeq != null'>
+                AND HOST_SEQ = #{hostSeq}
+            </if>
+            <if test='monitoringYn != null'>
+                AND MONITORING_YN = #{monitoringYn}
+            </if>
+            <if test='state != null'>
+                AND `state` = #{state}
+            </if>
+            <if test='notState != null'>
+                AND `state` != #{notState}
+            </if>
+            <if test='pluginName != null'>
+                AND PLUGIN_NAME = #{pluginName}
+            </if>
+        </where>
+    </sql>
+
+    <select id="getListCount" parameterType="PageableReqBody" resultType="Long">
+        SELECT
+            COUNT(SEQ)
+        FROM m_cmp_agent_host_item
+        WHERE HOST_SEQ=#{data.hostSeq}
+            AND STATE != "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+    </select>
+
+    <select id="getList" parameterType="PageableReqBody" resultType="HostItemInfo">
+        SELECT
+            SEQ,
+            HOST_SEQ,
+            `STATE`,
+            MONITORING_YN,
+            CREATE_AT,
+            UPDATE_AT,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            `NAME`,
+            INTERVAL_SEC,
+            SETTING
+        FROM m_cmp_agent_host_item
+        WHERE HOST_SEQ=#{data.hostSeq}
+            AND STATE != "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+        <include refid="mcmp.mc.observability.agent.orderBy" />
+        <include refid="mcmp.mc.observability.agent.pageFooter" />
+    </select>
+
+    <select id="getHostItemList" parameterType="Map" resultType="HostItemInfo">
+        SELECT
+            SEQ,
+            HOST_SEQ,
+            `STATE`,
+            MONITORING_YN,
+            CREATE_AT,
+            UPDATE_AT,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            `NAME`,
+            INTERVAL_SEC,
+            SETTING
+        FROM m_cmp_agent_host_item
+        <include refid="hostItemWhere" />
+    </select>
+
+    <select id="getDetail" resultType="HostItemInfo" parameterType="Map">
+        SELECT
+            SEQ,
+            HOST_SEQ,
+            `STATE`,
+            MONITORING_YN,
+            CREATE_AT,
+            UPDATE_AT,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            `NAME`,
+            INTERVAL_SEC,
+            SETTING
+        FROM m_cmp_agent_host_item
+        <include refid="hostItemWhere" />
+    </select>
+
+    <insert id="insertItem">
+        INSERT INTO m_cmp_agent_host_item(HOST_SEQ, PLUGIN_SEQ, PLUGIN_NAME, `NAME`, INTERVAL_SEC, SETTING)
+        VALUES (
+                #{hostSeq}
+                , #{pluginSeq}
+                , #{pluginName}
+                , #{name}
+                , #{intervalSec}
+                , #{setting}
+            )
+    </insert>
+
+    <update id="updateItem">
+        UPDATE m_cmp_agent_host_item
+        SET NAME         = #{name},
+            INTERVAL_SEC = #{intervalSec},
+            SETTING      = #{setting},
+            STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}"
+        WHERE SEQ = #{seq}
+            AND HOST_SEQ = #{hostSeq}
+    </update>
+
+    <update id="updateItemConf">
+        UPDATE m_cmp_agent_host_item
+        SET STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@NONE}",
+            UPDATE_AT = CURRENT_TIMESTAMP
+        WHERE SEQ = #{seq}
+    </update>
+
+    <update id="deleteItem">
+        UPDATE m_cmp_agent_host_item
+            SET STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        <include refid="hostItemWhere"/>
+    </update>
+
+    <delete id="deleteItemRow">
+        DELETE FROM m_cmp_agent_host_item WHERE SEQ=#{seq}
+    </delete>
+
+    <update id="turnMonitoringYn">
+        UPDATE m_cmp_agent_host_item
+        SET MONITORING_YN=3^MONITORING_YN , `STATE` = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}"
+        WHERE SEQ=#{seq}
+            AND HOST_SEQ = #{hostSeq}
+    </update>
+
+    <update id="syncHost">
+        UPDATE m_cmp_agent_host_item
+        SET STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}"
+        WHERE HOST_SEQ=#{hostSeq}
+    </update>
+</mapper>

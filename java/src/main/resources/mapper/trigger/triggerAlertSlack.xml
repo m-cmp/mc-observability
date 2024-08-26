@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerAlertSlackMapper">
+    <resultMap id="slackTokenResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerSlackUserInfo">
+        <result column="seq" property="seq" />
+        <result column="policy_seq" property="policySeq" />
+        <result column="name" property="name" />
+        <result column="token" property="token" />
+        <result column="channel" property="channel" />
+    </resultMap>
+
+    <insert id="createSlackUser">
+        INSERT INTO mc_o11y_trigger_alert_slack (policy_seq, name, token, channel)
+        VALUES (#{policySeq}, #{name}, #{token}, #{channel})
+    </insert>
+
+    <select id="getSlackUserListByPolicySeq" resultMap="slackTokenResultMap">
+        SELECT seq,
+               policy_seq,
+               name,
+               token,
+               channel
+        FROM mc_o11y_trigger_alert_slack
+        WHERE policy_seq = #{policySeq}
+    </select>
+
+    <select id="getSlackUser" resultType="mcmp.mc.observability.agent.trigger.model.TriggerSlackUserInfo">
+        SELECT seq,
+               policy_seq,
+               name,
+               token,
+               channel
+        FROM mc_o11y_trigger_alert_slack
+        WHERE seq = #{seq}
+    </select>
+
+    <delete id="deleteSlackUser">
+        DELETE FROM mc_o11y_trigger_alert_slack
+        WHERE SEQ = #{seq}
+    </delete>
+</mapper>

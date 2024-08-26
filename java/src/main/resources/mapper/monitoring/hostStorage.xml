@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.monitoring.mapper.HostStorageMapper">
+    <select id="getListCount" parameterType="PageableReqBody" resultType="Long">
+        SELECT
+            COUNT(SEQ)
+        FROM m_cmp_agent_host_storage
+        WHERE HOST_SEQ=#{data.hostSeq}
+            AND STATE != "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+    </select>
+
+    <select id="getList" parameterType="PageableReqBody" resultType="HostStorageInfo">
+        SELECT
+            SEQ
+            , HOST_SEQ
+            , NAME
+            , SETTING
+            , PLUGIN_SEQ
+            , PLUGIN_NAME
+            , STATE
+            , MONITORING_YN
+        FROM m_cmp_agent_host_storage
+        WHERE HOST_SEQ=#{data.hostSeq}
+            AND STATE != "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        <include refid="mcmp.mc.observability.agent.pageFilter" />
+        <include refid="mcmp.mc.observability.agent.orderBy" />
+        <include refid="mcmp.mc.observability.agent.pageFooter" />
+    </select>
+
+    <select id="getHostStorageList" parameterType="Map" resultType="HostStorageInfo">
+        SELECT
+            SEQ
+            , HOST_SEQ
+            , NAME
+            , SETTING
+            , PLUGIN_SEQ
+            , PLUGIN_NAME
+            , STATE
+            , MONITORING_YN
+        FROM m_cmp_agent_host_storage
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='hostSeq != null'>
+                AND HOST_SEQ = #{hostSeq}
+            </if>
+            <if test='monitoringYn != null'>
+                AND MONITORING_YN = #{monitoringYn}
+            </if>
+            <if test='state != null'>
+                AND `state` = #{state}
+            </if>
+            <if test='notState != null'>
+                AND `state` != #{notState}
+            </if>
+            <if test='pluginName != null'>
+                AND `PLUGIN_NAME` = #{pluginName}
+            </if>
+        </where>
+    </select>
+
+    <select id="getStorageDetail" resultType="HostStorageInfo">
+        SELECT
+            SEQ
+             , HOST_SEQ
+             , NAME
+             , SETTING
+             , PLUGIN_SEQ
+             , PLUGIN_NAME
+             , STATE
+             , MONITORING_YN
+        FROM m_cmp_agent_host_storage
+        WHERE HOST_SEQ=#{hostSeq}
+          AND SEQ = #{seq}
+    </select>
+
+    <insert id="createStorage" parameterType="HostStorageInfo">
+        INSERT INTO m_cmp_agent_host_storage(HOST_SEQ, NAME, SETTING, PLUGIN_SEQ, PLUGIN_NAME)
+        VALUES (
+            #{hostSeq}
+            , #{name}
+            , #{setting}
+            , #{pluginSeq}
+            , #{pluginName}
+        )
+    </insert>
+
+    <update id="updateStorage" parameterType="HostStorageInfo">
+        UPDATE m_cmp_agent_host_storage SET
+            `STATE` = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}",
+            NAME = #{name},
+            SETTING = #{setting}
+        WHERE
+            SEQ = #{seq} AND HOST_SEQ = #{hostSeq}
+    </update>
+
+    <update id="deleteStorage">
+        UPDATE m_cmp_agent_host_storage SET
+            `STATE` = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@DELETE}"
+        WHERE
+            SEQ=#{seq} AND HOST_SEQ = #{hostSeq}
+    </update>
+
+    <update id="updateStorageConf">
+        UPDATE m_cmp_agent_host_storage
+        SET STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@NONE}"
+        WHERE SEQ = #{seq}
+    </update>
+
+    <delete id="deleteStorageRow">
+        DELETE FROM m_cmp_agent_host_storage WHERE SEQ=#{seq}
+    </delete>
+
+    <update id="turnMonitoringYn">
+        UPDATE m_cmp_agent_host_storage
+        SET MONITORING_YN=3^MONITORING_YN , `STATE` = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}"
+        WHERE SEQ=#{seq}
+          AND HOST_SEQ = #{hostSeq}
+    </update>
+
+    <update id="syncHost">
+        UPDATE m_cmp_agent_host_storage
+        SET STATE = "${@mcmp.mc.observability.agent.monitoring.enums.StateOption@UPDATE}"
+        WHERE HOST_SEQ=#{hostSeq}
+    </update>
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.MonitoringConfigMapper">
+    <resultMap id="monitoringConfigResultMap" type="mcmp.mc.observability.agent.trigger.model.MonitoringConfigInfo">
+        <result column="seq" property="seq" />
+        <result column="ns_id" property="nsId" />
+        <result column="target_id" property="targetId" />
+        <result column="name" property="name" />
+        <result column="state" property="state" />
+        <result column="plugin_seq" property="pluginSeq" />
+        <result column="plugin_name" property="pluginName" />
+        <result column="plugin_type" property="pluginType" />
+        <result column="config" property="config" />
+    </resultMap>
+
+    <select id="getHostStorageList" parameterType="Map" resultMap="monitoringConfigResultMap">
+        SELECT
+            SEQ
+            , NS_ID
+            , TARGET_ID
+            , NAME
+            , STATE
+            , PLUGIN_SEQ
+            , PLUGIN_NAME
+            , PLUGIN_TYPE
+            , CONFIG
+        FROM mc_o11y_agent_target_monitoring_config
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='nsId != null'>
+                AND NS_ID = #{nsId}
+            </if>
+            <if test='targetId != null'>
+                AND TARGET_ID = #{targetId}
+            </if>
+            <if test='name != null'>
+                AND `NAME` = #{name}
+            </if>
+            <if test='state != null'>
+                AND `state` = #{state}
+            </if>
+            <if test='notState != null'>
+                AND `state` != #{notState}
+            </if>
+            <if test='pluginSeq != null'>
+                AND `PLUGIN_SEQ` = #{pluginSeq}
+            </if>
+            <if test='pluginName != null'>
+                AND `PLUGIN_NAME` = #{pluginName}
+            </if>
+            <if test='pluginType != null'>
+                AND `PLUGIN_TYPE` = #{pluginType}
+            </if>
+        </where>
+    </select>
+
+</mapper>

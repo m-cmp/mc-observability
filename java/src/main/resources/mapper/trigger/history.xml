@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerHistoryMapper">
+    <resultMap id="triggerHistoryResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerHistoryInfo">
+        <result column="seq" property="seq" />
+        <result column="policy_seq" property="policySeq" />
+        <result column="target_seq" property="targetSeq" />
+        <result column="name" property="name" />
+        <result column="ns_id" property="nsId" />
+        <result column="target_id" property="targetId" />
+        <result column="metric" property="metric" />
+        <result column="data" property="data" />
+        <result column="level" property="level" />
+        <result column="create_at" property="createAt" />
+        <result column="occur_time" property="occurTime" />
+    </resultMap>
+
+    <select id="getList" resultMap="triggerHistoryResultMap">
+        SELECT SEQ,
+               POLICY_SEQ,
+               TARGET_SEQ,
+               NAME,
+               NS_ID,
+               TARGET_ID,
+               METRIC,
+               DATA,
+               LEVEL,
+               CREATE_AT,
+               OCCUR_TIME
+        FROM mc_o11y_trigger_history
+        WHERE POLICY_SEQ = #{policySeq}
+    </select>
+
+    <select id="getDetail" resultMap="triggerHistoryResultMap">
+        SELECT SEQ,
+               POLICY_SEQ,
+               TARGET_SEQ,
+               NAME,
+               NS_ID,
+               TARGET_ID,
+               METRIC,
+               DATA,
+               LEVEL,
+               CREATE_AT,
+               OCCUR_TIME
+        FROM mc_o11y_trigger_history
+        WHERE SEQ = #{seq}
+    </select>
+
+    <insert id="createHistory" parameterType="TriggerHistoryInfo">
+        INSERT INTO mc_o11y_trigger_history( POLICY_SEQ, TARGET_SEQ, NAME, NS_ID, TARGET_ID, METRIC, DATA, LEVEL, OCCUR_TIME)
+        VALUES (
+                 #{policySeq}
+               , #{targetSeq}
+               , #{name}
+               , #{nsId}
+               , #{targetId}
+               , #{metric}
+               , #{data}
+               , #{level}
+               , #{occurTime}
+               )
+    </insert>
+</mapper>

@@ -6,11 +6,24 @@ server:
 
 spring:
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://0.0.0.0:3306
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:mariadb://192.168.130.26:3306/mc_observability
+    username: tabcloudit
+    password: tabcloudit
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: email
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 springdoc:
   swagger-ui:
@@ -19,7 +32,7 @@ springdoc:
     - /api/**
 
 mybatis:
-  mapper-locations: mapper/*.xml
+  mapper-locations: mapper/**/*.xml
   configuration:
     cache-enabled: true
     lazy-loading-enabled: true
@@ -29,8 +42,8 @@ mybatis:
     default-executor-type: simple
     default-statement-timeout: 100
     map-underscore-to-camel-case: true
-  type-aliases-package: mcmp.mc.observability.agent.model, mcmp.mc.observability.agent.dto
-  type-handlers-package: mcmp.mc.observability.agent.util
+  type-aliases-package: mcmp.mc.observability.agent
+  type-handlers-package: mcmp.mc.observability.agent
 
 logging:
   level:
@@ -38,3 +51,21 @@ logging:
   file:
     path: /var/log/mc-agent
     name: mc-agent.log
+
+feign:
+  okhttp:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 5000
+
+display_information:
+  name: Demo App
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  is_hosted: false
+  token_rotation_enabled: false
+

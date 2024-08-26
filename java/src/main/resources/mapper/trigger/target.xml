@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerTargetMapper">
+    <resultMap id="triggerTargetResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerTargetInfo">
+        <result column="seq" property="seq" />
+        <result column="policy_seq" property="policySeq" />
+        <result column="target_id" property="targetId" />
+        <result column="ns_id" property="nsId" />
+        <result column="name" property="name" />
+        <result column="alias_name" property="aliasName" />
+        <result column="create_at" property="createAt" />
+        <result column="update_at" property="updateAt" />
+    </resultMap>
+
+    <sql id="targetWhere">
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='policySeq != null'>
+                AND POLICY_SEQ = #{policySeq}
+            </if>
+            <if test='targetId != null'>
+                AND TARGET_ID = #{targetId}
+            </if>
+            <if test='nsId != null'>
+                AND NS_ID = #{nsId}
+            </if>
+            <if test='name != null'>
+                AND `NAME` = #{name}
+            </if>
+            <if test='aliasName != null'>
+                AND ALIAS_NAME = #{aliasName}
+            </if>
+        </where>
+    </sql>
+
+    <select id="getDetail" resultMap="triggerTargetResultMap">
+        SELECT TT.SEQ,
+               TT.POLICY_SEQ,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
+               TT.CREATE_AT,
+               TT.UPDATE_AT
+        FROM mc_o11y_trigger_target TT
+        LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
+        WHERE SEQ = #{seq}
+    </select>
+
+    <select id="getTargetDetail" resultMap="triggerTargetResultMap">
+        SELECT TT.SEQ,
+               TT.POLICY_SEQ,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
+               TT.CREATE_AT,
+               TT.UPDATE_AT
+        FROM mc_o11y_trigger_target TT
+                 LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
+        <where>
+            <if test='policySeq != null'>
+                AND TT.POLICY_SEQ = #{policySeq}
+            </if>
+            <if test='targetId != null'>
+                AND TT.TARGET_ID = #{targetId}
+            </if>
+            <if test='nsId != null'>
+                AND TT.NS_ID = #{nsId}
+            </if>
+        </where>
+    </select>
+
+    <select id="getList" resultMap="triggerTargetResultMap">
+        SELECT TT.SEQ,
+               TT.POLICY_SEQ,
+               TT.NS_ID,
+               TT.TARGET_ID,
+               AT.NAME,
+               AT.ALIAS_NAME,
+               TT.CREATE_AT,
+               TT.UPDATE_AT
+        FROM mc_o11y_trigger_target TT
+                 LEFT JOIN mc_o11y_agent_target `AT` ON TT.NS_ID = AT.NS_ID AND TT.TARGET_ID = AT.ID
+        WHERE TT.POLICY_SEQ = #{policySeq}
+    </select>
+
+    <select id="getListByPolicySeq" resultMap="triggerTargetResultMap">
+        SELECT SEQ,
+                POLICY_SEQ,
+                NS_ID,
+                TARGET_ID,
+                CREATE_AT,
+                UPDATE_AT
+        FROM mc_o11y_trigger_target
+        WHERE POLICY_SEQ = #{policySeq}
+    </select>
+
+    <insert id="createTarget">
+        INSERT INTO mc_o11y_trigger_target(SEQ, POLICY_SEQ, NS_ID, TARGET_ID)
+        VALUES (
+                 #{seq}
+               , #{policySeq}
+               , #{nsId}
+               , #{targetId}
+               )
+
+        <selectKey resultType="Long" keyProperty="seq" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <delete id="deleteTriggerTargetBySeq" parameterType="Long">
+        DELETE FROM mc_o11y_trigger_target
+        WHERE SEQ = #{seq}
+    </delete>
+
+    <delete id="deleteTriggerTargetByPolicySeq">
+        DELETE FROM mc_o11y_trigger_target
+        WHERE POLICY_SEQ = #{policySeq}
+    </delete>
+</mapper>

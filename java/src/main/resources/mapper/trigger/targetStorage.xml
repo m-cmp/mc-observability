@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerTargetStorageMapper">
+    <insert id="createTargetStorage">
+        INSERT IGNORE INTO mc_o11y_trigger_target_storage (
+                TARGET_SEQ,
+                URL,
+                `DATABASE`,
+                RETENTION_POLICY
+        ) VALUES (
+            #{targetSeq},
+            #{url},
+            #{database},
+            #{retentionPolicy}
+        )
+    </insert>
+
+    <select id="getRemainTaskStorageCount" resultType="Map">
+        SELECT COUNT(1) as `count`
+             , URL AS url
+             , `DATABASE` AS `database`
+             , RETENTION_POLICY AS retentionPolicy
+        FROM mc_o11y_trigger_target_storage TTS
+        LEFT JOIN mc_o11y_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+        WHERE POLICY_SEQ = #{policySeq}
+        GROUP BY URL, `DATABASE`, RETENTION_POLICY
+    </select>
+
+    <delete id="deleteTriggerTargetStorageByTargetSeq" parameterType="Long">
+        DELETE FROM mc_o11y_trigger_target_storage
+        WHERE TARGET_SEQ = #{targetSeq}
+    </delete>
+
+    <select id="getManageTriggerTargetStorageInfoList" resultType="mcmp.mc.observability.agent.trigger.model.ManageTriggerTargetStorageInfo">
+        SELECT TT.SEQ as targetSeq
+        , TT.POLICY_SEQ
+        , TTS.URL
+        , TTS.`DATABASE`
+        , TTS.RETENTION_POLICY
+        FROM mc_o11y_trigger_target_storage TTS
+        LEFT JOIN mc_o11y_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+        <where>
+            <if test="policySeq != null">
+                AND POLICY_SEQ = #{policySeq}
+            </if>
+        </where>
+        GROUP BY URL, `DATABASE` , RETENTION_POLICY
+    </select>
+
+    <delete id="deleteTriggerTargetStorageByPolicySeq">
+        DELETE FROM mc_o11y_trigger_target_storage
+        WHERE SEQ IN (
+            SELECT TTS.SEQ
+            FROM mc_o11y_trigger_target_storage TTS
+                     LEFT JOIN mc_o11y_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+            WHERE TT.POLICY_SEQ = #{policySeq}
+        )
+    </delete>
+
+    <select id="getPolicySeqListRegisteredInStorage" resultType="Long">
+        SELECT TT.POLICY_SEQ
+        FROM mc_o11y_trigger_target_storage TTS
+                 LEFT JOIN mc_o11y_trigger_target TT
+                           ON TT.SEQ = TTS.TARGET_SEQ
+        WHERE TTS.URL = #{url}
+        GROUP BY TT.POLICY_SEQ
+    </select>
+</mapper>

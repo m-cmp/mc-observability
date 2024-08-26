@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<table align="center" style="background-color: antiquewhite; width: 596px; table-layout: fixed; max-width: 596px" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+        <td style="width: 20px"></td>
+        <td style="text-align: center; background-color: antiquewhite">
+            <img src="cid:logo_png" alt="img" style="width: 130px; vertical-align: top" />
+        </td>
+        <td style="width: 20px"></td>
+    </tr>
+    <tr>
+        <td style="width: 40px"></td>
+        <td style="background-color: white">
+            <div style=" margin-top: 10px; text-align: center; align-content: center; justify-content: center">
+                <h3>M-CMP Trigger Event Alert</h3><br/>
+                [Alert :
+                <strong style="color:#006dff;font-weight: bold;" th:text="${metric}">metric</strong>
+                    alarm has been triggered in
+                <strong style="color:#006dff;font-weight: bold;" th:text="${policyName}">policyName</strong>
+                    ]
+            </div>
+        </td><tr>
+        <td>
+            <table align="center" border="0" cellpadding="0" cellspacing="0" style="width:540px;margin:20px auto;margin-left:25px;font-size:12px;border-top:2px solid #454f5d;border-bottom:1px solid #454f5d;margin-bottom:5px;">
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Policy Name</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${policyName}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">ID</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${targetId}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Namespace ID</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${nsId}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Target Name</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${targetName}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Metric</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${metric}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Level</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:utext="${level}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Threshold</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:utext="${threshold}"></td>
+                </tr>
+                <tr>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Occur Time</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${occurTime}"></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+        <td style="width: 40px"></td>
+    </tr>
+    <tr style="height: 40px">
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

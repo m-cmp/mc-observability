@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.agent.trigger.mapper.TriggerPolicyMapper">
+    <resultMap id="triggerPolicyResultMap" type="mcmp.mc.observability.agent.trigger.model.TriggerPolicyInfo">
+        <result column="seq" property="seq" />
+        <result column="name" property="name" />
+        <result column="description" property="description" />
+        <result column="metric" property="metric" />
+        <result column="threshold" property="threshold" />
+        <result column="field" property="field" />
+        <result column="agent_manager_ip" property="agentManagerIp" />
+        <result column="statistics" property="statistics" />
+        <result column="group_fields" property="groupFields" typeHandler="mcmp.mc.observability.agent.trigger.handler.StringListTypeHandler"/>
+        <result column="tick_script" property="tickScript" />
+        <result column="status" property="status" />
+        <result column="create_at" property="createAt" />
+        <result column="update_at" property="updateAt" />
+    </resultMap>
+
+    <sql id="policyWhere">
+        <where>
+            <if test='seq != null'>
+                AND SEQ = #{seq}
+            </if>
+            <if test='name != null'>
+                AND `NAME` = #{name}
+            </if>
+            <if test='metric != null'>
+                AND METRIC = #{metric}
+            </if>
+            <if test='status != null'>
+                AND STATUS = #{status}
+            </if>
+            <if test='field != null'>
+                AND FIELD = #{field},
+            </if>
+            <if test='statistics != null'>
+                AND STATISTICS = #{statistics},
+            </if>
+            <if test='agentManagerIp != null'>
+                AND AGENT_MANAGER_IP = #{agentManagerIp},
+            </if>
+        </where>
+    </sql>
+
+    <select id="getDetail" resultMap="triggerPolicyResultMap">
+        SELECT SEQ,
+               NAME,
+               DESCRIPTION,
+               METRIC,
+               THRESHOLD,
+               FIELD,
+               GROUP_FIELDS,
+               STATISTICS,
+               AGENT_MANAGER_IP,
+               TICK_SCRIPT,
+               STATUS,
+               CREATE_AT,
+               UPDATE_AT
+        FROM mc_o11y_trigger_policy
+        WHERE SEQ = #{seq}
+    </select>
+
+    <select id="getList" resultMap="triggerPolicyResultMap">
+        SELECT SEQ,
+               NAME,
+               DESCRIPTION,
+               METRIC,
+               THRESHOLD,
+               FIELD,
+               GROUP_FIELDS,
+               STATISTICS,
+               AGENT_MANAGER_IP,
+               TICK_SCRIPT,
+               STATUS,
+               CREATE_AT,
+               UPDATE_AT
+        FROM mc_o11y_trigger_policy
+    </select>
+
+    <insert id="createPolicy" parameterType="TriggerPolicyInfo">
+        INSERT INTO mc_o11y_trigger_policy(SEQ, NAME, DESCRIPTION, METRIC, FIELD, GROUP_FIELDS, AGENT_MANAGER_IP, STATISTICS, THRESHOLD, TICK_SCRIPT, STATUS)
+        VALUES (
+                #{seq}
+               , #{name}
+               , #{description}
+               , #{metric}
+               , #{field}
+               , #{field}
+               , #{groupFields}
+               , #{agentManagerIp}
+               , #{statistics}
+               , #{threshold}
+               , #{tickScript}
+               , #{status}
+               )
+    </insert>
+
+    <update id="updatePolicy">
+        UPDATE mc_o11y_trigger_policy
+        <trim prefix="SET" suffixOverrides=",">
+            <if test='name != null'>
+                `NAME` = #{name},
+            </if>
+            <if test='description != null'>
+                DESCRIPTION = #{description},
+            </if>
+            <if test='metric != null'>
+                METRIC = #{metric},
+            </if>
+            <if test='threshold != null'>
+                THRESHOLD = #{threshold},
+            </if>
+            <if test='field != null'>
+                FIELD = #{field},
+            </if>
+            <if test='agentManagerIp != null'>
+                AGENT_MANAGER_IP = #{agentManagerIp},
+            </if>
+            <if test='statistics != null'>
+                STATISTICS = #{statistics},
+            </if>
+            <if test='groupFields != null'>
+                GROUP_FIELDS = #{groupFields},
+            </if>
+            <if test='tickScript != null'>
+                TICK_SCRIPT = #{tickScript},
+            </if>
+            <if test='status != null'>
+                STATUS = #{status},
+            </if>
+            UPDATE_AT = CURRENT_TIMESTAMP,
+        </trim>
+        WHERE SEQ = #{seq}
+    </update>
+
+    <delete id="deletePolicy">
+        DELETE FROM mc_o11y_trigger_policy
+        WHERE SEQ = #{seq}
+    </delete>
+
+</mapper>
