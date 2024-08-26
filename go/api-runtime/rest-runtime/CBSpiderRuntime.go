@@ -11,14 +11,13 @@ package restruntime
 import (
 	"crypto/subtle"
 	"fmt"
+	"net"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"net/http"
 	"os"
-
-	"github.com/chyeh/pubip"
 
 	cblogger "github.com/cloud-barista/cb-log"
 	cr "github.com/cloud-barista/cb-spider/api-runtime/common-runtime"
@@ -107,7 +106,7 @@ func getServerIPorName(env string) string {
 	hostEnv := os.Getenv(env) // SERVER_ADDRESS or SERVICE_ADDRESS
 
 	if hostEnv == "" {
-		return getPublicIP()
+		return getHostIPorName()
 	}
 
 	// "1.2.3.4" or "localhost"
@@ -117,16 +116,36 @@ func getServerIPorName(env string) string {
 
 	strs := strings.Split(hostEnv, ":")
 	if strs[0] == "" { // ":31024"
-		return getPublicIP()
+		return getHostIPorName()
 	} else { // "1.2.3.4:31024" or "localhost:31024"
 		return strs[0]
 	}
 }
 
-func getPublicIP() string {
-	ip, err := pubip.Get()
+func getHostName() string {
+	hostName, err := os.Hostname()
 	if err != nil {
 		cblog.Error(err)
+	}
+	return hostName
+}
+
+func getHostIPorName() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		hostName, err := os.Hostname()
+		if err != nil {
+			cblog.Error(err)
+		}
+		return hostName
+	}
+	defer func() {
+		_ = conn.Close()
+	}()
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	localIP := strings.Split(localAddr.String(), ":")
+	if len(localIP) == 0 {
+		cblog.Error("Failed to get local IP.")
 		hostName, err := os.Hostname()
 		if err != nil {
 			cblog.Error(err)
@@ -134,7 +153,7 @@ func getPublicIP() string {
 		return hostName
 	}
 
-	return ip.String()
+	return localIP[0]
 }
 
 func getServerPort(env string) string {
