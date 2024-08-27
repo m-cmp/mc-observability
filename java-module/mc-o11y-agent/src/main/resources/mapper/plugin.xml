@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.mco11yagent.monitoring.mapper.PluginMapper">
+    <select id="getAllPlugin" resultType="PluginDefInfo">
+        SELECT SEQ, NAME, PLUGIN_ID, PLUGIN_TYPE FROM mc_o11y_agent_plugin_def
+    </select>
+
+    <select id="getList" resultType="PluginDefInfo">
+        SELECT SEQ, NAME, PLUGIN_ID, PLUGIN_TYPE FROM mc_o11y_agent_plugin_def
+    </select>
+</mapper>

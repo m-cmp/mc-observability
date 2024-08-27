@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://192.168.110.211:3306/mc_observability?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul
+    username: mc-agent
+    password: mc-agent
+
+scheduler:
+  expression:
+    health-check: "*/5 * * * * ?"
+    config-check: "*/30 * * * * ?"
+    plugin-update: "*/30 * * * * ?"
