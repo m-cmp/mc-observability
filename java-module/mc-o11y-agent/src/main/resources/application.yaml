@@ -11,6 +11,17 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: email
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 springdoc:
   swagger-ui:
@@ -29,7 +40,7 @@ mybatis:
     default-executor-type: simple
     default-statement-timeout: 100
     map-underscore-to-camel-case: true
-  type-aliases-package: mcmp.mc.observability.mco11yagent.monitoring.model, mcmp.mc.observability.mco11yagent.monitoring.dto
+  type-aliases-package: mcmp.mc.observability.mco11yagent.monitoring
   type-handlers-package: mcmp.mc.observability.mco11yagent.monitoring.util
 
 logging:
@@ -38,3 +49,21 @@ logging:
   file:
     path: /var/log/mc-agent
     name: mc-agent.log
+
+feign:
+  okhttp:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 5000
+
+display_information:
+  name: Demo App
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  is_hosted: false
+  token_rotation_enabled: false
+

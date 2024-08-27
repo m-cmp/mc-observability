@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(Constants.PREFIX_V1 + "/influxdb")
+@RequestMapping(Constants.MONITORING_URI + "/influxdb")
 public class InfluxDBController {
 
     private final InfluxDBService influxDBService;

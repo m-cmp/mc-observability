@@ -1,7 +1,8 @@
-package mcmp.mc.observability.mco11yagent.monitoring.aspect;
-import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Decode;
-import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64DecodeField;
-import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64EncodeField;
+package mcmp.mc.observability.mco11yagent.trigger.aspect;
+
+import mcmp.mc.observability.mco11yagent.trigger.annotation.TriggerBase64Decode;
+import mcmp.mc.observability.mco11yagent.trigger.annotation.TriggerBase64DecodeField;
+import mcmp.mc.observability.mco11yagent.trigger.annotation.TriggerBase64EncodeField;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -22,18 +23,18 @@ import java.util.stream.Collectors;
 
 @Aspect
 @Component
-public class Base64Aspect {
-    @Before(value = "@annotation(mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Decode)")
+public class TriggerBase64Aspect {
+    @Before(value = "@annotation(mcmp.mc.observability.mco11yagent.trigger.annotation.TriggerBase64Decode)")
     public void base64DecodeString(JoinPoint jp) throws Exception {
         List<Object> args  = Arrays.stream(jp.getArgs()).collect(Collectors.toList());
 
         MethodSignature methodSignature = (MethodSignature) jp.getSignature();
-        List<Class> targetClassList = Arrays.stream(methodSignature.getMethod().getAnnotation(Base64Decode.class).value()).collect(Collectors.toList());
+        List<Class> targetClassList = Arrays.stream(methodSignature.getMethod().getAnnotation(TriggerBase64Decode.class).value()).collect(Collectors.toList());
         List<Object> filterArgs = args.stream().filter(f -> targetClassList.contains(f.getClass())).collect(Collectors.toList());
 
         for( Object arg : filterArgs ) {
             List<Field> filterFields = Arrays.stream(arg.getClass().getDeclaredFields()).filter(f -> Arrays.stream(f.getDeclaredAnnotations())
-                    .anyMatch(annotation -> annotation.annotationType().equals(Base64DecodeField.class))).collect(Collectors.toList());
+                    .anyMatch(annotation -> annotation.annotationType().equals(TriggerBase64DecodeField.class))).collect(Collectors.toList());
 
             for( Field field : filterFields ) {
                 String targetMethodName = toUppercase(field.getName());
@@ -53,12 +54,12 @@ public class Base64Aspect {
         }
     }
 
-    @AfterReturning(value = "@annotation(mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Encode)", returning = "response")
+    @AfterReturning(value = "@annotation(mcmp.mc.observability.mco11yagent.trigger.annotation.TriggerBase64Encode)", returning = "response")
     public void base64EncodeString(JoinPoint jp, Object response) throws Exception {
         List<Field> fields = Arrays.stream(response.getClass().getDeclaredFields()).collect(Collectors.toList());
 
         for( Field field : fields ) {
-            if( Arrays.stream(field.getAnnotations()).anyMatch(annotation -> annotation.annotationType().equals(Base64EncodeField.class)) ) {
+            if( Arrays.stream(field.getAnnotations()).anyMatch(annotation -> annotation.annotationType().equals(TriggerBase64EncodeField.class)) ) {
                 String targetMethodName = toUppercase(field.getName());
 
                 List<Method> methods = Arrays.stream(response.getClass().getDeclaredMethods()).collect(Collectors.toList());

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(Constants.PREFIX_V1 + "/{nsId}/target/{targetId}/item")
+@RequestMapping(Constants.MONITORING_URI + "/{nsId}/target/{targetId}/item")
 public class ItemController {
 
     private final MonitoringConfigService monitoringConfigService;

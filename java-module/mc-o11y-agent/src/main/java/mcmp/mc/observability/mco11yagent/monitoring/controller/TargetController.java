@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(Constants.PREFIX_V1)
+@RequestMapping(Constants.MONITORING_URI)
 public class TargetController {
 
     private final TargetService targetService;
