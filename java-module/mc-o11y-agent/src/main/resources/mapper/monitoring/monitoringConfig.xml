@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mcmp.mc.observability.mco11yagent.monitoring.mapper.MonitoringConfigMapper">
+    <select id="getList" resultType="MonitoringConfigInfo">
+        SELECT
+            SEQ,
+            NS_ID,
+            TARGET_ID,
+            NAME,
+            STATE,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            PLUGIN_TYPE,
+            PLUGIN_CONFIG
+        FROM mc_o11y_agent_target_monitoring_config
+        <where>
+            <if test="nsId != null">
+                AND NS_ID=#{nsId}
+            </if>
+            <if test="targetId != null">
+                AND TARGET_ID=#{targetId}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert" parameterType="MonitoringConfigInfo">
+        INSERT INTO mc_o11y_agent_target_monitoring_config(
+            NS_ID,
+            TARGET_ID,
+            NAME,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            PLUGIN_TYPE,
+            PLUGIN_CONFIG)
+        VALUES (
+            #{nsId}
+            , #{targetId}
+            , #{name}
+            , #{pluginSeq}
+            , #{pluginName}
+            , #{pluginType}
+            , #{pluginConfig}
+        )
+    </insert>
+
+    <update id="update" parameterType="MonitoringConfigInfo">
+        UPDATE mc_o11y_agent_target_monitoring_config SET
+            NAME=#{name}
+            , PLUGIN_CONFIG=#{pluginConfig}
+            , STATE=#{state}
+        WHERE
+            SEQ=#{seq}
+    </update>
+
+    <update id="updateState" parameterType="MonitoringConfigInfo">
+        UPDATE mc_o11y_agent_target_monitoring_config SET STATE=#{state} WHERE SEQ=#{seq}
+    </update>
+
+    <delete id="delete" parameterType="MonitoringConfigInfo">
+        DELETE FROM mc_o11y_agent_target_monitoring_config WHERE SEQ=#{seq}
+    </delete>
+</mapper>

@@ -1,0 +1,69 @@
+project:
+  version: 0.2.0
+
+server:
+  port: 18080
+
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://0.0.0.0:3306
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: email
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+springdoc:
+  swagger-ui:
+    path: apis.html
+  paths-to-match:
+    - /api/**
+
+mybatis:
+  mapper-locations: mapper/*.xml
+  configuration:
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    use-column-label: true
+    use-generated-keys: true
+    default-executor-type: simple
+    default-statement-timeout: 100
+    map-underscore-to-camel-case: true
+  type-aliases-package: mcmp.mc.observability.mco11yagent.monitoring
+  type-handlers-package: mcmp.mc.observability.mco11yagent.monitoring.util
+
+logging:
+  level:
+    root: INFO
+  file:
+    path: /var/log/mc-agent
+    name: mc-agent.log
+
+feign:
+  okhttp:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 5000
+
+display_information:
+  name: Demo App
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  is_hosted: false
+  token_rotation_enabled: false
+
