@@ -1,6 +1,6 @@
 package mcmp.mc.observability.mco11yagent.trigger.util;
 
-public class Utils {
+public class TriggerUtils {
     public static String camelToSnake(String camel) {
         StringBuilder snake = new StringBuilder();
         snake.append(Character.toLowerCase(camel.charAt(0)));

@@ -2,7 +2,7 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.trigger.exception.ResultCodeException;
+import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.client.KapacitorClient;
 import mcmp.mc.observability.mco11yagent.trigger.model.*;
@@ -83,7 +83,7 @@ public class KapacitorApiService {
             String kapacitorUrl = getKapacitorUrl(targetStorageInfo.getUrl());
             KapacitorTaskInfo taskInfo = getTask(kapacitorUrl, kapacitorTaskId);
             if(taskInfo == null)
-                throw new ResultCodeException(ResultCode.FAILED, "Trigger Policy Not Exists");
+                throw new TriggerResultCodeException(ResultCode.FAILED, "Trigger Policy Not Exists");
 
             updateTask(kapacitorUrl, kapacitorTaskId, updateTaskParam);
 
@@ -93,7 +93,7 @@ public class KapacitorApiService {
             }
             return true;
         } catch (Exception e) {
-            throw new ResultCodeException(ResultCode.FAILED, "Failed to update Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policyInfo.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
+            throw new TriggerResultCodeException(ResultCode.FAILED, "Failed to update Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policyInfo.getSeq(), targetStorageInfo.getUrl(), e.getMessage());
         }
     }
 
@@ -120,7 +120,7 @@ public class KapacitorApiService {
                     kapacitorTaskId
             );
         } catch (Exception e) {
-            throw new ResultCodeException(ResultCode.FAILED, "Failed to delete Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policySeq, url, e.getMessage());
+            throw new TriggerResultCodeException(ResultCode.FAILED, "Failed to delete Kapacitor task. TriggerPolicy Seq : {}, Storage URL : {}, Error: {}", policySeq, url, e.getMessage());
         }
     }
 
@@ -139,7 +139,7 @@ public class KapacitorApiService {
         try {
             uri = new URI(url);
             if (uri == null)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "URI is null");
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "URI is null");
         } catch (URISyntaxException e) {
             e.printStackTrace();
             throw new URISyntaxException(uri.toString(), e.getMessage());

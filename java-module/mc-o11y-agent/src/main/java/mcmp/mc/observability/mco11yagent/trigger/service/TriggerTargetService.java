@@ -2,15 +2,15 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.trigger.exception.ResultCodeException;
+import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.MonitoringConfigStorageMapper;
-import mcmp.mc.observability.mco11yagent.trigger.model.ResBody;
+import mcmp.mc.observability.mco11yagent.trigger.model.TriggerMonitoringConfigInfo;
+import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.InfluxDBConnector;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerTargetMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerTargetStorageMapper;
-import mcmp.mc.observability.mco11yagent.trigger.model.MonitoringConfigInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerPolicyInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetStorageInfo;
@@ -34,20 +34,20 @@ public class TriggerTargetService {
     public List<TriggerTargetInfo> getList(Long policySeq) {
         TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(policySeq);
         if(triggerPolicyInfo == null)
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
+            throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
         return triggerTargetMapper.getList(policySeq);
     }
 
-    public ResBody<TriggerTargetInfo> getDetail(ResBody<TriggerTargetInfo> resBody, Long seq) {
+    public TriggerResBody<TriggerTargetInfo> getDetail(TriggerResBody<TriggerTargetInfo> triggerResBody, Long seq) {
         TriggerTargetInfo triggerTargetInfo = getDetail(seq);
         if( triggerTargetInfo == null ) {
-            resBody.setCode(ResultCode.INVALID_REQUEST);
-            return resBody;
+            triggerResBody.setCode(ResultCode.INVALID_REQUEST);
+            return triggerResBody;
         }
 
-        resBody.setData(triggerTargetInfo);
-        return resBody;
+        triggerResBody.setData(triggerTargetInfo);
+        return triggerResBody;
     }
 
     public TriggerTargetInfo getDetail(Long seq) {
@@ -55,11 +55,11 @@ public class TriggerTargetService {
         return info;
     }
 
-    public ResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         TriggerPolicyInfo policyInfo = triggerPolicyMapper.getDetail(policySeq);
         if (policyInfo == null)
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
+            throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
         List<TriggerTargetInfo> targetInfoList = triggerTargetMapper.getListByPolicySeq(policySeq);
         List<ManageTriggerTargetDto> addTargetList = new ArrayList<>();
@@ -76,10 +76,10 @@ public class TriggerTargetService {
             addTriggerTargets(addTargetList, policyInfo);
             deleteTriggerTargets(targetInfoList, policyInfo);
         } catch (Exception e) {
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Set Trigger Target failed");
+            throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Set Trigger Target failed");
         }
 
-        return resBody;
+        return triggerResBody;
     }
 
     private void addTriggerTargets(List<ManageTriggerTargetDto> addTargetList, TriggerPolicyInfo policyInfo) {
@@ -102,11 +102,11 @@ public class TriggerTargetService {
             params.put("notState", "DELETE");
             params.put("targetId", targetDto.getTargetId());
             params.put("nsId", targetDto.getNsId());
-            List<MonitoringConfigInfo> hostStorageInfoList = monitoringConfigStorageMapper.getHostStorageList(params);
+            List<TriggerMonitoringConfigInfo> hostStorageInfoList = monitoringConfigStorageMapper.getHostStorageList(params);
             if (CollectionUtils.isEmpty(hostStorageInfoList))
                 continue;
 
-            for (MonitoringConfigInfo info : hostStorageInfoList) {
+            for (TriggerMonitoringConfigInfo info : hostStorageInfoList) {
                 InfluxDBConnector influxDBConnector = new InfluxDBConnector(info.getConfig());
                 TriggerTargetStorageInfo targetStorageInfo = TriggerTargetStorageInfo.builder()
                         .targetSeq(triggerTargetInfo.getSeq())

@@ -2,7 +2,7 @@ project:
   version: 0.2.0
 
 server:
-  port: 18080
+  port: 18081
 
 spring:
   datasource:
@@ -30,7 +30,7 @@ springdoc:
     - /api/**
 
 mybatis:
-  mapper-locations: mapper/*.xml
+  mapper-locations: mapper/**/*.xml
   configuration:
     cache-enabled: true
     lazy-loading-enabled: true
@@ -40,15 +40,15 @@ mybatis:
     default-executor-type: simple
     default-statement-timeout: 100
     map-underscore-to-camel-case: true
-  type-aliases-package: mcmp.mc.observability.mco11yagent.monitoring
-  type-handlers-package: mcmp.mc.observability.mco11yagent.monitoring.util
+  type-aliases-package: mcmp.mc.observability.mco11yagent #.monitoring.model, mcmp.mc.observability.mco11yagent.monitoring.dto, mcmp.mc.observability.mco11yagent.trigger.model, mcmp.mc.observability.mco11yagent.trigger.model.dto
+  type-handlers-package: mcmp.mc.observability.mco11yagent
 
 logging:
   level:
     root: INFO
   file:
-    path: /var/log/mc-agent
-    name: mc-agent.log
+    path: /var/log/mc-observability
+    name: mc-o11y-agent.log
 
 feign:
   okhttp:

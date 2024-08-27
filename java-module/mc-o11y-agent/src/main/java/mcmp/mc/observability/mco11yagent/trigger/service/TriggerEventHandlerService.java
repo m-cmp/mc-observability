@@ -2,7 +2,7 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.trigger.exception.ResultCodeException;
+import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerHistoryMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
@@ -35,7 +35,7 @@ public class TriggerEventHandlerService {
 
             TriggerPolicyInfo triggerPolicyInfo = triggerPolicyMapper.getDetail(policySeq);
             if (triggerPolicyInfo == null)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
 
             List<TriggerTargetInfo> triggerTargetInfoList = triggerTargetMapper.getListByPolicySeq(policySeq);
             if(CollectionUtils.isEmpty(triggerTargetInfoList)) {
