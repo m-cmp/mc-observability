@@ -15,7 +15,7 @@ import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResBody<T> {
+public class TriggerResBody<T> {
     @JsonIgnore
     private ResultCode code = ResultCode.SUCCESS;
     @TriggerBase64EncodeField

@@ -29,8 +29,8 @@ public class TargetController {
     }
 
     @PostMapping("/{nsId}/target/{targetId}")
-    public ResBody insert(@PathVariable String nsId, @PathVariable String targetId) {
-        return targetService.insert(nsId, targetId);
+    public ResBody insert(@PathVariable String nsId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+        return targetService.insert(nsId, targetId, targetInfo);
     }
 
     @PutMapping("/{nsId}/target/{targetId}")

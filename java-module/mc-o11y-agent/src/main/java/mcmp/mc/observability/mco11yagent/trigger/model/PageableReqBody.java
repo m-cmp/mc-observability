@@ -3,7 +3,7 @@ package mcmp.mc.observability.mco11yagent.trigger.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import mcmp.mc.observability.mco11yagent.trigger.util.Utils;
+import mcmp.mc.observability.mco11yagent.trigger.util.TriggerUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class PageableReqBody<T> {
         if( sidx == null || sidx.isEmpty() || sord == null || sord.isEmpty() ) return "";
         StringBuilder sb = new StringBuilder();
         sb.append(" ORDER BY `");
-        sb.append(Utils.camelToSnake(getSidx()));
+        sb.append(TriggerUtils.camelToSnake(getSidx()));
         sb.append("` ");
         sb.append(sord.equalsIgnoreCase("asc")? "ASC": "DESC");
         return sb.toString();

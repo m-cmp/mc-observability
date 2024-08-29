@@ -5,8 +5,8 @@ import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.trigger.exception.ResultCodeException;
-import mcmp.mc.observability.mco11yagent.trigger.model.ResBody;
+import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
+import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.config.MailConfig;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerAlertEmailMapper;
@@ -40,83 +40,83 @@ public class TriggerPolicyAlertService {
     public List<TriggerSlackUserInfo> getSlackUserList(Long policySeq) {
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(policySeq);
         if(policyInfo == null)
-            throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
+            throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
 
         return slackMapper.getSlackUserListByPolicySeq(policySeq);
     }
 
-    public ResBody<Void> createSlackUser(TriggerSlackUserCreateDto dto) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> createSlackUser(TriggerSlackUserCreateDto dto) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(dto.getPolicySeq());
         if(policyInfo == null)
-            throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
+            throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
 
         TriggerSlackUserInfo info = new TriggerSlackUserInfo();
         info.setCreateDto(dto);
         try {
             int result = slackMapper.createSlackUser(info);
             if (result <= 0) {
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Slack User insert error QueryResult={}", result);
+                throw new TriggerResultCodeException(ResultCode.INVALID_ERROR, "Trigger Slack User insert error QueryResult={}", result);
             }
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
-    public ResBody<Void> deleteSlackUser(Long seq) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> deleteSlackUser(Long seq) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         try {
             if (seq <= 0)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
             slackMapper.deleteSlackUser(seq);
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
     public List<TriggerEmailUserInfo> getEmailUserList(Long policySeq) {
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(policySeq);
         if(policyInfo == null)
-            throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
+            throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", policySeq);
 
         return emailMapper.getEmailUserListByPolicySeq(policySeq);
     }
 
-    public ResBody<Void> createEmailUser(TriggerEmailUserCreateDto dto) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> createEmailUser(TriggerEmailUserCreateDto dto) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(dto.getPolicySeq());
         if(policyInfo == null)
-            throw new ResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
+            throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
 
         TriggerEmailUserInfo info = new TriggerEmailUserInfo();
         info.setCreatDto(dto);
         try {
             int result = emailMapper.createEmailUser(info);
             if (result <= 0) {
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Email User insert error QueryResult={}", result);
+                throw new TriggerResultCodeException(ResultCode.INVALID_ERROR, "Trigger Email User insert error QueryResult={}", result);
             }
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
-    public ResBody<Void> deleteEmailUser(Long seq) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> deleteEmailUser(Long seq) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         try {
             if (seq <= 0)
-                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
             emailMapper.deleteEmailUser(seq);
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
 
@@ -188,7 +188,7 @@ public class TriggerPolicyAlertService {
                 emailSender.send(mimeMessage);
             }
 
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -2,8 +2,8 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.trigger.exception.ResultCodeException;
-import mcmp.mc.observability.mco11yagent.trigger.model.ResBody;
+import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
+import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerTargetMapper;
@@ -33,15 +33,15 @@ public class TriggerPolicyService {
         return triggerPolicyMapper.getList();
     }
 
-    public ResBody<TriggerPolicyInfo> getDetail(ResBody<TriggerPolicyInfo> resBody, Long seq) {
+    public TriggerResBody<TriggerPolicyInfo> getDetail(TriggerResBody<TriggerPolicyInfo> triggerResBody, Long seq) {
         TriggerPolicyInfo triggerHistoryInfo = getDetail(seq);
         if( triggerHistoryInfo == null ) {
-            resBody.setCode(ResultCode.INVALID_REQUEST);
-            return resBody;
+            triggerResBody.setCode(ResultCode.INVALID_REQUEST);
+            return triggerResBody;
         }
 
-        resBody.setData(triggerHistoryInfo);
-        return resBody;
+        triggerResBody.setData(triggerHistoryInfo);
+        return triggerResBody;
     }
 
     public TriggerPolicyInfo getDetail(Long seq) {
@@ -49,29 +49,29 @@ public class TriggerPolicyService {
         return info;
     }
 
-    public ResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         TriggerPolicyInfo info = new TriggerPolicyInfo();
         info.setCreateDto(dto);
         try {
             if (info.getName() == null || info.getName().isEmpty()) {
-                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Name is null/empty");
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Name is null/empty");
             }
             info.makeTickScript(info);
             int result = triggerPolicyMapper.createPolicy(info);
             if (result <= 0) {
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy insert error QueryResult={}", result);
+                throw new TriggerResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy insert error QueryResult={}", result);
             }
 
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
-    public ResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         TriggerPolicyInfo info = triggerPolicyMapper.getDetail(dto.getSeq());
         info.setUpdateDto(dto);
         info.makeTickScript(info);
@@ -80,24 +80,24 @@ public class TriggerPolicyService {
             int result = triggerPolicyMapper.updatePolicy(info);
 
             if (result <= 0) {
-                throw new ResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy Update None");
+                throw new TriggerResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy Update None");
             }
 
             if(hasNonNullFields(dto)) {
                 List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", info.getSeq()));
                 if (CollectionUtils.isEmpty(targetStorageInfoList))
-                    return resBody;
+                    return triggerResBody;
 
                 for(ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
                     kapacitorApiService.updateTask(info, targetStorageInfo);
                 }
             }
 
-        } catch (ResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 
     private boolean hasNonNullFields(TriggerPolicyUpdateDto dto) {
@@ -112,15 +112,15 @@ public class TriggerPolicyService {
         return fields.stream().anyMatch(field -> field != null);
     }
 
-    public ResBody<Void> deletePolicy(Long seq) {
-        ResBody<Void> resBody = new ResBody<>();
+    public TriggerResBody<Void> deletePolicy(Long seq) {
+        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
         try {
             if( seq <= 0 )
-                throw new ResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Sequence Error");
+                throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Sequence Error");
 
             TriggerPolicyInfo policyInfo = getDetail(seq);
             if(policyInfo == null)
-                throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
+                throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
             List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", seq));
             if (!CollectionUtils.isEmpty(targetStorageInfoList)) {
@@ -137,10 +137,10 @@ public class TriggerPolicyService {
             triggerTargetMapper.deleteTriggerTargetByPolicySeq(seq);
             triggerPolicyMapper.deletePolicy(seq);
         }
-        catch (ResultCodeException e) {
+        catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            resBody.setCode(e.getResultCode());
+            triggerResBody.setCode(e.getResultCode());
         }
-        return resBody;
+        return triggerResBody;
     }
 }

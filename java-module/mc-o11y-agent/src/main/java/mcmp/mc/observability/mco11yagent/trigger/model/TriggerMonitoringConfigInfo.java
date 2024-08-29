@@ -7,7 +7,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MonitoringConfigInfo {
+public class TriggerMonitoringConfigInfo {
 
     private Long seq;
     private String nsId;

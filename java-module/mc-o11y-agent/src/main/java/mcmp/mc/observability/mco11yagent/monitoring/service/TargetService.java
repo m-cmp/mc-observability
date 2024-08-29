@@ -23,8 +23,7 @@ public class TargetService {
         return resBody;
     }
 
-    public ResBody insert(String nsId, String targetId) {
-        TargetInfo targetInfo = new TargetInfo();
+    public ResBody insert(String nsId, String targetId, TargetInfo targetInfo) {
         targetInfo.setNsId(nsId);
         targetInfo.setId(targetId);
         if( targetMapper.insert(targetInfo) > 0 ) {

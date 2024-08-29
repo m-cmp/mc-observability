@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="mcmp.mc.observability.mco11yagent.trigger.mapper.MonitoringConfigStorageMapper">
-    <resultMap id="monitoringConfigResultMap" type="mcmp.mc.observability.mco11yagent.trigger.model.MonitoringConfigInfo">
+    <resultMap id="monitoringConfigResultMap" type="mcmp.mc.observability.mco11yagent.trigger.model.TriggerMonitoringConfigInfo">
         <result column="seq" property="seq" />
         <result column="ns_id" property="nsId" />
         <result column="target_id" property="targetId" />
@@ -24,7 +24,7 @@
             , PLUGIN_SEQ
             , PLUGIN_NAME
             , PLUGIN_TYPE
-            , CONFIG
+            , PLUGIN_CONFIG
         FROM mc_o11y_agent_target_monitoring_config
         <where>
             <if test='seq != null'>

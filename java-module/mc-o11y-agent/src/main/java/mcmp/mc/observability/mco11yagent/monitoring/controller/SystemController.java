@@ -22,6 +22,4 @@ public class SystemController {
     public ResBody<List<PluginDefInfo>> list() {
         return pluginService.getList();
     }
-
-    // install api?
 }

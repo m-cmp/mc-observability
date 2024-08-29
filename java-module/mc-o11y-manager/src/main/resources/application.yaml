@@ -1,0 +1,16 @@
+project:
+  version: 0.2.0
+
+server:
+  port: 18080
+
+feign:
+  okhttp:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 5000
+  agent-manager:
+    url: http://localhost:18081
