@@ -87,7 +87,6 @@
                , #{description}
                , #{metric}
                , #{field}
-               , #{field}
                , #{groupFields}
                , #{agentManagerIp}
                , #{statistics}

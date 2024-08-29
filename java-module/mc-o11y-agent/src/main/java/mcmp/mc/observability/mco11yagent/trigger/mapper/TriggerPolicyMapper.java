@@ -1,6 +1,5 @@
 package mcmp.mc.observability.mco11yagent.trigger.mapper;
 
-import mcmp.mc.observability.mco11yagent.trigger.model.PageableReqBody;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerPolicyInfo;
 import org.apache.ibatis.annotations.Mapper;
 

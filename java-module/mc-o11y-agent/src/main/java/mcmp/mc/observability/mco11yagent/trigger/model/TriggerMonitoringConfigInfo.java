@@ -17,6 +17,6 @@ public class TriggerMonitoringConfigInfo {
     private Long pluginSeq;
     private String pluginName;
     private String pluginType;
-    private String config;
+    private String pluginConfig;
 
 }
