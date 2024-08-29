@@ -11,7 +11,7 @@
         <result column="plugin_seq" property="pluginSeq" />
         <result column="plugin_name" property="pluginName" />
         <result column="plugin_type" property="pluginType" />
-        <result column="config" property="config" />
+        <result column="plugin_config" property="pluginConfig" />
     </resultMap>
 
     <select id="getHostStorageList" parameterType="Map" resultMap="monitoringConfigResultMap">

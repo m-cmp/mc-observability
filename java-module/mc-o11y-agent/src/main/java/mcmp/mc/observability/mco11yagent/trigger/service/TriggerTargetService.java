@@ -107,7 +107,7 @@ public class TriggerTargetService {
                 continue;
 
             for (TriggerMonitoringConfigInfo info : hostStorageInfoList) {
-                InfluxDBConnector influxDBConnector = new InfluxDBConnector(info.getConfig());
+                InfluxDBConnector influxDBConnector = new InfluxDBConnector(info.getPluginConfig());
                 TriggerTargetStorageInfo targetStorageInfo = TriggerTargetStorageInfo.builder()
                         .targetSeq(triggerTargetInfo.getSeq())
                         .url(influxDBConnector.getUrl())

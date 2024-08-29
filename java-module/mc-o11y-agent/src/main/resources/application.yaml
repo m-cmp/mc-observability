@@ -60,7 +60,7 @@ feign:
         read-timeout: 5000
 
 display_information:
-  name: Demo App
+  name: M-CMP Trigger
 settings:
   org_deploy_enabled: false
   socket_mode_enabled: false
