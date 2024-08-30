@@ -2,7 +2,9 @@ package mcmp.mc.observability.mco11ymanager.controller;
 
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
+import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +22,7 @@ import java.util.List;
 public class MonitoringController {
 
     private final MonitoringClient monitoringClient;
+    private final MonitoringService monitoringService;
 
     // monitoring target api
     @GetMapping("/monitoring/target")
@@ -28,11 +31,10 @@ public class MonitoringController {
     }
     @PostMapping(Constants.TARGET_PATH)
     public Object insertTarget(@PathVariable String nsId, @PathVariable String targetId) {
-        /*
-        cb-tb -> get mic list
-        cb-tb -> filter nsId, targetId
-        jsch -> connect & install agent
-         */
+        if( monitoringClient.getTarget(nsId, targetId) != null ) return null;
+
+        if( !monitoringService.installAgent(nsId, targetId) ) return null;
+
         return monitoringClient.insertTarget(nsId, targetId);
     }
     @PutMapping(Constants.TARGET_PATH)

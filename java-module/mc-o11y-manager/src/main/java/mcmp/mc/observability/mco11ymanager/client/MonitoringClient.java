@@ -17,6 +17,8 @@ public interface MonitoringClient {
 
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/target")
     Object getTargetList();
+    @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
+    Object getTarget(@PathVariable String nsId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     Object insertTarget(@PathVariable String nsId, @PathVariable String targetId);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)

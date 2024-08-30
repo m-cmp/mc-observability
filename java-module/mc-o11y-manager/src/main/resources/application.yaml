@@ -14,3 +14,5 @@ feign:
         read-timeout: 5000
   agent-manager:
     url: http://localhost:18081
+  cb-tumblebug:
+    url: http://localhost:1323
