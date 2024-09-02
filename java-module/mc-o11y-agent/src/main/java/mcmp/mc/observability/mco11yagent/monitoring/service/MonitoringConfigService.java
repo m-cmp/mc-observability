@@ -36,18 +36,19 @@ public class MonitoringConfigService {
         monitoringConfigMapper.update(monitoringConfigInfo);
 
         if("influxdb".equals(monitoringConfigInfo.getPluginName())) {
-            triggerTaskManageService.manageStorage(originalConfig, monitoringConfigInfo);
+            triggerTaskManageService.updateStorage(originalConfig, monitoringConfigInfo);
         }
         return ResBody.builder().build();
     }
 
     public ResBody delete(String nsId, String targetId, Long seq) {
-        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
-        monitoringConfigInfo.setNsId(nsId);
-        monitoringConfigInfo.setTargetId(targetId);
-        monitoringConfigInfo.setSeq(seq);
+        MonitoringConfigInfo monitoringConfigInfo = monitoringConfigMapper.getDetail(seq);
         monitoringConfigInfo.setState("DELETE");
         monitoringConfigMapper.update(monitoringConfigInfo);
+
+        if("influxdb".equals(monitoringConfigInfo.getPluginName())) {
+            triggerTaskManageService.deleteStorage(monitoringConfigInfo);
+        }
         return ResBody.builder().build();
     }
 

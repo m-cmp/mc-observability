@@ -80,51 +80,83 @@ public class TriggerTaskManageService {
         }
     }
 
-    public void manageStorage(MonitoringConfigInfo originalInfo, MonitoringConfigInfo newInfo) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("targetId", newInfo.getTargetId());
-        params.put("nsId", newInfo.getNsId());
-        List<TriggerTargetInfo> triggerTargetInfoList = triggerTargetMapper.getTargetList(params);
-        if(CollectionUtils.isEmpty(triggerTargetInfoList))
-            return;
+    public void updateStorage(MonitoringConfigInfo originalInfo, MonitoringConfigInfo newInfo) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", newInfo.getTargetId());
+            params.put("nsId", newInfo.getNsId());
+            List<TriggerTargetInfo> triggerTargetInfoList = triggerTargetMapper.getTargetList(params);
+            if (CollectionUtils.isEmpty(triggerTargetInfoList))
+                return;
 
-        InfluxDBConnector originalInfluxdbInfo = new InfluxDBConnector(originalInfo.getPluginConfig());
-        InfluxDBConnector newInfluxdbInfo = new InfluxDBConnector(newInfo.getPluginConfig());
+            InfluxDBConnector originalInfluxdbInfo = new InfluxDBConnector(originalInfo.getPluginConfig());
+            InfluxDBConnector newInfluxdbInfo = new InfluxDBConnector(newInfo.getPluginConfig());
 
-        for(TriggerTargetInfo targetInfo : triggerTargetInfoList) {
-            params.put("targetSeq", targetInfo.getSeq());
-            params.put("url", originalInfluxdbInfo.getUrl());
-            params.put("database", originalInfluxdbInfo.getDatabase());
-            params.put("retentionPolicy", originalInfluxdbInfo.getRetentionPolicy());
+            for (TriggerTargetInfo targetInfo : triggerTargetInfoList) {
+                params.put("targetSeq", targetInfo.getSeq());
+                params.put("url", originalInfluxdbInfo.getUrl());
+                params.put("database", originalInfluxdbInfo.getDatabase());
+                params.put("retentionPolicy", originalInfluxdbInfo.getRetentionPolicy());
 
-            TriggerTargetStorageInfo originTriggerStorageInfo = triggerTargetStorageMapper.getStorageInfo(params);
+                TriggerTargetStorageInfo originTriggerStorageInfo = triggerTargetStorageMapper.getStorageInfo(params);
 
-            // The number of storages with the policy set on the target.
-            params.put("policySeq", targetInfo.getPolicySeq());
-            Long usageCount = triggerTargetStorageMapper.getUsageStorageCount(params);
-            if(usageCount < 2) {
-                // task delete in origin storage
-                kapacitorApiService.deleteTask(targetInfo.getPolicySeq(), originalInfluxdbInfo.getUrl());
+                // The number of storages with the policy set on the target.
+                params.put("policySeq", targetInfo.getPolicySeq());
+                Long usageCount = triggerTargetStorageMapper.getUsageStorageCount(params);
+                if (usageCount < 2) {
+                    // task delete in origin storage
+                    kapacitorApiService.deleteTask(targetInfo.getPolicySeq(), originalInfluxdbInfo.getUrl());
+                }
+
+                // Check if the agent storage information is registered in the target storage.
+                // Insert if not registered, update if already exists.
+                if (originTriggerStorageInfo == null) {
+                    TriggerTargetStorageInfo storageInfo = TriggerTargetStorageInfo.builder()
+                            .targetSeq(targetInfo.getSeq())
+                            .url(newInfluxdbInfo.getUrl())
+                            .retentionPolicy(newInfluxdbInfo.getRetentionPolicy())
+                            .database(newInfluxdbInfo.getDatabase())
+                            .build();
+                    triggerTargetStorageMapper.createTargetStorage(storageInfo);
+                } else {
+                    originTriggerStorageInfo.updateInfluxDBConfig(newInfluxdbInfo);
+                    triggerTargetStorageMapper.updateTargetStorage(originTriggerStorageInfo);
+                }
+
+                // Create a task for the modified storage
+                TriggerPolicyInfo policyInfo = triggerPolicyMapper.getDetail(targetInfo.getPolicySeq());
+                kapacitorApiService.createTask(policyInfo, newInfluxdbInfo.getUrl(), newInfluxdbInfo.getDatabase(), newInfluxdbInfo.getRetentionPolicy());
             }
+        } catch (Exception e) {
+            log.error("Failed to update Trigger Target Storage. Error : {}", e.getMessage());
+        }
+    }
 
-            // Check if the agent storage information is registered in the target storage.
-            // Insert if not registered, update if already exists.
-            if(originTriggerStorageInfo == null) {
-                TriggerTargetStorageInfo storageInfo = TriggerTargetStorageInfo.builder()
-                        .targetSeq(targetInfo.getSeq())
-                        .url(newInfluxdbInfo.getUrl())
-                        .retentionPolicy(newInfluxdbInfo.getRetentionPolicy())
-                        .database(newInfluxdbInfo.getDatabase())
-                        .build();
-                triggerTargetStorageMapper.createTargetStorage(storageInfo);
-            } else {
-                originTriggerStorageInfo.updateInfluxDBConfig(newInfluxdbInfo);
-                triggerTargetStorageMapper.updateTargetStorage(originTriggerStorageInfo);
+    public void deleteStorage(MonitoringConfigInfo monitoringConfigInfo) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", monitoringConfigInfo.getTargetId());
+            params.put("nsId", monitoringConfigInfo.getNsId());
+            List<TriggerTargetInfo> triggerTargetInfoList = triggerTargetMapper.getTargetList(params);
+            if (CollectionUtils.isEmpty(triggerTargetInfoList))
+                return;
+
+            InfluxDBConnector influxDBConnector = new InfluxDBConnector(monitoringConfigInfo.getPluginConfig());
+            for (TriggerTargetInfo targetInfo : triggerTargetInfoList) {
+                params.put("targetSeq", targetInfo.getSeq());
+                params.put("url", influxDBConnector.getUrl());
+                params.put("database", influxDBConnector.getDatabase());
+                params.put("retentionPolicy", influxDBConnector.getRetentionPolicy());
+                params.put("policySeq", targetInfo.getPolicySeq());
+                Long usageCount = triggerTargetStorageMapper.getUsageStorageCount(params);
+                if (usageCount < 2) {
+                    kapacitorApiService.deleteTask(targetInfo.getPolicySeq(), influxDBConnector.getUrl());
+                }
+                TriggerTargetStorageInfo targetStorageInfo = triggerTargetStorageMapper.getStorageInfo(params);
+                triggerTargetStorageMapper.deleteTriggerTargetStorage(targetStorageInfo);
             }
-
-            // Create a task for the modified storage
-            TriggerPolicyInfo policyInfo = triggerPolicyMapper.getDetail(targetInfo.getPolicySeq());
-            kapacitorApiService.createTask(policyInfo, newInfluxdbInfo.getUrl(), newInfluxdbInfo.getDatabase(), newInfluxdbInfo.getRetentionPolicy());
+        } catch (Exception e) {
+            log.error("Failed to delete Trigger Target Storage. Error : {}", e.getMessage());
         }
     }
 }

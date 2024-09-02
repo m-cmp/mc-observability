@@ -63,6 +63,11 @@
         )
     </delete>
 
+    <delete id="deleteTriggerTargetStorage">
+        DELETE FROM mc_o11y_trigger_target_storage
+        WHERE SEQ = #{seq}
+    </delete>
+
     <select id="getPolicySeqListRegisteredInStorage" resultType="Long">
         SELECT TT.POLICY_SEQ
         FROM mc_o11y_trigger_target_storage TTS
@@ -88,6 +93,6 @@
         SELECT COUNT(*) AS usageCount
         FROM mc_o11y_trigger_target_storage TTS
         LEFT JOIN mc_o11y_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
-        WHERE URL = #{url}
+        WHERE URL = #{url} AND POLICY_SEQ =  #{policySeq}
     </select>
 </mapper>

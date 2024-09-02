@@ -26,4 +26,6 @@ public interface TriggerTargetStorageMapper {
     Long getUsageStorageCount(Map<String, Object> params);
 
     void updateTargetStorage(TriggerTargetStorageInfo targetStorageInfo);
+
+    void deleteTriggerTargetStorage(TriggerTargetStorageInfo targetStorageInfo);
 }
