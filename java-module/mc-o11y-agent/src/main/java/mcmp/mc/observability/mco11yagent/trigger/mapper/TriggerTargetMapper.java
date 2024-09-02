@@ -11,6 +11,8 @@ public interface TriggerTargetMapper {
 
     List<TriggerTargetInfo> getList(Long policySeq);
 
+    List<TriggerTargetInfo> getTargetList(Map<String, Object> params);
+
     List<TriggerTargetInfo> getListByPolicySeq(Long policySeq);
 
     TriggerTargetInfo getDetail(Long seq);

@@ -24,6 +24,21 @@
         </where>
     </select>
 
+    <select id="getDetail" resultType="MonitoringConfigInfo">
+        SELECT
+            SEQ,
+            NS_ID,
+            TARGET_ID,
+            NAME,
+            STATE,
+            PLUGIN_SEQ,
+            PLUGIN_NAME,
+            PLUGIN_TYPE,
+            PLUGIN_CONFIG
+        FROM mc_o11y_agent_target_monitoring_config
+        WHERE SEQ=#{seq}
+    </select>
+
     <insert id="insert" parameterType="MonitoringConfigInfo">
         INSERT INTO mc_o11y_agent_target_monitoring_config(
             NS_ID,
