@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+import uvicorn
 from app.api.anomaly import anomaly
 from app.api.prediction import prediction
 
