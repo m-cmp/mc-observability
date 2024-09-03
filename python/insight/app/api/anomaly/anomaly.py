@@ -10,10 +10,6 @@ router = APIRouter()
 async def get_anomaly_detection_options():
     config_data = read_config("config/anomaly.ini")
 
-    response = ResBodyAnomalyDetectionOptions(
-        data=AnomalyDetectionOptions(**config_data),
-        rsCode="200",
-        rsMsg="Success"
-    )
+    response = ResBodyAnomalyDetectionOptions(data=AnomalyDetectionOptions(**config_data))
 
     return response

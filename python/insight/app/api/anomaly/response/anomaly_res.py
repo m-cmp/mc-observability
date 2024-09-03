@@ -9,5 +9,5 @@ class AnomalyDetectionOptions(BaseModel):
 
 class ResBodyAnomalyDetectionOptions(BaseModel):
     data: AnomalyDetectionOptions
-    rsCode: str
-    rsMsg: str
+    rsCode: str = "200"
+    rsMsg: str = "Success"
