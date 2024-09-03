@@ -130,7 +130,7 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build and publish (Observability-Manager)
-        id: docker_build
+        id: docker_build_1
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
@@ -144,7 +144,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
       - name: Build and publish (Observability-Agent)
-        id: docker_build
+        id: docker_build_2
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
