@@ -59,12 +59,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: change directory java-module
+        run: cd java-module
+        shell: bash
+
       - name: grant execute permission for gradlew
-        run: chmod +x java-module/gradlew
+        run: chmod +x gradlew
         shell: bash
 
       - name: Build with Gradle Wrapper
-        run: java-module/gradlew clean build --stacktrace
+        run: gradlew clean build --stacktrace
 
       - name: chk directory
         run: ls -al
