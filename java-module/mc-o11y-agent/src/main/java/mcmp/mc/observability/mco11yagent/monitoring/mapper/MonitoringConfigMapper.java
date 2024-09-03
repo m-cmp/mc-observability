@@ -7,6 +7,8 @@ import java.util.List;
 
 @Mapper
 public interface MonitoringConfigMapper {
+
+    MonitoringConfigInfo getDetail(Long seq);
     List<MonitoringConfigInfo> getList(String nsId, String targetId);
     int insert(MonitoringConfigInfo monitoringConfigInfo);
     int update(MonitoringConfigInfo monitoringConfigInfo);
