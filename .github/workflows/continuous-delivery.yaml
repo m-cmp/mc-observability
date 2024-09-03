@@ -68,8 +68,8 @@ jobs:
             # See `tags` input: https://github.com/docker/metadata-action?tab=readme-ov-file#tags-input
             ## Tags for a push tag event
             # minimal (e.g., 1.2.3)
-            type=semver,enable=true,pattern={{version}}
-            # type=semver,pattern={{major}}.{{minor}}
+            #type=semver,enable=true,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             ## Tags for a push branch event
             # Tags to reflect the last commit of the active branch
             type=edge,enable=true,branch=main
@@ -139,7 +139,7 @@ jobs:
 #          target: prod
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}-Manager
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
