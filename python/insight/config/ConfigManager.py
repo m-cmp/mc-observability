@@ -40,6 +40,21 @@ def read_prefix():
     api_prefix = config_common.get("prefix", "prefix")
     return api_prefix
 
+def read_db_config():
+    db_config = ConfigParser()
+    db_config.read('config/config.ini')
+
+    url = db_config.get("DB", "URL")
+    user = db_config.get("DB", "USERNAME")
+    pw = db_config.get("DB", "PASSWORD")
+    db = db_config.get("DB", "DATABASE")
+
+    return {
+        "url": url,
+        "user": user,
+        "pw": pw,
+        "db": db
+    }
 
 def read_influxdb_config():
     influxdb_config = ConfigParser()
