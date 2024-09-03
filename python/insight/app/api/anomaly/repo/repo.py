@@ -36,3 +36,12 @@ def repo_delete_setting(db: Session, setting_seq: int):
         db.commit()
         return setting
     return None
+
+
+def repo_check_duplicate(db: Session, setting_data: dict):
+    return db.query(model_ADS).filter_by(
+        NAMESPACE_ID=setting_data['NAMESPACE_ID'],
+        TARGET_ID=setting_data['TARGET_ID'],
+        TARGET_TYPE=setting_data['TARGET_TYPE'],
+        METRIC_TYPE=setting_data['METRIC_TYPE']
+    ).first()

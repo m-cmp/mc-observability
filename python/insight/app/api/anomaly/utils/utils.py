@@ -3,7 +3,8 @@ from app.api.anomaly.repo.repo import (
     repo_get_specific_setting,
     repo_create_setting,
     repo_update_setting,
-    repo_delete_setting
+    repo_delete_setting,
+    repo_check_duplicate
 )
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
 from config.ConfigManager import read_db_config
@@ -58,13 +59,21 @@ class AnomalySettingsService:
             content={"rsCode": "404", "rsMsg": "Target Not Found"}
         )
 
-    def create_setting(self, setting_data: dict) -> ResBodyVoid:
+    def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
         if 'nsId' in setting_data:
             setting_data['NAMESPACE_ID'] = setting_data.pop('nsId')
         if 'targetId' in setting_data:
             setting_data['TARGET_ID'] = setting_data.pop('targetId')
+
         setting_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                         setting_data.items()}
+
+        duplicate = repo_check_duplicate(db=self.db, setting_data=setting_data)
+        if duplicate:
+            return JSONResponse(status_code=409, content={"rsCode": "409",
+                                                         "rsMsg": "A record with the same namespace_id, target_id, "
+                                                                  "target_type, and metric_type already exists."})
+
         repo_create_setting(self.db, setting_data)
         return ResBodyVoid(rsMsg="Target Registered Successfully")
 
