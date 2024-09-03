@@ -7,3 +7,13 @@ dependencies {
     implementation 'io.github.openfeign:feign-httpclient:11.1'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.5'
 }
+
+jar {
+    enabled = false
+}
+
+bootJar {
+    archivesBaseName = "mcmp-observability-manager"
+    archiveFileName = "mc-o11y-manager.jar"
+    archiveVersion = "0.0.1"
+}
