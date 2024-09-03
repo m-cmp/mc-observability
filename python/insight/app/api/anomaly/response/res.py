@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 
 class AnomalyDetectionOptions(BaseModel):
@@ -17,7 +17,7 @@ class ResBodyAnomalyDetectionOptions(BaseModel):
 
 class AnomalyDetectionSettings(BaseModel):
     seq: int
-    ns_id: str
+    namespace_id: str
     target_id: str
     target_type: str
     metric_type: str
@@ -28,5 +28,10 @@ class AnomalyDetectionSettings(BaseModel):
 
 class ResBodyAnomalyDetectionSettings(BaseModel):
     data: List[AnomalyDetectionSettings]
+    rsCode: str = "200"
+    rsMsg: str = "Success"
+
+
+class ResBodyVoid(BaseModel):
     rsCode: str = "200"
     rsMsg: str = "Success"
