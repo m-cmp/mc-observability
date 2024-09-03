@@ -107,16 +107,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: change directory java-module
-        run: cd java-module
-        shell: bash
-
       - name: grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x java-module/gradlew
         shell: bash
 
       - name: Build with Gradle Wrapper
-        run: gradlew clean build --stacktrace
+        run: java-module/gradlew -p java-module clean build --stacktrace
 
 
       - name: Login to Docker Hub
