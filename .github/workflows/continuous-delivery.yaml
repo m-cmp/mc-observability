@@ -1,0 +1,21 @@
+name: Continuous Delivery (CD)
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+env:
+  DOCKER_REGISTRY_NAME: cloudbaristaorg
+  GHCR_REGISTRY_NAME: ${{ github.repository_owner }}
+  IMAGE_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  publish-container-image:
+    name: Publish a container image
+
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
