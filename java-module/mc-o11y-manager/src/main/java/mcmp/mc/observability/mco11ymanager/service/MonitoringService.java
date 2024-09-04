@@ -1,5 +1,7 @@
 package mcmp.mc.observability.mco11ymanager.service;
 
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -10,6 +12,10 @@ import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugSshKey;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 @Slf4j
@@ -17,13 +23,13 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class MonitoringService {
     private final TumblebugClient tumblebugClient;
-    public boolean installAgent(String nsId, String targetId) {
+    public String installAgent(String nsId, String targetId) {
         TumblebugMCI mciList = tumblebugClient.getMCIList(nsId);
 
-        if( mciList == null || mciList.getMci() == null || mciList.getMci().isEmpty()) return false;
+        if( mciList == null || mciList.getMci() == null || mciList.getMci().isEmpty()) return null;
 
         for( TumblebugMCI.MCI mci : mciList.getMci() ) {
-            if (mci.getVm() == null || mci.getVm().isEmpty()) return false;
+            if (mci.getVm() == null || mci.getVm().isEmpty()) return null;
 
             for (TumblebugMCI.Vm vm : mci.getVm()) {
                 if( !vm.getId().equals(targetId) ) continue;
@@ -43,12 +49,50 @@ public class MonitoringService {
 
                     session.disconnect();
 
-                    return true;
+                    return mci.getId();
                 } catch (JSchException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-        return false;
+        return null;
     }
+
+    private String sendCommand(Session session, String command) {
+        Channel channel = null;
+        String result = null;
+
+        try {
+            channel = session.openChannel("exec");
+            ChannelExec channelExec = (ChannelExec) channel;
+            channelExec.setPty(true);
+            channelExec.setCommand(command);
+
+            InputStream is = channel.getInputStream();
+
+            channel.connect();
+
+            InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+            BufferedReader br = new BufferedReader(isr);
+            String line;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+                stringBuilder.append(line).append("\n");
+            }
+
+            result = stringBuilder.toString();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            if (channel != null) {
+                log.info("result : {}, exit status : {}, command : {}", result, channel.getExitStatus(), command);
+                channel.disconnect();
+            }
+        }
+
+        return result;
+    }
+
 }

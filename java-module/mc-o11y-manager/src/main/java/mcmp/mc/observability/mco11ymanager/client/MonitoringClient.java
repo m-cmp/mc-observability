@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "agent-manager", url = "${feign.agent-manager.url:}")
 public interface MonitoringClient {
@@ -20,7 +21,7 @@ public interface MonitoringClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     Object getTarget(@PathVariable String nsId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object insertTarget(@PathVariable String nsId, @PathVariable String targetId);
+    Object insertTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String mciId);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     Object updateTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)

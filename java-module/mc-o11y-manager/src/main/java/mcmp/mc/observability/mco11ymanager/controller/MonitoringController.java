@@ -2,7 +2,6 @@ package mcmp.mc.observability.mco11ymanager.controller;
 
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
-import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
 import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,8 +12,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,9 +30,11 @@ public class MonitoringController {
     public Object insertTarget(@PathVariable String nsId, @PathVariable String targetId) {
         if( monitoringClient.getTarget(nsId, targetId) != null ) return null;
 
-        if( !monitoringService.installAgent(nsId, targetId) ) return null;
+        String mciId = monitoringService.installAgent(nsId, targetId);
 
-        return monitoringClient.insertTarget(nsId, targetId);
+        if( mciId == null ) return null;
+
+        return monitoringClient.insertTarget(nsId, mciId, targetId);
     }
     @PutMapping(Constants.TARGET_PATH)
     public Object updateTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object targetInfo) {
