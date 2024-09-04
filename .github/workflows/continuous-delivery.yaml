@@ -78,7 +78,7 @@ jobs:
             # minimal (short sha)
             # type=sha,enable=true,format=short            
             ## Tags for a push or pull_request event
-            # type=ref,event=branch
+            type=ref,event=branch
             # type=ref,event=tag
             # type=ref,event=pr
             ## Tags for a schedule event - handlebars with timezone (e.g. 20200110-093000)
@@ -139,7 +139,7 @@ jobs:
 #          target: prod
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}-Manager
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
