@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, AnomalyDetectionOptions,
                                           ResBodyAnomalyDetectionSettings)
-from app.api.anomaly.utils.utils import AnomalySettingsService, get_db
-from app.api.anomaly.response.res import ResBodyVoid
-from app.api.anomaly.request.req import AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate
+from app.api.anomaly.utils.utils import AnomalySettingsService, AnomalyHistoryService, AnomalyService, get_db
+from app.api.anomaly.response.res import ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse
+from app.api.anomaly.request.req import (AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
+                                         GetHistoryPathParams, GetAnomalyHistoryFilter)
 from config.ConfigManager import read_config
 
 router = APIRouter()
@@ -66,3 +67,28 @@ async def get_specific_anomaly_detection_target(nsId: str, targetId: str, db: Se
     """
     service = AnomalySettingsService(db=db)
     return service.get_setting(ns_id=nsId, target_id=targetId)
+
+
+@router.get("/anomaly-detection/nsId/{nsId}/target/{targetId}/history",
+            response_model=ResBodyAnomalyDetectionHistoryResponse)
+async def get_anomaly_detection_history(
+        path_params: GetHistoryPathParams = Depends(),
+        query_params: GetAnomalyHistoryFilter = Depends(),
+):
+    """
+    Fetch the results of anomaly detection for a specific target within a given time range.
+    """
+    service = AnomalyHistoryService()
+    data = service.get_anomaly_detection_results(path=path_params, query=query_params)
+    return ResBodyAnomalyDetectionHistoryResponse(data=data)
+
+
+@router.post("/anomaly-detection")
+async def post_anomaly_detection():
+    """
+    Request anomaly detection
+    """
+    service = AnomalyService()
+    response = service.anomaly_detection()
+
+    return response

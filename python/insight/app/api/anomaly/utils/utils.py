@@ -1,10 +1,11 @@
-from app.api.anomaly.repo.repo import AnomalySettingsRepository
+from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
 from config.ConfigManager import read_db_config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.responses import JSONResponse
 from enum import Enum
+from typing import Dict
 
 
 class AnomalySettingsService:
@@ -91,6 +92,23 @@ class AnomalySettingsService:
                 status_code=404,
                 content={"rsCode": "404", "rsMsg": "Target Not Found"}
             )
+
+
+class AnomalyHistoryService:
+    def __init__(self):
+        self.repo = InfluxDBRepository()
+
+    def get_anomaly_detection_results(self, path: Dict, query: Dict):
+        self.repo.query_anomaly_detection_results(path_params=path, query_params=query)
+        pass
+
+
+class AnomalyService:
+    def __init__(self):
+        pass
+
+    def anomaly_detection(self):
+        pass
 
 
 def get_db():

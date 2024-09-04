@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List
 
@@ -35,3 +35,24 @@ class ResBodyAnomalyDetectionSettings(BaseModel):
 class ResBodyVoid(BaseModel):
     rsCode: str = "200"
     rsMsg: str = "Success"
+
+
+class AnomalyDetectionHistoryValue(BaseModel):
+    timestamp: str = Field(..., description="The timestamp for the anomaly detection result.", format="date-time")
+    anomaly_score: float = Field(..., description="The anomaly score for the corresponding timestamp.")
+    anomaly_act: int = Field(..., description="Whether the data point is considered an anomaly (1) or normal (0).")
+    value: float = Field(..., description="The original monitoring data value for the corresponding timestamp.")
+
+
+class AnomalyDetectionHistoryResponse(BaseModel):
+    nsId: str = Field(..., description="The Namespace ID.")
+    targetId: str = Field(..., description="The ID of the target (VM ID or MCI ID).")
+    metric_type: str = Field(..., description="The type of metric being monitored for anomalies (e.g., CPU, MEM).", example="CPU")
+    target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
+    values: List[AnomalyDetectionHistoryValue] = Field(..., description="List of anomaly detection results for the given time range.")
+
+
+class ResBodyAnomalyDetectionHistoryResponse(BaseModel):
+    data: AnomalyDetectionHistoryResponse
+    rsCode: str = Field("200", description="Response code")
+    rsMsg: str = Field("Success", description="Response message")
