@@ -1,11 +1,4 @@
-from app.api.anomaly.repo.repo import (
-    repo_get_all_settings,
-    repo_get_specific_setting,
-    repo_create_setting,
-    repo_update_setting,
-    repo_delete_setting,
-    repo_check_duplicate
-)
+from app.api.anomaly.repo.repo import AnomalySettingsRepository
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
 from config.ConfigManager import read_db_config
 from sqlalchemy import create_engine
@@ -16,10 +9,10 @@ from enum import Enum
 
 class AnomalySettingsService:
     def __init__(self, db: Session):
-        self.db = db
+        self.repo = AnomalySettingsRepository(db=db)
 
     def get_all_settings(self) -> ResBodyAnomalyDetectionSettings:
-        settings = repo_get_all_settings(self.db)
+        settings = self.repo.get_all_settings()
 
         results = [
             AnomalyDetectionSettings(
@@ -38,7 +31,7 @@ class AnomalySettingsService:
         return ResBodyAnomalyDetectionSettings(data=results)
 
     def get_setting(self, ns_id: str, target_id: str) -> ResBodyAnomalyDetectionSettings | JSONResponse:
-        settings = repo_get_specific_setting(self.db, ns_id, target_id)
+        settings = self.repo.get_specific_setting(ns_id=ns_id, target_id=target_id)
         if settings:
             results = [
                 AnomalyDetectionSettings(
@@ -68,19 +61,19 @@ class AnomalySettingsService:
         setting_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                         setting_data.items()}
 
-        duplicate = repo_check_duplicate(db=self.db, setting_data=setting_data)
+        duplicate = self.repo.check_duplicate(setting_data=setting_data)
         if duplicate:
             return JSONResponse(status_code=409, content={"rsCode": "409",
                                                          "rsMsg": "A record with the same namespace_id, target_id, "
                                                                   "target_type, and metric_type already exists."})
 
-        repo_create_setting(self.db, setting_data)
+        self.repo.create_setting(setting_data=setting_data)
         return ResBodyVoid(rsMsg="Target Registered Successfully")
 
     def update_setting(self, setting_seq: int, update_data: dict) -> ResBodyVoid | JSONResponse:
         update_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                        update_data.items()}
-        updated_setting = repo_update_setting(self.db, setting_seq, update_data)
+        updated_setting = self.repo.update_setting(setting_seq=setting_seq, update_data=update_data)
         if updated_setting:
             return ResBodyVoid(rsMsg="Setting Updated Successfully")
         else:
@@ -90,7 +83,7 @@ class AnomalySettingsService:
             )
 
     def delete_setting(self, setting_seq: int) -> ResBodyVoid | JSONResponse:
-        deleted_setting = repo_delete_setting(self.db, setting_seq)
+        deleted_setting = self.repo.delete_setting(setting_seq=setting_seq)
         if deleted_setting:
             return ResBodyVoid(rsMsg="Setting Deleted Successfully")
         else:
