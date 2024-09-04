@@ -6,7 +6,12 @@ from sqlalchemy.orm import sessionmaker, Session
 from fastapi.responses import JSONResponse
 from enum import Enum
 from typing import Dict
+from datetime import datetime, timedelta
 import requests
+import pandas as pd
+import numpy as np
+import pytz
+import rrcf
 
 
 class AnomalySettingsService:
@@ -117,8 +122,13 @@ class AnomalyService:
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
         storage_seq = self.get_storage_seq(setting=setting)
         raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
+        pre_data = self.make_preprocess_data(data=raw_data)
 
-        return raw_data
+        anomaly_detector = AnomalyDetector(metric_type=setting.METRIC_TYPE)
+        score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
+        self.repo.save_results(df=score_df)
+
+        return score_df
 
     def get_storage_seq(self, setting: object):
         url = self._build_url(f"{setting.NAMESPACE_ID}/target/{setting.TARGET_ID}/storage")
@@ -171,6 +181,110 @@ class AnomalyService:
             "measurement": setting.METRIC_TYPE.lower(),
             "range": "12h"
         }
+
+    def make_preprocess_data(self, data) -> pd.DataFrame:
+        df = pd.DataFrame(data)  # data to df
+        df['regdate'] = pd.to_datetime(df['regdate'], utc=True)
+        df['regdate'] = df['regdate'].dt.tz_localize(None) + timedelta(hours=9)
+        df = self.null_ratio_preprocessing(df=df)
+        df = self.cpu_percent_change(df=df)
+        df = self.data_interpolation(df=df)
+
+        return df
+
+    @staticmethod
+    def null_ratio_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
+        null_ratio = (df.groupby(['id'])['resource_pct'].apply(lambda x: x.isnull().mean()))
+        ids_to_remove = null_ratio[null_ratio > 0.8].index
+        df = df[~df.set_index(['id']).index.isin(ids_to_remove)]
+
+        if len(df) == 0:
+            raise ValueError("There is no real data to use for predictions.")
+
+        return df
+
+    @staticmethod
+    def cpu_percent_change(df: pd.DataFrame) -> pd.DataFrame:
+        df.loc[df["resource_id"].str.contains("cpu"), "resource_pct"] = df.loc[
+            df["resource_id"].str.contains("cpu"), "resource_pct"
+        ].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
+
+        return df
+
+    @staticmethod
+    def data_interpolation(df: pd.DataFrame) -> pd.DataFrame:
+        df['resource_pct'] = df.groupby(
+            ['id', 'resource_id']
+        )['resource_pct'].apply(lambda x: x.interpolate(method='linear', limit_direction='both'))
+        return df
+
+
+class AnomalyDetector:
+    def __init__(self, metric_type: str):
+        # super(AnomalyDetector, self).__init__()
+        self.kst = pytz.timezone('Asia/Seoul')
+        self.metric_type = metric_type
+        self.num_trees = 10
+        self.shingle_ratio = 0.01
+        self.tree_size = 1024
+        self.anomaly_threshold = 2.5
+
+    @staticmethod
+    def normalize_scores(scores):
+        min_score = np.min(scores)
+        max_score = np.max(scores)
+        return (scores - min_score) / (max_score - min_score)
+
+    @staticmethod
+    def calculate_anomaly_threshold(complete_scores, anomaly_range_size):
+        mean_score = np.mean(complete_scores)
+        std_dev = np.std(complete_scores)
+        return mean_score + anomaly_range_size * std_dev
+
+    def run_rrcf(self, df, num_trees, shingle_size, tree_size, anomaly_range_size):
+        forest = [rrcf.RCTree() for _ in range(num_trees)]
+
+        data = df['resource_pct']
+        shingled_data = rrcf.shingle(data, size=shingle_size)
+        shingled_data = np.vstack([point for point in shingled_data])
+        rrcf_scores = []
+
+        for index, point in enumerate(shingled_data):
+            for tree in forest:
+                if len(tree.leaves) > tree_size:
+                    tree.forget_point(index - tree_size)
+                tree.insert_point(point, index=index)
+
+            avg_codisp = np.mean([tree.codisp(index) for tree in forest])
+            rrcf_scores.append(avg_codisp)
+
+        normalized_scores = self.normalize_scores(np.array(rrcf_scores))
+        initial_scores = np.full(shingle_size - 1, normalized_scores[0])
+        complete_scores = np.concatenate([initial_scores, normalized_scores])
+        anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, anomaly_range_size)
+        anomalies = complete_scores > anomaly_threshold
+        results = pd.DataFrame({
+            'anomaly_time': df['regdate'],
+            'data_value': data,
+            'anomaly_score': complete_scores,
+            'anomaly_label': anomalies.astype(int)
+        })
+        return results, anomaly_threshold
+
+    def complete_df(self, result_df: pd.DataFrame) -> pd.DataFrame:
+        # result_df = result_df[result_df['anomaly_label'] == 1]
+        result_df['resource_id'] = self.metric_type
+        return result_df
+
+    def calculate_anomaly_score(self, df: pd.DataFrame):
+        shingle_size = int(len(df) * self.shingle_ratio)
+        results, thr = self.run_rrcf(df=df, num_trees=self.num_trees, shingle_size=shingle_size
+                                     , tree_size=self.tree_size, anomaly_range_size=self.anomaly_threshold)
+        results = self.complete_df(result_df=results)
+        results = results[results['anomaly_label'] == 1]
+        input_time = datetime.now(self.kst).strftime('%Y-%m-%d %H:%M:%S')
+        results['regdate'] = input_time
+        return results
 
 
 def get_db():

@@ -3,6 +3,7 @@ from app.api.anomaly.model.models import AnomalyDetectionSettings
 from config.ConfigManager import read_influxdb_config
 from influxdb import InfluxDBClient
 from typing import Dict
+import pandas as pd
 
 
 class AnomalySettingsRepository:
@@ -95,3 +96,6 @@ class AnomalyServiceRepository:
 
     def get_anomaly_setting_info(self, seq: int):
         return self.db.query(AnomalyDetectionSettings).filter_by(SEQ=seq).first()
+
+    def save_results(self, df: pd.DataFrame):
+        pass
