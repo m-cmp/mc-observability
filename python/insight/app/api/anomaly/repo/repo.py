@@ -6,7 +6,6 @@ from typing import Dict
 
 
 class AnomalySettingsRepository:
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -88,3 +87,11 @@ class InfluxDBRepository:
             })
 
         return parsed_results
+
+
+class AnomalyServiceRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_anomaly_setting_info(self, seq: int):
+        return self.db.query(AnomalyDetectionSettings).filter_by(SEQ=seq).first()

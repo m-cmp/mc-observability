@@ -83,12 +83,12 @@ async def get_anomaly_detection_history(
     return ResBodyAnomalyDetectionHistoryResponse(data=data)
 
 
-@router.post("/anomaly-detection")
-async def post_anomaly_detection():
+@router.post("/anomaly-detection/{settingSeq}")
+async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db)):
     """
     Request anomaly detection
     """
-    service = AnomalyService()
+    service = AnomalyService(db=db, seq=settingSeq)
     response = service.anomaly_detection()
 
     return response

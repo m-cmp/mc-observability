@@ -1,11 +1,12 @@
-from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository
+from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository, AnomalyServiceRepository
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
-from config.ConfigManager import read_db_config
+from config.ConfigManager import read_db_config, read_o11y_config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.responses import JSONResponse
 from enum import Enum
 from typing import Dict
+import requests
 
 
 class AnomalySettingsService:
@@ -65,8 +66,8 @@ class AnomalySettingsService:
         duplicate = self.repo.check_duplicate(setting_data=setting_data)
         if duplicate:
             return JSONResponse(status_code=409, content={"rsCode": "409",
-                                                         "rsMsg": "A record with the same namespace_id, target_id, "
-                                                                  "target_type, and metric_type already exists."})
+                                                          "rsMsg": "A record with the same namespace_id, target_id, "
+                                                                   "target_type, and metric_type already exists."})
 
         self.repo.create_setting(setting_data=setting_data)
         return ResBodyVoid(rsMsg="Target Registered Successfully")
@@ -104,11 +105,72 @@ class AnomalyHistoryService:
 
 
 class AnomalyService:
-    def __init__(self):
-        pass
+    def __init__(self, db: Session, seq: int):
+        self.seq = seq
+        self.repo = AnomalyServiceRepository(db=db)
+        self.o11y_url = read_o11y_config()['url']
+        self.headers = {
+            "Content-Type": "application/json"
+        }
 
     def anomaly_detection(self):
-        pass
+        setting = self.repo.get_anomaly_setting_info(seq=self.seq)
+        storage_seq = self.get_storage_seq(setting=setting)
+        raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
+
+        return raw_data
+
+    def get_storage_seq(self, setting: object):
+        url = self._build_url(f"{setting.NAMESPACE_ID}/target/{setting.TARGET_ID}/storage")
+        response = self._send_request("GET", url)
+        data_list = response.json().get("data", [])
+
+        return data_list[0].get("seq")
+
+    def get_raw_data(self, storage_seq: int, setting: object):
+        url = self._build_url(f"influxdb/{storage_seq}/metric")
+        body = self._build_body(storage_seq, setting)
+        response = self._send_request("POST", url, json=body)
+        return response
+
+    def _build_url(self, path: str):
+        return f"http://{self.o11y_url}/api/o11y/monitoring/{path}"
+
+    def _send_request(self, method: str, url: str, **kwargs):
+        if method == "GET":
+            return requests.get(url, headers=self.headers, **kwargs)
+        elif method == "POST":
+            return requests.post(url, headers=self.headers, **kwargs)
+        else:
+            raise ValueError(f"Unsupported HTTP method: {method}")
+
+    @staticmethod
+    def _build_body(storage_seq: int, setting: object):
+        field_mapping = {
+            "CPU": "usage_idle",
+            "MEM": "used_percent",
+        }
+
+        field_value = field_mapping.get(setting.METRIC_TYPE)
+
+        return {
+            "conditions": [
+                {
+                    "key": "uuid",
+                    "value": setting.TARGET_ID
+                }
+            ],
+            "fields": [
+                {
+                    "function": "mean",
+                    "field": field_value
+                }
+            ],
+            "groupTime": "1m",
+            "influxDBSeq": storage_seq,
+            "measurement": setting.METRIC_TYPE.lower(),
+            "range": "12h"
+        }
 
 
 def get_db():
