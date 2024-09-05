@@ -16,6 +16,11 @@
         )
     </insert>
 
+    <update id="updateTargetStorage">
+        UPDATE mc_o11y_trigger_target_storage SET URL=#{url}, `DATABASE`=#{database}, RETENTION_POLICY=#{retentionPolicy}
+        WHERE SEQ=#{seq}
+    </update>
+
     <select id="getRemainTaskStorageCount" resultType="Map">
         SELECT COUNT(1) as `count`
              , URL AS url
@@ -58,6 +63,11 @@
         )
     </delete>
 
+    <delete id="deleteTriggerTargetStorage">
+        DELETE FROM mc_o11y_trigger_target_storage
+        WHERE SEQ = #{seq}
+    </delete>
+
     <select id="getPolicySeqListRegisteredInStorage" resultType="Long">
         SELECT TT.POLICY_SEQ
         FROM mc_o11y_trigger_target_storage TTS
@@ -65,5 +75,24 @@
                            ON TT.SEQ = TTS.TARGET_SEQ
         WHERE TTS.URL = #{url}
         GROUP BY TT.POLICY_SEQ
+    </select>
+    <select id="getStorageInfo" resultType="mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetStorageInfo">
+        SELECT SEQ,
+               `TARGET_SEQ`,
+               `URL`,
+               `DATABASE`,
+               `RETENTION_POLICY`
+        FROM mc_o11y_trigger_target_storage
+        WHERE `TARGET_SEQ` = #{targetSeq}
+          AND `URL` = #{url}
+          AND `DATABASE` = #{database}
+          AND `RETENTION_POLICY` = #{retentionPolicy}
+    </select>
+
+    <select id="getUsageStorageCount" resultType="java.lang.Long">
+        SELECT COUNT(*) AS usageCount
+        FROM mc_o11y_trigger_target_storage TTS
+        LEFT JOIN mc_o11y_trigger_target TT ON TT.SEQ = TTS.TARGET_SEQ
+        WHERE URL = #{url} AND POLICY_SEQ =  #{policySeq}
     </select>
 </mapper>

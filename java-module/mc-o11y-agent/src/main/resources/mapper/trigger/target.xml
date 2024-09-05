@@ -27,12 +27,6 @@
             <if test='nsId != null'>
                 AND NS_ID = #{nsId}
             </if>
-            <if test='name != null'>
-                AND `NAME` = #{name}
-            </if>
-            <if test='aliasName != null'>
-                AND ALIAS_NAME = #{aliasName}
-            </if>
         </where>
     </sql>
 
@@ -97,6 +91,16 @@
                 UPDATE_AT
         FROM mc_o11y_trigger_target
         WHERE POLICY_SEQ = #{policySeq}
+    </select>
+    <select id="getTargetList" resultType="mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetInfo">
+        SELECT SEQ,
+               POLICY_SEQ,
+               NS_ID,
+               TARGET_ID,
+               CREATE_AT,
+               UPDATE_AT
+        FROM mc_o11y_trigger_target
+        <include refid="targetWhere"/>
     </select>
 
     <insert id="createTarget">
