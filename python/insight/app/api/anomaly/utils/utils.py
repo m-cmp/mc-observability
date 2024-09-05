@@ -223,8 +223,6 @@ class AnomalyService:
         df['timestamp'] = df['timestamp'].dt.tz_localize(None) + timedelta(hours=9)
         df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
         df = self.null_ratio_preprocessing(df=df)
-        # TODO 생략
-        # df = self.cpu_percent_change(df=df)
         df = self.data_interpolation(df=df)
 
         return df
@@ -253,7 +251,6 @@ class AnomalyService:
 
 class AnomalyDetector:
     def __init__(self, metric_type: str):
-        # super(AnomalyDetector, self).__init__()
         self.kst = pytz.timezone('Asia/Seoul')
         self.metric_type = metric_type
         self.num_trees = 10
@@ -296,25 +293,15 @@ class AnomalyDetector:
         anomalies = complete_scores > anomaly_threshold
         results = pd.DataFrame({
             'timestamp': df['timestamp'],
-            # 'data_value': data,
             'anomaly_score': complete_scores.round(4),
             'isAnomaly': anomalies.astype(int)
         })
         return results, anomaly_threshold
 
-    def complete_df(self, result_df: pd.DataFrame) -> pd.DataFrame:
-        # result_df = result_df[result_df['anomaly_label'] == 1]
-        result_df['resource_id'] = self.metric_type
-        return result_df
-
     def calculate_anomaly_score(self, df: pd.DataFrame):
         shingle_size = int(len(df) * self.shingle_ratio)
         results, thr = self.run_rrcf(df=df, num_trees=self.num_trees, shingle_size=shingle_size,
                                      tree_size=self.tree_size, anomaly_range_size=self.anomaly_threshold)
-        # results = self.complete_df(result_df=results)
-        # results = results[results['anomaly_label'] == 1]
-        # input_time = datetime.now(self.kst).strftime('%Y-%m-%d %H:%M:%S')
-        # results['regdate'] = input_time
         return results
 
 
