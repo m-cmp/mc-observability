@@ -1,7 +1,7 @@
 from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository, AnomalyServiceRepository
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
 from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
-from config.ConfigManager import read_db_config, read_o11y_config
+from config.ConfigManager import read_db_config, read_o11y_config, read_rrcf_config
 from datetime import timedelta
 from enum import Enum
 from fastapi.responses import JSONResponse
@@ -218,7 +218,7 @@ class AnomalyService:
         }
 
     def make_preprocess_data(self, data) -> pd.DataFrame:
-        df = pd.DataFrame(data)  # data to df
+        df = pd.DataFrame(data)
         df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
         df['timestamp'] = df['timestamp'].dt.tz_localize(None) + timedelta(hours=9)
         df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
@@ -253,10 +253,7 @@ class AnomalyDetector:
     def __init__(self, metric_type: str):
         self.kst = pytz.timezone('Asia/Seoul')
         self.metric_type = metric_type
-        self.num_trees = 10
-        self.shingle_ratio = 0.01
-        self.tree_size = 1024
-        self.anomaly_threshold = 2.5
+        self.rrcf_config = read_rrcf_config()
 
     @staticmethod
     def normalize_scores(scores):
@@ -270,8 +267,8 @@ class AnomalyDetector:
         std_dev = np.std(complete_scores)
         return mean_score + anomaly_range_size * std_dev
 
-    def run_rrcf(self, df, num_trees, shingle_size, tree_size, anomaly_range_size):
-        forest = [rrcf.RCTree() for _ in range(num_trees)]
+    def run_rrcf(self, df, shingle_size: int):
+        forest = [rrcf.RCTree() for _ in range(self.rrcf_config['num_trees'])]
         data = df['resource_pct']
         shingled_data = rrcf.shingle(data, size=shingle_size)
         shingled_data = np.vstack([point for point in shingled_data])
@@ -279,8 +276,8 @@ class AnomalyDetector:
 
         for index, point in enumerate(shingled_data):
             for tree in forest:
-                if len(tree.leaves) > tree_size:
-                    tree.forget_point(index - tree_size)
+                if len(tree.leaves) > self.rrcf_config['tree_size']:
+                    tree.forget_point(index - self.rrcf_config['tree_size'])
                 tree.insert_point(point, index=index)
 
             avg_codisp = np.mean([tree.codisp(index) for tree in forest])
@@ -289,7 +286,7 @@ class AnomalyDetector:
         normalized_scores = self.normalize_scores(np.array(rrcf_scores))
         initial_scores = np.full(shingle_size - 1, normalized_scores[0])
         complete_scores = np.concatenate([initial_scores, normalized_scores])
-        anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, anomaly_range_size)
+        anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, self.rrcf_config['anomaly_range_size'])
         anomalies = complete_scores > anomaly_threshold
         results = pd.DataFrame({
             'timestamp': df['timestamp'],
@@ -299,9 +296,10 @@ class AnomalyDetector:
         return results, anomaly_threshold
 
     def calculate_anomaly_score(self, df: pd.DataFrame):
-        shingle_size = int(len(df) * self.shingle_ratio)
-        results, thr = self.run_rrcf(df=df, num_trees=self.num_trees, shingle_size=shingle_size,
-                                     tree_size=self.tree_size, anomaly_range_size=self.anomaly_threshold)
+        shingle_size = int(len(df) * self.rrcf_config['shingle_ratio'])
+        results, thr = self.run_rrcf(df=df, shingle_size=shingle_size)
+        results['timestamp'] = pd.to_datetime(results['timestamp'])
+        results['timestamp'] = results['timestamp'] - pd.to_timedelta(9, unit='h')
         return results
 
 

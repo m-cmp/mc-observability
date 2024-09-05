@@ -19,6 +19,21 @@ def read_config(file_path: str):
         "execution_intervals": execution_intervals
     }
 
+def read_rrcf_config():
+    rrcf_config = ConfigParser()
+    rrcf_config.read('config/anomaly.ini')
+
+    num_trees = rrcf_config.getint('rrcf', 'num_trees')
+    shingle_ratio = rrcf_config.getfloat('rrcf', 'shingle_ratio')
+    tree_size = rrcf_config.getint('rrcf', 'tree_size')
+    anomaly_range_size = rrcf_config.getfloat('rrcf', 'anomaly_range_size')
+
+    return {
+        "num_trees": num_trees,
+        "shingle_ratio": shingle_ratio,
+        "tree_size": tree_size,
+        "anomaly_range_size": anomaly_range_size
+    }
 
 def read_config_prediction(file_path: str):
     config = ConfigParser()
