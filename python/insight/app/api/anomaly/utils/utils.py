@@ -120,13 +120,17 @@ class AnomalyService:
 
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
-        storage_seq = self.get_storage_seq(setting=setting)
-        raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
+        # TODO 임시 생략
+        # storage_seq = self.get_storage_seq(setting=setting)
+        # raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
+        raw_data = pd.read_csv('./app/api/anomaly/utils/data1.csv', names=['timestamp', 'resource_pct'])
+        raw_data = raw_data.drop(0).reset_index(drop=True)
         pre_data = self.make_preprocess_data(data=raw_data)
 
         anomaly_detector = AnomalyDetector(metric_type=setting.METRIC_TYPE)
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
-        self.repo.save_results(df=score_df)
+        influx_repo = InfluxDBRepository(db='insight')
+        influx_repo.save_results(df=score_df, setting=setting)
 
         return score_df
 
@@ -184,22 +188,21 @@ class AnomalyService:
 
     def make_preprocess_data(self, data) -> pd.DataFrame:
         df = pd.DataFrame(data)  # data to df
-        df['regdate'] = pd.to_datetime(df['regdate'], utc=True)
-        df['regdate'] = df['regdate'].dt.tz_localize(None) + timedelta(hours=9)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
+        df['timestamp'] = df['timestamp'].dt.tz_localize(None) + timedelta(hours=9)
+        df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
         df = self.null_ratio_preprocessing(df=df)
-        df = self.cpu_percent_change(df=df)
+        # TODO 생략
+        # df = self.cpu_percent_change(df=df)
         df = self.data_interpolation(df=df)
 
         return df
 
     @staticmethod
     def null_ratio_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
-        null_ratio = (df.groupby(['id'])['resource_pct'].apply(lambda x: x.isnull().mean()))
-        ids_to_remove = null_ratio[null_ratio > 0.8].index
-        df = df[~df.set_index(['id']).index.isin(ids_to_remove)]
-
-        if len(df) == 0:
-            raise ValueError("There is no real data to use for predictions.")
+        null_ratio = df['resource_pct'].isnull().mean()
+        if null_ratio > 0.8:
+            raise ValueError("More than 80% of the data is missing. Unable to proceed.")
 
         return df
 
@@ -213,9 +216,7 @@ class AnomalyService:
 
     @staticmethod
     def data_interpolation(df: pd.DataFrame) -> pd.DataFrame:
-        df['resource_pct'] = df.groupby(
-            ['id', 'resource_id']
-        )['resource_pct'].apply(lambda x: x.interpolate(method='linear', limit_direction='both'))
+        df['resource_pct'] = df['resource_pct'].interpolate(method='linear', limit_direction='both')
         return df
 
 
@@ -243,7 +244,6 @@ class AnomalyDetector:
 
     def run_rrcf(self, df, num_trees, shingle_size, tree_size, anomaly_range_size):
         forest = [rrcf.RCTree() for _ in range(num_trees)]
-
         data = df['resource_pct']
         shingled_data = rrcf.shingle(data, size=shingle_size)
         shingled_data = np.vstack([point for point in shingled_data])
@@ -264,8 +264,8 @@ class AnomalyDetector:
         anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, anomaly_range_size)
         anomalies = complete_scores > anomaly_threshold
         results = pd.DataFrame({
-            'anomaly_time': df['regdate'],
-            'data_value': data,
+            'timestamp': df['timestamp'],
+            # 'data_value': data,
             'anomaly_score': complete_scores,
             'anomaly_label': anomalies.astype(int)
         })
@@ -278,12 +278,12 @@ class AnomalyDetector:
 
     def calculate_anomaly_score(self, df: pd.DataFrame):
         shingle_size = int(len(df) * self.shingle_ratio)
-        results, thr = self.run_rrcf(df=df, num_trees=self.num_trees, shingle_size=shingle_size
-                                     , tree_size=self.tree_size, anomaly_range_size=self.anomaly_threshold)
-        results = self.complete_df(result_df=results)
-        results = results[results['anomaly_label'] == 1]
-        input_time = datetime.now(self.kst).strftime('%Y-%m-%d %H:%M:%S')
-        results['regdate'] = input_time
+        results, thr = self.run_rrcf(df=df, num_trees=self.num_trees, shingle_size=shingle_size,
+                                     tree_size=self.tree_size, anomaly_range_size=self.anomaly_threshold)
+        # results = self.complete_df(result_df=results)
+        # results = results[results['anomaly_label'] == 1]
+        # input_time = datetime.now(self.kst).strftime('%Y-%m-%d %H:%M:%S')
+        # results['regdate'] = input_time
         return results
 
 

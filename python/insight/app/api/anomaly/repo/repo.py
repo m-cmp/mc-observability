@@ -51,10 +51,34 @@ class AnomalySettingsRepository:
 
 
 class InfluxDBRepository:
-    def __init__(self):
+    def __init__(self, db=None):
         db_info = read_influxdb_config()
-        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
-                                     password=db_info['password'], database=db_info['database'])
+        if db is None:
+            db = db_info['db']
+        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['user'],
+                                     password=db_info['pw'], database=db)
+
+    def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
+        tag = {
+            'namespace_id': setting.NAMESPACE_ID,
+            'target_id': setting.TARGET_ID,
+        }
+
+        json_body = []
+
+        for index, row in df.iterrows():
+            data_point = {
+                "measurement": setting.METRIC_TYPE.lower(),
+                "tags": tag,
+                "time": row['timestamp'],
+                "fields": {
+                    "anomaly_score": row['anomaly_score'],
+                    "anomaly_label": int(row['anomaly_label'])
+                }
+            }
+            json_body.append(data_point)
+
+        self.client.write_points(json_body)
 
     def query_anomaly_detection_results(self, path_params: Dict, query_params: Dict):
         ns_id = path_params.get('nsId')
@@ -65,7 +89,7 @@ class InfluxDBRepository:
 
         # Construct the InfluxQL query
         influxql_query = f'''
-        SELECT anomaly_score, anomaly_act, value
+        SELECT anomaly_score, anomaly_act
         FROM "{metric_type}"
         WHERE "namespace_id" = '{ns_id}'
         AND "target_id" = '{target_id}'
@@ -84,7 +108,6 @@ class InfluxDBRepository:
                 "timestamp": point['time'],
                 "anomaly_score": point.get('anomaly_score'),
                 "anomaly_act": point.get('anomaly_act'),
-                "value": point.get('value')
             })
 
         return parsed_results
@@ -96,6 +119,3 @@ class AnomalyServiceRepository:
 
     def get_anomaly_setting_info(self, seq: int):
         return self.db.query(AnomalyDetectionSettings).filter_by(SEQ=seq).first()
-
-    def save_results(self, df: pd.DataFrame):
-        pass
