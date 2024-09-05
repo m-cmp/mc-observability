@@ -55,7 +55,7 @@ class GetAnomalyHistoryFilter(BaseModel):
 
     @validator('start_time', pre=True, always=True)
     def set_start_time(cls, v):
-        return v or set_time_delta(168)
+        return v or set_time_delta(12)
 
     @validator('end_time', pre=True, always=True)
     def set_end_time(cls, v):

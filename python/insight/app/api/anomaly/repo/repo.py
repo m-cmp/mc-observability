@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 from app.api.anomaly.model.models import AnomalyDetectionSettings
+from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
 from config.ConfigManager import read_influxdb_config
 from influxdb import InfluxDBClient
-from typing import Dict
 import pandas as pd
+import pytz
 
 
 class AnomalySettingsRepository:
@@ -73,28 +74,31 @@ class InfluxDBRepository:
                 "time": row['timestamp'],
                 "fields": {
                     "anomaly_score": row['anomaly_score'],
-                    "anomaly_label": int(row['anomaly_label'])
+                    "isAnomaly": int(row['isAnomaly'])
                 }
             }
             json_body.append(data_point)
 
         self.client.write_points(json_body)
 
-    def query_anomaly_detection_results(self, path_params: Dict, query_params: Dict):
-        ns_id = path_params.get('nsId')
-        target_id = path_params.get('targetId')
-        metric_type = query_params.get('metric_type')
-        start_time = query_params.get('start_time')
-        end_time = query_params.get('end_time')
+    def query_anomaly_detection_results(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
+        ns_id = path_params.nsId
+        target_id = path_params.targetId
+        metric_type = query_params.metric_type.value.lower()
 
-        # Construct the InfluxQL query
+        st = query_params.start_time.astimezone(pytz.utc)
+        et = query_params.end_time.astimezone(pytz.utc)
+        start_time = st.strftime('%Y-%m-%dT%H:%M:%SZ')
+        end_time = et.strftime('%Y-%m-%dT%H:%M:%SZ')
+
         influxql_query = f'''
-        SELECT anomaly_score, anomaly_act
-        FROM "{metric_type}"
+        SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" 
+        FROM "insight"."autogen"."{metric_type}"
         WHERE "namespace_id" = '{ns_id}'
         AND "target_id" = '{target_id}'
         AND time >= '{start_time}'
-        AND time <= '{end_time}'
+        AND time <= '{end_time}' 
+        GROUP BY time(1m) FILL(null)
         '''
 
         # Execute the query
@@ -106,8 +110,8 @@ class InfluxDBRepository:
         for point in points:
             parsed_results.append({
                 "timestamp": point['time'],
-                "anomaly_score": point.get('anomaly_score'),
-                "anomaly_act": point.get('anomaly_act'),
+                "anomaly_score": point['anomaly_score'],
+                "isAnomaly": point['isAnomaly'],
             })
 
         return parsed_results

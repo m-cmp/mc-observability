@@ -1,12 +1,12 @@
 from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository, AnomalyServiceRepository
 from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings
+from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
 from config.ConfigManager import read_db_config, read_o11y_config
+from datetime import timedelta
+from enum import Enum
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from fastapi.responses import JSONResponse
-from enum import Enum
-from typing import Dict
-from datetime import datetime, timedelta
 import requests
 import pandas as pd
 import numpy as np
@@ -101,12 +101,43 @@ class AnomalySettingsService:
 
 
 class AnomalyHistoryService:
-    def __init__(self):
+    def __init__(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
         self.repo = InfluxDBRepository()
+        self.path_params = path_params
+        self.query_params = query_params
 
-    def get_anomaly_detection_results(self, path: Dict, query: Dict):
-        self.repo.query_anomaly_detection_results(path_params=path, query_params=query)
-        pass
+    def get_anomaly_detection_results(self):
+        results = self.repo.query_anomaly_detection_results(path_params=self.path_params, query_params=self.query_params)
+        raw_data = self.get_metric()
+        data = self.create_res_data(results=results, raw_data=raw_data)
+
+        return data
+
+    def get_metric(self):
+        # TODO 임시 생략
+        # storage_seq = self.get_storage_seq(setting=setting)
+        # raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
+        return 0
+
+    def create_res_data(self, results, raw_data):
+        values = []
+        for entry in results:
+            value_dict = {
+                'timestamp': entry['timestamp'],
+                'anomaly_score': entry['anomaly_score'],
+                'isAnomaly': entry['isAnomaly'],
+                'value': raw_data
+            }
+            values.append(value_dict)
+
+        data = {
+            "nsId": self.path_params.nsId,
+            "targetId": self.path_params.targetId,
+            "metric_type": self.query_params.metric_type.value,
+            "values": values
+        }
+
+        return data
 
 
 class AnomalyService:
@@ -266,8 +297,8 @@ class AnomalyDetector:
         results = pd.DataFrame({
             'timestamp': df['timestamp'],
             # 'data_value': data,
-            'anomaly_score': complete_scores,
-            'anomaly_label': anomalies.astype(int)
+            'anomaly_score': complete_scores.round(4),
+            'isAnomaly': anomalies.astype(int)
         })
         return results, anomaly_threshold
 

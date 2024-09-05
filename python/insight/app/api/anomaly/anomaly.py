@@ -78,8 +78,8 @@ async def get_anomaly_detection_history(
     """
     Fetch the results of anomaly detection for a specific target within a given time range.
     """
-    service = AnomalyHistoryService()
-    data = service.get_anomaly_detection_results(path=path_params, query=query_params)
+    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+    data = service.get_anomaly_detection_results()
     return ResBodyAnomalyDetectionHistoryResponse(data=data)
 
 
