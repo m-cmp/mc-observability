@@ -1,4 +1,5 @@
-get_options_example = {
+get_options_description = {
+    "api_description": "Fetch the available target types, metric types, and prediction range options for the prediction API.",
     "responses": {
         "200": {
             "description": "Successful retrieval of prediction options",
@@ -31,7 +32,8 @@ get_options_example = {
 }
 
 
-post_prediction_example = {
+post_prediction_description = {
+    "api_description": "Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -68,7 +70,8 @@ post_prediction_example = {
 }
 
 
-get_history_example = {
+get_history_description = {
+    "api_description": "Get previously stored prediction data for a specific VM or MCI group.",
     "response": {
         "200": {
             "description": "Successfully retrieved prediction history",
