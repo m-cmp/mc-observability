@@ -52,12 +52,10 @@ class AnomalySettingsRepository:
 
 
 class InfluxDBRepository:
-    def __init__(self, db=None):
+    def __init__(self):
         db_info = read_influxdb_config()
-        if db is None:
-            db = db_info['db']
         self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['user'],
-                                     password=db_info['pw'], database=db)
+                                     password=db_info['pw'], database=db_info['db'])
 
     def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
         tag = {
@@ -93,19 +91,17 @@ class InfluxDBRepository:
 
         influxql_query = f'''
         SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" 
-        FROM "insight"."autogen"."{metric_type}"
-        WHERE "namespace_id" = '{ns_id}'
-        AND "target_id" = '{target_id}'
-        AND time >= '{start_time}'
-        AND time <= '{end_time}' 
+        FROM "insight"."autogen"."{metric_type}" \
+        WHERE "namespace_id" = '{ns_id}' \
+        AND "target_id" = '{target_id}' \
+        AND time >= '{start_time}' \
+        AND time <= '{end_time}'  \
         GROUP BY time(1m) FILL(null)
         '''
 
-        # Execute the query
         results = self.client.query(influxql_query)
         points = list(results.get_points())
 
-        # Parse the results
         parsed_results = []
         for point in points:
             parsed_results.append({
