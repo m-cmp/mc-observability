@@ -8,11 +8,14 @@ import com.jcraft.jsch.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
+import mcmp.mc.observability.mco11ymanager.enums.OS;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugSshKey;
+import mcmp.mc.observability.mco11ymanager.util.Utils;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -28,32 +31,44 @@ public class MonitoringService {
 
         if( mciList == null || mciList.getMci() == null || mciList.getMci().isEmpty()) return null;
 
-        for( TumblebugMCI.MCI mci : mciList.getMci() ) {
-            if (mci.getVm() == null || mci.getVm().isEmpty()) return null;
+        try {
+            String myIp = switch (OS.parseProperty()) {
+                case WINDOWS -> Utils.runExec(new String[]{"powershell", "/c", "$(curl ifconfig.me).Content"});
+                case LINUX, UNIX -> Utils.runExec(new String[]{"/bin/sh", "-c", "curl ifconfig.me"});
+                default -> throw new IllegalStateException("Unexpected value: " + OS.parseProperty());
+            };
 
-            for (TumblebugMCI.Vm vm : mci.getVm()) {
-                if( !vm.getId().equals(targetId) ) continue;
+            for (TumblebugMCI.MCI mci : mciList.getMci()) {
+                if (mci.getVm() == null || mci.getVm().isEmpty()) return null;
 
-                TumblebugSshKey tumblebugSshKey = tumblebugClient.getSshKey(nsId, vm.getSshKeyId());
+                for (TumblebugMCI.Vm vm : mci.getVm()) {
+                    if (!vm.getId().equals(targetId)) continue;
 
-                JSch jSch = new JSch();
-                try {
-                    jSch.addIdentity(tumblebugSshKey.getSshKey().get(0).getPrivateKey());
-                    Session session = jSch.getSession(vm.getVmUserAccount(), vm.getPublicIP(), Integer.parseInt(vm.getSshPort()));
-                    Properties config = new Properties();
-                    config.put("StrictHostKeyChecking", "no");
-                    session.setConfig(config);
-                    session.connect();
+                    TumblebugSshKey tumblebugSshKey = tumblebugClient.getSshKey(nsId, vm.getSshKeyId());
 
-                    // install command
+                    JSch jSch = new JSch();
+                    try {
+                        jSch.addIdentity(tumblebugSshKey.getSshKey().get(0).getPrivateKey());
+                        Session session = jSch.getSession(vm.getVmUserAccount(), vm.getPublicIP(), Integer.parseInt(vm.getSshPort()));
+                        Properties config = new Properties();
+                        config.put("StrictHostKeyChecking", "no");
+                        session.setConfig(config);
+                        session.connect();
 
-                    session.disconnect();
+                        // install command
 
-                    return mci.getId();
-                } catch (JSchException e) {
-                    throw new RuntimeException(e);
+                        session.disconnect();
+
+                        return mci.getId();
+                    } catch (JSchException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         return null;
     }

@@ -62,12 +62,12 @@ public class Utils {
             sb.append(line);
             sb.append("\n");
         }
-
-        while ((line = brErr.readLine()) != null) {
-            logger.error("Error Output: {}", line);
-            sb.append(line);
-            sb.append("\n");
-        }
+//
+//        while ((line = brErr.readLine()) != null) {
+//            logger.error("Error Output: {}", line);
+//            sb.append(line);
+//            sb.append("\n");
+//        }
 
         process.waitFor();
 

@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.List;
 
-import static mcmp.mc.observability.mco11yagent.monitoring.common.Constants.COLLECTOR_CONFIG_DIR_PATH;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(Constants.MONITORING_URI)
@@ -33,12 +31,8 @@ public class SystemController {
         String data = "";
 
         switch (OS.parseProperty()) {
-            case WINDOWS -> {
-                data = Utils.runExec(new String[]{"powershell", "/c", "$(curl ifconfig.me).Content"});
-            }
-            case LINUX, UNIX -> {
-                data = Utils.runExec(new String[]{"/bin/sh", "-c", "curl ifconfig.me"});
-            }
+            case WINDOWS -> data = Utils.runExec(new String[]{"powershell", "/c", "$(curl ifconfig.me).Content"});
+            case LINUX, UNIX -> data = Utils.runExec(new String[]{"/bin/sh", "-c", "curl ifconfig.me"});
         }
         return ResBody.builder().data(data).build();
     }
