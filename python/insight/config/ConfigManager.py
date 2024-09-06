@@ -1,4 +1,5 @@
 import logging
+import json
 from configparser import ConfigParser
 
 logger = logging.getLogger()
@@ -69,10 +70,13 @@ def read_prophet_config():
     seasonality_prior_scale = prophet_config.get('prophet', 'PROPHET_SPS')
     holidays_prior_scale = prophet_config.get('prophet', 'PROPHET_HPS')
     seasonality_mode = prophet_config.get('prophet', 'PROPHET_SM')
+    remove_columns = json.loads(prophet_config.get('prophet', 'REMOVE_COLUMNS'))
 
     return {
         "changepoint_prior_scale": changepoint_prior_scale,
         "seasonality_prior_scale": seasonality_prior_scale,
         "holidays_prior_scale": holidays_prior_scale,
-        "seasonality_mode": seasonality_mode
+        "seasonality_mode": seasonality_mode,
+        'remove_columns': remove_columns
     }
+

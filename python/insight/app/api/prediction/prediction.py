@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Body
 
 from config.ConfigManager import read_config_prediction
 from app.api.prediction.request.req import Item, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
-from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions
+from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
+    PredictionResult
 from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
 from app.api.prediction.utils.utils import PredictionService
 from app.common.database.InfluxDB.influxdb_connection import read_influxdb_config
@@ -19,16 +20,9 @@ router = APIRouter()
 )
 async def get_prediction_options():
     read_influxdb_config()
-
     config_data = read_config_prediction('config/prediction.ini')
 
-    response = ResBodyPredictionOptions(
-        data=PredictionOptions(**config_data),
-        rsCode='200',
-        rsMsg='Success'
-    )
-
-    return response
+    return ResBodyPredictionOptions(data=PredictionOptions(**config_data))
 
 
 @router.post(
@@ -40,14 +34,23 @@ async def predict_monitoring_data(
         body_params: PredictionBody,
         path_params: PredictionPath = Depends()
 ):
-    prediction_service = PredictionService()
-    df = prediction_service.get_data(nsId=path_params.nsId, targetId=path_params.targetId, metric_type=body_params.metric_type)
-    prediction_result = prediction_service.prediction(df, body_params.prediction_range)
-    # print(df)
+    prediction_service = PredictionService(
+        nsId=path_params.nsId,
+        targetId=path_params.targetId,
+        metric_type=body_params.metric_type
+    )
+    df = prediction_service.get_data()
+    result_dict = prediction_service.predict(df, body_params.prediction_range)
 
+    prediction_result = PredictionResult(
+        nsId=path_params.nsId,
+        targetId=path_params.targetId,
+        metric_type=body_params.metric_type,
+        target_type=body_params.target_type,
+        values=result_dict
+    )
 
-
-    return 1
+    return ResBodyPredictionResult(data=prediction_result)
 
 
 @router.get(
