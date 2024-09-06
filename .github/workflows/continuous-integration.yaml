@@ -71,10 +71,10 @@ jobs:
 
       - name: Build image (Observability-Manager)
         env:
-          IMAGE_NAME: mc-observability-manager
-        run: docker build . --file java-module/mc-o11y-manager/Dockerfile --tag $IMAGE_NAME
-
-      - name: Build image (Observability-Agent)
-        env:
-          IMAGE_NAME: mc-observability-agent
-        run: docker build . --file java-module/mc-o11y-agent/Dockerfile --tag $IMAGE_NAME
+          IMAGE_NAME: mc-observability
+        run: docker build . --file java-module/Dockerfile --tag $IMAGE_NAME
+#
+#      - name: Build image (Observability-Agent)
+#        env:
+#          IMAGE_NAME: mc-observability-agent
+#        run: docker build . --file java-module/mc-o11y-agent/Dockerfile --tag $IMAGE_NAME
