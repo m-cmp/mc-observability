@@ -77,3 +77,8 @@ class PredictionService:
     @staticmethod
     def remove_timezone(dt):
         return dt.replace(tzinfo=None)
+
+
+    def get_prediction_history(self, start_time, end_time):
+        self.influxdb_repo.query_prediction_history(start_time, end_time)
+

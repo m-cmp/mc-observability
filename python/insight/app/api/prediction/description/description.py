@@ -82,7 +82,6 @@ get_history_description = {
                             "nsId": "string",
                             "targetId": "string",
                             "metric_type": "CPU",
-                            "target_type": "VM",
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",

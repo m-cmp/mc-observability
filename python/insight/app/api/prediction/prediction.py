@@ -65,6 +65,13 @@ async def get_prediction_history(
     print(f'nsId: {path_params.nsId}')
     print(f'targetId: {path_params.targetId}')
     print(f'query params: {query_params}')
+    prediction_service = PredictionService(
+        nsId=path_params.nsId,
+        targetId=path_params.targetId,
+        metric_type=query_params.metric_type
+    )
+    result_dict =  prediction_service.get_prediction_history(query_params.start_time, query_params.end_time)
+
 
     pass
 

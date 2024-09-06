@@ -28,9 +28,11 @@ class PredictionBody(BaseModel):
 
 
 # get history request parameters
-def set_time_delta(delta=0) -> datetime:
+def add_time_delta(delta=0) -> datetime:
+    # Arguments delta may be positive or negative.
     kst = pytz.timezone('Asia/Seoul')
-    return datetime.now(kst).replace(microsecond=0) - timedelta(hours=delta)
+    return datetime.now(kst).replace(microsecond=0) + timedelta(hours=delta)
+
 
 class GetHistoryPath(BaseModel):
     nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
@@ -46,17 +48,17 @@ class GetPredictionHistoryQuery(BaseModel):
     metric_type: MetricType = Field(Query(description='The type of metric to retrieve.'))
     start_time: datetime = Field(Query(
         default=None,
-        description='The start timestamp for the range of prediction data to retrieve. Defaults to 7 days before the current time if not provided.'
+        description='The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.'
     ))
     end_time: datetime = Field(Query(
         default=None,
-        description='The end timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.'
+        description='The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.'
     ))
 
     @validator('start_time', pre=True, always=True)
     def set_start_time(cls, v):
-        return v or set_time_delta(168)
+        return v or add_time_delta()
 
     @validator('end_time', pre=True, always=True)
     def set_end_time(cls, v):
-        return v or set_time_delta()
+        return v or add_time_delta(delta=168)
