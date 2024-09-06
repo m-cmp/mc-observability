@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import mcmp.mc.observability.mco11yagent.monitoring.model.InfluxDBConnector;
 
 @Data
 @Builder
@@ -25,4 +26,10 @@ public class TriggerTargetStorageInfo {
     private String retentionPolicy;
     @ApiModelProperty(value = "The time when the trigger target storage was registered", example = "2024-05-24 11:31:55")
     private String createAt;
+
+    public void updateInfluxDBConfig(InfluxDBConnector influxDBConnector) {
+        this.url = influxDBConnector.getUrl();
+        this.database = influxDBConnector.getDatabase();
+        this.retentionPolicy = influxDBConnector.getRetentionPolicy();
+    }
 }
