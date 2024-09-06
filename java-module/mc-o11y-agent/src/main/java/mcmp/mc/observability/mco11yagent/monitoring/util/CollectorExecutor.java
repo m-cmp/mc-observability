@@ -76,7 +76,11 @@ public class CollectorExecutor {
             throw new RuntimeException(e);
         }
 
-        return sb.toString().replaceAll("@NS_ID", System.getProperty(Constants.PROPERTY_NS_ID)).replaceAll("@TARGET_ID", System.getProperty(Constants.PROPERTY_TARGET_ID));
+        String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+        if( nsId == null ) nsId = "";
+        String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+        if( targetId == null ) targetId = "";
+        return sb.toString().replaceAll("@NS_ID", nsId).replaceAll("@TARGET_ID", targetId);
     }
 
     public boolean isCollectorAlive() {
@@ -84,7 +88,12 @@ public class CollectorExecutor {
     }
 
     public void updateConfigFile() {
-        List<MonitoringConfigInfo> configList = monitoringConfigService.list(System.getProperty(Constants.PROPERTY_NS_ID), System.getProperty(Constants.PROPERTY_TARGET_ID));
+        String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+        if( nsId == null ) nsId = "";
+        String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+        if( targetId == null ) targetId = "";
+
+        List<MonitoringConfigInfo> configList = monitoringConfigService.list(nsId, targetId);
         Map<Long, PluginDefInfo> pluginMap = pluginMapper.getAllPlugin();
 
         boolean isUpdate = configList.stream().anyMatch(f -> !f.getState().equalsIgnoreCase("NONE"));

@@ -3,6 +3,7 @@ package mcmp.mc.observability.mco11ymanager.controller;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,14 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(Constants.PREFIX_V1)
 public class MonitoringController {
 
     private final MonitoringClient monitoringClient;
+    private final MonitoringService monitoringService;
 
     // monitoring target api
     @GetMapping("/monitoring/target")
@@ -28,12 +28,13 @@ public class MonitoringController {
     }
     @PostMapping(Constants.TARGET_PATH)
     public Object insertTarget(@PathVariable String nsId, @PathVariable String targetId) {
-        /*
-        cb-tb -> get mic list
-        cb-tb -> filter nsId, targetId
-        jsch -> connect & install agent
-         */
-        return monitoringClient.insertTarget(nsId, targetId);
+        if( monitoringClient.getTarget(nsId, targetId) != null ) return null;
+
+        String mciId = monitoringService.installAgent(nsId, targetId);
+
+        if( mciId == null ) return null;
+
+        return monitoringClient.insertTarget(nsId, mciId, targetId);
     }
     @PutMapping(Constants.TARGET_PATH)
     public Object updateTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object targetInfo) {

@@ -7,7 +7,9 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://0.0.0.0:3306
+    url: jdbc:mariadb://mc-o11y-maria:3306/mc_observability?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul
+    username: mc-agent
+    password: mc-agent
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher

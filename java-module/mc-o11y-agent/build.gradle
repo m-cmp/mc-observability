@@ -24,3 +24,13 @@ dependencies {
 
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.0.9'
 }
+
+jar {
+    enabled = false
+}
+
+bootJar {
+    archivesBaseName = "mcmp-observability-agent"
+    archiveFileName = "mc-o11y-agent.jar"
+    archiveVersion = "0.0.1"
+}

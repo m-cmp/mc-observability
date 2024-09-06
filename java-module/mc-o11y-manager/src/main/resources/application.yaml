@@ -13,4 +13,6 @@ feign:
         connect-timeout: 5000
         read-timeout: 5000
   agent-manager:
-    url: http://localhost:18081
+    url: http://mc-o11y-agent:18081
+  cb-tumblebug:
+    url: http://cb-tumblebug:1323

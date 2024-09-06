@@ -1,0 +1,58 @@
+networks:
+  default:
+    driver: bridge
+    external: true
+    internal: true
+
+services:
+  mc-o11y-manager:
+    image: cloudbaristaorg/mc-o11y-manager
+    container_name: mc-o11y-manager
+    ports:
+      - 18080:18080
+    networks:
+      - default
+
+  mc-o11y-agent:
+    image: cloudbaristaorg/mc-o11y-agent
+    container_name: mc-o11y-agent
+    ports:
+      - 18081:18081
+    volumes:
+      - /root/docker:/docker
+    networks:
+      - default
+
+  mariadb:
+    image: mariadb:10.7.6
+    container_name: mc-o11y-maria
+    ports:
+      - 3306:3306
+    volumes:
+      - /docker/mariadb/etc/mysql/conf.d:/etc/mysql/conf.d:ro
+      - /docker/mariadb/var/lib/mysql:/var/lib/mysql
+      - /docker/mariadb/var/log/maria:/var/log/maria
+    environment:
+      - TZ="Asia/Seoul"
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=qwe1212!Q
+      - MARIADB_USER=mc-agent
+      - MARIADB_DATABASE=mc_observability
+      - MARIADB_PASSWORD=mc-agent
+    networks:
+      - default
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: mc-o11y-influx
+    ports:
+      - 8086:8086
+    environment:
+      - INFLUXDB_USER=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability"
+    volumes:
+      - /docker/influxdb/config:/etc/influxdb
+      - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
+    networks:
+      - default
