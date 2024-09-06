@@ -1,0 +1,6 @@
+services:
+  mc-o11y-agent:
+    image: cloudbaristaorg/mc-observability
+    container_name: mc-o11y-agent
+    ports:
+      - 18081:18081

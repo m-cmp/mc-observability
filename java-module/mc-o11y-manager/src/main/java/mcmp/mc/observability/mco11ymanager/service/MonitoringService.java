@@ -56,6 +56,9 @@ public class MonitoringService {
                         session.connect();
 
                         // install command
+                        sendCommand(session, "wget https://github.com/m-cmp/mc-observability/raw/develop/java-module/scripts/init.sh");
+                        sendCommand(session, "chmod +x init.sh");
+                        sendCommand(session, "./init.sh " + myIp + " " + nsId + " " + mci.getId() + " " + targetId);
 
                         session.disconnect();
 
