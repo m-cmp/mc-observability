@@ -24,8 +24,8 @@ class AnomalySettingsService:
         results = [
             AnomalyDetectionSettings(
                 seq=setting.SEQ,
-                namespace_id=setting.NAMESPACE_ID,
-                target_id=setting.TARGET_ID,
+                nsId=setting.NAMESPACE_ID,
+                targetId=setting.TARGET_ID,
                 target_type=setting.TARGET_TYPE,
                 metric_type=setting.METRIC_TYPE,
                 execution_interval=setting.EXECUTION_INTERVAL,
@@ -43,8 +43,8 @@ class AnomalySettingsService:
             results = [
                 AnomalyDetectionSettings(
                     seq=setting.SEQ,
-                    namespace_id=setting.NAMESPACE_ID,
-                    target_id=setting.TARGET_ID,
+                    nsId=setting.NAMESPACE_ID,
+                    targetId=setting.TARGET_ID,
                     target_type=setting.TARGET_TYPE,
                     metric_type=setting.METRIC_TYPE,
                     execution_interval=setting.EXECUTION_INTERVAL,

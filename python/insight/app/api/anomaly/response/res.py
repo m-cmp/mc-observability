@@ -17,8 +17,8 @@ class ResBodyAnomalyDetectionOptions(BaseModel):
 
 class AnomalyDetectionSettings(BaseModel):
     seq: int
-    namespace_id: str
-    target_id: str
+    nsId: str
+    targetId: str
     target_type: str
     metric_type: str
     execution_interval: str
