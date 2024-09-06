@@ -30,35 +30,26 @@ class InfluxDBRepository:
         self.client.write_points(points)
 
 
-    def query_prediction_history(self, start_time, end_time):
+    def query_prediction_history(self, nsId, targetId, start_time, end_time):
         start_time = start_time.astimezone(pytz.utc)
         end_time = end_time.astimezone(pytz.utc)
         start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-        print(f'start_time: {start_time}')
-        print(f'end_time: {end_time}')
-
-
-        nsId = 'prediction_nsId'
-        targetId = 'prediction_targetId'
 
         influxdb_query = f'''
-        SELECT mean("prediction_metric") as "prediction_metric"
-        FROM "insight"."autogen"."cpu" 
-        WHERE "namespace_id" = \'{nsId}\' 
-        AND "target_id" = \'{targetId}\'
-        AND time < \'{start_time}\'
-        GROUP BY time(1h) FILL(null)
+        SELECT mean("prediction_metric") as "prediction_metric" \
+        FROM "insight"."autogen"."cpu" \
+        WHERE "namespace_id" = '{nsId}' \
+        AND "target_id" = '{targetId}' \
+        AND time > '{start_time}' \
+        AND time < '{end_time}' \
+        GROUP BY time(1h) FILL(null) \
         '''
 
-
-
         results = self.client.query(influxdb_query)
-        print(f'result: {results}')
         points = list(results.get_points())
-        print(f'points: {points}')
 
-        pass
+        return points
 
 
 

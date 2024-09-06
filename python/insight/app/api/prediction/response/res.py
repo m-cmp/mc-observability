@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Union
 
 
 # GET /predictions/options
@@ -17,8 +18,8 @@ class ResBodyPredictionOptions(BaseModel):
 
 # POST /predictions/nsId/{nsId}/target/{targetId}
 class PredictValue(BaseModel):
-    timestamp:  datetime
-    predicted_value: float
+    timestamp: datetime
+    predicted_value: Union[float, None]
 
 class PredictionResult(BaseModel):
     nsId: str
@@ -35,3 +36,20 @@ class ResBodyPredictionResult(BaseModel):
 
 
 # GET /predictions/nsId/{nsId}/target/{targetId}/history
+class HistoryValue(BaseModel):
+    timestamp: datetime
+    predicted_value: Union[float, None]
+
+
+class PredictionHistory(BaseModel):
+    nsId: str
+    targetId: str
+    metric_type: str
+    values: list[HistoryValue]
+
+class ResBodyPredictionHistory(BaseModel):
+    data: PredictionHistory
+    rsCode: str = '200'
+    rsMsg: str = 'Success'
+
+

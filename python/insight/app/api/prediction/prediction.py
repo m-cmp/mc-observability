@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Body
 from config.ConfigManager import read_config_prediction
 from app.api.prediction.request.req import Item, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
 from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
-    PredictionResult
+    PredictionResult, PredictionHistory, ResBodyPredictionHistory
 from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
 from app.api.prediction.utils.utils import PredictionService
 from app.common.database.InfluxDB.influxdb_connection import read_influxdb_config
@@ -62,18 +62,23 @@ async def get_prediction_history(
         path_params: GetHistoryPath = Depends(),
         query_params: GetPredictionHistoryQuery = Depends()
 ):
-    print(f'nsId: {path_params.nsId}')
-    print(f'targetId: {path_params.targetId}')
-    print(f'query params: {query_params}')
     prediction_service = PredictionService(
         nsId=path_params.nsId,
         targetId=path_params.targetId,
         metric_type=query_params.metric_type
     )
-    result_dict =  prediction_service.get_prediction_history(query_params.start_time, query_params.end_time)
+    result_dict =  prediction_service.get_prediction_history(path_params, query_params)
+    print(f'result_dict: {result_dict}')
 
 
-    pass
+    prediction_history = PredictionHistory(
+        nsId=path_params.nsId,
+        targetId=path_params.targetId,
+        metric_type=query_params.metric_type,
+        values=result_dict
+    )
+    print(PredictionHistory)
 
+    return ResBodyPredictionHistory(data=prediction_history)
 
 

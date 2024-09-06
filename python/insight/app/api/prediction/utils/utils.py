@@ -6,7 +6,7 @@ import time
 
 from config.ConfigManager import read_prophet_config
 from app.api.prediction.repo.repo import InfluxDBRepository
-from app.api.prediction.response.res import PredictValue, PredictionResult
+from app.api.prediction.response.res import PredictionResult, PredictionHistory
 
 
 
@@ -79,6 +79,22 @@ class PredictionService:
         return dt.replace(tzinfo=None)
 
 
-    def get_prediction_history(self, start_time, end_time):
-        self.influxdb_repo.query_prediction_history(start_time, end_time)
+    def get_prediction_history(self, path_params, query_params):
+        prediction_points = self.influxdb_repo.query_prediction_history(
+            nsId=path_params.nsId,
+            targetId=path_params.targetId,
+            start_time=query_params.start_time,
+            end_time=query_params.end_time,
+        )
+
+        values = []
+        for point in prediction_points:
+            value_dict = {
+                'timestamp': point['time'],
+                'predicted_value': point['prediction_metric']
+            }
+            values.append(value_dict)
+
+        return values
+
 
