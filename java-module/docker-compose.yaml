@@ -1,27 +1,19 @@
 networks:
-  default:
-    driver: bridge
-    external: true
+  internal_network:
     internal: true
+  external_network:
+    driver: bridge
 
 services:
   mc-o11y-manager:
-    image: cloudbaristaorg/mc-o11y-manager
-    container_name: mc-o11y-manager
+    image: cloudbaristaorg/mc-observability
+    container_name: mc-o11y-service
     ports:
       - 18080:18080
-    networks:
-      - default
-
-  mc-o11y-agent:
-    image: cloudbaristaorg/mc-o11y-agent
-    container_name: mc-o11y-agent
-    ports:
       - 18081:18081
-    volumes:
-      - /root/docker:/docker
     networks:
-      - default
+      - internal_network
+      - external_network
 
   mariadb:
     image: mariadb:10.7.6
@@ -40,7 +32,8 @@ services:
       - MARIADB_DATABASE=mc_observability
       - MARIADB_PASSWORD=mc-agent
     networks:
-      - default
+      - internal_network
+      - external_network
 
   influxdb:
     image: influxdb:1.8
@@ -55,4 +48,5 @@ services:
       - /docker/influxdb/config:/etc/influxdb
       - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
     networks:
-      - default
+      - internal_network
+      - external_network
