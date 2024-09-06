@@ -606,13 +606,13 @@ paths:
           type: string
           format: date-time
           required: false
-          description: The start timestamp for the range of prediction data to retrieve. Defaults to 7 days before the current time if not provided.
+          description: The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
         - in: query
           name: end_time
           type: string
           format: date-time
           required: false
-          description: The end timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+          description: The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.
       responses:
         200:
           description: Successfully retrieved prediction history
@@ -646,6 +646,75 @@ paths:
           description: Successful retrieval of anomaly detection targets
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+    post:
+      tags:
+        - '[Insight] Anomaly Detection'
+      summary: Register an anomaly detection target
+      description: Register a target for anomaly detection and automatically schedule detection tasks.
+      operationId: registerAnomalyDetectionTarget
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Parameters required to register the anomaly detection target.
+          required: true
+          schema:
+            $ref: '#/definitions/AnomalyDetectionTargetRegistration'
+      responses:
+        200:
+          description: Successful registration of anomaly detection target
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
+    put:
+      tags:
+        - '[Insight] Anomaly Detection'
+      summary: Update anomaly detection settings for a specific target
+      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
+      operationId: updateAnomalyDetectionTarget
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: settingSeq
+          type: integer
+          required: true
+          description: The Setting Seq.
+        - in: body
+          name: body
+          description: Parameters required to update the anomaly detection target.
+          required: true
+          schema:
+            $ref: '#/definitions/AnomalyDetectionTargetUpdate'
+      responses:
+        200:
+          description: Successful update of anomaly detection target
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+    delete:
+      tags:
+        - '[Insight] Anomaly Detection'
+      summary: Delete an anomaly detection target
+      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
+      operationId: deleteAnomalyDetectionTarget
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: settingSeq
+          type: integer
+          required: true
+          description: The Setting Seq.
+      responses:
+        200:
+          description: Successful deletion of anomaly detection target
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
       tags:
@@ -671,97 +740,6 @@ paths:
           description: Successful retrieval of anomaly detection targets
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionTarget'
-
-    post:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Register an anomaly detection target
-      description: Register a target for anomaly detection and automatically schedule detection tasks.
-      operationId: registerAnomalyDetectionTarget
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target (VM ID or MCI ID).
-        - in: body
-          name: body
-          description: Parameters required to register the anomaly detection target.
-          required: true
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetRegistration'
-      responses:
-        200:
-          description: Successful registration of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-
-    put:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Update anomaly detection settings for a specific target
-      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
-      operationId: updateAnomalyDetectionTarget
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target (VM ID or MCI ID).
-        - in: body
-          name: body
-          description: Parameters required to update the anomaly detection target.
-          required: true
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetUpdate'
-      responses:
-        200:
-          description: Successful update of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-
-    delete:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Delete an anomaly detection target
-      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
-      operationId: deleteAnomalyDetectionTarget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target (VM ID or MCI ID).
-      responses:
-        200:
-          description: Successful deletion of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
     get:
       tags:
@@ -1495,10 +1473,6 @@ definitions:
         type: string
         description: The type of metric being predicted (e.g., CPU, MEM).
         example: "CPU"
-      target_type:
-        type: string
-        description: The type of the target (VM or MCI).
-        example: "VM"
       values:
         type: array
         items:
@@ -1579,29 +1553,37 @@ definitions:
     properties:
       seq:
         type: integer
-        description: The sequence number of the target.
+        description: "The sequence number of the target."
         example: 1
-      id:
+      nsId:
         type: string
-        description: The ID of the target (VM ID or MCI ID).
-        example: "vm-12345"
+        description: "The namespace ID associated with the setting."
+        example: "namespace-01"
+      targetId:
+        type: string
+        description: "The ID of the target (e.g., VM ID or MCI ID)."
+        example: "vm-01"
+      target_type:
+        type: string
+        description: "The type of the target (e.g., VM, container, etc.)."
+        example: "VM"
       metric_type:
         type: string
-        description: The type of metric being monitored for anomalies.
+        description: "The type of metric being monitored for anomalies (e.g., CPU, memory)."
         example: "CPU"
       execution_interval:
         type: string
-        description: The interval at which anomaly detection runs.
+        description: "The interval at which anomaly detection runs (e.g., 5m for 5 minutes)."
         example: "5m"
       last_execution:
         type: string
         format: date-time
-        description: The last time anomaly detection was executed for this target.
+        description: "The last time anomaly detection was executed for this target."
         example: "2024-08-22T00:00:00Z"
       createAt:
         type: string
         format: date-time
-        description: The timestamp when the target was created.
+        description: "The timestamp when the target was created."
         example: "2024-08-15T00:00:00Z"
   ResBodyAnomalyDetectionSettings:
     type: object
@@ -1632,10 +1614,6 @@ definitions:
         type: string
         description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
         example: "CPU"
-      target_type:
-        type: string
-        description: The type of the target (VM or MCI).
-        example: "VM"
       values:
         type: array
         items:
@@ -1681,35 +1659,6 @@ definitions:
         type: string
         description: Response message
         example: "Success"
-  AnomalyDetectionTarget:
-    type: object
-    properties:
-      seq:
-        type: integer
-        description: The sequence number of the target.
-        example: 1
-      id:
-        type: string
-        description: The ID of the target (VM ID or MCI ID).
-        example: "vm-12345"
-      metric_type:
-        type: string
-        description: The type of metric being monitored for anomalies.
-        example: "CPU"
-      execution_interval:
-        type: string
-        description: The interval at which anomaly detection runs.
-        example: "5m"
-      last_execution:
-        type: string
-        format: date-time
-        description: The last time anomaly detection was executed for this target.
-        example: "2024-08-22T00:00:00Z"
-      createAt:
-        type: string
-        format: date-time
-        description: The timestamp when the target was created.
-        example: "2024-08-15T00:00:00Z"
   ResBodyAnomalyDetectionTarget:
     type: object
     title: "ResBody<AnomalyDetectionTarget>"
@@ -1717,7 +1666,7 @@ definitions:
       data:
         type: array
         items:
-          $ref: '#/definitions/AnomalyDetectionTarget'
+          $ref: '#/definitions/AnomalyDetectionSettings'
       rsCode:
         type: string
         description: Response code
@@ -1729,36 +1678,44 @@ definitions:
   AnomalyDetectionTargetRegistration:
     type: object
     required:
+      - nsId
+      - targetId
       - target_type
       - metric_type
       - execution_interval
     properties:
+      nsId:
+        type: string
+        description: "The namespace ID associated with the anomaly detection target."
+        example: "namespace-01"
+      targetId:
+        type: string
+        description: "The ID of the target (e.g., VM ID or MCI ID)."
+        example: "vm-01"
       target_type:
         type: string
-        description: The type of the target (VM or MCI).
+        description: "The type of the target (VM or MCI)."
         enum:
           - VM
           - MCI
         example: "VM"
       metric_type:
         type: string
-        description: The type of metric to monitor for anomalies.
+        description: "The type of metric being monitored for anomalies (CPU or MEM)."
+        enum:
+          - CPU
+          - MEM
         example: "CPU"
       execution_interval:
         type: string
-        description: The interval at which anomaly detection should run.
+        description: "The interval at which anomaly detection runs (e.g., 5m, 10m, 30m)."
         example: "5m"
   AnomalyDetectionTargetUpdate:
     type: object
     required:
-      - metric_type
       - execution_interval
     properties:
-      metric_type:
-        type: string
-        description: The type of metric to monitor for anomalies.
-        example: "CPU"
       execution_interval:
         type: string
-        description: The interval at which anomaly detection should run.
+        description: "The interval at which anomaly detection runs (5m, 10m, 30m)"
         example: "10m"
