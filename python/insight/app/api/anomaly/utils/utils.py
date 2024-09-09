@@ -160,7 +160,7 @@ class AnomalyService:
 
         anomaly_detector = AnomalyDetector(metric_type=setting.METRIC_TYPE)
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
-        influx_repo = InfluxDBRepository(db='insight')
+        influx_repo = InfluxDBRepository()
         influx_repo.save_results(df=score_df, setting=setting)
 
         return score_df

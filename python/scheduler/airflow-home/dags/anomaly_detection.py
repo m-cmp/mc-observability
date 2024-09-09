@@ -1,10 +1,11 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.mysql_hook import MySqlHook
-from airflow.hooks.http_hook import HttpHook
+from airflow.hooks.base_hook import BaseHook
 from datetime import datetime, timedelta
 import pandas as pd
 import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 default_args = {
@@ -18,6 +19,10 @@ def fetch_data_from_db():
     hook = MySqlHook(mysql_conn_id='mcmp_db')
     sql = "SELECT * FROM anomaly_detection_settings"
     df = hook.get_pandas_df(sql)
+
+    df['LAST_EXECUTION'] = df['LAST_EXECUTION'].astype(str)
+    df['REGDATE'] = df['REGDATE'].astype(str)
+
     return df.to_dict('records')
 
 
@@ -44,30 +49,45 @@ def filter_records_to_execute(records):
         interval = parse_execution_intervals(record)
         record['next_execution_time'] = record['LAST_EXECUTION'] + interval
 
-    rows_to_execute = [record for record in records if record['next_execution_time'] <= current_time]
-    return rows_to_execute
+    seq_list = [record['SEQ'] for record in records if record['next_execution_time'] <= current_time]
+
+    return seq_list
 
 
-def post_to_api(record):
-    setting_seq = record['SEQ']
+def post_to_api(setting_seq):
+    conn = BaseHook.get_connection('api_base_url')
+    base_url = f"{conn.schema}://{conn.host}:{conn.port}" if conn.port else f"{conn.schema}://{conn.host}"
 
-    http_hook = HttpHook(http_conn_id='api_base_url', method='POST')
-    url = f"{http_hook.base_url}/api/o11y/insight/anomaly-detection/{setting_seq}"
+    url = f"{base_url}/api/o11y/insight/anomaly-detection/{setting_seq}"
 
-    response = requests.post(url)
+    try:
+        response = requests.post(url)
 
-    if response.status_code == 200:
-        print(f"POST successful for settingSeq {setting_seq}")
-    else:
-        print(
-            f"POST failed for settingSeq {setting_seq}. Status Code: {response.status_code}, Response: {response.text}")
+        if response.status_code == 200:
+            print(f"POST successful for settingSeq {setting_seq}")
+        else:
+            print(
+                f"POST failed for settingSeq {setting_seq}. Status Code: {response.status_code}, Response: {response.text}")
+    except Exception as e:
+        print(f"Exception during API call for settingSeq {setting_seq}: {str(e)}")
 
 
 def execute_api_calls(**context):
-    rows_to_execute = context['ti'].xcom_pull(task_ids='filter_records')
+    seq_list = context['ti'].xcom_pull(task_ids='filter_records')
 
-    for record in rows_to_execute:
-        post_to_api(record)
+    if not seq_list:
+        print("No records to execute.")
+        return
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(post_to_api, setting_seq): setting_seq for setting_seq in seq_list}
+
+        for future in as_completed(futures):
+            setting_seq = futures[future]
+            try:
+                future.result()
+            except Exception as exc:
+                print(f"API call generated an exception for settingSeq {setting_seq}: {exc}")
 
 
 with DAG(
