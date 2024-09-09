@@ -12,16 +12,23 @@ if [ $? -ne 0 ]; then
   sudo apt-get install -y docker-ce docker-ce-cli docker-compose
 fi
 
-cat <<EOF > mc-o11y-agent.conf
-JAVA_OPTS="-Dspring.profiles.active=prd -Dmc-o11y.ns-id=$2 -Dmc-o11y.mci-id=$3 -Dmc-o11y.target-id=$4"
+git --version
+if [ $? -ne 0 ]; then
+  sudo apt-get install -y git
+fi
+
+git clone https://github.com/m-cmp/mc-observability.git
+
+cd mc-observability
+
+cat <<EOF > .env
+NS_ID=$2
+MCI_ID=$3
+TARGET_ID=$4
+DATABASE_HOST=$1
+DATABASE_NAME=mc-observability
+DATABASE_ID=mc-agent
+DATABASE_PW=mc-agent
 EOF
 
-cat <<EOF > application-prd.yaml
-spring:
-  datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://$1:3306/mc_observability?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul
-    username: mc-agent
-    password: mc-agent
-EOF
-
+docker compose up -d

@@ -46,9 +46,9 @@ public class AgentService {
 
             collectorExecutor.startCollector();
 
-            String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+            String nsId = System.getenv(Constants.PROPERTY_NS_ID);
             if( nsId == null ) nsId = "";
-            String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+            String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
             if( targetId == null ) targetId = "";
             targetMapper.updateState(nsId, targetId, "ACTIVE");
         }
@@ -61,9 +61,9 @@ public class AgentService {
 
     @PreDestroy
     public void destroy() {
-        String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+        String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
-        String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+        String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
         targetMapper.updateState(nsId, targetId, "INACTIVE");
     }
