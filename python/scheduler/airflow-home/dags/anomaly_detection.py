@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.mysql_hook import MySqlHook
+from airflow.hooks.http_hook import HttpHook
 from datetime import datetime, timedelta
 import pandas as pd
 import requests
@@ -8,6 +9,7 @@ import requests
 
 default_args = {
     'owner': 'airflow',
+    'depends_on_past': False,
     'retries': 0,
 }
 
@@ -48,7 +50,9 @@ def filter_records_to_execute(records):
 
 def post_to_api(record):
     setting_seq = record['SEQ']
-    url = f'http://127.0.0.1:9001/api/o11y/insight/anomaly-detection/{setting_seq}'
+
+    http_hook = HttpHook(http_conn_id='api_base_url', method='POST')
+    url = f"{http_hook.base_url}/api/o11y/insight/anomaly-detection/{setting_seq}"
 
     response = requests.post(url)
 
@@ -71,6 +75,7 @@ with DAG(
     default_args=default_args,
     start_date=datetime(2023, 9, 6),
     schedule_interval='*/1 * * * *',
+    catchup=False,
 ) as dag:
 
     fetch_data_task = PythonOperator(
