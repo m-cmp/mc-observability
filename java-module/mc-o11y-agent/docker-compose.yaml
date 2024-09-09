@@ -4,3 +4,10 @@ services:
     container_name: mc-o11y-agent
     ports:
       - 18081:18081
+    environment:
+      - NS_ID:${NS_ID:}
+      - MCI_ID:${MCI_ID:}
+      - TARGET_ID:${TARGET_ID:}
+      - DATABASE_HOST:${DATABASE_HOST:}
+      - DATABASE_ID:${DATABASE_ID:}
+      - DATABASE_PW:${DATABASE_PW:}

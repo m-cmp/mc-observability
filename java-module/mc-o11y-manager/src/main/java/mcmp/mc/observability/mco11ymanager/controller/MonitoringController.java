@@ -21,6 +21,11 @@ public class MonitoringController {
     private final MonitoringClient monitoringClient;
     private final MonitoringService monitoringService;
 
+    // monitoring test api
+    @GetMapping("/monitoring/ns")
+    public Object getNS() {
+        return monitoringService.getNs();
+    }
     // monitoring target api
     @GetMapping("/monitoring/target")
     public Object getTargetList() {

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.enums.OS;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
+import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugSshKey;
 import mcmp.mc.observability.mco11ymanager.util.Utils;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,11 @@ import java.util.Properties;
 @RequiredArgsConstructor
 public class MonitoringService {
     private final TumblebugClient tumblebugClient;
+
+    public TumblebugNS getNs() {
+        return tumblebugClient.getNSList();
+    }
+
     public String installAgent(String nsId, String targetId) {
         TumblebugMCI mciList = tumblebugClient.getMCIList(nsId);
 
