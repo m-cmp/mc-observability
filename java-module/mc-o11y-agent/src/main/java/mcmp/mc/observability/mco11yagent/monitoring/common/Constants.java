@@ -9,7 +9,7 @@ public class Constants {
     public static final String COLLECTOR_CONFIG_PATH = CONFIG_ROOT_PATH + "/mc-observability-agent-collector.conf";
     public static final String COLLECTOR_CONFIG_DIR_PATH = CONFIG_ROOT_PATH + "/conf";
 
-    public static final String PROPERTY_NS_ID = "mc-o11y.ns-id";
-    public static final String PROPERTY_MCI_ID = "mc-o11y.mci-id";
-    public static final String PROPERTY_TARGET_ID = "mc-o11y.target-id";
+    public static final String PROPERTY_NS_ID = "NS_ID";
+    public static final String PROPERTY_MCI_ID = "MCI_ID";
+    public static final String PROPERTY_TARGET_ID = "TARGET_ID";
 }

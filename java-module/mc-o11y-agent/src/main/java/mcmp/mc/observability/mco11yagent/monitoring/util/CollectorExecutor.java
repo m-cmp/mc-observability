@@ -76,9 +76,9 @@ public class CollectorExecutor {
             throw new RuntimeException(e);
         }
 
-        String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+        String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
-        String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+        String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
         return sb.toString().replaceAll("@NS_ID", nsId).replaceAll("@TARGET_ID", targetId);
     }
@@ -88,9 +88,9 @@ public class CollectorExecutor {
     }
 
     public void updateConfigFile() {
-        String nsId = System.getProperty(Constants.PROPERTY_NS_ID);
+        String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
-        String targetId = System.getProperty(Constants.PROPERTY_TARGET_ID);
+        String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
 
         List<MonitoringConfigInfo> configList = monitoringConfigService.list(nsId, targetId);
