@@ -26,6 +26,11 @@ public class MonitoringController {
     public Object getNS() {
         return monitoringService.getNs();
     }
+    // monitoring plugins api
+    @GetMapping("/monitoring/plugins")
+    public Object getPluginList() {
+        return monitoringClient.getPluginList();
+    }
     // monitoring target api
     @GetMapping("/monitoring/target")
     public Object getTargetList() {
