@@ -14,6 +14,10 @@ services:
     networks:
       - internal_network
       - external_network
+    environment:
+      - TUMBLEBUG_URL=http://cb-tumblebug:1323
+      - TUMBLEBUG_ID=default
+      - TUMBLEBUG_PW=default
 
   mariadb:
     image: mariadb:10.7.6
