@@ -383,13 +383,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<MetricInfo>>'
-
-  /api/o11y/monitoring/trigger/history:
+  /api/o11y/trigger/history:
     get:
       tags:
         - '[Metric Event] monitoring metric trigger'
       summary: Get Trigger History all list
-      operationId: listUsingGET_3
+      operationId: listUsingGET_5
       parameters:
         - name: policySeq
           in: query
@@ -401,7 +400,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/ResBody<List<TriggerHistoryInfo>>'
+            $ref: '#/definitions/TriggerResBody«List«TriggerHistoryInfo»»'
   /api/o11y/monitoring/trigger/policy:
     get:
       tags:
@@ -431,11 +430,11 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<Void>'
   /api/o11y/monitoring/trigger/policy/{policySeq}:
-    put:
+    patch:
       tags:
         - '[Metric Event] monitoring metric trigger'
       summary: Update request Trigger Policy
-      operationId: updateUsingPUT_3
+      operationId: updateUsingPATCH_3
       consumes:
         - application/json
       parameters:
@@ -524,6 +523,140 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/trigger/policy/{policySeq}/alert/email:
+    get:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Get Trigger Alert Email User all list
+      operationId: getEmailUserListUsingGET
+      parameters:
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«List«TriggerEmailUserInfo»»'
+    post:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Create request Trigger Alert Email User
+      operationId: createEmailUserUsingPOST
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: dto
+          description: dto
+          required: true
+          schema:
+            $ref: '#/definitions/TriggerEmailUserCreateDto'
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«Void»'
+  /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}:
+    delete:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Delete Request Trigger Alert Email User
+      operationId: deleteEmailUserUsingDELETE
+      parameters:
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+        - name: seq
+          in: path
+          description: seq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«Void»'
+  /api/o11y/trigger/policy/{policySeq}/alert/slack:
+    get:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Get Trigger Alert Slack User all list
+      operationId: getSlackUserListUsingGET
+      parameters:
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«List«TriggerSlackUserInfo»»'
+    post:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Create request Trigger Alert Slack User
+      operationId: createSlackUserUsingPOST
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: dto
+          description: dto
+          required: true
+          schema:
+            $ref: '#/definitions/TriggerSlackUserCreateDto'
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«Void»'
+  /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}:
+    delete:
+      tags:
+        - '[Metric Event] monitoring trigger event handler'
+      summary: Delete Request Trigger Alert Slack User
+      operationId: deleteSlackUserUsingDELETE
+      parameters:
+        - name: policySeq
+          in: path
+          description: policySeq
+          required: true
+          type: integer
+          format: int64
+        - name: seq
+          in: path
+          description: seq
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/TriggerResBody«Void»'
   /api/o11y/insight/predictions/options:
     get:
       tags:
@@ -1152,7 +1285,105 @@ definitions:
           items:
             type: object
     title: MetricInfo
-  ResBody<List<TriggerHistoryInfo>>:
+  TriggerEmailUserCreateDto:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Alert Receiver Email
+      name:
+        type: string
+        description: Trigger Alert Email User name
+    title: TriggerEmailUserCreateDto
+  TriggerResBody«Void»:
+    type: object
+    properties:
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: TriggerResBody«Void»
+  TriggerResBody«List«TriggerEmailUserInfo»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerEmailUserInfo'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: TriggerResBody«List«TriggerEmailUserInfo»»
+  TriggerEmailUserInfo:
+    type: object
+    properties:
+      email:
+        type: string
+        description: Alert Receiver Email
+      name:
+        type: string
+        description: Trigger Alert Email User name
+      policySeq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by trigger policy
+      seq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by Trigger Email User
+    title: TriggerEmailUserInfo
+  TriggerResBody«List«TriggerSlackUserInfo»»:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerSlackUserInfo'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: TriggerResBody«List«TriggerSlackUserInfo»»»
+  TriggerSlackUserCreateDto:
+    type: object
+    properties:
+      channel:
+        type: string
+        description: Base64 Encoded value
+      name:
+        type: string
+        description: Trigger Alert Slack User name
+      token:
+        type: string
+        description: Base64 Encoded value
+    title: TriggerSlackUserCreateDto
+  TriggerSlackUserInfo:
+    type: object
+    properties:
+      channel:
+        type: string
+        description: Base64 Encoded value
+      name:
+        type: string
+        description: Trigger Alert Slack User name
+      policySeq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by trigger policy
+      seq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by Trigger Slack User
+      token:
+        type: string
+        description: Base64 Encoded value
+    title: TriggerSlackUserInfo
+  TriggerResBody«List«TriggerHistoryInfo»»:
     type: object
     properties:
       data:
@@ -1163,7 +1394,7 @@ definitions:
         type: string
       rsMsg:
         type: string
-    title: ResBody<List<TriggerHistoryInfo>>
+    title: TriggerResBody«List«TriggerHistoryInfo»»
   TriggerHistoryInfo:
     type: object
     properties:
@@ -1174,20 +1405,19 @@ definitions:
       data:
         type: string
         description: Trigger event alarm details
-      ex:
-        type: string
-        example: {}
-        description: 'Target additional configuration information (e.g., {"key" : "value"})'
-      hostname:
-        type: string
-        example: localhost
-        description: Base64 Encoded value
       level:
         type: string
         description: Trigger event level
       metric:
         type: string
         description: Trigger event target metric name
+      name:
+        type: string
+        example: localhost
+        description: Base64 Encoded value
+      nsId:
+        type: string
+        description: Namespace Id
       occurTime:
         type: string
         description: The time when the history occurred
@@ -1201,10 +1431,14 @@ definitions:
         format: int64
         example: 1
         description: Sequence by history
-      nsId:
-        type: string
       targetId:
         type: string
+        description: Vm Id
+      targetSeq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by trigger target
     title: TriggerHistoryInfo
   ResBody<List<TriggerPolicyInfo>>:
     type: object
@@ -1221,11 +1455,10 @@ definitions:
   TriggerPolicyInfo:
     type: object
     properties:
-      seq:
-        type: integer
-        format: int64
-        example: 1
-        description: Sequence by trigger policy
+      agentManagerIp:
+        type: string
+        example: http://localhost:18080
+        description: Agent Manager IP
       createAt:
         type: string
         example: '2024-05-24 11:31:55'
@@ -1233,10 +1466,18 @@ definitions:
       description:
         type: string
         example: ZGVzY3JpcHRpb24=
-        description: description
-      isEnabled:
-        type: boolean
-        description: Trigger Policy enablement status
+        description: Host description
+      field:
+        type: string
+        example: usage_idle
+        description: Trigger target metric field
+      groupFields:
+        type: array
+        example:
+          - cpu
+        description: Fields to group the data
+        items:
+          type: string
       metric:
         type: string
         example: cpu
@@ -1245,6 +1486,21 @@ definitions:
         type: string
         example: Y3B1IHVzYWdlX2lkbGUgY2hlY2sgcG9saWN5
         description: Base64 Encoded value
+      seq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by trigger policy
+      statistics:
+        type: string
+        example: min
+        description: Trigger target metric statistics
+      status:
+        type: string
+        description: Trigger Policy enablement status
+        enum:
+          - DISABLED
+          - ENABLED
       threshold:
         type: string
         example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
@@ -1256,25 +1512,46 @@ definitions:
   TriggerPolicyCreateDTO:
     type: object
     properties:
+      agentManagerIp:
+        type: string
+        example: http://localhost:18080
+        description: Agent Manager IP
       description:
         type: string
         example: ZGVzY3JpcHRpb24=
-      isEnabled:
-        type: boolean
-        description: Trigger Policy enablement status
+        description: Host description
+      field:
+        type: string
+        example: usage_idle
+        description: Trigger target metric field
+      groupFields:
+        type: array
+        example:
+          - cpu
+        description: Fields to group the data
+        items:
+          type: string
       metric:
         type: string
-        example: cpu
         description: Trigger target metric
-      field:
-        example: usage_idle
-        type: string
-      statistics:
-        example: min
-        type: string
+        enum:
+          - cpu
+          - disk
+          - mem
       name:
         type: string
+        example: Y3B1IHBvbGljeQ==
         description: Base64 Encoded value
+      statistics:
+        type: string
+        example: min
+        description: Trigger target metric statistics
+      status:
+        type: string
+        description: Trigger Policy enablement status
+        enum:
+          - DISABLED
+          - ENABLED
       threshold:
         type: string
         example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
@@ -1283,19 +1560,43 @@ definitions:
   TriggerPolicyUpdateDto:
     type: object
     properties:
+      agentManagerIp:
+        type: string
+        example: http://localhost:18080
+        description: Agent Manager IP
       description:
         type: string
         example: ZGVzY3JpcHRpb24=
-      isEnabled:
-        type: boolean
-        description: Trigger Policy enablement status
+        description: Host description
+      field:
+        type: string
+        example: usage_idle
+        description: Trigger target metric field
+      groupFields:
+        type: array
+        example:
+          - cpu
+        description: Fields to group the data
+        items:
+          type: string
       metric:
         type: string
         example: cpu
         description: Trigger target metric
       name:
         type: string
+        example: Y3B1IHBvbGljeQ==
         description: Base64 Encoded value
+      statistics:
+        type: string
+        example: min
+        description: Trigger target metric statistics
+      status:
+        type: string
+        description: Trigger Policy enablement status
+        enum:
+          - DISABLED
+          - ENABLED
       threshold:
         type: string
         example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
@@ -1316,27 +1617,33 @@ definitions:
   TriggerTargetInfo:
     type: object
     properties:
+      aliasName:
+        type: string
+        example: test-vm
+        description: Host Alias Name
       createAt:
         type: string
         example: '2024-05-24 11:31:55'
         description: The time when the trigger target was registered
       name:
         type: string
-        example: localhost
-        description: Base64 Encoded value
+        example: vm1
+        description: Host name
+      nsId:
+        type: string
+        description: Namespace Id
       policySeq:
         type: integer
         format: int64
         example: 1
         description: Sequence by trigger policy
-      nsId:
-        type: string
+      seq:
+        type: integer
+        format: int64
+        example: 1
+        description: Sequence by trigger target
       targetId:
         type: string
-      updateAt:
-        type: string
-        description: The time when the trigger target was updated
-    title: TriggerTargetInfo
   PredictionOptions:
     type: object
     properties:
