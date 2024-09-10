@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(TriggerConstants.TRIGGER_URI + "/target")
+@RequestMapping(TriggerConstants.TRIGGER_URI)
 public class TriggerTargetController {
 
     private final TriggerTargetService triggerTargetService;
@@ -22,7 +22,7 @@ public class TriggerTargetController {
 
     @ApiOperation(value = "Get Trigger Target all list")
     @TriggerBase64Encode
-    @GetMapping
+    @GetMapping("/target")
     public TriggerResBody<List<TriggerTargetInfo>> list(@RequestParam("policySeq") Long policySeq) {
         TriggerResBody<List<TriggerTargetInfo>> res = new TriggerResBody<>();
         res.setData(triggerTargetService.getList(policySeq));
@@ -31,13 +31,13 @@ public class TriggerTargetController {
 
     @ApiOperation(value = "Get Trigger Target detail", hidden = true)
     @TriggerBase64Encode
-    @GetMapping("/{targetSeq}")
+    @GetMapping("/target/{targetSeq}")
     public TriggerResBody<TriggerTargetInfo> detail(@PathVariable("targetSeq") Long seq) {
         return triggerTargetService.getDetail(new TriggerResBody<>(), seq);
     }
 
     @ApiOperation(value = "Set trigger target")
-    @PutMapping("/{policySeq}")
+    @PutMapping("/{policySeq}/target")
     public TriggerResBody<Void> setTargets(@PathVariable("policySeq") Long policySeq,
                                            @RequestBody List<ManageTriggerTargetDto> targets) {
         return triggerTargetService.setTargets(policySeq, targets);
