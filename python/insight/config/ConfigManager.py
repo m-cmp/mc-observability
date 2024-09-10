@@ -80,3 +80,13 @@ def read_prophet_config():
         'remove_columns': remove_columns
     }
 
+
+def read_o11y_config():
+    o11y_config = ConfigParser()
+    o11y_config.read('config/config.ini')
+
+    url = o11y_config.get("MC-O11Y", "url")
+
+    return {
+        "url": url,
+    }
