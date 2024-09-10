@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import requests
 
-from config.ConfigManager import read_prophet_config
+from config.ConfigManager import read_prophet_config, read_o11y_config
 from app.api.prediction.repo.repo import InfluxDBRepository
 from app.api.prediction.response.res import PredictionResult, PredictionHistory
 
@@ -17,7 +18,51 @@ class PredictionService:
         self.metric_type = metric_type
         self.prophet_config = read_prophet_config()
         self.influxdb_repo = InfluxDBRepository()
+        self.o11y_url = read_o11y_config()['url']
+        self.headers = {
+            'Content-Type': 'application/json'
+        }
 
+
+    def _build_url(self, path: str):
+        return f'http://{self.o11y_url}/api/o11y/monitoring/{path}'
+
+
+    def _send_request(self, method: str, url:str, **kwargs):
+        if method == 'GET':
+            return requests.get(url, headers=self.headers, **kwargs)
+        elif method == 'POST':
+            return requests.post(url, headers=self.headers, **kwargs)
+        else:
+            raise ValueError(f'Unsupported HTTP method: {method}')
+
+    @staticmethod
+    def _build_body(storage_seq: int, setting: object):
+        field_mapping = {
+            "CPU": "usage_idle",
+            "MEM": "used_percent",
+        }
+
+        field_value = field_mapping.get(setting.METRIC_TYPE)
+
+        return {
+            "conditions": [
+                {
+                    "key": "uuid",
+                    "value": setting.TARGET_ID
+                }
+            ],
+            "fields": [
+                {
+                    "function": "mean",
+                    "field": field_value
+                }
+            ],
+            "groupTime": "1m",
+            "influxDBSeq": storage_seq,
+            "measurement": setting.METRIC_TYPE.lower(),
+            "range": "12h"
+        }
 
     def get_data(self):
         # TODO
