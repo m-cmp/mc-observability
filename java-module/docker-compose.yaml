@@ -1,0 +1,57 @@
+networks:
+  internal_network:
+    internal: true
+  external_network:
+    driver: bridge
+
+services:
+  mc-o11y-manager:
+    image: cloudbaristaorg/mc-observability
+    container_name: mc-o11y-service
+    ports:
+      - 18080:18080
+      - 18081:18081
+    networks:
+      - internal_network
+      - external_network
+    environment:
+      - TUMBLEBUG_URL=http://cb-tumblebug:1323
+      - TUMBLEBUG_ID=default
+      - TUMBLEBUG_PW=default
+
+  mariadb:
+    image: mariadb:10.7.6
+    container_name: mc-o11y-maria
+    ports:
+      - 3306:3306
+    volumes:
+      - /docker/mariadb/etc/mysql/conf.d:/etc/mysql/conf.d:ro
+      - /docker/mariadb/var/lib/mysql:/var/lib/mysql
+      - /docker/mariadb/var/log/maria:/var/log/maria
+      - ./maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
+    environment:
+      - TZ="Asia/Seoul"
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=qwe1212!Q
+      - MARIADB_USER=mc-agent
+      - MARIADB_DATABASE=mc_observability
+      - MARIADB_PASSWORD=mc-agent
+    networks:
+      - internal_network
+      - external_network
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: mc-o11y-influx
+    ports:
+      - 8086:8086
+    environment:
+      - INFLUXDB_USER=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability"
+    volumes:
+      - /docker/influxdb/config:/etc/influxdb
+      - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
+    networks:
+      - internal_network
+      - external_network
