@@ -28,18 +28,23 @@ public class TargetController {
         return targetService.getList();
     }
 
-    @PostMapping("/{nsId}/target/{targetId}")
-    public ResBody insert(@PathVariable String nsId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
-        return targetService.insert(nsId, targetId, targetInfo);
+    @GetMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody<TargetInfo> getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        return targetService.getTarget(nsId, mciId, targetId);
     }
 
-    @PutMapping("/{nsId}/target/{targetId}")
-    public ResBody update(@PathVariable String nsId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
-        return targetService.update(nsId, targetId, targetInfo);
+    @PostMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+        return targetService.insert(nsId, mciId, targetId, targetInfo);
     }
 
-    @DeleteMapping("/{nsId}/target/{targetId}")
-    public ResBody delete(@PathVariable String nsId, @PathVariable String targetId) {
-        return targetService.delete(nsId, targetId);
+    @PutMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+        return targetService.update(nsId, mciId, targetId, targetInfo);
+    }
+
+    @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        return targetService.delete(nsId, mciId, targetId);
     }
 }

@@ -6,6 +6,7 @@
         SELECT
             SEQ,
             NS_ID,
+            MCI_ID,
             TARGET_ID,
             NAME,
             STATE,
@@ -18,6 +19,9 @@
             <if test="nsId != null">
                 AND NS_ID=#{nsId}
             </if>
+            <if test="mciId != null">
+                AND MCI_ID=#{mciId}
+            </if>
             <if test="targetId != null">
                 AND TARGET_ID=#{targetId}
             </if>
@@ -28,6 +32,7 @@
         SELECT
             SEQ,
             NS_ID,
+            MCI_ID,
             TARGET_ID,
             NAME,
             STATE,
@@ -42,6 +47,7 @@
     <insert id="insert" parameterType="MonitoringConfigInfo">
         INSERT INTO mc_o11y_agent_target_monitoring_config(
             NS_ID,
+            MCI_ID,
             TARGET_ID,
             NAME,
             PLUGIN_SEQ,
@@ -50,6 +56,7 @@
             PLUGIN_CONFIG)
         VALUES (
             #{nsId}
+            , #{mciId}
             , #{targetId}
             , #{name}
             , #{pluginSeq}

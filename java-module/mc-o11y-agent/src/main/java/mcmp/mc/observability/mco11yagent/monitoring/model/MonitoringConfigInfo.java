@@ -8,6 +8,7 @@ import lombok.Setter;
 public class MonitoringConfigInfo {
     private Long seq;
     private String nsId;
+    private String mciId;
     private String targetId;
     private String name;
     private String state;

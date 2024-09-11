@@ -2,6 +2,7 @@ package mcmp.mc.observability.mco11yagent.monitoring.controller;
 
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
+import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.MonitoringConfigInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.service.MonitoringConfigService;
@@ -19,31 +20,36 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(Constants.MONITORING_URI + "/{nsId}/target/{targetId}/storage")
+@RequestMapping(Constants.MONITORING_URI + "/{nsId}/{mciId}/target/{targetId}/storage")
 public class StorageController {
 
     private final MonitoringConfigService monitoringConfigService;
 
     @GetMapping
-    public ResBody<List<MonitoringConfigInfo>> list(@PathVariable String nsId, @PathVariable String targetId) {
-        List<MonitoringConfigInfo> list = monitoringConfigService.list(nsId, targetId);
+    public ResBody<List<MonitoringConfigInfo>> list(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        List<MonitoringConfigInfo> list = monitoringConfigService.list(nsId, mciId, targetId);
         ResBody<List<MonitoringConfigInfo>> resBody = new ResBody<>();
         resBody.setData(list.stream().filter(f -> f.getPluginType().equals("OUTPUT")).collect(Collectors.toList()));
         return resBody;
     }
 
     @PostMapping
-    public ResBody insert(@PathVariable String nsId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringConfigService.insert(nsId, targetId, monitoringConfigInfo);
+    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+        return monitoringConfigService.insert(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
     @PutMapping
-    public ResBody update(@PathVariable String nsId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringConfigService.update(nsId, targetId, monitoringConfigInfo);
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+        return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
     @DeleteMapping("/{storageSeq}")
-    public ResBody delete(@PathVariable String nsId, @PathVariable String targetId, @PathVariable Long storageSeq) {
-        return monitoringConfigService.delete(nsId, targetId, storageSeq);
+    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
+        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
+        monitoringConfigInfo.setSeq(storageSeq);
+        if( monitoringConfigService.updateState(monitoringConfigInfo, "DELETE") <= 0 ) {
+            return ResBody.builder().code(ResultCode.FAILED).build();
+        }
+        return ResBody.builder().build();
     }
 }

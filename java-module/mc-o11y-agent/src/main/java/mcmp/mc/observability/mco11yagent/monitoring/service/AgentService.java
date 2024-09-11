@@ -48,9 +48,11 @@ public class AgentService {
 
             String nsId = System.getenv(Constants.PROPERTY_NS_ID);
             if( nsId == null ) nsId = "";
+            String mciId = System.getenv(Constants.PROPERTY_MCI_ID);
+            if( mciId == null ) mciId = "";
             String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
             if( targetId == null ) targetId = "";
-            targetMapper.updateState(nsId, targetId, "ACTIVE");
+            targetMapper.updateState(nsId, mciId, targetId, "ACTIVE");
         }
         catch (IOException e) {
             log.error(ExceptionUtils.getMessage(e));
@@ -63,8 +65,10 @@ public class AgentService {
     public void destroy() {
         String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
+        String mciId = System.getenv(Constants.PROPERTY_MCI_ID);
+        if( mciId == null ) mciId = "";
         String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
-        targetMapper.updateState(nsId, targetId, "INACTIVE");
+        targetMapper.updateState(nsId, mciId, targetId, "INACTIVE");
     }
 }

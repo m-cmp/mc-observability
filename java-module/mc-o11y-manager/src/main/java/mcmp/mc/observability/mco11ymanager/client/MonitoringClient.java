@@ -1,6 +1,7 @@
 package mcmp.mc.observability.mco11ymanager.client;
 
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.model.ResBody;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "agent-manager", url = "${feign.agent-manager.url:}")
 public interface MonitoringClient {
@@ -19,33 +19,33 @@ public interface MonitoringClient {
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/target")
     Object getTargetList();
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object getTarget(@PathVariable String nsId, @PathVariable String targetId);
+    ResBody getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object insertTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String mciId);
+    Object insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object updateTarget(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object targetInfo);
+    Object updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object deleteTarget(@PathVariable String nsId, @PathVariable String targetId);
+    Object deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
 
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object getItemList(@PathVariable String nsId, @PathVariable String targetId);
+    Object getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object insertItem(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    Object insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object updateItem(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    Object updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH + "/{itemSeq}")
-    Object deleteItem(@PathVariable String nsId, @PathVariable String targetId, @PathVariable Long itemSeq);
+    Object deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq);
 
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object getStorageList(@PathVariable String nsId, @PathVariable String targetId);
+    Object getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object insertStorage(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    Object insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object updateStorage(@PathVariable String nsId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    Object updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
-    Object deleteStorage(@PathVariable String nsId, @PathVariable String targetId, @PathVariable Long storageSeq);
+    Object deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq);
 
 
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)

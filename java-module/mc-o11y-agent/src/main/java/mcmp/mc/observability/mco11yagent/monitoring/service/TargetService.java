@@ -23,8 +23,15 @@ public class TargetService {
         return resBody;
     }
 
-    public ResBody insert(String nsId, String targetId, TargetInfo targetInfo) {
+    public ResBody<TargetInfo> getTarget(String nsId, String mciId, String targetId) {
+        ResBody<TargetInfo> resBody = new ResBody<>();
+        resBody.setData(targetMapper.getTarget(nsId, mciId, targetId));
+        return resBody;
+    }
+
+    public ResBody insert(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
         targetInfo.setNsId(nsId);
+        targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.insert(targetInfo) > 0 ) {
             return ResBody.builder().code(ResultCode.SUCCESS).build();
@@ -34,8 +41,9 @@ public class TargetService {
         }
     }
 
-    public ResBody update(String nsId, String targetId, TargetInfo targetInfo) {
+    public ResBody update(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
         targetInfo.setNsId(nsId);
+        targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.update(targetInfo) > 0 ) {
             return ResBody.builder().code(ResultCode.SUCCESS).build();
@@ -45,9 +53,10 @@ public class TargetService {
         }
     }
 
-    public ResBody delete(String nsId, String targetId) {
+    public ResBody delete(String nsId, String mciId, String targetId) {
         TargetInfo targetInfo = new TargetInfo();
         targetInfo.setNsId(nsId);
+        targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.delete(targetInfo) > 0 ) {
             return ResBody.builder().code(ResultCode.SUCCESS).build();
