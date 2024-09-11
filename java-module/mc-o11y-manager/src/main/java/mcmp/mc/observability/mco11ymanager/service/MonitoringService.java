@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.enums.OS;
+import mcmp.mc.observability.mco11ymanager.model.TargetInfo;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugCmd;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
@@ -24,7 +25,7 @@ public class MonitoringService {
         return tumblebugClient.getNSList();
     }
 
-    public String installAgent(String nsId, String mciId, String targetId) {
+    public String installAgent(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
         TumblebugMCI mci = tumblebugClient.getMCIList(nsId, mciId);
 
         try {
@@ -46,6 +47,8 @@ public class MonitoringService {
                     tumblebugCmd.setUserName(vm.getVmUserName());
 
                     Object result = tumblebugClient.sendCommand(nsId, mciId, targetId, vm.getSubGroupId(), tumblebugCmd);
+
+                    targetInfo.setName(vm.getName());
                 }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

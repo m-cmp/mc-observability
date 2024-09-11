@@ -37,7 +37,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<TargetInfo>>'
-  /api/o11y/monitoring/{nsId}/target/{targetId}:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     post:
       tags:
         - '[Target] Monitoring target management'
@@ -48,10 +48,19 @@ paths:
           in: path
           required: true
           type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
         - name: targetId
           in: path
           required: true
           type: string
+        - name: targetInfo
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TargetCreateDTO'
       produces:
         - '*/*'
       responses:
@@ -66,6 +75,10 @@ paths:
       operationId: PUT_target
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -95,6 +108,10 @@ paths:
           in: path
           required: true
           type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
         - name: targetId
           in: path
           required: true
@@ -106,7 +123,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/target/{targetId}/item:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
     get:
       tags:
         - '[Monitoring item] Monitoring target item management'
@@ -114,6 +131,10 @@ paths:
       operationId: GET_items
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -135,6 +156,10 @@ paths:
       operationId: POST_items
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -164,6 +189,10 @@ paths:
           in: path
           required: true
           type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
         - name: targetId
           in: path
           required: true
@@ -180,7 +209,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/target/{targetId}/item/{itemSeq}:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
     delete:
       tags:
         - '[Monitoring item] Monitoring target item management'
@@ -188,6 +217,10 @@ paths:
       operationId: DELETE_items
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -207,7 +240,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/target/{targetId}/storage:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
     get:
       tags:
         - '[Monitoring storage] Monitoring target storage management'
@@ -215,6 +248,10 @@ paths:
       operationId: GET_storages
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -236,6 +273,10 @@ paths:
       operationId: POST_storages
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -265,6 +306,10 @@ paths:
           in: path
           required: true
           type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
         - name: targetId
           in: path
           required: true
@@ -281,7 +326,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/target/{targetId}/storage/{storageSeq}:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
     delete:
       tags:
         - '[Monitoring storage] Monitoring target storage management'
@@ -289,6 +334,10 @@ paths:
       operationId: DELETE_storages
       parameters:
         - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
           in: path
           required: true
           type: string
@@ -603,6 +652,16 @@ definitions:
       rsMsg:
         type: string
     title: ResBody<Void>
+  TargetCreateDTO:
+    type: object
+    properties:
+      description:
+        type: string
+        description: target description (Base64 encoded value)
+      aliasName:
+        type: string
+        description: target alias name (Base64 encoded value)
+    title: TargetCreateDTO
   TargetUpdateDTO:
     type: object
     properties:

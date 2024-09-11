@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
 import mcmp.mc.observability.mco11ymanager.model.ResBody;
+import mcmp.mc.observability.mco11ymanager.model.TargetInfo;
 import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,11 +39,11 @@ public class MonitoringController {
         return monitoringClient.getTargetList();
     }
     @PostMapping(Constants.TARGET_PATH)
-    public Object insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo) {
+    public Object insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
         ResBody obj = monitoringClient.getTarget(nsId, mciId, targetId);
         if( obj.getData() != null ) return null;
 
-        monitoringService.installAgent(nsId, mciId, targetId);
+        monitoringService.installAgent(nsId, mciId, targetId, targetInfo);
 
         if( mciId == null ) return null;
 
