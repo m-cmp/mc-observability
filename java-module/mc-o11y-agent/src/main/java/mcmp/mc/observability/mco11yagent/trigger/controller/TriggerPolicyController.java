@@ -16,7 +16,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(TriggerConstants.TRIGGER_URI + "/policy")
+@RequestMapping(TriggerConstants.TRIGGER_URI)
 public class TriggerPolicyController {
 
     private final TriggerPolicyService triggerPolicyService;
