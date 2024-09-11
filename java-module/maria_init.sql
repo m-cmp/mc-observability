@@ -1,6 +1,6 @@
 -- --------------------------------------------------------
 -- 호스트:                          192.168.110.211
--- 서버 버전:                        10.7.6-MariaDB-1:10.7.6+maria~deb11 - mariadb.org binary distribution
+-- 서버 버전:                        10.7.6-MariaDB-1:10.7.6+maria~ubu2004 - mariadb.org binary distribution
 -- 서버 OS:                        debian-linux-gnu
 -- HeidiSQL 버전:                  12.3.0.6589
 -- --------------------------------------------------------
@@ -21,9 +21,9 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_agent_plugin_def` (
     `PLUGIN_ID` varchar(50) NOT NULL,
     `PLUGIN_TYPE` enum('INPUT','PROCESSOR','AGGREGATOR','OUTPUT') NOT NULL,
     PRIMARY KEY (`SEQ`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4;
 
--- 테이블 데이터 mc_observability.mc_o11y_agent_plugin_def:~9 rows (대략적) 내보내기
+-- 테이블 데이터 mc_observability.mc_o11y_agent_plugin_def:~10 rows (대략적) 내보내기
 INSERT INTO `mc_o11y_agent_plugin_def` (`SEQ`, `NAME`, `PLUGIN_ID`, `PLUGIN_TYPE`) VALUES
                                                                                        (1, 'cpu', '[[inputs.cpu]]', 'INPUT'),
                                                                                        (2, 'disk', '[[inputs.disk]]', 'INPUT'),
@@ -33,7 +33,8 @@ INSERT INTO `mc_o11y_agent_plugin_def` (`SEQ`, `NAME`, `PLUGIN_ID`, `PLUGIN_TYPE
                                                                                        (6, 'swap', '[[inputs.swap]]', 'INPUT'),
                                                                                        (7, 'tail', '[[inputs.tail]]', 'INPUT'),
                                                                                        (8, 'system', '[[inputs.system]]', 'INPUT'),
-                                                                                       (9, 'influxdb', '[[outputs.influxdb]]', 'OUTPUT');
+                                                                                       (9, 'influxdb', '[[outputs.influxdb]]', 'OUTPUT'),
+                                                                                       (10, 'opensearch', '[[outputs.opensearch]]', 'OUTPUT');
 
 -- 테이블 mc_observability.mc_o11y_agent_summary_influx 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_summary_influx` (
@@ -51,32 +52,34 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_agent_summary_influx` (
 -- 테이블 mc_observability.mc_o11y_agent_target 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_target` (
     `NS_ID` varchar(50) NOT NULL,
+    `MCI_ID` varchar(50) NOT NULL,
     `ID` varchar(50) NOT NULL,
     `NAME` varchar(50) DEFAULT '',
     `ALIAS_NAME` varchar(50) DEFAULT NULL,
     `DESCRIPTION` varchar(50) DEFAULT NULL,
     `STATE` enum('ACTIVE','INACTIVE') DEFAULT 'INACTIVE',
-    PRIMARY KEY (`NS_ID`,`ID`) USING BTREE
+    PRIMARY KEY (`NS_ID`,`MCI_ID`,`ID`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 테이블 데이터 mc_observability.mc_o11y_agent_target:~0 rows (대략적) 내보내기
 
 -- 테이블 mc_observability.mc_o11y_agent_target_monitoring_config 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_target_monitoring_config` (
-    `SEQ` int(10) unsigned NOT NULL,
+    `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `NS_ID` varchar(50) NOT NULL,
+    `MCI_ID` varchar(50) NOT NULL,
     `TARGET_ID` varchar(50) NOT NULL,
     `NAME` varchar(50) NOT NULL,
     `STATE` enum('NONE','ADD','UPDATE','DELETE') NOT NULL DEFAULT 'ADD',
     `PLUGIN_SEQ` int(10) unsigned NOT NULL DEFAULT 0,
     `PLUGIN_NAME` varchar(50) NOT NULL,
     `PLUGIN_TYPE` enum('INPUT','PROCESSOR','AGGREGATOR','OUTPUT') NOT NULL,
-    `PLUGIN_CONFIG` longtext NOT NULL,
+    `PLUGIN_CONFIG` longtext NOT NULL DEFAULT '',
     PRIMARY KEY (`SEQ`),
-    KEY `NS_ID_TARGET_ID` (`NS_ID`,`TARGET_ID`)
+    KEY `NS_ID_MCI_ID_TARGET_ID` (`NS_ID`,`MCI_ID`,`TARGET_ID`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 테이블 데이터 mc_observability.mc_o11y_agent_target_monitoring_config:~0 rows (대략적) 내보내기
+-- 테이블 데이터 mc_observability.mc_o11y_agent_target_monitoring_config:~1 rows (대략적) 내보내기
 
 -- 테이블 mc_observability.mc_o11y_trigger_alert_email 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_email` (
@@ -85,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_email` (
     `email` varchar(100) NOT NULL,
     `policy_seq` int(10) unsigned NOT NULL,
     PRIMARY KEY (`seq`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_alert_email:~0 rows (대략적) 내보내기
 
@@ -98,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_slack` (
     `channel` varchar(100) NOT NULL,
     PRIMARY KEY (`seq`),
     UNIQUE KEY `mc_o11y_trigger_alert_slack_unique` (`policy_seq`,`name`,`token`,`channel`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_alert_slack:~0 rows (대략적) 내보내기
 
@@ -116,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_history` (
     `CREATE_AT` timestamp NOT NULL DEFAULT current_timestamp() COMMENT '등록일시',
     `OCCUR_TIME` timestamp NULL DEFAULT NULL COMMENT '발생일시',
     PRIMARY KEY (`SEQ`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COMMENT='트리거  히스토리';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거  히스토리';
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_history:~0 rows (대략적) 내보내기
 
@@ -136,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_policy` (
     `GROUP_FIELDS` varchar(100) DEFAULT NULL,
     `AGENT_MANAGER_IP` varchar(100) NOT NULL,
     PRIMARY KEY (`SEQ`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COMMENT='트리거 정책';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거 정책';
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_policy:~0 rows (대략적) 내보내기
 
@@ -152,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_target` (
     UNIQUE KEY `mc_o11y_trigger_target_unique` (`POLICY_SEQ`,`NS_ID`,`TARGET_ID`),
     KEY `m_cmp_trigger_target_m_cmp_trigger_policy_FK` (`POLICY_SEQ`),
     CONSTRAINT `m_cmp_trigger_target_m_cmp_trigger_policy_FK` FOREIGN KEY (`POLICY_SEQ`) REFERENCES `mc_o11y_trigger_policy` (`SEQ`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf8mb4 COMMENT='트리거  대상';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거  대상';
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_target:~0 rows (대략적) 내보내기
 
@@ -167,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_target_storage` (
     PRIMARY KEY (`SEQ`),
     UNIQUE KEY `m_cmp_trigger_target_storage_unique` (`TARGET_SEQ`,`URL`,`DATABASE`,`RETENTION_POLICY`),
     CONSTRAINT `m_cmp_trigger_target_storage_m_cmp_trigger_target_FK` FOREIGN KEY (`TARGET_SEQ`) REFERENCES `mc_o11y_trigger_target` (`SEQ`)
-    ) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COMMENT='트리거 대상 저장소';
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거 대상 저장소';
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_target_storage:~0 rows (대략적) 내보내기
 

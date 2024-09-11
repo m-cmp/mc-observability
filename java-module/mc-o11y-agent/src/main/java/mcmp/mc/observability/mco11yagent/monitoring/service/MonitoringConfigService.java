@@ -17,20 +17,22 @@ public class MonitoringConfigService {
     private final MonitoringConfigMapper monitoringConfigMapper;
     private final TriggerTaskManageService triggerTaskManageService;
 
-    public List<MonitoringConfigInfo> list(String nsId, String targetId) {
-        return monitoringConfigMapper.getList(nsId, targetId);
+    public List<MonitoringConfigInfo> list(String nsId, String mciId, String targetId) {
+        return monitoringConfigMapper.getList(nsId, mciId, targetId);
     }
 
-    public ResBody insert(String nsId, String targetId, MonitoringConfigInfo monitoringConfigInfo) {
+    public ResBody insert(String nsId, String mciId, String targetId, MonitoringConfigInfo monitoringConfigInfo) {
         monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
         monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigMapper.insert(monitoringConfigInfo);
         return ResBody.builder().build();
     }
 
-    public ResBody update(String nsId, String targetId, MonitoringConfigInfo monitoringConfigInfo) {
+    public ResBody update(String nsId, String mciId, String targetId, MonitoringConfigInfo monitoringConfigInfo) {
         MonitoringConfigInfo originalConfig = monitoringConfigMapper.getDetail(monitoringConfigInfo.getSeq());
         monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
         monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setState("UPDATE");
         monitoringConfigMapper.update(monitoringConfigInfo);
@@ -41,7 +43,7 @@ public class MonitoringConfigService {
         return ResBody.builder().build();
     }
 
-    public ResBody delete(String nsId, String targetId, Long seq) {
+    public ResBody delete(Long seq) {
         MonitoringConfigInfo monitoringConfigInfo = monitoringConfigMapper.getDetail(seq);
         monitoringConfigInfo.setState("DELETE");
         monitoringConfigMapper.update(monitoringConfigInfo);

@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class TargetInfo {
     private String nsId;
+    private String mciId;
     private String id;
     private String name;
     private String aliasName;

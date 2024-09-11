@@ -8,27 +8,22 @@ import java.util.List;
 @Getter
 @Setter
 public class TumblebugMCI {
-    private List<MCI> mci;
+    private String configureCloudAdaptiveNetwork;
+    private String description;
+    private String id;
+    private String installMonAgent;
+    private String label;
+    private String name;
+    private List<String> newVmList;
+    private String placementAlgo;
+    private String status;
+    private StatusCount statusCount;
+    private String systemLabel;
+    private String systemMessage;
+    private String targetAction;
+    private String targetStatus;
+    private Vm[] vm;
 
-    @Getter
-    @Setter
-    public static class MCI {
-        private String configureCloudAdaptiveNetwork;
-        private String description;
-        private String id;
-        private String installMonAgent;
-        private String label;
-        private String name;
-        private List<String> newVmList;
-        private String placementAlgo;
-        private String status;
-        private StatusCount statusCount;
-        private String systemLabel;
-        private String systemMessage;
-        private String targetAction;
-        private String targetStatus;
-        private List<Vm> vm;
-    }
     @Getter
     @Setter
     public static class StatusCount {
@@ -81,6 +76,7 @@ public class TumblebugMCI {
         private String targetAction;
         private String targetStatus;
         private String vNetId;
+        private String vmUserName;
         private String vmUserAccount;
         private String vmUserPassword;
     }

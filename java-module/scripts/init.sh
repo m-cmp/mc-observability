@@ -9,7 +9,7 @@ if [ $? -ne 0 ]; then
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   sudo apt-get update
-  sudo apt-get install -y docker-ce docker-ce-cli docker-compose
+  sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 fi
 
 git --version
@@ -19,7 +19,7 @@ fi
 
 git clone https://github.com/m-cmp/mc-observability.git
 
-cd mc-observability
+cd mc-observability/java-module/mc-o11y-agent
 
 cat <<EOF > .env
 NS_ID=$2
@@ -31,4 +31,4 @@ DATABASE_ID=mc-agent
 DATABASE_PW=mc-agent
 EOF
 
-docker compose up -d
+sudo docker compose up -d

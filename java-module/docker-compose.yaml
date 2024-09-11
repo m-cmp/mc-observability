@@ -28,6 +28,7 @@ services:
       - /docker/mariadb/etc/mysql/conf.d:/etc/mysql/conf.d:ro
       - /docker/mariadb/var/lib/mysql:/var/lib/mysql
       - /docker/mariadb/var/log/maria:/var/log/maria
+      - ./maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no

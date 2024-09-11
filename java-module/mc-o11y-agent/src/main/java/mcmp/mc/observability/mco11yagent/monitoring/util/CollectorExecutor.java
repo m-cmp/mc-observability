@@ -78,9 +78,11 @@ public class CollectorExecutor {
 
         String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
+        String mciId = System.getenv(Constants.PROPERTY_MCI_ID);
+        if( mciId == null ) mciId = "";
         String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
-        return sb.toString().replaceAll("@NS_ID", nsId).replaceAll("@TARGET_ID", targetId);
+        return sb.toString().replaceAll("@NS_ID", nsId).replaceAll("@MCI_ID", mciId).replaceAll("@TARGET_ID", targetId);
     }
 
     public boolean isCollectorAlive() {
@@ -90,10 +92,12 @@ public class CollectorExecutor {
     public void updateConfigFile() {
         String nsId = System.getenv(Constants.PROPERTY_NS_ID);
         if( nsId == null ) nsId = "";
+        String mciId = System.getenv(Constants.PROPERTY_MCI_ID);
+        if( mciId == null ) mciId = "";
         String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
         if( targetId == null ) targetId = "";
 
-        List<MonitoringConfigInfo> configList = monitoringConfigService.list(nsId, targetId);
+        List<MonitoringConfigInfo> configList = monitoringConfigService.list(nsId, mciId, targetId);
         Map<Long, PluginDefInfo> pluginMap = pluginMapper.getAllPlugin();
 
         boolean isUpdate = configList.stream().anyMatch(f -> !f.getState().equalsIgnoreCase("NONE"));
@@ -110,7 +114,7 @@ public class CollectorExecutor {
                     }
                     case "DELETE" -> {
                         Utils.deleteFile(filePath);
-                        monitoringConfigService.delete(f.getNsId(), f.getTargetId(), f.getSeq());
+                        monitoringConfigService.delete(f.getSeq());
                     }
                 }
             } catch (IOException e) {

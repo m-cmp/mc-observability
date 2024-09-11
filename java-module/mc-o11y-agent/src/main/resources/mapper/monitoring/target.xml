@@ -6,6 +6,7 @@
     <select id="getList" resultType="TargetInfo">
         SELECT
             NS_ID,
+            MCI_ID,
             ID,
             NAME,
             ALIAS_NAME,
@@ -14,14 +15,31 @@
         FROM mc_o11y_agent_target
     </select>
 
+    <select id="getTarget" resultType="TargetInfo">
+        SELECT
+            NS_ID,
+            MCI_ID,
+            ID,
+            NAME,
+            ALIAS_NAME,
+            DESCRIPTION,
+            STATE
+        FROM mc_o11y_agent_target
+        WHERE NS_ID=#{nsId}
+        AND MCI_ID = #{mciId}
+        AND ID=#{id}
+    </select>
+
     <insert id="insert" parameterType="TargetInfo">
         insert into mc_o11y_agent_target (NS_ID,
+                                          MCI_ID,
                                           ID,
                                           NAME,
                                           ALIAS_NAME,
                                           DESCRIPTION,
                                           STATE)
         values (  #{nsId}
+                , #{mciId}
                 , #{id}
                 , #{name}
                 , #{aliasName}
@@ -44,17 +62,19 @@
         </trim>
         WHERE
             NS_ID = #{nsId}
+            AND MCI_ID = #{mciId}
             AND ID = #{id}
     </update>
 
     <update id="updateState" parameterType="String">
-        UPDATE mc_o11y_agent_target SET STATE=#{state} WHERE NS_ID=#{nsId} AND ID=#{id}
+        UPDATE mc_o11y_agent_target SET STATE=#{state} WHERE NS_ID=#{nsId} AND MCI_ID=#{mciId} AND ID=#{id}
     </update>
 
     <delete id="delete" parameterType="TargetInfo">
         DELETE FROM mc_o11y_agent_target
         WHERE
             NS_ID = #{nsId}
-        AND ID = #{ID}
+        AND MCI_ID = #{mciId}
+        AND ID = #{id}
     </delete>
 </mapper>

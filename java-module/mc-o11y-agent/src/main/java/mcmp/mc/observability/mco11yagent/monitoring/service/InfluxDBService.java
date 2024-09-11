@@ -34,7 +34,7 @@ public class InfluxDBService {
     private final MonitoringConfigService monitoringConfigService;
 
     public ResBody<List<InfluxDBInfo>> getList() {
-        List<MonitoringConfigInfo> storageInfoList = monitoringConfigService.list(null, null);
+        List<MonitoringConfigInfo> storageInfoList = monitoringConfigService.list(null, null, null);
 
         List<InfluxDBInfo> influxDBInfoList = new ArrayList<>();
         for (MonitoringConfigInfo hostStorageInfo : storageInfoList) {
