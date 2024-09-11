@@ -383,7 +383,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<MetricInfo>>'
-  /api/o11y/trigger/history:
+  /api/o11y/trigger/policy/history:
     get:
       tags:
         - '[Metric Event] monitoring metric trigger'
@@ -401,7 +401,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TriggerResBody«List«TriggerHistoryInfo»»'
-  /api/o11y/monitoring/trigger/policy:
+  /api/o11y/trigger/policy:
     get:
       tags:
         - '[Metric Event] monitoring metric trigger'
@@ -429,7 +429,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/trigger/policy/{policySeq}:
+  /api/o11y/trigger/policy/{policySeq}:
     patch:
       tags:
         - '[Metric Event] monitoring metric trigger'
@@ -472,7 +472,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/trigger/target:
+  /api/o11y/trigger/policy/target:
     get:
       tags:
         - '[Metric Event] monitoring metric trigger'
@@ -490,7 +490,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<TriggerTargetInfo>>'
-  /api/o11y/monitoring/trigger/target/{policySeq}:
+  /api/o11y/trigger/policy/{policySeq}/target:
     put:
       tags:
         - '[Metric Event] monitoring metric trigger'
