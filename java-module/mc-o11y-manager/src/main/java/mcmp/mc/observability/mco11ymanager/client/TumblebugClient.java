@@ -4,7 +4,6 @@ import mcmp.mc.observability.mco11ymanager.config.TumblebugFeignConfig;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugCmd;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
-import mcmp.mc.observability.mco11ymanager.model.TumblebugSshKey;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
