@@ -594,16 +594,6 @@ definitions:
         format: int64
       name:
         type: string
-      os:
-        type: array
-        items:
-          type: string
-          enum:
-            - LINUX
-            - MACOS
-            - SOLARIS
-            - UNIX
-            - WINDOWS
       pluginId:
         type: string
       pluginType:
