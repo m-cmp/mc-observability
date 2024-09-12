@@ -32,14 +32,14 @@ type ClusterNodeMonitoringReqInfo struct {
 }
 
 type TimestampValue struct {
-	Timestamp time.Time
-	Value     string
+	Timestamp time.Time `json:"timestamp"`
+	Value     string    `json:"value"`
 }
 
 type MetricData struct {
-	MetricName      string
-	MetricUnit      string
-	TimestampValues []TimestampValue
+	MetricName      string           `json:"metricName"`
+	MetricUnit      string           `json:"metricUnit"`
+	TimestampValues []TimestampValue `json:"timestampValues"`
 }
 
 type MetricType string
