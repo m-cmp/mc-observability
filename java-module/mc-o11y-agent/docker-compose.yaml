@@ -11,3 +11,5 @@ services:
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_ID=${DATABASE_ID}
       - DATABASE_PW=${DATABASE_PW}
+    volumes:
+      - /var/log:/var/log:ro

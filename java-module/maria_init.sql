@@ -49,6 +49,18 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_agent_summary_influx` (
 
 -- 테이블 데이터 mc_observability.mc_o11y_agent_summary_influx:~0 rows (대략적) 내보내기
 
+-- 테이블 mc_observability.mc_o11y_agent_summary_opensearch 구조 내보내기
+CREATE TABLE IF NOT EXISTS `mc_o11y_agent_summary_opensearch` (
+    `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `URL` varchar(50) NOT NULL DEFAULT '',
+    `INDEX_NAME` varchar(50) NOT NULL DEFAULT '',
+    `USERNAME` varchar(50) NOT NULL DEFAULT '',
+    `PASSWORD` varchar(50) NOT NULL DEFAULT '',
+    PRIMARY KEY (`SEQ`) USING BTREE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 테이블 데이터 mc_observability.mc_o11y_agent_summary_opensearch:~0 rows (대략적) 내보내기
+
 -- 테이블 mc_observability.mc_o11y_agent_target 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_target` (
     `NS_ID` varchar(50) NOT NULL,

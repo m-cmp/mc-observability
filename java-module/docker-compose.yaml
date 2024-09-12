@@ -18,6 +18,8 @@ services:
       - TUMBLEBUG_URL=http://cb-tumblebug:1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PW=default
+    volumes:
+      - /var/log:/var/log:ro
 
   mariadb:
     image: mariadb:10.7.6
