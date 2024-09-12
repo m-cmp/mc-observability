@@ -437,7 +437,7 @@ paths:
       tags:
         - '[Metric Event] monitoring metric trigger'
       summary: Get Trigger History all list
-      operationId: listUsingGET_5
+      operationId: listUsingGET_6
       parameters:
         - name: policySeq
           in: query
