@@ -14,7 +14,7 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 ## How to Use
 
 ### MCMP-Agent Use
- - [MC-Observability-Agent Readme](./java/README.md)
+ - [MC-Observability-Agent Readme](./java-module/README.md)
 
 ## How to Contribute
 
