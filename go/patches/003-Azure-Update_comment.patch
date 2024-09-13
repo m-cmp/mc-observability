@@ -1,0 +1,21 @@
+commit c3fa79a3ef69bf43691e529a1520c07351dd472b
+Author: ish <ish@innogrid.com>
+Date:   Fri Sep 13 10:52:03 2024 +0900
+
+    Azure: Update comment
+
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+index 3467c43e..13452d84 100644
+--- a/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
++++ b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+@@ -4,9 +4,7 @@
+ //
+ //      * Cloud-Barista: https://github.com/cloud-barista
+ //
+-// This is a Cloud Driver Example for PoC Test.
+-//
+-// by hyokyung.kim@innogrid.co.kr, 2019.07.
++// Azure Monitoring PoC by ish@innogrid.com, 2024.08.
+ 
+ package resources
+ 
