@@ -7,6 +7,7 @@ import mcmp.mc.observability.mco11yagent.monitoring.enums.MetricType;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.exception.ResultCodeException;
 import mcmp.mc.observability.mco11yagent.monitoring.mapper.InfluxDBMapper;
+import mcmp.mc.observability.mco11yagent.monitoring.mapper.MiningDBMapper;
 import mcmp.mc.observability.mco11yagent.monitoring.model.*;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.util.InfluxDBUtils;
@@ -32,6 +33,7 @@ import static mcmp.mc.observability.mco11yagent.monitoring.enums.MetricType.*;
 public class InfluxDBService {
 
     private final InfluxDBMapper influxDBMapper;
+    private final MiningDBMapper miningDBMapper;
     private final MonitoringConfigService monitoringConfigService;
     private final SpiderClient spiderClient;
 
@@ -88,6 +90,28 @@ public class InfluxDBService {
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
         }
 
+        return getFields(influxDBInfo);
+    }
+
+    public ResBody<List<MeasurementFieldInfo>> getFields() {
+        MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
+
+        if( miningDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "miningDB info null");
+        }
+
+        InfluxDBInfo influxDBInfo = InfluxDBInfo.builder()
+                .url(miningDBInfo.getUrl())
+                .database(miningDBInfo.getDatabase())
+                .retentionPolicy(miningDBInfo.getRetentionPolicy())
+                .username(miningDBInfo.getUsername())
+                .password(miningDBInfo.getPassword())
+                .build();
+
+        return getFields(influxDBInfo);
+    }
+
+    public ResBody<List<MeasurementFieldInfo>> getFields(InfluxDBInfo influxDBInfo) {
         ResBody<List<MeasurementFieldInfo>> res = new ResBody<>();
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
@@ -108,6 +132,28 @@ public class InfluxDBService {
             throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
         }
 
+        return getTags(influxDBInfo);
+    }
+
+    public ResBody<List<MeasurementTagInfo>> getTags() {
+        MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
+
+        if( miningDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "miningDB info null");
+        }
+
+        InfluxDBInfo influxDBInfo = InfluxDBInfo.builder()
+                .url(miningDBInfo.getUrl())
+                .database(miningDBInfo.getDatabase())
+                .retentionPolicy(miningDBInfo.getRetentionPolicy())
+                .username(miningDBInfo.getUsername())
+                .password(miningDBInfo.getPassword())
+                .build();
+
+        return getTags(influxDBInfo);
+    }
+
+    public ResBody<List<MeasurementTagInfo>> getTags(InfluxDBInfo influxDBInfo) {
         ResBody<List<MeasurementTagInfo>> res = new ResBody<>();
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
@@ -136,12 +182,35 @@ public class InfluxDBService {
         return res;
     }
 
-    public List<MetricInfo> getMetrics(MetricsInfo metricsInfo) {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(metricsInfo.getInfluxDBSeq());
+    public List<MetricInfo> getMetrics(Long influxDBSeq, MetricsInfo metricsInfo) {
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
 
         if( influxDBInfo == null ) {
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", metricsInfo.getInfluxDBSeq());
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
         }
+
+        return getMetrics(influxDBInfo, metricsInfo);
+    }
+
+    public List<MetricInfo> getMetrics(MetricsInfo metricsInfo) {
+        MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
+
+        if( miningDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "miningDB info null");
+        }
+
+        InfluxDBInfo influxDBInfo = InfluxDBInfo.builder()
+                .url(miningDBInfo.getUrl())
+                .database(miningDBInfo.getDatabase())
+                .retentionPolicy(miningDBInfo.getRetentionPolicy())
+                .username(miningDBInfo.getUsername())
+                .password(miningDBInfo.getPassword())
+                .build();
+
+        return getMetrics(influxDBInfo, metricsInfo);
+    }
+
+    public List<MetricInfo> getMetrics(InfluxDBInfo influxDBInfo, MetricsInfo metricsInfo) {
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
         String queryString = metricsInfo.getQuery();

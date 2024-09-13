@@ -62,4 +62,16 @@ public interface MonitoringClient {
     Object getOpensearchList();
     @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
     Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo);
+
+
+    @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
+    Object getMiningDB();
+    @PutMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
+    Object updateMiningDB(@RequestBody Object info);
+    @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/measurement")
+    Object getMiningDBFields();
+    @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/tag")
+    Object getMiningDBTags();
+    @PostMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/metric")
+    Object getMiningDBMetrics(@RequestBody Object metricsInfo);
 }
