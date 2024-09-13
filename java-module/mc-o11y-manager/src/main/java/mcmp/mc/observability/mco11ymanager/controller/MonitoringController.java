@@ -125,4 +125,30 @@ public class MonitoringController {
     public Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo) {
         return monitoringClient.getOpensearchLogs(opensearchSeq, logsInfo);
     }
+
+    // monitoring miningdb api
+    @GetMapping(Constants.MININGDB_PATH)
+    public Object getMiningDB() {
+        return monitoringClient.getMiningDB();
+    }
+
+    @PostMapping(Constants.MININGDB_PATH)
+    public Object updateMiningDB(@RequestBody Object info) {
+        return monitoringClient.updateMiningDB(info);
+    }
+
+    @GetMapping(Constants.MININGDB_PATH + "/measurement")
+    public Object getMiningDBFields() {
+        return monitoringClient.getMiningDBFields();
+    }
+
+    @GetMapping(Constants.MININGDB_PATH + "/tag")
+    public Object getMiningDBTags() {
+        return monitoringClient.getMiningDBTags();
+    }
+
+    @PostMapping(Constants.MININGDB_PATH + "/metric")
+    public Object getMiningDBMetrics(@RequestBody Object metricsInfo) {
+        return monitoringClient.getMiningDBMetrics(metricsInfo);
+    }
 }

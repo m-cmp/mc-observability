@@ -93,6 +93,19 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_agent_target_monitoring_config` (
 
 -- 테이블 데이터 mc_observability.mc_o11y_agent_target_monitoring_config:~1 rows (대략적) 내보내기
 
+-- 테이블 mc_observability.mc_o11y_mining_db 구조 내보내기
+CREATE TABLE IF NOT EXISTS `mc_o11y_mining_db` (
+    `URL` varchar(50) NOT NULL DEFAULT '',
+    `DATABASE` varchar(50) NOT NULL DEFAULT '',
+    `RETENTION_POLICY` varchar(50) NOT NULL DEFAULT '',
+    `USERNAME` varchar(50) NOT NULL DEFAULT '',
+    `PASSWORD` varchar(50) NOT NULL DEFAULT ''
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 테이블 데이터 mc_observability.mc_o11y_mining_db:~0 rows (대략적) 내보내기
+INSERT INTO `mc_o11y_mining_db` (`URL`, `DATABASE`, `RETENTION_POLICY`, `USERNAME`, `PASSWORD`) VALUES
+    ('http://mc-o11y-influx:8086', 'mc-mining', 'autogen', 'mc-agent', 'mc-agent');
+
 -- 테이블 mc_observability.mc_o11y_trigger_alert_email 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_email` (
     `seq` int(10) unsigned NOT NULL AUTO_INCREMENT,

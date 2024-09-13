@@ -469,6 +469,82 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
+  /api/o11y/monitoring/miningdb:
+    get:
+      tags:
+        - '[Mining InfluxDB] Monitoring metric downsampling'
+      summary: Get mining influxdb detail
+      operationId: GET_miningdb
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<MiningDBInfo>'
+    put:
+      tags:
+        - '[Mining InfluxDB] Monitoring metric downsampling'
+      summary: Update mining influxdb info
+      operationId: PUT_miningdb
+      parameters:
+        - name: info
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MiningDBInfo'
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/monitoring/miningdb/measurement:
+    get:
+      tags:
+        - '[Mining InfluxDB] Monitoring metric downsampling'
+      summary: Get downsampling measurement & field list
+      operationId: GET_MiningDBInfo
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<MeasurementFieldInfo>>'
+  /api/o11y/monitoring/miningdb/tag:
+    get:
+      tags:
+        - '[Mining InfluxDB] Monitoring metric downsampling'
+      summary: Get downsampling metric tag list
+      operationId: GET_MiningDBTag
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
+  /api/o11y/monitoring/miningdb/metric:
+    post:
+      tags:
+        - '[Mining InfluxDB] Monitoring metric downsampling'
+      summary: Get downsampling metric
+      operationId: GET_MiningDB_Metric
+      parameters:
+        - name: metricsInfo
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/MetricsInfo'
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<MetricInfo>>'
   /api/o11y/trigger/policy/history:
     get:
       tags:
@@ -1414,6 +1490,32 @@ definitions:
         example: 1h
         description: timeunit s,m,h,d(second, minute, hour, day)
     title: LogsInfo
+  ResBody<MiningDBInfo>:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/MiningDBInfo'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody<MiningDBInfo>
+  MiningDBInfo:
+    type: object
+    properties:
+      url:
+        type: string
+      database:
+        type: string
+      retentionPolicy:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+    title: MiningDBInfo
   TriggerEmailUserCreateDto:
     type: object
     properties:
