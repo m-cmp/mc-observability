@@ -68,4 +68,4 @@ jobs:
       - name: Build
         env:
           IMAGE_NAME: cb-spider_azure_monitoring
-        run: cd go/cb-spider && docker build . --file Dockerfile --tag $IMAGE_NAME
+        run: cd go && make && cd cb-spider && docker build . --file Dockerfile --tag $IMAGE_NAME
