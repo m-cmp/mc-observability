@@ -15,6 +15,20 @@
         FROM mc_o11y_agent_target
     </select>
 
+    <select id="getListNSMCI" resultType="TargetInfo">
+        SELECT
+            NS_ID,
+            MCI_ID,
+            ID,
+            NAME,
+            ALIAS_NAME,
+            DESCRIPTION,
+            STATE
+        FROM mc_o11y_agent_target
+        WHERE NS_ID=#{nsId}
+          AND MCI_ID = #{mciId}
+    </select>
+
     <select id="getTarget" resultType="TargetInfo">
         SELECT
             NS_ID,

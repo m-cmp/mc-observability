@@ -38,6 +38,14 @@ public class MonitoringController {
     public Object getTargetList() {
         return monitoringClient.getTargetList();
     }
+    @GetMapping("/monitoring/{nsId}/{mciId}/target")
+    public Object getTargetListNSMCI(@PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId) {
+        return monitoringClient.getTargetListNSMCI(nsId, mciId);
+    }
+    @GetMapping(Constants.TARGET_PATH)
+    public ResBody getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        return monitoringClient.getTarget(nsId, mciId, targetId);
+    }
     @PostMapping(Constants.TARGET_PATH)
     public Object insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
         ResBody obj = monitoringClient.getTarget(nsId, mciId, targetId);

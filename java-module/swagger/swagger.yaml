@@ -37,6 +37,45 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<TargetInfo>>'
+  /api/o11y/monitoring/{nsId}/{mciId}/target:
+    get:
+      tags:
+        - '[Target] Monitoring target management'
+      summary: Get all mc-observability management target list in specified NS and MCI
+      operationId: GET_targets_ns_mci
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<TargetInfo>>'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
+    get:
+      tags:
+        - '[Target] Monitoring target management'
+      summary: Get monitoring target
+      operationId: GET_target
+      parameters:
+        - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
+        - name: targetId
+          in: path
+          required: true
+          type: string
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<TargetInfo>'
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     post:
       tags:

@@ -9,6 +9,7 @@ import java.util.List;
 @Mapper
 public interface TargetMapper {
     List<TargetInfo> getList();
+    List<TargetInfo> getListNSMCI(@Param("nsId") String nsId, @Param("mciId") String mciId);
     TargetInfo getTarget(@Param("nsId") String nsId, @Param("mciId") String mciId, @Param("id") String targetId);
     int insert(TargetInfo targetInfo);
     int update(TargetInfo targetInfo);

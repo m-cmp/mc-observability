@@ -32,6 +32,12 @@ public class TargetController {
     }
 
     @Base64Encode
+    @GetMapping("/{nsId}/{mciId}/target")
+    public ResBody<List<TargetInfo>> list(@PathVariable String nsId, @PathVariable String mciId) {
+        return targetService.getList(nsId, mciId);
+    }
+
+    @Base64Encode
     @GetMapping("/{nsId}/{mciId}/target/{targetId}")
     public ResBody<TargetInfo> getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return targetService.getTarget(nsId, mciId, targetId);

@@ -18,6 +18,8 @@ public interface MonitoringClient {
 
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/target")
     Object getTargetList();
+    @GetMapping(Constants.PREFIX_V1 + "/monitoring/{nsId}/{mciId}/target")
+    Object getTargetListNSMCI(@PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId);
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     ResBody getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)

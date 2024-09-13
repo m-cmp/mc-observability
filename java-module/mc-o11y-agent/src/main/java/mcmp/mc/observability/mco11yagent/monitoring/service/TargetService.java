@@ -23,6 +23,12 @@ public class TargetService {
         return resBody;
     }
 
+    public ResBody<List<TargetInfo>> getList(String nsId, String mciId) {
+        ResBody<List<TargetInfo>> resBody = new ResBody<>();
+        resBody.setData(targetMapper.getListNSMCI(nsId, mciId));
+        return resBody;
+    }
+
     public ResBody<TargetInfo> getTarget(String nsId, String mciId, String targetId) {
         ResBody<TargetInfo> resBody = new ResBody<>();
         resBody.setData(targetMapper.getTarget(nsId, mciId, targetId));
