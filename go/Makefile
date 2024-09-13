@@ -7,6 +7,7 @@ GO_COMMAND := ${GOPROXY_OPTION} go
 GOPATH := $(shell go env GOPATH)
 
 default:
+	@echo "[*] Checking swag installation..."
 	@if [ ! -f "${GOPATH}/bin/swag" ] && [ ! -f "$(GOROOT)/bin/swag" ]; then \
   	  echo "[*] Installing swag..."; \
 	  ${GO_COMMAND} install github.com/swaggo/swag/cmd/swag@latest; \
