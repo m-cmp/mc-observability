@@ -17,4 +17,5 @@ public class ResBody<T> {
     private String rsMsg;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
+    private String errorMessage;
 }

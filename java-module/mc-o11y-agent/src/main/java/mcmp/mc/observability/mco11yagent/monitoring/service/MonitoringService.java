@@ -7,6 +7,7 @@ import mcmp.mc.observability.mco11yagent.monitoring.model.InfluxDBInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.PluginDefInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.client.SpiderClient;
 import mcmp.mc.observability.mco11yagent.monitoring.client.TumblebugClient;
+import mcmp.mc.observability.mco11yagent.monitoring.model.SpiderMonitoringInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.TumblebugMCI;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,21 @@ public class MonitoringService {
     private final TumblebugClient tumblebugClient;
     private final InfluxDBService influxDBService;
     private final PluginMapper pluginMapper;
+    private final SpiderClient spiderClient;
+
+    public SpiderMonitoringInfo.Data geSpiderVMMonitoring(String nsId, String mciId, String targetId, String metricType,
+                                                          String timeBeforeHour, String intervalMinute) {
+        TumblebugMCI.Vm vm = tumblebugClient.getVM(nsId, mciId, targetId);
+
+        SpiderMonitoringInfo.Data data = null;
+        try {
+            data = spiderClient.getVMMonitoring(vm.getCspResourceName(), metricType, vm.getConnectionName(), timeBeforeHour, intervalMinute);
+        } catch (Exception e) {
+            log.error(ExceptionUtils.getMessage(e));
+        }
+
+        return data;
+    }
 
     public void writeSpiderVMMonitoring(InfluxDBInfo influxDBinfo, String nsId, String mciId, String targetId, String timeBeforeHour, String intervalMinute) {
         TumblebugMCI.Vm vm = tumblebugClient.getVM(nsId, mciId, targetId);
@@ -34,6 +50,5 @@ public class MonitoringService {
         } catch (Exception e) {
             log.error(ExceptionUtils.getMessage(e));
         }
-
     }
 }

@@ -23,6 +23,8 @@ public class ResBody<T> {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
 
+    private String errorMessage;
+
     public String getRsCode() {
         return code.getCode();
     }

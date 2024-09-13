@@ -76,7 +76,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<TargetInfo>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     post:
       tags:
         - '[Target] Monitoring target management'
@@ -396,6 +395,36 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{metricType}:
+    get:
+      tags:
+        - '[Monitoring CSP] Monitoring target from the CSP'
+      summary: Get target monitoring data from the CSP
+      operationId: GET_CSP
+      parameters:
+        - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
+        - name: targetId
+          in: path
+          required: true
+          type: string
+        - name: metricType
+          in: path
+          required: true
+          type: string
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<SpiderMonitoringInfo.Data>'
   /api/o11y/monitoring/influxdb:
     get:
       tags:

@@ -66,6 +66,12 @@ public class MonitoringController {
         return monitoringClient.deleteTarget(nsId, mciId, targetId);
     }
 
+    // cb-spider monitoring api
+    @GetMapping(Constants.TARGET_CSP_PATH)
+    ResBody getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String metricType) {
+        return monitoringClient.getCSP(nsId, mciId, targetId, metricType);
+    }
+
     // monitoring item api
     @GetMapping(Constants.TARGET_ITEM_PATH)
     Object getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
