@@ -2,7 +2,15 @@ SHELL=/bin/bash
 
 CB_SPIDER_COMMIT_HASH="7c75d80e8d275d7c137b33a22b2107829eff91b1"
 
+GOPROXY_OPTION := GOPROXY=direct
+GO_COMMAND := ${GOPROXY_OPTION} go
+GOPATH := $(shell go env GOPATH)
+
 default:
+	@if [ ! -f "${GOPATH}/bin/swag" ] && [ ! -f "$(GOROOT)/bin/swag" ]; then \
+  	  echo "[*] Installing swag..."; \
+	  ${GO_COMMAND} install github.com/swaggo/swag/cmd/swag@latest; \
+	fi
 	@echo "[*] Cloning CB-Spider..."
 	@if [ ! -d "./cb-spider" ]; then \
 		  git clone https://github.com/cloud-barista/cb-spider; \
