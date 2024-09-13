@@ -6,7 +6,7 @@ networks:
 
 services:
   mc-o11y-manager:
-    image: cloudbaristaorg/mc-observability
+    image: cloudbaristaorg/mc-observability:edge
     container_name: mc-o11y-service
     ports:
       - 18080:18080
@@ -41,6 +41,34 @@ services:
     networks:
       - internal_network
       - external_network
+
+  cb-spider_azure_monitoring:
+    image: cloudbaristaorg/cb-spider_azure_monitoring:edge
+    container_name: cb-spider_azure_monitoring
+    platform: linux/amd64
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 1024:1024
+    volumes:
+      - /docker/cb-spider_azure_monitoring/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - /docker/cb-spider_azure_monitoring/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+    environment:
+      - PLUGIN_SW=OFF
+      - SERVER_ADDRESS=localhost
+      # if you leave these values empty, REST Auth will be disabled.
+      # - API_USERNAME=
+      # - API_PASSWORD=
+      - SPIDER_LOG_LEVEL=error
+      - SPIDER_HISCALL_LOG_LEVEL=error
+      - ID_TRANSFORM_MODE=OFF
+    healthcheck: # for CB-Spider
+      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   influxdb:
     image: influxdb:1.8
