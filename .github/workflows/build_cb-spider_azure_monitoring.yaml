@@ -13,6 +13,8 @@ on:
       - "CODEOWNERS"
       - "docs/**"
       - "scripts/**"
+      - "java-module/**"
+      - "python/**"
       # - "assets/**"
       # - "scripts/**"
       # - "src/testclient/scripts/**"

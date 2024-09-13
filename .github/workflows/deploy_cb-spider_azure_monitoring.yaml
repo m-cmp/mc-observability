@@ -27,8 +27,8 @@ on:
       - "CODEOWNERS"
       - ".all-contributorsrc"
       - "assets/**"
-      - "src/testclient/scripts/**"
-      - "src/testclient/test-clis/**"
+      - "java-module/**"
+      - "python/**"
   # workflow trigger button
   # workflow_dispatch:
 
