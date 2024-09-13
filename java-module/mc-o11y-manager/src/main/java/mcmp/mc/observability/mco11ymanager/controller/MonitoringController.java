@@ -114,4 +114,15 @@ public class MonitoringController {
     public Object getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody Object metricsInfo) {
         return monitoringClient.getInfluxDBMetrics(influxDBSeq, metricsInfo);
     }
+
+    // monitoring opensearch log api
+    @GetMapping(Constants.OPENSEARCH_PATH)
+    public Object getOpensearchList() {
+        return monitoringClient.getOpensearchList();
+    }
+
+    @PostMapping(Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
+    public Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo) {
+        return monitoringClient.getOpensearchLogs(opensearchSeq, logsInfo);
+    }
 }
