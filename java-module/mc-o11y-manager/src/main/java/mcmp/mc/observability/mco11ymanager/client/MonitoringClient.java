@@ -56,4 +56,10 @@ public interface MonitoringClient {
     Object getInfluxDBTags(@PathVariable Long influxDBSeq);
     @PostMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
     Object getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody Object metricsInfo);
+
+
+    @GetMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH)
+    Object getOpensearchList();
+    @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
+    Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo);
 }

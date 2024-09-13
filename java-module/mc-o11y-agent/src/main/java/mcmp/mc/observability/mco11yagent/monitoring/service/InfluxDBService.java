@@ -37,6 +37,7 @@ public class InfluxDBService {
 
     public ResBody<List<InfluxDBInfo>> getList() {
         List<MonitoringConfigInfo> storageInfoList = monitoringConfigService.list(null, null, null);
+        storageInfoList = storageInfoList.stream().filter(f -> f.getPluginName().equalsIgnoreCase("influxdb")).collect(Collectors.toList());
 
         List<InfluxDBInfo> influxDBInfoList = new ArrayList<>();
         for (MonitoringConfigInfo hostStorageInfo : storageInfoList) {
@@ -78,7 +79,6 @@ public class InfluxDBService {
 
         if( !newList.isEmpty() ) influxDBMapper.insertInfluxDBInfoList(newList);
         if( !delList.isEmpty() ) influxDBMapper.deleteInfluxDBInfoList(delList);
-
     }
 
     public ResBody<List<MeasurementFieldInfo>> getFields(Long influxDBSeq) {

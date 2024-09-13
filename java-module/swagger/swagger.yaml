@@ -432,6 +432,43 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<MetricInfo>>'
+  /api/o11y/monitoring/opensearch:
+    get:
+      tags:
+        - '[Monitoring log] Monitoring log'
+      summary: Get all Opensearch list
+      operationId: GET_Opensearchs
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<OpensearchInfo>>'
+  /api/o11y/monitoring/opensearch/{opensearchSeq}/logs:
+    get:
+      tags:
+        - '[Monitoring log] Monitoring log'
+      summary: Get collected log
+      operationId: GET_OpensearchLogs
+      parameters:
+        - name: opensearchSeq
+          in: path
+          required: true
+          type: integer
+          format: int64
+        - name: logsInfo
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/LogsInfo'
+      produces:
+        - '*/*'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
   /api/o11y/trigger/policy/history:
     get:
       tags:
@@ -1241,7 +1278,6 @@ definitions:
   MetricsInfo:
     type: object
     required:
-      - influxDBSeq
       - measurement
       - range
     properties:
@@ -1270,10 +1306,6 @@ definitions:
         type: string
         example: 1h
         description: timeunit s,m,h,d(second, minute, hour, day)
-      influxDBSeq:
-        type: integer
-        format: int64
-        example: 1
       limit:
         type: integer
         format: int64
@@ -1334,6 +1366,54 @@ definitions:
           items:
             type: object
     title: MetricInfo
+  ResBody<List<OpensearchInfo>>:
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/OpensearchInfo'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody<List<OpensearchInfo>>
+  OpensearchInfo:
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      url:
+        type: string
+      indexName:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+    title: OpensearchInfo
+  LogsInfo:
+    type: object
+    required:
+      - range
+    properties:
+      conditions:
+        type: array
+        example:
+          - key: cpu
+            value: cpu-total
+        items:
+          $ref: '#/definitions/ConditionInfo'
+      limit:
+        type: integer
+        format: int64
+        example: 10
+      range:
+        type: string
+        example: 1h
+        description: timeunit s,m,h,d(second, minute, hour, day)
+    title: LogsInfo
   TriggerEmailUserCreateDto:
     type: object
     properties:

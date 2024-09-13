@@ -59,59 +59,70 @@ public class MonitoringController {
     }
 
     // monitoring item api
-    @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
+    @GetMapping(Constants.TARGET_ITEM_PATH)
     Object getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return monitoringClient.getItemList(nsId, mciId, targetId);
     }
-    @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
+    @PostMapping(Constants.TARGET_ITEM_PATH)
     Object insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
         return monitoringClient.insertItem(nsId, mciId, targetId, monitoringConfigInfo);
     }
-    @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
+    @PutMapping(Constants.TARGET_ITEM_PATH)
     Object updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
         return monitoringClient.updateItem(nsId, mciId, targetId, monitoringConfigInfo);
     }
-    @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH + "/{itemSeq}")
+    @DeleteMapping(Constants.TARGET_ITEM_PATH + "/{itemSeq}")
     Object deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
         return monitoringClient.deleteItem(nsId, mciId, targetId, itemSeq);
     }
 
     // monitoring storage api
-    @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
+    @GetMapping(Constants.TARGET_STORAGE_PATH)
     Object getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return monitoringClient.getStorageList(nsId, mciId, targetId);
     }
-    @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
+    @PostMapping(Constants.TARGET_STORAGE_PATH)
     Object insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
         return monitoringClient.insertStorage(nsId, mciId, targetId, monitoringConfigInfo);
     }
-    @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
+    @PutMapping(Constants.TARGET_STORAGE_PATH)
     Object updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
         return monitoringClient.updateStorage(nsId, mciId, targetId, monitoringConfigInfo);
     }
-    @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
+    @DeleteMapping(Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
     Object deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
         return monitoringClient.deleteStorage(nsId, mciId, targetId, storageSeq);
     }
 
     // monitoring influxdb metric api
-    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)
+    @GetMapping(Constants.INFLUXDB_PATH)
     public Object getInfluxDBList() {
         return monitoringClient.getInfluxDBList();
     }
 
-    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
+    @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
     public Object getInfluxDBFields(@PathVariable Long influxDBSeq) {
         return monitoringClient.getInfluxDBFields(influxDBSeq);
     }
 
-    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
+    @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
     public Object getInfluxDBTags(@PathVariable Long influxDBSeq) {
         return monitoringClient.getInfluxDBTags(influxDBSeq);
     }
 
-    @PostMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
+    @PostMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
     public Object getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody Object metricsInfo) {
         return monitoringClient.getInfluxDBMetrics(influxDBSeq, metricsInfo);
+    }
+
+    // monitoring opensearch log api
+    @GetMapping(Constants.OPENSEARCH_PATH)
+    public Object getOpensearchList() {
+        return monitoringClient.getOpensearchList();
+    }
+
+    @PostMapping(Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
+    public Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo) {
+        return monitoringClient.getOpensearchLogs(opensearchSeq, logsInfo);
     }
 }

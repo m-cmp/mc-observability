@@ -1,7 +1,7 @@
 FROM alpine AS builder
 RUN touch /tmp/myfile
-RUN wget https://dl.influxdata.com/telegraf/releases/telegraf-1.26.1_linux_amd64.tar.gz
-RUN tar xfpz telegraf-1.26.1_linux_amd64.tar.gz ./telegraf-1.26.1/usr/bin/telegraf --strip-components 4 && mv telegraf mc-observability-agent-collector
+RUN wget https://dl.influxdata.com/telegraf/releases/telegraf-1.29.5_linux_amd64.tar.gz
+RUN tar xfpz telegraf-1.29.5_linux_amd64.tar.gz ./telegraf-1.29.5/usr/bin/telegraf --strip-components 4 && mv telegraf mc-observability-agent-collector
 
 FROM openjdk:17-slim AS prod
 RUN mkdir -p /usr/bin/mc-observability-agent

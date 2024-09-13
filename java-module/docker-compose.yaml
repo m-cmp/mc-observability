@@ -18,6 +18,8 @@ services:
       - TUMBLEBUG_URL=http://cb-tumblebug:1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PW=default
+    volumes:
+      - /var/log:/var/log:ro
 
   mariadb:
     image: mariadb:10.7.6
@@ -45,6 +47,7 @@ services:
     container_name: mc-o11y-influx
     ports:
       - 8086:8086
+      - 8082:8082
     environment:
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
@@ -52,6 +55,58 @@ services:
     volumes:
       - /docker/influxdb/config:/etc/influxdb
       - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
+    networks:
+      - internal_network
+      - external_network
+
+  chronograf:
+    image: chronograf:1.9.4
+    container_name: mc-o11y-chronograf
+    ports:
+      - 8888:8888
+    volumes:
+      - /docker/chronograf_data:/var/lib/chronograf
+    networks:
+      - internal_network
+      - external_network
+
+  opensearch-node1:
+    image: opensearchproject/opensearch:1.3.19
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "discovery.type=single-node"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - /docker/opensearch:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600
+    networks:
+      - internal_network
+      - external_network
+        
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:1.3.19
+    container_name: opensearch-dashboards
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node1:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
     networks:
       - internal_network
       - external_network

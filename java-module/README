@@ -1,4 +1,0 @@
-1. Installation is Finished.
-2. Setup mc-agent information
-   refer README : mc-agent -h or mc-agent --help
-3. systemctl start mc-agent
