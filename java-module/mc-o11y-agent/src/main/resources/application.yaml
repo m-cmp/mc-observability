@@ -59,7 +59,21 @@ feign:
     config:
       default:
         connect-timeout: 5000
-        read-timeout: 5000
+        read-timeout: 30000
+  cb-tumblebug:
+    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
+    id: ${TUMBLEBUG_ID:default}
+    pw: ${TUMBLEBUG_PW:default}
+  cb-spider:
+    url: ${SPIDER_URL:http://cb-spider:1024}
+    id: ${SPIDER_ID:default}
+    pw: ${SPIDER_PW:default}
+    monitoring:
+      influxdb_url: ${SPIDER_MONITORING_INFLUXDB_URL:http://mc-o11y-influx:8086}
+      influxdb_database: ${SPIDER_MONITORING_INFLUXDB_DATABASE:mc-observability}
+      influxdb_retention_policy: ${SPIDER_MONITORING_INFLUXDB_RETENTION_POLICY:autogen}
+      influxdb_username: ${SPIDER_MONITORING_INFLUXDB_USERNAME:mc-agent}
+      influxdb_password: ${SPIDER_MONITORING_INFLUXDB_PASSWORD:mc-agent}
 
 display_information:
   name: M-CMP Trigger

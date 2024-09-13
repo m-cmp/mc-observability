@@ -12,14 +12,14 @@ if [ $? -ne 0 ]; then
   sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 fi
 
-git --version
+wget --version
 if [ $? -ne 0 ]; then
-  sudo apt-get install -y git
+  sudo apt-get install -y wget
 fi
+mkdir -p mc-observability/
+wget https://raw.githubusercontent.com/m-cmp/mc-observability/main/java-module/docker-compose.yaml -O mc-observability/docker-compose.yaml
 
-git clone https://github.com/m-cmp/mc-observability.git
-
-cd mc-observability/java-module/mc-o11y-agent
+cd mc-observability/
 
 cat <<EOF > .env
 NS_ID=$2

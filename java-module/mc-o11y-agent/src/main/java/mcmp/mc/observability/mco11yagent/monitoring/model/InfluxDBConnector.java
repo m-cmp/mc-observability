@@ -19,6 +19,7 @@ public class InfluxDBConnector {
 
     private void setInfluxDB() {
         influxDB = (StringUtils.isBlank(username) && StringUtils.isBlank(password))? InfluxDBFactory.connect(url): InfluxDBFactory.connect(url, username, password);
+        influxDB.setDatabase(database);
     }
 
     public InfluxDBConnector(InfluxDBInfo influxDBInfo) {
