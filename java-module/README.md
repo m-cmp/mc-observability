@@ -109,7 +109,7 @@ UpdateRelStyle(container13, database12, $lineColor="green")
   - MariaDB (10.7.6)
   - InfluxDB (1.8.10)
   - Chronograf (1.10)
-  - Telegraf (1.26.1)
+  - Telegraf (1.29.5)
   - SpringBoot (2.7.6)
   - Java (17)
 
@@ -120,113 +120,74 @@ $ git clone https://github.com/m-cmp/mc-observability.git ${YourFolderName}
 
 ### Step two: Go to Java folder
 ```
-$ cd ${YourFolderName}/java
+$ cd ${YourFolderName}/java-module
 ```
 
-### Step three: Subsystem docker-compose run
+### Step three: set .env (edit .env)
 ```
-$ docker-compose up -d
+$ cp .env.sample .env
 ```
 
-### Step four: Network check
+### Step four: Subsystem docker-compose run
+```
+$ docker compose up -d
+```
+
+### Step five: Network check
 ```
 $ netstat -lntp
 # Active Internet connections (only servers)
 # Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-# tcp        0      0 0.0.0.0:8888            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:18080           0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:18081           0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
 # tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:5601            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
 # tcp        0      0 0.0.0.0:8086            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::8888                 :::*                    LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:8888            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:9200            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp        0      0 0.0.0.0:9600            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
+# tcp6       0      0 :::18080                :::*                    LISTEN      ${YourPID}/docker-proxy
+# tcp6       0      0 :::18081                :::*                    LISTEN      ${YourPID}/docker-proxy
 # tcp6       0      0 :::3306                 :::*                    LISTEN      ${YourPID}/docker-proxy
+# tcp6       0      0 :::5601                 :::*                    LISTEN      ${YourPID}/docker-proxy
 # tcp6       0      0 :::8086                 :::*                    LISTEN      ${YourPID}/docker-proxy
-```
-
-### Step five: Run install script
-```
-$ script/install.sh
+# tcp6       0      0 :::8888                 :::*                    LISTEN      ${YourPID}/docker-proxy
+# tcp6       0      0 :::9200                 :::*                    LISTEN      ${YourPID}/docker-proxy
+# tcp6       0      0 :::9600                 :::*                    LISTEN      ${YourPID}/docker-proxy
 ```
 
 ### Swagger Docs
-https://m-cmp.github.io/mc-observability/java/swagger
-
-#### [v0.3.0 swagger api preview](https://m-cmp.github.io/mc-observability/java/swagger/index_copy.html)
+#### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
 
 ### API Use guide (swagger docs linked mermaid contents)
 #### Observability Monitoring target setting guide
-
-<details>
-<summary>접기/펼치기</summary>
-
-```mermaid
-flowchart TD
-A([Start]) --> B[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/host-controller/listUsingGET'>Get&Select monitoring host</a>]
-B --> C{Select<br>Item/Storage}
-C --Item--> D[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/system-controller/getPluginsUsingGET'>Get&Select item plugin</a>]
-D --> E[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/host-item-controller/createUsingPOST'>Set monitoring item</a>]
-E --> F{Add more?}
-F --Y--> D
-F --N--> Z([End])
-C --Storage--> G[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/system-controller/getPluginUsingGET'>Get&Select storage plugin</a>]
-G --> H[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/host-storage-controller/createUsingPOST_1'>Set monitoring storage</a>]
-H --> I{Add more?}
-I --Y--> G
-I --N--> Z([End])
-```
-
-#### Observability Metrics view guide
-
-```mermaid
-flowchart TD
-A([Start]) --> B[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/influx-db-controller/getListUsingGET'>Get&Select Integration InfluxDB</a>]
-B --> C[Get field/tag]
-C --Fields--> D[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/influx-db-controller/getMeasurementAndFieldsUsingGET'>Get field list</a><br>Field is metric target]
-C --Tags--> E[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/influx-db-controller/getTagsUsingGET'>Get tag list</a><br>Tag is metric filter]
-D --> F[<a href='https://m-cmp.github.io/mc-observability/java/swagger/#/metric-controller/getMetricUsingGET'>Get metrics</a>]
-E --> F
-```
-
-#### M-CMP Observability monitoring setting sequenceDiagram
 
 ```mermaid
 sequenceDiagram
 participant M-CMP User
 participant MC-O11y-Manager
 participant MC-O11y-Agent-Manager
+participant CB-Tumblebug
 participant MariaDB
 participant MC-O11y-Agent
-M-CMP User ->> MC-O11y-Manager: Request all O11y-Agent-Manager
-MC-O11y-Manager ->> M-CMP User: Send all O11y-Agent-Manager list
-M-CMP User ->> M-CMP User: Select O11y-Agent-Manager
 
-loop Configuration Changes
-  Note over MariaDB,MC-O11y-Agent: Scheduler section
-  MC-O11y-Agent ->> MariaDB: Request all changed config
-  MariaDB ->> MC-O11y-Agent: Send changed config list
-  alt one or more changed?
-    MC-O11y-Agent ->> MC-O11y-Agent: Config file update
-  else
-    Note over MC-O11y-Agent: sleep
-  end
-end
-
-M-CMP User ->> MC-O11y-Manager: Request all monitoring plugin
-loop Monitoring setting
-  Note over M-CMP User, MariaDB: Monitoring plugin setting<br>plugin is item+storage mean
-  M-CMP User ->> MC-O11y-Manager: Request all monitoring plugin
-  MC-O11y-Manager ->> MC-O11y-Agent-Manager: Request forwarding
-  MC-O11y-Agent-Manager ->> MariaDB: Request forwarding
-  MariaDB ->> MC-O11y-Agent-Manager: Send all monitoring plugin list
-  MC-O11y-Agent-Manager ->> MC-O11y-Manager: Response forwarding
-  MC-O11y-Manager ->> M-CMP User: Response forwarding
-  M-CMP User ->> MC-O11y-Manager: Add/Update monitoring plugin
-  MC-O11y-Manager ->> MC-O11y-Agent-Manager: Request forwarding
-  MC-O11y-Agent-Manager ->> MariaDB: Request forwarding
-  MariaDB ->> MC-O11y-Agent-Manager: Return Insert or Update result
-  MC-O11y-Agent-Manager ->> MC-O11y-Manager: Response forwarding
-  MC-O11y-Manager ->> M-CMP User: Response forwarding
+Note over M-CMP User: run docker-image
+M-CMP User ->> MC-O11y-Manager: Request install agent<br>param: nsId, targetId
+MC-O11y-Manager ->> MC-O11y-Agent-Manager: Check installed target
+alt Already install target?
+  MC-O11y-Agent-Manager ->> MC-O11y-Manager: Response installed
+  MC-O11y-Manager ->> M-CMP User: Response installed
+else
+  MC-O11y-Agent-Manager ->> CB-Tumblebug: Request target connection info
+  CB-Tumblebug ->> MC-O11y-Agent-Manager: Response connection info
+  MC-O11y-Agent-Manager ->> MC-O11y-Agent: Connect target
+  MC-O11y-Agent-Manager ->> MC-O11y-Agent: Install agent
+  MC-O11y-Agent ->> MariaDB: Regist managed target
+  MC-O11y-Agent ->> MC-O11y-Agent-Manager: Installation complete
+  MC-O11y-Agent-Manager ->> MC-O11y-Manager: Installation complete
+  MC-O11y-Manager ->> M-CMP User: Installation complete
 end
 ```
-</details>
 
 ## How to Contribute
 
