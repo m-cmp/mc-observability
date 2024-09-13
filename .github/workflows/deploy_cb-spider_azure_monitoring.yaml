@@ -18,7 +18,6 @@ on:
     tags:
       - "v*.*.*"
     paths-ignore:
-      - ".github/**"
       - "docs/**"
       - "scripts/**"
       - "**.md"
@@ -115,6 +114,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
+      - name: Build
+        env:
+          IMAGE_NAME: cb-spider_azure_monitoring
+        run: cd go && make && cd cb-spider && docker build . --file Dockerfile --tag $IMAGE_NAME
+
       - name: Build and publish
         id: docker_build_1
         uses: docker/build-push-action@v6
@@ -122,26 +126,11 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           context: ./go/cb-spider
           file: ./go/cb-spider/Dockerfile
-#          target: prod
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
-#
-#      - name: Build and publish (Observability-Agent)
-#        id: docker_build_2
-#        uses: docker/build-push-action@v6
-#        with:
-#          builder: ${{ steps.buildx.outputs.name }}
-#          context: ./
-#          file: ./java-module/mc-o11y-agent/Dockerfile
-##          target: prod
-#          platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
-#          push: ${{ github.event_name != 'pull_request' }}
-#          tags: ${{ steps.meta.outputs.tags }}
-#          cache-from: type=local,src=/tmp/.buildx-cache
-#          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
