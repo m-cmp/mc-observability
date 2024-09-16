@@ -17,6 +17,6 @@ public interface TumblebugClient {
     TumblebugNS getNSList();
     @GetMapping(value = "/tumblebug/ns/{nsId}/mci/{mciId}", produces = "application/json")
     TumblebugMCI getMCIList(@PathVariable String nsId, @PathVariable String mciId);
-    @PostMapping(value = "/ns/{nsId}/cmd/mci/{mciId}", produces = "application/json")
+    @PostMapping(value = "/tumblebug/ns/{nsId}/cmd/mci/{mciId}", produces = "application/json")
     Object sendCommand(@PathVariable String nsId, @PathVariable String mciId, @RequestParam String subGroupId, @RequestParam String vmId, @RequestBody TumblebugCmd tumblebugCmd);
 }

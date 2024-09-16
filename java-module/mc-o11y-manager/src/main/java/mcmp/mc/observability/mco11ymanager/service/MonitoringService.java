@@ -46,7 +46,7 @@ public class MonitoringService {
                     tumblebugCmd.setCommand(cmdList);
                     tumblebugCmd.setUserName(vm.getVmUserName());
 
-                    Object result = tumblebugClient.sendCommand(nsId, mciId, targetId, vm.getSubGroupId(), tumblebugCmd);
+                    Object result = tumblebugClient.sendCommand(nsId, mciId, vm.getSubGroupId(), targetId, tumblebugCmd);
 
                     targetInfo.setName(vm.getName());
                 }
