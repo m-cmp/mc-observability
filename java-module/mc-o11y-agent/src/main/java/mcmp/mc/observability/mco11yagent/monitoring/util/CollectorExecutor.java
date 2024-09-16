@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -109,6 +112,10 @@ public class CollectorExecutor {
                 switch (f.getState()) {
                     case "ADD", "UPDATE" -> {
                         sb.append(pluginMap.get(f.getPluginSeq()).getPluginId()).append("\n").append(f.getPluginConfig());
+                        Path path = Paths.get(Constants.COLLECTOR_CONFIG_DIR_PATH);
+                        if (Files.notExists(path)) {
+                            Files.createDirectories(path);
+                        }
                         Utils.writeFile(sb.toString(), filePath);
                         monitoringConfigService.updateState(f, "NONE");
                     }
