@@ -9,4 +9,9 @@
     <select id="getList" resultType="PluginDefInfo">
         SELECT SEQ, NAME, PLUGIN_ID, PLUGIN_TYPE FROM mc_o11y_agent_plugin_def
     </select>
+
+    <select id="getPlugin" resultType="PluginDefInfo">
+        SELECT SEQ, NAME, PLUGIN_ID, PLUGIN_TYPE FROM mc_o11y_agent_plugin_def
+        WHERE SEQ=#{seqId}
+    </select>
 </mapper>
