@@ -11,7 +11,7 @@ feign:
     config:
       default:
         connect-timeout: 5000
-        read-timeout: 5000
+        read-timeout: 30000
   agent-manager:
     url: http://localhost:18081
   cb-tumblebug:
