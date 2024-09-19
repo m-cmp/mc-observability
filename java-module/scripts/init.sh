@@ -19,7 +19,7 @@ fi
 
 git clone https://github.com/m-cmp/mc-observability.git
 
-cd mc-observability/java-module/mc-olly-agent/
+cd mc-observability/java-module/mc-o11y-agent/
 
 cat <<EOF > .env
 NS_ID=$2
