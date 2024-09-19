@@ -115,8 +115,8 @@ def read_o11y_config():
     o11y_config = ConfigParser()
     o11y_config.read('config/config.ini')
 
-    url = o11y_config.get("MC-O11Y", "url")
-    port = o11y_config.get("MC-O11Y", "port")
+    url = o11y_config.get("MC-O11Y", "URL")
+    port = o11y_config.get("MC-O11Y", "PORT")
 
     return {
         "url": url,

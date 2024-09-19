@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, Body
-
 from config.ConfigManager import read_config_prediction
 from app.api.prediction.request.req import Item, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
 from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
     PredictionResult, PredictionHistory, ResBodyPredictionHistory
 from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
 from app.api.prediction.utils.utils import PredictionService
-from app.common.database.InfluxDB.influxdb_connection import read_influxdb_config
-
 import pandas as pd
 
 router = APIRouter()
@@ -19,7 +16,6 @@ router = APIRouter()
     responses=get_options_description['responses']
 )
 async def get_prediction_options():
-    read_influxdb_config()
     config_data = read_config_prediction('config/prediction.ini')
 
     return ResBodyPredictionOptions(data=PredictionOptions(**config_data))
@@ -59,7 +55,7 @@ async def get_prediction_history(
         query_params: GetPredictionHistoryQuery = Depends()
 ):
     prediction_service = PredictionService()
-    result_dict =  prediction_service.get_prediction_history(path_params, query_params)
+    result_dict = prediction_service.get_prediction_history(path_params, query_params)
 
     prediction_history = PredictionHistory(
         nsId=path_params.nsId,

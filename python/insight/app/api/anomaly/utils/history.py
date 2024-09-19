@@ -13,6 +13,7 @@ class AnomalyHistoryService:
         self.path_params = path_params
         self.query_params = query_params
         self.o11y_url = read_o11y_config()['url']
+        self.o11y_port = read_o11y_config()['port']
         self.headers = {
             "Content-Type": "application/json"
         }
@@ -51,7 +52,7 @@ class AnomalyHistoryService:
         return df_cleaned
 
     def _build_url(self, path: str):
-        return f"http://{self.o11y_url}/api/o11y/monitoring/{path}"
+        return f"http://{self.o11y_url}:{self.o11y_port}/api/o11y/monitoring/{path}"
 
     def _build_body(self):
         field_mapping = {

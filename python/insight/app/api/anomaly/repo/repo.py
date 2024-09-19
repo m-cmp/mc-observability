@@ -1,10 +1,12 @@
-from sqlalchemy.orm import Session
 from app.api.anomaly.model.models import AnomalyDetectionSettings
 from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
 from config.ConfigManager import read_influxdb_config
 from influxdb import InfluxDBClient
 import pandas as pd
 import pytz
+from datetime import datetime
+from sqlalchemy.orm import Session
+from sqlalchemy import update
 
 
 class AnomalySettingsRepository:
@@ -54,8 +56,8 @@ class AnomalySettingsRepository:
 class InfluxDBRepository:
     def __init__(self):
         db_info = read_influxdb_config()
-        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['user'],
-                                     password=db_info['pw'], database=db_info['db'])
+        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
+                                     password=db_info['password'], database=db_info['database'])
 
     def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
         tag = {
@@ -119,3 +121,17 @@ class AnomalyServiceRepository:
 
     def get_anomaly_setting_info(self, seq: int):
         return self.db.query(AnomalyDetectionSettings).filter_by(SEQ=seq).first()
+
+    def update_last_exe_time(self, seq: int):
+        kst = pytz.timezone('Asia/Seoul')
+        current_time_kst = datetime.now(kst)
+
+        stmt = (
+            update(AnomalyDetectionSettings)
+            .where(AnomalyDetectionSettings.SEQ == seq)
+            .values(LAST_EXECUTION=current_time_kst)
+        )
+
+        self.db.execute(stmt)
+        self.db.commit()
+

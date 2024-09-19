@@ -15,6 +15,7 @@ class AnomalyService:
         self.seq = seq
         self.repo = AnomalyServiceRepository(db=db)
         self.o11y_url = read_o11y_config()['url']
+        self.o11y_port = read_o11y_config()['port']
         self.headers = {
             "Content-Type": "application/json"
         }
@@ -29,6 +30,7 @@ class AnomalyService:
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
         influx_repo = InfluxDBRepository()
         influx_repo.save_results(df=score_df, setting=setting)
+        self.repo.update_last_exe_time(seq=self.seq)
 
         return score_df
 
@@ -61,7 +63,7 @@ class AnomalyService:
         return df_cleaned
 
     def _build_url(self, path: str):
-        return f"http://{self.o11y_url}/api/o11y/monitoring/{path}"
+        return f"http://{self.o11y_url}:{self.o11y_port}/api/o11y/monitoring/{path}"
 
     def _send_request(self, method: str, url: str, **kwargs):
         if method == "GET":

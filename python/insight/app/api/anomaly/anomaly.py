@@ -90,9 +90,6 @@ async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db))
     """
     Request anomaly detection
     """
-    print("########################################")
-    print(settingSeq)
-    print("########################################")
     service = AnomalyService(db=db, seq=settingSeq)
     service.anomaly_detection()
 

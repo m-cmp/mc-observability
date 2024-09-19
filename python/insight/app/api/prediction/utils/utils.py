@@ -23,7 +23,6 @@ class PredictionService:
         self.headers = {'Content-Type': 'application/json'}
         self.seq_list = self._get_storage_seq_lists()
 
-
     def _get_storage_seq_lists(self):
         url = self._build_url("influxdb")
         response = self._send_request("GET", url)
@@ -32,10 +31,8 @@ class PredictionService:
 
         return seq_list
 
-
     def _build_url(self, path: str):
         return f'http://{self.o11y_url}:{self.o11y_port}/api/o11y/monitoring/{path}'
-
 
     def _send_request(self, method: str, url:str, **kwargs):
         if method == 'GET':
@@ -44,7 +41,6 @@ class PredictionService:
             return requests.post(url, headers=self.headers, **kwargs)
         else:
             raise ValueError(f'Unsupported HTTP method: {method}')
-
 
     def _build_body(self, nsId: str, targetId: str, target_type: str, metric_type: str, prediction_range: str):
         if metric_type == 'System Load': metric_type = 'System'
@@ -84,7 +80,6 @@ class PredictionService:
             "range": prediction_range
         }
 
-
     def get_data(self, path_params: PredictionPath, body_params: PredictionBody):
         nsId = path_params.nsId
         targetId = path_params.targetId
@@ -108,7 +103,6 @@ class PredictionService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'There is not enough data. {e}')
 
         return df_cleaned
-
 
     def predict(self, df: pd.DataFrame, path_params: PredictionPath, body_params: PredictionBody):
         nsId = path_params.nsId
@@ -141,11 +135,9 @@ class PredictionService:
 
         return result_dict
 
-
     def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
         if metric_type == 'System Load': metric_type = 'System'
         self.influxdb_repo.save_results(df, nsId, targetId, metric_type)
-
 
     @staticmethod
     def convert_prediction_range(prediction_range: str):
@@ -154,7 +146,6 @@ class PredictionService:
         else:
             return int(prediction_range[:-1]), 'h'
 
-
     def preprocess_data(self, df: pd.DataFrame):
         df['ds'] = pd.to_datetime(df['ds'])
         df['ds'] = df['ds'].apply(self.remove_timezone)
@@ -162,11 +153,9 @@ class PredictionService:
 
         return df, last_datetime
 
-
     @staticmethod
     def remove_timezone(dt):
         return dt.replace(tzinfo=None)
-
 
     def get_prediction_history(self, path_params: GetHistoryPath, query_params: GetPredictionHistoryQuery):
         prediction_points = self.influxdb_repo.query_prediction_history(
@@ -186,4 +175,3 @@ class PredictionService:
             values.append(value_dict)
 
         return values
-

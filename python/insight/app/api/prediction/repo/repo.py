@@ -7,11 +7,10 @@ from config.ConfigManager import read_influxdb_config
 
 
 class InfluxDBRepository:
-    def __init__(self, db=None):
+    def __init__(self):
         db_info = read_influxdb_config()
         self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
                                      password=db_info['password'], database=db_info['database'])
-
 
     def save_results(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
         points = []
@@ -30,7 +29,6 @@ class InfluxDBRepository:
             points.append(point)
 
         self.client.write_points(points)
-
 
     def query_prediction_history(self, nsId: str, targetId: str, metric_type: str, start_time: datetime, end_time: datetime):
         print(f'type: {type(start_time)}')
@@ -54,13 +52,3 @@ class InfluxDBRepository:
         points = list(results.get_points())
 
         return points
-
-
-
-
-
-
-
-
-
-
