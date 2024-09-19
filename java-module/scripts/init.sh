@@ -36,4 +36,5 @@ DATABASE_ID=mc-agent
 DATABASE_PW=mc-agent
 EOF
 
+sudo mkdir -p /var/log/mc-observability/
 sudo docker compose up -d
