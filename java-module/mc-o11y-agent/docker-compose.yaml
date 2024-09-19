@@ -8,10 +8,15 @@ services:
       - NS_ID=${NS_ID}
       - MCI_ID=${MCI_ID}
       - TARGET_ID=${TARGET_ID}
+      - TUMBLEBUG_URL=${TUMBLEBUG_URL}
+      - TUMBLEBUG_ID=${TUMBLEBUG_ID}
+      - TUMBLEBUG_PW=${TUMBLEBUG_PW}
+      - SPIDER_URL=${SPIDER_URL}
+      - SPIDER_MONITORING_INFLUXDB_URL=${SPIDER_MONITORING_INFLUXDB_URL}
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_ID=${DATABASE_ID}
       - DATABASE_PW=${DATABASE_PW}
     volumes:
-      - /etc/:/etc/:ro
+      - /etc/:/etc/:rw
       - /usr/lib/os-release:/usr/lib/os-release:ro
       - /var/:/var/:rw
