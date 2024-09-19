@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-CB_SPIDER_COMMIT_HASH="7c75d80e8d275d7c137b33a22b2107829eff91b1"
+CB_SPIDER_COMMIT_HASH="22fc67e2c8de767d498591e95d02d525bb7478fe"
 
 GOPROXY_OPTION := GOPROXY=direct
 GO_COMMAND := ${GOPROXY_OPTION} go
@@ -21,6 +21,7 @@ default:
 		git reset && \
 		git checkout -- . && \
 		git clean -fd && \
+		git fetch origin && \
 		git checkout $(CB_SPIDER_COMMIT_HASH) && \
 		git reset && \
 		git checkout -- . && \
@@ -31,3 +32,4 @@ default:
 		done
 	@echo "[*] Building cb-spider..."
 	@make -C cb-spider
+
