@@ -112,49 +112,307 @@ UpdateRelStyle(container13, database12, $lineColor="green")
   - Telegraf (1.29.5)
   - SpringBoot (2.7.6)
   - Java (17)
+  - cb-tumblebug (edge)
+  - cb-spider (edge + Azure Monitoring PoC patched)
 
-### Step one: clone source
-```
-$ git clone https://github.com/m-cmp/mc-observability.git ${YourFolderName}
-```
-
-### Step two: Go to Java folder
-```
-$ cd ${YourFolderName}/java-module
-```
-
-### Step three: set .env (edit .env)
-```
-$ cp .env.sample .env
+### 1. Install Docker to CSP's VM
+```shell
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
-### Step four: Subsystem docker-compose run
+### 2. Clone observability source to CSP's VM
 ```
-$ docker compose up -d
+git clone https://github.com/m-cmp/mc-observability.git
 ```
 
-### Step five: Network check
+### 3. Go to Java folder
 ```
-$ netstat -lntp
-# Active Internet connections (only servers)
-# Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
-# tcp        0      0 0.0.0.0:18080           0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:18081           0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:3306            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:5601            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:8086            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:8888            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:9200            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp        0      0 0.0.0.0:9600            0.0.0.0:*               LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::18080                :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::18081                :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::3306                 :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::5601                 :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::8086                 :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::8888                 :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::9200                 :::*                    LISTEN      ${YourPID}/docker-proxy
-# tcp6       0      0 :::9600                 :::*                    LISTEN      ${YourPID}/docker-proxy
+cd mc-observability/java-module
 ```
+
+### 4. set .env (edit .env) (Or skip this step for use defaults.)
+```
+cp .env.sample .env
+```
+
+### 5. Run docker services
+```
+sudo mkdir -p /docker/opensearch
+sudo chown -R 1000:1000 /docker/opensearch
+sudo docker compose up -d
+```
+
+### 6. Check network listen states
+```
+sudo ss -nltp | grep docker                                                                                                       12:03:20 PM
+LISTEN 0      4096              0.0.0.0:1024       0.0.0.0:*    users:(("docker-proxy",pid=21828,fd=4))
+LISTEN 0      4096              0.0.0.0:1324       0.0.0.0:*    users:(("docker-proxy",pid=18004,fd=4))
+LISTEN 0      4096              0.0.0.0:1325       0.0.0.0:*    users:(("docker-proxy",pid=17943,fd=4))
+LISTEN 0      4096              0.0.0.0:1323       0.0.0.0:*    users:(("docker-proxy",pid=18311,fd=4))
+LISTEN 0      4096              0.0.0.0:3306       0.0.0.0:*    users:(("docker-proxy",pid=21737,fd=4))
+LISTEN 0      4096              0.0.0.0:5601       0.0.0.0:*    users:(("docker-proxy",pid=22105,fd=4))
+LISTEN 0      4096              0.0.0.0:8086       0.0.0.0:*    users:(("docker-proxy",pid=21771,fd=4))
+LISTEN 0      4096              0.0.0.0:8082       0.0.0.0:*    users:(("docker-proxy",pid=21805,fd=4))
+LISTEN 0      4096              0.0.0.0:8888       0.0.0.0:*    users:(("docker-proxy",pid=21951,fd=4))
+LISTEN 0      4096              0.0.0.0:9200       0.0.0.0:*    users:(("docker-proxy",pid=22183,fd=4))
+LISTEN 0      4096              0.0.0.0:9600       0.0.0.0:*    users:(("docker-proxy",pid=22160,fd=4))
+LISTEN 0      4096              0.0.0.0:18080      0.0.0.0:*    users:(("docker-proxy",pid=21915,fd=4))
+LISTEN 0      4096              0.0.0.0:18081      0.0.0.0:*    users:(("docker-proxy",pid=21863,fd=4))
+LISTEN 0      4096                 [::]:1024          [::]:*    users:(("docker-proxy",pid=21834,fd=4))
+LISTEN 0      4096                 [::]:1324          [::]:*    users:(("docker-proxy",pid=18012,fd=4))
+LISTEN 0      4096                 [::]:1325          [::]:*    users:(("docker-proxy",pid=17950,fd=4))
+LISTEN 0      4096                 [::]:1323          [::]:*    users:(("docker-proxy",pid=18322,fd=4))
+LISTEN 0      4096                 [::]:3306          [::]:*    users:(("docker-proxy",pid=21745,fd=4))
+LISTEN 0      4096                 [::]:5601          [::]:*    users:(("docker-proxy",pid=22111,fd=4))
+LISTEN 0      4096                 [::]:8086          [::]:*    users:(("docker-proxy",pid=21778,fd=4))
+LISTEN 0      4096                 [::]:8082          [::]:*    users:(("docker-proxy",pid=21812,fd=4))
+LISTEN 0      4096                 [::]:8888          [::]:*    users:(("docker-proxy",pid=21959,fd=4))
+LISTEN 0      4096                 [::]:9200          [::]:*    users:(("docker-proxy",pid=22189,fd=4))
+LISTEN 0      4096                 [::]:9600          [::]:*    users:(("docker-proxy",pid=22167,fd=4))
+LISTEN 0      4096                 [::]:18080         [::]:*    users:(("docker-proxy",pid=21922,fd=4))
+LISTEN 0      4096                 [::]:18081         [::]:*    users:(("docker-proxy",pid=21873,fd=4))
+```
+
+### 7. Clone tumblebug source (Run on the same CSP's VM)
+```
+git clone https://github.com/m-cmp/mc-observability.git
+cd cb-tumblebug
+```
+
+### 8. Initialize tumblebug (Run on the same CSP's VM)
+[Initialize CB-Tumblebug to configure Multi-Cloud info](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info)
+
+### 9. Create namespace to tumblebug (Run on the same CSP's VM)
+```shell
+curl -u default:default -X 'POST' \
+  'http://127.0.0.1:1323/tumblebug/ns' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "description": "First namespace",
+  "name": "ns01"
+}'
+```
+
+### 10. Create MCI dynamically (Run on the same CSP's VM)
+```shell
+curl -u default:default -X 'POST' \
+  'http://127.0.0.1:1323/tumblebug/ns/ns01/mciDynamic' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "description": "Made in CB-TB",
+  "installMonAgent": "no",
+  "label": "DynamicVM",
+  "name": "mci01",
+  "systemLabel": "",
+  "vm": [
+    {
+      "commonImage": "azure+koreacentral+ubuntu22.04",
+      "commonSpec": "azure+koreacentral+standard_b4ls_v2",
+      "connectionName": "azure-koreacentral",
+      "description": "Description",
+      "label": "DynamicVM",
+      "name": "g1-1",
+      "rootDiskSize": "default",
+      "rootDiskType": "default",
+      "subGroupSize": "3",
+      "vmUserPassword": "string"
+    }
+  ]
+}'
+```
+
+### 11. Register monitoring targets to observability manager (Run on any host)
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "description": "vm1",
+  "aliasName": "g1"
+}'
+```
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-2' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "description": "vm2",
+  "aliasName": "g2"
+}'
+```
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-3' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "description": "vm3",
+  "aliasName": "g3"
+}'
+```
+
+### 12. Check registered monitoring targets from observability (Run on any host)
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target' \
+--header 'Accept: */*' | jq
+```
+
+### 13. Register tail monitoring item to the VM (Run on any host)
+g1-1-1 example)
+
+- Encode tail configuration to base64
+```shell
+echo -e '  files = ["/var/log/syslog"]
+  from_beginning = false
+  watch_method = "inotify"
+
+  # Data format to parse syslog entries
+  data_format = "grok"
+  grok_patterns = ["%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}"]
+
+  # Add these fields if you want to tag the logs
+  [inputs.tail.tags]
+    vm_id = "g1-1-1"
+    mci_group_id = "mci01"' | base64 -w 0
+```
+
+- Check public IP of g1-1-1 VM
+```shell
+curl -u default:default -X 'GET' \
+  'http://observability_VM_PUBLIC_IP:1323/tumblebug/ns/ns01/mci/mci01/vm/g1-1-1' \
+  -H 'accept: application/json' | jq | grep publicIP
+```
+
+- Send request with encoded pluginConfig content to g1-1-1 VM
+```shell
+curl --location 'g1-1-1_VM_PUBLIC_IP:18081/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "tail",
+  "pluginSeq": "7",
+  "pluginConfig": "ICBmaWxlcyA9IFsiL3Zhci9sb2cvc3lzbG9nIl0KICBmcm9tX2JlZ2lubmluZyA9IGZhbHNlCiAgd2F0Y2hfbWV0aG9kID0gImlub3RpZnkiCgogICMgRGF0YSBmb3JtYXQgdG8gcGFyc2Ugc3lzbG9nIGVudHJpZXMKICBkYXRhX2Zvcm1hdCA9ICJncm9rIgogIGdyb2tfcGF0dGVybnMgPSBbIiV7U1lTTE9HVElNRVNUQU1QOnRpbWVzdGFtcH0gJXtTWVNMT0dIT1NUOmhvc3RuYW1lfSAle1BST0c6cHJvZ3JhbX06ICV7R1JFRURZREFUQTptZXNzYWdlfSJdCgogICMgQWRkIHRoZXNlIGZpZWxkcyBpZiB5b3Ugd2FudCB0byB0YWcgdGhlIGxvZ3MKICBbaW5wdXRzLnRhaWwudGFnc10KICAgIHZtX2lkID0gImcxLTEtMSIKICAgIG1jaV9ncm91cF9pZCA9ICJtY2kwMSIK"
+}'
+```
+
+### 14. Register opensearch monitoring item to the VM (Run on any host)
+g1-1-1 example)
+
+- Send request with encoded pluginConfig content
+```shell
+echo -e '  urls = ["http://observability_VM_PUBLIC_IP:9200"]
+  index_name = "telegraf-test"
+  template_name = "telegraf-*"' | base64 -w 0
+```
+
+- Send request with encoded pluginConfig content
+```shell
+curl --location 'g1-1-1_VM_PUBLIC_IP:18081/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "opensearch",
+  "pluginSeq": "10",
+  "pluginConfig": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}'
+```
+
+### 15. Check registered OpenSearch servers
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch' \
+--header 'Accept: */*' | jq
+```
+
+### 16. Check VM's syslog (Run on any host)
+g1-1-1 example)
+
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/1/logs' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "range": "1d/d",
+  "limit": "3"
+}' | jq
+```
+
+- Response example
+    <details>
+    <summary>접기/펼치기</summary>
+    
+    ```json
+    {
+        "data": [
+            {
+                "@timestamp": "2024-09-19T10:56:56.641954674Z",
+                "measurement_name": "tail",
+                "tag": {
+                    "host": "44f7ab229e2b",
+                    "mci_group_id": "mci01",
+                    "mci_id": "mci01",
+                    "ns_id": "ns01",
+                    "path": "/var/log/syslog",
+                    "target_id": "g1-1-1",
+                    "vm_id": "g1-1-1"
+                },
+                "tail": {
+                    "hostname": "crlrvke4322s738t4bvg",
+                    "message": "[17296.138673] docker0: port 1(veth64c8848) entered disabled state",
+                    "program": "kernel",
+                    "timestamp": "Sep 19 10:56:56"
+                }
+            },
+            {
+                "@timestamp": "2024-09-19T10:56:56.80143192Z",
+                "measurement_name": "tail",
+                "tag": {
+                    "host": "44f7ab229e2b",
+                    "mci_group_id": "mci01",
+                    "mci_id": "mci01",
+                    "ns_id": "ns01",
+                    "path": "/var/log/syslog",
+                    "target_id": "g1-1-1",
+                    "vm_id": "g1-1-1"
+                },
+                "tail": {
+                    "hostname": "crlrvke4322s738t4bvg",
+                    "message": "[17296.295880] eth0: renamed from veth74b7f62",
+                    "program": "kernel",
+                    "timestamp": "Sep 19 10:56:56"
+                }
+            },
+            {
+                "@timestamp": "2024-09-19T10:56:56.825379239Z",
+                "measurement_name": "tail",
+                "tag": {
+                    "host": "44f7ab229e2b",
+                    "mci_group_id": "mci01",
+                    "mci_id": "mci01",
+                    "ns_id": "ns01",
+                    "path": "/var/log/syslog",
+                    "target_id": "g1-1-1",
+                    "vm_id": "g1-1-1"
+                },
+                "tail": {
+                    "hostname": "crlrvke4322s738t4bvg",
+                    "message": "[17296.319992] docker0: port 1(veth64c8848) entered blocking state",
+                    "program": "kernel",
+                    "timestamp": "Sep 19 10:56:56"
+                }
+            }
+        ],
+        "errorMessage": null,
+        "rsCode": "0000",
+        "rsMsg": "완료되었습니다."
+    }
+    ```
+    </details>
+
 
 ### Swagger Docs
 #### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
