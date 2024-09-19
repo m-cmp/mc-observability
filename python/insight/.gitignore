@@ -1,0 +1,11 @@
+.idea/
+__pycache__/
+venv/
+.conda/
+tests/
+log/
+
+#*.iml
+*.ori
+*.h5
+*.log
