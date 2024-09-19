@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, AnomalyDetectionOptions,
                                           ResBodyAnomalyDetectionSettings)
-from app.api.anomaly.utils.utils import AnomalySettingsService, AnomalyHistoryService, AnomalyService, get_db
+from app.api.anomaly.utils.utils import AnomalyService, get_db
+from app.api.anomaly.utils.history import AnomalyHistoryService
+from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.response.res import ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse
 from app.api.anomaly.request.req import (AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
@@ -88,6 +90,9 @@ async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db))
     """
     Request anomaly detection
     """
+    print("########################################")
+    print(settingSeq)
+    print("########################################")
     service = AnomalyService(db=db, seq=settingSeq)
     service.anomaly_detection()
 

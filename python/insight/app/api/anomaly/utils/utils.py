@@ -1,11 +1,6 @@
-from app.api.anomaly.repo.repo import AnomalySettingsRepository, InfluxDBRepository, AnomalyServiceRepository
-from app.api.anomaly.response.res import (ResBodyAnomalyDetectionSettings, ResBodyVoid, AnomalyDetectionSettings,
-                                          AnomalyDetectionHistoryValue, AnomalyDetectionHistoryResponse)
-from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
+from app.api.anomaly.repo.repo import InfluxDBRepository, AnomalyServiceRepository
 from config.ConfigManager import read_db_config, read_o11y_config, read_rrcf_config
 from datetime import timedelta
-from enum import Enum
-from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import requests
@@ -13,209 +8,6 @@ import pandas as pd
 import numpy as np
 import pytz
 import rrcf
-
-
-class AnomalySettingsService:
-    def __init__(self, db: Session):
-        self.repo = AnomalySettingsRepository(db=db)
-
-    def get_all_settings(self) -> ResBodyAnomalyDetectionSettings:
-        settings = self.repo.get_all_settings()
-
-        results = [
-            AnomalyDetectionSettings(
-                seq=setting.SEQ,
-                nsId=setting.NAMESPACE_ID,
-                targetId=setting.TARGET_ID,
-                target_type=setting.TARGET_TYPE,
-                metric_type=setting.METRIC_TYPE,
-                execution_interval=setting.EXECUTION_INTERVAL,
-                last_execution=setting.LAST_EXECUTION,
-                createAt=setting.REGDATE
-            )
-            for setting in settings
-        ]
-
-        return ResBodyAnomalyDetectionSettings(data=results)
-
-    def get_setting(self, ns_id: str, target_id: str) -> ResBodyAnomalyDetectionSettings | JSONResponse:
-        settings = self.repo.get_specific_setting(ns_id=ns_id, target_id=target_id)
-        if settings:
-            results = [
-                AnomalyDetectionSettings(
-                    seq=setting.SEQ,
-                    nsId=setting.NAMESPACE_ID,
-                    targetId=setting.TARGET_ID,
-                    target_type=setting.TARGET_TYPE,
-                    metric_type=setting.METRIC_TYPE,
-                    execution_interval=setting.EXECUTION_INTERVAL,
-                    last_execution=setting.LAST_EXECUTION,
-                    createAt=setting.REGDATE
-                )
-                for setting in settings
-            ]
-            return ResBodyAnomalyDetectionSettings(data=results)
-        return JSONResponse(
-            status_code=404,
-            content={"rsCode": "404", "rsMsg": "Target Not Found"}
-        )
-
-    def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
-        if 'nsId' in setting_data:
-            setting_data['NAMESPACE_ID'] = setting_data.pop('nsId')
-        if 'targetId' in setting_data:
-            setting_data['TARGET_ID'] = setting_data.pop('targetId')
-
-        setting_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
-                        setting_data.items()}
-
-        duplicate = self.repo.check_duplicate(setting_data=setting_data)
-        if duplicate:
-            return JSONResponse(status_code=409, content={"rsCode": "409",
-                                                          "rsMsg": "A record with the same namespace_id, target_id, "
-                                                                   "target_type, and metric_type already exists."})
-
-        self.repo.create_setting(setting_data=setting_data)
-        return ResBodyVoid(rsMsg="Target Registered Successfully")
-
-    def update_setting(self, setting_seq: int, update_data: dict) -> ResBodyVoid | JSONResponse:
-        update_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
-                       update_data.items()}
-        updated_setting = self.repo.update_setting(setting_seq=setting_seq, update_data=update_data)
-        if updated_setting:
-            return ResBodyVoid(rsMsg="Setting Updated Successfully")
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"rsCode": "404", "rsMsg": "Target Not Found"}
-            )
-
-    def delete_setting(self, setting_seq: int) -> ResBodyVoid | JSONResponse:
-        deleted_setting = self.repo.delete_setting(setting_seq=setting_seq)
-        if deleted_setting:
-            return ResBodyVoid(rsMsg="Setting Deleted Successfully")
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"rsCode": "404", "rsMsg": "Target Not Found"}
-            )
-
-
-class AnomalyHistoryService:
-    def __init__(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
-        self.repo = InfluxDBRepository()
-        self.path_params = path_params
-        self.query_params = query_params
-        self.o11y_url = read_o11y_config()['url']
-        self.headers = {
-            "Content-Type": "application/json"
-        }
-
-    def get_anomaly_detection_results(self):
-        results = self.repo.query_anomaly_detection_results(path_params=self.path_params, query_params=self.query_params)
-        storage_seq_list = self.get_storage_seq_list()
-        raw_data = self.get_raw_data(seq_list=storage_seq_list)
-        data = self.create_res_data(results=results, raw_data=raw_data)
-
-        return data
-
-    def get_storage_seq_list(self):
-        url = self._build_url("influxdb")
-        response = self._send_request("GET", url)
-        data_list = response.json().get("data", [])
-        seq_list = [item['seq'] for item in data_list]
-
-        return seq_list
-
-    def get_raw_data(self, seq_list: list):
-        all_data = []
-
-        for seq in seq_list:
-            url = self._build_url(f"influxdb/{seq}/metric")
-            body = self._build_body()
-            response = self._send_request("POST", url, json=body)
-            data = response.json().get("data", [])
-            all_data.extend(data)
-            all_data.extend(data)
-
-        df_list = [pd.DataFrame(data["values"], columns=["timestamp", "resource_pct"]) for data in all_data]
-        combined_df = pd.concat(df_list, ignore_index=True)
-        df_cleaned = combined_df.groupby('timestamp', as_index=False).agg({'resource_pct': 'mean'})
-
-        return df_cleaned
-
-    def _build_url(self, path: str):
-        return f"http://{self.o11y_url}/api/o11y/monitoring/{path}"
-
-    def _build_body(self):
-        field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
-        }
-
-        field_value = field_mapping.get(self.query_params.metric_type.value)
-
-        return {
-            "conditions": [
-                {
-                    "key": "ns_id",
-                    "value": self.path_params.nsId
-                },
-                {
-                    "key": "target_id",
-                    "value": self.path_params.targetId
-                }
-            ],
-            "fields": [
-                {
-                    "function": "mean",
-                    "field": field_value
-                }
-            ],
-            "groupTime": "1m",
-            "measurement": self.query_params.metric_type.value.lower(),
-            "range": "12h"
-        }
-
-    def _send_request(self, method: str, url: str, **kwargs):
-        if method == "GET":
-            return requests.get(url, headers=self.headers, **kwargs)
-        elif method == "POST":
-            return requests.post(url, headers=self.headers, **kwargs)
-        else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
-
-    def create_res_data(self, results, raw_data):
-        values = []
-        raw_data['timestamp'] = pd.to_datetime(raw_data['timestamp'])
-        raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
-
-        for entry in results:
-            entry_timestamp = pd.to_datetime(entry['timestamp'])
-            matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
-
-            if not matching_row.empty:
-                resource_pct_value = matching_row['resource_pct'].values[0]
-                resource_pct_value = round(resource_pct_value, 4) if resource_pct_value is not None else None
-            else:
-                resource_pct_value = None
-
-            value = AnomalyDetectionHistoryValue(
-                timestamp=entry['timestamp'],
-                anomaly_score=entry.get('anomaly_score'),
-                isAnomaly=entry.get('isAnomaly'),
-                value=resource_pct_value
-            )
-            values.append(value)
-
-        data = AnomalyDetectionHistoryResponse(
-            nsId=self.path_params.nsId,
-            targetId=self.path_params.targetId,
-            metric_type=self.query_params.metric_type.value,
-            values=values
-        )
-
-        return data
 
 
 class AnomalyService:
@@ -257,9 +49,12 @@ class AnomalyService:
             response = self._send_request(method="POST", url=url, json=body)
             data = response.json().get("data", [])
             all_data.extend(data)
-            all_data.extend(data)
 
         df_list = [pd.DataFrame(data["values"], columns=["timestamp", "resource_pct"]) for data in all_data]
+
+        if not df_list:
+            raise Exception("No data retrieved from mc-o11y.")
+
         combined_df = pd.concat(df_list, ignore_index=True)
         df_cleaned = combined_df.groupby('timestamp', as_index=False).agg({'resource_pct': 'mean'})
 
