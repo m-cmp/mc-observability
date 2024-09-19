@@ -1,6 +1,6 @@
 services:
   mc-o11y-agent:
-    image: cloudbaristaorg/mc-observability
+    image: cloudbaristaorg/mc-observability:edge
     container_name: mc-o11y-agent
     ports:
       - 18081:18081
@@ -12,4 +12,6 @@ services:
       - DATABASE_ID=${DATABASE_ID}
       - DATABASE_PW=${DATABASE_PW}
     volumes:
-      - /var/log:/var/log:ro
+      - /etc/:/etc/:ro
+      - /usr/lib/os-release:/usr/lib/os-release:ro
+      - /var/:/var/:rw
