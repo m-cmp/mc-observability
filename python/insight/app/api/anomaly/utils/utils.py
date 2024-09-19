@@ -151,12 +151,9 @@ class AnomalyService:
 
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
-        # TODO 임시 생략
-        # storage_seq = self.get_storage_seq(setting=setting)
-        # raw_data = self.get_raw_data(storage_seq=storage_seq, setting=setting)
-        raw_data = pd.read_csv('./app/api/anomaly/utils/data1.csv', names=['timestamp', 'resource_pct'])
-        raw_data = raw_data.drop(0).reset_index(drop=True)
-        pre_data = self.make_preprocess_data(data=raw_data)
+        storage_seq_list = self.get_storage_seq_list()
+        raw_data = self.get_raw_data(seq_list=storage_seq_list, setting=setting)
+        pre_data = self.make_preprocess_data(df=raw_data)
 
         anomaly_detector = AnomalyDetector(metric_type=setting.METRIC_TYPE)
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
@@ -165,18 +162,30 @@ class AnomalyService:
 
         return score_df
 
-    def get_storage_seq(self, setting: object):
-        url = self._build_url(f"{setting.NAMESPACE_ID}/target/{setting.TARGET_ID}/storage")
+    def get_storage_seq_list(self):
+        url = self._build_url("influxdb")
         response = self._send_request("GET", url)
         data_list = response.json().get("data", [])
+        seq_list = [item['seq'] for item in data_list]
 
-        return data_list[0].get("seq")
+        return seq_list
 
-    def get_raw_data(self, storage_seq: int, setting: object):
-        url = self._build_url(f"influxdb/{storage_seq}/metric")
-        body = self._build_body(storage_seq, setting)
-        response = self._send_request("POST", url, json=body)
-        return response
+    def get_raw_data(self, seq_list: list, setting: object):
+        all_data = []
+
+        for seq in seq_list:
+            url = self._build_url(f"influxdb/{seq}/metric")
+            body = self._build_body(setting)
+            response = self._send_request("POST", url, json=body)
+            data = response.json().get("data", [])
+            all_data.extend(data)
+            all_data.extend(data)
+
+        df_list = [pd.DataFrame(data["values"], columns=["timestamp", "resource_pct"]) for data in all_data]
+        combined_df = pd.concat(df_list, ignore_index=True)
+        df_cleaned = combined_df.groupby('timestamp', as_index=False).agg({'resource_pct': 'mean'})
+
+        return df_cleaned
 
     def _build_url(self, path: str):
         return f"http://{self.o11y_url}/api/o11y/monitoring/{path}"
@@ -190,7 +199,7 @@ class AnomalyService:
             raise ValueError(f"Unsupported HTTP method: {method}")
 
     @staticmethod
-    def _build_body(storage_seq: int, setting: object):
+    def _build_body(setting: object):
         field_mapping = {
             "CPU": "usage_idle",
             "MEM": "used_percent",
@@ -201,7 +210,11 @@ class AnomalyService:
         return {
             "conditions": [
                 {
-                    "key": "uuid",
+                    "key": "ns_id",
+                    "value": setting.NAMESPACE_ID
+                },
+                {
+                    "key": "target_id",
                     "value": setting.TARGET_ID
                 }
             ],
@@ -212,13 +225,11 @@ class AnomalyService:
                 }
             ],
             "groupTime": "1m",
-            "influxDBSeq": storage_seq,
             "measurement": setting.METRIC_TYPE.lower(),
             "range": "12h"
         }
 
-    def make_preprocess_data(self, data) -> pd.DataFrame:
-        df = pd.DataFrame(data)
+    def make_preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
         df['timestamp'] = df['timestamp'].dt.tz_localize(None) + timedelta(hours=9)
         df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
