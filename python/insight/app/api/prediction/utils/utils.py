@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import time
 import requests
 
-from app.api.prediction.request.req import PredictionPath, PredictionBody
+from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
 from config.ConfigManager import read_prophet_config, read_o11y_config
 from app.api.prediction.repo.repo import InfluxDBRepository
 from app.api.prediction.response.res import PredictionResult, PredictionHistory
@@ -46,7 +46,7 @@ class PredictionService:
             raise ValueError(f'Unsupported HTTP method: {method}')
 
 
-    def _build_body(self, nsId, targetId, target_type, metric_type, prediction_range):
+    def _build_body(self, nsId: str, targetId: str, target_type: str, metric_type: str, prediction_range: str):
         if metric_type == 'System Load': metric_type = 'System'
 
         target_mapping = {
@@ -110,7 +110,7 @@ class PredictionService:
         return df_cleaned
 
 
-    def predict(self, df: pd.DataFrame, path_params, body_params, idle=False):
+    def predict(self, df: pd.DataFrame, path_params: PredictionPath, body_params: PredictionBody):
         nsId = path_params.nsId
         targetId = path_params.targetId
         metric_type = body_params.metric_type
@@ -134,21 +134,21 @@ class PredictionService:
 
         if metric_type == 'CPU':
             prediction['predicted_value'] = prediction['predicted_value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
-
         prediction['predicted_value'] = np.clip(prediction['predicted_value'], 0, 100).round(2)
+
         self.save_prediction_result(prediction, nsId, targetId, metric_type)
         result_dict = prediction.to_dict('records')
 
         return result_dict
 
 
-    def save_prediction_result(self, df, nsId, targetId, metric_type):
+    def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
         if metric_type == 'System Load': metric_type = 'System'
         self.influxdb_repo.save_results(df, nsId, targetId, metric_type)
 
 
     @staticmethod
-    def convert_prediction_range(prediction_range):
+    def convert_prediction_range(prediction_range: str):
         if prediction_range[-1] in ['d', 'm', 'y']:
             return int(prediction_range[:-1]), prediction_range[-1]
         else:
@@ -168,7 +168,7 @@ class PredictionService:
         return dt.replace(tzinfo=None)
 
 
-    def get_prediction_history(self, path_params, query_params):
+    def get_prediction_history(self, path_params: GetHistoryPath, query_params: GetPredictionHistoryQuery):
         prediction_points = self.influxdb_repo.query_prediction_history(
             nsId=path_params.nsId,
             targetId=path_params.targetId,
@@ -186,5 +186,4 @@ class PredictionService:
             values.append(value_dict)
 
         return values
-
 

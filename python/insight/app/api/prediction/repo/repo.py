@@ -1,4 +1,6 @@
 import pytz
+from datetime import datetime
+import pandas as pd
 from influxdb import InfluxDBClient
 
 from config.ConfigManager import read_influxdb_config
@@ -11,7 +13,7 @@ class InfluxDBRepository:
                                      password=db_info['password'], database=db_info['database'])
 
 
-    def save_results(self, df, nsId, targetId, metric_type):
+    def save_results(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
         points = []
         for _, row in df.iterrows():
             point = {
@@ -30,7 +32,8 @@ class InfluxDBRepository:
         self.client.write_points(points)
 
 
-    def query_prediction_history(self, nsId, targetId, metric_type, start_time, end_time):
+    def query_prediction_history(self, nsId: str, targetId: str, metric_type: str, start_time: datetime, end_time: datetime):
+        print(f'type: {type(start_time)}')
         start_time = start_time.astimezone(pytz.utc)
         end_time = end_time.astimezone(pytz.utc)
         start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
