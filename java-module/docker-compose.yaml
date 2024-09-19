@@ -42,6 +42,107 @@ services:
       - internal_network
       - external_network
 
+  # CB-Tumblebug
+  cb-tumblebug:
+    image: cloudbaristaorg/cb-tumblebug:0.9.11
+    container_name: cb-tumblebug
+    platform: linux/amd64
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 1323:1323
+    depends_on:
+      - cb-tumblebug-etcd
+      # - cb-tumblebug-etcd-conf
+#       - cb-spider
+    volumes:
+      - ./conf/setup.env:/app/conf/setup.env
+      - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
+      - ~/.cloud-barista/credentials.yaml.enc.:/app/conf/credentials.yaml.enc
+      - /docker/cb-tumblebug-container/meta_db/:/app/meta_db/
+      - /docker/cb-tumblebug-container/log/:/app/log/
+    environment:
+      # - TB_ROOT_PATH=/app
+      - TB_SPIDER_REST_URL=http://cb-spider_azure_monitoring:1024/spider
+      - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
+      # - TB_ETCD_AUTH_ENABLED=true
+      # - TB_ETCD_USERNAME=default
+      # - TB_ETCD_PASSWORD=default
+      # - TB_SQLITE_URL=localhost:3306
+      # - TB_SQLITE_DATABASE=cb_tumblebug
+      # - TB_SQLITE_USER=cb_tumblebug
+      # - TB_SQLITE_PASSWORD=cb_tumblebug
+      # - TB_ALLOW_ORIGINS=*
+      # - TB_AUTH_ENABLED=true
+      # - TB_API_USERNAME=default
+      # - TB_API_PASSWORD=default
+      # - TB_AUTOCONTROL_DURATION_MS=10000
+      # - TB_SELF_ENDPOINT=localhost:1323
+      # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
+      # - TB_DEFAULT_NAMESPACE=default
+      # - TB_DEFAULT_CREDENTIALHOLDER=admin
+      # - TB_LOGFILE_PATH=/app/log/tumblebug.log
+      # - TB_LOGFILE_MAXSIZE=1000
+      # - TB_LOGFILE_MAXBACKUPS=3
+      # - TB_LOGFILE_MAXAGE=30
+      # - TB_LOGFILE_COMPRESS=false
+      # - TB_LOGLEVEL=debug
+      # - TB_LOGWRITER=both
+      # - TB_NODE_ENV=development
+    healthcheck: # for CB-Tumblebug
+      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # cb-tumblebug-etcd
+  cb-tumblebug-etcd:
+    image: gcr.io/etcd-development/etcd:v3.5.14
+    container_name: cb-tumblebug-etcd
+    networks:
+      - internal_network
+    ports:
+      - 2379:2379
+      - 2380:2380
+    volumes:
+      - /docker/etcd/data:/etcd-data
+    entrypoint: /usr/local/bin/etcd
+    command:
+      - --name
+      - s1
+      - --data-dir
+      - /etcd-data
+      - --listen-client-urls
+      - http://0.0.0.0:2379
+      - --advertise-client-urls
+      - http://0.0.0.0:2379
+      - --listen-peer-urls
+      - http://0.0.0.0:2380
+      - --initial-advertise-peer-urls
+      - http://0.0.0.0:2380
+      - --initial-cluster
+      - s1=http://0.0.0.0:2380
+      - --initial-cluster-token
+      - tkn
+      - --initial-cluster-state
+      - new
+      - --log-level
+      - info
+      - --logger
+      - zap
+      - --log-outputs
+      - stderr
+      - --auth-token
+      - simple
+    healthcheck: # for etcd
+      test: [ "CMD", "/usr/local/bin/etcd", "--version"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   cb-spider_azure_monitoring:
     image: cloudbaristaorg/cb-spider_azure_monitoring:edge
     container_name: cb-spider_azure_monitoring
