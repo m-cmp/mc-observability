@@ -18,8 +18,9 @@ class ResBodyPredictionOptions(BaseModel):
 
 # POST /predictions/nsId/{nsId}/target/{targetId}
 class PredictValue(BaseModel):
-    timestamp: datetime
+    timestamp: str
     predicted_value: Union[float, None]
+
 
 class PredictionResult(BaseModel):
     nsId: str
@@ -28,16 +29,16 @@ class PredictionResult(BaseModel):
     target_type: str
     values: list[PredictValue]
 
+
 class ResBodyPredictionResult(BaseModel):
     data: PredictionResult
     rsCode: str = '200'
     rsMsg: str = 'Success'
 
 
-
 # GET /predictions/nsId/{nsId}/target/{targetId}/history
 class HistoryValue(BaseModel):
-    timestamp: datetime
+    timestamp: str
     predicted_value: Union[float, None]
 
 
@@ -47,9 +48,8 @@ class PredictionHistory(BaseModel):
     metric_type: str
     values: list[HistoryValue]
 
+
 class ResBodyPredictionHistory(BaseModel):
     data: PredictionHistory
     rsCode: str = '200'
     rsMsg: str = 'Success'
-
-

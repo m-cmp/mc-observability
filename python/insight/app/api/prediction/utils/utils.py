@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-
+import pytz
 from prophet import Prophet
 import pandas as pd
 import numpy as np
@@ -129,6 +129,7 @@ class PredictionService:
         if metric_type == 'CPU':
             prediction['predicted_value'] = prediction['predicted_value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
         prediction['predicted_value'] = np.clip(prediction['predicted_value'], 0, 100).round(2)
+        prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
 
         self.save_prediction_result(prediction, nsId, targetId, metric_type)
         result_dict = prediction.to_dict('records')
@@ -156,6 +157,10 @@ class PredictionService:
     @staticmethod
     def remove_timezone(dt):
         return dt.replace(tzinfo=None)
+
+    @staticmethod
+    def insert_timezone(dt):
+        return dt.replace(tzinfo=pytz.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
     def get_prediction_history(self, path_params: GetHistoryPath, query_params: GetPredictionHistoryQuery):
         prediction_points = self.influxdb_repo.query_prediction_history(
