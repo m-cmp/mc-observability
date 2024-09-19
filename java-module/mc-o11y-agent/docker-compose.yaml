@@ -2,6 +2,7 @@ services:
   mc-o11y-agent:
     image: cloudbaristaorg/mc-observability:edge
     container_name: mc-o11y-agent
+    restart: always
     ports:
       - 18081:18081
     environment:
