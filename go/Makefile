@@ -33,3 +33,10 @@ default:
 	@echo "[*] Building cb-spider..."
 	@make -C cb-spider
 
+run:
+	@cd cb-spider
+	@./bin/start.sh
+
+stop:
+	@cd cb-spider
+	@./bin/stop.sh
