@@ -34,13 +34,9 @@ async def predict_monitoring_data(
         body_params: PredictionBody,
         path_params: PredictionPath = Depends()
 ):
-    prediction_service = PredictionService(
-        nsId=path_params.nsId,
-        targetId=path_params.targetId,
-        metric_type=body_params.metric_type
-    )
-    df = prediction_service.get_data()
-    result_dict = prediction_service.predict(df, body_params.prediction_range)
+    prediction_service = PredictionService()
+    df = prediction_service.get_data(path_params, body_params)
+    result_dict = prediction_service.predict(df, path_params, body_params)
 
     prediction_result = PredictionResult(
         nsId=path_params.nsId,
@@ -62,14 +58,8 @@ async def get_prediction_history(
         path_params: GetHistoryPath = Depends(),
         query_params: GetPredictionHistoryQuery = Depends()
 ):
-    prediction_service = PredictionService(
-        nsId=path_params.nsId,
-        targetId=path_params.targetId,
-        metric_type=query_params.metric_type
-    )
+    prediction_service = PredictionService()
     result_dict =  prediction_service.get_prediction_history(path_params, query_params)
-    print(f'result_dict: {result_dict}')
-
 
     prediction_history = PredictionHistory(
         nsId=path_params.nsId,
@@ -77,7 +67,6 @@ async def get_prediction_history(
         metric_type=query_params.metric_type,
         values=result_dict
     )
-    print(PredictionHistory)
 
     return ResBodyPredictionHistory(data=prediction_history)
 
