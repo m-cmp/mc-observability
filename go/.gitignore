@@ -1,1 +1,6 @@
-cb-spider
+cb-spider/
+bin/
+meta_db/
+conf/
+log/
+setup.env

@@ -1,6 +1,6 @@
 SHELL=/bin/bash
 
-CB_SPIDER_COMMIT_HASH="22fc67e2c8de767d498591e95d02d525bb7478fe"
+CB_SPIDER_COMMIT_HASH="9102c6f415a57dd3b422648ca123c0880d9ca56f"
 
 GOPROXY_OPTION := GOPROXY=direct
 GO_COMMAND := ${GOPROXY_OPTION} go
@@ -32,6 +32,19 @@ default:
 		done
 	@echo "[*] Building cb-spider..."
 	@make -C cb-spider
+	@echo "[*] Linking folders..."
+	@mkdir -p meta_db/
+	@if [ ! -d "conf" ]; then \
+		  cp -RpPf cb-spider/conf .; \
+		fi
+	@if [ ! -f "setup.env" ]; then \
+		  cp -pPf cb-spider/setup.env .; \
+		fi
+	@mkdir -p log/
+	@rm -rf  cb-spider/meta_db && ln -sf ../meta_db cb-spider/meta_db
+	@rm -rf  cb-spider/conf && ln -sf ../conf cb-spider/conf
+	@rm -rf  cb-spider/log && ln -sf ../log cb-spider/log
+	@rm -f  cb-spider/setup.env && ln -sf ../setup.env cb-spider/setup.env
 
 run:
 	@cd cb-spider && ./bin/start.sh
