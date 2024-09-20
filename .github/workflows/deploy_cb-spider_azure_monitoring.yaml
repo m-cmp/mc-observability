@@ -45,6 +45,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - name: Remove unused data
+        run: docker system prune -a -f
+
       - name: Checkout source code
         uses: actions/checkout@v4
 

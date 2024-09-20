@@ -26,6 +26,9 @@ jobs:
         os: [ubuntu-22.04]
     runs-on: ${{matrix.os}}
     steps:
+      - name: Remove unused data
+        run: docker system prune -a -f
+
       - uses: actions/checkout@v4
 
       - name: Set up JDK 17
