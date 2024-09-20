@@ -115,7 +115,7 @@ jobs:
           IMAGE_NAME: cb-spider_azure_monitoring
         run: cd go && make && cd cb-spider && docker build . --file Dockerfile --tag $IMAGE_NAME
 
-      - name: Build and publish
+      - name: Publish image
         id: docker_build_1
         uses: docker/build-push-action@v6
         with:
@@ -127,6 +127,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+
+      - name: Clean
+        run: cd go && make clean
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
