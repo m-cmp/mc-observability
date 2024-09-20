@@ -26,9 +26,8 @@ on:
       - "LICENSE"
       - "CODEOWNERS"
       - ".all-contributorsrc"
-      - "assets/**"
-      - "src/testclient/scripts/**"
-      - "src/testclient/test-clis/**"
+      - "go/**"
+      - "python/**"
   # workflow trigger button
   # workflow_dispatch:
 

@@ -11,10 +11,12 @@ on:
       - "**.md"
       - ".gitignore"
       - ".git/**"
-      - "CODE_OF_CONFUCT.md"
+      - "CODE_OF_CONDUCT.md"
       - "CONTRIBUTING.md"
       - "LICENSE"
       - "README.md"
+      - "go/**"
+      - "python/**"
 jobs:
   build-source-chk:
     name: Check source code
