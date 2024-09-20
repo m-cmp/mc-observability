@@ -19,13 +19,13 @@ on:
       - "v*.*.*"
     paths-ignore:
       - ".github/**"
-      - "docs/**"
-      - "scripts/**"
+      - "java-module/**.md"
+      - "java-module/conf/**"
+      - "java-module/.env.sample"
+      - "java-module/swagger/**"
       - "**.md"
-      - ".gitignore"
       - "LICENSE"
-      - "CODEOWNERS"
-      - ".all-contributorsrc"
+      - ".gitignore"
       - "go/**"
       - "python/**"
   # workflow trigger button

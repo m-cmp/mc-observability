@@ -18,14 +18,10 @@ on:
     tags:
       - "v*.*.*"
     paths-ignore:
-      - "docs/**"
-      - "scripts/**"
+      - ".github/**"
       - "**.md"
-      - ".gitignore"
       - "LICENSE"
-      - "CODEOWNERS"
-      - ".all-contributorsrc"
-      - "assets/**"
+      - ".gitignore"
       - "java-module/**"
       - "python/**"
   # workflow trigger button

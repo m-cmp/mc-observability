@@ -8,13 +8,14 @@ on:
     branches:
       - main
     paths-ignore:
+      - ".github/**"
+      - "java-module/**.md"
+      - "java-module/conf/**"
+      - "java-module/.env.sample"
+      - "java-module/swagger/**"
       - "**.md"
-      - ".gitignore"
-      - ".git/**"
-      - "CODE_OF_CONDUCT.md"
-      - "CONTRIBUTING.md"
       - "LICENSE"
-      - "README.md"
+      - ".gitignore"
       - "go/**"
       - "python/**"
 jobs:
