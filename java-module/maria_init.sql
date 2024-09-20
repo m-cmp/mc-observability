@@ -14,6 +14,14 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+
+CREATE DATABASE IF NOT EXISTS mc_airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON mc_airflow.* TO 'mc-agent'@'%';
+FLUSH PRIVILEGES;
+
+USE mc_observability;
+
+
 -- 테이블 mc_observability.mc_o11y_agent_plugin_def 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_plugin_def` (
     `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT,
