@@ -64,7 +64,7 @@ services:
       - /docker/cb-tumblebug-container/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
-      - TB_SPIDER_REST_URL=http://cb-spider_azure_monitoring:1024/spider
+      - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
@@ -143,9 +143,9 @@ services:
       retries: 3
       start_period: 10s
 
-  cb-spider_azure_monitoring:
+  cb-spider:
     image: cloudbaristaorg/cb-spider_azure_monitoring:edge
-    container_name: cb-spider_azure_monitoring
+    container_name: cb-spider
     platform: linux/amd64
     networks:
       - internal_network
