@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, Body
-from config.ConfigManager import read_config_prediction
-from app.api.prediction.request.req import Item, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
+from fastapi import APIRouter, Depends
+from config.ConfigManager import ConfigManager
+from app.api.prediction.request.req import PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
 from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
     PredictionResult, PredictionHistory, ResBodyPredictionHistory
 from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
 from app.api.prediction.utils.utils import PredictionService
-import pandas as pd
+
 
 router = APIRouter()
 
@@ -16,7 +16,8 @@ router = APIRouter()
     responses=get_options_description['responses']
 )
 async def get_prediction_options():
-    config_data = read_config_prediction('config/prediction.ini')
+    config = ConfigManager()
+    config_data = config.get_prediction_config()
 
     return ResBodyPredictionOptions(data=PredictionOptions(**config_data))
 

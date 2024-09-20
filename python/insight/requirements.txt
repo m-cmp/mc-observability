@@ -29,8 +29,9 @@ python-dateutil==2.9.0.post0
 pillow==10.4.0
 prophet==1.1.5
 pydantic==1.10.18
-pydantic_core==2.20.1
+pydantic_core==2.23.4
 PyMySQL==1.1.1
+PyYAML==6.0.2
 pyparsing==3.1.4
 python-dateutil==2.9.0.post0
 pytz==2024.1

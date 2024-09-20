@@ -3,23 +3,21 @@ import pytz
 from prophet import Prophet
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import time
 import requests
 
 from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
-from config.ConfigManager import read_prophet_config, read_o11y_config
+from config.ConfigManager import ConfigManager
 from app.api.prediction.repo.repo import InfluxDBRepository
-from app.api.prediction.response.res import PredictionResult, PredictionHistory
 
 
 
 class PredictionService:
     def __init__(self):
-        self.prophet_config = read_prophet_config()
+        config = ConfigManager()
+        self.prophet_config = config.get_prophet_config()
         self.influxdb_repo = InfluxDBRepository()
-        self.o11y_url = read_o11y_config()['url']
-        self.o11y_port = read_o11y_config()['port']
+        self.o11y_url = config.get_o11y_config()['url']
+        self.o11y_port = config.get_o11y_config()['port']
         self.headers = {'Content-Type': 'application/json'}
         self.seq_list = self._get_storage_seq_lists()
 

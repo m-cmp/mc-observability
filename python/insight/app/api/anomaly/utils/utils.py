@@ -1,5 +1,5 @@
 from app.api.anomaly.repo.repo import InfluxDBRepository, AnomalyServiceRepository
-from config.ConfigManager import read_db_config, read_o11y_config, read_rrcf_config
+from config.ConfigManager import ConfigManager
 from datetime import timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -12,10 +12,11 @@ import rrcf
 
 class AnomalyService:
     def __init__(self, db: Session, seq: int):
+        config = ConfigManager()
         self.seq = seq
         self.repo = AnomalyServiceRepository(db=db)
-        self.o11y_url = read_o11y_config()['url']
-        self.o11y_port = read_o11y_config()['port']
+        self.o11y_url = config.get_o11y_config()['url']
+        self.o11y_port = config.get_o11y_config()['port']
         self.headers = {
             "Content-Type": "application/json"
         }
@@ -137,9 +138,10 @@ class AnomalyService:
 
 class AnomalyDetector:
     def __init__(self, metric_type: str):
+        config = ConfigManager()
         self.kst = pytz.timezone('Asia/Seoul')
         self.metric_type = metric_type
-        self.rrcf_config = read_rrcf_config()
+        self.rrcf_config = config.get_rrcf_config()
 
     @staticmethod
     def normalize_scores(scores):
@@ -190,7 +192,8 @@ class AnomalyDetector:
 
 
 def get_db():
-    db_info = read_db_config()
+    config = ConfigManager()
+    db_info = config.get_db_config()
     database_url = f"mysql+pymysql://{db_info['user']}:{db_info['pw']}@{db_info['url']}/{db_info['db']}"
 
     engine = create_engine(database_url)

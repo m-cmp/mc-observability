@@ -2,13 +2,13 @@ import pytz
 from datetime import datetime
 import pandas as pd
 from influxdb import InfluxDBClient
-
-from config.ConfigManager import read_influxdb_config
+from config.ConfigManager import ConfigManager
 
 
 class InfluxDBRepository:
     def __init__(self):
-        db_info = read_influxdb_config()
+        config = ConfigManager()
+        db_info = config.get_influxdb_config()
         self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
                                      password=db_info['password'], database=db_info['database'])
 
