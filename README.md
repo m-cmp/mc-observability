@@ -16,6 +16,9 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 ### MCMP-Agent Use
  - [MC-Observability-Agent Readme](./java-module/README.md)
 
+### MC-Observability-Insight API Use
+ - [MC-Observability-Insight Readme](./python/README.md)
+
 ## How to Contribute
 
 - Issues/Discussions/Ideas: Utilize issue of mc-observability
