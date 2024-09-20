@@ -8,7 +8,7 @@ from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.response.res import ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse
 from app.api.anomaly.request.req import (AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
-from config.ConfigManager import read_config
+from config.ConfigManager import ConfigManager
 
 router = APIRouter()
 
@@ -18,7 +18,8 @@ async def get_available_options_for_anomaly_detection():
     """
     Fetch the available target types, metric types, and interval options for the anomaly detection API.
     """
-    config_data = read_config("config/anomaly.ini")
+    config=ConfigManager()
+    config_data = config.get_anomaly_config()
 
     response = ResBodyAnomalyDetectionOptions(data=AnomalyDetectionOptions(**config_data))
 

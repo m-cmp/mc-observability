@@ -1,7 +1,7 @@
 from app.api.anomaly.repo.repo import InfluxDBRepository
 from app.api.anomaly.response.res import AnomalyDetectionHistoryValue, AnomalyDetectionHistoryResponse
 from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
-from config.ConfigManager import read_o11y_config
+from config.ConfigManager import ConfigManager
 import requests
 import pandas as pd
 import numpy as np
@@ -9,11 +9,12 @@ import numpy as np
 
 class AnomalyHistoryService:
     def __init__(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
+        config = ConfigManager()
         self.repo = InfluxDBRepository()
         self.path_params = path_params
         self.query_params = query_params
-        self.o11y_url = read_o11y_config()['url']
-        self.o11y_port = read_o11y_config()['port']
+        self.o11y_url = config.get_o11y_config()['url']
+        self.o11y_port = config.get_o11y_config()['port']
         self.headers = {
             "Content-Type": "application/json"
         }

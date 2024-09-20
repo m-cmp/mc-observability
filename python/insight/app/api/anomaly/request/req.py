@@ -1,4 +1,5 @@
 from configparser import ConfigParser
+from config.ConfigManager import ConfigManager
 from datetime import datetime, timedelta
 from enum import Enum
 from fastapi import Query, Path
@@ -11,16 +12,22 @@ def set_time_delta(delta=0) -> datetime:
     return datetime.now(kst).replace(microsecond=0) - timedelta(hours=delta)
 
 
-def generate_enum_from_config(section: str, option: str, enum_name: str):
-    config = ConfigParser()
-    config.read('config/anomaly.ini')
-    items = config.get(section, option).split(', ')
-    return Enum(enum_name, {item: item for item in items})
+def generate_enum_from_config(path: str, enum_name: str):
+    keys = path.split('.')
+    data = ConfigManager().config
+    for key in keys:
+        data = data.get(key, {})
+
+    if isinstance(data, list):
+        items = data
+        return Enum(enum_name, {item: item for item in items})
+    else:
+        raise ValueError(f"Invalid path '{path}' or data is not a list.")
 
 
-TargetType = generate_enum_from_config('target_types', 'types', 'TargetType')
-MetricType = generate_enum_from_config('metric_types', 'types', 'MetricType')
-ExecutionInterval = generate_enum_from_config('execution_intervals', 'intervals', 'ExecutionInterval')
+TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType')
+MetricType = generate_enum_from_config('anomaly.metric_types.types', 'MetricType')
+ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
 
 
 class AnomalyDetectionTargetRegistration(BaseModel):

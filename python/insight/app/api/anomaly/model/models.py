@@ -5,7 +5,7 @@ Base = declarative_base()
 
 
 class AnomalyDetectionSettings(Base):
-    __tablename__ = "anomaly_detection_settings"
+    __tablename__ = "mc_o11y_insight_anomaly_setting"
 
     SEQ = Column(Integer, primary_key=True, index=True)
     NAMESPACE_ID = Column(String(100))

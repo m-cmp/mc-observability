@@ -14,6 +14,14 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+
+CREATE DATABASE IF NOT EXISTS mc_airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL PRIVILEGES ON mc_airflow.* TO 'mc-agent'@'%';
+FLUSH PRIVILEGES;
+
+USE mc_observability;
+
+
 -- 테이블 mc_observability.mc_o11y_agent_plugin_def 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_agent_plugin_def` (
     `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -198,6 +206,21 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_target_storage` (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거 대상 저장소';
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_target_storage:~0 rows (대략적) 내보내기
+
+
+CREATE TABLE `mc_o11y_insight_anomaly_setting` (
+  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `NAMESPACE_ID` varchar(100) NOT NULL,
+  `TARGET_ID` varchar(100) NOT NULL,
+  `TARGET_TYPE` varchar(100) NOT NULL,
+  `METRIC_TYPE` varchar(100) NOT NULL,
+  `EXECUTION_INTERVAL` varchar(100) NOT NULL,
+  `LAST_EXECUTION` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `REGDATE` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`SEQ`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

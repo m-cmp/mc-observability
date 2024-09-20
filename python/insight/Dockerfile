@@ -1,13 +1,13 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
-WORKDIR /sherlock
+WORKDIR /mc-insight
 
-COPY requirements.txt /sherlock
+COPY requirements.txt /mc-insight
 RUN pip install -r requirements.txt
-COPY . /sherlock
+COPY . /mc-insight
 
 EXPOSE 9001
 
-COPY entrypoint.sh /entrypoint.sh
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

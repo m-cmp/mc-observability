@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.anomaly import anomaly
 from app.api.prediction import prediction
-from config.ConfigManager import read_prefix
+from config.ConfigManager import ConfigManager
 import uvicorn
 
+
+config = ConfigManager()
 
 app = FastAPI(
     title='Insight Module DOCS',
@@ -21,7 +23,7 @@ app.add_middleware(
     allow_headers=['*']
 )
 
-api_prefix = read_prefix()
+api_prefix = config.get_prefix()
 app.include_router(anomaly.router, prefix=api_prefix, tags=["[Insight] Anomaly Detection"])
 app.include_router(prediction.router, prefix=api_prefix, tags=["[Insight] Prediction"])
 

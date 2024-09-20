@@ -1,0 +1,78 @@
+common:
+  prefix:
+    /api/o11y/insight
+  DB:
+    URL: mariadb
+    USERNAME: mc-agent
+    PASSWORD: mc-agent
+    DATABASE: mc_observability
+  InfluxDB:
+    HOST: influxdb
+    PORT: 8086
+    USERNAME: mc-agent
+    PASSWORD: mc-agent
+    DATABASE: insight
+    POLICY: autogen
+  MC-O11Y:
+    URL: mc-o11y-manager
+    PORT: 18080
+
+anomaly:
+  target_types:
+    types:
+      - VM
+      - MCI
+  metric_types:
+    types:
+      - CPU
+      - MEM
+  execution_intervals:
+    intervals:
+      - 5m
+      - 10m
+      - 30m
+  rrcf:
+    num_trees: 10
+    shingle_ratio: 0.01
+    tree_size: 1024
+    anomaly_range_size: 2.5
+
+prediction:
+  target_types:
+    types:
+      - VM
+      - MCI
+  metric_types:
+    types:
+      - CPU
+      - MEM
+      - Disk
+      - System Load
+  prediction_ranges:
+    min: 1h
+    max: 2160h
+  prediction_history:
+    default_range: 168
+  prophet:
+    PROPHET_CPS: 10.0
+    PROPHET_SPS: 10.0
+    PROPHET_HPS: 0.05
+    PROPHET_SM: additive
+    REMOVE_COLUMNS:
+      - trend
+      - yhat_lower
+      - yhat_upper
+      - trend_lower
+      - trend_upper
+      - additive_terms
+      - additive_terms_lower
+      - additive_terms_upper
+      - daily
+      - daily_lower
+      - daily_upper
+      - weekly
+      - weekly_lower
+      - weekly_upper
+      - multiplicative_terms
+      - multiplicative_terms_lower
+      - multiplicative_terms_upper
