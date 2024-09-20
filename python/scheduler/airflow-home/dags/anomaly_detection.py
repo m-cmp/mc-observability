@@ -17,7 +17,7 @@ default_args = {
 
 def fetch_data_from_db():
     hook = MySqlHook(mysql_conn_id='mcmp_db')
-    sql = "SELECT * FROM anomaly_detection_settings"
+    sql = "SELECT * FROM mc_o11y_insight_anomaly_setting"
     df = hook.get_pandas_df(sql)
 
     df['LAST_EXECUTION'] = df['LAST_EXECUTION'].astype(str)
