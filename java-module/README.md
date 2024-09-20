@@ -413,6 +413,285 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch
     ```
     </details>
 
+### 17. Check VM's monitoring data
+- Supported metric types
+  - cpu_usage (%)
+  - memory_usage (Bytes)
+  - disk_read (Bytes)
+  - disk_write (Bytes)
+  - disk_read_ops (Bytes)
+  - disk_write_ops (Bytes)
+  - network_in (Bytes)
+  - network_out (Bytes)
+- Range and interval of metrics
+  - Retrieves 1-minute interval metric data from 1 hour ago
+- Time is displayed in UTC.
+
+g1-1-1 cpu_usage example)
+
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/csp/cpu_usage' \
+--header 'Accept: */*' | jq
+```
+
+- Response example
+    <details>
+    <summary>접기/펼치기</summary>
+
+    ```json
+    {
+      "data": {
+        "metricName": "Percentage CPU",
+        "metricUnit": "Percent",
+        "timestampValues": [
+          {
+            "timestamp": "2024-09-20T01:54:00Z",
+            "value": "0.345"
+          },
+          {
+            "timestamp": "2024-09-20T01:55:00Z",
+            "value": "0.355"
+          },
+          {
+            "timestamp": "2024-09-20T01:56:00Z",
+            "value": "0.355"
+          },
+          {
+            "timestamp": "2024-09-20T01:57:00Z",
+            "value": "0.365"
+          },
+          {
+            "timestamp": "2024-09-20T01:58:00Z",
+            "value": "0.365"
+          },
+          {
+            "timestamp": "2024-09-20T01:59:00Z",
+            "value": "0.375"
+          },
+          {
+            "timestamp": "2024-09-20T02:00:00Z",
+            "value": "0.36"
+          },
+          {
+            "timestamp": "2024-09-20T02:01:00Z",
+            "value": "0.445"
+          },
+          {
+            "timestamp": "2024-09-20T02:02:00Z",
+            "value": "0.4"
+          },
+          {
+            "timestamp": "2024-09-20T02:03:00Z",
+            "value": "0.345"
+          },
+          {
+            "timestamp": "2024-09-20T02:04:00Z",
+            "value": "0.345"
+          },
+          {
+            "timestamp": "2024-09-20T02:05:00Z",
+            "value": "0.33"
+          },
+          {
+            "timestamp": "2024-09-20T02:06:00Z",
+            "value": "0.35"
+          },
+          {
+            "timestamp": "2024-09-20T02:07:00Z",
+            "value": "0.375"
+          },
+          {
+            "timestamp": "2024-09-20T02:08:00Z",
+            "value": "0.39"
+          },
+          {
+            "timestamp": "2024-09-20T02:09:00Z",
+            "value": "0.345"
+          },
+          {
+            "timestamp": "2024-09-20T02:10:00Z",
+            "value": "0.405"
+          },
+          {
+            "timestamp": "2024-09-20T02:11:00Z",
+            "value": "0.345"
+          },
+          {
+            "timestamp": "2024-09-20T02:12:00Z",
+            "value": "0.335"
+          },
+          {
+            "timestamp": "2024-09-20T02:13:00Z",
+            "value": "0.33"
+          },
+          {
+            "timestamp": "2024-09-20T02:14:00Z",
+            "value": "0.33"
+          },
+          {
+            "timestamp": "2024-09-20T02:15:00Z",
+            "value": "0.31"
+          },
+          {
+            "timestamp": "2024-09-20T02:16:00Z",
+            "value": "0.31"
+          },
+          {
+            "timestamp": "2024-09-20T02:17:00Z",
+            "value": "0.31"
+          },
+          {
+            "timestamp": "2024-09-20T02:18:00Z",
+            "value": "0.28"
+          },
+          {
+            "timestamp": "2024-09-20T02:19:00Z",
+            "value": "0.28"
+          },
+          {
+            "timestamp": "2024-09-20T02:20:00Z",
+            "value": "0.29"
+          },
+          {
+            "timestamp": "2024-09-20T02:21:00Z",
+            "value": "0.285"
+          },
+          {
+            "timestamp": "2024-09-20T02:22:00Z",
+            "value": "0.275"
+          },
+          {
+            "timestamp": "2024-09-20T02:23:00Z",
+            "value": "0.305"
+          },
+          {
+            "timestamp": "2024-09-20T02:24:00Z",
+            "value": "0.27"
+          },
+          {
+            "timestamp": "2024-09-20T02:25:00Z",
+            "value": "0.275"
+          },
+          {
+            "timestamp": "2024-09-20T02:26:00Z",
+            "value": "0.27"
+          },
+          {
+            "timestamp": "2024-09-20T02:27:00Z",
+            "value": "0.265"
+          },
+          {
+            "timestamp": "2024-09-20T02:28:00Z",
+            "value": "0.27"
+          },
+          {
+            "timestamp": "2024-09-20T02:29:00Z",
+            "value": "0.275"
+          },
+          {
+            "timestamp": "2024-09-20T02:30:00Z",
+            "value": "0.305"
+          },
+          {
+            "timestamp": "2024-09-20T02:31:00Z",
+            "value": "0.315"
+          },
+          {
+            "timestamp": "2024-09-20T02:32:00Z",
+            "value": "0.265"
+          },
+          {
+            "timestamp": "2024-09-20T02:33:00Z",
+            "value": "0.28"
+          },
+          {
+            "timestamp": "2024-09-20T02:34:00Z",
+            "value": "0.265"
+          },
+          {
+            "timestamp": "2024-09-20T02:35:00Z",
+            "value": "0.26"
+          },
+          {
+            "timestamp": "2024-09-20T02:36:00Z",
+            "value": "0.26"
+          },
+          {
+            "timestamp": "2024-09-20T02:37:00Z",
+            "value": "0.51"
+          },
+          {
+            "timestamp": "2024-09-20T02:38:00Z",
+            "value": "13.18"
+          },
+          {
+            "timestamp": "2024-09-20T02:39:00Z",
+            "value": "13.165"
+          },
+          {
+            "timestamp": "2024-09-20T02:40:00Z",
+            "value": "0.98"
+          },
+          {
+            "timestamp": "2024-09-20T02:41:00Z",
+            "value": "0.685"
+          },
+          {
+            "timestamp": "2024-09-20T02:42:00Z",
+            "value": "0.455"
+          },
+          {
+            "timestamp": "2024-09-20T02:43:00Z",
+            "value": "0.445"
+          },
+          {
+            "timestamp": "2024-09-20T02:44:00Z",
+            "value": "0.37"
+          },
+          {
+            "timestamp": "2024-09-20T02:45:00Z",
+            "value": "0.475"
+          },
+          {
+            "timestamp": "2024-09-20T02:46:00Z",
+            "value": "0.44"
+          },
+          {
+            "timestamp": "2024-09-20T02:47:00Z",
+            "value": "0.34"
+          },
+          {
+            "timestamp": "2024-09-20T02:48:00Z",
+            "value": "0.31"
+          },
+          {
+            "timestamp": "2024-09-20T02:49:00Z",
+            "value": "0.32"
+          },
+          {
+            "timestamp": "2024-09-20T02:50:00Z",
+            "value": "0.375"
+          },
+          {
+            "timestamp": "2024-09-20T02:51:00Z",
+            "value": "0.34"
+          },
+          {
+            "timestamp": "2024-09-20T02:52:00Z",
+            "value": "0.245"
+          },
+          {
+            "timestamp": "2024-09-20T02:53:00Z",
+            "value": "0.365"
+          }
+        ]
+      },
+      "errorMessage": null,
+      "rsCode": "0000",
+      "rsMsg": "완료되었습니다."
+    }
+    ```
+    </details>
 
 ### Swagger Docs
 #### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
