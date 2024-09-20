@@ -32,6 +32,8 @@ default:
 		done
 	@echo "[*] Building cb-spider..."
 	@make -C cb-spider
+
+run:
 	@echo "[*] Linking folders..."
 	@mkdir -p meta_db/
 	@if [ ! -d "conf" ]; then \
@@ -45,8 +47,6 @@ default:
 	@rm -rf  cb-spider/conf && ln -sf ../conf cb-spider/conf
 	@rm -rf  cb-spider/log && ln -sf ../log cb-spider/log
 	@rm -f  cb-spider/setup.env && ln -sf ../setup.env cb-spider/setup.env
-
-run:
 	@cd cb-spider && ./bin/start.sh
 
 stop:
