@@ -30,7 +30,7 @@ public interface MonitoringClient {
     Object deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_CSP_PATH)
-    ResBody getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String metricType);
+    Object getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String metricType);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
     Object getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
