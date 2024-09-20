@@ -184,6 +184,7 @@ services:
     volumes:
       - /docker/influxdb/config:/etc/influxdb
       - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
+      - ./influxdb_init:/docker-entrypoint-initdb.d
     networks:
       - internal_network
       - external_network
