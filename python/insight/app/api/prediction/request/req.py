@@ -18,7 +18,7 @@ class PredictionPath(BaseModel):
     targetId: str = Field(Path(description='The ID of the target VM or MCI group.'))
 
 
-class MetricType(str, Enum):
+class PredictionMetricType(str, Enum):
     CPU = 'CPU'
     MEM = 'MEM'
     Disk = 'Disk'
@@ -27,7 +27,7 @@ class MetricType(str, Enum):
 
 class PredictionBody(BaseModel):
     target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    metric_type: MetricType = Field(..., description="The type of metric being monitored for predictions(CPU, MEM,"
+    metric_type: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(CPU, MEM,"
                                                      " Disk, System Load)", example="CPU")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
 
@@ -45,7 +45,7 @@ class GetHistoryPath(BaseModel):
 
 
 class GetPredictionHistoryQuery(BaseModel):
-    metric_type: MetricType = Field(Query(description='The type of metric to retrieve.'))
+    metric_type: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
     start_time: datetime = Field(Query(
         default=None,
         description='The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.'
