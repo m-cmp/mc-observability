@@ -1375,6 +1375,47 @@ definitions:
       password:
         type: string
     title: InfluxDBInfo
+  SpiderMonitoringInfo.Data:
+    type: object
+    properties:
+      metricName:
+        type: string
+      metricUnit:
+        type: string
+      timestampValues:
+        type: array
+        example:
+          - timestamp: '2024-09-20T02:01:00Z'
+            value: '0.445'
+        items:
+          $ref: '#/definitions/TimestampValue'
+      retentionPolicy:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+    title: SpiderMonitoringInfo.Data
+  ResBody<SpiderMonitoringInfo.Data>:
+    type: object
+    properties:
+      data:
+        type: object
+        items:
+          $ref: '#/definitions/SpiderMonitoringInfo.Data'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody<SpiderMonitoringInfo.Data>
+  TimestampValue:
+    type: object
+    properties:
+      timestamp:
+        type: string
+      value:
+        type: string
+    title: TimestampValue
   ResBody<List<MeasurementFieldInfo>>:
     type: object
     properties:
