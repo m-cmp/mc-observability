@@ -1183,6 +1183,18 @@ definitions:
       rsMsg:
         type: string
     title: ResBody<List<TargetInfo>>
+  ResBody<TargetInfo>:
+    type: object
+    properties:
+      data:
+        type: object
+        items:
+          $ref: '#/definitions/TargetInfo'
+      rsCode:
+        type: string
+      rsMsg:
+        type: string
+    title: ResBody<TargetInfo>
   TargetInfo:
     type: object
     properties:
