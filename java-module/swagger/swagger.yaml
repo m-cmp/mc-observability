@@ -1309,6 +1309,7 @@ paths:
               rsCode: '200'
               rsMsg: Success
           headers: {}
+definitions:
   ResBody<List<PluginDefInfo>>:
     type: object
     properties:
