@@ -26,7 +26,7 @@ def generate_enum_from_config(path: str, enum_name: str):
 
 
 TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType')
-MetricType = generate_enum_from_config('anomaly.metric_types.types', 'MetricType')
+AnomalyMetricType = generate_enum_from_config('anomaly.metric_types.types', 'MetricType')
 ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
 
 
@@ -34,7 +34,7 @@ class AnomalyDetectionTargetRegistration(BaseModel):
     nsId: str
     targetId: str
     target_type: TargetType = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    metric_type: MetricType = Field(..., description="The type of metric being monitored for anomalies (CPU or MEM)", example="CPU")
+    metric_type: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (CPU or MEM)", example="CPU")
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
 
@@ -48,7 +48,7 @@ class GetHistoryPathParams(BaseModel):
 
 
 class GetAnomalyHistoryFilter(BaseModel):
-    metric_type: MetricType = Field(Query(description='The type of metric to retrieve.'))
+    metric_type: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))
     start_time: datetime = Field(Query(
         default=None,
         description='The start timestamp for the range of prediction data to retrieve. '
