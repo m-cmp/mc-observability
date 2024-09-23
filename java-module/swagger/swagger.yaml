@@ -2230,14 +2230,6 @@ definitions:
     - 5m
     - 10m
     - 30m
-  HTTPValidationError:
-    title: HTTPValidationError
-    type: object
-    properties:
-      detail:
-        type: array
-        items:
-          $ref: '#/definitions/ValidationError'
   HistoryValue:
     title: HistoryValue
     type: object
@@ -2454,18 +2446,3 @@ definitions:
     enum:
     - VM
     - MCI
-  ValidationError:
-    title: ValidationError
-    type: object
-    properties:
-      loc:
-        type: array
-        items: {}
-      msg:
-        type: string
-      type:
-        type: string
-    required:
-    - loc
-    - msg
-    - type
