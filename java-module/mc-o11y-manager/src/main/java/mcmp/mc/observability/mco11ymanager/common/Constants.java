@@ -9,4 +9,6 @@ public class Constants {
     public static final String INFLUXDB_PATH = "/monitoring/influxdb";
     public static final String OPENSEARCH_PATH = "/monitoring/opensearch";
     public static final String MININGDB_PATH = "/monitoring/miningdb";
+    public static final String PREDICTION_PATH = "/insight/predictions";
+    public static final String ANOMALY_PATH = "/insight/anomaly-detection";
 }
