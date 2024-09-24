@@ -43,6 +43,15 @@ paths:
         - '[Target] Monitoring target management'
       summary: Get all mc-observability management target list in specified NS and MCI
       operationId: GET_targets_ns_mci
+      parameters:
+        - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
       produces:
         - '*/*'
       responses:
