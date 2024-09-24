@@ -66,7 +66,7 @@ Ex: http://observability_VM_PUBLIC_IP:9002
 API can be used as shown in the example below.  
 ```
 curl -X 'GET' \
-  'http://observability_VM_PUBLIC_IP:9001/api/o11y/insight/anomaly-detection/options' \
+  'http://observability_VM_PUBLIC_IP:18080/api/o11y/insight/anomaly-detection/options' \
   -H 'accept: application/json'
 ```
 
