@@ -262,7 +262,7 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01
 --header 'Accept: */*' | jq
 ```
 
-### 13. Register tail monitoring item to the VM (Run on any host)
+### 13. Register tail monitoring item (Run on any host)
 g1-1-1 example)
 
 - Encode tail configuration to base64
@@ -281,16 +281,9 @@ echo -e '  files = ["/var/log/syslog"]
     mci_group_id = "mci01"' | base64 -w 0
 ```
 
-- Check public IP of g1-1-1 VM
+- Send request with encoded pluginConfig content
 ```shell
-curl -u default:default -X 'GET' \
-  'http://observability_VM_PUBLIC_IP:1323/tumblebug/ns/ns01/mci/mci01/vm/g1-1-1' \
-  -H 'accept: application/json' | jq | grep publicIP
-```
-
-- Send request with encoded pluginConfig content to g1-1-1 VM
-```shell
-curl --location 'g1-1-1_VM_PUBLIC_IP:18081/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
@@ -300,10 +293,10 @@ curl --location 'g1-1-1_VM_PUBLIC_IP:18081/api/o11y/monitoring/ns01/mci01/target
 }'
 ```
 
-### 14. Register opensearch monitoring item to the VM (Run on any host)
+### 14. Register OpenSearch monitoring item (Run on any host)
 g1-1-1 example)
 
-- Send request with encoded pluginConfig content
+- Encode pluginConfig content
 ```shell
 echo -e '  urls = ["http://observability_VM_PUBLIC_IP:9200"]
   index_name = "telegraf-test"
@@ -312,7 +305,7 @@ echo -e '  urls = ["http://observability_VM_PUBLIC_IP:9200"]
 
 - Send request with encoded pluginConfig content
 ```shell
-curl --location 'g1-1-1_VM_PUBLIC_IP:18081/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
@@ -692,6 +685,70 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01
     }
     ```
     </details>
+
+### 14. Register agent monitoring items (Run on any host)
+g1-1-1 example)
+
+- Encode pluginConfig content
+```shell
+echo -e '  interval = "10s"' | base64 -w 0
+```
+
+- Send metric requests with encoded pluginConfig content
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "cpu",
+  "pluginSeq": "1",
+  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
+}'
+```
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "disk",
+  "pluginSeq": "2",
+  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
+}'
+```
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "mem",
+  "pluginSeq": "4",
+  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
+}'
+```
+
+### 14. Register InfluxDB (Run on any host)
+g1-1-1 example)
+
+- Encode pluginConfig content
+```shell
+echo -e '  urls = ["http://observability_VM_PUBLIC_IP:8086"]
+  database = "mc-observability"
+  retention_policy = "autogen"
+  username = "mc-agent"
+  password = "mc-agent"' | base64 -w 0
+```
+
+- Send request with encoded pluginConfig content
+```shell
+curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "name": "influxdb",
+  "pluginSeq": "9",
+  "pluginConfig": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}'
+```
 
 ### Swagger Docs
 #### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
