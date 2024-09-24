@@ -43,6 +43,15 @@ paths:
         - '[Target] Monitoring target management'
       summary: Get all mc-observability management target list in specified NS and MCI
       operationId: GET_targets_ns_mci
+      parameters:
+        - name: nsId
+          in: path
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          required: true
+          type: string
       produces:
         - '*/*'
       responses:
@@ -887,264 +896,398 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/TriggerResBody«Void»'
+  /api/o11y/insight/anomaly-detection/options:
+    get:
+      description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
+      summary: GetAnomalyDetectionOptions
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyDetectionOptions
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionOptions'
+          examples:
+            application/json:
+              data:
+                target_types:
+                - VM
+                - MCI
+                metric_types:
+                - CPU
+                - MEM
+                execution_intervals:
+                - 5m
+                - 10m
+                - 30m
+              rsCode: '200'
+              rsMsg: Success
+          headers: {}
+  /api/o11y/insight/anomaly-detection/settings:
+    get:
+      description: Fetch the current settings for all anomaly detection targets.
+      summary: GetAllAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAllAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          headers: {}
+    post:
+      description: Register a target for anomaly detection and automatically schedule detection tasks.
+      summary: PostAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: PostAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetRegistration'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
+    put:
+      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
+      summary: PutAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: PutAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+          headers: {}
+    delete:
+      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
+      summary: DeleteAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: DeleteAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
+    get:
+      description: Fetch the current settings for a specific anomaly detection target.
+      summary: GetTargetAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetTargetAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
+    get:
+      description: Fetch the results of anomaly detection for a specific target within a given time range.
+      summary: GetAnomalyDetectionHistory
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyDetectionHistory
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for the prediction.
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: The ID of the target VM or MCI group.
+      - name: metric_type
+        in: query
+        required: true
+        enum:
+        - CPU
+        - MEM
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        format: date-time
+        description: The start timestamp for the range of prediction data to retrieve. Defaults to 7 days before the current time if not provided.
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        format: date-time
+        description: The end timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/{settingSeq}:
+    post:
+      description: Request anomaly detection
+      summary: PostAnomalyDetection
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: PostAnomalyDetection
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+          headers: {}
   /api/o11y/insight/predictions/options:
     get:
-      tags:
-        - '[Insight] Prediction'
-      summary: Get available options for predictions
       description: Fetch the available target types, metric types, and prediction range options for the prediction API.
-      operationId: getPredictionOptions
+      summary: GetPredictionOptions
+      tags:
+      - '[Insight] Prediction'
+      operationId: GetPredictionOptions
+      deprecated: false
       produces:
-        - application/json
+      - application/json
+      parameters: []
       responses:
-        200:
+        '200':
           description: Successful retrieval of prediction options
           schema:
             $ref: '#/definitions/ResBodyPredictionOptions'
+          examples:
+            application/json:
+              data:
+                target_types:
+                - VM
+                - MCI
+                metric_types:
+                - CPU
+                - MEM
+                - Disk
+                - System Load
+                prediction_ranges:
+                  min: 1h
+                  max: 2160h
+              rsCode: '200'
+              rsMsg: Success
+          headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      tags:
-        - '[Insight] Prediction'
-      summary: Predict monitoring data metrics for a VM or MCI group
       description: Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.
-      operationId: predictMetrics
-      consumes:
-        - application/json
+      summary: PostPrediction
+      tags:
+      - '[Insight] Prediction'
+      operationId: PostPrediction
+      deprecated: false
       produces:
-        - application/json
+      - application/json
+      consumes:
+      - application/json
       parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID for the prediction.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target VM or MCI group.
-        - in: body
-          name: body
-          description: Parameters required to predict monitoring data.
-          required: true
-          schema:
-            $ref: '#/definitions/PredictionRequest'
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for the prediction.
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: The ID of the target VM or MCI group.
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PredictionBody'
       responses:
-        200:
+        '200':
           description: Successful prediction response
           schema:
-            $ref: '#/definitions/ResBodyPredictionResponse'
+            $ref: '#/definitions/ResBodyPredictionResult'
+          examples:
+            application/json:
+              data:
+                nsId: string
+                targetId: string
+                metric_type: CPU
+                target_type: VM
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  predicted_value: 75
+                - timestamp: 2024-08-22T01:00:00Z
+                  predicted_value: 78
+                - timestamp: 2024-08-22T02:00:00Z
+                  predicted_value: 80
+              rsCode: '200'
+              rsMsg: Success
+          headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
     get:
-      tags:
-        - '[Insight] Prediction'
-      summary: Get historical prediction data
       description: Get previously stored prediction data for a specific VM or MCI group.
-      operationId: getPredictionHistory
+      summary: GetPredictionHistory
+      tags:
+      - '[Insight] Prediction'
+      operationId: GetPredictionHistory
+      deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID for the prediction.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target VM or MCI group.
-        - in: query
-          name: metric_type
-          type: string
-          required: true
-          description: The type of metric to retrieve.
-          enum:
-            - CPU
-            - MEM
-            - Disk
-            - System Load
-        - in: query
-          name: start_time
-          type: string
-          format: date-time
-          required: false
-          description: The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
-        - in: query
-          name: end_time
-          type: string
-          format: date-time
-          required: false
-          description: The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for the prediction.
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: The ID of the target VM or MCI group.
+      - name: metric_type
+        in: query
+        required: true
+        enum:
+        - CPU
+        - MEM
+        - Disk
+        - System Load
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        format: date-time
+        description: The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        format: date-time
+        description: The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.
       responses:
-        200:
+        '200':
           description: Successfully retrieved prediction history
           schema:
-            $ref: '#/definitions/ResBodyPredictionHistoryResponse'
-  /api/o11y/insight/anomaly-detection/options:
-    get:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Get available options for anomaly detection
-      description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
-      operationId: getAnomalyDetectionOptions
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Successful retrieval of anomaly detection options
-          schema:
-            $ref: '#/definitions/ResBodyAnomalyDetectionOptions'
-  /api/o11y/insight/anomaly-detection/settings:
-    get:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Get all anomaly detection settings
-      description: Fetch the current settings for all anomaly detection targets.
-      operationId: getAllAnomalyDetectionTargets
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Successful retrieval of anomaly detection targets
-          schema:
-            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
-    post:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Register an anomaly detection target
-      description: Register a target for anomaly detection and automatically schedule detection tasks.
-      operationId: registerAnomalyDetectionTarget
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: body
-          description: Parameters required to register the anomaly detection target.
-          required: true
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetRegistration'
-      responses:
-        200:
-          description: Successful registration of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
-    put:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Update anomaly detection settings for a specific target
-      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
-      operationId: updateAnomalyDetectionTarget
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: settingSeq
-          type: integer
-          required: true
-          description: The Setting Seq.
-        - in: body
-          name: body
-          description: Parameters required to update the anomaly detection target.
-          required: true
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetUpdate'
-      responses:
-        200:
-          description: Successful update of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-    delete:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Delete an anomaly detection target
-      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
-      operationId: deleteAnomalyDetectionTarget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: settingSeq
-          type: integer
-          required: true
-          description: The Setting Seq.
-      responses:
-        200:
-          description: Successful deletion of anomaly detection target
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
-    get:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Retrieve settings for a specific anomaly detection target
-      description: Fetch the current settings for a specific anomaly detection target.
-      operationId: getSpecificAnomalyDetectionTarget
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target (VM ID or MCI ID).
-      responses:
-        200:
-          description: Successful retrieval of anomaly detection targets
-          schema:
-            $ref: '#/definitions/ResBodyAnomalyDetectionTarget'
-  /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
-    get:
-      tags:
-        - '[Insight] Anomaly Detection'
-      summary: Retrieve anomaly detection results
-      description: Fetch the results of anomaly detection for a specific target within a given time range.
-      operationId: getAnomalyDetectionResults
-      produces:
-        - application/json
-      parameters:
-        - in: path
-          name: nsId
-          type: string
-          required: true
-          description: The Namespace ID.
-        - in: path
-          name: targetId
-          type: string
-          required: true
-          description: The ID of the target (VM ID or MCI ID).
-        - in: query
-          name: metric_type
-          type: string
-          required: true
-          description: The type of metric for which to retrieve anomaly detection results (cpu, mem).
-        - in: query
-          name: start_time
-          type: string
-          format: date-time
-          required: true
-          description: The start timestamp for the range of results to retrieve.
-        - in: query
-          name: end_time
-          type: string
-          format: date-time
-          required: true
-          description: The end timestamp for the range of results to retrieve.
-      responses:
-        200:
-          description: Successful retrieval of anomaly detection results
-          schema:
-            $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
+            $ref: '#/definitions/ResBodyPredictionHistory'
+          examples:
+            application/json:
+              data:
+                nsId: string
+                targetId: string
+                metric_type: CPU
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  predicted_value: 50
+                - timestamp: 2024-08-22T01:00:00Z
+                  predicted_value: 55
+                - timestamp: 2024-08-22T02:00:00Z
+                  predicted_value: 60
+              rsCode: '200'
+              rsMsg: Success
+          headers: {}
 definitions:
   ResBody<List<PluginDefInfo>>:
     type: object
@@ -1996,257 +2139,313 @@ definitions:
         description: Sequence by trigger target
       targetId:
         type: string
-  PredictionOptions:
+  AnomalyDetectionHistoryResponse:
+    title: AnomalyDetectionHistoryResponse
     type: object
     properties:
-      target_types:
+      nsId:
+        description: The Namespace ID.
+        type: string
+      targetId:
+        description: The ID of the target (VM ID or MCI ID).
+        type: string
+      metric_type:
+        description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
+        example: CPU
+        type: string
+      values:
+        description: List of anomaly detection results for the given time range.
         type: array
         items:
-          type: string
-        description: List of available target types.
-        example:
-          - "VM"
-          - "MCI"
-      metric_types:
-        type: array
-        items:
-          type: string
-        description: List of available metric types for prediction.
-        example:
-          - "CPU"
-          - "MEM"
-          - "Disk"
-          - "System Load"
-      prediction_ranges:
-        type: object
-        properties:
-          min:
-            type: string
-            description: Minimum allowed prediction range in hours.
-            example: "1h"
-          max:
-            type: string
-            description: Maximum allowed prediction range in hours.
-            example: "2160h"
-  ResBodyPredictionOptions:
-    type: object
-    title: "ResBody<PredictionOptions>"
-    properties:
-      data:
-        $ref: '#/definitions/PredictionOptions'
-      rsCode:
-        type: string
-        description: Response code indicating success or failure.
-        example: "200"
-      rsMsg:
-        type: string
-        description: Response message.
-        example: "Success"
-  PredictionRequest:
-    type: object
+          $ref: '#/definitions/AnomalyDetectionHistoryValue'
     required:
-      - target_type
-      - metric_type
-      - prediction_range
-    properties:
-      target_type:
-        type: string
-        description: The type of the target (VM or MCI).
-        enum:
-          - VM
-          - MCI
-        example: "VM"
-      metric_type:
-        type: string
-        description: The type of metric to predict. (CPU, MEM, Disk, System Load)
-        enum:
-          - CPU
-          - MEM
-          - Disk
-          - System Load
-        example: "CPU"
-      prediction_range:
-        type: string
-        description: The range of the data to predict, between '1h' and '2160h'.
-        example: "24h"
-  PredictionResponse:
+    - nsId
+    - targetId
+    - metric_type
+    - values
+  AnomalyDetectionHistoryValue:
+    title: AnomalyDetectionHistoryValue
     type: object
     properties:
-      nsId:
+      timestamp:
+        description: The timestamp for the anomaly detection result.
         type: string
-        description: The Namespace ID.
-      targetId:
-        type: string
-        description: The ID of the target (VM ID or MCI ID).
-      metric_type:
-        type: string
-        description: The type of metric being predicted (e.g., CPU, MEM).
-        example: "CPU"
-      target_type:
-        type: string
-        description: The type of the target (VM or MCI).
-        example: "VM"
-      values:
-        type: array
-        items:
-          type: object
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-              description: The timestamp corresponding to the predicted value.
-            predicted_value:
-              type: number
-              description: The predicted metric value for the corresponding timestamp.
-        example:
-          - timestamp: "2024-08-22T00:00:00Z"
-            predicted_value: 75
-          - timestamp: "2024-08-22T01:00:00Z"
-            predicted_value: 78
-          - timestamp: "2024-08-22T02:00:00Z"
-            predicted_value: 80
-  ResBodyPredictionResponse:
-    type: object
-    title: "ResBody<PredictionResponse>"
-    properties:
-      data:
-        $ref: '#/definitions/PredictionResponse'
-      rsCode:
-        type: string
-        description: Response code indicating success or failure.
-        example: "200"
-      rsMsg:
-        type: string
-        description: Response message.
-        example: "Success"
-  PredictionHistoryResponse:
-    type: object
-    properties:
-      nsId:
-        type: string
-        description: The Namespace ID.
-      targetId:
-        type: string
-        description: The ID of the target (VM ID or MCI ID).
-      metric_type:
-        type: string
-        description: The type of metric being predicted (e.g., CPU, MEM).
-        example: "CPU"
-      values:
-        type: array
-        items:
-          type: object
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-              description: The timestamp corresponding to the predicted value.
-            predicted_value:
-              type: number
-              description: The predicted metric value for the corresponding timestamp.
-        example:
-          - timestamp: "2024-08-22T00:00:00Z"
-            predicted_value: 50
-          - timestamp: "2024-08-22T01:00:00Z"
-            predicted_value: 55
-          - timestamp: "2024-08-22T02:00:00Z"
-            predicted_value: 60
-  ResBodyPredictionHistoryResponse:
-    type: object
-    title: "ResBody<PredictionHistoryResponse>"
-    properties:
-      data:
-        $ref: '#/definitions/PredictionHistoryResponse'
-      rsCode:
-        type: string
-        description: Response code indicating success or failure.
-        example: "200"
-      rsMsg:
-        type: string
-        description: Response message.
-        example: "Success"
+        format: date-time
+      anomaly_score:
+        description: The anomaly score for the corresponding timestamp.
+        type: number
+        format: double
+      isAnomaly:
+        description: Whether the data point is considered an anomaly (1) or normal (0).
+        type: integer
+        format: int32
+      value:
+        description: The original monitoring data value for the corresponding timestamp.
+        type: number
+        format: double
+    required:
+    - timestamp
+    - anomaly_score
+    - isAnomaly
+    - value
   AnomalyDetectionOptions:
+    title: AnomalyDetectionOptions
     type: object
     properties:
       target_types:
         type: array
         items:
           type: string
-        description: List of available target types.
-        example:
-          - "VM"
-          - "MCI"
       metric_types:
         type: array
         items:
           type: string
-        description: List of available metric types for anomaly detection.
-        example:
-          - "CPU"
-          - "MEM"
       execution_intervals:
         type: array
         items:
           type: string
-        description: List of available intervals for anomaly detection.
-        example:
-          - "5m"
-          - "10m"
-          - "30m"
-  ResBodyAnomalyDetectionOptions:
+    required:
+    - target_types
+    - metric_types
+    - execution_intervals
+  AnomalyDetectionSettings:
+    title: AnomalyDetectionSettings
     type: object
-    title: "ResBody<AnomalyDetectionOptions>"
+    properties:
+      seq:
+        type: integer
+        format: int32
+      nsId:
+        type: string
+      targetId:
+        type: string
+      target_type:
+        type: string
+      metric_type:
+        type: string
+      execution_interval:
+        type: string
+      last_execution:
+        type: string
+        format: date-time
+      createAt:
+        type: string
+        format: date-time
+    required:
+    - seq
+    - nsId
+    - targetId
+    - target_type
+    - metric_type
+    - execution_interval
+    - last_execution
+    - createAt
+  AnomalyDetectionTargetRegistration:
+    title: AnomalyDetectionTargetRegistration
+    type: object
+    properties:
+      nsId:
+        type: string
+      targetId:
+        type: string
+      target_type:
+        type: object
+        allOf:
+        - $ref: '#/definitions/TargetType'
+        - description: The type of the target (VM or MCI).
+          example: VM
+      metric_type:
+        type: object
+        allOf:
+        - $ref: '#/definitions/MetricType'
+        - description: The type of metric being monitored for anomalies (CPU or MEM)
+          example: CPU
+      execution_interval:
+        type: object
+        allOf:
+        - $ref: '#/definitions/ExecutionInterval'
+        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
+          example: 5m
+    required:
+    - nsId
+    - targetId
+    - target_type
+    - metric_type
+    - execution_interval
+  AnomalyDetectionTargetUpdate:
+    title: AnomalyDetectionTargetUpdate
+    type: object
+    properties:
+      execution_interval:
+        type: object
+        allOf:
+        - $ref: '#/definitions/ExecutionInterval'
+        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
+          example: 5m
+    required:
+    - execution_interval
+  ExecutionInterval:
+    title: ExecutionInterval
+    description: An enumeration.
+    type: string
+    enum:
+    - 5m
+    - 10m
+    - 30m
+  HistoryValue:
+    title: HistoryValue
+    type: object
+    properties:
+      timestamp:
+        type: string
+      predicted_value:
+        type: number
+        format: double
+    required:
+    - timestamp
+  MetricType:
+    title: MetricType
+    description: An enumeration.
+    type: string
+    enum:
+    - CPU
+    - MEM
+  PredictValue:
+    title: PredictValue
+    type: object
+    properties:
+      timestamp:
+        type: string
+      predicted_value:
+        type: number
+        format: double
+    required:
+    - timestamp
+  PredictionBody:
+    title: PredictionBody
+    type: object
+    properties:
+      target_type:
+        description: The type of the target (VM or MCI).
+        example: VM
+        type: string
+      metric_type:
+        type: object
+        allOf:
+        - $ref: '#/definitions/PredictionMetricType'
+        - description: The type of metric being monitored for predictions(CPU, MEM, Disk, System Load)
+          example: CPU
+      prediction_range:
+        description: Data prediction range as of now (1h~2,160h)
+        example: 24h
+        type: string
+    required:
+    - target_type
+    - metric_type
+    - prediction_range
+  PredictionHistory:
+    title: PredictionHistory
+    type: object
+    properties:
+      nsId:
+        type: string
+      targetId:
+        type: string
+      metric_type:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/HistoryValue'
+    required:
+    - nsId
+    - targetId
+    - metric_type
+    - values
+  PredictionMetricType:
+    title: PredictionMetricType
+    description: An enumeration.
+    type: string
+    enum:
+    - CPU
+    - MEM
+    - Disk
+    - System Load
+  PredictionOptions:
+    title: PredictionOptions
+    type: object
+    properties:
+      target_types:
+        type: array
+        items:
+          type: string
+      metric_types:
+        type: array
+        items:
+          type: string
+      prediction_ranges:
+        type: object
+        additionalProperties:
+          type: string
+    required:
+    - target_types
+    - metric_types
+    - prediction_ranges
+  PredictionResult:
+    title: PredictionResult
+    type: object
+    properties:
+      nsId:
+        type: string
+      targetId:
+        type: string
+      metric_type:
+        type: string
+      target_type:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/PredictValue'
+    required:
+    - nsId
+    - targetId
+    - metric_type
+    - target_type
+    - values
+  ResBodyAnomalyDetectionHistoryResponse:
+    title: ResBodyAnomalyDetectionHistoryResponse
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/AnomalyDetectionHistoryResponse'
+      rsCode:
+        description: Response code
+        type: string
+        default: '200'
+      rsMsg:
+        description: Response message
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyAnomalyDetectionOptions:
+    title: ResBodyAnomalyDetectionOptions
+    type: object
     properties:
       data:
         $ref: '#/definitions/AnomalyDetectionOptions'
       rsCode:
         type: string
-        description: Response code indicating success or failure.
-        example: "200"
+        default: '200'
       rsMsg:
         type: string
-        description: Response message.
-        example: "Success"
-  AnomalyDetectionSettings:
-    type: object
-    properties:
-      seq:
-        type: integer
-        description: "The sequence number of the target."
-        example: 1
-      nsId:
-        type: string
-        description: "The namespace ID associated with the setting."
-        example: "namespace-01"
-      targetId:
-        type: string
-        description: "The ID of the target (e.g., VM ID or MCI ID)."
-        example: "vm-01"
-      target_type:
-        type: string
-        description: "The type of the target (e.g., VM, container, etc.)."
-        example: "VM"
-      metric_type:
-        type: string
-        description: "The type of metric being monitored for anomalies (e.g., CPU, memory)."
-        example: "CPU"
-      execution_interval:
-        type: string
-        description: "The interval at which anomaly detection runs (e.g., 5m for 5 minutes)."
-        example: "5m"
-      last_execution:
-        type: string
-        format: date-time
-        description: "The last time anomaly detection was executed for this target."
-        example: "2024-08-22T00:00:00Z"
-      createAt:
-        type: string
-        format: date-time
-        description: "The timestamp when the target was created."
-        example: "2024-08-15T00:00:00Z"
+        default: Success
+    required:
+    - data
   ResBodyAnomalyDetectionSettings:
+    title: ResBodyAnomalyDetectionSettings
     type: object
-    title: "ResBody<List<AnomalyDetectionSettings>>"
     properties:
       data:
         type: array
@@ -2254,127 +2453,58 @@ definitions:
           $ref: '#/definitions/AnomalyDetectionSettings'
       rsCode:
         type: string
-        description: Response code indicating success or failure.
-        example: "200"
+        default: '200'
       rsMsg:
         type: string
-        description: Response message.
-        example: "Success"
-  AnomalyDetectionHistoryResponse:
+        default: Success
+    required:
+    - data
+  ResBodyPredictionHistory:
+    title: ResBodyPredictionHistory
     type: object
-    properties:
-      nsId:
-        type: string
-        description: The Namespace ID.
-      targetId:
-        type: string
-        description: The ID of the target (VM ID or MCI ID).
-      metric_type:
-        type: string
-        description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
-        example: "CPU"
-      values:
-        type: array
-        items:
-          type: object
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-              description: The timestamp for the anomaly detection result.
-            anomaly_score:
-              type: number
-              description: The anomaly score for the corresponding timestamp.
-            anomaly_act:
-              type: integer
-              description: Whether the data point is considered an anomaly (1) or normal (0).
-            value:
-              type: number
-              description: The original monitoring data value for the corresponding timestamp.
-        example:
-          - timestamp: "2024-08-22T00:00:00Z"
-            anomaly_score: 0.01
-            anomaly_act: 0
-            value: 0.75
-          - timestamp: "2024-08-22T01:00:00Z"
-            anomaly_score: 0.58
-            anomaly_act: 1
-            value: 3.85
-          - timestamp: "2024-08-22T02:00:00Z"
-            anomaly_score: 0.99
-            anomaly_act: 1
-            value: 80.7
-  ResBodyAnomalyDetectionHistoryResponse:
-    type: object
-    title: "ResBody<AnomalyDetectionHistoryResponse>"
     properties:
       data:
-        $ref: '#/definitions/AnomalyDetectionHistoryResponse'
+        $ref: '#/definitions/PredictionHistory'
       rsCode:
         type: string
-        description: Response code
-        example: "200"
+        default: '200'
       rsMsg:
         type: string
-        description: Response message
-        example: "Success"
-  ResBodyAnomalyDetectionTarget:
+        default: Success
+    required:
+    - data
+  ResBodyPredictionOptions:
+    title: ResBodyPredictionOptions
     type: object
-    title: "ResBody<AnomalyDetectionTarget>"
     properties:
       data:
-        type: array
-        items:
-          $ref: '#/definitions/AnomalyDetectionSettings'
+        $ref: '#/definitions/PredictionOptions'
       rsCode:
         type: string
-        description: Response code
-        example: "200"
+        default: '200'
       rsMsg:
         type: string
-        description: Response message
-        example: "Success"
-  AnomalyDetectionTargetRegistration:
-    type: object
+        default: Success
     required:
-      - nsId
-      - targetId
-      - target_type
-      - metric_type
-      - execution_interval
-    properties:
-      nsId:
-        type: string
-        description: "The namespace ID associated with the anomaly detection target."
-        example: "namespace-01"
-      targetId:
-        type: string
-        description: "The ID of the target (e.g., VM ID or MCI ID)."
-        example: "vm-01"
-      target_type:
-        type: string
-        description: "The type of the target (VM or MCI)."
-        enum:
-          - VM
-          - MCI
-        example: "VM"
-      metric_type:
-        type: string
-        description: "The type of metric being monitored for anomalies (CPU or MEM)."
-        enum:
-          - CPU
-          - MEM
-        example: "CPU"
-      execution_interval:
-        type: string
-        description: "The interval at which anomaly detection runs (e.g., 5m, 10m, 30m)."
-        example: "5m"
-  AnomalyDetectionTargetUpdate:
+    - data
+  ResBodyPredictionResult:
+    title: ResBodyPredictionResult
     type: object
-    required:
-      - execution_interval
     properties:
-      execution_interval:
+      data:
+        $ref: '#/definitions/PredictionResult'
+      rsCode:
         type: string
-        description: "The interval at which anomaly detection runs (5m, 10m, 30m)"
-        example: "10m"
+        default: '200'
+      rsMsg:
+        type: string
+        default: Success
+    required:
+    - data
+  TargetType:
+    title: TargetType
+    description: An enumeration.
+    type: string
+    enum:
+    - VM
+    - MCI

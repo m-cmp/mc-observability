@@ -1,6 +1,6 @@
 get_options_description = {
     "api_description": "Fetch the available target types, metric types, and prediction range options for the prediction API.",
-    "responses": {
+    "response": {
         "200": {
             "description": "Successful retrieval of prediction options",
             "content": {

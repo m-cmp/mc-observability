@@ -13,7 +13,9 @@ router = APIRouter()
 @router.get(
     path='/predictions/options',
     description=get_options_description['api_description'],
-    responses=get_options_description['responses']
+    responses=get_options_description['response'],
+    response_model=ResBodyPredictionOptions,
+    operation_id="GetPredictionOptions"
 )
 async def get_prediction_options():
     config = ConfigManager()
@@ -25,7 +27,9 @@ async def get_prediction_options():
 @router.post(
     path='/predictions/nsId/{nsId}/target/{targetId}',
     description=post_prediction_description['api_description'],
-    responses=post_prediction_description['response']
+    responses=post_prediction_description['response'],
+    response_model=ResBodyPredictionResult,
+    operation_id="PostPrediction"
 )
 async def predict_monitoring_data(
         body_params: PredictionBody,
@@ -49,7 +53,9 @@ async def predict_monitoring_data(
 @router.get(
     path='/predictions/nsId/{nsId}/target/{targetId}/history',
     description=get_history_description['api_description'],
-    responses=get_history_description['response']
+    responses=get_history_description['response'],
+    response_model=ResBodyPredictionHistory,
+    operation_id="GetPredictionHistory"
 )
 async def get_prediction_history(
         path_params: GetHistoryPath = Depends(),
