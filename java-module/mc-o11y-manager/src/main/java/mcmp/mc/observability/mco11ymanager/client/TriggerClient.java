@@ -14,31 +14,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "trigger-manager", url = "${feign.agent-manager.url:}")
 public interface TriggerClient {
 
-    @GetMapping(Constants.TRIGGER_POLICY_PATH + "/history")
+    @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/history")
     Object getTriggerHistory(@RequestParam Long policySeq);
-    @GetMapping(Constants.TRIGGER_POLICY_PATH)
+    @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH)
     Object getTriggerPolicy();
-    @PostMapping(Constants.TRIGGER_POLICY_PATH)
+    @PostMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH)
     Object insertTriggerPolicy(@RequestBody Object body);
-    @PatchMapping(Constants.TRIGGER_POLICY_PATH + "/{policySeq}")
+    @PatchMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/{policySeq}")
     Object updateTriggerPolicy(@PathVariable Long policySeq, @RequestBody Object body);
-    @DeleteMapping(Constants.TRIGGER_POLICY_PATH + "/{policySeq}")
+    @DeleteMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/{policySeq}")
     Object deleteTriggerPolicy(@PathVariable Long policySeq);
-    @GetMapping(Constants.TRIGGER_POLICY_PATH + "/target")
+    @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/target")
     Object getTriggerPolicyTarget(@RequestParam Long policySeq);
-    @PutMapping(Constants.TRIGGER_POLICY_PATH + "/{policySeq}/target")
+    @PutMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/{policySeq}/target")
     Object updateTriggerPolicyTarget(@PathVariable Long policySeq, @RequestBody Object body);
 
-    @GetMapping(Constants.TRIGGER_ALERT_PATH + "/email")
+    @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/email")
     Object getTriggerAlertEmail(@PathVariable Long policySeq);
-    @PostMapping(Constants.TRIGGER_ALERT_PATH + "/email")
+    @PostMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/email")
     Object insertTriggerAlertEmail(@PathVariable Long policySeq, @RequestBody Object body);
-    @DeleteMapping(Constants.TRIGGER_ALERT_PATH + "/email/{seq}")
+    @DeleteMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/email/{seq}")
     Object deleteTriggerAlertEmail(@PathVariable Long policySeq, @PathVariable Long seq);
-    @GetMapping(Constants.TRIGGER_ALERT_PATH + "/slack")
+    @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/slack")
     Object getTriggerAlertSlack(@PathVariable Long policySeq);
-    @PostMapping(Constants.TRIGGER_ALERT_PATH + "/slack")
+    @PostMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/slack")
     Object insertTriggerAlertSlack(@PathVariable Long policySeq, @RequestBody Object body);
-    @DeleteMapping(Constants.TRIGGER_ALERT_PATH + "/slack/{seq}")
+    @DeleteMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/slack/{seq}")
     Object deleteTriggerAlertSlack(@PathVariable Long policySeq, @PathVariable Long seq);
 }
