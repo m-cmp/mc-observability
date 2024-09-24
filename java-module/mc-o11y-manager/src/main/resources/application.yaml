@@ -22,4 +22,4 @@ feign:
     id: ${TUMBLEBUG_ID:default}
     pw: ${TUMBLEBUG_PW:default}
   insight:
-    url: http://localhost:9001
+    url: ${INSIGHT_URL:http://mc-o11y-insight:9001}
