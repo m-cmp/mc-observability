@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(TriggerConstants.TRIGGER_URI + "/policy/{policySeq}" + "/alert")
+@RequestMapping(TriggerConstants.TRIGGER_URI + "/{policySeq}" + "/alert")
 public class TriggerPolicyAlertController {
 
     private final TriggerPolicyAlertService triggerPolicyAlertService;
