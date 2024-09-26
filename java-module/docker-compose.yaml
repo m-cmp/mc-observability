@@ -206,6 +206,8 @@ services:
     container_name: mc-o11y-kapacitor
     ports:
       - 9092:9092
+    environment:
+      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-o11y-influx:8086
     volumes:
       - /docker/kapacitor_data:/var/lib/kapacitor
     networks:
