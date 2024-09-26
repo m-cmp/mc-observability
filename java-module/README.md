@@ -142,7 +142,9 @@ cp .env.sample .env
 ### 5. Run docker services
 ```
 sudo mkdir -p /docker/opensearch
+sudo mkdir -p /docker/kapacitor_data
 sudo chown -R 1000:1000 /docker/opensearch
+sudo chown -R 999:999 /docker/kapacitor_data
 sudo docker compose up -d
 ```
 
