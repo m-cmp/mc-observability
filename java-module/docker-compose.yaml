@@ -201,6 +201,17 @@ services:
       - internal_network
       - external_network
 
+  kapacitor:
+    image: kapacitor:1.7.5
+    container_name: mc-o11y-kapacitor
+    ports:
+      - 9092:9092
+    volumes:
+      - /docker/kapacitor_data:/var/lib/kapacitor
+    networks:
+      - internal_network
+      - external_network
+
   opensearch-node1:
     image: opensearchproject/opensearch:1.3.19
     container_name: opensearch-node1
