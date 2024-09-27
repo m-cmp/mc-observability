@@ -14,16 +14,16 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: email
-    password: password
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:gmail_account@gmail.com}
+    password: ${SMTP_PASSWORD:gmail_app_password}
     properties:
       mail:
         smtp:
-          auth: true
+          auth: ${SMTP_AUTH:true}
           starttls:
-            enable: true
+            enable: ${SMTP_ENABLE_TLS:true}
 
 springdoc:
   swagger-ui:
