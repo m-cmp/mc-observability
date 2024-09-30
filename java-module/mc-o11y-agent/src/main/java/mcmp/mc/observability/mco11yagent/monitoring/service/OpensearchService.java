@@ -27,6 +27,7 @@ import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.index.query.RangeQueryBuilder;
 import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -101,6 +102,8 @@ public class OpensearchService {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(boolQueryBuilder);
             if( logsInfo.getLimit() != null ) searchSourceBuilder.size(logsInfo.getLimit().intValue());
+
+            searchSourceBuilder.sort("@timestamp", SortOrder.DESC);
 
             SearchRequest searchRequest = new SearchRequest(opensearchInfo.getIndexName());
             searchRequest.source(searchSourceBuilder);
