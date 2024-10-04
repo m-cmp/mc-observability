@@ -18,7 +18,7 @@ class AnomalySettingsService:
                 nsId=setting.NAMESPACE_ID,
                 targetId=setting.TARGET_ID,
                 target_type=setting.TARGET_TYPE,
-                measurements=setting.MEASUREMENT,
+                measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION,
                 createAt=setting.REGDATE
