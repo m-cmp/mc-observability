@@ -27,7 +27,7 @@ class PredictionMetricType(str, Enum):
 
 class PredictionBody(BaseModel):
     target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    measurements: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
+    measurement: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
                                                      " disk, system load)", example="cpu")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
 
