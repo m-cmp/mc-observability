@@ -1088,8 +1088,8 @@ paths:
         in: query
         required: true
         enum:
-        - CPU
-        - MEM
+        - cpu
+        - mem
         type: string
         description: The type of metric to retrieve.
       - name: start_time
@@ -1168,7 +1168,7 @@ paths:
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      description: Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.
+      description: Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.
       summary: PostPrediction
       tags:
       - '[Insight] Prediction'
@@ -1249,10 +1249,10 @@ paths:
         in: query
         required: true
         enum:
-        - CPU
-        - MEM
-        - Disk
-        - System Load
+        - cpu
+        - mem
+        - disk
+        - system load
         type: string
         description: The type of metric to retrieve.
       - name: start_time
@@ -2150,8 +2150,8 @@ definitions:
         description: The ID of the target (VM ID or MCI ID).
         type: string
       measurement:
-        description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
-        example: CPU
+        description: The type of metric being monitored for anomalies (e.g., cpu, mem).
+        example: cpu
         type: string
       values:
         description: List of anomaly detection results for the given time range.
@@ -2258,8 +2258,8 @@ definitions:
         type: object
         allOf:
         - $ref: '#/definitions/MetricType'
-        - description: The type of metric being monitored for anomalies (CPU or MEM)
-          example: CPU
+        - description: The type of metric being monitored for anomalies (cpu or mem)
+          example: cpu
       execution_interval:
         type: object
         allOf:
@@ -2308,8 +2308,8 @@ definitions:
     description: An enumeration.
     type: string
     enum:
-    - CPU
-    - MEM
+    - cpu
+    - mem
   PredictValue:
     title: PredictValue
     type: object
@@ -2333,8 +2333,8 @@ definitions:
         type: object
         allOf:
         - $ref: '#/definitions/PredictionMetricType'
-        - description: The type of metric being monitored for predictions(CPU, MEM, Disk, System Load)
-          example: CPU
+        - description: The type of metric being monitored for predictions(cpu, mem, disk, system load)
+          example: cpu
       prediction_range:
         description: Data prediction range as of now (1h~2,160h)
         example: 24h
@@ -2367,10 +2367,10 @@ definitions:
     description: An enumeration.
     type: string
     enum:
-    - CPU
-    - MEM
-    - Disk
-    - System Load
+    - cpu
+    - mem
+    - disk
+    - system load
   PredictionOptions:
     title: PredictionOptions
     type: object

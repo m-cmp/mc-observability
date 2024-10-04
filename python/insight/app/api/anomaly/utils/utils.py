@@ -77,8 +77,8 @@ class AnomalyService:
     @staticmethod
     def _build_body(setting: object):
         field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
+            "cpu": "usage_idle",
+            "mem": "used_percent",
         }
 
         field_value = field_mapping.get(setting.measurement)

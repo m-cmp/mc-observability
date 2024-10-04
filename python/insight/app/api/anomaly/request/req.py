@@ -34,7 +34,7 @@ class AnomalyDetectionTargetRegistration(BaseModel):
     nsId: str
     targetId: str
     target_type: TargetType = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (CPU or MEM)", example="CPU")
+    measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu")
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
 

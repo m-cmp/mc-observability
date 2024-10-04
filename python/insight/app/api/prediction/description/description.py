@@ -33,7 +33,7 @@ get_options_description = {
 
 
 post_prediction_description = {
-    "api_description": "Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -43,7 +43,7 @@ post_prediction_description = {
                         "data": {
                             "nsId": "string",
                             "targetId": "string",
-                            "measurement": "CPU",
+                            "measurement": "cpu",
                             "target_type": "VM",
                             "values": [
                                 {
@@ -81,7 +81,7 @@ get_history_description = {
                         "data": {
                             "nsId": "string",
                             "targetId": "string",
-                            "measurement": "CPU",
+                            "measurement": "cpu",
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",

@@ -57,8 +57,8 @@ class AnomalyHistoryService:
 
     def _build_body(self):
         field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
+            "cpu": "usage_idle",
+            "mem": "used_percent",
         }
 
         field_value = field_mapping.get(self.query_params.measurement.value)

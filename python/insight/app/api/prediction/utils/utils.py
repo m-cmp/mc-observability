@@ -41,17 +41,17 @@ class PredictionService:
             raise ValueError(f'Unsupported HTTP method: {method}')
 
     def _build_body(self, nsId: str, targetId: str, target_type: str, measurement: str, prediction_range: str):
-        if measurement == 'System Load': measurement = 'System'
+        if measurement == 'system load': measurement = 'system'
 
         target_mapping = {
             'VM': 'target_id',
             'MCI': 'mci_id'
         }
         field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
-            "Disk": "used_percent",
-            "System": 'load1'
+            "cpu": "usage_idle",
+            "mem": "used_percent",
+            "disk": "used_percent",
+            "system": 'load1'
         }
         target_value = target_mapping[target_type]
         field_value = field_mapping.get(measurement)
@@ -124,7 +124,7 @@ class PredictionService:
         prediction = prediction[prediction['ds'] > last_datetime]
         prediction = prediction.rename(columns={'ds': 'timestamp', 'yhat': 'value'})
 
-        if measurement == 'CPU':
+        if measurement == 'cpu':
             prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
         prediction['value'] = np.clip(prediction['value'], 0, 100).round(2)
         prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
@@ -135,7 +135,7 @@ class PredictionService:
         return result_dict
 
     def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
-        if measurement == 'System Load': measurement = 'System'
+        if measurement == 'system load': measurement = 'system'
         self.influxdb_repo.save_results(df, nsId, targetId, measurement)
 
     @staticmethod
