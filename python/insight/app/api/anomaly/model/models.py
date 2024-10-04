@@ -11,7 +11,7 @@ class AnomalyDetectionSettings(Base):
     NAMESPACE_ID = Column(String(100))
     TARGET_ID = Column(String(100))
     TARGET_TYPE = Column(String(45))
-    measurement = Column(String(45))
+    MEASUREMENT = Column(String(45))
     EXECUTION_INTERVAL = Column(String(10))
     LAST_EXECUTION = Column(DateTime)
     REGDATE = Column(DateTime)
