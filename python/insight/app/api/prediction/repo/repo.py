@@ -23,7 +23,7 @@ class InfluxDBRepository:
                 },
                 'time': row['timestamp'],
                 'fields': {
-                    'prediction_metric': row['predicted_value']
+                    'prediction_metric': row['value']
                 }
             }
             points.append(point)
