@@ -523,7 +523,7 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<List<OpensearchInfo>>'
   /api/o11y/monitoring/opensearch/{opensearchSeq}/logs:
-    get:
+    post:
       tags:
         - '[Monitoring log] Monitoring log'
       summary: Get collected log
