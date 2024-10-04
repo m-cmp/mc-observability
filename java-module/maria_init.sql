@@ -213,7 +213,7 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
   `NAMESPACE_ID` varchar(100) NOT NULL,
   `TARGET_ID` varchar(100) NOT NULL,
   `TARGET_TYPE` varchar(100) NOT NULL,
-  `METRIC_TYPE` varchar(100) NOT NULL,
+  `MEASUREMENT` varchar(100) NOT NULL,
   `EXECUTION_INTERVAL` varchar(100) NOT NULL,
   `LAST_EXECUTION` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `REGDATE` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',

@@ -12,11 +12,11 @@ class InfluxDBRepository:
         self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
                                      password=db_info['password'], database=db_info['database'])
 
-    def save_results(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
+    def save_results(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
         points = []
         for _, row in df.iterrows():
             point = {
-                'measurement': metric_type.lower(),
+                'measurement': measurement.lower(),
                 'tags': {
                     'namespace_id': nsId,
                     'target_id': targetId,
@@ -30,17 +30,17 @@ class InfluxDBRepository:
 
         self.client.write_points(points)
 
-    def query_prediction_history(self, nsId: str, targetId: str, metric_type: str, start_time: datetime, end_time: datetime):
+    def query_prediction_history(self, nsId: str, targetId: str, measurement: str, start_time: datetime, end_time: datetime):
         print(f'type: {type(start_time)}')
         start_time = start_time.astimezone(pytz.utc)
         end_time = end_time.astimezone(pytz.utc)
         start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-        metric_type = metric_type.lower()
+        measurement = measurement.lower()
 
         influxdb_query = f'''
         SELECT mean("prediction_metric") as "prediction_metric" \
-        FROM "insight"."autogen".f"{metric_type}" \
+        FROM "insight"."autogen".f"{measurement}" \
         WHERE "namespace_id" = '{nsId}' \
         AND "target_id" = '{targetId}' \
         AND time > '{start_time}' \

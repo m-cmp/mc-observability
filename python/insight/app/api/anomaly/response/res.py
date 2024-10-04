@@ -20,7 +20,7 @@ class AnomalyDetectionSettings(BaseModel):
     nsId: str
     targetId: str
     target_type: str
-    metric_type: str
+    measurement: str
     execution_interval: str
     last_execution: datetime
     createAt: datetime
@@ -47,7 +47,7 @@ class AnomalyDetectionHistoryValue(BaseModel):
 class AnomalyDetectionHistoryResponse(BaseModel):
     nsId: str = Field(..., description="The Namespace ID.")
     targetId: str = Field(..., description="The ID of the target (VM ID or MCI ID).")
-    metric_type: str = Field(..., description="The type of metric being monitored for anomalies (e.g., CPU, MEM).", example="CPU")
+    measurement: str = Field(..., description="The type of metric being monitored for anomalies (e.g., CPU, MEM).", example="CPU")
     values: List[AnomalyDetectionHistoryValue] = Field(..., description="List of anomaly detection results for the given time range.")
 
 

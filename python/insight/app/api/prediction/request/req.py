@@ -45,7 +45,7 @@ class GetHistoryPath(BaseModel):
 
 
 class GetPredictionHistoryQuery(BaseModel):
-    metric_type: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
+    measurement: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
     start_time: datetime = Field(Query(
         default=None,
         description='The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.'

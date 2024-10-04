@@ -61,7 +61,7 @@ class AnomalyHistoryService:
             "MEM": "used_percent",
         }
 
-        field_value = field_mapping.get(self.query_params.metric_type.value)
+        field_value = field_mapping.get(self.query_params.measurement.value)
 
         return {
             "conditions": [
@@ -81,7 +81,7 @@ class AnomalyHistoryService:
                 }
             ],
             "groupTime": "1m",
-            "measurement": self.query_params.metric_type.value.lower(),
+            "measurement": self.query_params.measurement.value.lower(),
             "range": "12h"
         }
 
@@ -119,7 +119,7 @@ class AnomalyHistoryService:
         data = AnomalyDetectionHistoryResponse(
             nsId=self.path_params.nsId,
             targetId=self.path_params.targetId,
-            metric_type=self.query_params.metric_type.value,
+            measurement=self.query_params.measurement.value,
             values=values
         )
 

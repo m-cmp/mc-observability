@@ -918,9 +918,9 @@ paths:
                 target_types:
                 - VM
                 - MCI
-                metric_types:
-                - CPU
-                - MEM
+                measurements:
+                - cpu
+                - mem
                 execution_intervals:
                 - 5m
                 - 10m
@@ -1155,11 +1155,11 @@ paths:
                 target_types:
                 - VM
                 - MCI
-                metric_types:
-                - CPU
-                - MEM
-                - Disk
-                - System Load
+                measurements:
+                - cpu
+                - mem
+                - disk
+                - system load
                 prediction_ranges:
                   min: 1h
                   max: 2160h
@@ -1212,15 +1212,15 @@ paths:
               data:
                 nsId: string
                 targetId: string
-                metric_type: CPU
+                measurement: cpu
                 target_type: VM
                 values:
                 - timestamp: 2024-08-22T00:00:00Z
-                  predicted_value: 75
+                  value: 75
                 - timestamp: 2024-08-22T01:00:00Z
-                  predicted_value: 78
+                  value: 78
                 - timestamp: 2024-08-22T02:00:00Z
-                  predicted_value: 80
+                  value: 80
               rsCode: '200'
               rsMsg: Success
           headers: {}
@@ -1277,14 +1277,14 @@ paths:
               data:
                 nsId: string
                 targetId: string
-                metric_type: CPU
+                measurement: cpu
                 values:
                 - timestamp: 2024-08-22T00:00:00Z
-                  predicted_value: 50
+                  value: 50
                 - timestamp: 2024-08-22T01:00:00Z
-                  predicted_value: 55
+                  value: 55
                 - timestamp: 2024-08-22T02:00:00Z
-                  predicted_value: 60
+                  value: 60
               rsCode: '200'
               rsMsg: Success
           headers: {}
@@ -2149,7 +2149,7 @@ definitions:
       targetId:
         description: The ID of the target (VM ID or MCI ID).
         type: string
-      metric_type:
+      measurement:
         description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
         example: CPU
         type: string
@@ -2161,7 +2161,7 @@ definitions:
     required:
     - nsId
     - targetId
-    - metric_type
+    - measurement
     - values
   AnomalyDetectionHistoryValue:
     title: AnomalyDetectionHistoryValue
@@ -2196,7 +2196,7 @@ definitions:
         type: array
         items:
           type: string
-      metric_types:
+      measurements:
         type: array
         items:
           type: string
@@ -2206,7 +2206,7 @@ definitions:
           type: string
     required:
     - target_types
-    - metric_types
+    - measurements
     - execution_intervals
   AnomalyDetectionSettings:
     title: AnomalyDetectionSettings
@@ -2221,7 +2221,7 @@ definitions:
         type: string
       target_type:
         type: string
-      metric_type:
+      measurement:
         type: string
       execution_interval:
         type: string
@@ -2236,7 +2236,7 @@ definitions:
     - nsId
     - targetId
     - target_type
-    - metric_type
+    - measurement
     - execution_interval
     - last_execution
     - createAt
@@ -2254,7 +2254,7 @@ definitions:
         - $ref: '#/definitions/TargetType'
         - description: The type of the target (VM or MCI).
           example: VM
-      metric_type:
+      measurement:
         type: object
         allOf:
         - $ref: '#/definitions/MetricType'
@@ -2270,7 +2270,7 @@ definitions:
     - nsId
     - targetId
     - target_type
-    - metric_type
+    - measurement
     - execution_interval
   AnomalyDetectionTargetUpdate:
     title: AnomalyDetectionTargetUpdate
@@ -2298,7 +2298,7 @@ definitions:
     properties:
       timestamp:
         type: string
-      predicted_value:
+      value:
         type: number
         format: double
     required:
@@ -2316,7 +2316,7 @@ definitions:
     properties:
       timestamp:
         type: string
-      predicted_value:
+      value:
         type: number
         format: double
     required:
@@ -2329,7 +2329,7 @@ definitions:
         description: The type of the target (VM or MCI).
         example: VM
         type: string
-      metric_type:
+      measurement:
         type: object
         allOf:
         - $ref: '#/definitions/PredictionMetricType'
@@ -2341,7 +2341,7 @@ definitions:
         type: string
     required:
     - target_type
-    - metric_type
+    - measurement
     - prediction_range
   PredictionHistory:
     title: PredictionHistory
@@ -2351,7 +2351,7 @@ definitions:
         type: string
       targetId:
         type: string
-      metric_type:
+      measurement:
         type: string
       values:
         type: array
@@ -2360,7 +2360,7 @@ definitions:
     required:
     - nsId
     - targetId
-    - metric_type
+    - measurement
     - values
   PredictionMetricType:
     title: PredictionMetricType
@@ -2379,7 +2379,7 @@ definitions:
         type: array
         items:
           type: string
-      metric_types:
+      measurements:
         type: array
         items:
           type: string
@@ -2389,7 +2389,7 @@ definitions:
           type: string
     required:
     - target_types
-    - metric_types
+    - measurements
     - prediction_ranges
   PredictionResult:
     title: PredictionResult
@@ -2399,7 +2399,7 @@ definitions:
         type: string
       targetId:
         type: string
-      metric_type:
+      measurement:
         type: string
       target_type:
         type: string
@@ -2410,7 +2410,7 @@ definitions:
     required:
     - nsId
     - targetId
-    - metric_type
+    - measurement
     - target_type
     - values
   ResBodyAnomalyDetectionHistoryResponse:

@@ -49,7 +49,7 @@ class AnomalySettingsRepository:
             NAMESPACE_ID=setting_data['NAMESPACE_ID'],
             TARGET_ID=setting_data['TARGET_ID'],
             TARGET_TYPE=setting_data['TARGET_TYPE'],
-            METRIC_TYPE=setting_data['METRIC_TYPE']
+            measurement=setting_data['measurement']
         ).first()
 
 
@@ -70,7 +70,7 @@ class InfluxDBRepository:
 
         for index, row in df.iterrows():
             data_point = {
-                "measurement": setting.METRIC_TYPE.lower(),
+                "measurement": setting.measurement.lower(),
                 "tags": tag,
                 "time": row['timestamp'],
                 "fields": {
@@ -85,7 +85,7 @@ class InfluxDBRepository:
     def query_anomaly_detection_results(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
         ns_id = path_params.nsId
         target_id = path_params.targetId
-        metric_type = query_params.metric_type.value.lower()
+        measurement = query_params.measurement.value.lower()
 
         st = query_params.start_time.astimezone(pytz.utc)
         et = query_params.end_time.astimezone(pytz.utc)
@@ -94,7 +94,7 @@ class InfluxDBRepository:
 
         influxql_query = f'''
         SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" 
-        FROM "insight"."autogen"."{metric_type}" \
+        FROM "insight"."autogen"."{measurement}" \
         WHERE "namespace_id" = '{ns_id}' \
         AND "target_id" = '{target_id}' \
         AND time >= '{start_time}' \

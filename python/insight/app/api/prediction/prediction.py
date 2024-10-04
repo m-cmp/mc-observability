@@ -42,7 +42,7 @@ async def predict_monitoring_data(
     prediction_result = PredictionResult(
         nsId=path_params.nsId,
         targetId=path_params.targetId,
-        metric_type=body_params.metric_type,
+        measurement=body_params.measurement,
         target_type=body_params.target_type,
         values=result_dict
     )
@@ -67,7 +67,7 @@ async def get_prediction_history(
     prediction_history = PredictionHistory(
         nsId=path_params.nsId,
         targetId=path_params.targetId,
-        metric_type=query_params.metric_type,
+        measurement=query_params.measurement,
         values=result_dict
     )
 

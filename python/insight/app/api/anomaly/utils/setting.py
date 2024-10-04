@@ -18,7 +18,7 @@ class AnomalySettingsService:
                 nsId=setting.NAMESPACE_ID,
                 targetId=setting.TARGET_ID,
                 target_type=setting.TARGET_TYPE,
-                measurements=setting.METRIC_TYPE,
+                measurements=setting.measurement,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION,
                 createAt=setting.REGDATE
@@ -37,7 +37,7 @@ class AnomalySettingsService:
                     nsId=setting.NAMESPACE_ID,
                     targetId=setting.TARGET_ID,
                     target_type=setting.TARGET_TYPE,
-                    metric_type=setting.METRIC_TYPE,
+                    measurement=setting.measurement,
                     execution_interval=setting.EXECUTION_INTERVAL,
                     last_execution=setting.LAST_EXECUTION,
                     createAt=setting.REGDATE
@@ -63,7 +63,7 @@ class AnomalySettingsService:
         if duplicate:
             return JSONResponse(status_code=409, content={"rsCode": "409",
                                                           "rsMsg": "A record with the same namespace_id, target_id, "
-                                                                   "target_type, and metric_type already exists."})
+                                                                   "target_type, and measurement already exists."})
 
         self.repo.create_setting(setting_data=setting_data)
         return ResBodyVoid(rsMsg="Target Registered Successfully")

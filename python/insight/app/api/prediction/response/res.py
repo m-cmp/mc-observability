@@ -25,7 +25,7 @@ class PredictValue(BaseModel):
 class PredictionResult(BaseModel):
     nsId: str
     targetId: str
-    metric_type: str
+    measurement: str
     target_type: str
     values: list[PredictValue]
 
@@ -45,7 +45,7 @@ class HistoryValue(BaseModel):
 class PredictionHistory(BaseModel):
     nsId: str
     targetId: str
-    metric_type: str
+    measurement: str
     values: list[HistoryValue]
 
 

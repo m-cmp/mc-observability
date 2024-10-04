@@ -40,8 +40,8 @@ class PredictionService:
         else:
             raise ValueError(f'Unsupported HTTP method: {method}')
 
-    def _build_body(self, nsId: str, targetId: str, target_type: str, metric_type: str, prediction_range: str):
-        if metric_type == 'System Load': metric_type = 'System'
+    def _build_body(self, nsId: str, targetId: str, target_type: str, measurement: str, prediction_range: str):
+        if measurement == 'System Load': measurement = 'System'
 
         target_mapping = {
             'VM': 'target_id',
@@ -54,7 +54,7 @@ class PredictionService:
             "System": 'load1'
         }
         target_value = target_mapping[target_type]
-        field_value = field_mapping.get(metric_type)
+        field_value = field_mapping.get(measurement)
 
         return {
             "conditions": [
@@ -74,7 +74,7 @@ class PredictionService:
                 }
             ],
             "groupTime": "1h",
-            "measurement": metric_type.lower(),
+            "measurement": measurement.lower(),
             "range": prediction_range
         }
 
@@ -82,11 +82,11 @@ class PredictionService:
         nsId = path_params.nsId
         targetId = path_params.targetId
         target_type = body_params.target_type
-        metric_type = body_params.metric_type
+        measurement = body_params.measurement
         prediction_range = body_params.prediction_range
 
         all_data = []
-        body = self._build_body(nsId, targetId, target_type, metric_type, prediction_range)
+        body = self._build_body(nsId, targetId, target_type, measurement, prediction_range)
         for seq in self.seq_list:
             url = self._build_url(f'influxdb/{seq}/metric')
             response = self._send_request('POST', url, json=body)
@@ -105,7 +105,7 @@ class PredictionService:
     def predict(self, df: pd.DataFrame, path_params: PredictionPath, body_params: PredictionBody):
         nsId = path_params.nsId
         targetId = path_params.targetId
-        metric_type = body_params.metric_type
+        measurement = body_params.measurement
         prediction_range = body_params.prediction_range
         model = Prophet(
             changepoint_prior_scale=self.prophet_config['changepoint_prior_scale'],
@@ -124,19 +124,19 @@ class PredictionService:
         prediction = prediction[prediction['ds'] > last_datetime]
         prediction = prediction.rename(columns={'ds': 'timestamp', 'yhat': 'value'})
 
-        if metric_type == 'CPU':
+        if measurement == 'CPU':
             prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
         prediction['value'] = np.clip(prediction['value'], 0, 100).round(2)
         prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
 
-        self.save_prediction_result(prediction, nsId, targetId, metric_type)
+        self.save_prediction_result(prediction, nsId, targetId, measurement)
         result_dict = prediction.to_dict('records')
 
         return result_dict
 
-    def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, metric_type: str):
-        if metric_type == 'System Load': metric_type = 'System'
-        self.influxdb_repo.save_results(df, nsId, targetId, metric_type)
+    def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
+        if measurement == 'System Load': measurement = 'System'
+        self.influxdb_repo.save_results(df, nsId, targetId, measurement)
 
     @staticmethod
     def convert_prediction_range(prediction_range: str):
@@ -164,7 +164,7 @@ class PredictionService:
         prediction_points = self.influxdb_repo.query_prediction_history(
             nsId=path_params.nsId,
             targetId=path_params.targetId,
-            metric_type=query_params.metric_type,
+            measurement=query_params.measurement,
             start_time=query_params.start_time,
             end_time=query_params.end_time,
         )

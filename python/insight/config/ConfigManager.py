@@ -31,7 +31,7 @@ class ConfigManager:
         prediction = self.config.get('prediction', {})
         return {
             'target_types': prediction.get('target_types', {}).get('types', []),
-            'metric_types': prediction.get('metric_types', {}).get('types', []),
+            'measurements': prediction.get('measurements', {}).get('types', []),
             'prediction_ranges': prediction.get('prediction_ranges', [])
         }
 

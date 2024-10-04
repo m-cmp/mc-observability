@@ -43,7 +43,7 @@ post_prediction_description = {
                         "data": {
                             "nsId": "string",
                             "targetId": "string",
-                            "metric_type": "CPU",
+                            "measurement": "CPU",
                             "target_type": "VM",
                             "values": [
                                 {
@@ -81,7 +81,7 @@ get_history_description = {
                         "data": {
                             "nsId": "string",
                             "targetId": "string",
-                            "metric_type": "CPU",
+                            "measurement": "CPU",
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",
