@@ -6,7 +6,7 @@ from typing import Union
 # GET /predictions/options
 class PredictionOptions(BaseModel):
     target_types: list[str]
-    metric_types: list[str]
+    measurements: list[str]
     prediction_ranges: dict[str, str]
 
 

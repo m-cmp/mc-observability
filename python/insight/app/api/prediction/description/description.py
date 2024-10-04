@@ -11,11 +11,11 @@ get_options_description = {
                                 "VM",
                                 "MCI"
                             ],
-                            "metric_types": [
-                                "CPU",
-                                "MEM",
-                                "Disk",
-                                "System Load"
+                            "measurements": [
+                                "cpu",
+                                "mem",
+                                "disk",
+                                "system load"
                             ],
                             "prediction_ranges": {
                                 "min": "1h",

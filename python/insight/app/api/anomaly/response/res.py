@@ -5,7 +5,7 @@ from typing import List, Optional
 
 class AnomalyDetectionOptions(BaseModel):
     target_types: list[str]
-    metric_types: list[str]
+    measurements: list[str]
     execution_intervals: list[str]
 
 

@@ -14,7 +14,7 @@ class ConfigManager:
         anomaly = self.config.get('anomaly', {})
         return {
             "target_types": anomaly.get('target_types', {}).get('types', []),
-            "metric_types": anomaly.get('metric_types', {}).get('types', []),
+            "measurements": anomaly.get('measurements', {}).get('types', []),
             "execution_intervals": anomaly.get('execution_intervals', {}).get('intervals', [])
         }
 

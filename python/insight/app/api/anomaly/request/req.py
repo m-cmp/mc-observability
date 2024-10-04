@@ -26,7 +26,7 @@ def generate_enum_from_config(path: str, enum_name: str):
 
 
 TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType')
-AnomalyMetricType = generate_enum_from_config('anomaly.metric_types.types', 'MetricType')
+AnomalyMetricType = generate_enum_from_config('anomaly.measurements.types', 'MetricType')
 ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
 
 

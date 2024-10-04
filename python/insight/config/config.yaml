@@ -22,10 +22,10 @@ anomaly:
     types:
       - VM
       - MCI
-  metric_types:
+  measurements:
     types:
-      - CPU
-      - MEM
+      - cpu
+      - mem
   execution_intervals:
     intervals:
       - 5m
@@ -42,12 +42,12 @@ prediction:
     types:
       - VM
       - MCI
-  metric_types:
+  measurements:
     types:
-      - CPU
-      - MEM
-      - Disk
-      - System Load
+      - cpu
+      - mem
+      - disk
+      - system load
   prediction_ranges:
     min: 1h
     max: 2160h

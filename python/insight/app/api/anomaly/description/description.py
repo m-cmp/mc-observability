@@ -11,9 +11,9 @@ get_options_description = {
                                 "VM",
                                 "MCI"
                             ],
-                            "metric_types": [
-                                "CPU",
-                                "MEM"
+                            "measurements": [
+                                "cpu",
+                                "mem"
                             ],
                             "execution_intervals": [
                                 "5m",

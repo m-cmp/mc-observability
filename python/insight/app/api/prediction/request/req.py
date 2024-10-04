@@ -19,16 +19,16 @@ class PredictionPath(BaseModel):
 
 
 class PredictionMetricType(str, Enum):
-    CPU = 'CPU'
-    MEM = 'MEM'
-    Disk = 'Disk'
-    SystemLoad = 'System Load'
+    cpu = 'cpu'
+    mem = 'mem'
+    disk = 'disk'
+    systemLoad = 'system load'
 
 
 class PredictionBody(BaseModel):
     target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    metric_type: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(CPU, MEM,"
-                                                     " Disk, System Load)", example="CPU")
+    measurements: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
+                                                     " disk, system load)", example="cpu")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
 
 
