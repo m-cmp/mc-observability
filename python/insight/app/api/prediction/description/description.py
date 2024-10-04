@@ -48,15 +48,15 @@ post_prediction_description = {
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",
-                                    "predicted_value": 75
+                                    "value": 75
                                 },
                                 {
                                     "timestamp": "2024-08-22T01:00:00Z",
-                                    "predicted_value": 78
+                                    "value": 78
                                 },
                                 {
                                     "timestamp": "2024-08-22T02:00:00Z",
-                                    "predicted_value": 80
+                                    "value": 80
                                 }
                             ]
                         },
@@ -85,15 +85,15 @@ get_history_description = {
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",
-                                    "predicted_value": 50
+                                    "value": 50
                                 },
                                 {
                                     "timestamp": "2024-08-22T01:00:00Z",
-                                    "predicted_value": 55
+                                    "value": 55
                                 },
                                 {
                                     "timestamp": "2024-08-22T02:00:00Z",
-                                    "predicted_value": 60
+                                    "value": 60
                                 }
                             ]
                         },

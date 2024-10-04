@@ -19,7 +19,7 @@ class ResBodyPredictionOptions(BaseModel):
 # POST /predictions/nsId/{nsId}/target/{targetId}
 class PredictValue(BaseModel):
     timestamp: str
-    predicted_value: Union[float, None]
+    value: Union[float, None]
 
 
 class PredictionResult(BaseModel):
@@ -39,7 +39,7 @@ class ResBodyPredictionResult(BaseModel):
 # GET /predictions/nsId/{nsId}/target/{targetId}/history
 class HistoryValue(BaseModel):
     timestamp: str
-    predicted_value: Union[float, None]
+    value: Union[float, None]
 
 
 class PredictionHistory(BaseModel):

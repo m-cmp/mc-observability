@@ -122,11 +122,11 @@ class PredictionService:
         prediction = model.predict(future)
         prediction = prediction.drop(columns=self.prophet_config['remove_columns'], errors='ignore')
         prediction = prediction[prediction['ds'] > last_datetime]
-        prediction = prediction.rename(columns={'ds': 'timestamp', 'yhat': 'predicted_value'})
+        prediction = prediction.rename(columns={'ds': 'timestamp', 'yhat': 'value'})
 
         if metric_type == 'CPU':
-            prediction['predicted_value'] = prediction['predicted_value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
-        prediction['predicted_value'] = np.clip(prediction['predicted_value'], 0, 100).round(2)
+            prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
+        prediction['value'] = np.clip(prediction['value'], 0, 100).round(2)
         prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
 
         self.save_prediction_result(prediction, nsId, targetId, metric_type)
@@ -173,7 +173,7 @@ class PredictionService:
         for point in prediction_points:
             value_dict = {
                 'timestamp': point['time'],
-                'predicted_value': point['prediction_metric']
+                'value': point['prediction_metric']
             }
             values.append(value_dict)
 
