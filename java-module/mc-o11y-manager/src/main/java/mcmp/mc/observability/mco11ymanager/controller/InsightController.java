@@ -29,8 +29,8 @@ public class InsightController {
         return insightClient.predictMetric(nsId, targetId, body);
     }
     @GetMapping(Constants.PREDICTION_PATH + "/nsId/{nsId}/target/{targetId}/history")
-    public Object getPredictionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String metric_type, @RequestParam(required = false) String start_time, @RequestParam(required = false) String end_time) {
-        return insightClient.getPredictionHistory(nsId, targetId, metric_type, start_time, end_time);
+    public Object getPredictionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam(required = false) String start_time, @RequestParam(required = false) String end_time) {
+        return insightClient.getPredictionHistory(nsId, targetId, measurement, start_time, end_time);
     }
 
     // insight anomaly detection
@@ -59,7 +59,7 @@ public class InsightController {
         return insightClient.getAnomalyDetection(nsId, targetId);
     }
     @GetMapping(Constants.ANOMALY_PATH + "/nsId/{nsId}/target/{targetId}/history")
-    public Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String metric_type, @RequestParam String start_time, @RequestParam String end_time) {
-        return insightClient.getAnomalyDetectionHistory(nsId, targetId, metric_type, start_time, end_time);
+    public Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam String start_time, @RequestParam String end_time) {
+        return insightClient.getAnomalyDetectionHistory(nsId, targetId, measurement, start_time, end_time);
     }
 }

@@ -1084,7 +1084,7 @@ paths:
         required: true
         type: string
         description: The ID of the target VM or MCI group.
-      - name: metric_type
+      - name: measurement
         in: query
         required: true
         enum:
@@ -1245,7 +1245,7 @@ paths:
         required: true
         type: string
         description: The ID of the target VM or MCI group.
-      - name: metric_type
+      - name: measurement
         in: query
         required: true
         enum:
