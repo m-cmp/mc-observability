@@ -23,13 +23,13 @@ public class MonitoringService {
     private final PluginMapper pluginMapper;
     private final SpiderClient spiderClient;
 
-    public SpiderMonitoringInfo.Data geSpiderVMMonitoring(String nsId, String mciId, String targetId, String metricType,
+    public SpiderMonitoringInfo.Data geSpiderVMMonitoring(String nsId, String mciId, String targetId, String measurement,
                                                           String timeBeforeHour, String intervalMinute) {
         TumblebugMCI.Vm vm = tumblebugClient.getVM(nsId, mciId, targetId);
 
         SpiderMonitoringInfo.Data data = null;
         try {
-            data = spiderClient.getVMMonitoring(vm.getCspResourceName(), metricType, vm.getConnectionName(), timeBeforeHour, intervalMinute);
+            data = spiderClient.getVMMonitoring(vm.getCspResourceName(), measurement, vm.getConnectionName(), timeBeforeHour, intervalMinute);
         } catch (Exception e) {
             log.error(ExceptionUtils.getMessage(e));
         }

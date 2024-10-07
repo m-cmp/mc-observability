@@ -2,7 +2,7 @@ package mcmp.mc.observability.mco11yagent.monitoring.enums;
 
 import lombok.Getter;
 
-public enum MetricType {
+public enum Measurement {
     CPU_USAGE("cpu_usage"),
     MEMORY_USAGE("memory_usage"),
     DISK_READ("disk_read"),
@@ -15,7 +15,7 @@ public enum MetricType {
 
     private final String value;
 
-    MetricType(String value) {
+    Measurement(String value) {
         this.value = value;
     }
 

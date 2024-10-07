@@ -18,11 +18,11 @@ public class CSPController {
     private final MonitoringService monitoringService;
 
     @Base64Encode
-    @GetMapping("/{metricType}")
-    public ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String metricType) {
+    @GetMapping("/{measurement}")
+    public ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement) {
         ResBody<SpiderMonitoringInfo.Data> resBody = new ResBody<>();
         try {
-            resBody.setData(monitoringService.geSpiderVMMonitoring(nsId, mciId, targetId, metricType, "1", "1"));
+            resBody.setData(monitoringService.geSpiderVMMonitoring(nsId, mciId, targetId, measurement, "1", "1"));
         } catch (Exception e) {
             resBody.setCode(ResultCode.FAILED);
             resBody.setErrorMessage(e.getMessage());

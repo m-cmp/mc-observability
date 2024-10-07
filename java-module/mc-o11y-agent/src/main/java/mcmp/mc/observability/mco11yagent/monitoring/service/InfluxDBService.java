@@ -3,7 +3,6 @@ package mcmp.mc.observability.mco11yagent.monitoring.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11yagent.monitoring.client.SpiderClient;
-import mcmp.mc.observability.mco11yagent.monitoring.enums.MetricType;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.exception.ResultCodeException;
 import mcmp.mc.observability.mco11yagent.monitoring.mapper.InfluxDBMapper;
@@ -25,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static mcmp.mc.observability.mco11yagent.monitoring.enums.MetricType.*;
+import static mcmp.mc.observability.mco11yagent.monitoring.enums.Measurement.*;
 
 @Slf4j
 @Service
@@ -39,7 +38,7 @@ public class InfluxDBService {
 
     public ResBody<List<InfluxDBInfo>> getList() {
         List<MonitoringConfigInfo> storageInfoList = monitoringConfigService.list(null, null, null);
-        storageInfoList = storageInfoList.stream().filter(f -> f.getPluginName().equalsIgnoreCase("influxdb")).collect(Collectors.toList());
+        storageInfoList = storageInfoList.stream().filter(f -> f.getPluginName().equalsIgnoreCase("influxdb")).toList();
 
         List<InfluxDBInfo> influxDBInfoList = new ArrayList<>();
         for (MonitoringConfigInfo hostStorageInfo : storageInfoList) {

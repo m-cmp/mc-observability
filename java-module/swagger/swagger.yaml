@@ -404,7 +404,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{metricType}:
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
     get:
       tags:
         - '[Monitoring CSP] Monitoring target from the CSP'
@@ -423,7 +423,7 @@ paths:
           in: path
           required: true
           type: string
-        - name: metricType
+        - name: measurement
           in: path
           required: true
           type: string
@@ -2303,8 +2303,8 @@ definitions:
         format: double
     required:
     - timestamp
-  MetricType:
-    title: MetricType
+  Measurement:
+    title: Measurement
     description: An enumeration.
     type: string
     enum:

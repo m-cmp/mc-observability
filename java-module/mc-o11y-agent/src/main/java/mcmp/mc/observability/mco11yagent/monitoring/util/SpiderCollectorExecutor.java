@@ -3,10 +3,7 @@ package mcmp.mc.observability.mco11yagent.monitoring.util;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
-import mcmp.mc.observability.mco11yagent.monitoring.enums.MetricType;
 import mcmp.mc.observability.mco11yagent.monitoring.model.InfluxDBInfo;
-import mcmp.mc.observability.mco11yagent.monitoring.service.InfluxDBService;
-import mcmp.mc.observability.mco11yagent.monitoring.service.MonitoringConfigService;
 import mcmp.mc.observability.mco11yagent.monitoring.service.MonitoringService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,10 +14,8 @@ import javax.annotation.PreDestroy;
 @Service
 @RequiredArgsConstructor
 public class SpiderCollectorExecutor {
-    private final MonitoringConfigService monitoringConfigService;
     private Process SPIDER_COLLECTOR_PROCESS = null;
 
-    private final InfluxDBService influxDBService;
     private final MonitoringService monitoringService;
 
     @Value("${feign.cb-spider.monitoring.influxdb_url}")

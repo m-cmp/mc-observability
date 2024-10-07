@@ -68,8 +68,8 @@ public class MonitoringController {
 
     // cb-spider monitoring api
     @GetMapping(Constants.TARGET_CSP_PATH)
-    Object getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String metricType) {
-        return monitoringClient.getCSP(nsId, mciId, targetId, metricType);
+    Object getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement) {
+        return monitoringClient.getCSP(nsId, mciId, targetId, measurement);
     }
 
     // monitoring item api
