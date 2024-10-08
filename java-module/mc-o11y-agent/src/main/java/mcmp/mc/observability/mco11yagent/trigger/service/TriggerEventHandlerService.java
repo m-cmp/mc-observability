@@ -54,8 +54,8 @@ public class TriggerEventHandlerService {
             params.put("policySeq", policySeq);
 
             for(KapacitorAlertInfo.DataInfo.SeriesInfo seriesInfo : seriesInfos) {
-                String targetId = String.valueOf(seriesInfo.getTags().get("id"));
-                String nsId = String.valueOf(seriesInfo.getTags().get("nsId"));
+                String targetId = String.valueOf(seriesInfo.getTags().get("target_id"));
+                String nsId = String.valueOf(seriesInfo.getTags().get("ns_id"));
                 params.put("targetId", targetId);
                 params.put("nsId", nsId);
                 TriggerTargetInfo triggerTargetInfo = triggerTargetMapper.getTargetDetail(params);
