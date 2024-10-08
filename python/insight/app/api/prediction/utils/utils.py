@@ -4,11 +4,9 @@ from prophet import Prophet
 import pandas as pd
 import numpy as np
 import requests
-
 from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
 from config.ConfigManager import ConfigManager
 from app.api.prediction.repo.repo import InfluxDBRepository
-
 
 
 class PredictionService:

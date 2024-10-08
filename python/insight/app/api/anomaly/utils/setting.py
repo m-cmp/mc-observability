@@ -21,7 +21,7 @@ class AnomalySettingsService:
                 measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION,
-                createAt=setting.REGDATE
+                create_at=setting.REGDATE
             )
             for setting in settings
         ]
@@ -40,7 +40,7 @@ class AnomalySettingsService:
                     measurement=setting.MEASUREMENT,
                     execution_interval=setting.EXECUTION_INTERVAL,
                     last_execution=setting.LAST_EXECUTION,
-                    createAt=setting.REGDATE
+                    create_at=setting.REGDATE
                 )
                 for setting in settings
             ]

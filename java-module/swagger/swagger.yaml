@@ -1096,14 +1096,12 @@ paths:
         in: query
         required: false
         type: string
-        format: date-time
-        description: The start timestamp for the range of prediction data to retrieve. Defaults to 7 days before the current time if not provided.
+        description: The start timestamp for the range of Anomaly data to retrieve. Format 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The end timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+        description: The end timestamp for the range of Anomaly data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
       responses:
         '200':
           description: Successful Response
@@ -1210,8 +1208,8 @@ paths:
           examples:
             application/json:
               data:
-                nsId: string
-                targetId: string
+                ns_id: string
+                target_id: string
                 measurement: cpu
                 target_type: VM
                 values:
@@ -1259,14 +1257,12 @@ paths:
         in: query
         required: false
         type: string
-        format: date-time
-        description: The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+        description: The start timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.
+        description: The end timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to 7 days after the current time if not provided.
       responses:
         '200':
           description: Successfully retrieved prediction history
@@ -1275,8 +1271,8 @@ paths:
           examples:
             application/json:
               data:
-                nsId: string
-                targetId: string
+                ns_id: string
+                target_id: string
                 measurement: cpu
                 values:
                 - timestamp: 2024-08-22T00:00:00Z
@@ -2143,10 +2139,10 @@ definitions:
     title: AnomalyDetectionHistoryResponse
     type: object
     properties:
-      nsId:
+      ns_id:
         description: The Namespace ID.
         type: string
-      targetId:
+      target_id:
         description: The ID of the target (VM ID or MCI ID).
         type: string
       measurement:
@@ -2159,8 +2155,8 @@ definitions:
         items:
           $ref: '#/definitions/AnomalyDetectionHistoryValue'
     required:
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - measurement
     - values
   AnomalyDetectionHistoryValue:
@@ -2215,9 +2211,9 @@ definitions:
       seq:
         type: integer
         format: int32
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       target_type:
         type: string
@@ -2228,25 +2224,25 @@ definitions:
       last_execution:
         type: string
         format: date-time
-      createAt:
+      create_at:
         type: string
         format: date-time
     required:
     - seq
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - target_type
     - measurement
     - execution_interval
     - last_execution
-    - createAt
+    - create_at
   AnomalyDetectionTargetRegistration:
     title: AnomalyDetectionTargetRegistration
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       target_type:
         type: object
@@ -2267,8 +2263,8 @@ definitions:
         - description: The interval at which anomaly detection runs (5m, 10m, 30m)
           example: 5m
     required:
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - target_type
     - measurement
     - execution_interval
@@ -2347,9 +2343,9 @@ definitions:
     title: PredictionHistory
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       measurement:
         type: string
@@ -2358,8 +2354,8 @@ definitions:
         items:
           $ref: '#/definitions/HistoryValue'
     required:
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - measurement
     - values
   PredictionMetricType:
@@ -2395,9 +2391,9 @@ definitions:
     title: PredictionResult
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       measurement:
         type: string
@@ -2408,8 +2404,8 @@ definitions:
         items:
           $ref: '#/definitions/PredictValue'
     required:
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - measurement
     - target_type
     - values

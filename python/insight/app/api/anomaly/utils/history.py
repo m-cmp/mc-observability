@@ -111,7 +111,7 @@ class AnomalyHistoryService:
             value = AnomalyDetectionHistoryValue(
                 timestamp=entry['timestamp'],
                 anomaly_score=entry.get('anomaly_score'),
-                isAnomaly=entry.get('isAnomaly'),
+                is_anomaly=entry.get('isAnomaly'),
                 value=resource_pct_value
             )
             values.append(value)
