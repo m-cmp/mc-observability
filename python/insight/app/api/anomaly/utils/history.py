@@ -99,7 +99,7 @@ class AnomalyHistoryService:
         raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
 
         for entry in results:
-            entry_timestamp = pd.to_datetime(entry['timestamp'])
+            entry_timestamp = pd.to_datetime(entry['timestamp']).strftime('%Y-%m-%dT%H:%M:%SZ')
             matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
 
             if not matching_row.empty:

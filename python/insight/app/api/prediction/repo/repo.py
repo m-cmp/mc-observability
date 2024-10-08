@@ -30,12 +30,7 @@ class InfluxDBRepository:
 
         self.client.write_points(points)
 
-    def query_prediction_history(self, nsId: str, targetId: str, measurement: str, start_time: datetime, end_time: datetime):
-        print(f'type: {type(start_time)}')
-        start_time = start_time.astimezone(pytz.utc)
-        end_time = end_time.astimezone(pytz.utc)
-        start_time = start_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-        end_time = end_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+    def query_prediction_history(self, nsId: str, targetId: str, measurement: str, start_time: str, end_time: str):
         measurement = measurement.lower()
 
         influxdb_query = f'''

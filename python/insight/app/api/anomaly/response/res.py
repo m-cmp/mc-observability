@@ -38,7 +38,7 @@ class ResBodyVoid(BaseModel):
 
 
 class AnomalyDetectionHistoryValue(BaseModel):
-    timestamp: str = Field(..., description="The timestamp for the anomaly detection result.", format="date-time")
+    timestamp: str = Field(..., description="The timestamp for the anomaly detection result.", format="date-time", example="2024-10-08T06:50:37Z")
     anomaly_score: Optional[float] = Field(..., description="The anomaly score for the corresponding timestamp.")
     isAnomaly: Optional[int] = Field(..., description="Whether the data point is considered an anomaly (1) or normal (0).")
     value: Optional[float] = Field(..., description="The original monitoring data value for the corresponding timestamp.")

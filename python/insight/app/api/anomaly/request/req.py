@@ -7,9 +7,10 @@ from pydantic import BaseModel, validator, Field
 import pytz
 
 
-def set_time_delta(delta=0) -> datetime:
-    kst = pytz.timezone('Asia/Seoul')
-    return datetime.now(kst).replace(microsecond=0) - timedelta(hours=delta)
+def set_time_delta(delta=0) -> str:
+    utc_now = datetime.utcnow().replace(microsecond=0)
+    new_time_utc = utc_now + timedelta(hours=delta)
+    return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def generate_enum_from_config(path: str, enum_name: str):
@@ -49,15 +50,19 @@ class GetHistoryPathParams(BaseModel):
 
 class GetAnomalyHistoryFilter(BaseModel):
     measurement: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))
-    start_time: datetime = Field(Query(
+    start_time: str = Field(Query(
         default=None,
-        description='The start timestamp for the range of prediction data to retrieve. '
-                    'Defaults to 7 days before the current time if not provided.'
+        description='The start timestamp for the range of Anomaly data to retrieve. '
+                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
+                    'Defaults to 12 hours before the current time if not provided.',
+        example='2024-10-08T12:00:00Z'
     ))
-    end_time: datetime = Field(Query(
+    end_time: str = Field(Query(
         default=None,
-        description='The end timestamp for the range of prediction data to retrieve. '
-                    'Defaults to the current time if not provided.'
+        description='The end timestamp for the range of Anomaly data to retrieve. '
+                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
+                    'Defaults to the current time if not provided.',
+        example='2024-10-09T00:00:00Z'
     ))
 
     @validator('start_time', pre=True, always=True)

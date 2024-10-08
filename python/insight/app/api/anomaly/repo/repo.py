@@ -87,10 +87,8 @@ class InfluxDBRepository:
         target_id = path_params.targetId
         measurement = query_params.measurement.value.lower()
 
-        st = query_params.start_time.astimezone(pytz.utc)
-        et = query_params.end_time.astimezone(pytz.utc)
-        start_time = st.strftime('%Y-%m-%dT%H:%M:%SZ')
-        end_time = et.strftime('%Y-%m-%dT%H:%M:%SZ')
+        start_time = query_params.start_time
+        end_time = query_params.end_time
 
         influxql_query = f'''
         SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" 
