@@ -117,8 +117,8 @@ class AnomalyHistoryService:
             values.append(value)
 
         data = AnomalyDetectionHistoryResponse(
-            nsId=self.path_params.nsId,
-            targetId=self.path_params.targetId,
+            ns_id=self.path_params.nsId,
+            target_id=self.path_params.targetId,
             measurement=self.query_params.measurement.value,
             values=values
         )
