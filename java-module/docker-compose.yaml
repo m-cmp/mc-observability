@@ -297,7 +297,7 @@ services:
 
         # Import variables & Make connections
         # airflow variables import -a overwrite /usr/local/airflow/airflow_variables.json
-        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL mc-o11y-manager:18080
+        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-o11y-manager:18080
 
         airflow connections add --conn-type http --conn-host mc-o11y-insight-service --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mariadb --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
