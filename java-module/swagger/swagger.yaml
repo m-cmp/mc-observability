@@ -946,7 +946,11 @@ paths:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
           headers: {}
     post:
-      description: Register a target for anomaly detection and automatically schedule detection tasks.
+      description: |
+        Register a target for anomaly detection and automatically schedule detection tasks.  
+        (measurememt : field) Relationships are as follows.  
+        cpu : usage_idle  
+        mem : used_percent
       summary: PostAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1166,7 +1170,13 @@ paths:
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      description: Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.
+      description: |
+        Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.
+        (measurememt : field) Relationships are as follows.  
+        cpu : usage_idle  
+        mem : used_percent  
+        disk : used_percent  
+        system load : load1
       summary: PostPrediction
       tags:
       - '[Insight] Prediction'
