@@ -1,7 +1,11 @@
 .idea/
 target/
-python/scheduler/airflow-home/logs/
 __pycache__/
 venv/
 .conda/
 *.log
+
+python/scheduler/airflow-home/logs/
+python/scheduler/airflow-home/airflow-webserver.pid
+python/scheduler/airflow-home/dags/__pycache__/
+python/scheduler/airflow-home/webserver_config.py
