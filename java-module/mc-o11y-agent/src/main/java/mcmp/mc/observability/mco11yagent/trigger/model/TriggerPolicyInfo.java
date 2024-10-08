@@ -141,8 +141,8 @@ public class TriggerPolicyInfo {
 
     public String convertListToString(List<String> groupByFields) {
         List<String> fields = new ArrayList<>();
-        fields.add("id");
-        fields.add("nsId");
+        fields.add("target_id");
+        fields.add("ns_id");
 
         if (groupByFields != null && !groupByFields.isEmpty()) {
             fields.addAll(groupByFields);
