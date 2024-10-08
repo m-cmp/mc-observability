@@ -1,3 +1,7 @@
 .idea/
 target/
-scheduler/airflow-home/logs/
+python/scheduler/airflow-home/logs/
+__pycache__/
+venv/
+.conda/
+*.log
