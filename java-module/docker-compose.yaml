@@ -302,7 +302,7 @@ services:
         airflow connections add --conn-type http --conn-host mc-o11y-insight-service --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mariadb --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
         airflow connections add --conn-type http --conn-host mc-manager --conn-port 18080 o11y-manager
-        airflow connections add --conn-type influxdb --conn-host influxdb --conn-port 8086 --conn-schema mc-downsampling --conn-login mc-agent --conn-password mc-agent influxdb
+        airflow connections add --conn-type influxdb --conn-host influxdb --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
         # Reload & Run dags
         airflow dags reserialize
