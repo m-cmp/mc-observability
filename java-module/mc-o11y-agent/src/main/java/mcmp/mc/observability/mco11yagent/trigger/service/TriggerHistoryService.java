@@ -2,7 +2,7 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
-import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerHistoryMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
@@ -27,15 +27,15 @@ public class TriggerHistoryService {
         return triggerHistoryMapper.getList(policySeq);
     }
 
-    public TriggerResBody<TriggerHistoryInfo> getDetail(TriggerResBody<TriggerHistoryInfo> triggerResBody, Long seq) {
+    public ResBody<TriggerHistoryInfo> getDetail(ResBody<TriggerHistoryInfo> ResBody, Long seq) {
         TriggerHistoryInfo triggerHistoryInfo = getDetail(seq);
         if( triggerHistoryInfo == null ) {
-            triggerResBody.setCode(ResultCode.INVALID_REQUEST);
-            return triggerResBody;
+            ResBody.setCode(ResultCode.INVALID_REQUEST);
+            return ResBody;
         }
 
-        triggerResBody.setData(triggerHistoryInfo);
-        return triggerResBody;
+        ResBody.setData(triggerHistoryInfo);
+        return ResBody;
     }
 
     public TriggerHistoryInfo getDetail(Long seq) {

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.MonitoringConfigStorageMapper;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerMonitoringConfigInfo;
-import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.InfluxDBConnector;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
@@ -39,15 +39,15 @@ public class TriggerTargetService {
         return triggerTargetMapper.getList(policySeq);
     }
 
-    public TriggerResBody<TriggerTargetInfo> getDetail(TriggerResBody<TriggerTargetInfo> triggerResBody, Long seq) {
+    public ResBody<TriggerTargetInfo> getDetail(ResBody<TriggerTargetInfo> ResBody, Long seq) {
         TriggerTargetInfo triggerTargetInfo = getDetail(seq);
         if( triggerTargetInfo == null ) {
-            triggerResBody.setCode(ResultCode.INVALID_REQUEST);
-            return triggerResBody;
+            ResBody.setCode(ResultCode.INVALID_REQUEST);
+            return ResBody;
         }
 
-        triggerResBody.setData(triggerTargetInfo);
-        return triggerResBody;
+        ResBody.setData(triggerTargetInfo);
+        return ResBody;
     }
 
     public TriggerTargetInfo getDetail(Long seq) {
@@ -55,8 +55,8 @@ public class TriggerTargetService {
         return info;
     }
 
-    public TriggerResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {
+        ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo policyInfo = triggerPolicyMapper.getDetail(policySeq);
         if (policyInfo == null)
             throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
@@ -79,7 +79,7 @@ public class TriggerTargetService {
             throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Set Trigger Target failed");
         }
 
-        return triggerResBody;
+        return ResBody;
     }
 
     private void addTriggerTargets(List<ManageTriggerTargetDto> addTargetList, TriggerPolicyInfo policyInfo) {

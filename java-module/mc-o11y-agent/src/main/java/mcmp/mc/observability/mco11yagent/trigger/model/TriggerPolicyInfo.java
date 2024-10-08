@@ -1,6 +1,7 @@
 package mcmp.mc.observability.mco11yagent.trigger.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,34 +24,58 @@ import java.util.Map;
 public class TriggerPolicyInfo {
 
     @ApiModelProperty(value = "Sequence by trigger policy", example = "1")
+    @JsonProperty("seq")
     private Long seq;
+
     @ApiModelProperty(value = "Base64 Encoded value", example = "Y3B1IHVzYWdlX2lkbGUgY2hlY2sgcG9saWN5")
     @TriggerBase64EncodeField
+    @JsonProperty("name")
     private String name;
+
     @ApiModelProperty(value = "Host description", example = "ZGVzY3JpcHRpb24=")
     @TriggerBase64EncodeField
+    @JsonProperty("description")
     private String description;
+
     @ApiModelProperty(value = "Trigger target metric", example = "cpu")
+    @JsonProperty("metric")
     private String metric;
+
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
+    @JsonProperty("field")
     private String field;
+
     @ApiModelProperty(value = "Trigger target metric statistics", example = "min")
+    @JsonProperty("statistics")
     private String statistics;
-    @ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
+
+    @ApiModelProperty(value = "Base64 Encoded value", example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
     @TriggerBase64EncodeField
+    @JsonProperty("threshold")
     private String threshold;
+
     @ApiModelProperty(value = "Agent Manager IP", example = "http://localhost:18080")
+    @JsonProperty("agent_manager_ip")
     private String agentManagerIp;
+
     @ApiModelProperty(value = "Trigger Policy enablement status")
+    @JsonProperty("status")
     private TaskStatus status;
+
     @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
+    @JsonProperty("group_fields")
     private List<String> groupFields;
+
     @JsonIgnore
+    @JsonProperty("tick_script")
     private String tickScript;
 
     @ApiModelProperty(value = "The time when the trigger policy was registered", example = "2024-05-24 11:31:55")
+    @JsonProperty("create_at")
     private String createAt;
+
     @ApiModelProperty(value = "The time when the trigger policy was updated")
+    @JsonProperty("update_at")
     private String updateAt;
 
     public void setCreateDto(TriggerPolicyCreateDto dto) {
