@@ -23,8 +23,8 @@ class PredictValue(BaseModel):
 
 
 class PredictionResult(BaseModel):
-    nsId: str
-    targetId: str
+    ns_id: str
+    target_id: str
     measurement: str
     target_type: str
     values: list[PredictValue]
@@ -43,8 +43,8 @@ class HistoryValue(BaseModel):
 
 
 class PredictionHistory(BaseModel):
-    nsId: str
-    targetId: str
+    ns_id: str
+    target_id: str
     measurement: str
     values: list[HistoryValue]
 

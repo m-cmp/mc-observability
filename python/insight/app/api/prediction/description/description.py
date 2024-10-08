@@ -41,8 +41,8 @@ post_prediction_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "nsId": "string",
-                            "targetId": "string",
+                            "ns_id": "string",
+                            "target_id": "string",
                             "measurement": "cpu",
                             "target_type": "VM",
                             "values": [
@@ -79,8 +79,8 @@ get_history_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "nsId": "string",
-                            "targetId": "string",
+                            "ns_id": "string",
+                            "target_id": "string",
                             "measurement": "cpu",
                             "values": [
                                 {
