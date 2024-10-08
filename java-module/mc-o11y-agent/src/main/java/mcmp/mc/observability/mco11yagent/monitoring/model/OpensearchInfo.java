@@ -1,5 +1,6 @@
 package mcmp.mc.observability.mco11yagent.monitoring.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +17,20 @@ import java.util.regex.Pattern;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OpensearchInfo {
+
+    @JsonProperty("seq")
     private Long seq;
+
+    @JsonProperty("url")
     private String url;
+
+    @JsonProperty("index_name")
     private String indexName;
+
+    @JsonProperty("username")
     private String username;
+
+    @JsonProperty("password")
     private String password;
 
     @Override
@@ -39,6 +50,7 @@ public class OpensearchInfo {
     public int hashCode() {
         return Objects.hash(url, indexName, username, password);
     }
+
     public OpensearchInfo(String setting) {
         setting = setting.replaceAll(" ", "");
 
@@ -52,7 +64,7 @@ public class OpensearchInfo {
         Pattern p = Pattern.compile(findRegex);
         Matcher m = p.matcher(origin);
 
-        if( m.find() ) {
+        if (m.find()) {
             String findStr = m.group();
             return findStr.replaceAll(replaceRegex, "");
         }

@@ -6,7 +6,7 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
-import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.config.MailConfig;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerAlertEmailMapper;
@@ -45,8 +45,8 @@ public class TriggerPolicyAlertService {
         return slackMapper.getSlackUserListByPolicySeq(policySeq);
     }
 
-    public TriggerResBody<Void> createSlackUser(TriggerSlackUserCreateDto dto) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> createSlackUser(TriggerSlackUserCreateDto dto) {
+        ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(dto.getPolicySeq());
         if(policyInfo == null)
             throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
@@ -60,22 +60,22 @@ public class TriggerPolicyAlertService {
             }
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
-    public TriggerResBody<Void> deleteSlackUser(Long seq) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> deleteSlackUser(Long seq) {
+        ResBody<Void> ResBody = new ResBody<>();
         try {
             if (seq <= 0)
                 throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
             slackMapper.deleteSlackUser(seq);
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
     public List<TriggerEmailUserInfo> getEmailUserList(Long policySeq) {
@@ -86,8 +86,8 @@ public class TriggerPolicyAlertService {
         return emailMapper.getEmailUserListByPolicySeq(policySeq);
     }
 
-    public TriggerResBody<Void> createEmailUser(TriggerEmailUserCreateDto dto) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> createEmailUser(TriggerEmailUserCreateDto dto) {
+        ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo policyInfo = policyMapper.getDetail(dto.getPolicySeq());
         if(policyInfo == null)
             throw new TriggerResultCodeException(ResultCode.NOT_FOUND_DATA, "Trigger Policy is not exist. PolicySeq : {}", dto.getPolicySeq());
@@ -101,22 +101,22 @@ public class TriggerPolicyAlertService {
             }
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
-    public TriggerResBody<Void> deleteEmailUser(Long seq) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> deleteEmailUser(Long seq) {
+        ResBody<Void> ResBody = new ResBody<>();
         try {
             if (seq <= 0)
                 throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Slack User Sequence Error");
             emailMapper.deleteEmailUser(seq);
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
 

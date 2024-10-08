@@ -3,7 +3,7 @@ package mcmp.mc.observability.mco11yagent.trigger.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
-import mcmp.mc.observability.mco11yagent.trigger.model.TriggerResBody;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerTargetMapper;
@@ -33,15 +33,15 @@ public class TriggerPolicyService {
         return triggerPolicyMapper.getList();
     }
 
-    public TriggerResBody<TriggerPolicyInfo> getDetail(TriggerResBody<TriggerPolicyInfo> triggerResBody, Long seq) {
+    public ResBody<TriggerPolicyInfo> getDetail(ResBody<TriggerPolicyInfo> ResBody, Long seq) {
         TriggerPolicyInfo triggerHistoryInfo = getDetail(seq);
         if( triggerHistoryInfo == null ) {
-            triggerResBody.setCode(ResultCode.INVALID_REQUEST);
-            return triggerResBody;
+            ResBody.setCode(ResultCode.INVALID_REQUEST);
+            return ResBody;
         }
 
-        triggerResBody.setData(triggerHistoryInfo);
-        return triggerResBody;
+        ResBody.setData(triggerHistoryInfo);
+        return ResBody;
     }
 
     public TriggerPolicyInfo getDetail(Long seq) {
@@ -49,8 +49,8 @@ public class TriggerPolicyService {
         return info;
     }
 
-    public TriggerResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
+        ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo info = new TriggerPolicyInfo();
         info.setCreateDto(dto);
         try {
@@ -65,13 +65,13 @@ public class TriggerPolicyService {
 
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
-    public TriggerResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
+        ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo info = triggerPolicyMapper.getDetail(dto.getSeq());
         info.setUpdateDto(dto);
         info.makeTickScript(info);
@@ -86,7 +86,7 @@ public class TriggerPolicyService {
             if(hasNonNullFields(dto)) {
                 List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", info.getSeq()));
                 if (CollectionUtils.isEmpty(targetStorageInfoList))
-                    return triggerResBody;
+                    return ResBody;
 
                 for(ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
                     kapacitorApiService.updateTask(info, targetStorageInfo);
@@ -95,9 +95,9 @@ public class TriggerPolicyService {
 
         } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 
     private boolean hasNonNullFields(TriggerPolicyUpdateDto dto) {
@@ -112,8 +112,8 @@ public class TriggerPolicyService {
         return fields.stream().anyMatch(field -> field != null);
     }
 
-    public TriggerResBody<Void> deletePolicy(Long seq) {
-        TriggerResBody<Void> triggerResBody = new TriggerResBody<>();
+    public ResBody<Void> deletePolicy(Long seq) {
+        ResBody<Void> ResBody = new ResBody<>();
         try {
             if( seq <= 0 )
                 throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Sequence Error");
@@ -139,8 +139,8 @@ public class TriggerPolicyService {
         }
         catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
-            triggerResBody.setCode(e.getResultCode());
+            ResBody.setCode(e.getResultCode());
         }
-        return triggerResBody;
+        return ResBody;
     }
 }

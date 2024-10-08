@@ -1,5 +1,6 @@
 package mcmp.mc.observability.mco11yagent.monitoring.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64DecodeField;
@@ -8,18 +9,38 @@ import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64EncodeField
 @Getter
 @Setter
 public class MonitoringConfigInfo {
+
+    @JsonProperty("seq")
     private Long seq;
+
+    @JsonProperty("ns_id")
     private String nsId;
+
+    @JsonProperty("mci_id")
     private String mciId;
+
+    @JsonProperty("target_id")
     private String targetId;
+
     @Base64EncodeField
     @Base64DecodeField
+    @JsonProperty("name")
     private String name;
+
+    @JsonProperty("state")
     private String state;
+
+    @JsonProperty("plugin_seq")
     private Long pluginSeq;
+
+    @JsonProperty("plugin_name")
     private String pluginName;
+
+    @JsonProperty("plugin_type")
     private String pluginType;
+
     @Base64EncodeField
     @Base64DecodeField
+    @JsonProperty("plugin_config")
     private String pluginConfig;
 }

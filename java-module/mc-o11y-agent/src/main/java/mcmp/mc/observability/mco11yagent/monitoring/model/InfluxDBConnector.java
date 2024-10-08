@@ -1,5 +1,6 @@
 package mcmp.mc.observability.mco11yagent.monitoring.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.influxdb.InfluxDB;
@@ -10,15 +11,28 @@ import java.util.regex.Pattern;
 
 @Getter
 public class InfluxDBConnector {
+
     private InfluxDB influxDB;
+
+    @JsonProperty("url")
     private final String url;
+
+    @JsonProperty("database")
     private final String database;
+
+    @JsonProperty("retention_policy")
     private final String retentionPolicy;
+
+    @JsonProperty("username")
     private final String username;
+
+    @JsonProperty("password")
     private final String password;
 
     private void setInfluxDB() {
-        influxDB = (StringUtils.isBlank(username) && StringUtils.isBlank(password))? InfluxDBFactory.connect(url): InfluxDBFactory.connect(url, username, password);
+        influxDB = (StringUtils.isBlank(username) && StringUtils.isBlank(password))
+                ? InfluxDBFactory.connect(url)
+                : InfluxDBFactory.connect(url, username, password);
         influxDB.setDatabase(database);
     }
 
@@ -46,7 +60,7 @@ public class InfluxDBConnector {
         Pattern p = Pattern.compile(findRegex);
         Matcher m = p.matcher(origin);
 
-        if( m.find() ) {
+        if (m.find()) {
             String findStr = m.group();
             return findStr.replaceAll(replaceRegex, "");
         }

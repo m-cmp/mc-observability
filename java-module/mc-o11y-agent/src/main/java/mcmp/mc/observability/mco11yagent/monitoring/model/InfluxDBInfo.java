@@ -1,5 +1,6 @@
 package mcmp.mc.observability.mco11yagent.monitoring.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
@@ -14,16 +15,27 @@ import java.util.Objects;
 @ApiModel(description = "InfluxDB information")
 public class InfluxDBInfo {
     @ApiModelProperty(value = "Sequence number")
+    @JsonProperty("seq")
     private Long seq;
+
     @ApiModelProperty(value = "Host url", example = "http://localhost:8086")
+    @JsonProperty("url")
     private String url;
+
     @ApiModelProperty(value = "Database name", example = "mc-agent")
+    @JsonProperty("database")
     private String database;
+
     @ApiModelProperty(value = "Data retention policy name", example = "autogen")
+    @JsonProperty("retention_policy")
     private String retentionPolicy;
+
     @ApiModelProperty(value = "Authentication username", example = "mc-agent")
+    @JsonProperty("username")
     private String username;
+
     @ApiModelProperty(value = "Authentication password", example = "mc-agent")
+    @JsonProperty("password")
     private String password;
 
     @Override

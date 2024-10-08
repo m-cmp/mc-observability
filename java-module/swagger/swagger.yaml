@@ -195,7 +195,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/ResBody<List<ItemInfo>>'
+            $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
     post:
       tags:
         - '[Monitoring item] Monitoring target item management'
@@ -214,11 +214,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: itemInfo
+        - name: monitoringConfigInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/ItemCreateDTO'
+            $ref: '#/definitions/MonitoringConfigInfo'
       produces:
         - '*/*'
       responses:
@@ -244,11 +244,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: itemInfo
+        - name: monitoringConfigInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/ItemUpdateDTO'
+            $ref: '#/definitions/MonitoringConfigInfo'
       produces:
         - '*/*'
       responses:
@@ -312,7 +312,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/ResBody<List<StorageInfo>>'
+            $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
     post:
       tags:
         - '[Monitoring storage] Monitoring target storage management'
@@ -331,11 +331,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: storageInfo
+        - name: monitoringConfigInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/StorageCreateDTO'
+            $ref: '#/definitions/MonitoringConfigInfo'
       produces:
         - '*/*'
       responses:
@@ -361,11 +361,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: storageInfo
+        - name: monitoringConfigInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/StorageUpdateDTO'
+            $ref: '#/definitions/MonitoringConfigInfo'
       produces:
         - '*/*'
       responses:
@@ -639,7 +639,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«List«TriggerHistoryInfo»»'
+            $ref: '#/definitions/ResBody<List<TriggerHistoryInfo>>'
   /api/o11y/trigger/policy:
     get:
       tags:
@@ -747,9 +747,9 @@ paths:
             items:
               type: object
               properties:
-                nsId:
+                ns_id:
                   type: string
-                targetId:
+                target_id:
                   type: string
         - name: policySeq
           in: path
@@ -779,7 +779,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«List«TriggerEmailUserInfo»»'
+            $ref: '#/definitions/ResBody<List<TriggerEmailUserInfo>>'
     post:
       tags:
         - '[Metric Event] monitoring trigger event handler'
@@ -804,7 +804,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«Void»'
+            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}:
     delete:
       tags:
@@ -828,7 +828,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«Void»'
+            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/trigger/policy/{policySeq}/alert/slack:
     get:
       tags:
@@ -846,7 +846,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«List«TriggerSlackUserInfo»»'
+            $ref: '#/definitions/ResBody<List<TriggerSlackUserInfo>>'
     post:
       tags:
         - '[Metric Event] monitoring trigger event handler'
@@ -871,7 +871,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«Void»'
+            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}:
     delete:
       tags:
@@ -895,7 +895,7 @@ paths:
         '200':
           description: OK
           schema:
-            $ref: '#/definitions/TriggerResBody«Void»'
+            $ref: '#/definitions/ResBody<Void>'
   /api/o11y/insight/anomaly-detection/options:
     get:
       description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
@@ -1302,9 +1302,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/PluginDefInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<PluginDefInfo>>
   PluginDefInfo:
@@ -1315,9 +1315,9 @@ definitions:
         format: int64
       name:
         type: string
-      pluginId:
+      plugin_id:
         type: string
-      pluginType:
+      plugin_type:
         type: string
     title: PluginDefInfo
   ResBody<List<TargetInfo>>:
@@ -1327,9 +1327,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TargetInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TargetInfo>>
   ResBody<TargetInfo>:
@@ -1339,28 +1339,31 @@ definitions:
         type: object
         items:
           $ref: '#/definitions/TargetInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<TargetInfo>
   TargetInfo:
     type: object
     properties:
+      ns_id:
+        type: string
+        description: namespace ID
+      mci_id:
+        type: string
+        description: MCI ID
       id:
         type: string
         description: target ID
+      name:
+        type: string
+      alias_name:
+        type: string
+        description: target alias name (Base64 encoded value)
       description:
         type: string
         description: target description (Base64 encoded value)
-      nsId:
-        type: string
-        description: namespace ID
-      name:
-        type: string
-      aliasName:
-        type: string
-        description: target alias name (Base64 encoded value)
       state:
         type: string
         enum:
@@ -1370,9 +1373,9 @@ definitions:
   ResBody<Void>:
     type: object
     properties:
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<Void>
   TargetCreateDTO:
@@ -1381,7 +1384,7 @@ definitions:
       description:
         type: string
         description: target description (Base64 encoded value)
-      aliasName:
+      alias_name:
         type: string
         description: target alias name (Base64 encoded value)
     title: TargetCreateDTO
@@ -1391,7 +1394,7 @@ definitions:
       description:
         type: string
         description: target description (Base64 encoded value)
-      aliasName:
+      alias_name:
         type: string
         description: target alias name (Base64 encoded value)
     title: TargetUpdateDTO
@@ -1402,111 +1405,57 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/ItemInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<ItemInfo>>
-  ItemInfo:
+  MonitoringConfigInfo:
     type: object
     properties:
       seq:
         type: integer
         format: int64
+      ns_id:
+        type: string
+        description: namespace ID
+      mci_id:
+        type: string
+        description: MCI ID
+      target_id:
+        type: string
+        description: target ID
       name:
         type: string
         description: Base64 Encoded value
-      pluginName:
-        type: string
-      pluginSeq:
-        type: integer
-        format: int64
-      pluginConfig:
-        type: string
-        description: Base64 Encoded value
-    title: ItemInfo
-  ItemCreateDTO:
-    type: object
-    properties:
       name:
         type: string
         description: Base64 Encoded value
-      pluginSeq:
-        type: integer
+      state:
+        type: string
+      plugin_seq:
+        type: string
         format: int64
-      pluginConfig:
+        description: Defined sequence number of the plugin
+      plugin_name:
         type: string
-        description: Base64 Encoded value
-    title: ItemCreateDTO
-  ItemUpdateDTO:
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      name:
+        description: InfluxDB plugin name
+      plugin_config:
         type: string
-        description: Base64 Encoded value
-      pluginConfig:
-        type: string
-        description: Base64 Encoded value
-    title: ItemUpdateDTO
-  ResBody<List<StorageInfo>>:
+        description: Base64 Encoded InfluxDB plugin config value
+    title: MonitoringConfigInfo
+  ResBody<List<MonitoringConfigInfo>>:
     type: object
     properties:
       data:
         type: array
         items:
-          $ref: '#/definitions/StorageInfo'
+          $ref: '#/definitions/MonitoringConfigInfo'
       rsCode:
         type: string
       rsMsg:
         type: string
-    title: ResBody<List<StorageInfo>>
-  StorageInfo:
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      name:
-        type: string
-        description: Base64 Encoded value
-      pluginName:
-        type: string
-      pluginSeq:
-        type: integer
-        format: int64
-      pluginConfig:
-        type: string
-        description: Base64 Encoded value
-    title: StorageInfo
-  StorageCreateDTO:
-    type: object
-    properties:
-      name:
-        type: string
-        description: Base64 Encoded value
-      pluginSeq:
-        type: integer
-        format: int64
-      pluginConfig:
-        type: string
-        description: Base64 Encoded value
-    title: StorageCreateDTO
-  StorageUpdateDTO:
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      name:
-        type: string
-        description: Base64 Encoded value
-      pluginConfig:
-        type: string
-        description: Base64 Encoded value
-    title: StorageUpdateDTO
+    title: ResBody<List<MonitoringConfigInfo>>
   ResBody<List<InfluxDBInfo>>:
     type: object
     properties:
@@ -1529,7 +1478,7 @@ definitions:
         type: string
       database:
         type: string
-      retentionPolicy:
+      retention_policy:
         type: string
       username:
         type: string
@@ -1550,7 +1499,7 @@ definitions:
             value: '0.445'
         items:
           $ref: '#/definitions/TimestampValue'
-      retentionPolicy:
+      retention_policy:
         type: string
       username:
         type: string
@@ -1602,9 +1551,9 @@ definitions:
   FieldInfo:
     type: object
     properties:
-      fieldKey:
+      field_key:
         type: string
-      fieldType:
+      field_type:
         type: string
     title: FieldInfo
   ResBody<List<Map<string,object>>>:
@@ -1641,14 +1590,14 @@ definitions:
             field: usage_idle
         items:
           $ref: '#/definitions/FieldFunctionInfo'
-      groupBy:
+      group_by:
         type: array
         example:
           - uuid
           - cpu
         items:
           type: string
-      groupTime:
+      group_time:
         type: string
         example: 1h
         description: timeunit s,m,h,d(second, minute, hour, day)
@@ -1779,7 +1728,7 @@ definitions:
         type: string
       database:
         type: string
-      retentionPolicy:
+      retention_policy:
         type: string
       username:
         type: string
@@ -1796,15 +1745,7 @@ definitions:
         type: string
         description: Trigger Alert Email User name
     title: TriggerEmailUserCreateDto
-  TriggerResBody«Void»:
-    type: object
-    properties:
-      rsCode:
-        type: string
-      rsMsg:
-        type: string
-    title: TriggerResBody«Void»
-  TriggerResBody«List«TriggerEmailUserInfo»»:
+  ResBody<List<TriggerEmailUserInfo>>:
     type: object
     properties:
       data:
@@ -1815,7 +1756,7 @@ definitions:
         type: string
       rsMsg:
         type: string
-    title: TriggerResBody«List«TriggerEmailUserInfo»»
+    title: ResBody<List<TriggerEmailUserInfo>>
   TriggerEmailUserInfo:
     type: object
     properties:
@@ -1836,7 +1777,7 @@ definitions:
         example: 1
         description: Sequence by Trigger Email User
     title: TriggerEmailUserInfo
-  TriggerResBody«List«TriggerSlackUserInfo»»:
+  ResBody<List<TriggerSlackUserInfo>>:
     type: object
     properties:
       data:
@@ -1847,7 +1788,7 @@ definitions:
         type: string
       rsMsg:
         type: string
-    title: TriggerResBody«List«TriggerSlackUserInfo»»»
+    title: ResBody<List<TriggerSlackUserInfo>>>
   TriggerSlackUserCreateDto:
     type: object
     properties:
@@ -1884,7 +1825,7 @@ definitions:
         type: string
         description: Base64 Encoded value
     title: TriggerSlackUserInfo
-  TriggerResBody«List«TriggerHistoryInfo»»:
+  ResBody<List<TriggerHistoryInfo>>:
     type: object
     properties:
       data:
@@ -1895,7 +1836,7 @@ definitions:
         type: string
       rsMsg:
         type: string
-    title: TriggerResBody«List«TriggerHistoryInfo»»
+    title: ResBody<List<TriggerHistoryInfo>>
   TriggerHistoryInfo:
     type: object
     properties:
