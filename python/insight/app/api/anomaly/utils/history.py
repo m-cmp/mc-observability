@@ -57,11 +57,11 @@ class AnomalyHistoryService:
 
     def _build_body(self):
         field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
+            "cpu": "usage_idle",
+            "mem": "used_percent",
         }
 
-        field_value = field_mapping.get(self.query_params.metric_type.value)
+        field_value = field_mapping.get(self.query_params.measurement.value)
 
         return {
             "conditions": [
@@ -81,7 +81,7 @@ class AnomalyHistoryService:
                 }
             ],
             "groupTime": "1m",
-            "measurement": self.query_params.metric_type.value.lower(),
+            "measurement": self.query_params.measurement.value.lower(),
             "range": "12h"
         }
 
@@ -99,7 +99,7 @@ class AnomalyHistoryService:
         raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
 
         for entry in results:
-            entry_timestamp = pd.to_datetime(entry['timestamp'])
+            entry_timestamp = pd.to_datetime(entry['timestamp']).strftime('%Y-%m-%dT%H:%M:%SZ')
             matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
 
             if not matching_row.empty:
@@ -111,15 +111,15 @@ class AnomalyHistoryService:
             value = AnomalyDetectionHistoryValue(
                 timestamp=entry['timestamp'],
                 anomaly_score=entry.get('anomaly_score'),
-                isAnomaly=entry.get('isAnomaly'),
+                is_anomaly=entry.get('isAnomaly'),
                 value=resource_pct_value
             )
             values.append(value)
 
         data = AnomalyDetectionHistoryResponse(
-            nsId=self.path_params.nsId,
-            targetId=self.path_params.targetId,
-            metric_type=self.query_params.metric_type.value,
+            ns_id=self.path_params.nsId,
+            target_id=self.path_params.targetId,
+            measurement=self.query_params.measurement.value,
             values=values
         )
 

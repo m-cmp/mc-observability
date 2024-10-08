@@ -40,9 +40,9 @@ async def predict_monitoring_data(
     result_dict = prediction_service.predict(df, path_params, body_params)
 
     prediction_result = PredictionResult(
-        nsId=path_params.nsId,
-        targetId=path_params.targetId,
-        metric_type=body_params.metric_type,
+        ns_id=path_params.nsId,
+        target_id=path_params.targetId,
+        measurement=body_params.measurement,
         target_type=body_params.target_type,
         values=result_dict
     )
@@ -65,9 +65,9 @@ async def get_prediction_history(
     result_dict = prediction_service.get_prediction_history(path_params, query_params)
 
     prediction_history = PredictionHistory(
-        nsId=path_params.nsId,
-        targetId=path_params.targetId,
-        metric_type=query_params.metric_type,
+        ns_id=path_params.nsId,
+        target_id=path_params.targetId,
+        measurement=query_params.measurement,
         values=result_dict
     )
 

@@ -15,13 +15,13 @@ class AnomalySettingsService:
         results = [
             AnomalyDetectionSettings(
                 seq=setting.SEQ,
-                nsId=setting.NAMESPACE_ID,
-                targetId=setting.TARGET_ID,
+                ns_id=setting.NAMESPACE_ID,
+                target_id=setting.TARGET_ID,
                 target_type=setting.TARGET_TYPE,
-                metric_type=setting.METRIC_TYPE,
+                measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION,
-                createAt=setting.REGDATE
+                create_at=setting.REGDATE
             )
             for setting in settings
         ]
@@ -34,13 +34,13 @@ class AnomalySettingsService:
             results = [
                 AnomalyDetectionSettings(
                     seq=setting.SEQ,
-                    nsId=setting.NAMESPACE_ID,
-                    targetId=setting.TARGET_ID,
+                    ns_id=setting.NAMESPACE_ID,
+                    target_id=setting.TARGET_ID,
                     target_type=setting.TARGET_TYPE,
-                    metric_type=setting.METRIC_TYPE,
+                    measurement=setting.MEASUREMENT,
                     execution_interval=setting.EXECUTION_INTERVAL,
                     last_execution=setting.LAST_EXECUTION,
-                    createAt=setting.REGDATE
+                    create_at=setting.REGDATE
                 )
                 for setting in settings
             ]
@@ -63,7 +63,7 @@ class AnomalySettingsService:
         if duplicate:
             return JSONResponse(status_code=409, content={"rsCode": "409",
                                                           "rsMsg": "A record with the same namespace_id, target_id, "
-                                                                   "target_type, and metric_type already exists."})
+                                                                   "target_type, and measurement already exists."})
 
         self.repo.create_setting(setting_data=setting_data)
         return ResBodyVoid(rsMsg="Target Registered Successfully")

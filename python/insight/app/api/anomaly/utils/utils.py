@@ -27,7 +27,7 @@ class AnomalyService:
         raw_data = self.get_raw_data(seq_list=storage_seq_list, setting=setting)
         pre_data = self.make_preprocess_data(df=raw_data)
 
-        anomaly_detector = AnomalyDetector(metric_type=setting.METRIC_TYPE)
+        anomaly_detector = AnomalyDetector(measurement=setting.measurement)
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
         influx_repo = InfluxDBRepository()
         influx_repo.save_results(df=score_df, setting=setting)
@@ -77,11 +77,11 @@ class AnomalyService:
     @staticmethod
     def _build_body(setting: object):
         field_mapping = {
-            "CPU": "usage_idle",
-            "MEM": "used_percent",
+            "cpu": "usage_idle",
+            "mem": "used_percent",
         }
 
-        field_value = field_mapping.get(setting.METRIC_TYPE)
+        field_value = field_mapping.get(setting.measurement)
 
         return {
             "conditions": [
@@ -101,7 +101,7 @@ class AnomalyService:
                 }
             ],
             "groupTime": "1m",
-            "measurement": setting.METRIC_TYPE.lower(),
+            "measurement": setting.measurement.lower(),
             "range": "12h"
         }
 
@@ -137,10 +137,10 @@ class AnomalyService:
 
 
 class AnomalyDetector:
-    def __init__(self, metric_type: str):
+    def __init__(self, measurement: str):
         config = ConfigManager()
         self.kst = pytz.timezone('Asia/Seoul')
-        self.metric_type = metric_type
+        self.measurement = measurement
         self.rrcf_config = config.get_rrcf_config()
 
     @staticmethod

@@ -11,11 +11,11 @@ get_options_description = {
                                 "VM",
                                 "MCI"
                             ],
-                            "metric_types": [
-                                "CPU",
-                                "MEM",
-                                "Disk",
-                                "System Load"
+                            "measurements": [
+                                "cpu",
+                                "mem",
+                                "disk",
+                                "system load"
                             ],
                             "prediction_ranges": {
                                 "min": "1h",
@@ -33,7 +33,7 @@ get_options_description = {
 
 
 post_prediction_description = {
-    "api_description": "Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -41,9 +41,9 @@ post_prediction_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "nsId": "string",
-                            "targetId": "string",
-                            "metric_type": "CPU",
+                            "ns_id": "string",
+                            "target_id": "string",
+                            "measurement": "cpu",
                             "target_type": "VM",
                             "values": [
                                 {
@@ -79,9 +79,9 @@ get_history_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "nsId": "string",
-                            "targetId": "string",
-                            "metric_type": "CPU",
+                            "ns_id": "string",
+                            "target_id": "string",
+                            "measurement": "cpu",
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",

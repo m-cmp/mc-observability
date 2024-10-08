@@ -7,9 +7,10 @@ from pydantic import BaseModel, validator, Field
 import pytz
 
 
-def set_time_delta(delta=0) -> datetime:
-    kst = pytz.timezone('Asia/Seoul')
-    return datetime.now(kst).replace(microsecond=0) - timedelta(hours=delta)
+def set_time_delta(delta=0) -> str:
+    utc_now = datetime.utcnow().replace(microsecond=0)
+    new_time_utc = utc_now + timedelta(hours=delta)
+    return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def generate_enum_from_config(path: str, enum_name: str):
@@ -26,15 +27,15 @@ def generate_enum_from_config(path: str, enum_name: str):
 
 
 TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType')
-AnomalyMetricType = generate_enum_from_config('anomaly.metric_types.types', 'MetricType')
+AnomalyMetricType = generate_enum_from_config('anomaly.measurements.types', 'MetricType')
 ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
 
 
 class AnomalyDetectionTargetRegistration(BaseModel):
-    nsId: str
-    targetId: str
+    ns_id: str
+    target_id: str
     target_type: TargetType = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    metric_type: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (CPU or MEM)", example="CPU")
+    measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu")
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
 
@@ -48,16 +49,20 @@ class GetHistoryPathParams(BaseModel):
 
 
 class GetAnomalyHistoryFilter(BaseModel):
-    metric_type: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))
-    start_time: datetime = Field(Query(
+    measurement: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))
+    start_time: str = Field(Query(
         default=None,
-        description='The start timestamp for the range of prediction data to retrieve. '
-                    'Defaults to 7 days before the current time if not provided.'
+        description='The start timestamp for the range of Anomaly data to retrieve. '
+                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
+                    'Defaults to 12 hours before the current time if not provided.',
+        example='2024-10-08T12:00:00Z'
     ))
-    end_time: datetime = Field(Query(
+    end_time: str = Field(Query(
         default=None,
-        description='The end timestamp for the range of prediction data to retrieve. '
-                    'Defaults to the current time if not provided.'
+        description='The end timestamp for the range of Anomaly data to retrieve. '
+                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
+                    'Defaults to the current time if not provided.',
+        example='2024-10-09T00:00:00Z'
     ))
 
     @validator('start_time', pre=True, always=True)

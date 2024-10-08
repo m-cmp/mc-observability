@@ -19,24 +19,24 @@ class PredictionPath(BaseModel):
 
 
 class PredictionMetricType(str, Enum):
-    CPU = 'CPU'
-    MEM = 'MEM'
-    Disk = 'Disk'
-    SystemLoad = 'System Load'
+    cpu = 'cpu'
+    mem = 'mem'
+    disk = 'disk'
+    systemLoad = 'system load'
 
 
 class PredictionBody(BaseModel):
     target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
-    metric_type: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(CPU, MEM,"
-                                                     " Disk, System Load)", example="CPU")
+    measurement: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
+                                                     " disk, system load)", example="cpu")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
 
 
 # get history request parameters
-def add_time_delta(delta=0) -> datetime:
-    # Arguments delta may be positive or negative.
-    kst = pytz.timezone('Asia/Seoul')
-    return datetime.now(kst).replace(microsecond=0) + timedelta(hours=delta)
+def add_time_delta(delta=0) -> str:
+    utc_now = datetime.utcnow().replace(microsecond=0)
+    new_time_utc = utc_now + timedelta(hours=delta)
+    return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 class GetHistoryPath(BaseModel):
@@ -45,14 +45,18 @@ class GetHistoryPath(BaseModel):
 
 
 class GetPredictionHistoryQuery(BaseModel):
-    metric_type: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
-    start_time: datetime = Field(Query(
+    measurement: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
+    start_time: str = Field(Query(
         default=None,
-        description='The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.'
+        description="The start timestamp for the range of prediction data to retrieve. **Format**: "
+                    "'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided.",
+        example='2024-10-09T00:00:00Z'
     ))
-    end_time: datetime = Field(Query(
+    end_time: str = Field(Query(
         default=None,
-        description='The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.'
+        description="The end timestamp for the range of prediction data to retrieve. **Format**: "
+                    "'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided.",
+        example='2024-10-16T00:00:00Z'
     ))
 
     @validator('start_time', pre=True, always=True)

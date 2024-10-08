@@ -918,9 +918,9 @@ paths:
                 target_types:
                 - VM
                 - MCI
-                metric_types:
-                - CPU
-                - MEM
+                measurements:
+                - cpu
+                - mem
                 execution_intervals:
                 - 5m
                 - 10m
@@ -946,7 +946,11 @@ paths:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
           headers: {}
     post:
-      description: Register a target for anomaly detection and automatically schedule detection tasks.
+      description: |
+        Register a target for anomaly detection and automatically schedule detection tasks.  
+        (measurememt : field) Relationships are as follows.  
+        cpu : usage_idle  
+        mem : used_percent
       summary: PostAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1088,22 +1092,20 @@ paths:
         in: query
         required: true
         enum:
-        - CPU
-        - MEM
+        - cpu
+        - mem
         type: string
         description: The type of metric to retrieve.
       - name: start_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The start timestamp for the range of prediction data to retrieve. Defaults to 7 days before the current time if not provided.
+        description: The start timestamp for the range of Anomaly data to retrieve. Format 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The end timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+        description: The end timestamp for the range of Anomaly data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
       responses:
         '200':
           description: Successful Response
@@ -1155,11 +1157,11 @@ paths:
                 target_types:
                 - VM
                 - MCI
-                metric_types:
-                - CPU
-                - MEM
-                - Disk
-                - System Load
+                measurements:
+                - cpu
+                - mem
+                - disk
+                - system load
                 prediction_ranges:
                   min: 1h
                   max: 2160h
@@ -1168,7 +1170,13 @@ paths:
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      description: Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group.
+      description: |
+        Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.
+        (measurememt : field) Relationships are as follows.  
+        cpu : usage_idle  
+        mem : used_percent  
+        disk : used_percent  
+        system load : load1
       summary: PostPrediction
       tags:
       - '[Insight] Prediction'
@@ -1210,17 +1218,17 @@ paths:
           examples:
             application/json:
               data:
-                nsId: string
-                targetId: string
-                metric_type: CPU
+                ns_id: string
+                target_id: string
+                measurement: cpu
                 target_type: VM
                 values:
                 - timestamp: 2024-08-22T00:00:00Z
-                  predicted_value: 75
+                  value: 75
                 - timestamp: 2024-08-22T01:00:00Z
-                  predicted_value: 78
+                  value: 78
                 - timestamp: 2024-08-22T02:00:00Z
-                  predicted_value: 80
+                  value: 80
               rsCode: '200'
               rsMsg: Success
           headers: {}
@@ -1249,24 +1257,22 @@ paths:
         in: query
         required: true
         enum:
-        - CPU
-        - MEM
-        - Disk
-        - System Load
+        - cpu
+        - mem
+        - disk
+        - system load
         type: string
         description: The type of metric to retrieve.
       - name: start_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The start timestamp for the range of prediction data to retrieve. Defaults to the current time if not provided.
+        description: The start timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        format: date-time
-        description: The end timestamp for the range of prediction data to retrieve. Defaults to 7 days after the current time if not provided.
+        description: The end timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to 7 days after the current time if not provided.
       responses:
         '200':
           description: Successfully retrieved prediction history
@@ -1275,16 +1281,16 @@ paths:
           examples:
             application/json:
               data:
-                nsId: string
-                targetId: string
-                metric_type: CPU
+                ns_id: string
+                target_id: string
+                measurement: cpu
                 values:
                 - timestamp: 2024-08-22T00:00:00Z
-                  predicted_value: 50
+                  value: 50
                 - timestamp: 2024-08-22T01:00:00Z
-                  predicted_value: 55
+                  value: 55
                 - timestamp: 2024-08-22T02:00:00Z
-                  predicted_value: 60
+                  value: 60
               rsCode: '200'
               rsMsg: Success
           headers: {}
@@ -2143,15 +2149,15 @@ definitions:
     title: AnomalyDetectionHistoryResponse
     type: object
     properties:
-      nsId:
+      ns_id:
         description: The Namespace ID.
         type: string
-      targetId:
+      target_id:
         description: The ID of the target (VM ID or MCI ID).
         type: string
-      metric_type:
-        description: The type of metric being monitored for anomalies (e.g., CPU, MEM).
-        example: CPU
+      measurement:
+        description: The type of metric being monitored for anomalies (e.g., cpu, mem).
+        example: cpu
         type: string
       values:
         description: List of anomaly detection results for the given time range.
@@ -2159,9 +2165,9 @@ definitions:
         items:
           $ref: '#/definitions/AnomalyDetectionHistoryValue'
     required:
-    - nsId
-    - targetId
-    - metric_type
+    - ns_id
+    - target_id
+    - measurement
     - values
   AnomalyDetectionHistoryValue:
     title: AnomalyDetectionHistoryValue
@@ -2196,7 +2202,7 @@ definitions:
         type: array
         items:
           type: string
-      metric_types:
+      measurements:
         type: array
         items:
           type: string
@@ -2206,7 +2212,7 @@ definitions:
           type: string
     required:
     - target_types
-    - metric_types
+    - measurements
     - execution_intervals
   AnomalyDetectionSettings:
     title: AnomalyDetectionSettings
@@ -2215,38 +2221,38 @@ definitions:
       seq:
         type: integer
         format: int32
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       target_type:
         type: string
-      metric_type:
+      measurement:
         type: string
       execution_interval:
         type: string
       last_execution:
         type: string
         format: date-time
-      createAt:
+      create_at:
         type: string
         format: date-time
     required:
     - seq
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - target_type
-    - metric_type
+    - measurement
     - execution_interval
     - last_execution
-    - createAt
+    - create_at
   AnomalyDetectionTargetRegistration:
     title: AnomalyDetectionTargetRegistration
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
       target_type:
         type: object
@@ -2254,12 +2260,12 @@ definitions:
         - $ref: '#/definitions/TargetType'
         - description: The type of the target (VM or MCI).
           example: VM
-      metric_type:
+      measurement:
         type: object
         allOf:
         - $ref: '#/definitions/MetricType'
-        - description: The type of metric being monitored for anomalies (CPU or MEM)
-          example: CPU
+        - description: The type of metric being monitored for anomalies (cpu or mem)
+          example: cpu
       execution_interval:
         type: object
         allOf:
@@ -2267,10 +2273,10 @@ definitions:
         - description: The interval at which anomaly detection runs (5m, 10m, 30m)
           example: 5m
     required:
-    - nsId
-    - targetId
+    - ns_id
+    - target_id
     - target_type
-    - metric_type
+    - measurement
     - execution_interval
   AnomalyDetectionTargetUpdate:
     title: AnomalyDetectionTargetUpdate
@@ -2298,7 +2304,7 @@ definitions:
     properties:
       timestamp:
         type: string
-      predicted_value:
+      value:
         type: number
         format: double
     required:
@@ -2308,15 +2314,15 @@ definitions:
     description: An enumeration.
     type: string
     enum:
-    - CPU
-    - MEM
+    - cpu
+    - mem
   PredictValue:
     title: PredictValue
     type: object
     properties:
       timestamp:
         type: string
-      predicted_value:
+      value:
         type: number
         format: double
     required:
@@ -2329,48 +2335,48 @@ definitions:
         description: The type of the target (VM or MCI).
         example: VM
         type: string
-      metric_type:
+      measurement:
         type: object
         allOf:
         - $ref: '#/definitions/PredictionMetricType'
-        - description: The type of metric being monitored for predictions(CPU, MEM, Disk, System Load)
-          example: CPU
+        - description: The type of metric being monitored for predictions(cpu, mem, disk, system load)
+          example: cpu
       prediction_range:
         description: Data prediction range as of now (1h~2,160h)
         example: 24h
         type: string
     required:
     - target_type
-    - metric_type
+    - measurement
     - prediction_range
   PredictionHistory:
     title: PredictionHistory
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
-      metric_type:
+      measurement:
         type: string
       values:
         type: array
         items:
           $ref: '#/definitions/HistoryValue'
     required:
-    - nsId
-    - targetId
-    - metric_type
+    - ns_id
+    - target_id
+    - measurement
     - values
   PredictionMetricType:
     title: PredictionMetricType
     description: An enumeration.
     type: string
     enum:
-    - CPU
-    - MEM
-    - Disk
-    - System Load
+    - cpu
+    - mem
+    - disk
+    - system load
   PredictionOptions:
     title: PredictionOptions
     type: object
@@ -2379,7 +2385,7 @@ definitions:
         type: array
         items:
           type: string
-      metric_types:
+      measurements:
         type: array
         items:
           type: string
@@ -2389,17 +2395,17 @@ definitions:
           type: string
     required:
     - target_types
-    - metric_types
+    - measurements
     - prediction_ranges
   PredictionResult:
     title: PredictionResult
     type: object
     properties:
-      nsId:
+      ns_id:
         type: string
-      targetId:
+      target_id:
         type: string
-      metric_type:
+      measurement:
         type: string
       target_type:
         type: string
@@ -2408,9 +2414,9 @@ definitions:
         items:
           $ref: '#/definitions/PredictValue'
     required:
-    - nsId
-    - targetId
-    - metric_type
+    - ns_id
+    - target_id
+    - measurement
     - target_type
     - values
   ResBodyAnomalyDetectionHistoryResponse:

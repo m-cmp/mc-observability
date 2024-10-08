@@ -14,7 +14,7 @@ class ConfigManager:
         anomaly = self.config.get('anomaly', {})
         return {
             "target_types": anomaly.get('target_types', {}).get('types', []),
-            "metric_types": anomaly.get('metric_types', {}).get('types', []),
+            "measurements": anomaly.get('measurements', {}).get('types', []),
             "execution_intervals": anomaly.get('execution_intervals', {}).get('intervals', [])
         }
 
@@ -31,7 +31,7 @@ class ConfigManager:
         prediction = self.config.get('prediction', {})
         return {
             'target_types': prediction.get('target_types', {}).get('types', []),
-            'metric_types': prediction.get('metric_types', {}).get('types', []),
+            'measurements': prediction.get('measurements', {}).get('types', []),
             'prediction_ranges': prediction.get('prediction_ranges', [])
         }
 
