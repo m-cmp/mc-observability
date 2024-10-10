@@ -38,7 +38,7 @@ class DataProcessor:
         for metirc_info in self.metric_info_list:
             measurement = metirc_info['measurement']
             for field in metirc_info['fields']:
-                if field['type'] not in ['integer', 'float']:
+                if field['field_type'] not in ['integer', 'float']:
                     continue
 
                 metric_data = self.load_metric_data(measurement=measurement, field=field['key'])
