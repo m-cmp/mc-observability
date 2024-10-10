@@ -41,16 +41,16 @@ class DataProcessor:
                 if field['field_type'] not in ['integer', 'float']:
                     continue
 
-                metric_data = self.load_metric_data(measurement=measurement, field=field['key'])
+                metric_data = self.load_metric_data(measurement=measurement, field=field['field_key'])
                 if not metric_data:
                     print('data empty')
                     continue
 
                 tags = metric_data[0]['tags']
                 # "tags": {"mci_id": "mci01", "ns_id": "ns01", "target_id": "g1-1-1"}
-                result_df = self.downsample_and_reduce(measurement=measurement, field=field['key'],
+                result_df = self.downsample_and_reduce(measurement=measurement, field=field['field_key'],
                                                        metric_data=metric_data[0]['values'])
-                self.save_to_influx(measurement, result_df, tags=tags, field=field['key'])
+                self.save_to_influx(measurement, result_df, tags=tags, field=field['field_key'])
 
             print(f"{measurement} is saved.")
 
