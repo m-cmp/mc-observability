@@ -27,9 +27,9 @@ public interface InsightClient {
     @PostMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings")
     Object insertAnomalyDetectionSetting(@RequestBody Object body);
     @PutMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings/{settingSeq}")
-    Object updateAnomalyDetectionSetting(@RequestParam Long settingSeq, @RequestBody Object body);
+    Object updateAnomalyDetectionSetting(@PathVariable Long settingSeq, @RequestBody Object body);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings/{settingSeq}")
-    Object deleteAnomalyDetectionSetting(@RequestParam Long settingSeq);
+    Object deleteAnomalyDetectionSetting(@PathVariable Long settingSeq);
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings/nsId/{nsId}/target/{targetId}")
     Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String targetId);
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/nsId/{nsId}/target/{targetId}/history")
