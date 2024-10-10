@@ -49,7 +49,7 @@ class AnomalySettingsRepository:
             NAMESPACE_ID=setting_data['NAMESPACE_ID'],
             TARGET_ID=setting_data['TARGET_ID'],
             TARGET_TYPE=setting_data['TARGET_TYPE'],
-            measurement=setting_data['measurement']
+            MEASUREMENT=setting_data['MEASUREMENT']
         ).first()
 
 

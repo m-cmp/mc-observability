@@ -81,7 +81,7 @@ class AnomalyService:
             "mem": "used_percent",
         }
 
-        field_value = field_mapping.get(setting.measurement)
+        field_value = field_mapping.get(setting.MEASUREMENT)
 
         return {
             "conditions": [
@@ -101,7 +101,7 @@ class AnomalyService:
                 }
             ],
             "groupTime": "1m",
-            "measurement": setting.measurement.lower(),
+            "measurement": setting.MEASUREMENT.lower(),
             "range": "12h"
         }
 
