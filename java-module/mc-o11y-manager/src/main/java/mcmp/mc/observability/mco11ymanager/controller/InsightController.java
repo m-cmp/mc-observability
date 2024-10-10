@@ -59,7 +59,7 @@ public class InsightController {
         return insightClient.getAnomalyDetection(nsId, targetId);
     }
     @GetMapping(Constants.ANOMALY_PATH + "/nsId/{nsId}/target/{targetId}/history")
-    public Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam String start_time, @RequestParam String end_time) {
+    public Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam(required = false) String start_time, @RequestParam(required = false) String end_time) {
         return insightClient.getAnomalyDetectionHistory(nsId, targetId, measurement, start_time, end_time);
     }
 }
