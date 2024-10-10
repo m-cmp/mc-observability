@@ -1428,9 +1428,6 @@ definitions:
       name:
         type: string
         description: Base64 Encoded value
-      name:
-        type: string
-        description: Base64 Encoded value
       state:
         type: string
       plugin_seq:
