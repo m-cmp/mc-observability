@@ -20,8 +20,8 @@ class AnomalySettingsService:
                 target_type=setting.TARGET_TYPE,
                 measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
-                last_execution=setting.LAST_EXECUTION,
-                create_at=setting.REGDATE
+                last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                create_at=setting.REGDATE.strftime('%Y-%m-%dT%H:%M:%SZ')
             )
             for setting in settings
         ]
@@ -39,15 +39,15 @@ class AnomalySettingsService:
                     target_type=setting.TARGET_TYPE,
                     measurement=setting.MEASUREMENT,
                     execution_interval=setting.EXECUTION_INTERVAL,
-                    last_execution=setting.LAST_EXECUTION,
-                    create_at=setting.REGDATE
+                    last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    create_at=setting.REGDATE.strftime('%Y-%m-%dT%H:%M:%SZ')
                 )
                 for setting in settings
             ]
             return ResBodyAnomalyDetectionSettings(data=results)
         return JSONResponse(
             status_code=404,
-            content={"rsCode": "404", "rsMsg": "Target Not Found"}
+            content={"rs_code": "404", "rs_msg": "Target Not Found"}
         )
 
     def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
@@ -61,31 +61,31 @@ class AnomalySettingsService:
 
         duplicate = self.repo.check_duplicate(setting_data=setting_data)
         if duplicate:
-            return JSONResponse(status_code=409, content={"rsCode": "409",
-                                                          "rsMsg": "A record with the same namespace_id, target_id, "
+            return JSONResponse(status_code=409, content={"rs_code": "409",
+                                                          "rs_msg": "A record with the same namespace_id, target_id, "
                                                                    "target_type, and measurement already exists."})
 
         self.repo.create_setting(setting_data=setting_data)
-        return ResBodyVoid(rsMsg="Target Registered Successfully")
+        return ResBodyVoid(rs_msg="Target Registered Successfully")
 
     def update_setting(self, setting_seq: int, update_data: dict) -> ResBodyVoid | JSONResponse:
         update_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                        update_data.items()}
         updated_setting = self.repo.update_setting(setting_seq=setting_seq, update_data=update_data)
         if updated_setting:
-            return ResBodyVoid(rsMsg="Setting Updated Successfully")
+            return ResBodyVoid(rs_msg="Setting Updated Successfully")
         else:
             return JSONResponse(
                 status_code=404,
-                content={"rsCode": "404", "rsMsg": "Target Not Found"}
+                content={"rs_code": "404", "rs_msg": "Target Not Found"}
             )
 
     def delete_setting(self, setting_seq: int) -> ResBodyVoid | JSONResponse:
         deleted_setting = self.repo.delete_setting(setting_seq=setting_seq)
         if deleted_setting:
-            return ResBodyVoid(rsMsg="Setting Deleted Successfully")
+            return ResBodyVoid(rs_msg="Setting Deleted Successfully")
         else:
             return JSONResponse(
                 status_code=404,
-                content={"rsCode": "404", "rsMsg": "Target Not Found"}
+                content={"rs_code": "404", "rs_msg": "Target Not Found"}
             )

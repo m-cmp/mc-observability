@@ -20,8 +20,8 @@ common:
 anomaly:
   target_types:
     types:
-      - VM
-      - MCI
+      - vm
+      - mci
   measurements:
     types:
       - cpu
@@ -40,8 +40,8 @@ anomaly:
 prediction:
   target_types:
     types:
-      - VM
-      - MCI
+      - vm
+      - mci
   measurements:
     types:
       - cpu

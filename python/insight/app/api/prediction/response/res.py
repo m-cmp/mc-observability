@@ -12,8 +12,8 @@ class PredictionOptions(BaseModel):
 
 class ResBodyPredictionOptions(BaseModel):
     data: PredictionOptions
-    rsCode: str = '200'
-    rsMsg: str = 'Success'
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
 
 
 # POST /predictions/nsId/{nsId}/target/{targetId}
@@ -32,8 +32,8 @@ class PredictionResult(BaseModel):
 
 class ResBodyPredictionResult(BaseModel):
     data: PredictionResult
-    rsCode: str = '200'
-    rsMsg: str = 'Success'
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
 
 
 # GET /predictions/nsId/{nsId}/target/{targetId}/history
@@ -51,5 +51,5 @@ class PredictionHistory(BaseModel):
 
 class ResBodyPredictionHistory(BaseModel):
     data: PredictionHistory
-    rsCode: str = '200'
-    rsMsg: str = 'Success'
+    rs_code: str = '200'
+    rs_msg: str = 'Success'

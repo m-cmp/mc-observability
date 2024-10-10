@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from datetime import datetime
 from typing import List, Optional
 
 
@@ -11,8 +10,8 @@ class AnomalyDetectionOptions(BaseModel):
 
 class ResBodyAnomalyDetectionOptions(BaseModel):
     data: AnomalyDetectionOptions
-    rsCode: str = "200"
-    rsMsg: str = "Success"
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 class AnomalyDetectionSettings(BaseModel):
@@ -22,19 +21,21 @@ class AnomalyDetectionSettings(BaseModel):
     target_type: str
     measurement: str
     execution_interval: str
-    last_execution: datetime
-    create_at: datetime
+    last_execution: str = Field(..., description="The timestamp for the anomaly detection last run.",
+                                format="date-time", example="2024-10-08T06:50:37Z")
+    create_at: str = Field(..., description="The timestamp for the registration for anomaly detection target.",
+                           format="date-time", example="2024-10-08T06:50:37Z")
 
 
 class ResBodyAnomalyDetectionSettings(BaseModel):
     data: List[AnomalyDetectionSettings]
-    rsCode: str = "200"
-    rsMsg: str = "Success"
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 class ResBodyVoid(BaseModel):
-    rsCode: str = "200"
-    rsMsg: str = "Success"
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 class AnomalyDetectionHistoryValue(BaseModel):
@@ -46,12 +47,12 @@ class AnomalyDetectionHistoryValue(BaseModel):
 
 class AnomalyDetectionHistoryResponse(BaseModel):
     ns_id: str = Field(..., description="The Namespace ID.")
-    target_id: str = Field(..., description="The ID of the target (VM ID or MCI ID).")
+    target_id: str = Field(..., description="The ID of the target (vm ID or mci ID).")
     measurement: str = Field(..., description="The type of metric being monitored for anomalies (e.g., cpu, mem).", example="cpu")
     values: List[AnomalyDetectionHistoryValue] = Field(..., description="List of anomaly detection results for the given time range.")
 
 
 class ResBodyAnomalyDetectionHistoryResponse(BaseModel):
     data: AnomalyDetectionHistoryResponse
-    rsCode: str = Field("200", description="Response code")
-    rsMsg: str = Field("Success", description="Response message")
+    rs_code: str = Field("200", description="Response code")
+    rs_msg: str = Field("Success", description="Response message")
