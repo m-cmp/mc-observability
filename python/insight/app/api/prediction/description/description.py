@@ -8,8 +8,8 @@ get_options_description = {
                     "example": {
                         "data": {
                             "target_types": [
-                                "VM",
-                                "MCI"
+                                "vm",
+                                "mci"
                             ],
                             "measurements": [
                                 "cpu",
@@ -22,8 +22,8 @@ get_options_description = {
                                 "max": "2160h"
                             }
                         },
-                        "rsCode": "200",
-                        "rsMsg": "Success"
+                        "rs_code": "200",
+                        "rs_msg": "Success"
                     }
                 }
             }
@@ -33,7 +33,7 @@ get_options_description = {
 
 
 post_prediction_description = {
-    "api_description": "Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -44,7 +44,7 @@ post_prediction_description = {
                             "ns_id": "string",
                             "target_id": "string",
                             "measurement": "cpu",
-                            "target_type": "VM",
+                            "target_type": "vm",
                             "values": [
                                 {
                                     "timestamp": "2024-08-22T00:00:00Z",
@@ -60,8 +60,8 @@ post_prediction_description = {
                                 }
                             ]
                         },
-                        "rsCode": "200",
-                        "rsMsg": "Success"
+                        "rs_code": "200",
+                        "rs_msg": "Success"
                     }
                 }
             }
@@ -71,7 +71,7 @@ post_prediction_description = {
 
 
 get_history_description = {
-    "api_description": "Get previously stored prediction data for a specific VM or MCI group.",
+    "api_description": "Get previously stored prediction data for a specific vm or mci group.",
     "response": {
         "200": {
             "description": "Successfully retrieved prediction history",
@@ -97,8 +97,8 @@ get_history_description = {
                                 }
                             ]
                         },
-                        "rsCode": "200",
-                        "rsMsg": "Success"
+                        "rs_code": "200",
+                        "rs_msg": "Success"
                     }
                 }
             }

@@ -42,8 +42,8 @@ class PredictionService:
         if measurement == 'system load': measurement = 'system'
 
         target_mapping = {
-            'VM': 'target_id',
-            'MCI': 'mci_id'
+            'vm': 'target_id',
+            'mci': 'mci_id'
         }
         field_mapping = {
             "cpu": "usage_idle",

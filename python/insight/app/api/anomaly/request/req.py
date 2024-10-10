@@ -34,7 +34,7 @@ ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.inter
 class AnomalyDetectionTargetRegistration(BaseModel):
     ns_id: str
     target_id: str
-    target_type: TargetType = Field(..., description="The type of the target (VM or MCI).", example="VM")
+    target_type: TargetType = Field(..., description="The type of the target (vm or mci).", example="vm")
     measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu")
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
@@ -45,7 +45,7 @@ class AnomalyDetectionTargetUpdate(BaseModel):
 
 class GetHistoryPathParams(BaseModel):
     nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target VM or MCI group.'))
+    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
 
 
 class GetAnomalyHistoryFilter(BaseModel):

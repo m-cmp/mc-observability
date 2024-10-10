@@ -8,8 +8,8 @@ get_options_description = {
                     "example": {
                         "data": {
                             "target_types": [
-                                "VM",
-                                "MCI"
+                                "vm",
+                                "mci"
                             ],
                             "measurements": [
                                 "cpu",
@@ -21,8 +21,8 @@ get_options_description = {
                                 "30m"
                             ]
                         },
-                        "rsCode": "200",
-                        "rsMsg": "Success"
+                        "rs_code": "200",
+                        "rs_msg": "Success"
                     }
                 }
             }

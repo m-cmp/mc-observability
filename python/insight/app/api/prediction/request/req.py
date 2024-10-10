@@ -15,7 +15,7 @@ class Item(BaseModel):
 # post prediction request parameters
 class PredictionPath(BaseModel):
     nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target VM or MCI group.'))
+    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
 
 
 class PredictionMetricType(str, Enum):
@@ -26,7 +26,7 @@ class PredictionMetricType(str, Enum):
 
 
 class PredictionBody(BaseModel):
-    target_type: str = Field(..., description="The type of the target (VM or MCI).", example="VM")
+    target_type: str = Field(..., description="The type of the target (vm or mci).", example="vm")
     measurement: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
                                                      " disk, system load)", example="cpu")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
@@ -41,7 +41,7 @@ def add_time_delta(delta=0) -> str:
 
 class GetHistoryPath(BaseModel):
     nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target VM or MCI group.'))
+    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
 
 
 class GetPredictionHistoryQuery(BaseModel):

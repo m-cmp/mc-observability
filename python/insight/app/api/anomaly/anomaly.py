@@ -114,4 +114,4 @@ async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db))
     service = AnomalyService(db=db, seq=settingSeq)
     service.anomaly_detection()
 
-    return ResBodyVoid(rsMsg="Anomaly Detection Success")
+    return ResBodyVoid(rs_msg="Anomaly Detection Success")

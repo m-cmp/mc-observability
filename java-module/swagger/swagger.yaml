@@ -86,6 +86,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<TargetInfo>'
     post:
+      description: |
+        The values that require Base64 encoding:  
+        description, alias_name
       tags:
         - '[Target] Monitoring target management'
       summary: Add new monitoring target (MC-O11y-Agent Install)
@@ -116,6 +119,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<Void>'
     put:
+      description: |
+        The values that require Base64 encoding:  
+        description, alias_name
       tags:
         - '[Target] Monitoring target management'
       summary: Update target information
@@ -197,6 +203,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
     post:
+      description: |
+        The values that require Base64 encoding:  
+        name, plugin_config
       tags:
         - '[Monitoring item] Monitoring target item management'
       summary: Add target monitoring item
@@ -214,11 +223,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: monitoringConfigInfo
+        - name: itemCreateInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/MonitoringConfigInfo'
+            $ref: '#/definitions/ItemCreateDTO'
       produces:
         - '*/*'
       responses:
@@ -227,6 +236,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<Void>'
     put:
+      description: |
+        The values that require Base64 encoding:  
+        name, plugin_config
       tags:
         - '[Monitoring item] Monitoring target item management'
       summary: Update target monitoring item
@@ -244,11 +256,11 @@ paths:
           in: path
           required: true
           type: string
-        - name: monitoringConfigInfo
+        - name: itemUpdateInfo
           in: body
           required: true
           schema:
-            $ref: '#/definitions/MonitoringConfigInfo'
+            $ref: '#/definitions/ItemUpdateDTO'
       produces:
         - '*/*'
       responses:
@@ -314,6 +326,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
     post:
+      description: |
+        The values that require Base64 encoding:  
+        name, plugin_config
       tags:
         - '[Monitoring storage] Monitoring target storage management'
       summary: Add target monitoring storage
@@ -344,6 +359,9 @@ paths:
           schema:
             $ref: '#/definitions/ResBody<Void>'
     put:
+      description: |
+        The values that require Base64 encoding:  
+        name, plugin_config
       tags:
         - '[Monitoring storage] Monitoring target storage management'
       summary: Update target monitoring storage
@@ -447,18 +465,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<InfluxDBInfo>>'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/measurement:
+  /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
         - '[Monitoring metric] Monitoring metric'
       summary: Get collected measurement & field list
       operationId: GET_InfluxDBInfo
-      parameters:
-        - name: influxDBSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
       produces:
         - '*/*'
       responses:
@@ -466,18 +478,12 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<MeasurementFieldInfo>>'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/tag:
+  /api/o11y/monitoring/influxdb/tag:
     get:
       tags:
         - '[Monitoring metric] Monitoring metric'
       summary: Get collected metric tag list
       operationId: GET_InfluxDBTag
-      parameters:
-        - name: influxDBSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
       produces:
         - '*/*'
       responses:
@@ -485,18 +491,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/metric:
+  /api/o11y/monitoring/influxdb/metric:
     post:
       tags:
         - '[Monitoring metric] Monitoring metric'
       summary: Get collected metric
       operationId: GET_Metric
       parameters:
-        - name: influxDBSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
         - name: metricsInfo
           in: body
           required: true
@@ -624,10 +625,13 @@ paths:
             $ref: '#/definitions/ResBody<List<MetricInfo>>'
   /api/o11y/trigger/policy/history:
     get:
+      description: |
+        Base64 Encoded value:  
+        name
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Get Trigger History all list
-      operationId: listUsingGET_6
+      operationId: GetTriggerHistoryAllList
       parameters:
         - name: policySeq
           in: query
@@ -643,19 +647,22 @@ paths:
   /api/o11y/trigger/policy:
     get:
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Get Trigger Policy all list
-      operationId: listUsingGET_4
+      operationId: GetTriggerPolicyAllList
       responses:
         '200':
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<TriggerPolicyInfo>>'
     post:
+      description: |
+        The values that require Base64 encoding:
+        description, name, threshold
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Create request Trigger Policy
-      operationId: createUsingPOST_2
+      operationId: CreateRequestTriggerPolicy
       parameters:
         - in: body
           name: triggerPolicyCreateDto
@@ -671,9 +678,9 @@ paths:
   /api/o11y/trigger/policy/{policySeq}:
     patch:
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Update request Trigger Policy
-      operationId: updateUsingPATCH_3
+      operationId: UpdateRequestTriggerPolicy
       consumes:
         - application/json
       parameters:
@@ -696,9 +703,9 @@ paths:
             $ref: '#/definitions/ResBody<Void>'
     delete:
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Delete request trigger policy
-      operationId: deleteUsingDELETE_2
+      operationId: DeleteRequestTriggerPolicy
       parameters:
         - name: policySeq
           in: path
@@ -714,9 +721,9 @@ paths:
   /api/o11y/trigger/policy/target:
     get:
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Get Trigger Target all list
-      operationId: listUsingGET_5
+      operationId: GetTriggerTargetAllList
       parameters:
         - name: policySeq
           in: query
@@ -732,9 +739,9 @@ paths:
   /api/o11y/trigger/policy/{policySeq}/target:
     put:
       tags:
-        - '[Metric Event] monitoring metric trigger'
+        - '[Metric Event] monitoring measurement trigger'
       summary: Set trigger target
-      operationId: setTargetsUsingPUT
+      operationId: PutTriggerTarget
       consumes:
         - application/json
       parameters:
@@ -767,7 +774,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Get Trigger Alert Email User all list
-      operationId: getEmailUserListUsingGET
+      operationId: GetTriggerAlertEmailUserAllList
       parameters:
         - name: policySeq
           in: path
@@ -784,7 +791,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Create request Trigger Alert Email User
-      operationId: createEmailUserUsingPOST
+      operationId: CreateTriggerAlertEmailUser
       consumes:
         - application/json
       parameters:
@@ -810,7 +817,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Delete Request Trigger Alert Email User
-      operationId: deleteEmailUserUsingDELETE
+      operationId: DeleteTriggerAlertEmailUser
       parameters:
         - name: policySeq
           in: path
@@ -834,7 +841,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Get Trigger Alert Slack User all list
-      operationId: getSlackUserListUsingGET
+      operationId: GetTriggerAlertSlackUserAllList
       parameters:
         - name: policySeq
           in: path
@@ -851,7 +858,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Create request Trigger Alert Slack User
-      operationId: createSlackUserUsingPOST
+      operationId: CreateTriggerAlertSlackUser
       consumes:
         - application/json
       parameters:
@@ -877,7 +884,7 @@ paths:
       tags:
         - '[Metric Event] monitoring trigger event handler'
       summary: Delete Request Trigger Alert Slack User
-      operationId: deleteSlackUserUsingDELETE
+      operationId: DeleteTriggerAlertSlackUser
       parameters:
         - name: policySeq
           in: path
@@ -916,8 +923,8 @@ paths:
             application/json:
               data:
                 target_types:
-                - VM
-                - MCI
+                - vm
+                - mci
                 measurements:
                 - cpu
                 - mem
@@ -925,8 +932,8 @@ paths:
                 - 5m
                 - 10m
                 - 30m
-              rsCode: '200'
-              rsMsg: Success
+              rs_code: '200'
+              rs_msg: Success
           headers: {}
   /api/o11y/insight/anomaly-detection/settings:
     get:
@@ -944,6 +951,16 @@ paths:
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          examples:
+            application/json:
+              - seq: 1
+                ns_id: "ns01"
+                target_id: "vm01"
+                target_type: "VM"
+                measurement: "cpu"
+                execution_interval: "5m"
+                last_execution: "2024-10-10T06:08:48Z"
+                create_at: "2024-10-10T03:08:48Z"
           headers: {}
     post:
       description: |
@@ -1087,7 +1104,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target VM or MCI group.
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -1161,8 +1178,8 @@ paths:
             application/json:
               data:
                 target_types:
-                - VM
-                - MCI
+                - vm
+                - mci
                 measurements:
                 - cpu
                 - mem
@@ -1171,13 +1188,13 @@ paths:
                 prediction_ranges:
                   min: 1h
                   max: 2160h
-              rsCode: '200'
-              rsMsg: Success
+              rs_code: '200'
+              rs_msg: Success
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
       description: |
-        Predict future metrics (cpu, mem, disk, system load) for a given VM or MCI group.
+        Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.
         (measurememt : field) Relationships are as follows.  
         cpu : usage_idle  
         mem : used_percent  
@@ -1202,7 +1219,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target VM or MCI group.
+        description: The ID of the target vm or mci group.
       - name: Content-Type
         in: header
         required: false
@@ -1235,12 +1252,12 @@ paths:
                   value: 78
                 - timestamp: 2024-08-22T02:00:00Z
                   value: 80
-              rsCode: '200'
-              rsMsg: Success
+              rs_code: '200'
+              rs_msg: Success
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
     get:
-      description: Get previously stored prediction data for a specific VM or MCI group.
+      description: Get previously stored prediction data for a specific vm or mci group.
       summary: GetPredictionHistory
       tags:
       - '[Insight] Prediction'
@@ -1258,7 +1275,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target VM or MCI group.
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -1303,8 +1320,8 @@ paths:
                   value: 55
                 - timestamp: 2024-08-22T02:00:00Z
                   value: 60
-              rsCode: '200'
-              rsMsg: Success
+              rs_code: '200'
+              rs_msg: Success
           headers: {}
 definitions:
   ResBody<List<PluginDefInfo>>:
@@ -1365,7 +1382,7 @@ definitions:
       mci_id:
         type: string
         description: MCI ID
-      id:
+      target_id:
         type: string
         description: target ID
       name:
@@ -1410,18 +1427,6 @@ definitions:
         type: string
         description: target alias name (Base64 encoded value)
     title: TargetUpdateDTO
-  ResBody<List<ItemInfo>>:
-    type: object
-    properties:
-      data:
-        type: array
-        items:
-          $ref: '#/definitions/ItemInfo'
-      rs_code:
-        type: string
-      rs_msg:
-        type: string
-    title: ResBody<List<ItemInfo>>
   MonitoringConfigInfo:
     type: object
     properties:
@@ -1460,11 +1465,37 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MonitoringConfigInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<MonitoringConfigInfo>>
+  ItemCreateDTO:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Base64 Encoded value
+      plugin_seq:
+        type: integer
+        format: int64
+      plugin_config:
+        type: string
+        description: Base64 Encoded value
+    title: ItemCreateDTO
+  ItemUpdateDTO:
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      name:
+        type: string
+        description: Base64 Encoded value
+      plugin_config:
+        type: string
+        description: Base64 Encoded value
+    title: ItemUpdateDTO
   ResBody<List<InfluxDBInfo>>:
     type: object
     properties:
@@ -1472,9 +1503,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/InfluxDBInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<InfluxDBInfo>>
   InfluxDBInfo:
@@ -1522,9 +1553,9 @@ definitions:
         type: object
         items:
           $ref: '#/definitions/SpiderMonitoringInfo.Data'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<SpiderMonitoringInfo.Data>
   TimestampValue:
@@ -1542,9 +1573,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MeasurementFieldInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<MeasurementFieldInfo>>
   MeasurementFieldInfo:
@@ -1574,9 +1605,9 @@ definitions:
           type: object
           additionalProperties:
             type: object
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<Map<string,object>>>
   MetricsInfo:
@@ -1645,9 +1676,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MetricInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<MetricInfo>>
   MetricInfo:
@@ -1677,9 +1708,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/OpensearchInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<OpensearchInfo>>
   OpensearchInfo:
@@ -1725,9 +1756,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MiningDBInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<MiningDBInfo>
   MiningDBInfo:
@@ -1761,9 +1792,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TriggerEmailUserInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TriggerEmailUserInfo>>
   TriggerEmailUserInfo:
@@ -1775,7 +1806,7 @@ definitions:
       name:
         type: string
         description: Trigger Alert Email User name
-      policySeq:
+      policy_seq:
         type: integer
         format: int64
         example: 1
@@ -1793,9 +1824,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TriggerSlackUserInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TriggerSlackUserInfo>>>
   TriggerSlackUserCreateDto:
@@ -1820,7 +1851,7 @@ definitions:
       name:
         type: string
         description: Trigger Alert Slack User name
-      policySeq:
+      policy_seq:
         type: integer
         format: int64
         example: 1
@@ -1841,17 +1872,17 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TriggerHistoryInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TriggerHistoryInfo>>
   TriggerHistoryInfo:
     type: object
     properties:
-      createAt:
+      create_at:
         type: string
-        example: '2024-05-24 11:31:55'
+        example: '2024-05-24T11:31:55Z'
         description: The time when the history was inserted into the database
       data:
         type: string
@@ -1859,20 +1890,20 @@ definitions:
       level:
         type: string
         description: Trigger event level
-      metric:
+      measurement:
         type: string
         description: Trigger event target metric name
       name:
         type: string
         example: localhost
         description: Base64 Encoded value
-      nsId:
+      ns_id:
         type: string
         description: Namespace Id
-      occurTime:
+      occur_time:
         type: string
         description: The time when the history occurred
-      policySeq:
+      policy_seq:
         type: integer
         format: int64
         example: 1
@@ -1882,10 +1913,10 @@ definitions:
         format: int64
         example: 1
         description: Sequence by history
-      targetId:
+      target_id:
         type: string
         description: Vm Id
-      targetSeq:
+      target_seq:
         type: integer
         format: int64
         example: 1
@@ -1898,21 +1929,21 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TriggerPolicyInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TriggerPolicyInfo>>
   TriggerPolicyInfo:
     type: object
     properties:
-      agentManagerIp:
+      agent_manager_ip:
         type: string
-        example: http://localhost:18080
+        example: http://mc-o11y-manager:18080
         description: Agent Manager IP
-      createAt:
+      create_at:
         type: string
-        example: '2024-05-24 11:31:55'
+        example: '2024-05-24T11:31:55Z'
         description: The time when the trigger policy was registered
       description:
         type: string
@@ -1922,14 +1953,7 @@ definitions:
         type: string
         example: usage_idle
         description: Trigger target metric field
-      groupFields:
-        type: array
-        example:
-          - cpu
-        description: Fields to group the data
-        items:
-          type: string
-      metric:
+      measurement:
         type: string
         example: cpu
         description: Trigger target metric
@@ -1956,17 +1980,13 @@ definitions:
         type: string
         example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
         description: Base64 Encoded value
-      updateAt:
+      update_at:
         type: string
         description: The time when the trigger policy was updated
     title: TriggerPolicyInfo
   TriggerPolicyCreateDTO:
     type: object
     properties:
-      agentManagerIp:
-        type: string
-        example: http://localhost:18080
-        description: Agent Manager IP
       description:
         type: string
         example: ZGVzY3JpcHRpb24=
@@ -1975,14 +1995,7 @@ definitions:
         type: string
         example: usage_idle
         description: Trigger target metric field
-      groupFields:
-        type: array
-        example:
-          - cpu
-        description: Fields to group the data
-        items:
-          type: string
-      metric:
+      measurement:
         type: string
         description: Trigger target metric
         enum:
@@ -2011,10 +2024,6 @@ definitions:
   TriggerPolicyUpdateDto:
     type: object
     properties:
-      agentManagerIp:
-        type: string
-        example: http://localhost:18080
-        description: Agent Manager IP
       description:
         type: string
         example: ZGVzY3JpcHRpb24=
@@ -2023,14 +2032,7 @@ definitions:
         type: string
         example: usage_idle
         description: Trigger target metric field
-      groupFields:
-        type: array
-        example:
-          - cpu
-        description: Fields to group the data
-        items:
-          type: string
-      metric:
+      measurement:
         type: string
         example: cpu
         description: Trigger target metric
@@ -2060,30 +2062,30 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/TriggerTargetInfo'
-      rsCode:
+      rs_code:
         type: string
-      rsMsg:
+      rs_msg:
         type: string
     title: ResBody<List<TriggerTargetInfo>>
   TriggerTargetInfo:
     type: object
     properties:
-      aliasName:
+      alias_name:
         type: string
         example: test-vm
         description: Host Alias Name
-      createAt:
+      create_at:
         type: string
-        example: '2024-05-24 11:31:55'
+        example: '2024-05-24T11:31:55Z'
         description: The time when the trigger target was registered
       name:
         type: string
         example: vm1
         description: Host name
-      nsId:
+      ns_id:
         type: string
         description: Namespace Id
-      policySeq:
+      policy_seq:
         type: integer
         format: int64
         example: 1
@@ -2126,19 +2128,22 @@ definitions:
       timestamp:
         description: The timestamp for the anomaly detection result.
         type: string
-        format: date-time
+        example: '2024-10-10T06:08:00Z'
       anomaly_score:
         description: The anomaly score for the corresponding timestamp.
         type: number
         format: double
+        example: 0.85
       isAnomaly:
         description: Whether the data point is considered an anomaly (1) or normal (0).
         type: integer
         format: int32
+        example: 1
       value:
         description: The original monitoring data value for the corresponding timestamp.
         type: number
         format: double
+        example: 99.5
     required:
     - timestamp
     - anomaly_score
@@ -2171,22 +2176,28 @@ definitions:
       seq:
         type: integer
         format: int32
+        example: 1
       ns_id:
         type: string
+        example: ns01
       target_id:
         type: string
+        example: vm01
       target_type:
         type: string
+        example: vm
       measurement:
         type: string
+        example: cpu
       execution_interval:
         type: string
+        example: '5m'
       last_execution:
         type: string
-        format: date-time
+        example: '2024-10-10T06:08:48Z'
       create_at:
         type: string
-        format: date-time
+        example: '2024-10-10T03:08:48Z'
     required:
     - seq
     - ns_id
@@ -2208,8 +2219,8 @@ definitions:
         type: object
         allOf:
         - $ref: '#/definitions/TargetType'
-        - description: The type of the target (VM or MCI).
-          example: VM
+        - description: The type of the target (vm or mci).
+          example: vm
       measurement:
         type: object
         allOf:
@@ -2282,8 +2293,8 @@ definitions:
     type: object
     properties:
       target_type:
-        description: The type of the target (VM or MCI).
-        example: VM
+        description: The type of the target (vm or mci).
+        example: vm
         type: string
       measurement:
         type: object
@@ -2375,11 +2386,11 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/AnomalyDetectionHistoryResponse'
-      rsCode:
+      rs_code:
         description: Response code
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         description: Response message
         type: string
         default: Success
@@ -2391,10 +2402,10 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/AnomalyDetectionOptions'
-      rsCode:
+      rs_code:
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         type: string
         default: Success
     required:
@@ -2407,10 +2418,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/AnomalyDetectionSettings'
-      rsCode:
+      rs_code:
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         type: string
         default: Success
     required:
@@ -2421,10 +2432,10 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/PredictionHistory'
-      rsCode:
+      rs_code:
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         type: string
         default: Success
     required:
@@ -2435,10 +2446,10 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/PredictionOptions'
-      rsCode:
+      rs_code:
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         type: string
         default: Success
     required:
@@ -2449,10 +2460,10 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/PredictionResult'
-      rsCode:
+      rs_code:
         type: string
         default: '200'
-      rsMsg:
+      rs_msg:
         type: string
         default: Success
     required:
@@ -2462,5 +2473,12 @@ definitions:
     description: An enumeration.
     type: string
     enum:
-    - VM
-    - MCI
+    - vm
+    - mci
+  MetricType:
+    title: MetricType
+    description: An enumeration.
+    type: string
+    enum:
+      - cpu
+      - mem
