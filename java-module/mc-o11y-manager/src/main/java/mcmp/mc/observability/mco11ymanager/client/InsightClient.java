@@ -33,5 +33,5 @@ public interface InsightClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings/nsId/{nsId}/target/{targetId}")
     Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String targetId);
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/nsId/{nsId}/target/{targetId}/history")
-    Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam String start_time, @RequestParam String end_time);
+    Object getAnomalyDetectionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam(required = false) String start_time, @RequestParam(required = false) String end_time);
 }
