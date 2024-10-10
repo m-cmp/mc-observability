@@ -51,10 +51,10 @@ class AnomalySettingsService:
         )
 
     def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
-        if 'nsId' in setting_data:
-            setting_data['NAMESPACE_ID'] = setting_data.pop('nsId')
-        if 'targetId' in setting_data:
-            setting_data['TARGET_ID'] = setting_data.pop('targetId')
+        if 'ns_id' in setting_data:
+            setting_data['NAMESPACE_ID'] = setting_data.pop('ns_id')
+        if 'target_id' in setting_data:
+            setting_data['TARGET_ID'] = setting_data.pop('target_id')
 
         setting_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                         setting_data.items()}

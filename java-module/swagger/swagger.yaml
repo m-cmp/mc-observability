@@ -1100,12 +1100,18 @@ paths:
         in: query
         required: false
         type: string
-        description: The start timestamp for the range of Anomaly data to retrieve. Format 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided.
+        description: |
+          The start timestamp for the range of Anomaly data to retrieve.  
+          Format 'YYYY-MM-DDTHH:MM:SSZ'.  
+          Defaults to 12 hours before the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        description: The end timestamp for the range of Anomaly data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
+        description: |
+          The end timestamp for the range of Anomaly data to retrieve.  
+          Format YYYY-MM-DDTHH:MM:SSZ.  
+          Defaults to the current time if not provided.
       responses:
         '200':
           description: Successful Response
@@ -1267,12 +1273,18 @@ paths:
         in: query
         required: false
         type: string
-        description: The start timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to the current time if not provided.
+        description: |
+          The start timestamp for the range of prediction data to retrieve.  
+          Format YYYY-MM-DDTHH:MM:SSZ.  
+          Defaults to the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
-        description: The end timestamp for the range of prediction data to retrieve. Format YYYY-MM-DDTHH:MM:SSZ. Defaults to 7 days after the current time if not provided.
+        description: |
+          The end timestamp for the range of prediction data to retrieve. 
+          Format YYYY-MM-DDTHH:MM:SSZ. 
+          Defaults to 7 days after the current time if not provided.
       responses:
         '200':
           description: Successfully retrieved prediction history
