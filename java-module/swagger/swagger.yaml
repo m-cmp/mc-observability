@@ -523,18 +523,13 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ResBody<List<OpensearchInfo>>'
-  /api/o11y/monitoring/opensearch/{opensearchSeq}/logs:
+  /api/o11y/monitoring/opensearch/logs:
     post:
       tags:
         - '[Monitoring log] Monitoring log'
       summary: Get collected log
       operationId: GET_OpensearchLogs
       parameters:
-        - name: opensearchSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
         - name: logsInfo
           in: body
           required: true
@@ -1619,8 +1614,10 @@ definitions:
       conditions:
         type: array
         example:
-          - key: cpu
-            value: cpu-total
+          - key: ns_id
+            value: ns01
+          - key: mci_id
+            value: mci01
         items:
           $ref: '#/definitions/ConditionInfo'
       fields:
@@ -1633,8 +1630,7 @@ definitions:
       group_by:
         type: array
         example:
-          - uuid
-          - cpu
+          - target_id
         items:
           type: string
       group_time:
@@ -1650,7 +1646,7 @@ definitions:
         example: cpu
       range:
         type: string
-        example: 1h
+        example: 24h
         description: timeunit s,m,h,d(second, minute, hour, day)
     title: MetricsInfo
   ConditionInfo:
@@ -1736,8 +1732,8 @@ definitions:
       conditions:
         type: array
         example:
-          - key: cpu
-            value: cpu-total
+          - key: target_id
+            value: vm01
         items:
           $ref: '#/definitions/ConditionInfo'
       limit:
