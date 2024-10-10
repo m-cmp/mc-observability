@@ -47,11 +47,11 @@ public class InsightController {
         return insightClient.insertAnomalyDetectionSetting(body);
     }
     @PutMapping(Constants.ANOMALY_PATH + "/settings/{settingSeq}")
-    public Object updateAnomalyDetectionSetting(@RequestParam Long settingSeq, @RequestBody Object body) {
+    public Object updateAnomalyDetectionSetting(@PathVariable Long settingSeq, @RequestBody Object body) {
         return insightClient.updateAnomalyDetectionSetting(settingSeq, body);
     }
     @DeleteMapping(Constants.ANOMALY_PATH + "/settings/{settingSeq}")
-    public Object deleteAnomalyDetectionSetting(@RequestParam Long settingSeq) {
+    public Object deleteAnomalyDetectionSetting(@PathVariable Long settingSeq) {
         return insightClient.deleteAnomalyDetectionSetting(settingSeq);
     }
     @GetMapping(Constants.ANOMALY_PATH + "/settings/nsId/{nsId}/target/{targetId}")
