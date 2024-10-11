@@ -130,7 +130,7 @@ public class TriggerPolicyInfo {
                 "@ALERT_CONDITION" +
                 "        .id('{{ .TaskName }}')\n" +
                 "        .stateChangesOnly()\n" +
-                "        .post('@AGENT_MANAGER_IP/api/o11y/trigger/receiver')\n\n" +
+                "        .post('@AGENT_MANAGER_IP/api/o11y/trigger/policy/receiver')\n\n" +
                 "trigger\n" +
                 "    |httpOut('output')";
 
