@@ -83,4 +83,4 @@ settings:
   is_hosted: false
   token_rotation_enabled: false
 
-agent_manager_ip: ${AGENT_MANAGER_IP:http://mc-agent-manager:18080}
+agent_manager_ip: ${AGENT_MANAGER_IP:http://mc-o11y-manager:18080}
