@@ -33,20 +33,15 @@ public class TriggerPolicyUpdateDto {
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
     @JsonProperty("field")
     private String field;
-
-    @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
-    @JsonProperty("group_fields")
-    private List<String> groupFields;
+	@ApiModelProperty(value = "Fields to group the data", hidden = true ,example = "[]")
+	@JsonProperty("group_fields")
+	private List<String> groupFields;
 
     @ApiModelProperty(value = "Trigger target metric statistics", example = "min")
     @JsonProperty("statistics")
     private String statistics;
 
-    @ApiModelProperty(value = "Agent Manager IP", example = "http://localhost:18080")
-    @JsonProperty("agent_manager_ip")
-    private String agentManagerIp;
-
-    @ApiModelProperty(value = "Base64 Encoded value", example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
+	@ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID49IDEwMCIsICJ3YXJuIjogInZhbHVlID4gOTkuOSIsICJpbmZvIjogInZhbHVlIDwgOTkuNiJ9")
     @TriggerBase64DecodeField
     @JsonProperty("threshold")
     private String threshold;

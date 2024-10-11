@@ -15,7 +15,10 @@ import mcmp.mc.observability.mco11yagent.trigger.mapper.TriggerPolicyMapper;
 import mcmp.mc.observability.mco11yagent.trigger.model.*;
 import mcmp.mc.observability.mco11yagent.trigger.model.dto.TriggerEmailUserCreateDto;
 import mcmp.mc.observability.mco11yagent.trigger.model.dto.TriggerSlackUserCreateDto;
+
+import org.apache.commons.io.FileUtils;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,9 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import javax.mail.internet.MimeMessage;
+
+import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 @Slf4j
@@ -180,8 +186,15 @@ public class TriggerPolicyAlertService {
             mimeMessageHelper.setSubject("[Alert] Trigger event occurred");
             mimeMessageHelper.setText(html, true);
 
-            ClassPathResource resource = new ClassPathResource("static/images/mcmp-logo.png");
-            mimeMessageHelper.addInline("logo_png", resource.getFile());
+            InputStream is = new ClassPathResource("static/images/mcmp-logo.png").getInputStream();
+
+            File file = File.createTempFile(String.valueOf(is.hashCode()), ".tmp");
+            file.deleteOnExit();
+
+            FileUtils.copyInputStreamToFile(is, file);
+            FileSystemResource fsr = new FileSystemResource(file);
+
+            mimeMessageHelper.addInline("logo_png", fsr);
 
             for (TriggerEmailUserInfo emailUserInfo : emailUserInfoList) {
                 mimeMessageHelper.setTo(emailUserInfo.getEmail());

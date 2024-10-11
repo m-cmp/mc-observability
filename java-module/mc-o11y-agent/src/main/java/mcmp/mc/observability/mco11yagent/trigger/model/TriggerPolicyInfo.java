@@ -38,7 +38,7 @@ public class TriggerPolicyInfo {
     private String description;
 
     @ApiModelProperty(value = "Trigger target metric", example = "cpu")
-    @JsonProperty("metric")
+    @JsonProperty("measurement")
     private String metric;
 
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")
@@ -49,12 +49,12 @@ public class TriggerPolicyInfo {
     @JsonProperty("statistics")
     private String statistics;
 
-    @ApiModelProperty(value = "Base64 Encoded value", example = "eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=")
+	@ApiModelProperty(value = "Base64 Encoded value",  example = "eyJjcml0IjogInZhbHVlID49IDEwMCIsICJ3YXJuIjogInZhbHVlID4gOTkuOSIsICJpbmZvIjogInZhbHVlIDwgOTkuNiJ9")
     @TriggerBase64EncodeField
     @JsonProperty("threshold")
     private String threshold;
 
-    @ApiModelProperty(value = "Agent Manager IP", example = "http://localhost:18080")
+    @ApiModelProperty(value = "Agent Manager IP", hidden = true, example = "http://localhost:18080")
     @JsonProperty("agent_manager_ip")
     private String agentManagerIp;
 
@@ -62,8 +62,7 @@ public class TriggerPolicyInfo {
     @JsonProperty("status")
     private TaskStatus status;
 
-    @ApiModelProperty(value = "Fields to group the data", example = "[\"cpu\"]")
-    @JsonProperty("group_fields")
+    @ApiModelProperty(value = "Fields to group the data", hidden = true, example = "[]")
     private List<String> groupFields;
 
     @JsonIgnore
@@ -87,7 +86,6 @@ public class TriggerPolicyInfo {
         this.field = dto.getField();
         this.statistics = dto.getStatistics();
         this.status = dto.getStatus();
-        this.agentManagerIp = dto.getAgentManagerIp();
     }
 
     public void setUpdateDto(TriggerPolicyUpdateDto dto) {
@@ -107,8 +105,6 @@ public class TriggerPolicyInfo {
             this.statistics = dto.getStatistics();
         if (dto.getStatus() != null)
             this.status = dto.getStatus();
-        if (dto.getAgentManagerIp() != null)
-            this.agentManagerIp = dto.getAgentManagerIp();
     }
 
     public void makeTickScript(TriggerPolicyInfo triggerPolicy) {
@@ -152,7 +148,7 @@ public class TriggerPolicyInfo {
                 .replaceAll("@WHERE_CONDITION", whereCondition)
                 .replaceAll("@STATISTICS", statistics)
                 .replaceAll("@ALERT_CONDITION", alertCondition)
-                .replaceAll("@AGENT_MANAGER_IP", triggerPolicy.getAgentManagerIp());
+                .replaceAll("@AGENT_MANAGER_IP", agentManagerIp);
 
         this.tickScript = tickScript;
     }

@@ -28,6 +28,8 @@ public interface TriggerClient {
     Object getTriggerPolicyTarget(@RequestParam Long policySeq);
     @PutMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/{policySeq}/target")
     Object updateTriggerPolicyTarget(@PathVariable Long policySeq, @RequestBody Object body);
+    @PostMapping(Constants.PREFIX_V1 + Constants.TRIGGER_POLICY_PATH + "/receiver")
+    Object getTriggerEvent(@RequestBody String data);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TRIGGER_ALERT_PATH + "/email")
     Object getTriggerAlertEmail(@PathVariable Long policySeq);

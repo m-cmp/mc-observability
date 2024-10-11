@@ -15,6 +15,8 @@ import mcmp.mc.observability.mco11yagent.trigger.model.dto.TriggerPolicyUpdateDt
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import java.util.*;
 
@@ -28,6 +30,9 @@ public class TriggerPolicyService {
     private final TriggerTargetMapper triggerTargetMapper;
     private final TriggerTargetStorageMapper triggerTargetStorageMapper;
     private final KapacitorApiService kapacitorApiService;
+
+    @Value("${agent_manager_ip:http://localhost:18180}")
+    private String agentManagerIp;
 
     public List<TriggerPolicyInfo> getList() {
         return triggerPolicyMapper.getList();
@@ -52,6 +57,7 @@ public class TriggerPolicyService {
     public ResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
         ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo info = new TriggerPolicyInfo();
+        info.setAgentManagerIp(agentManagerIp);
         info.setCreateDto(dto);
         try {
             if (info.getName() == null || info.getName().isEmpty()) {
@@ -73,6 +79,7 @@ public class TriggerPolicyService {
     public ResBody<Void> updatePolicy(TriggerPolicyUpdateDto dto) {
         ResBody<Void> ResBody = new ResBody<>();
         TriggerPolicyInfo info = triggerPolicyMapper.getDetail(dto.getSeq());
+        info.setAgentManagerIp(agentManagerIp);
         info.setUpdateDto(dto);
         info.makeTickScript(info);
 
