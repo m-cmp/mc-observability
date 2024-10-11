@@ -29,7 +29,6 @@ public class KapacitorAlertInfo {
     @JsonProperty("data")
     private DataInfo data;
 
-    @JsonProperty("previous_level")
     private String previousLevel;
 
     @JsonProperty("recoverable")

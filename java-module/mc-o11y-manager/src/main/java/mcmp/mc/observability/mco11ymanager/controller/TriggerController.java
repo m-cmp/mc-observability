@@ -49,6 +49,10 @@ public class TriggerController {
     public Object updateTriggerPolicyTarget(@PathVariable Long policySeq, @RequestBody Object body) {
         return triggerClient.updateTriggerPolicyTarget(policySeq, body);
     }
+    @PostMapping(Constants.TRIGGER_POLICY_PATH + "/receiver")
+    public Object getTriggerEvent(@RequestBody String data) {
+        return triggerClient.getTriggerEvent(data);
+    }
 
     // trigger alert api
     @GetMapping(Constants.TRIGGER_ALERT_PATH + "/email")
