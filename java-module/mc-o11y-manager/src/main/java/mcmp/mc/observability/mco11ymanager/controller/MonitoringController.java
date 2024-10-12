@@ -90,7 +90,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-update-target", summary = "Update target information",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo) {
+    public ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
         return monitoringClient.updateTarget(nsId, mciId, targetId, targetInfo);
     }
 
