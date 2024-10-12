@@ -11,617 +11,681 @@ info:
 host: localhost:18080
 basePath: /
 paths:
-  /api/o11y/monitoring/plugins:
-    get:
+  /api/o11y/trigger/policy/{policySeq}/target:
+    put:
       tags:
-        - '[System] environment'
-      summary: Get all available monitoring plugin list
-      operationId: GET_plugins
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<PluginDefInfo>>'
-  /api/o11y/monitoring/target:
-    get:
-      tags:
-        - '[Target] Monitoring target management'
-      summary: Get all mc-observability management target list
-      operationId: GET_targets
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<TargetInfo>>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target:
-    get:
-      tags:
-        - '[Target] Monitoring target management'
-      summary: Get all mc-observability management target list in specified NS and MCI
-      operationId: GET_targets_ns_mci
+      - trigger-controller
+      operationId: updateTriggerPolicyTarget
       parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-      produces:
-        - '*/*'
+      - name: policySeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<TargetInfo>>'
+          content:
+            '*/*':
+              schema:
+                type: object
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     get:
       tags:
-        - '[Target] Monitoring target management'
+      - "[Target] Monitoring target management"
       summary: Get monitoring target
-      operationId: GET_target
+      operationId: monitoring-get-target
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-      produces:
-        - '*/*'
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<TargetInfo>'
-    post:
-      description: |
-        The values that require Base64 encoding:  
-        description, alias_name
-      tags:
-        - '[Target] Monitoring target management'
-      summary: Add new monitoring target (MC-O11y-Agent Install)
-      operationId: POST_target
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-        - name: targetInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/TargetCreateDTO'
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyTargetInfo'
     put:
-      description: |
-        The values that require Base64 encoding:  
-        description, alias_name
       tags:
-        - '[Target] Monitoring target management'
+      - "[Target] Monitoring target management"
       summary: Update target information
-      operationId: PUT_target
+      operationId: monitoring-update-target
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/TargetUpdateDTO'
-      produces:
-        - '*/*'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-    delete:
-      tags:
-        - '[Target] Monitoring target management'
-      summary: Delete monitoring agent & management target
-      operationId: DELETE_target
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
-    get:
-      tags:
-        - '[Monitoring item] Monitoring target item management'
-      summary: Get all target monitoring item list
-      operationId: GET_items
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
     post:
-      description: |
-        The values that require Base64 encoding:  
-        name, plugin_config
       tags:
-        - '[Monitoring item] Monitoring target item management'
-      summary: Add target monitoring item
-      operationId: POST_items
+      - "[Target] Monitoring target management"
+      summary: Add new monitoring target (MC-O11y-Agent Install)
+      operationId: monitoring-add-target
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: itemCreateInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/ItemCreateDTO'
-      produces:
-        - '*/*'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TargetInfo'
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-    put:
-      description: |
-        The values that require Base64 encoding:  
-        name, plugin_config
-      tags:
-        - '[Monitoring item] Monitoring target item management'
-      summary: Update target monitoring item
-      operationId: PUT_items
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-        - name: itemUpdateInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/ItemUpdateDTO'
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
     delete:
       tags:
-        - '[Monitoring item] Monitoring target item management'
-      summary: Delete target monitoring item
-      operationId: DELETE_items
+      - "[Target] Monitoring target management"
+      summary: Delete monitoring agent & management target
+      operationId: monitoring-delete-target
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: itemSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
-      produces:
-        - '*/*'
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
     get:
       tags:
-        - '[Monitoring storage] Monitoring target storage management'
+      - "[Monitoring storage] Monitoring target storage management"
       summary: Get all target monitoring storage list
-      operationId: GET_storages
+      operationId: monitoring-list-storage
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-      produces:
-        - '*/*'
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MonitoringConfigInfo>>'
-    post:
-      description: |
-        The values that require Base64 encoding:  
-        name, plugin_config
-      tags:
-        - '[Monitoring storage] Monitoring target storage management'
-      summary: Add target monitoring storage
-      operationId: POST_storages
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-        - name: monitoringConfigInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/MonitoringConfigInfo'
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMonitoringConfigInfo'
     put:
-      description: |
-        The values that require Base64 encoding:  
-        name, plugin_config
       tags:
-        - '[Monitoring storage] Monitoring target storage management'
+      - "[Monitoring storage] Monitoring target storage management"
       summary: Update target monitoring storage
-      operationId: PUT_storages
+      operationId: monitoring-update-storage
       parameters:
-        - name: nsId
-          in: path
-          required: true
+      - name: nsId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: mciId
-          in: path
-          required: true
+      - name: mciId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: targetId
-          in: path
-          required: true
+      - name: targetId
+        in: path
+        required: true
+        schema:
           type: string
-        - name: monitoringConfigInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/MonitoringConfigInfo'
-      produces:
-        - '*/*'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
-    delete:
-      tags:
-        - '[Monitoring storage] Monitoring target storage management'
-      summary: Delete target monitoring storage
-      operationId: DELETE_storages
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-        - name: storageSeq
-          in: path
-          required: true
-          type: integer
-          format: int64
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
-    get:
-      tags:
-        - '[Monitoring CSP] Monitoring target from the CSP'
-      summary: Get target monitoring data from the CSP
-      operationId: GET_CSP
-      parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-        - name: mciId
-          in: path
-          required: true
-          type: string
-        - name: targetId
-          in: path
-          required: true
-          type: string
-        - name: measurement
-          in: path
-          required: true
-          type: string
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<SpiderMonitoringInfo.Data>'
-  /api/o11y/monitoring/influxdb:
-    get:
-      tags:
-        - '[Monitoring metric] Monitoring metric'
-      summary: Get all InfluxDB list
-      operationId: GET_InfluxDBs
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<InfluxDBInfo>>'
-  /api/o11y/monitoring/influxdb/measurement:
-    get:
-      tags:
-        - '[Monitoring metric] Monitoring metric'
-      summary: Get collected measurement & field list
-      operationId: GET_InfluxDBInfo
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MeasurementFieldInfo>>'
-  /api/o11y/monitoring/influxdb/tag:
-    get:
-      tags:
-        - '[Monitoring metric] Monitoring metric'
-      summary: Get collected metric tag list
-      operationId: GET_InfluxDBTag
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
-  /api/o11y/monitoring/influxdb/metric:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
     post:
       tags:
-        - '[Monitoring metric] Monitoring metric'
-      summary: Get collected metric
-      operationId: GET_Metric
+      - "[Monitoring storage] Monitoring target storage management"
+      summary: Add target monitoring storage
+      operationId: monitoring-add-storage
       parameters:
-        - name: metricsInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/MetricsInfo'
-      produces:
-        - '*/*'
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MetricInfo>>'
-  /api/o11y/monitoring/opensearch:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
     get:
       tags:
-        - '[Monitoring log] Monitoring log'
-      summary: Get all Opensearch list
-      operationId: GET_Opensearchs
-      produces:
-        - '*/*'
+      - "[Monitoring item] Monitoring target item management"
+      summary: Get all target monitoring item list
+      operationId: monitoring-list-item
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<OpensearchInfo>>'
-  /api/o11y/monitoring/opensearch/logs:
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMonitoringConfigInfo'
+    put:
+      tags:
+      - "[Monitoring item] Monitoring target item management"
+      summary: Update target monitoring item
+      operationId: monitoring-update-item
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
     post:
       tags:
-        - '[Monitoring log] Monitoring log'
-      summary: Get collected log
-      operationId: GET_OpensearchLogs
+      - "[Monitoring item] Monitoring target item management"
+      summary: Add target monitoring item
+      operationId: monitoring-add-item
       parameters:
-        - name: logsInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/LogsInfo'
-      produces:
-        - '*/*'
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
   /api/o11y/monitoring/miningdb:
     get:
       tags:
-        - '[Mining InfluxDB] Monitoring metric downsampling'
+      - "[Target] Monitoring target management"
       summary: Get mining influxdb detail
-      operationId: GET_miningdb
-      produces:
-        - '*/*'
+      operationId: monitoring-list-miningdb
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<MiningDBInfo>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyMiningDBInfo'
     put:
       tags:
-        - '[Mining InfluxDB] Monitoring metric downsampling'
+      - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Update mining influxdb info
-      operationId: PUT_miningdb
+      operationId: monitoring-update-miningdb
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyVoid'
+  /api/o11y/monitoring/opensearch/{opensearchSeq}/logs:
+    post:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Get collected logs from OpenSearch
+      operationId: monitoring-list-opensearch-log
       parameters:
-        - name: info
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/MiningDBInfo'
-      produces:
-        - '*/*'
+      - name: opensearchSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogsInfo'
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<Void>'
-  /api/o11y/monitoring/miningdb/measurement:
-    get:
-      tags:
-        - '[Mining InfluxDB] Monitoring metric downsampling'
-      summary: Get downsampling measurement & field list
-      operationId: GET_MiningDBInfo
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MeasurementFieldInfo>>'
-  /api/o11y/monitoring/miningdb/tag:
-    get:
-      tags:
-        - '[Mining InfluxDB] Monitoring metric downsampling'
-      summary: Get downsampling metric tag list
-      operationId: GET_MiningDBTag
-      produces:
-        - '*/*'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<Map<string%2Cobject>>>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMapStringObject'
   /api/o11y/monitoring/miningdb/metric:
     post:
       tags:
-        - '[Mining InfluxDB] Monitoring metric downsampling'
+      - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Get downsampling metric
-      operationId: GET_MiningDB_Metric
-      parameters:
-        - name: metricsInfo
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/MetricsInfo'
-      produces:
-        - '*/*'
+      operationId: monitoring-list-miningdb-metric
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
       responses:
-        '200':
+        "200":
           description: OK
-          schema:
-            $ref: '#/definitions/ResBody<List<MetricInfo>>'
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMetricInfo'
+  /api/o11y/monitoring/influxdb/{influxDBSeq}/metric:
+    post:
+      tags:
+      - "[Monitoring metric] Monitoring metric"
+      summary: Get collected metric
+      operationId: monitoring-list-metric
+      parameters:
+      - name: influxDBSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsInfo'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMetricInfo'
+  /api/o11y/monitoring/{nsId}/{mciId}/target:
+    get:
+      tags:
+      - "[Target] Monitoring target management"
+      summary: Get all mc-observability management target list in specified NS and
+        MCI
+      operationId: monitoring-list-specified-target
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListTargetInfo'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
+    get:
+      tags:
+      - "[Monitoring CSP] Monitoring target from the CSP"
+      summary: Get target monitoring data from the CSP
+      operationId: monitoring-get-csp
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: measurement
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyData'
+  /api/o11y/monitoring/target:
+    get:
+      tags:
+      - "[Target] Monitoring target management"
+      summary: Get all mc-observability management target list
+      operationId: monitoring-list-all-target
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListTargetInfo'
+  /api/o11y/monitoring/plugins:
+    get:
+      tags:
+      - "[System] environment"
+      summary: Get all available monitoring plugin list
+      operationId: monitoring-list-plugins
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListPluginDefInfo'
+  /api/o11y/monitoring/opensearch:
+    get:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Get all OpenSearch list
+      operationId: monitoring-list-opensearch
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListOpensearchInfo'
+  /api/o11y/monitoring/ns:
+    get:
+      tags:
+      - "[Target] Monitoring target management"
+      summary: Get all mc-observability management namespace list
+      operationId: monitoring-list-ns
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TumblebugNS'
+  /api/o11y/monitoring/miningdb/tag:
+    get:
+      tags:
+      - "[Mining InfluxDB] Monitoring metric downsampling"
+      summary: Get downsampling metric tag list
+      operationId: monitoring-list-miningdb-measurement-tag"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMeasurementTagInfo'
+  /api/o11y/monitoring/miningdb/measurement:
+    get:
+      tags:
+      - "[Mining InfluxDB] Monitoring metric downsampling"
+      summary: Get downsampling measurement & field list
+      operationId: monitoring-get-miningdb-measurement
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMeasurementFieldInfo'
+  /api/o11y/monitoring/influxdb:
+    get:
+      tags:
+      - "[Monitoring metric] Monitoring metric"
+      summary: Get all InfluxDB list
+      operationId: monitoring-list-influxdb
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListInfluxDBInfo'
+  /api/o11y/monitoring/influxdb/{influxDBSeq}/tag:
+    get:
+      tags:
+      - "[Monitoring metric] Monitoring metric"
+      summary: Get collected measurement tag list
+      operationId: monitoring-list-measurement-tag
+      parameters:
+      - name: influxDBSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMeasurementTagInfo'
+  /api/o11y/monitoring/influxdb/{influxDBSeq}/measurement:
+    get:
+      tags:
+      - "[Monitoring metric] Monitoring metric"
+      summary: Get collected measurement & field list
+      operationId: monitoring-get-measurement
+      parameters:
+      - name: influxDBSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBodyListMeasurementFieldInfo'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
+    delete:
+      tags:
+      - "[Monitoring storage] Monitoring target storage management"
+      summary: Delete target monitoring storage
+      operationId: monitoring-delete-storage
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: storageSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
   /api/o11y/trigger/policy/history:
     get:
       description: |
-        Base64 Encoded value:  
+        Base64 Encoded value:
         name
       tags:
         - '[Metric Event] monitoring measurement trigger'
@@ -959,9 +1023,9 @@ paths:
           headers: {}
     post:
       description: |
-        Register a target for anomaly detection and automatically schedule detection tasks.  
-        (measurememt : field) Relationships are as follows.  
-        cpu : usage_idle  
+        Register a target for anomaly detection and automatically schedule detection tasks.
+        (measurememt : field) Relationships are as follows.
+        cpu : usage_idle
         mem : used_percent
       summary: PostAnomalyDetectionSettings
       tags:
@@ -1113,16 +1177,16 @@ paths:
         required: false
         type: string
         description: |
-          The start timestamp for the range of Anomaly data to retrieve.  
-          Format 'YYYY-MM-DDTHH:MM:SSZ'.  
+          The start timestamp for the range of Anomaly data to retrieve.
+          Format 'YYYY-MM-DDTHH:MM:SSZ'.
           Defaults to 12 hours before the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
         description: |
-          The end timestamp for the range of Anomaly data to retrieve.  
-          Format YYYY-MM-DDTHH:MM:SSZ.  
+          The end timestamp for the range of Anomaly data to retrieve.
+          Format YYYY-MM-DDTHH:MM:SSZ.
           Defaults to the current time if not provided.
       responses:
         '200':
@@ -1190,10 +1254,10 @@ paths:
     post:
       description: |
         Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.
-        (measurememt : field) Relationships are as follows.  
-        cpu : usage_idle  
-        mem : used_percent  
-        disk : used_percent  
+        (measurememt : field) Relationships are as follows.
+        cpu : usage_idle
+        mem : used_percent
+        disk : used_percent
         system load : load1
       summary: PostPrediction
       tags:
@@ -1286,16 +1350,16 @@ paths:
         required: false
         type: string
         description: |
-          The start timestamp for the range of prediction data to retrieve.  
-          Format YYYY-MM-DDTHH:MM:SSZ.  
+          The start timestamp for the range of prediction data to retrieve.
+          Format YYYY-MM-DDTHH:MM:SSZ.
           Defaults to the current time if not provided.
       - name: end_time
         in: query
         required: false
         type: string
         description: |
-          The end timestamp for the range of prediction data to retrieve. 
-          Format YYYY-MM-DDTHH:MM:SSZ. 
+          The end timestamp for the range of prediction data to retrieve.
+          Format YYYY-MM-DDTHH:MM:SSZ.
           Defaults to 7 days after the current time if not provided.
       responses:
         '200':
@@ -1318,6 +1382,549 @@ paths:
               rs_code: '200'
               rs_msg: Success
           headers: {}
+components:
+  schemas:
+    ResBody:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: object
+          description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    ResBodyVoid:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: object
+          description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    TargetInfo:
+      type: object
+      properties:
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        alias_name:
+          type: string
+        description:
+          type: string
+        state:
+          type: string
+    ConditionInfo:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    LogsInfo:
+      type: object
+      properties:
+        opensearch_seq:
+          type: integer
+          format: int64
+        range:
+          type: string
+        limit:
+          type: integer
+          format: int64
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionInfo'
+    ResBodyListMapStringObject:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              description: Response data
+            description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MetricInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Measurement name
+        columns:
+          type: array
+          description: Column name of values index
+          items:
+            type: string
+            description: Column name of values index
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+            description: tag list of metric
+          description: tag list of metric
+        values:
+          type: array
+          description: Sequence by monitoring item
+          items:
+            type: array
+            description: Sequence by monitoring item
+            items:
+              type: object
+              description: Sequence by monitoring item
+      description: Metric information
+    ResBodyListMetricInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MetricInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    FieldInfo:
+      type: object
+      properties:
+        function:
+          type: string
+        field:
+          type: string
+      example:
+      - function: mean
+        field: usage_idle
+    MetricsInfo:
+      required:
+      - influx_db_seq
+      - measurement
+      - range
+      type: object
+      properties:
+        influx_db_seq:
+          type: integer
+          format: int64
+          example: 1
+        measurement:
+          type: string
+          example: cpu
+        range:
+          type: string
+          description: "timeunit s,m,h,d(second, minute, hour, day)"
+          example: 1h
+        group_time:
+          type: string
+          description: "timeunit s,m,h,d(second, minute, hour, day)"
+          example: 1h
+        group_by:
+          type: array
+          example:
+          - uuid
+          - cpu
+          items:
+            type: string
+            example: "[\"uuid\",\"cpu\"]"
+        limit:
+          type: integer
+          format: int64
+          example: 10
+        fields:
+          type: array
+          example:
+          - function: mean
+            field: usage_idle
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+        conditions:
+          type: array
+          example:
+          - key: cpu
+            value: cpu-total
+          items:
+            $ref: '#/components/schemas/ConditionInfo'
+    ResBodyListTargetInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/TargetInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    ResBodyTargetInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/TargetInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MonitoringConfigInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          format: int64
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        target_id:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+        plugin_seq:
+          type: integer
+          format: int64
+        plugin_name:
+          type: string
+        plugin_type:
+          type: string
+        plugin_config:
+          type: string
+      description: Response data
+    ResBodyListMonitoringConfigInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MonitoringConfigInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    Data:
+      type: object
+      properties:
+        metric_name:
+          type: string
+        metric_unit:
+          type: string
+        timestamp_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampValue'
+      description: Response data
+    ResBodyData:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/Data'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    TimestampValue:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        value:
+          type: string
+    PluginDefInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          description: Plugin identify sequence number
+          format: int64
+        name:
+          type: string
+          description: Plugin name
+        plugin_id:
+          type: string
+          description: Plugin ID
+        plugin_type:
+          type: string
+          description: Plugin type
+      description: Response data
+    ResBodyListPluginDefInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/PluginDefInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    OpensearchInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          format: int64
+        url:
+          type: string
+        index_name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      description: Response data
+    ResBodyListOpensearchInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/OpensearchInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    NS:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        resource_type:
+          type: string
+        uid:
+          type: string
+    TumblebugNS:
+      type: object
+      properties:
+        ns:
+          type: array
+          items:
+            $ref: '#/components/schemas/NS'
+    MiningDBInfo:
+      type: object
+      properties:
+        url:
+          type: string
+        database:
+          type: string
+        retention_policy:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      description: Response data
+    ResBodyMiningDBInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/MiningDBInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MeasurementTagInfo:
+      type: object
+      properties:
+        measurement:
+          type: string
+          description: influxDB measurement name
+          example: cpu
+        tags:
+          type: array
+          description: influxDB tag list on measurement
+          example:
+          - cpu
+          - host
+          items:
+            type: string
+            description: influxDB tag list on measurement
+            example: "[\"cpu\",\"host\"]"
+      description: InfluxDB measurement tag information
+    ResBodyListMeasurementTagInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MeasurementTagInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MeasurementFieldInfo:
+      type: object
+      properties:
+        measurement:
+          type: string
+          description: influxDB measurement name
+          example: cpu
+        fields:
+          type: array
+          description: influxDB field list on measurement
+          example:
+          - key: usage_guest
+            type: float
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+      description: Measurement field information
+    ResBodyListMeasurementFieldInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MeasurementFieldInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    InfluxDBInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          description: Sequence number
+          format: int64
+        url:
+          type: string
+          description: Host url
+          example: http://localhost:8086
+        database:
+          type: string
+          description: Database name
+          example: mc-agent
+        retention_policy:
+          type: string
+          description: Data retention policy name
+          example: autogen
+        username:
+          type: string
+          description: Authentication username
+          example: mc-agent
+        password:
+          type: string
+          description: Authentication password
+          example: mc-agent
+      description: InfluxDB information
+    ResBodyListInfluxDBInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/InfluxDBInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
 definitions:
   ResBody<List<PluginDefInfo>>:
     type: object
