@@ -6,6 +6,8 @@ dependencies {
     implementation 'com.jcraft:jsch:0.1.44-1'
     implementation 'io.github.openfeign:feign-httpclient:11.1'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.5'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
 }
 
 jar {
@@ -17,3 +19,48 @@ bootJar {
     archiveFileName = "mc-o11y-manager.jar"
     archiveVersion = "0.0.1"
 }
+
+tasks.register('runSpringBootInBackground') {
+    doLast {
+        println 'Starting mc-o11y-manager in the background...'
+        def processBuilder = new ProcessBuilder('java', '-jar', 'mc-o11y-manager/build/libs/mc-o11y-manager.jar')
+        processBuilder.redirectOutput(new File("mc-o11y-manager/build/mc-o11y-manager.log"))
+        processBuilder.redirectError(new File("mc-o11y-manager/build/mc-o11y-manager-error.log"))
+        processBuilder.start()
+        println 'mc-o11y-manager started in the background (logs in mc-o11y-manager/build/mc-o11y-manager.log).'
+
+        println 'Waiting for 5 seconds before generating Swagger documentation...'
+        Thread.sleep(5000)
+    }
+}
+
+tasks.register('stopSpringBoot') {
+    doLast {
+        println 'Stopping mc-o11y-manager...'
+        def pidFile = file("../mc-o11y-manager.pid")
+        println pidFile.path
+        if (pidFile.exists()) {
+            def pid = pidFile.text.trim()
+            exec {
+                commandLine 'kill', '-9', pid
+            }
+            println "mc-o11y-manager stopped (PID: ${pid})"
+            pidFile.delete()
+        } else {
+            println "PID file not found, mc-o11y-manager might not be running."
+        }
+    }
+}
+
+tasks.register('generateSwaggerYaml', Exec) {
+    println 'Generating Swagger documentation...'
+    commandLine 'curl', '-o', 'build/swagger.yaml', 'http://localhost:18080/v3/api-docs.yaml'
+    doLast {
+        println 'Swagger YAML file has been generated.'
+    }
+}
+
+generateSwaggerYaml.dependsOn runSpringBootInBackground
+stopSpringBoot.mustRunAfter generateSwaggerYaml
+
+build.dependsOn generateSwaggerYaml, stopSpringBoot

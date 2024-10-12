@@ -38,3 +38,8 @@ out/
 
 ### log files ###
 *.log*
+
+.diff_*
+.git_*
+
+*.pid

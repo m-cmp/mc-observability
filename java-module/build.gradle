@@ -3,16 +3,12 @@ plugins {
     id 'org.springframework.boot' version '2.7.6'
 }
 
-repositories {
-    mavenCentral()
-}
-
 bootJar.enabled = false
 
 allprojects {
     group = 'mcmp.mc.observability'
     version = '0.2.0'
-    sourceCompatibility = '17'
+    sourceCompatibility = JavaVersion.VERSION_17
 
     repositories {
         mavenCentral()
