@@ -67,6 +67,12 @@ stop: stop_agent stop_manager ## Stop built jar files
 stop_docker: ## Stop Docker containers
 	@docker compose down
 
+swag: stop_agent stop_manager build ## Generate Swagger doc YAML file
+	@echo Generating Swagger doc YAML file...
+	@sh gradlew generateSwaggerYaml
+	@sh gradlew stopSpringBoot
+	@echo Generating Swagger doc finished!
+
 clean: ## Remove previous build
 	@echo Cleaning build...
 	@rm -rf .gradle build mc-o11y-agent/.gradle mc-o11y-agent/build mc-o11y-manager/.gradle mc-o11y-manager/build

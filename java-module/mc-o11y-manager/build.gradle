@@ -62,5 +62,3 @@ tasks.register('generateSwaggerYaml', Exec) {
 
 generateSwaggerYaml.dependsOn runSpringBootInBackground
 stopSpringBoot.mustRunAfter generateSwaggerYaml
-
-build.dependsOn generateSwaggerYaml, stopSpringBoot
