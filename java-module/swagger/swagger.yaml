@@ -11,31 +11,6 @@ info:
 host: localhost:18080
 basePath: /
 paths:
-  /api/o11y/trigger/policy/{policySeq}/target:
-    put:
-      tags:
-      - trigger-controller
-      operationId: updateTriggerPolicyTarget
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: object
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     get:
       tags:
@@ -670,6 +645,41 @@ paths:
         schema:
           type: string
       - name: storageSeq
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ResBody'
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
+    delete:
+      tags:
+      - "[Monitoring item] Monitoring target item management"
+      summary: Delete target monitoring item
+      operationId: monitoring-delete-item
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: mciId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: targetId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: itemSeq
         in: path
         required: true
         schema:
@@ -3085,3 +3095,546 @@ definitions:
     enum:
       - cpu
       - mem
+components:
+  schemas:
+    ResBody:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: object
+          description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    ResBodyVoid:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: object
+          description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    TargetInfo:
+      type: object
+      properties:
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        alias_name:
+          type: string
+        description:
+          type: string
+        state:
+          type: string
+    ConditionInfo:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    LogsInfo:
+      type: object
+      properties:
+        opensearch_seq:
+          type: integer
+          format: int64
+        range:
+          type: string
+        limit:
+          type: integer
+          format: int64
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionInfo'
+    ResBodyListMapStringObject:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              description: Response data
+            description: Response data
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MetricInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Measurement name
+        columns:
+          type: array
+          description: Column name of values index
+          items:
+            type: string
+            description: Column name of values index
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+            description: tag list of metric
+          description: tag list of metric
+        values:
+          type: array
+          description: Sequence by monitoring item
+          items:
+            type: array
+            description: Sequence by monitoring item
+            items:
+              type: object
+              description: Sequence by monitoring item
+      description: Metric information
+    ResBodyListMetricInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MetricInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    FieldInfo:
+      type: object
+      properties:
+        function:
+          type: string
+        field:
+          type: string
+      example:
+      - function: mean
+        field: usage_idle
+    MetricsInfo:
+      required:
+      - influx_db_seq
+      - measurement
+      - range
+      type: object
+      properties:
+        influx_db_seq:
+          type: integer
+          format: int64
+          example: 1
+        measurement:
+          type: string
+          example: cpu
+        range:
+          type: string
+          description: "timeunit s,m,h,d(second, minute, hour, day)"
+          example: 1h
+        group_time:
+          type: string
+          description: "timeunit s,m,h,d(second, minute, hour, day)"
+          example: 1h
+        group_by:
+          type: array
+          example:
+          - uuid
+          - cpu
+          items:
+            type: string
+            example: "[\"uuid\",\"cpu\"]"
+        limit:
+          type: integer
+          format: int64
+          example: 10
+        fields:
+          type: array
+          example:
+          - function: mean
+            field: usage_idle
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+        conditions:
+          type: array
+          example:
+          - key: cpu
+            value: cpu-total
+          items:
+            $ref: '#/components/schemas/ConditionInfo'
+    ResBodyListTargetInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/TargetInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    ResBodyTargetInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/TargetInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MonitoringConfigInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          format: int64
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        target_id:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+        plugin_seq:
+          type: integer
+          format: int64
+        plugin_name:
+          type: string
+        plugin_type:
+          type: string
+        plugin_config:
+          type: string
+      description: Response data
+    ResBodyListMonitoringConfigInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MonitoringConfigInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    Data:
+      type: object
+      properties:
+        metric_name:
+          type: string
+        metric_unit:
+          type: string
+        timestamp_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimestampValue'
+      description: Response data
+    ResBodyData:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/Data'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    TimestampValue:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        value:
+          type: string
+    PluginDefInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          description: Plugin identify sequence number
+          format: int64
+        name:
+          type: string
+          description: Plugin name
+        plugin_id:
+          type: string
+          description: Plugin ID
+        plugin_type:
+          type: string
+          description: Plugin type
+      description: Response data
+    ResBodyListPluginDefInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/PluginDefInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    OpensearchInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          format: int64
+        url:
+          type: string
+        index_name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      description: Response data
+    ResBodyListOpensearchInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/OpensearchInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    NS:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        resource_type:
+          type: string
+        uid:
+          type: string
+    TumblebugNS:
+      type: object
+      properties:
+        ns:
+          type: array
+          items:
+            $ref: '#/components/schemas/NS'
+    MiningDBInfo:
+      type: object
+      properties:
+        url:
+          type: string
+        database:
+          type: string
+        retention_policy:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      description: Response data
+    ResBodyMiningDBInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/MiningDBInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MeasurementTagInfo:
+      type: object
+      properties:
+        measurement:
+          type: string
+          description: influxDB measurement name
+          example: cpu
+        tags:
+          type: array
+          description: influxDB tag list on measurement
+          example:
+          - cpu
+          - host
+          items:
+            type: string
+            description: influxDB tag list on measurement
+            example: "[\"cpu\",\"host\"]"
+      description: InfluxDB measurement tag information
+    ResBodyListMeasurementTagInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MeasurementTagInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    MeasurementFieldInfo:
+      type: object
+      properties:
+        measurement:
+          type: string
+          description: influxDB measurement name
+          example: cpu
+        fields:
+          type: array
+          description: influxDB field list on measurement
+          example:
+          - key: usage_guest
+            type: float
+          items:
+            $ref: '#/components/schemas/FieldInfo'
+      description: Measurement field information
+    ResBodyListMeasurementFieldInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/MeasurementFieldInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
+    InfluxDBInfo:
+      type: object
+      properties:
+        seq:
+          type: integer
+          description: Sequence number
+          format: int64
+        url:
+          type: string
+          description: Host url
+          example: http://localhost:8086
+        database:
+          type: string
+          description: Database name
+          example: mc-agent
+        retention_policy:
+          type: string
+          description: Data retention policy name
+          example: autogen
+        username:
+          type: string
+          description: Authentication username
+          example: mc-agent
+        password:
+          type: string
+          description: Authentication password
+          example: mc-agent
+      description: InfluxDB information
+    ResBodyListInfluxDBInfo:
+      type: object
+      properties:
+        rs_code:
+          type: string
+          description: Response code
+        rs_msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          description: Response data
+          items:
+            $ref: '#/components/schemas/InfluxDBInfo'
+        error_message:
+          type: string
+          description: Error message
+      description: Generic response body wrapper
