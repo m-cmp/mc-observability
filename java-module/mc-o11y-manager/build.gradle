@@ -2,11 +2,12 @@ plugins {
 }
 
 dependencies {
+    api 'org.influxdb:influxdb-java:2.23'
+    api 'org.apache.commons:commons-lang3:3.12.0'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.jcraft:jsch:0.1.44-1'
     implementation 'io.github.openfeign:feign-httpclient:11.1'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.5'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
 }
 

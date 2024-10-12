@@ -1,4 +1,4 @@
-package mcmp.mc.observability.mco11yagent.monitoring.annotation;
+package mcmp.mc.observability.mco11ymanager.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

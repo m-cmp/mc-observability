@@ -1,4 +1,4 @@
-package mcmp.mc.observability.mco11yagent.monitoring.enums;
+package mcmp.mc.observability.mco11ymanager.enums;
 
 import lombok.Getter;
 

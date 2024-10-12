@@ -1,7 +1,7 @@
 package mcmp.mc.observability.mco11ymanager.client;
 
 import mcmp.mc.observability.mco11ymanager.common.Constants;
-import mcmp.mc.observability.mco11ymanager.model.ResBody;
+import mcmp.mc.observability.mco11ymanager.model.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,72 +10,71 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+import java.util.Map;
+
 @FeignClient(name = "agent-manager", url = "${feign.agent-manager.url:}")
 public interface MonitoringClient {
 
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/plugins")
-    Object getPluginList();
+    ResBody<List<PluginDefInfo>> getPluginList();
 
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/target")
-    Object getTargetList();
+    ResBody<List<TargetInfo>> getTargetList();
     @GetMapping(Constants.PREFIX_V1 + "/monitoring/{nsId}/{mciId}/target")
-    Object getTargetListNSMCI(@PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId);
+    ResBody<List<TargetInfo>> getTargetListNSMCI(@PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId);
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    ResBody getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
+    ResBody<TargetInfo> getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
+    ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
+    ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    Object deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
+    ResBody deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_CSP_PATH)
-    Object getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement);
+    ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
+    ResBody<List<MonitoringConfigInfo>> getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    Object updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH + "/{itemSeq}")
-    Object deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq);
-
+    ResBody deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
+    ResBody<List<MonitoringConfigInfo>> getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    Object updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
+    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
-    Object deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq);
-
+    ResBody deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)
-    Object getInfluxDBList();
+    ResBody<List<InfluxDBInfo>> getInfluxDBList();
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
-    Object getInfluxDBFields(@PathVariable Long influxDBSeq);
+    ResBody<List<MeasurementFieldInfo>> getInfluxDBFields(@PathVariable Long influxDBSeq);
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
-    Object getInfluxDBTags(@PathVariable Long influxDBSeq);
+    ResBody<List<MeasurementTagInfo>> getInfluxDBTags(@PathVariable Long influxDBSeq);
     @PostMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
-    Object getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody Object metricsInfo);
-
+    ResBody<List<MetricInfo>> getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody MetricsInfo metricsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH)
-    Object getOpensearchList();
+    ResBody<List<OpensearchInfo>> getOpensearchList();
     @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
-    Object getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody Object logsInfo);
-
+    ResBody<List<Map<String, Object>>> getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody LogsInfo logsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
-    Object getMiningDB();
+    ResBody<MiningDBInfo> getMiningDB();
     @PutMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
-    Object updateMiningDB(@RequestBody Object info);
+    ResBody<Void> updateMiningDB(@RequestBody Object info);
     @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/measurement")
-    Object getMiningDBFields();
+    ResBody<List<MeasurementFieldInfo>> getMiningDBFields();
     @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/tag")
-    Object getMiningDBTags();
+    ResBody<List<MeasurementTagInfo>> getMiningDBTags();
     @PostMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH + "/metric")
-    Object getMiningDBMetrics(@RequestBody Object metricsInfo);
+    ResBody<List<MetricInfo>> getMiningDBMetrics(@RequestBody Object metricsInfo);
 }
