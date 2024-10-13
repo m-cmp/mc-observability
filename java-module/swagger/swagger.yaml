@@ -1,15 +1,13 @@
 openapi: 3.0.1
 info:
-  title: Api Documentation
-  description: Api Documentation
-  termsOfService: urn:tos
-  contact: {}
+  title: mc-o11y-manager API Documentation
+  description: API documentation for mc-o11y-manager
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
   version: 0.2.0
 servers:
-- url: //localhost:18080/
+- url: http://localhost:18080
 paths:
   /api/o11y/monitoring/plugins:
     get:
