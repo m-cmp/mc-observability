@@ -203,7 +203,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MonitoringConfigInfo'
         required: true
       responses:
         "200":
@@ -237,7 +237,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MonitoringConfigInfo'
         required: true
       responses:
         "200":
@@ -300,7 +300,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MonitoringConfigInfo'
         required: true
       responses:
         "200":
@@ -334,7 +334,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MonitoringConfigInfo'
         required: true
       responses:
         "200":
@@ -365,7 +365,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MiningDBSetDTO'
         required: true
       responses:
         "200":
@@ -410,7 +410,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/MetricsInfo'
         required: true
       responses:
         "200":

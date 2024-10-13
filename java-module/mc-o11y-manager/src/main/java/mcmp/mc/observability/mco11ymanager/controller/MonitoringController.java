@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.model.*;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
+import mcmp.mc.observability.mco11ymanager.model.dto.MiningDBSetDTO;
 import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -124,7 +125,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-add-item", summary = "Add target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
+    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
         return monitoringClient.insertItem(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
@@ -132,7 +133,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-update-item", summary = "Update target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
+    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
         return monitoringClient.updateItem(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
@@ -157,7 +158,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-add-storage", summary = "Add target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
+    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
         return monitoringClient.insertStorage(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
@@ -165,7 +166,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-update-storage", summary = "Update target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object monitoringConfigInfo) {
+    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
         return monitoringClient.updateStorage(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
@@ -240,7 +241,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-update-miningdb", summary = "Update mining influxdb info",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<Void> updateMiningDB(@RequestBody Object info) {
+    public ResBody<Void> updateMiningDB(@RequestBody MiningDBSetDTO info) {
         return monitoringClient.updateMiningDB(info);
     }
 
@@ -264,7 +265,7 @@ public class MonitoringController {
     @Operation(operationId = "monitoring-list-miningdb-metric", summary = "Get downsampling metric",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<MetricInfo>> getMiningDBMetrics(@RequestBody Object metricsInfo) {
+    public ResBody<List<MetricInfo>> getMiningDBMetrics(@RequestBody MetricsInfo metricsInfo) {
         return monitoringClient.getMiningDBMetrics(metricsInfo);
     }
 }
