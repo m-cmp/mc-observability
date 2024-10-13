@@ -1686,6 +1686,20 @@ components:
           type: string
           description: Error message
       description: Generic response body wrapper
+    MiningDBSetDTO:
+      type: object
+      properties:
+        url:
+          type: string
+        database:
+          type: string
+        retention_policy:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+      description: MiningDB information
     Data:
       type: object
       properties:

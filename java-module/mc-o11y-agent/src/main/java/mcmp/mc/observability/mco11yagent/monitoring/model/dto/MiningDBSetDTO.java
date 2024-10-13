@@ -25,22 +25,17 @@ public class MiningDBSetDTO {
     private String password;
 
     @JsonIgnore
-    @JsonProperty("old_url")
     private String oldUrl;
 
     @JsonIgnore
-    @JsonProperty("old_database")
     private String oldDatabase;
 
     @JsonIgnore
-    @JsonProperty("old_retention_policy")
     private String oldRetentionPolicy;
 
     @JsonIgnore
-    @JsonProperty("old_username")
     private String oldUsername;
 
     @JsonIgnore
-    @JsonProperty("old_password")
     private String oldPassword;
 }

@@ -2,11 +2,13 @@ package mcmp.mc.observability.mco11ymanager.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "MiningDB information")
 public class MiningDBSetDTO {
 
     @JsonProperty("url")
@@ -25,22 +27,17 @@ public class MiningDBSetDTO {
     private String password;
 
     @JsonIgnore
-    @JsonProperty("old_url")
     private String oldUrl;
 
     @JsonIgnore
-    @JsonProperty("old_database")
     private String oldDatabase;
 
     @JsonIgnore
-    @JsonProperty("old_retention_policy")
     private String oldRetentionPolicy;
 
     @JsonIgnore
-    @JsonProperty("old_username")
     private String oldUsername;
 
     @JsonIgnore
-    @JsonProperty("old_password")
     private String oldPassword;
 }
