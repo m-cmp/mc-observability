@@ -713,7 +713,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<List<TriggerHistoryInfo>>'
+                $ref: '#/components/schemas/ResBodyListTriggerHistoryInfo'
   /api/o11y/trigger/policy:
     get:
       tags:
@@ -726,7 +726,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<List<TriggerPolicyInfo>>'
+                $ref: '#/components/schemas/ResBodyListTriggerPolicyInfo'
     post:
       tags:
       - "[Metric Event] monitoring measurement trigger"
@@ -748,7 +748,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       x-codegen-request-body-name: triggerPolicyCreateDto
   /api/o11y/trigger/policy/{policySeq}:
     delete:
@@ -770,7 +770,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
     patch:
       tags:
       - "[Metric Event] monitoring measurement trigger"
@@ -797,7 +797,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       x-codegen-request-body-name: triggerPolicyUpdateDto
   /api/o11y/trigger/policy/target:
     get:
@@ -819,7 +819,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<List<TriggerTargetInfo>>'
+                $ref: '#/components/schemas/ResBodyListTriggerTargetInfo'
   /api/o11y/trigger/policy/{policySeq}/target:
     put:
       tags:
@@ -854,7 +854,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       x-codegen-request-body-name: targets
   /api/o11y/trigger/policy/{policySeq}/alert/email:
     get:
@@ -876,7 +876,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<List<TriggerEmailUserInfo>>'
+                $ref: '#/components/schemas/ResBodyListTriggerEmailUserInfo'
     post:
       tags:
       - "[Metric Event] monitoring trigger event handler"
@@ -903,7 +903,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       x-codegen-request-body-name: dto
   /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}:
     delete:
@@ -932,7 +932,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
   /api/o11y/trigger/policy/{policySeq}/alert/slack:
     get:
       tags:
@@ -953,7 +953,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<List<TriggerSlackUserInfo>>'
+                $ref: '#/components/schemas/ResBodyListTriggerSlackUserInfo'
     post:
       tags:
       - "[Metric Event] monitoring trigger event handler"
@@ -980,7 +980,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       x-codegen-request-body-name: dto
   /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}:
     delete:
@@ -1009,7 +1009,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
   /api/o11y/insight/anomaly-detection/options:
     get:
       tags:
@@ -1091,7 +1091,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       deprecated: false
       x-codegen-request-body-name: body
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
@@ -1127,7 +1127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       deprecated: false
       x-codegen-request-body-name: body
     delete:
@@ -1150,7 +1150,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       deprecated: false
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
@@ -1250,7 +1250,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBodyVoid'
       deprecated: false
   /api/o11y/insight/predictions/options:
     get:
@@ -1977,8 +1977,8 @@ components:
         name:
           type: string
           description: Trigger Alert Email User name
-    ResBody<List<TriggerEmailUserInfo>>:
-      title: ResBody<List<TriggerEmailUserInfo>>
+    ResBodyListTriggerEmailUserInfo:
+      title: ResBodyListTriggerEmailUserInfo
       type: object
       properties:
         data:
@@ -2009,8 +2009,8 @@ components:
           description: Sequence by Trigger Email User
           format: int64
           example: 1
-    ResBody<List<TriggerSlackUserInfo>>:
-      title: ResBody<List<TriggerSlackUserInfo>>>
+    ResBodyListTriggerSlackUserInfo:
+      title: ResBodyListTriggerSlackUserInfo
       type: object
       properties:
         data:
@@ -2057,8 +2057,8 @@ components:
         token:
           type: string
           description: Base64 Encoded value
-    ResBody<List<TriggerHistoryInfo>>:
-      title: ResBody<List<TriggerHistoryInfo>>
+    ResBodyListTriggerHistoryInfo:
+      title: ResBodyListTriggerHistoryInfo
       type: object
       properties:
         data:
@@ -2114,8 +2114,8 @@ components:
           description: Sequence by trigger target
           format: int64
           example: 1
-    ResBody<List<TriggerPolicyInfo>>:
-      title: ResBody<List<TriggerPolicyInfo>>
+    ResBodyListTriggerPolicyInfo:
+      title: ResBodyListTriggerPolicyInfo
       type: object
       properties:
         data:
@@ -2247,8 +2247,8 @@ components:
           type: string
           description: Base64 Encoded value
           example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-    ResBody<List<TriggerTargetInfo>>:
-      title: ResBody<List<TriggerTargetInfo>>
+    ResBodyListTriggerTargetInfo:
+      title: ResBodyListTriggerTargetInfo
       type: object
       properties:
         data:
