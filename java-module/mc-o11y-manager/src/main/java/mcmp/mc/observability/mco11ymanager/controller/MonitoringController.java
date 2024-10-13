@@ -31,7 +31,7 @@ public class MonitoringController {
 
     // monitoring test api
     @GetMapping("/monitoring/ns")
-    @Operation(operationId = "monitoring-list-ns", summary = "Get all mc-observability management namespace list",
+    @Operation(operationId = "GetNSs", summary = "Get all mc-observability management namespace list",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public TumblebugNS getNS() {
@@ -40,7 +40,7 @@ public class MonitoringController {
 
     // monitoring plugins api
     @GetMapping("/monitoring/plugins")
-    @Operation(operationId = "monitoring-list-plugins", summary = "Get all available monitoring plugin list",
+    @Operation(operationId = "GetPlugins", summary = "Get all available monitoring plugin list",
             tags = "[System] environment")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<PluginDefInfo>> getPluginList() {
@@ -49,7 +49,7 @@ public class MonitoringController {
 
     // monitoring target api
     @GetMapping("/monitoring/target")
-    @Operation(operationId = "monitoring-list-all-target", summary = "Get all mc-observability management target list",
+    @Operation(operationId = "GetTargets", summary = "Get all mc-observability management target list",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<TargetInfo>> getTargetList() {
@@ -57,7 +57,7 @@ public class MonitoringController {
     }
 
     @GetMapping("/monitoring/{nsId}/{mciId}/target")
-    @Operation(operationId = "monitoring-list-specified-target", summary = "Get all mc-observability management target list in specified NS and MCI",
+    @Operation(operationId = "GetTargetsNSMCI", summary = "Get all mc-observability management target list in specified NS and MCI",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<TargetInfo>> getTargetListNSMCI(@PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId) {
@@ -65,7 +65,7 @@ public class MonitoringController {
     }
 
     @GetMapping(Constants.TARGET_PATH)
-    @Operation(operationId = "monitoring-get-target", summary = "Get monitoring target",
+    @Operation(operationId = "GetTarget", summary = "Get monitoring target",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<TargetInfo> getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
@@ -73,7 +73,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.TARGET_PATH)
-    @Operation(operationId = "monitoring-add-target", summary = "Add new monitoring target (MC-O11y-Agent Install)",
+    @Operation(operationId = "PostTarget", summary = "Add new monitoring target (MC-O11y-Agent Install)",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
@@ -88,7 +88,7 @@ public class MonitoringController {
     }
 
     @PutMapping(Constants.TARGET_PATH)
-    @Operation(operationId = "monitoring-update-target", summary = "Update target information",
+    @Operation(operationId = "PutTarget", summary = "Update target information",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
@@ -96,7 +96,7 @@ public class MonitoringController {
     }
 
     @DeleteMapping(Constants.TARGET_PATH)
-    @Operation(operationId = "monitoring-delete-target", summary = "Delete monitoring agent & management target",
+    @Operation(operationId = "DeleteTarget", summary = "Delete monitoring agent & management target",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
@@ -105,7 +105,7 @@ public class MonitoringController {
 
     // cb-spider monitoring api
     @GetMapping(Constants.TARGET_CSP_PATH)
-    @Operation(operationId = "monitoring-get-csp", summary = "Get target monitoring data from the CSP",
+    @Operation(operationId = "GetCSP", summary = "Get target monitoring data from the CSP",
             tags = "[Monitoring CSP] Monitoring target from the CSP")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement) {
@@ -114,7 +114,7 @@ public class MonitoringController {
 
     // monitoring item api
     @GetMapping(Constants.TARGET_ITEM_PATH)
-    @Operation(operationId = "monitoring-list-item", summary = "Get all target monitoring item list",
+    @Operation(operationId = "GetItems", summary = "Get all target monitoring item list",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody<List<MonitoringConfigInfo>> getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
@@ -122,7 +122,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.TARGET_ITEM_PATH)
-    @Operation(operationId = "monitoring-add-item", summary = "Add target monitoring item",
+    @Operation(operationId = "PostItem", summary = "Add target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
@@ -130,7 +130,7 @@ public class MonitoringController {
     }
 
     @PutMapping(Constants.TARGET_ITEM_PATH)
-    @Operation(operationId = "monitoring-update-item", summary = "Update target monitoring item",
+    @Operation(operationId = "PutItem", summary = "Update target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
@@ -138,7 +138,7 @@ public class MonitoringController {
     }
 
     @DeleteMapping(Constants.TARGET_ITEM_PATH + "/{itemSeq}")
-    @Operation(operationId = "monitoring-delete-item", summary = "Delete target monitoring item",
+    @Operation(operationId = "DeleteItem", summary = "Delete target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
@@ -147,7 +147,7 @@ public class MonitoringController {
 
     // monitoring storage api
     @GetMapping(Constants.TARGET_STORAGE_PATH)
-    @Operation(operationId = "monitoring-list-storage", summary = "Get all target monitoring storage list",
+    @Operation(operationId = "GetStorages", summary = "Get all target monitoring storage list",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody<List<MonitoringConfigInfo>> getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
@@ -155,7 +155,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.TARGET_STORAGE_PATH)
-    @Operation(operationId = "monitoring-add-storage", summary = "Add target monitoring storage",
+    @Operation(operationId = "PostStorage", summary = "Add target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
@@ -163,7 +163,7 @@ public class MonitoringController {
     }
 
     @PutMapping(Constants.TARGET_STORAGE_PATH)
-    @Operation(operationId = "monitoring-update-storage", summary = "Update target monitoring storage",
+    @Operation(operationId = "PutStorage", summary = "Update target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
@@ -171,7 +171,7 @@ public class MonitoringController {
     }
 
     @DeleteMapping(Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
-    @Operation(operationId = "monitoring-delete-storage", summary = "Delete target monitoring storage",
+    @Operation(operationId = "DeleteStorage", summary = "Delete target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     ResBody deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
@@ -180,7 +180,7 @@ public class MonitoringController {
 
     // monitoring influxdb metric api
     @GetMapping(Constants.INFLUXDB_PATH)
-    @Operation(operationId = "monitoring-list-influxdb", summary = "Get all InfluxDB list",
+    @Operation(operationId = "GetInfluxDBs", summary = "Get all InfluxDB list",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<InfluxDBInfo>> getInfluxDBList() {
@@ -188,7 +188,7 @@ public class MonitoringController {
     }
 
     @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
-    @Operation(operationId = "monitoring-get-measurement", summary = "Get collected measurement & field list",
+    @Operation(operationId = "GetInfluxDBMeasurements", summary = "Get collected measurement & field list",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MeasurementFieldInfo>> getInfluxDBFields(@PathVariable Long influxDBSeq) {
@@ -196,7 +196,7 @@ public class MonitoringController {
     }
 
     @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
-    @Operation(operationId = "monitoring-list-measurement-tag", summary = "Get collected measurement tag list",
+    @Operation(operationId = "GetInfluxDBTags", summary = "Get collected measurement tag list",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MeasurementTagInfo>> getInfluxDBTags(@PathVariable Long influxDBSeq) {
@@ -204,7 +204,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
-    @Operation(operationId = "monitoring-list-metric", summary = "Get collected metric",
+    @Operation(operationId = "GetInfluxDBMetrics", summary = "Get collected metric",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MetricInfo>> getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody MetricsInfo metricsInfo) {
@@ -213,7 +213,7 @@ public class MonitoringController {
 
     // monitoring opensearch log api
     @GetMapping(Constants.OPENSEARCH_PATH)
-    @Operation(operationId = "monitoring-list-opensearch", summary = "Get all OpenSearch list",
+    @Operation(operationId = "GetOpenSearches", summary = "Get all OpenSearch list",
             tags = "[Monitoring log] Monitoring log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<OpensearchInfo>> getOpensearchList() {
@@ -221,7 +221,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
-    @Operation(operationId = "monitoring-list-opensearch-log", summary = "Get collected logs from OpenSearch",
+    @Operation(operationId = "GetOpenSearchLogs", summary = "Get collected logs from OpenSearch",
             tags = "[Monitoring log] Monitoring log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<Map<String, Object>>> getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody LogsInfo logsInfo) {
@@ -230,7 +230,7 @@ public class MonitoringController {
 
     // monitoring miningdb api
     @GetMapping(Constants.MININGDB_PATH)
-    @Operation(operationId = "monitoring-list-miningdb", summary = "Get mining influxdb detail",
+    @Operation(operationId = "GetMiningDBs", summary = "Get mining influxdb detail",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<MiningDBInfo> getMiningDB() {
@@ -238,7 +238,7 @@ public class MonitoringController {
     }
 
     @PutMapping(Constants.MININGDB_PATH)
-    @Operation(operationId = "monitoring-update-miningdb", summary = "Update mining influxdb info",
+    @Operation(operationId = "PutMiningDB", summary = "Update mining influxdb info",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<Void> updateMiningDB(@RequestBody MiningDBSetDTO info) {
@@ -246,7 +246,7 @@ public class MonitoringController {
     }
 
     @GetMapping(Constants.MININGDB_PATH + "/measurement")
-    @Operation(operationId = "monitoring-get-miningdb-measurement",summary = "Get downsampling measurement & field list",
+    @Operation(operationId = "GetMiningDBMeasurements",summary = "Get downsampling measurement & field list",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MeasurementFieldInfo>> getMiningDBFields() {
@@ -254,7 +254,7 @@ public class MonitoringController {
     }
 
     @GetMapping(Constants.MININGDB_PATH + "/tag")
-    @Operation(operationId = "monitoring-list-miningdb-measurement-tag\"", summary = "Get downsampling metric tag list",
+    @Operation(operationId = "GetMiningDBTags\"", summary = "Get downsampling metric tag list",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MeasurementTagInfo>> getMiningDBTags() {
@@ -262,7 +262,7 @@ public class MonitoringController {
     }
 
     @PostMapping(Constants.MININGDB_PATH + "/metric")
-    @Operation(operationId = "monitoring-list-miningdb-metric", summary = "Get downsampling metric",
+    @Operation(operationId = "GetMiningDBMetrics", summary = "Get downsampling metric",
             tags = "[Mining InfluxDB] Monitoring metric downsampling")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody<List<MetricInfo>> getMiningDBMetrics(@RequestBody MetricsInfo metricsInfo) {

@@ -14,7 +14,7 @@ paths:
       tags:
       - "[System] environment"
       summary: Get all available monitoring plugin list
-      operationId: monitoring-list-plugins
+      operationId: GetPlugins
       responses:
         "200":
           description: OK
@@ -27,7 +27,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Get monitoring target
-      operationId: monitoring-get-target
+      operationId: GetTarget
       parameters:
       - name: nsId
         in: path
@@ -55,7 +55,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Update target information
-      operationId: monitoring-update-target
+      operationId: PutTarget
       parameters:
       - name: nsId
         in: path
@@ -89,7 +89,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Add new monitoring target (MC-O11y-Agent Install)
-      operationId: monitoring-add-target
+      operationId: PostTarget
       parameters:
       - name: nsId
         in: path
@@ -123,7 +123,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Delete monitoring agent & management target
-      operationId: monitoring-delete-target
+      operationId: DeleteTarget
       parameters:
       - name: nsId
         in: path
@@ -152,7 +152,7 @@ paths:
       tags:
       - "[Monitoring storage] Monitoring target storage management"
       summary: Get all target monitoring storage list
-      operationId: monitoring-list-storage
+      operationId: GetStorages
       parameters:
       - name: nsId
         in: path
@@ -180,7 +180,7 @@ paths:
       tags:
       - "[Monitoring storage] Monitoring target storage management"
       summary: Update target monitoring storage
-      operationId: monitoring-update-storage
+      operationId: PutStorage
       parameters:
       - name: nsId
         in: path
@@ -214,7 +214,7 @@ paths:
       tags:
       - "[Monitoring storage] Monitoring target storage management"
       summary: Add target monitoring storage
-      operationId: monitoring-add-storage
+      operationId: PostStorage
       parameters:
       - name: nsId
         in: path
@@ -249,7 +249,7 @@ paths:
       tags:
       - "[Monitoring item] Monitoring target item management"
       summary: Get all target monitoring item list
-      operationId: monitoring-list-item
+      operationId: GetItems
       parameters:
       - name: nsId
         in: path
@@ -277,7 +277,7 @@ paths:
       tags:
       - "[Monitoring item] Monitoring target item management"
       summary: Update target monitoring item
-      operationId: monitoring-update-item
+      operationId: PutItem
       parameters:
       - name: nsId
         in: path
@@ -311,7 +311,7 @@ paths:
       tags:
       - "[Monitoring item] Monitoring target item management"
       summary: Add target monitoring item
-      operationId: monitoring-add-item
+      operationId: PostItem
       parameters:
       - name: nsId
         in: path
@@ -346,7 +346,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Get mining influxdb detail
-      operationId: monitoring-list-miningdb
+      operationId: GetMiningDBs
       responses:
         "200":
           description: OK
@@ -358,7 +358,7 @@ paths:
       tags:
       - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Update mining influxdb info
-      operationId: monitoring-update-miningdb
+      operationId: PutMiningDB
       requestBody:
         content:
           application/json:
@@ -377,7 +377,7 @@ paths:
       tags:
       - "[Monitoring log] Monitoring log"
       summary: Get collected logs from OpenSearch
-      operationId: monitoring-list-opensearch-log
+      operationId: GetOpenSearchLogs
       parameters:
       - name: opensearchSeq
         in: path
@@ -403,7 +403,7 @@ paths:
       tags:
       - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Get downsampling metric
-      operationId: monitoring-list-miningdb-metric
+      operationId: GetMiningDBMetrics
       requestBody:
         content:
           application/json:
@@ -422,7 +422,7 @@ paths:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected metric
-      operationId: monitoring-list-metric
+      operationId: GetInfluxDBMetrics
       parameters:
       - name: influxDBSeq
         in: path
@@ -449,7 +449,7 @@ paths:
       - "[Target] Monitoring target management"
       summary: Get all mc-observability management target list in specified NS and
         MCI
-      operationId: monitoring-list-specified-target
+      operationId: GetTargetsNSMCI
       parameters:
       - name: nsId
         in: path
@@ -473,7 +473,7 @@ paths:
       tags:
       - "[Monitoring CSP] Monitoring target from the CSP"
       summary: Get target monitoring data from the CSP
-      operationId: monitoring-get-csp
+      operationId: GetCSP
       parameters:
       - name: nsId
         in: path
@@ -507,7 +507,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Get all mc-observability management target list
-      operationId: monitoring-list-all-target
+      operationId: GetTargets
       responses:
         "200":
           description: OK
@@ -520,7 +520,7 @@ paths:
       tags:
       - "[Monitoring log] Monitoring log"
       summary: Get all OpenSearch list
-      operationId: monitoring-list-opensearch
+      operationId: GetOpenSearches
       responses:
         "200":
           description: OK
@@ -533,7 +533,7 @@ paths:
       tags:
       - "[Target] Monitoring target management"
       summary: Get all mc-observability management namespace list
-      operationId: monitoring-list-ns
+      operationId: GetNSs
       responses:
         "200":
           description: OK
@@ -546,7 +546,7 @@ paths:
       tags:
       - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Get downsampling metric tag list
-      operationId: monitoring-list-miningdb-measurement-tag"
+      operationId: GetMiningDBTags"
       responses:
         "200":
           description: OK
@@ -559,7 +559,7 @@ paths:
       tags:
       - "[Mining InfluxDB] Monitoring metric downsampling"
       summary: Get downsampling measurement & field list
-      operationId: monitoring-get-miningdb-measurement
+      operationId: GetMiningDBMeasurements
       responses:
         "200":
           description: OK
@@ -572,7 +572,7 @@ paths:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get all InfluxDB list
-      operationId: monitoring-list-influxdb
+      operationId: GetInfluxDBs
       responses:
         "200":
           description: OK
@@ -585,7 +585,7 @@ paths:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected measurement tag list
-      operationId: monitoring-list-measurement-tag
+      operationId: GetInfluxDBTags
       parameters:
       - name: influxDBSeq
         in: path
@@ -605,7 +605,7 @@ paths:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected measurement & field list
-      operationId: monitoring-get-measurement
+      operationId: GetInfluxDBMeasurements
       parameters:
       - name: influxDBSeq
         in: path
@@ -625,7 +625,7 @@ paths:
       tags:
       - "[Monitoring storage] Monitoring target storage management"
       summary: Delete target monitoring storage
-      operationId: monitoring-delete-storage
+      operationId: DeleteStorage
       parameters:
       - name: nsId
         in: path
@@ -660,7 +660,7 @@ paths:
       tags:
       - "[Monitoring item] Monitoring target item management"
       summary: Delete target monitoring item
-      operationId: monitoring-delete-item
+      operationId: DeleteItem
       parameters:
       - name: nsId
         in: path
