@@ -57,12 +57,12 @@ public interface MonitoringClient {
 
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)
     ResBody<List<InfluxDBInfo>> getInfluxDBList();
-    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
-    ResBody<List<MeasurementFieldInfo>> getInfluxDBFields(@PathVariable Long influxDBSeq);
-    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
-    ResBody<List<MeasurementTagInfo>> getInfluxDBTags(@PathVariable Long influxDBSeq);
-    @PostMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
-    ResBody<List<MetricInfo>> getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody MetricsInfo metricsInfo);
+    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/measurement")
+    ResBody<List<MeasurementFieldInfo>> getInfluxDBFields();
+    @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/tag")
+    ResBody<List<MeasurementTagInfo>> getInfluxDBTags();
+    @PostMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH + "/metric")
+    ResBody<List<MetricInfo>> getInfluxDBMetrics(@RequestBody MetricsInfo metricsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH)
     ResBody<List<OpenSearchInfo>> getOpenSearchList();

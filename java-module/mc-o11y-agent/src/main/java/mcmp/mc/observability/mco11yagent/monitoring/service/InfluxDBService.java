@@ -82,16 +82,6 @@ public class InfluxDBService {
         if( !delList.isEmpty() ) influxDBMapper.deleteInfluxDBInfoList(delList);
     }
 
-    public ResBody<List<MeasurementFieldInfo>> getFields(Long influxDBSeq) {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
-
-        if( influxDBInfo == null ) {
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
-        }
-
-        return getFields(influxDBInfo);
-    }
-
     public ResBody<List<MeasurementFieldInfo>> getFields() {
         MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
 
@@ -111,6 +101,10 @@ public class InfluxDBService {
     }
 
     public ResBody<List<MeasurementFieldInfo>> getFields(InfluxDBInfo influxDBInfo) {
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Can't find configured InfluxDB. InfluxDBInfo is null");
+        }
+
         ResBody<List<MeasurementFieldInfo>> res = new ResBody<>();
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
@@ -122,16 +116,6 @@ public class InfluxDBService {
         res.setData(InfluxDBUtils.measurementAndFieldsMapping(qr.getResults().get(0).getSeries()));
 
         return res;
-    }
-
-    public ResBody<List<MeasurementTagInfo>> getTags(Long influxDBSeq) {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
-
-        if( influxDBInfo == null ) {
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
-        }
-
-        return getTags(influxDBInfo);
     }
 
     public ResBody<List<MeasurementTagInfo>> getTags() {
@@ -153,6 +137,10 @@ public class InfluxDBService {
     }
 
     public ResBody<List<MeasurementTagInfo>> getTags(InfluxDBInfo influxDBInfo) {
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Can't find configured InfluxDB. InfluxDBInfo is null");
+        }
+
         ResBody<List<MeasurementTagInfo>> res = new ResBody<>();
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
@@ -181,16 +169,6 @@ public class InfluxDBService {
         return res;
     }
 
-    public List<MetricInfo> getMetrics(Long influxDBSeq, MetricsInfo metricsInfo) {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfo(influxDBSeq);
-
-        if( influxDBInfo == null ) {
-            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "influxDB info null seq = {}", influxDBSeq);
-        }
-
-        return getMetrics(influxDBInfo, metricsInfo);
-    }
-
     public List<MetricInfo> getMetrics(MetricsInfo metricsInfo) {
         MiningDBInfo miningDBInfo = miningDBMapper.getDetail();
 
@@ -210,6 +188,9 @@ public class InfluxDBService {
     }
 
     public List<MetricInfo> getMetrics(InfluxDBInfo influxDBInfo, MetricsInfo metricsInfo) {
+        if( influxDBInfo == null ) {
+            throw new ResultCodeException(ResultCode.INVALID_REQUEST, "Can't find configured InfluxDB. InfluxDBInfo is null");
+        }
 
         InfluxDBConnector influxDBConnector = new InfluxDBConnector(influxDBInfo);
         String queryString = metricsInfo.getQuery();

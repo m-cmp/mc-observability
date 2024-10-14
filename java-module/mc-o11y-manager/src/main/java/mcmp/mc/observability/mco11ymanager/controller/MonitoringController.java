@@ -190,28 +190,28 @@ public class MonitoringController {
         return monitoringClient.getInfluxDBList();
     }
 
-    @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/measurement")
+    @GetMapping(Constants.INFLUXDB_PATH + "/measurement")
     @Operation(operationId = "GetInfluxDBMeasurements", summary = "Get collected measurement & field list",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<MeasurementFieldInfo>> getInfluxDBFields(@PathVariable Long influxDBSeq) {
-        return monitoringClient.getInfluxDBFields(influxDBSeq);
+    public ResBody<List<MeasurementFieldInfo>> getInfluxDBFields() {
+        return monitoringClient.getInfluxDBFields();
     }
 
-    @GetMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/tag")
+    @GetMapping(Constants.INFLUXDB_PATH + "/tag")
     @Operation(operationId = "GetInfluxDBTags", summary = "Get collected measurement tag list",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<MeasurementTagInfo>> getInfluxDBTags(@PathVariable Long influxDBSeq) {
-        return monitoringClient.getInfluxDBTags(influxDBSeq);
+    public ResBody<List<MeasurementTagInfo>> getInfluxDBTags() {
+        return monitoringClient.getInfluxDBTags();
     }
 
-    @PostMapping(Constants.INFLUXDB_PATH + "/{influxDBSeq}/metric")
+    @PostMapping(Constants.INFLUXDB_PATH + "/metric")
     @Operation(operationId = "GetInfluxDBMetrics", summary = "Get collected metric",
             tags = "[Monitoring metric] Monitoring metric")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<MetricInfo>> getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody MetricsInfo metricsInfo) {
-        return monitoringClient.getInfluxDBMetrics(influxDBSeq, metricsInfo);
+    public ResBody<List<MetricInfo>> getInfluxDBMetrics(@RequestBody MetricsInfo metricsInfo) {
+        return monitoringClient.getInfluxDBMetrics(metricsInfo);
     }
 
     // monitoring opensearch log api
