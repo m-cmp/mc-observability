@@ -21,8 +21,8 @@ class AnomalyHistoryService:
 
     def get_anomaly_detection_results(self):
         results = self.repo.query_anomaly_detection_results(path_params=self.path_params, query_params=self.query_params)
-        storage_seq_list = self.get_storage_seq_list()
-        raw_data = self.get_raw_data(seq_list=storage_seq_list)
+        # storage_seq_list = self.get_storage_seq_list()
+        raw_data = self.get_raw_data()
         data = self.create_res_data(results=results, raw_data=raw_data)
 
         return data
@@ -35,20 +35,19 @@ class AnomalyHistoryService:
 
         return seq_list
 
-    def get_raw_data(self, seq_list: list):
+    def get_raw_data(self):
         all_data = []
 
-        for seq in seq_list:
-            url = self._build_url(f"influxdb/{seq}/metric")
-            body = self._build_body()
-            response = self._send_request("POST", url, json=body)
-            data = response.json().get("data", [])
-            all_data.extend(data)
-            all_data.extend(data)
+        url = self._build_url(path="influxdb/metric")
+        body = self._build_body()
+        response = self._send_request("POST", url, json=body)
+        data = response.json().get("data", [])
+        all_data.extend(data)
 
-        df_list = [pd.DataFrame(data["values"], columns=["timestamp", "resource_pct"]) for data in all_data]
-        combined_df = pd.concat(df_list, ignore_index=True)
-        df_cleaned = combined_df.groupby('timestamp', as_index=False).agg({'resource_pct': 'mean'})
+        if not data:
+            raise Exception("No data retrieved from mc-o11y.")
+
+        df_cleaned = pd.DataFrame(data[0]["values"], columns=["timestamp", "resource_pct"])
 
         return df_cleaned
 
@@ -80,7 +79,7 @@ class AnomalyHistoryService:
                     "field": field_value
                 }
             ],
-            "groupTime": "1m",
+            "group_time": "1m",
             "measurement": self.query_params.measurement.value.lower(),
             "range": "12h"
         }

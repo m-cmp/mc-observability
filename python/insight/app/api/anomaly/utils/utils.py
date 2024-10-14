@@ -23,8 +23,8 @@ class AnomalyService:
 
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
-        storage_seq_list = self.get_storage_seq_list()
-        raw_data = self.get_raw_data(seq_list=storage_seq_list, setting=setting)
+        # storage_seq_list = self.get_storage_seq_list()
+        raw_data = self.get_raw_data(setting=setting)
         pre_data = self.make_preprocess_data(df=raw_data)
 
         anomaly_detector = AnomalyDetector(measurement=setting.measurement)
@@ -43,23 +43,16 @@ class AnomalyService:
 
         return seq_list
 
-    def get_raw_data(self, seq_list: list, setting: object):
-        all_data = []
+    def get_raw_data(self, setting: object):
+        url = self._build_url(path=f"influxdb/metric")
+        body = self._build_body(setting)
+        response = self._send_request(method="POST", url=url, json=body)
+        data = response.json().get("data", [])
 
-        for seq in seq_list:
-            url = self._build_url(path=f"influxdb/{seq}/metric")
-            body = self._build_body(setting)
-            response = self._send_request(method="POST", url=url, json=body)
-            data = response.json().get("data", [])
-            all_data.extend(data)
-
-        df_list = [pd.DataFrame(data["values"], columns=["timestamp", "resource_pct"]) for data in all_data]
-
-        if not df_list:
+        if not data:
             raise Exception("No data retrieved from mc-o11y.")
 
-        combined_df = pd.concat(df_list, ignore_index=True)
-        df_cleaned = combined_df.groupby('timestamp', as_index=False).agg({'resource_pct': 'mean'})
+        df_cleaned = pd.DataFrame(data[0]["values"], columns=["timestamp", "resource_pct"])
 
         return df_cleaned
 
@@ -100,7 +93,7 @@ class AnomalyService:
                     "field": field_value
                 }
             ],
-            "groupTime": "1m",
+            "group_time": "1m",
             "measurement": setting.MEASUREMENT.lower(),
             "range": "12h"
         }

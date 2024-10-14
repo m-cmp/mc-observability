@@ -44,7 +44,8 @@ def data_down_sampling(ti, **context):
 
     seq_list = ti.xcom_pull(key='influxdb_seq_list', task_ids='call_influxdb_seq')
 
-    api_url = api_base_url + f'/monitoring/influxdb/{seq_list[0]}/measurement'
+    # api_url = api_base_url + f'/monitoring/influxdb/{seq_list[0]}/measurement'
+    api_url = api_base_url + f'/monitoring/influxdb/measurement'
     response = requests.get(api_url)
     response.raise_for_status()
 

@@ -17,7 +17,7 @@ class PredictionService:
         self.o11y_url = config.get_o11y_config()['url']
         self.o11y_port = config.get_o11y_config()['port']
         self.headers = {'Content-Type': 'application/json'}
-        self.seq_list = self._get_storage_seq_lists()
+        # self.seq_list = self._get_storage_seq_lists()
 
     def _get_storage_seq_lists(self):
         url = self._build_url("influxdb")
@@ -71,7 +71,7 @@ class PredictionService:
                     "field": field_value
                 }
             ],
-            "groupTime": "1h",
+            "group_time": "1h",
             "measurement": measurement.lower(),
             "range": prediction_range
         }
@@ -85,11 +85,11 @@ class PredictionService:
 
         all_data = []
         body = self._build_body(nsId, targetId, target_type, measurement, prediction_range)
-        for seq in self.seq_list:
-            url = self._build_url(f'influxdb/{seq}/metric')
-            response = self._send_request('POST', url, json=body)
-            data = response.json().get("data", [])
-            all_data.extend(data)
+        # for seq in self.seq_list:
+        url = self._build_url(f'influxdb/metric')
+        response = self._send_request('POST', url, json=body)
+        data = response.json().get("data", [])
+        all_data.extend(data)
 
         try:
             df_list = [pd.DataFrame(data["values"], columns=["ds", "y"]) for data in all_data]
@@ -122,8 +122,8 @@ class PredictionService:
         prediction = prediction[prediction['ds'] > last_datetime]
         prediction = prediction.rename(columns={'ds': 'timestamp', 'yhat': 'value'})
 
-        if measurement == 'cpu':
-            prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
+        # if measurement == 'cpu':
+        #     prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
         prediction['value'] = np.clip(prediction['value'], 0, 100).round(2)
         prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
 

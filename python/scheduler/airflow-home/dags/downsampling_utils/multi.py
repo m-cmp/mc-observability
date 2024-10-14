@@ -63,15 +63,16 @@ class DataProcessor:
                     'field': field
                 }
             ],
-            'groupBy': [
+            'group_by': [
                 'ns_id', 'mci_id', 'target_id'
             ],
-            'groupTime': '1m',
+            'group_time': '1m',
             'measurement': measurement,
             'range': '1h'
         }
 
-        api_url = self.api_base_url + f'/monitoring/influxdb/{self.influx_seq[0]}/metric'
+        # api_url = self.api_base_url + f'/monitoring/influxdb/{self.influx_seq[0]}/metric'
+        api_url = self.api_base_url + f'/monitoring/influxdb/metric'
         metric_data = requests.post(api_url, headers=self.headers, json=body).json().get('data', [])
 
         return metric_data
