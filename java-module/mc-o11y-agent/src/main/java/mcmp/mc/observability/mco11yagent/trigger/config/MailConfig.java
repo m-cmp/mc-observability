@@ -13,7 +13,7 @@ public class MailConfig {
     @Value("${spring.mail.host}")
     public String host;
 
-    @Value("${spring.mail.port}")
+    @Value("${spring.mail.port:587}")
     public int port;
 
     @Value("${spring.mail.username}")
