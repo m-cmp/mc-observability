@@ -410,19 +410,12 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/ResBodyListMetricInfo'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/metric:
+  /api/o11y/monitoring/influxdb/metric:
     post:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected metric
       operationId: GetInfluxDBMetrics
-      parameters:
-      - name: influxDBSeq
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
       requestBody:
         content:
           application/json:
@@ -573,19 +566,12 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/ResBodyListInfluxDBInfo'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/tag:
+  /api/o11y/monitoring/influxdb/tag:
     get:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected measurement tag list
       operationId: GetInfluxDBTags
-      parameters:
-      - name: influxDBSeq
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
       responses:
         "200":
           description: OK
@@ -593,19 +579,12 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/ResBodyListMeasurementTagInfo'
-  /api/o11y/monitoring/influxdb/{influxDBSeq}/measurement:
+  /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
       - "[Monitoring metric] Monitoring metric"
       summary: Get collected measurement & field list
       operationId: GetInfluxDBMeasurements
-      parameters:
-      - name: influxDBSeq
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
       responses:
         "200":
           description: OK
