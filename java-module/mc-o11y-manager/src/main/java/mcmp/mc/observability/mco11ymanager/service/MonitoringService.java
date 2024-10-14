@@ -75,7 +75,8 @@ public class MonitoringService {
                 if (plugin.getName().equals("opensearch")){
                     itemCreateInfo.setPluginConfig("  urls = [\"http://"+ myIp + ":9200\"]\n" +
                             "  index_name = \"mc-o11y\"\n" +
-                            "  template_name = \"telegraf\"");
+                            "  template_name = \"mc-o11y\"\n" +
+                            "  namepass = [\"tail\"]");
                 } else if (plugin.getName().equals("tail")) {
                     itemCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
                             "  from_beginning = false\n" +
