@@ -19,7 +19,7 @@
             <div style=" margin-top: 10px; text-align: center; align-content: center; justify-content: center">
                 <h3>M-CMP Trigger Event Alert</h3><br/>
                 [Alert :
-                <strong style="color:#006dff;font-weight: bold;" th:text="${metric}">metric</strong>
+                <strong style="color:#006dff;font-weight: bold;" th:text="${measurement}">measurement</strong>
                     alarm has been triggered in
                 <strong style="color:#006dff;font-weight: bold;" th:text="${policyName}">policyName</strong>
                     ]
@@ -44,8 +44,8 @@
                     <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${targetName}"></td>
                 </tr>
                 <tr>
-                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Metric</th>
-                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${metric}"></td>
+                    <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Measurement</th>
+                    <td style="border-bottom:1px solid #e7e9ee;color:#142337;background-color:#fefbf7;padding:10px 15px" th:text="${measurement}"></td>
                 </tr>
                 <tr>
                     <th width="110" height="35" style="width:110px;height:35px;background-color:#fcf3e7;border-bottom:1px solid #e7e9ee;padding-left:15px;text-align:left;font-weight:normal;color:#142337">Level</th>
