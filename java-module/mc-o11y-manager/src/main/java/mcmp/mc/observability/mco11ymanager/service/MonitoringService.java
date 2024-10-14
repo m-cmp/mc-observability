@@ -3,30 +3,107 @@ package mcmp.mc.observability.mco11ymanager.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
 import mcmp.mc.observability.mco11ymanager.enums.OS;
-import mcmp.mc.observability.mco11ymanager.model.TargetInfo;
+import mcmp.mc.observability.mco11ymanager.model.PluginDefInfo;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugCmd;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
+import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateDTO;
 import mcmp.mc.observability.mco11ymanager.util.Utils;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MonitoringService {
+    private final MonitoringClient monitoringClient;
     private final TumblebugClient tumblebugClient;
 
     public TumblebugNS getNs() {
         return tumblebugClient.getNSList();
     }
 
-    public String installAgent(String nsId, String mciId, String targetId) {
+    private void configureInputs(String nsId, String mciId, String targetId) {
+        MonitoringConfigInfoCreateDTO itemCreateInfo = new MonitoringConfigInfoCreateDTO();
+
+        List<PluginDefInfo> pluginList = monitoringClient.getPluginList().getData();
+        for (PluginDefInfo plugin : pluginList) {
+            if (Objects.equals(plugin.getPluginType(), "INPUT")) {
+                if (plugin.getName().equals("cpu") ||
+                        plugin.getName().equals("disk") ||
+                        plugin.getName().equals("diskio") ||
+                        plugin.getName().equals("mem") ||
+                        plugin.getName().equals("processes") ||
+                        plugin.getName().equals("swap") ||
+                        plugin.getName().equals("system")){
+                    itemCreateInfo.setPluginConfig("");
+                } else if (plugin.getName().equals("tail")) {
+                    itemCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
+                            "  from_beginning = false\n" +
+                            "  watch_method = \"inotify\"\n" +
+                            "\n" +
+                            "  # Data format to parse syslog entries\n" +
+                            "  data_format = \"grok\"\n" +
+                            "  grok_patterns = [\"%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}\"]\n" +
+                            "\n" +
+                            "  # Add these fields if you want to tag the logs\n" +
+                            "  [inputs.tail.tags]\n" +
+                            "    mci_id = \"" + mciId + "\"\n" +
+                            "    ns_id = \"" + nsId + "\"\n" +
+                            "    target_id = \"" + targetId + "\"");
+                }
+
+                itemCreateInfo.setName(plugin.getName());
+                monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
+            }
+        }
+    }
+
+    private void configureOutputs(String nsId, String mciId, String targetId, String myIp) {
+        MonitoringConfigInfoCreateDTO itemCreateInfo = new MonitoringConfigInfoCreateDTO();
+
+        List<PluginDefInfo> pluginList = monitoringClient.getPluginList().getData();
+        for (PluginDefInfo plugin : pluginList) {
+            if (Objects.equals(plugin.getPluginType(), "OUTPUT")) {
+                if (plugin.getName().equals("opensearch")){
+                    itemCreateInfo.setPluginConfig("  urls = [\"http://"+ myIp + ":9200\"]\n" +
+                            "  index_name = \"mc-o11y\"\n" +
+                            "  template_name = \"telegraf\"");
+                } else if (plugin.getName().equals("tail")) {
+                    itemCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
+                            "  from_beginning = false\n" +
+                            "  watch_method = \"inotify\"\n" +
+                            "\n" +
+                            "  # Data format to parse syslog entries\n" +
+                            "  data_format = \"grok\"\n" +
+                            "  grok_patterns = [\"%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}\"]\n" +
+                            "\n" +
+                            "  # Add these fields if you want to tag the logs\n" +
+                            "  [inputs.tail.tags]\n" +
+                            "    mci_id = \"" + mciId + "\"\n" +
+                            "    ns_id = \"" + nsId + "\"\n" +
+                            "    target_id = \"" + targetId + "\"");
+                }
+
+                itemCreateInfo.setName(plugin.getName());
+                monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
+            }
+        }
+    }
+
+    public void configureDefaultConfigs(String nsId, String mciId, String targetId, String myIp) {
+        configureInputs(nsId, mciId, targetId);
+        configureOutputs(nsId, mciId, targetId, myIp);
+    }
+
+    public void installAgent(String nsId, String mciId, String targetId) {
         TumblebugMCI mci = tumblebugClient.getMCIList(nsId, mciId);
 
         try {
@@ -50,12 +127,11 @@ public class MonitoringService {
                     Object result = tumblebugClient.sendCommand(nsId, mciId, vm.getSubGroupId(), targetId, tumblebugCmd);
                     ObjectMapper objectMapper = new ObjectMapper();
                     System.out.println(objectMapper.writeValueAsString(result));
+
+                    configureDefaultConfigs(nsId, mciId, targetId, myIp);
                 }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
-
-
 }
