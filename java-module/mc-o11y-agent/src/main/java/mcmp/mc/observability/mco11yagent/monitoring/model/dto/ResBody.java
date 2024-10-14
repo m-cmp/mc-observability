@@ -20,7 +20,6 @@ public class ResBody<T> {
 
     @Builder.Default
     @JsonIgnore
-    @JsonProperty("code")
     private ResultCode code = ResultCode.SUCCESS;
 
     @Base64EncodeField

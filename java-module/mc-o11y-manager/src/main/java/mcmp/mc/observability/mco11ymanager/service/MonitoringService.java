@@ -1,5 +1,6 @@
 package mcmp.mc.observability.mco11ymanager.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mcmp.mc.observability.mco11ymanager.client.TumblebugClient;
@@ -25,7 +26,7 @@ public class MonitoringService {
         return tumblebugClient.getNSList();
     }
 
-    public String installAgent(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
+    public String installAgent(String nsId, String mciId, String targetId) {
         TumblebugMCI mci = tumblebugClient.getMCIList(nsId, mciId);
 
         try {
@@ -47,8 +48,8 @@ public class MonitoringService {
                     tumblebugCmd.setUserName(vm.getVmUserName());
 
                     Object result = tumblebugClient.sendCommand(nsId, mciId, vm.getSubGroupId(), targetId, tumblebugCmd);
-
-                    targetInfo.setName(vm.getName());
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    System.out.println(objectMapper.writeValueAsString(result));
                 }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);

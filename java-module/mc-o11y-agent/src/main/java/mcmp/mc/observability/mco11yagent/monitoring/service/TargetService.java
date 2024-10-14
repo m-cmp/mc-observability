@@ -35,7 +35,7 @@ public class TargetService {
         return resBody;
     }
 
-    public ResBody insert(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
+    public ResBody<?> insert(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
@@ -47,7 +47,7 @@ public class TargetService {
         }
     }
 
-    public ResBody update(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
+    public ResBody<?> update(String nsId, String mciId, String targetId, TargetInfo targetInfo) {
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
@@ -59,7 +59,7 @@ public class TargetService {
         }
     }
 
-    public ResBody delete(String nsId, String mciId, String targetId) {
+    public ResBody<?> delete(String nsId, String mciId, String targetId) {
         TargetInfo targetInfo = new TargetInfo();
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);

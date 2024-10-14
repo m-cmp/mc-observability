@@ -10,6 +10,7 @@ import mcmp.mc.observability.mco11ymanager.model.*;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
 import mcmp.mc.observability.mco11ymanager.model.dto.MiningDBSetDTO;
+import mcmp.mc.observability.mco11ymanager.model.dto.TargetInfoCreateUpdateDTO;
 import mcmp.mc.observability.mco11ymanager.service.MonitoringService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -78,30 +79,30 @@ public class MonitoringController {
     @Operation(operationId = "PostTarget", summary = "Add new monitoring target (MC-O11y-Agent Install)",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+    public ResBody<?> insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
         ResBody<TargetInfo> obj = monitoringClient.getTarget(nsId, mciId, targetId);
         if( obj.getData() != null ) return null;
 
-        monitoringService.installAgent(nsId, mciId, targetId, targetInfo);
+        monitoringService.installAgent(nsId, mciId, targetId);
 
         if( mciId == null ) return null;
 
-        return monitoringClient.insertTarget(nsId, mciId, targetId, targetInfo);
+        return monitoringClient.insertTarget(nsId, mciId, targetId, targetCreateInfo);
     }
 
     @PutMapping(Constants.TARGET_PATH)
     @Operation(operationId = "PutTarget", summary = "Update target information",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
-        return monitoringClient.updateTarget(nsId, mciId, targetId, targetInfo);
+    public ResBody<?> updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetUpdateInfo) {
+        return monitoringClient.updateTarget(nsId, mciId, targetId, targetUpdateInfo);
     }
 
     @DeleteMapping(Constants.TARGET_PATH)
     @Operation(operationId = "DeleteTarget", summary = "Delete monitoring agent & management target",
             tags = "[Target] Monitoring target management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+    public ResBody<?> deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return monitoringClient.deleteTarget(nsId, mciId, targetId);
     }
 
@@ -127,7 +128,7 @@ public class MonitoringController {
     @Operation(operationId = "PostItem", summary = "Add target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
+    ResBody<?> insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
         return monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
     }
 
@@ -135,7 +136,7 @@ public class MonitoringController {
     @Operation(operationId = "PutItem", summary = "Update target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
+    ResBody<?> updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
         return monitoringClient.updateItem(nsId, mciId, targetId, itemUpdateInfo);
     }
 
@@ -143,7 +144,7 @@ public class MonitoringController {
     @Operation(operationId = "DeleteItem", summary = "Delete target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
+    ResBody<?> deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
         return monitoringClient.deleteItem(nsId, mciId, targetId, itemSeq);
     }
 
@@ -160,7 +161,7 @@ public class MonitoringController {
     @Operation(operationId = "PostStorage", summary = "Add target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
+    ResBody<?> insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
         return monitoringClient.insertStorage(nsId, mciId, targetId, storageCreateInfo);
     }
 
@@ -168,7 +169,7 @@ public class MonitoringController {
     @Operation(operationId = "PutStorage", summary = "Update target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
+    ResBody<?> updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
         return monitoringClient.updateStorage(nsId, mciId, targetId, storageUpdateInfo);
     }
 
@@ -176,7 +177,7 @@ public class MonitoringController {
     @Operation(operationId = "DeleteStorage", summary = "Delete target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
+    ResBody<?> deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
         return monitoringClient.deleteStorage(nsId, mciId, targetId, storageSeq);
     }
 

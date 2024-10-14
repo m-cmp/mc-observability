@@ -76,7 +76,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TargetInfo'
+              $ref: '#/components/schemas/TargetInfoCreateUpdateDTO'
         required: true
       responses:
         "200":
@@ -84,7 +84,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
     post:
       tags:
       - "[Target] Monitoring target management"
@@ -110,7 +110,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TargetInfo'
+              $ref: '#/components/schemas/TargetInfoCreateUpdateDTO'
         required: true
       responses:
         "200":
@@ -118,7 +118,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
     delete:
       tags:
       - "[Target] Monitoring target management"
@@ -146,7 +146,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
     get:
       tags:
@@ -209,7 +209,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
     post:
       tags:
       - "[Monitoring storage] Monitoring target storage management"
@@ -243,7 +243,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
     get:
       tags:
@@ -306,7 +306,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
     post:
       tags:
       - "[Monitoring item] Monitoring target item management"
@@ -340,7 +340,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
   /api/o11y/monitoring/miningdb:
     get:
       tags:
@@ -647,7 +647,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
     delete:
       tags:
@@ -682,7 +682,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBody'
+                $ref: '#/components/schemas/ResBodyObject'
   /api/o11y/trigger/policy/history:
     get:
       tags:
@@ -1403,7 +1403,7 @@ paths:
       deprecated: false
 components:
   schemas:
-    ResBody:
+    ResBodyObject:
       type: object
       properties:
         rs_code:

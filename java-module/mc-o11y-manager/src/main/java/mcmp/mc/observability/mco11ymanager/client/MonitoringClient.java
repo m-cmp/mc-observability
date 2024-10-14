@@ -28,11 +28,11 @@ public interface MonitoringClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
     ResBody<TargetInfo> getTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
+    ResBody<?> insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    ResBody updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
+    ResBody<?> updateTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody Object targetInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_PATH)
-    ResBody deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
+    ResBody<?> deleteTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_CSP_PATH)
     ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement);
@@ -40,20 +40,20 @@ public interface MonitoringClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
     ResBody<List<MonitoringConfigInfo>> getItemList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo);
+    ResBody<?> insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH)
-    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo);
+    ResBody<?> updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_ITEM_PATH + "/{itemSeq}")
-    ResBody deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq);
+    ResBody<?> deleteItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
     ResBody<List<MonitoringConfigInfo>> getStorageList(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
     @PostMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo);
+    ResBody<?> insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo);
     @PutMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH)
-    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo);
+    ResBody<?> updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo);
     @DeleteMapping(Constants.PREFIX_V1 + Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
-    ResBody deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq);
+    ResBody<?> deleteStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.INFLUXDB_PATH)
     ResBody<List<InfluxDBInfo>> getInfluxDBList();

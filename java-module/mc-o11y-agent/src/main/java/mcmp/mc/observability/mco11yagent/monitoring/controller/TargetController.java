@@ -6,6 +6,7 @@ import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Encode;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
 import mcmp.mc.observability.mco11yagent.monitoring.model.TargetInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.TargetInfoCreateUpdateDTO;
 import mcmp.mc.observability.mco11yagent.monitoring.service.TargetService;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,18 +46,28 @@ public class TargetController {
 
     @Base64Decode(TargetInfo.class)
     @PostMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+    public ResBody<?> insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
+        TargetInfo targetInfo = new TargetInfo();
+        targetInfo.setName(targetCreateInfo.getName());
+        targetInfo.setAliasName(targetCreateInfo.getAliasName());
+        targetInfo.setDescription(targetCreateInfo.getDescription());
+
         return targetService.insert(nsId, mciId, targetId, targetInfo);
     }
 
     @Base64Decode(TargetInfo.class)
     @PutMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfo targetInfo) {
+    public ResBody<?> update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetUpdateInfo) {
+        TargetInfo targetInfo = new TargetInfo();
+        targetInfo.setName(targetUpdateInfo.getName());
+        targetInfo.setAliasName(targetUpdateInfo.getAliasName());
+        targetInfo.setDescription(targetUpdateInfo.getDescription());
+
         return targetService.update(nsId, mciId, targetId, targetInfo);
     }
 
     @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+    public ResBody<?> delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return targetService.delete(nsId, mciId, targetId);
     }
 }
