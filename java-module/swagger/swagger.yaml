@@ -1431,6 +1431,15 @@ components:
           type: string
         state:
           type: string
+    TargetInfoCreateUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        alias_name:
+          type: string
+        description:
+          type: string
     ConditionInfo:
       type: object
       properties:
