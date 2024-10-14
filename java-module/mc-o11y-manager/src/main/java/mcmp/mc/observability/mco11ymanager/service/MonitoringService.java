@@ -62,7 +62,7 @@ public class MonitoringService {
                             "    target_id = \"" + targetId + "\"");
                 }
 
-                itemCreateInfo.setName(plugin.getName());
+                itemCreateInfo.setPluginSeq(plugin.getSeq());
                 monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
             }
         }
@@ -97,7 +97,7 @@ public class MonitoringService {
                             "    target_id = \"" + targetId + "\"");
                 }
 
-                itemCreateInfo.setName(plugin.getName());
+                itemCreateInfo.setPluginSeq(plugin.getSeq());
                 monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
             }
         }
