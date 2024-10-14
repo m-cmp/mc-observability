@@ -44,7 +44,7 @@ public class MonitoringConfigService {
         monitoringConfigInfo.setMciId(mciId);
         monitoringConfigInfo.setTargetId(targetId);
 
-        PluginDefInfo pluginDefInfo = pluginMapper.getPlugin(monitoringConfigInfo.getPluginSeq());
+        PluginDefInfo pluginDefInfo = pluginMapper.getPlugin(originalConfig.getPluginSeq());
         monitoringConfigInfo.setPluginName(pluginDefInfo.getName());
         monitoringConfigInfo.setPluginType(pluginDefInfo.getPluginType());
 

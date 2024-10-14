@@ -61,8 +61,6 @@ public class StorageController {
         monitoringConfigInfo.setNsId(nsId);
         monitoringConfigInfo.setMciId(mciId);
         monitoringConfigInfo.setTargetId(targetId);
-        monitoringConfigInfo.setName(storageUpdateInfo.getName());
-        monitoringConfigInfo.setPluginSeq(storageUpdateInfo.getPluginSeq());
         monitoringConfigInfo.setPluginConfig(storageUpdateInfo.getPluginConfig());
 
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);

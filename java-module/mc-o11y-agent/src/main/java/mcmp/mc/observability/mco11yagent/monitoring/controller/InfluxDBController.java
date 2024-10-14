@@ -35,20 +35,20 @@ public class InfluxDBController {
 
     @GetMapping("/measurement")
     public ResBody<List<MeasurementFieldInfo>> measurement() {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(1);
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(0);
         return influxDBService.getFields(influxDBInfo);
     }
 
     @GetMapping("/tag")
     public ResBody<List<MeasurementTagInfo>> tag() {
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(1);
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(0);
         return influxDBService.getTags(influxDBInfo);
     }
 
     @PostMapping("/metric")
     public ResBody<List<MetricInfo>> metric(@RequestBody MetricsInfo metricsInfo) {
         ResBody<List<MetricInfo>> resBody = new ResBody<>();
-        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(1);
+        InfluxDBInfo influxDBInfo = influxDBMapper.getInfluxDBInfoList().get(0);
         resBody.setData(influxDBService.getMetrics(influxDBInfo, metricsInfo));
         return resBody;
     }

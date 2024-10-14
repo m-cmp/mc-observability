@@ -60,8 +60,6 @@ public class ItemController {
         monitoringConfigInfo.setNsId(nsId);
         monitoringConfigInfo.setMciId(mciId);
         monitoringConfigInfo.setTargetId(targetId);
-        monitoringConfigInfo.setName(itemUpdateInfo.getName());
-        monitoringConfigInfo.setPluginSeq(itemUpdateInfo.getPluginSeq());
         monitoringConfigInfo.setPluginConfig(itemUpdateInfo.getPluginConfig());
 
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);
