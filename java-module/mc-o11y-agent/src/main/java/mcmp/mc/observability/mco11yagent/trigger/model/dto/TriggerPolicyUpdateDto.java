@@ -27,7 +27,7 @@ public class TriggerPolicyUpdateDto {
     private String description;
 
     @ApiModelProperty(value = "Trigger target metric", example = "cpu")
-    @JsonProperty("metric")
+    @JsonProperty("measurement")
     private String metric;
 
     @ApiModelProperty(value = "Trigger target metric field", example = "usage_idle")

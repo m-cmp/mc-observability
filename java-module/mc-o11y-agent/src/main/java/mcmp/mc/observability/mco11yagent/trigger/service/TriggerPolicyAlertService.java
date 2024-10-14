@@ -176,7 +176,7 @@ public class TriggerPolicyAlertService {
             context.setVariable("targetId", alertInfo.getTargetId());
             context.setVariable("nsId", alertInfo.getNsId());
             context.setVariable("targetName", alertInfo.getTargetName());
-            context.setVariable("metric", alertInfo.getMetric());
+            context.setVariable("measurement", alertInfo.getMetric());
             context.setVariable("level", alertInfo.getLevel());
             context.setVariable("threshold", alertInfo.getThreshold());
             context.setVariable("occurTime", alertInfo.getOccurTime());

@@ -26,7 +26,7 @@ public class TriggerAlertInfo {
     @JsonProperty("target_name")
     private String targetName;
 
-    @JsonProperty("metric")
+    @JsonProperty("measurement")
     private String metric;
 
     @JsonProperty("data")
@@ -49,7 +49,7 @@ public class TriggerAlertInfo {
         appendIfNotNull(sb, "ID", this.targetId);
         appendIfNotNull(sb, "Namespace ID", this.nsId);
         appendIfNotNull(sb, "Target Name", this.targetName);
-        appendIfNotNull(sb, "Metric", this.metric);
+        appendIfNotNull(sb, "Measurement", this.metric);
         appendIfNotNull(sb, "Level", this.level);
         appendIfNotNull(sb, "Threshold", this.threshold);
         appendIfNotNull(sb, "Occur Time", this.occurTime);

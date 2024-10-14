@@ -31,7 +31,7 @@ public class TriggerHistoryInfo {
     private String targetId;
 
     @ApiModelProperty(value = "Trigger event target metric name")
-    @JsonProperty("metric")
+    @JsonProperty("measurement")
     private String metric;
 
     @ApiModelProperty(value = "Trigger event alarm details")

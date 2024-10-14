@@ -1,7 +1,10 @@
 package mcmp.mc.observability.mco11yagent.trigger.service;
 
+import static mcmp.mc.observability.mco11yagent.trigger.enums.TaskStatus.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.mco11yagent.trigger.enums.TaskStatus;
 import mcmp.mc.observability.mco11yagent.trigger.exception.TriggerResultCodeException;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.trigger.client.KapacitorClient;
@@ -87,7 +90,7 @@ public class KapacitorApiService {
 
             updateTask(kapacitorUrl, kapacitorTaskId, updateTaskParam);
 
-            if(policyInfo.getStatus().equals("enabled")) {
+            if(policyInfo.getStatus().equals(ENABLED)) {
                 updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "disabled"));
                 updateTask(kapacitorUrl, kapacitorTaskId, Collections.singletonMap("status", "enabled"));
             }
