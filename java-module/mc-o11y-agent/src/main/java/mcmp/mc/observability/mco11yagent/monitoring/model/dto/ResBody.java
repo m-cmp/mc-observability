@@ -17,7 +17,6 @@ import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResBody<T> {
-
     @Builder.Default
     @JsonIgnore
     private ResultCode code = ResultCode.SUCCESS;
@@ -35,4 +34,11 @@ public class ResBody<T> {
 
     @JsonProperty("rs_msg")
     private String rsMsg;
+
+    public void setCode(ResultCode code) {
+        this.code = code;
+        this.rsCode = code.getCode();
+        this.rsMsg = code.getMsg();
+        this.errorMessage = "";
+    }
 }
