@@ -15,14 +15,6 @@ public class MonitoringConfigInfoUpdateDTO {
 
     @Base64EncodeField
     @Base64DecodeField
-    @JsonProperty("name")
-    private String name;
-
-    @JsonProperty("plugin_seq")
-    private Long pluginSeq;
-
-    @Base64EncodeField
-    @Base64DecodeField
     @JsonProperty("plugin_config")
     private String pluginConfig;
 }

@@ -1539,15 +1539,10 @@ components:
         field: usage_idle
     MetricsInfo:
       required:
-      - influx_db_seq
       - measurement
       - range
       type: object
       properties:
-        influx_db_seq:
-          type: integer
-          format: int64
-          example: 1
         measurement:
           type: string
           example: cpu
@@ -1562,11 +1557,10 @@ components:
         group_by:
           type: array
           example:
-          - uuid
           - cpu
           items:
             type: string
-            example: "[\"uuid\",\"cpu\"]"
+            example: "[\"cpu\"]"
         limit:
           type: integer
           format: int64
@@ -1658,11 +1652,6 @@ components:
       type: object
       properties:
         seq:
-          type: integer
-          format: int64
-        name:
-          type: string
-        plugin_seq:
           type: integer
           format: int64
         plugin_config:
