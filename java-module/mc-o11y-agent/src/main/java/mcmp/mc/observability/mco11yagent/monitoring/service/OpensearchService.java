@@ -83,7 +83,7 @@ public class OpensearchService {
     }
 
     public List<Map<String, Object>> getLogs(LogsInfo logsInfo) {
-        OpensearchInfo opensearchInfo = opensearchMapper.getOpensearchInfo(logsInfo.getOpensearchSeq());
+        OpensearchInfo opensearchInfo = opensearchMapper.getOpensearchInfoList().get(0);
 
         List<Map<String, Object>> result;
 

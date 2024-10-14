@@ -220,12 +220,12 @@ public class MonitoringController {
         return monitoringClient.getOpensearchList();
     }
 
-    @PostMapping(Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
+    @PostMapping(Constants.OPENSEARCH_PATH + "/logs")
     @Operation(operationId = "GetOpenSearchLogs", summary = "Get collected logs from OpenSearch",
             tags = "[Monitoring log] Monitoring log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<Map<String, Object>>> getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody LogsInfo logsInfo) {
-        return monitoringClient.getOpensearchLogs(opensearchSeq, logsInfo);
+    public ResBody<List<Map<String, Object>>> getOpensearchLogs(@RequestBody LogsInfo logsInfo) {
+        return monitoringClient.getOpensearchLogs(logsInfo);
     }
 
     // monitoring miningdb api

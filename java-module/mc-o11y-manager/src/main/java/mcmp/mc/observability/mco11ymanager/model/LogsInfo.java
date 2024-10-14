@@ -13,9 +13,6 @@ import java.util.List;
 @Setter
 public class LogsInfo {
 
-    @JsonProperty("opensearch_seq")
-    private Long opensearchSeq;
-
     @JsonProperty("range")
     private String range;
 

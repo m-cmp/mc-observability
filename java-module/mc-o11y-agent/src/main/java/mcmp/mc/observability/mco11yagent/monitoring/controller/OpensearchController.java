@@ -28,10 +28,9 @@ public class OpensearchController {
         return opensearchService.getList();
     }
 
-    @PostMapping("/{opensearchSeq}/logs")
-    public ResBody<List<Map<String, Object>>> metric(@PathVariable Long opensearchSeq, @RequestBody LogsInfo logsInfo) {
+    @PostMapping("/logs")
+    public ResBody<List<Map<String, Object>>> metric(@RequestBody LogsInfo logsInfo) {
         ResBody<List<Map<String, Object>>> resBody = new ResBody<>();
-        logsInfo.setOpensearchSeq(opensearchSeq);
         resBody.setData(opensearchService.getLogs(logsInfo));
         return resBody;
     }

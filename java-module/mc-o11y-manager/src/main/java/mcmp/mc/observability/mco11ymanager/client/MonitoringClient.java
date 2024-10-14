@@ -64,8 +64,8 @@ public interface MonitoringClient {
 
     @GetMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH)
     ResBody<List<OpensearchInfo>> getOpensearchList();
-    @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/{opensearchSeq}/logs")
-    ResBody<List<Map<String, Object>>> getOpensearchLogs(@PathVariable Long opensearchSeq, @RequestBody LogsInfo logsInfo);
+    @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/logs")
+    ResBody<List<Map<String, Object>>> getOpensearchLogs(@RequestBody LogsInfo logsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
     ResBody<MiningDBInfo> getMiningDB();

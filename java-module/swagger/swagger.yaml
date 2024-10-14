@@ -372,19 +372,12 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/ResBodyVoid'
-  /api/o11y/monitoring/opensearch/{opensearchSeq}/logs:
+  /api/o11y/monitoring/opensearch/logs:
     post:
       tags:
       - "[Monitoring log] Monitoring log"
       summary: Get collected logs from OpenSearch
       operationId: GetOpenSearchLogs
-      parameters:
-      - name: opensearchSeq
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
       requestBody:
         content:
           application/json:
@@ -1469,9 +1462,6 @@ components:
     LogsInfo:
       type: object
       properties:
-        opensearch_seq:
-          type: integer
-          format: int64
         range:
           type: string
         limit:
