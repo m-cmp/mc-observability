@@ -35,7 +35,9 @@ public class MonitoringService {
 
         List<PluginDefInfo> pluginList = monitoringClient.getPluginList().getData();
         for (PluginDefInfo plugin : pluginList) {
-            if (Objects.equals(plugin.getPluginType(), "INPUT")) {
+            if (plugin == null)
+                continue;
+            if (plugin.getPluginType().equals("INPUT")) {
                 if (plugin.getName().equals("cpu") ||
                         plugin.getName().equals("disk") ||
                         plugin.getName().equals("diskio") ||
@@ -71,7 +73,9 @@ public class MonitoringService {
 
         List<PluginDefInfo> pluginList = monitoringClient.getPluginList().getData();
         for (PluginDefInfo plugin : pluginList) {
-            if (Objects.equals(plugin.getPluginType(), "OUTPUT")) {
+            if (plugin == null)
+                continue;
+            if (plugin.getPluginType().equals("OUTPUT")) {
                 if (plugin.getName().equals("opensearch")){
                     itemCreateInfo.setPluginConfig("  urls = [\"http://"+ myIp + ":9200\"]\n" +
                             "  index_name = \"mc-o11y\"\n" +
