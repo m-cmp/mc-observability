@@ -6,6 +6,8 @@ import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Encode;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.MonitoringConfigInfo;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.MonitoringConfigInfoCreateDTO;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.service.MonitoringConfigService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,13 +40,34 @@ public class ItemController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PostMapping
-    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+        public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
+        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
+        monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
+        monitoringConfigInfo.setTargetId(targetId);
+        monitoringConfigInfo.setName(itemCreateInfo.getName());
+        monitoringConfigInfo.setPluginSeq(itemCreateInfo.getPluginSeq());
+        monitoringConfigInfo.setPluginName(itemCreateInfo.getPluginName());
+        monitoringConfigInfo.setPluginType(itemCreateInfo.getPluginType());
+        monitoringConfigInfo.setPluginConfig(itemCreateInfo.getPluginConfig());
+
         return monitoringConfigService.insert(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PutMapping
-    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
+        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
+        monitoringConfigInfo.setSeq(itemUpdateInfo.getSeq());
+        monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
+        monitoringConfigInfo.setTargetId(targetId);
+        monitoringConfigInfo.setName(itemUpdateInfo.getName());
+        monitoringConfigInfo.setPluginSeq(itemUpdateInfo.getPluginSeq());
+        monitoringConfigInfo.setPluginName(itemUpdateInfo.getPluginName());
+        monitoringConfigInfo.setPluginType(itemUpdateInfo.getPluginType());
+        monitoringConfigInfo.setPluginConfig(itemUpdateInfo.getPluginConfig());
+
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);
     }
 

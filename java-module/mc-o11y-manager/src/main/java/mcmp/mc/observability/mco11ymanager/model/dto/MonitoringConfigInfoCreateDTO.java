@@ -1,17 +1,14 @@
-package mcmp.mc.observability.mco11yagent.monitoring.model;
+package mcmp.mc.observability.mco11ymanager.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64DecodeField;
-import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64EncodeField;
+import mcmp.mc.observability.mco11ymanager.annotation.Base64DecodeField;
+import mcmp.mc.observability.mco11ymanager.annotation.Base64EncodeField;
 
 @Getter
 @Setter
-public class MonitoringConfigInfo {
-
-    @JsonProperty(value = "seq")
-    private Long seq;
+public class MonitoringConfigInfoCreateDTO {
 
     @JsonProperty("ns_id")
     private String nsId;
@@ -26,9 +23,6 @@ public class MonitoringConfigInfo {
     @Base64DecodeField
     @JsonProperty("name")
     private String name;
-
-    @JsonProperty("state")
-    private String state;
 
     @JsonProperty("plugin_seq")
     private Long pluginSeq;

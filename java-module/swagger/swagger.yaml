@@ -201,7 +201,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MonitoringConfigInfo'
+              $ref: '#/components/schemas/MonitoringConfigInfoUpdateDTO'
         required: true
       responses:
         "200":
@@ -235,7 +235,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MonitoringConfigInfo'
+              $ref: '#/components/schemas/MonitoringConfigInfoCreateDTO'
         required: true
       responses:
         "200":
@@ -298,7 +298,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MonitoringConfigInfo'
+              $ref: '#/components/schemas/MonitoringConfigInfoUpdateDTO'
         required: true
       responses:
         "200":
@@ -332,7 +332,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MonitoringConfigInfo'
+              $ref: '#/components/schemas/MonitoringConfigInfoCreateDTO'
         required: true
       responses:
         "200":
@@ -1656,6 +1656,49 @@ components:
         plugin_config:
           type: string
       description: Response data
+    MonitoringConfigInfoCreateDTO:
+      type: object
+      properties:
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        target_id:
+          type: string
+        name:
+          type: string
+        plugin_seq:
+          type: integer
+          format: int64
+        plugin_name:
+          type: string
+        plugin_type:
+          type: string
+        plugin_config:
+          type: string
+    MonitoringConfigInfoUpdateDTO:
+      type: object
+      properties:
+        seq:
+          type: integer
+          format: int64
+        ns_id:
+          type: string
+        mci_id:
+          type: string
+        target_id:
+          type: string
+        name:
+          type: string
+        plugin_seq:
+          type: integer
+          format: int64
+        plugin_name:
+          type: string
+        plugin_type:
+          type: string
+        plugin_config:
+          type: string
     ResBodyListMonitoringConfigInfo:
       type: object
       properties:

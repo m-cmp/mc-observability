@@ -6,6 +6,8 @@ import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64Encode;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.MonitoringConfigInfo;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.MonitoringConfigInfoCreateDTO;
+import mcmp.mc.observability.mco11yagent.monitoring.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.service.MonitoringConfigService;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -38,13 +40,35 @@ public class StorageController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PostMapping
-    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
+        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
+        monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
+        monitoringConfigInfo.setTargetId(targetId);
+        monitoringConfigInfo.setName(storageCreateInfo.getName());
+        monitoringConfigInfo.setPluginSeq(storageCreateInfo.getPluginSeq());
+        monitoringConfigInfo.setPluginName(storageCreateInfo.getPluginName());
+        monitoringConfigInfo.setPluginType(storageCreateInfo.getPluginType());
+        monitoringConfigInfo.setPluginConfig(storageCreateInfo.getPluginConfig());
+
+
         return monitoringConfigService.insert(nsId, mciId, targetId, monitoringConfigInfo);
     }
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PutMapping
-    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
+        MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
+        monitoringConfigInfo.setSeq(storageUpdateInfo.getSeq());
+        monitoringConfigInfo.setNsId(nsId);
+        monitoringConfigInfo.setMciId(mciId);
+        monitoringConfigInfo.setTargetId(targetId);
+        monitoringConfigInfo.setName(storageUpdateInfo.getName());
+        monitoringConfigInfo.setPluginSeq(storageUpdateInfo.getPluginSeq());
+        monitoringConfigInfo.setPluginName(storageUpdateInfo.getPluginName());
+        monitoringConfigInfo.setPluginType(storageUpdateInfo.getPluginType());
+        monitoringConfigInfo.setPluginConfig(storageUpdateInfo.getPluginConfig());
+
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);
     }
 

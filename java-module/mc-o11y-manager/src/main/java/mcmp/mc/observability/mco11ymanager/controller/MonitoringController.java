@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateDTO;
+import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11ymanager.model.*;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
@@ -125,16 +127,16 @@ public class MonitoringController {
     @Operation(operationId = "PostItem", summary = "Add target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringClient.insertItem(nsId, mciId, targetId, monitoringConfigInfo);
+    ResBody insertItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
+        return monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
     }
 
     @PutMapping(Constants.TARGET_ITEM_PATH)
     @Operation(operationId = "PutItem", summary = "Update target monitoring item",
             tags = "[Monitoring item] Monitoring target item management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringClient.updateItem(nsId, mciId, targetId, monitoringConfigInfo);
+    ResBody updateItem(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
+        return monitoringClient.updateItem(nsId, mciId, targetId, itemUpdateInfo);
     }
 
     @DeleteMapping(Constants.TARGET_ITEM_PATH + "/{itemSeq}")
@@ -158,16 +160,16 @@ public class MonitoringController {
     @Operation(operationId = "PostStorage", summary = "Add target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringClient.insertStorage(nsId, mciId, targetId, monitoringConfigInfo);
+    ResBody insertStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
+        return monitoringClient.insertStorage(nsId, mciId, targetId, storageCreateInfo);
     }
 
     @PutMapping(Constants.TARGET_STORAGE_PATH)
     @Operation(operationId = "PutStorage", summary = "Update target monitoring storage",
             tags = "[Monitoring storage] Monitoring target storage management")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfo monitoringConfigInfo) {
-        return monitoringClient.updateStorage(nsId, mciId, targetId, monitoringConfigInfo);
+    ResBody updateStorage(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
+        return monitoringClient.updateStorage(nsId, mciId, targetId, storageUpdateInfo);
     }
 
     @DeleteMapping(Constants.TARGET_STORAGE_PATH + "/{storageSeq}")
