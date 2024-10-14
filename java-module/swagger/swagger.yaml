@@ -520,7 +520,7 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/ResBodyListOpensearchInfo'
+                $ref: '#/components/schemas/ResBodyListOpenSearchInfo'
   /api/o11y/monitoring/ns:
     get:
       tags:
@@ -1757,7 +1757,7 @@ components:
           type: string
           description: Error message
       description: Generic response body wrapper
-    OpensearchInfo:
+    OpenSearchInfo:
       type: object
       properties:
         seq:
@@ -1772,7 +1772,7 @@ components:
         password:
           type: string
       description: Response data
-    ResBodyListOpensearchInfo:
+    ResBodyListOpenSearchInfo:
       type: object
       properties:
         rs_code:
@@ -1785,7 +1785,7 @@ components:
           type: array
           description: Response data
           items:
-            $ref: '#/components/schemas/OpensearchInfo'
+            $ref: '#/components/schemas/OpenSearchInfo'
         error_message:
           type: string
           description: Error message

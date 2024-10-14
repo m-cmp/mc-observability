@@ -3,9 +3,9 @@ package mcmp.mc.observability.mco11yagent.monitoring.controller;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
 import mcmp.mc.observability.mco11yagent.monitoring.model.LogsInfo;
-import mcmp.mc.observability.mco11yagent.monitoring.model.OpensearchInfo;
+import mcmp.mc.observability.mco11yagent.monitoring.model.OpenSearchInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
-import mcmp.mc.observability.mco11yagent.monitoring.service.OpensearchService;
+import mcmp.mc.observability.mco11yagent.monitoring.service.OpenSearchService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +19,12 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(Constants.MONITORING_URI + "/opensearch")
-public class OpensearchController {
+public class OpenSearchController {
 
-    private final OpensearchService opensearchService;
+    private final OpenSearchService opensearchService;
 
     @GetMapping
-    public ResBody<List<OpensearchInfo>> list() {
+    public ResBody<List<OpenSearchInfo>> list() {
         return opensearchService.getList();
     }
 

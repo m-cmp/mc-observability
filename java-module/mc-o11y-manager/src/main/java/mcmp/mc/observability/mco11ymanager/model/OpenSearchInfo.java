@@ -1,11 +1,7 @@
-package mcmp.mc.observability.mco11yagent.monitoring.model;
+package mcmp.mc.observability.mco11ymanager.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -16,7 +12,7 @@ import java.util.regex.Pattern;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OpensearchInfo {
+public class OpenSearchInfo {
 
     @JsonProperty("seq")
     private Long seq;
@@ -38,7 +34,7 @@ public class OpensearchInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        OpensearchInfo that = (OpensearchInfo) o;
+        OpenSearchInfo that = (OpenSearchInfo) o;
 
         if (!Objects.equals(url, that.url)) return false;
         if (!Objects.equals(indexName, that.indexName)) return false;
@@ -51,7 +47,7 @@ public class OpensearchInfo {
         return Objects.hash(url, indexName, username, password);
     }
 
-    public OpensearchInfo(String setting) {
+    public OpenSearchInfo(String setting) {
         setting = setting.replaceAll(" ", "");
 
         this.url = parseRegex(setting, "(urls=\\[\".*\")\\]", "(urls=)|\\[|\\]|\"");

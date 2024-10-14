@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="mcmp.mc.observability.mco11yagent.monitoring.mapper.OpensearchMapper">
-    <select id="getOpensearchInfo" parameterType="Long" resultType="OpensearchInfo">
+<mapper namespace="mcmp.mc.observability.mco11yagent.monitoring.mapper.OpenSearchMapper">
+    <select id="getOpenSearchInfo" parameterType="Long" resultType="OpenSearchInfo">
         select
             `SEQ`,
             `URL`,
@@ -14,7 +14,7 @@
         where SEQ=#{seq}
     </select>
 
-    <select id="getOpensearchInfoList" resultType="OpensearchInfo">
+    <select id="getOpenSearchInfoList" resultType="OpenSearchInfo">
         select
             `SEQ`,
             `URL`,
@@ -25,7 +25,7 @@
             mc_o11y_agent_summary_opensearch
     </select>
 
-    <select id="getOpensearchInfoMap" resultType="Map">
+    <select id="getOpenSearchInfoMap" resultType="Map">
         select
             `SEQ`,
             `URL`,
@@ -36,7 +36,7 @@
             mc_o11y_agent_summary_opensearch
     </select>
 
-    <insert id="insertOpensearchInfoList" parameterType="List">
+    <insert id="insertOpenSearchInfoList" parameterType="List">
         insert into mc_o11y_agent_summary_opensearch(`URL`, `INDEX_NAME`, `USERNAME`, `PASSWORD`)
         values
             <foreach collection="list" item="item" separator=",">
@@ -49,7 +49,7 @@
             </foreach>
     </insert>
 
-    <delete id="deleteOpensearchInfoList" parameterType="Long">
+    <delete id="deleteOpenSearchInfoList" parameterType="Long">
         delete from mc_o11y_agent_summary_opensearch
                where seq in
         <foreach collection="list" item="item" open="(" close=")" separator=",">

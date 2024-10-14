@@ -216,16 +216,16 @@ public class MonitoringController {
     @Operation(operationId = "GetOpenSearches", summary = "Get all OpenSearch list",
             tags = "[Monitoring log] Monitoring log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<OpensearchInfo>> getOpensearchList() {
-        return monitoringClient.getOpensearchList();
+    public ResBody<List<OpenSearchInfo>> getOpenSearchList() {
+        return monitoringClient.getOpenSearchList();
     }
 
     @PostMapping(Constants.OPENSEARCH_PATH + "/logs")
     @Operation(operationId = "GetOpenSearchLogs", summary = "Get collected logs from OpenSearch",
             tags = "[Monitoring log] Monitoring log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<Map<String, Object>>> getOpensearchLogs(@RequestBody LogsInfo logsInfo) {
-        return monitoringClient.getOpensearchLogs(logsInfo);
+    public ResBody<List<Map<String, Object>>> getOpenSearchLogs(@RequestBody LogsInfo logsInfo) {
+        return monitoringClient.getOpenSearchLogs(logsInfo);
     }
 
     // monitoring miningdb api

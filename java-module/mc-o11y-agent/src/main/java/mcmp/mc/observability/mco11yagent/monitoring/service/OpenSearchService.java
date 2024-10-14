@@ -7,9 +7,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import mcmp.mc.observability.mco11yagent.monitoring.mapper.OpensearchMapper;
+import mcmp.mc.observability.mco11yagent.monitoring.mapper.OpenSearchMapper;
 import mcmp.mc.observability.mco11yagent.monitoring.model.LogsInfo;
-import mcmp.mc.observability.mco11yagent.monitoring.model.OpensearchInfo;
+import mcmp.mc.observability.mco11yagent.monitoring.model.OpenSearchInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.MonitoringConfigInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import org.apache.http.HttpHost;
@@ -40,50 +40,50 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OpensearchService {
+public class OpenSearchService {
 
-    private final OpensearchMapper opensearchMapper;
+    private final OpenSearchMapper opensearchMapper;
     private final MonitoringConfigService monitoringConfigService;
 
-    public ResBody<List<OpensearchInfo>> getList() {
+    public ResBody<List<OpenSearchInfo>> getList() {
         List<MonitoringConfigInfo> storageInfoList = monitoringConfigService.list(null, null, null);
         storageInfoList = storageInfoList.stream().filter(f -> f.getPluginName().equalsIgnoreCase("opensearch")).collect(Collectors.toList());
 
-        List<OpensearchInfo> opensearchInfoList = new ArrayList<>();
+        List<OpenSearchInfo> opensearchInfoList = new ArrayList<>();
         for (MonitoringConfigInfo hostStorageInfo : storageInfoList) {
-            opensearchInfoList.add(new OpensearchInfo(hostStorageInfo.getPluginConfig()));
+            opensearchInfoList.add(new OpenSearchInfo(hostStorageInfo.getPluginConfig()));
         }
 
-        syncSummaryOpensearchList(opensearchInfoList.stream().distinct().collect(Collectors.toList()));
+        syncSummaryOpenSearchList(opensearchInfoList.stream().distinct().collect(Collectors.toList()));
 
-        ResBody<List<OpensearchInfo>> res = new ResBody<>();
-        res.setData(opensearchMapper.getOpensearchInfoList());
+        ResBody<List<OpenSearchInfo>> res = new ResBody<>();
+        res.setData(opensearchMapper.getOpenSearchInfoList());
 
         return res;
     }
 
-    private void syncSummaryOpensearchList(List<OpensearchInfo> opensearchInfoList) {
-        Map<Long, OpensearchInfo> summaryOpensearchInfoList = opensearchMapper.getOpensearchInfoMap();
-        List<OpensearchInfo> newList = new ArrayList<>();
+    private void syncSummaryOpenSearchList(List<OpenSearchInfo> opensearchInfoList) {
+        Map<Long, OpenSearchInfo> summaryOpenSearchInfoList = opensearchMapper.getOpenSearchInfoMap();
+        List<OpenSearchInfo> newList = new ArrayList<>();
         List<Long> delList = new ArrayList<>();
 
-        for( OpensearchInfo info : opensearchInfoList ) {
-            Optional<Map.Entry<Long, OpensearchInfo>> findEntry = summaryOpensearchInfoList.entrySet().stream().filter(a -> a.getValue().hashCode() == info.hashCode()).findAny();
+        for( OpenSearchInfo info : opensearchInfoList ) {
+            Optional<Map.Entry<Long, OpenSearchInfo>> findEntry = summaryOpenSearchInfoList.entrySet().stream().filter(a -> a.getValue().hashCode() == info.hashCode()).findAny();
             if (findEntry.isPresent()) {
-                summaryOpensearchInfoList.remove(findEntry.get().getKey());
+                summaryOpenSearchInfoList.remove(findEntry.get().getKey());
             } else {
                 newList.add(info);
             }
         }
 
-        summaryOpensearchInfoList.forEach((key, value) -> delList.add(key));
+        summaryOpenSearchInfoList.forEach((key, value) -> delList.add(key));
 
-        if( !newList.isEmpty() ) opensearchMapper.insertOpensearchInfoList(newList);
-        if( !delList.isEmpty() ) opensearchMapper.deleteOpensearchInfoList(delList);
+        if( !newList.isEmpty() ) opensearchMapper.insertOpenSearchInfoList(newList);
+        if( !delList.isEmpty() ) opensearchMapper.deleteOpenSearchInfoList(delList);
     }
 
     public List<Map<String, Object>> getLogs(LogsInfo logsInfo) {
-        OpensearchInfo opensearchInfo = opensearchMapper.getOpensearchInfoList().get(0);
+        OpenSearchInfo opensearchInfo = opensearchMapper.getOpenSearchInfoList().get(0);
 
         List<Map<String, Object>> result;
 

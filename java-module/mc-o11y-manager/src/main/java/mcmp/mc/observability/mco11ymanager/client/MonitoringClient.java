@@ -63,9 +63,9 @@ public interface MonitoringClient {
     ResBody<List<MetricInfo>> getInfluxDBMetrics(@PathVariable Long influxDBSeq, @RequestBody MetricsInfo metricsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH)
-    ResBody<List<OpensearchInfo>> getOpensearchList();
+    ResBody<List<OpenSearchInfo>> getOpenSearchList();
     @PostMapping(Constants.PREFIX_V1 + Constants.OPENSEARCH_PATH + "/logs")
-    ResBody<List<Map<String, Object>>> getOpensearchLogs(@RequestBody LogsInfo logsInfo);
+    ResBody<List<Map<String, Object>>> getOpenSearchLogs(@RequestBody LogsInfo logsInfo);
 
     @GetMapping(Constants.PREFIX_V1 + Constants.MININGDB_PATH)
     ResBody<MiningDBInfo> getMiningDB();
