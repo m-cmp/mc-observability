@@ -47,8 +47,6 @@ public class ItemController {
         monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setName(itemCreateInfo.getName());
         monitoringConfigInfo.setPluginSeq(itemCreateInfo.getPluginSeq());
-        monitoringConfigInfo.setPluginName(itemCreateInfo.getPluginName());
-        monitoringConfigInfo.setPluginType(itemCreateInfo.getPluginType());
         monitoringConfigInfo.setPluginConfig(itemCreateInfo.getPluginConfig());
 
         return monitoringConfigService.insert(nsId, mciId, targetId, monitoringConfigInfo);
@@ -64,8 +62,6 @@ public class ItemController {
         monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setName(itemUpdateInfo.getName());
         monitoringConfigInfo.setPluginSeq(itemUpdateInfo.getPluginSeq());
-        monitoringConfigInfo.setPluginName(itemUpdateInfo.getPluginName());
-        monitoringConfigInfo.setPluginType(itemUpdateInfo.getPluginType());
         monitoringConfigInfo.setPluginConfig(itemUpdateInfo.getPluginConfig());
 
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);

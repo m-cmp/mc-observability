@@ -10,15 +10,6 @@ import mcmp.mc.observability.mco11ymanager.annotation.Base64EncodeField;
 @Setter
 public class MonitoringConfigInfoCreateDTO {
 
-    @JsonProperty("ns_id")
-    private String nsId;
-
-    @JsonProperty("mci_id")
-    private String mciId;
-
-    @JsonProperty("target_id")
-    private String targetId;
-
     @Base64EncodeField
     @Base64DecodeField
     @JsonProperty("name")
@@ -26,12 +17,6 @@ public class MonitoringConfigInfoCreateDTO {
 
     @JsonProperty("plugin_seq")
     private Long pluginSeq;
-
-    @JsonProperty("plugin_name")
-    private String pluginName;
-
-    @JsonProperty("plugin_type")
-    private String pluginType;
 
     @Base64EncodeField
     @Base64DecodeField

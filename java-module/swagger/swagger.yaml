@@ -1638,21 +1638,11 @@ components:
     MonitoringConfigInfoCreateDTO:
       type: object
       properties:
-        ns_id:
-          type: string
-        mci_id:
-          type: string
-        target_id:
-          type: string
         name:
           type: string
         plugin_seq:
           type: integer
           format: int64
-        plugin_name:
-          type: string
-        plugin_type:
-          type: string
         plugin_config:
           type: string
     MonitoringConfigInfoUpdateDTO:
@@ -1661,21 +1651,11 @@ components:
         seq:
           type: integer
           format: int64
-        ns_id:
-          type: string
-        mci_id:
-          type: string
-        target_id:
-          type: string
         name:
           type: string
         plugin_seq:
           type: integer
           format: int64
-        plugin_name:
-          type: string
-        plugin_type:
-          type: string
         plugin_config:
           type: string
     ResBodyListMonitoringConfigInfo:
