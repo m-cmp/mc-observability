@@ -1380,6 +1380,21 @@ paths:
                 rs_code: "200"
                 rs_msg: Success
       deprecated: false
+  /api/o11y/readyz:
+    get:
+      tags:
+      - "[Health] Check API Health"
+      summary: Check API health status
+      operationId: GetReadyz
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
 components:
   schemas:
     ResBodyObject:
