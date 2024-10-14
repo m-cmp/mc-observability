@@ -4,6 +4,7 @@ import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateD
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
 import mcmp.mc.observability.mco11ymanager.model.*;
+import mcmp.mc.observability.mco11ymanager.model.dto.ResBody;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;

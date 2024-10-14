@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateDTO;
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11ymanager.model.*;
+import mcmp.mc.observability.mco11ymanager.model.dto.ResBody;
 import mcmp.mc.observability.mco11ymanager.client.MonitoringClient;
 import mcmp.mc.observability.mco11ymanager.common.Constants;
 import mcmp.mc.observability.mco11ymanager.model.dto.MiningDBSetDTO;
