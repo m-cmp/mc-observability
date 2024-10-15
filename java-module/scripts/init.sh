@@ -12,7 +12,7 @@ if [ $? -ne 0 ]; then
                   "tag": "{{.Name}}"
           }
   }
-  ' > /etc/docker/daemon.json
+  ' | sudo tee /etc/docker/daemon.json
 
   # Install Docker CE
   sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
