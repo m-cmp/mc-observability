@@ -70,7 +70,7 @@ class InfluxDBRepository:
 
         for index, row in df.iterrows():
             data_point = {
-                "measurement": setting.measurement.lower(),
+                "measurement": setting.MEASUREMENT.lower(),
                 "tags": tag,
                 "time": row['timestamp'],
                 "fields": {
