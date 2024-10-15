@@ -53,7 +53,7 @@ public class MonitoringService {
                             "\n" +
                             "  # Data format to parse syslog entries\n" +
                             "  data_format = \"grok\"\n" +
-                            "  grok_patterns = [\"%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}\"]\n" +
+                            "  grok_patterns = [\"%{SYSLOGTIMESTAMP:timestamp} %{HOSTNAME:host} %{GREEDYDATA:message}\"]\n" +
                             "\n" +
                             "  # Add these fields if you want to tag the logs\n" +
                             "  [inputs.tail.tags]\n" +
