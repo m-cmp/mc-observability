@@ -60,6 +60,8 @@ public class MonitoringService {
                             "    mci_id = \"" + mciId + "\"\n" +
                             "    ns_id = \"" + nsId + "\"\n" +
                             "    target_id = \"" + targetId + "\"");
+                } else {
+                    continue;
                 }
 
                 itemCreateInfo.setPluginSeq(plugin.getSeq());
@@ -82,20 +84,14 @@ public class MonitoringService {
                             "  index_name = \"mc-o11y\"\n" +
                             "  template_name = \"mc-o11y\"\n" +
                             "  namepass = [\"tail\"]");
-                } else if (plugin.getName().equals("tail")) {
-                    storageCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
-                            "  from_beginning = false\n" +
-                            "  watch_method = \"inotify\"\n" +
-                            "\n" +
-                            "  # Data format to parse syslog entries\n" +
-                            "  data_format = \"grok\"\n" +
-                            "  grok_patterns = [\"%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}\"]\n" +
-                            "\n" +
-                            "  # Add these fields if you want to tag the logs\n" +
-                            "  [inputs.tail.tags]\n" +
-                            "    mci_id = \"" + mciId + "\"\n" +
-                            "    ns_id = \"" + nsId + "\"\n" +
-                            "    target_id = \"" + targetId + "\"");
+                } else if (plugin.getName().equals("influxdb")) {
+                    storageCreateInfo.setPluginConfig("  urls = [\"http://" + myIp + ":8086\"]\n" +
+                            "  database = \"mc-observability\"\n" +
+                            "  retention_policy = \"autogen\"\n" +
+                            "  username = \"mc-agent\"\n" +
+                            "  password = \"mc-agent\"");
+                } else {
+                    continue;
                 }
 
                 storageCreateInfo.setPluginSeq(plugin.getSeq());
