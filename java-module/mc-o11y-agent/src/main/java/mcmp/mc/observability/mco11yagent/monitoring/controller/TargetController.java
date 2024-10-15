@@ -46,7 +46,7 @@ public class TargetController {
 
     @Base64Decode(TargetInfo.class)
     @PostMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody<?> insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
+    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
         TargetInfo targetInfo = new TargetInfo();
         targetInfo.setName(targetCreateInfo.getName());
         targetInfo.setAliasName(targetCreateInfo.getAliasName());
@@ -57,7 +57,7 @@ public class TargetController {
 
     @Base64Decode(TargetInfo.class)
     @PutMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody<?> update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetUpdateInfo) {
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetUpdateInfo) {
         TargetInfo targetInfo = new TargetInfo();
         targetInfo.setName(targetUpdateInfo.getName());
         targetInfo.setAliasName(targetUpdateInfo.getAliasName());
@@ -67,7 +67,7 @@ public class TargetController {
     }
 
     @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
-    public ResBody<?> delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
         return targetService.delete(nsId, mciId, targetId);
     }
 }

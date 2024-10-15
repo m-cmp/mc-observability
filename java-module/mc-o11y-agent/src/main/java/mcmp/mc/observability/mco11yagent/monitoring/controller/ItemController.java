@@ -40,7 +40,7 @@ public class ItemController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PostMapping
-        public ResBody<?> insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
+        public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setName(itemCreateInfo.getName());
         monitoringConfigInfo.setPluginSeq(itemCreateInfo.getPluginSeq());
@@ -51,7 +51,7 @@ public class ItemController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PutMapping
-    public ResBody<?> update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
+    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(itemUpdateInfo.getSeq());
         monitoringConfigInfo.setPluginConfig(itemUpdateInfo.getPluginConfig());
@@ -60,7 +60,7 @@ public class ItemController {
     }
 
     @DeleteMapping("/{itemSeq}")
-    public ResBody<?> delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
+    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long itemSeq) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(itemSeq);
         if( monitoringConfigService.updateState(monitoringConfigInfo, "DELETE") <= 0 ) {

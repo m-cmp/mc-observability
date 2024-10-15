@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RequiredArgsConstructor
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(value = {ResultCodeException.class})
-    protected ResBody<?> resultCodeException(Exception exception) {
+    protected ResBody resultCodeException(Exception exception) {
         ResultCodeException e = (ResultCodeException)exception;
         log.error("ResultCodeException throw Exception message : " + e.getMessage(), e.getObjects());
         log.error("ResultCodeException throw Exception stacktrace : {}", ExceptionUtils.getStackTrace(e));
