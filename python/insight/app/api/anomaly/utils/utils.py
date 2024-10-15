@@ -27,7 +27,7 @@ class AnomalyService:
         raw_data = self.get_raw_data(setting=setting)
         pre_data = self.make_preprocess_data(df=raw_data)
 
-        anomaly_detector = AnomalyDetector(measurement=setting.measurement)
+        anomaly_detector = AnomalyDetector(measurement=setting.MEASUREMENT)
         score_df = anomaly_detector.calculate_anomaly_score(df=pre_data)
         influx_repo = InfluxDBRepository()
         influx_repo.save_results(df=score_df, setting=setting)
