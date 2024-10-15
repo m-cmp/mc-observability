@@ -92,7 +92,27 @@ public class OpenSearchService {
 
         try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(opensearchInfo.getUrl())).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)))) {
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-            if( logsInfo.getConditions() != null ) logsInfo.getConditions().forEach(f -> boolQueryBuilder.must(QueryBuilders.matchQuery(f.getKey(), f.getValue())));
+
+            Map<String, String> fieldMapping = Map.of(
+                "ns_id", "tag.ns_id",
+                "mci_id", "tag.mci_id",
+                "target_id", "tag.target_id"
+            );
+
+
+//             if( logsInfo.getConditions() != null ) logsInfo.getConditions().forEach(f -> boolQueryBuilder.must(QueryBuilders.matchQuery(f.getKey(), f.getValue())));
+            if (logsInfo.getConditions() != null) {
+                logsInfo.getConditions().forEach(condition -> {
+                    String key = condition.getKey();
+                    String value = condition.getValue();
+
+                    // key에 해당하는 필드명을 찾음. 없으면 key 그대로 사용
+                    String searchField = fieldMapping.getOrDefault(key, key);
+
+                    // 검색 쿼리 생성
+                    boolQueryBuilder.must(QueryBuilders.matchQuery(searchField, value));
+                });
+            }
 
             RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("@timestamp")
                     .gte("now-" + logsInfo.getRange())
