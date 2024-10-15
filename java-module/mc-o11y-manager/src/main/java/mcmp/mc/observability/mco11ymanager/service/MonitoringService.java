@@ -106,7 +106,7 @@ public class MonitoringService {
         configureOutputs(nsId, mciId, targetId, myIp);
     }
 
-    public void installAgent(String nsId, String mciId, String targetId) {
+    public boolean installAgent(String nsId, String mciId, String targetId) {
         TumblebugMCI mci = tumblebugClient.getMCIList(nsId, mciId);
 
         try {
@@ -132,9 +132,13 @@ public class MonitoringService {
                     System.out.println(objectMapper.writeValueAsString(result));
 
                     configureDefaultConfigs(nsId, mciId, targetId, myIp);
+
+                    return true;
                 }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
+
+        return false;
     }
 }

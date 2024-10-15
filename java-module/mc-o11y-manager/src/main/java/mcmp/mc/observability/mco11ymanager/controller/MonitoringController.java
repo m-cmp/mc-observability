@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import mcmp.mc.observability.mco11ymanager.enums.ResultCode;
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateDTO;
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoUpdateDTO;
 import mcmp.mc.observability.mco11ymanager.model.*;
@@ -82,11 +83,15 @@ public class MonitoringController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
     public ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
         ResBody<TargetInfo> obj = monitoringClient.getTarget(nsId, mciId, targetId);
-        if( obj.getData() != null ) return null;
+        if( obj.getData() != null ) {
+            return new ResBody(ResultCode.NOT_FOUND_DATA);
+        }
 
-        monitoringService.installAgent(nsId, mciId, targetId);
+        boolean success = monitoringService.installAgent(nsId, mciId, targetId);
 
-        if( mciId == null ) return null;
+        if(!success) {
+            return new ResBody(ResultCode.FAILED);
+        }
 
         return monitoringClient.insertTarget(nsId, mciId, targetId, targetCreateInfo);
     }

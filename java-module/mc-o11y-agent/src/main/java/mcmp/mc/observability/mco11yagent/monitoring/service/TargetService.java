@@ -41,8 +41,7 @@ public class TargetService {
         targetInfo.setId(targetId);
         if( targetMapper.insert(targetInfo) > 0 ) {
             return new ResBody<>(ResultCode.SUCCESS);
-        }
-        else {
+        } else {
             return new ResBody<>(ResultCode.FAILED);
         }
     }
