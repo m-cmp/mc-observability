@@ -38,11 +38,15 @@ public class SpiderCollectorExecutor {
     public void startSpiderCollector() {
         if (SPIDER_COLLECTOR_PROCESS == null || !SPIDER_COLLECTOR_PROCESS.isAlive()) {
             String nsId = System.getenv(Constants.PROPERTY_NS_ID);
-            if( nsId == null ) nsId = "";
+            if(nsId == null ) nsId = "";
             String mciId = System.getenv(Constants.PROPERTY_MCI_ID);
             if( mciId == null ) mciId = "";
             String targetId = System.getenv(Constants.PROPERTY_TARGET_ID);
             if( targetId == null ) targetId = "";
+
+            if (nsId.isEmpty() || mciId.isEmpty() || targetId.isEmpty()) {
+                return;
+            }
 
             InfluxDBInfo influxDBinfo = InfluxDBInfo.builder()
                     .url(influxdb_url)
