@@ -1,4 +1,4 @@
-package mcmp.mc.observability.mco11ymanager.service;
+package mcmp.mc.observability.mco11yagent.util.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,8 +23,14 @@ import java.util.Map;
 public class UtilService {
     private final RestTemplate restTemplate;
 
-    @Value("${feign.agent-manager.url}")
-    private String agentManagerURL;
+    @Value("${spring.datasource.url}")
+    private String dbUrl;
+
+    @Value("${spring.datasource.username}")
+    private String dbUsername;
+
+    @Value("${spring.datasource.password}")
+    private String dbPassword;
 
     @Value("${feign.cb-tumblebug.url}")
     private String tumblebugURL;
@@ -32,11 +41,36 @@ public class UtilService {
     @Value("${feign.cb-tumblebug.pw}")
     private String tumblebugPW;
 
-    @Value("${feign.insight.url}")
-    private String insightURL;
+    @Value("${feign.cb-spider.url}")
+    private String spiderURL;
 
-    public Map<String, Object> checkExternalServiceHealth(String externalServiceUrl) {
-        return checkExternalServiceHealth(externalServiceUrl, null, null);
+    @Value("${feign.cb-spider.id}")
+    private String spiderID;
+
+    @Value("${feign.cb-spider.pw}")
+    private String spiderPW;
+
+    private boolean checkDatabaseConnection() {
+        Connection connection = null;
+        try {
+            Class.forName("org.mariadb.jdbc.Driver");
+
+            log.info("Connecting to database with URL: {}", dbUrl);
+            connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+
+            return connection.isValid(5);
+        } catch (SQLException | ClassNotFoundException e) {
+            log.error("Database connection error", e);
+            return false;
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    log.error("Error closing database connection", e);
+                }
+            }
+        }
     }
 
     public Map<String, Object> checkExternalServiceHealth(String externalServiceUrl, String username, String password) {
@@ -71,28 +105,27 @@ public class UtilService {
     public Map<String, Object> checkApiHealth() {
         Map<String, Object> apiHealthStatus = new HashMap<>();
 
-        Map<String, Object> agentManagerStatus = checkExternalServiceHealth(agentManagerURL + "/api/o11y/readyz");
+        Map<String, Object> spiderStatus = checkExternalServiceHealth(spiderURL + "/spider/readyz", spiderID, spiderPW);
         Map<String, Object> tumblebugStatus = checkExternalServiceHealth(tumblebugURL + "/tumblebug/readyz", tumblebugID, tumblebugPW);
-        Map<String, Object> insightStatus = checkExternalServiceHealth(insightURL +"/api/o11y/insight/predictions/options");
 
-        boolean isAgentManagerHealthy = "UP".equals(agentManagerStatus.get("status"));
+        boolean isDatabaseHealthy = checkDatabaseConnection();
+        boolean isSpiderHealthy = "UP".equals(spiderStatus.get("status"));
         boolean isTumblebugHealthy = "UP".equals(tumblebugStatus.get("status"));
-        boolean isInsightHealthy = "UP".equals(insightStatus.get("status"));
 
-        boolean isApiHealthy = isAgentManagerHealthy && isTumblebugHealthy && isInsightHealthy;
+        boolean isApiHealthy = isDatabaseHealthy && isSpiderHealthy && isTumblebugHealthy;
 
         if (isApiHealthy) {
             apiHealthStatus.put("message", "All systems are operational");
         } else {
             StringBuilder message = new StringBuilder("One or more systems are down: ");
-            if (!isAgentManagerHealthy) {
-                message.append("Agent Manager is down or not healthy. ");
+            if (!isDatabaseHealthy) {
+                message.append("Database is down. ");
+            }
+            if (!isSpiderHealthy) {
+                message.append("Spider is down. ");
             }
             if (!isTumblebugHealthy) {
                 message.append("Tumblebug is down. ");
-            }
-            if (!isInsightHealthy) {
-                message.append("Insight is down. ");
             }
             apiHealthStatus.put("message", message.toString().trim());
         }

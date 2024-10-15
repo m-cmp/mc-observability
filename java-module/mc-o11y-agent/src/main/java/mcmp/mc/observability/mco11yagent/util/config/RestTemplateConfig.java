@@ -1,4 +1,4 @@
-package mcmp.mc.observability.mco11ymanager.config;
+package mcmp.mc.observability.mco11yagent.util.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -28,9 +28,9 @@ public class UtilController {
         String status = (String) healthStatus.get("status");
 
         if ("DOWN".equals(status)) {
-            return ResponseEntity.status(503).body(healthStatus); // 503 응답
+            return ResponseEntity.status(503).body(healthStatus);
         } else {
-            return ResponseEntity.ok(healthStatus); // 200 응답
+            return ResponseEntity.ok(healthStatus);
         }
     }
 }
