@@ -20,6 +20,7 @@ services:
       - TUMBLEBUG_PW=default
       - INSIGHT_URL=http://mc-o11y-insight:9001
     volumes:
+      - ./manager-conf:/etc/mc-observability-agent:rw
       - /var/log/syslog:/var/log/syslog:ro
 
   mariadb:
