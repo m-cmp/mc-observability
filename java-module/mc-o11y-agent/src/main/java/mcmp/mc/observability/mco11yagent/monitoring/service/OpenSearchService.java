@@ -2,7 +2,6 @@ package mcmp.mc.observability.mco11yagent.monitoring.service;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +15,10 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.opensearch.action.search.SearchRequest;
 import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestClient;
-import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
@@ -83,62 +80,62 @@ public class OpenSearchService {
     }
 
     public List<Map<String, Object>> getLogs(LogsInfo logsInfo) {
-        OpenSearchInfo opensearchInfo = opensearchMapper.getOpenSearchInfoList().get(0);
+        List<OpenSearchInfo> opensearchInfoList = opensearchMapper.getOpenSearchInfoList();
+        List<Map<String, Object>> result = new ArrayList<>();
 
-        List<Map<String, Object>> result;
+        for (OpenSearchInfo opensearchInfo : opensearchInfoList) {
+            BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(opensearchInfo.getUsername(), opensearchInfo.getPassword()));
 
-        BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(opensearchInfo.getUsername(), opensearchInfo.getPassword()));
+            try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(opensearchInfo.getUrl())).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)))) {
+                BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 
-        try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(opensearchInfo.getUrl())).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)))) {
-            BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-
-            Map<String, String> fieldMapping = Map.of(
-                "ns_id", "tag.ns_id",
-                "mci_id", "tag.mci_id",
-                "target_id", "tag.target_id"
-            );
-
+                Map<String, String> fieldMapping = Map.of(
+                        "ns_id", "tag.ns_id",
+                        "mci_id", "tag.mci_id",
+                        "target_id", "tag.target_id"
+                );
 
 //             if( logsInfo.getConditions() != null ) logsInfo.getConditions().forEach(f -> boolQueryBuilder.must(QueryBuilders.matchQuery(f.getKey(), f.getValue())));
-            if (logsInfo.getConditions() != null) {
-                logsInfo.getConditions().forEach(condition -> {
-                    String key = condition.getKey();
-                    String value = condition.getValue();
+                if (logsInfo.getConditions() != null) {
+                    logsInfo.getConditions().forEach(condition -> {
+                        String key = condition.getKey();
+                        String value = condition.getValue();
 
-                    // key에 해당하는 필드명을 찾음. 없으면 key 그대로 사용
-                    String searchField = fieldMapping.getOrDefault(key, key);
+                        // key에 해당하는 필드명을 찾음. 없으면 key 그대로 사용
+                        String searchField = fieldMapping.getOrDefault(key, key);
 
-                    // 검색 쿼리 생성
-                    boolQueryBuilder.must(QueryBuilders.matchQuery(searchField, value));
-                });
+                        // 검색 쿼리 생성
+                        boolQueryBuilder.must(QueryBuilders.matchQuery(searchField, value));
+                    });
+                }
+
+                RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("@timestamp")
+                        .gte("now-" + logsInfo.getRange())
+                        .lte("now");
+                boolQueryBuilder.filter(rangeQueryBuilder);
+
+                SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+                searchSourceBuilder.query(boolQueryBuilder);
+                if( logsInfo.getLimit() != null ) searchSourceBuilder.size(logsInfo.getLimit().intValue());
+
+                searchSourceBuilder.sort("@timestamp", SortOrder.DESC);
+
+                SearchRequest searchRequest = new SearchRequest(opensearchInfo.getIndexName());
+                searchRequest.source(searchSourceBuilder);
+
+                SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+                JsonArray ja = new JsonArray();
+                searchResponse.getHits().forEach(f -> ja.add(JsonParser.parseString(f.getSourceAsString()).getAsJsonObject()));
+
+                List<Map<String, Object>> logs = new Gson().fromJson(ja.toString(), new TypeToken<List<Map<String, Object>>>(){}.getType());
+                result.addAll(logs);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
-            RangeQueryBuilder rangeQueryBuilder = QueryBuilders.rangeQuery("@timestamp")
-                    .gte("now-" + logsInfo.getRange())
-                    .lte("now");
-            boolQueryBuilder.filter(rangeQueryBuilder);
-
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(boolQueryBuilder);
-            if( logsInfo.getLimit() != null ) searchSourceBuilder.size(logsInfo.getLimit().intValue());
-
-            searchSourceBuilder.sort("@timestamp", SortOrder.DESC);
-
-            SearchRequest searchRequest = new SearchRequest(opensearchInfo.getIndexName());
-            searchRequest.source(searchSourceBuilder);
-
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-
-            JsonArray ja = new JsonArray();
-            searchResponse.getHits().forEach(f -> ja.add(JsonParser.parseString(f.getSourceAsString()).getAsJsonObject()));
-
-            result = new Gson().fromJson(ja.toString(), new TypeToken<List<Map<String, Object>>>(){}.getType());
-
-            return result;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
+        return result;
     }
 }
