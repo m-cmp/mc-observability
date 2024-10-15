@@ -120,7 +120,7 @@ public class MonitoringService {
                     if (!vm.getId().equals(targetId)) continue;
 
                     List<String> cmdList = new ArrayList<>();
-                    cmdList.add("wget https://github.com/m-cmp/mc-observability/raw/main/java-module/scripts/init.sh");
+                    cmdList.add("wget https://github.com/m-cmp/mc-observability/raw/main/java-module/scripts/init.sh -O init.sh");
                     cmdList.add("chmod +x init.sh");
                     cmdList.add("./init.sh " + myIp + " " + nsId + " " + mci.getId() + " " + targetId);
                     TumblebugCmd tumblebugCmd  = new TumblebugCmd();
