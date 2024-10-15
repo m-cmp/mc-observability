@@ -5,14 +5,14 @@ cd $HOME
 docker -v
 if [ $? -ne 0 ]; then
   sudo mkdir -p /etc/docker/
-  echo -e '{
-          "log-driver": "syslog",
-          "log-opts": {
-                  "syslog-format": "rfc3164",
-                  "tag": "{{.Name}}"
-          }
-  }
-  ' | sudo tee /etc/docker/daemon.json
+  echo  '{
+        "log-driver": "syslog",
+        "log-opts": {
+                "syslog-format": "rfc3164",
+                "tag": "{{.Name}}"
+        }
+}
+' | sudo tee /etc/docker/daemon.json
 
   # Install Docker CE
   sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
