@@ -63,13 +63,14 @@ public class MonitoringService {
                 }
 
                 itemCreateInfo.setPluginSeq(plugin.getSeq());
+                itemCreateInfo.setName(plugin.getName());
                 monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
             }
         }
     }
 
     private void configureOutputs(String nsId, String mciId, String targetId, String myIp) {
-        MonitoringConfigInfoCreateDTO itemCreateInfo = new MonitoringConfigInfoCreateDTO();
+        MonitoringConfigInfoCreateDTO storageCreateInfo = new MonitoringConfigInfoCreateDTO();
 
         List<PluginDefInfo> pluginList = monitoringClient.getPluginList().getData();
         for (PluginDefInfo plugin : pluginList) {
@@ -77,12 +78,12 @@ public class MonitoringService {
                 continue;
             if (plugin.getPluginType().equals("OUTPUT")) {
                 if (plugin.getName().equals("opensearch")){
-                    itemCreateInfo.setPluginConfig("  urls = [\"http://"+ myIp + ":9200\"]\n" +
+                    storageCreateInfo.setPluginConfig("  urls = [\"http://"+ myIp + ":9200\"]\n" +
                             "  index_name = \"mc-o11y\"\n" +
                             "  template_name = \"mc-o11y\"\n" +
                             "  namepass = [\"tail\"]");
                 } else if (plugin.getName().equals("tail")) {
-                    itemCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
+                    storageCreateInfo.setPluginConfig("  files = [\"/var/log/syslog\"]\n" +
                             "  from_beginning = false\n" +
                             "  watch_method = \"inotify\"\n" +
                             "\n" +
@@ -97,8 +98,9 @@ public class MonitoringService {
                             "    target_id = \"" + targetId + "\"");
                 }
 
-                itemCreateInfo.setPluginSeq(plugin.getSeq());
-                monitoringClient.insertItem(nsId, mciId, targetId, itemCreateInfo);
+                storageCreateInfo.setPluginSeq(plugin.getSeq());
+                storageCreateInfo.setName(plugin.getName());
+                monitoringClient.insertStorage(nsId, mciId, targetId, storageCreateInfo);
             }
         }
     }
