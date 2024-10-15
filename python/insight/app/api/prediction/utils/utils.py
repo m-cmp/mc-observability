@@ -146,6 +146,8 @@ class PredictionService:
     def preprocess_data(self, df: pd.DataFrame):
         df['ds'] = pd.to_datetime(df['ds'])
         df['ds'] = df['ds'].apply(self.remove_timezone)
+        null_datetime = df['ds'].max()
+        df = df[df['ds'] != null_datetime]
         last_datetime = df['ds'].max()
 
         return df, last_datetime
