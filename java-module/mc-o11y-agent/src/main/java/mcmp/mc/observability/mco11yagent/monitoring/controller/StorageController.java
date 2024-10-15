@@ -42,13 +42,9 @@ public class StorageController {
     @PostMapping
     public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
-        monitoringConfigInfo.setNsId(nsId);
-        monitoringConfigInfo.setMciId(mciId);
-        monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setName(storageCreateInfo.getName());
         monitoringConfigInfo.setPluginSeq(storageCreateInfo.getPluginSeq());
         monitoringConfigInfo.setPluginConfig(storageCreateInfo.getPluginConfig());
-
 
         return monitoringConfigService.insert(nsId, mciId, targetId, monitoringConfigInfo);
     }
@@ -58,9 +54,6 @@ public class StorageController {
     public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(storageUpdateInfo.getSeq());
-        monitoringConfigInfo.setNsId(nsId);
-        monitoringConfigInfo.setMciId(mciId);
-        monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setPluginConfig(storageUpdateInfo.getPluginConfig());
 
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);

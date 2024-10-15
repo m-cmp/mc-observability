@@ -42,9 +42,6 @@ public class ItemController {
     @PostMapping
         public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO itemCreateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
-        monitoringConfigInfo.setNsId(nsId);
-        monitoringConfigInfo.setMciId(mciId);
-        monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setName(itemCreateInfo.getName());
         monitoringConfigInfo.setPluginSeq(itemCreateInfo.getPluginSeq());
         monitoringConfigInfo.setPluginConfig(itemCreateInfo.getPluginConfig());
@@ -57,9 +54,6 @@ public class ItemController {
     public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO itemUpdateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(itemUpdateInfo.getSeq());
-        monitoringConfigInfo.setNsId(nsId);
-        monitoringConfigInfo.setMciId(mciId);
-        monitoringConfigInfo.setTargetId(targetId);
         monitoringConfigInfo.setPluginConfig(itemUpdateInfo.getPluginConfig());
 
         return monitoringConfigService.update(nsId, mciId, targetId, monitoringConfigInfo);
