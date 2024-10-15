@@ -20,7 +20,7 @@ services:
       - TUMBLEBUG_PW=default
       - INSIGHT_URL=http://mc-o11y-insight:9001
     volumes:
-      - /var/log:/var/log:ro
+      - /var/log/syslog:/var/log/syslog:ro
 
   mariadb:
     image: mariadb:10.7.6
