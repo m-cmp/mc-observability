@@ -1,2690 +1,2963 @@
-openapi: 3.0.1
+swagger: '2.0'
 info:
+  version: '0.2.2'
   title: mc-o11y-manager API Documentation
   description: API documentation for mc-o11y-manager
+  contact: {}
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.2.0
-servers:
-- url: http://localhost:18080
+host: localhost:18080
+basePath: /
+consumes:
+- application/json
+produces:
+- application/json
 paths:
   /api/o11y/monitoring/plugins:
     get:
+      description: ''
+      summary: GetPlugins
       tags:
-      - "[System] environment"
-      summary: Get all available monitoring plugin list
+      - '[System] environment'
       operationId: GetPlugins
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListPluginDefInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListPluginDefInfo'
+          headers: {}
   /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
     get:
+      description: ''
+      summary: GetTarget
       tags:
-      - "[Target] Monitoring target management"
-      summary: Get monitoring target
+      - '[Target] Monitoring target management'
       operationId: GetTarget
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyTargetInfo'
+          schema:
+            $ref: '#/definitions/ResBodyTargetInfo'
+          headers: {}
     put:
+      description: ''
+      summary: PutTarget
       tags:
-      - "[Target] Monitoring target management"
-      summary: Update target information
+      - '[Target] Monitoring target management'
       operationId: PutTarget
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TargetInfoCreateUpdateDTO'
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/TargetInfoCreateUpdateDTO'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
     post:
+      description: ''
+      summary: PostTarget
       tags:
-      - "[Target] Monitoring target management"
-      summary: Add new monitoring target (MC-O11y-Agent Install)
+      - '[Target] Monitoring target management'
       operationId: PostTarget
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TargetInfoCreateUpdateDTO'
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/TargetInfoCreateUpdateDTO'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
     delete:
+      description: ''
+      summary: DeleteTarget
       tags:
-      - "[Target] Monitoring target management"
-      summary: Delete monitoring agent & management target
+      - '[Target] Monitoring target management'
       operationId: DeleteTarget
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
-    get:
-      tags:
-      - "[Monitoring storage] Monitoring target storage management"
-      summary: Get all target monitoring storage list
-      operationId: GetStorages
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMonitoringConfigInfo'
-    put:
-      tags:
-      - "[Monitoring storage] Monitoring target storage management"
-      summary: Update target monitoring storage
-      operationId: PutStorage
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MonitoringConfigInfoUpdateDTO'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
-    post:
-      tags:
-      - "[Monitoring storage] Monitoring target storage management"
-      summary: Add target monitoring storage
-      operationId: PostStorage
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MonitoringConfigInfoCreateDTO'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
-    get:
-      tags:
-      - "[Monitoring item] Monitoring target item management"
-      summary: Get all target monitoring item list
-      operationId: GetItems
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMonitoringConfigInfo'
-    put:
-      tags:
-      - "[Monitoring item] Monitoring target item management"
-      summary: Update target monitoring item
-      operationId: PutItem
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MonitoringConfigInfoUpdateDTO'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
-    post:
-      tags:
-      - "[Monitoring item] Monitoring target item management"
-      summary: Add target monitoring item
-      operationId: PostItem
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MonitoringConfigInfoCreateDTO'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
   /api/o11y/monitoring/miningdb:
     get:
+      description: ''
+      summary: GetMiningDBs
       tags:
-      - "[Target] Monitoring target management"
-      summary: Get mining influxdb detail
+      - '[Target] Monitoring target management'
       operationId: GetMiningDBs
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyMiningDBInfo'
+          schema:
+            $ref: '#/definitions/ResBodyMiningDBInfo'
+          headers: {}
     put:
+      description: ''
+      summary: PutMiningDB
       tags:
-      - "[Mining InfluxDB] Monitoring metric downsampling"
-      summary: Update mining influxdb info
+      - '[Mining InfluxDB] Monitoring metric downsampling'
       operationId: PutMiningDB
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MiningDBSetDTO'
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/MiningDBSetDTO'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-  /api/o11y/monitoring/opensearch/logs:
-    post:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Get collected logs from OpenSearch
-      operationId: GetOpenSearchLogs
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LogsInfo'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMapStringObject'
-  /api/o11y/monitoring/miningdb/metric:
-    post:
-      tags:
-      - "[Mining InfluxDB] Monitoring metric downsampling"
-      summary: Get downsampling metric
-      operationId: GetMiningDBMetrics
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricsInfo'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMetricInfo'
-  /api/o11y/monitoring/influxdb/metric:
-    post:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: Get collected metric
-      operationId: GetInfluxDBMetrics
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MetricsInfo'
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMetricInfo'
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/monitoring/{nsId}/{mciId}/target:
     get:
+      description: ''
+      summary: GetTargetsNSMCI
       tags:
-      - "[Target] Monitoring target management"
-      summary: Get all mc-observability management target list in specified NS and
-        MCI
+      - '[Target] Monitoring target management'
       operationId: GetTargetsNSMCI
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTargetInfo'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
-    get:
-      tags:
-      - "[Monitoring CSP] Monitoring target from the CSP"
-      summary: Get target monitoring data from the CSP
-      operationId: GetCSP
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: mciId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: targetId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: measurement
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyData'
+          schema:
+            $ref: '#/definitions/ResBodyListTargetInfo'
+          headers: {}
   /api/o11y/monitoring/target:
     get:
+      description: ''
+      summary: GetTargets
       tags:
-      - "[Target] Monitoring target management"
-      summary: Get all mc-observability management target list
+      - '[Target] Monitoring target management'
       operationId: GetTargets
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTargetInfo'
-  /api/o11y/monitoring/opensearch:
-    get:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Get all OpenSearch list
-      operationId: GetOpenSearches
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListOpenSearchInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTargetInfo'
+          headers: {}
   /api/o11y/monitoring/ns:
     get:
+      description: ''
+      summary: GetNSs
       tags:
-      - "[Target] Monitoring target management"
-      summary: Get all mc-observability management namespace list
+      - '[Target] Monitoring target management'
       operationId: GetNSs
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/TumblebugNS'
-  /api/o11y/monitoring/miningdb/tag:
+          schema:
+            $ref: '#/definitions/TumblebugNS'
+          headers: {}
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
     get:
+      description: ''
+      summary: GetStorages
       tags:
-      - "[Mining InfluxDB] Monitoring metric downsampling"
-      summary: Get downsampling metric tag list
-      operationId: GetMiningDBTags"
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMeasurementTagInfo'
-  /api/o11y/monitoring/miningdb/measurement:
-    get:
-      tags:
-      - "[Mining InfluxDB] Monitoring metric downsampling"
-      summary: Get downsampling measurement & field list
-      operationId: GetMiningDBMeasurements
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMeasurementFieldInfo'
-  /api/o11y/monitoring/influxdb:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: Get all InfluxDB list
-      operationId: GetInfluxDBs
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListInfluxDBInfo'
-  /api/o11y/monitoring/influxdb/tag:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: Get collected measurement tag list
-      operationId: GetInfluxDBTags
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMeasurementTagInfo'
-  /api/o11y/monitoring/influxdb/measurement:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: Get collected measurement & field list
-      operationId: GetInfluxDBMeasurements
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListMeasurementFieldInfo'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
-    delete:
-      tags:
-      - "[Monitoring storage] Monitoring target storage management"
-      summary: Delete target monitoring storage
-      operationId: DeleteStorage
+      - '[Monitoring storage] Monitoring target storage management'
+      operationId: GetStorages
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMonitoringConfigInfo'
+          headers: {}
+    put:
+      description: ''
+      summary: PutStorage
+      tags:
+      - '[Monitoring storage] Monitoring target storage management'
+      operationId: PutStorage
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
         schema:
-          type: string
+          $ref: '#/definitions/MonitoringConfigInfoUpdateDTO'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+    post:
+      description: ''
+      summary: PostStorage
+      tags:
+      - '[Monitoring storage] Monitoring target storage management'
+      operationId: PostStorage
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/MonitoringConfigInfoCreateDTO'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
+    delete:
+      description: ''
+      summary: DeleteStorage
+      tags:
+      - '[Monitoring storage] Monitoring target storage management'
+      operationId: DeleteStorage
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
       - name: storageSeq
         in: path
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: ''
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
-    delete:
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
+    get:
+      description: ''
+      summary: GetItems
       tags:
-      - "[Monitoring item] Monitoring target item management"
-      summary: Delete target monitoring item
-      operationId: DeleteItem
+      - '[Monitoring item] Monitoring target item management'
+      operationId: GetItems
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: mciId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMonitoringConfigInfo'
+          headers: {}
+    put:
+      description: ''
+      summary: PutItem
+      tags:
+      - '[Monitoring item] Monitoring target item management'
+      operationId: PutItem
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
         schema:
-          type: string
+          $ref: '#/definitions/MonitoringConfigInfoUpdateDTO'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+    post:
+      description: ''
+      summary: PostItem
+      tags:
+      - '[Monitoring item] Monitoring target item management'
+      operationId: PostItem
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/MonitoringConfigInfoCreateDTO'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
+    delete:
+      description: ''
+      summary: DeleteItem
+      tags:
+      - '[Monitoring item] Monitoring target item management'
+      operationId: DeleteItem
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
       - name: itemSeq
         in: path
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: ''
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyObject'
+          schema:
+            $ref: '#/definitions/ResBodyObject'
+          headers: {}
+  /api/o11y/monitoring/miningdb/metric:
+    post:
+      description: ''
+      summary: GetMiningDBMetrics
+      tags:
+      - '[Mining InfluxDB] Monitoring metric downsampling'
+      operationId: GetMiningDBMetrics
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/MetricsInfo'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMetricInfo'
+          headers: {}
+  /api/o11y/monitoring/miningdb/tag:
+    get:
+      description: ''
+      summary: GetMiningDBTags"
+      tags:
+      - '[Mining InfluxDB] Monitoring metric downsampling'
+      operationId: GetMiningDBTags"
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMeasurementTagInfo'
+          headers: {}
+  /api/o11y/monitoring/miningdb/measurement:
+    get:
+      description: ''
+      summary: GetMiningDBMeasurements
+      tags:
+      - '[Mining InfluxDB] Monitoring metric downsampling'
+      operationId: GetMiningDBMeasurements
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMeasurementFieldInfo'
+          headers: {}
+  /api/o11y/monitoring/opensearch/logs:
+    post:
+      description: ''
+      summary: GetOpenSearchLogs
+      tags:
+      - '[Monitoring log] Monitoring log'
+      operationId: GetOpenSearchLogs
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/LogsInfo'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMapStringObject'
+          headers: {}
+  /api/o11y/monitoring/opensearch:
+    get:
+      description: ''
+      summary: GetOpenSearches
+      tags:
+      - '[Monitoring log] Monitoring log'
+      operationId: GetOpenSearches
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListOpenSearchInfo'
+          headers: {}
+  /api/o11y/monitoring/influxdb/metric:
+    post:
+      description: ''
+      summary: GetInfluxDBMetrics
+      tags:
+      - '[Monitoring metric] Monitoring metric'
+      operationId: GetInfluxDBMetrics
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/MetricsInfo'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMetricInfo'
+          headers: {}
+  /api/o11y/monitoring/influxdb:
+    get:
+      description: ''
+      summary: GetInfluxDBs
+      tags:
+      - '[Monitoring metric] Monitoring metric'
+      operationId: GetInfluxDBs
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListInfluxDBInfo'
+          headers: {}
+  /api/o11y/monitoring/influxdb/tag:
+    get:
+      description: ''
+      summary: GetInfluxDBTags
+      tags:
+      - '[Monitoring metric] Monitoring metric'
+      operationId: GetInfluxDBTags
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMeasurementTagInfo'
+          headers: {}
+  /api/o11y/monitoring/influxdb/measurement:
+    get:
+      description: ''
+      summary: GetInfluxDBMeasurements
+      tags:
+      - '[Monitoring metric] Monitoring metric'
+      operationId: GetInfluxDBMeasurements
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyListMeasurementFieldInfo'
+          headers: {}
+  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
+    get:
+      description: ''
+      summary: GetCSP
+      tags:
+      - '[Monitoring CSP] Monitoring target from the CSP'
+      operationId: GetCSP
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: targetId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: measurement
+        in: path
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/ResBodyData'
+          headers: {}
   /api/o11y/trigger/policy/history:
     get:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Get Trigger History all list
       description: "Base64 Encoded value:  \nname\n"
+      summary: GetTriggerHistoryAllList
+      tags:
+      - '[Metric Event] monitoring measurement trigger'
       operationId: GetTriggerHistoryAllList
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: query
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTriggerHistoryInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTriggerHistoryInfo'
+          headers: {}
   /api/o11y/trigger/policy:
     get:
+      description: ''
+      summary: GetTriggerPolicyAllList
       tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Get Trigger Policy all list
+      - '[Metric Event] monitoring measurement trigger'
       operationId: GetTriggerPolicyAllList
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTriggerPolicyInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTriggerPolicyInfo'
+          headers: {}
     post:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Create request Trigger Policy
-      description: |
+      description: >
         The values that require Base64 encoding:
+
         description, name, threshold
+      summary: CreateRequestTriggerPolicy
+      tags:
+      - '[Metric Event] monitoring measurement trigger'
       operationId: CreateRequestTriggerPolicy
-      requestBody:
-        description: triggerPolicyCreateDto
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/TriggerPolicyCreateDTO'
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - '*/*'
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - '*/*'
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
+        description: triggerPolicyCreateDto
+        schema:
+          $ref: '#/definitions/TriggerPolicyCreateDTO'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      x-codegen-request-body-name: triggerPolicyCreateDto
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}:
     delete:
+      description: ''
+      summary: DeleteRequestTriggerPolicy
       tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Delete request trigger policy
+      - '[Metric Event] monitoring measurement trigger'
       operationId: DeleteRequestTriggerPolicy
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: path
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
     patch:
+      description: ''
+      summary: UpdateRequestTriggerPolicy
       tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Update request Trigger Policy
+      - '[Metric Event] monitoring measurement trigger'
       operationId: UpdateRequestTriggerPolicy
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: policySeq
         in: path
+        required: true
+        type: integer
+        format: int64
         description: policySeq
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
         description: triggerPolicyUpdateDto
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TriggerPolicyUpdateDto'
-        required: true
+        schema:
+          $ref: '#/definitions/TriggerPolicyUpdateDto'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      x-codegen-request-body-name: triggerPolicyUpdateDto
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/target:
     get:
+      description: ''
+      summary: GetTriggerTargetAllList
       tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Get Trigger Target all list
+      - '[Metric Event] monitoring measurement trigger'
       operationId: GetTriggerTargetAllList
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: query
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTriggerTargetInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTriggerTargetInfo'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}/target:
     put:
+      description: ''
+      summary: PutTriggerTarget
       tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: Set trigger target
+      - '[Metric Event] monitoring measurement trigger'
       operationId: PutTriggerTarget
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: policySeq
         in: path
+        required: true
+        type: integer
+        format: int64
         description: policySeq
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
         description: targets
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  ns_id:
-                    type: string
-                  target_id:
-                    type: string
-        required: true
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/ApiO11yTriggerPolicyTargetRequest'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      x-codegen-request-body-name: targets
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}/alert/email:
     get:
+      description: ''
+      summary: GetTriggerAlertEmailUserAllList
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Get Trigger Alert Email User all list
+      - '[Metric Event] monitoring trigger event handler'
       operationId: GetTriggerAlertEmailUserAllList
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: path
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTriggerEmailUserInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTriggerEmailUserInfo'
+          headers: {}
     post:
+      description: ''
+      summary: CreateTriggerAlertEmailUser
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Create request Trigger Alert Email User
+      - '[Metric Event] monitoring trigger event handler'
       operationId: CreateTriggerAlertEmailUser
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: policySeq
         in: path
+        required: true
+        type: integer
+        format: int64
         description: policySeq
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
         description: dto
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TriggerEmailUserCreateDto'
-        required: true
+        schema:
+          $ref: '#/definitions/TriggerEmailUserCreateDto'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      x-codegen-request-body-name: dto
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}:
     delete:
+      description: ''
+      summary: DeleteTriggerAlertEmailUser
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Delete Request Trigger Alert Email User
+      - '[Metric Event] monitoring trigger event handler'
       operationId: DeleteTriggerAlertEmailUser
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: path
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       - name: seq
         in: path
-        description: seq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: seq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}/alert/slack:
     get:
+      description: ''
+      summary: GetTriggerAlertSlackUserAllList
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Get Trigger Alert Slack User all list
+      - '[Metric Event] monitoring trigger event handler'
       operationId: GetTriggerAlertSlackUserAllList
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: path
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyListTriggerSlackUserInfo'
+          schema:
+            $ref: '#/definitions/ResBodyListTriggerSlackUserInfo'
+          headers: {}
     post:
+      description: ''
+      summary: CreateTriggerAlertSlackUser
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Create request Trigger Alert Slack User
+      - '[Metric Event] monitoring trigger event handler'
       operationId: CreateTriggerAlertSlackUser
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: policySeq
         in: path
+        required: true
+        type: integer
+        format: int64
         description: policySeq
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
         required: true
-        schema:
-          type: integer
-          format: int64
-      requestBody:
         description: dto
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TriggerSlackUserCreateDto'
-        required: true
+        schema:
+          $ref: '#/definitions/TriggerSlackUserCreateDto'
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      x-codegen-request-body-name: dto
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}:
     delete:
+      description: ''
+      summary: DeleteTriggerAlertSlackUser
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: Delete Request Trigger Alert Slack User
+      - '[Metric Event] monitoring trigger event handler'
       operationId: DeleteTriggerAlertSlackUser
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: policySeq
         in: path
-        description: policySeq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: policySeq
       - name: seq
         in: path
-        description: seq
         required: true
-        schema:
-          type: integer
-          format: int64
+        type: integer
+        format: int64
+        description: seq
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/insight/anomaly-detection/options:
     get:
-      tags:
-      - "[Insight] Anomaly Detection"
+      description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
       summary: GetAnomalyDetectionOptions
-      description: "Fetch the available target types, metric types, and interval options\
-        \ for the anomaly detection API."
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: GetAnomalyDetectionOptions
-      responses:
-        "200":
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyAnomalyDetectionOptions'
-              example:
-                data:
-                  target_types:
-                  - vm
-                  - mci
-                  measurements:
-                  - cpu
-                  - mem
-                  execution_intervals:
-                  - 5m
-                  - 10m
-                  - 30m
-                rs_code: "200"
-                rs_msg: Success
       deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionOptions'
+          examples:
+            application/json:
+              data:
+                target_types:
+                - vm
+                - mci
+                measurements:
+                - cpu
+                - mem
+                execution_intervals:
+                - 5m
+                - 10m
+                - 30m
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings:
     get:
-      tags:
-      - "[Insight] Anomaly Detection"
-      summary: GetAllAnomalyDetectionSettings
       description: Fetch the current settings for all anomaly detection targets.
-      operationId: GetAllAnomalyDetectionSettings
-      responses:
-        "200":
-          description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyAnomalyDetectionSettings'
-              example:
-              - seq: 1
-                ns_id: ns01
-                target_id: vm01
-                target_type: VM
-                measurement: cpu
-                execution_interval: 5m
-                last_execution: 2024-10-10T06:08:48Z
-                create_at: 2024-10-10T03:08:48Z
-      deprecated: false
-    post:
+      summary: GetAllAnomalyDetectionSettings
       tags:
-      - "[Insight] Anomaly Detection"
+      - '[Insight] Anomaly Detection'
+      operationId: GetAllAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          headers: {}
+    post:
+      description: "Register a target for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
       summary: PostAnomalyDetectionSettings
-      description: "Register a target for anomaly detection and automatically schedule\
-        \ detection tasks.  \n(measurememt : field) Relationships are as follows.\
-        \  \ncpu : usage_idle  \nmem : used_percent\n"
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: Content-Type
         in: header
-        schema:
-          type: string
-          enum:
-          - application/json
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnomalyDetectionTargetRegistration'
+        required: false
+        enum:
+        - application/json
+        type: string
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetRegistration'
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      deprecated: false
-      x-codegen-request-body-name: body
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
-      tags:
-      - "[Insight] Anomaly Detection"
+      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
       summary: PutAnomalyDetectionSettings
-      description: "Modify the settings for a specific anomaly detection target, including\
-        \ the monitoring metric and interval."
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: PutAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: settingSeq
         in: path
         required: true
-        schema:
-          type: integer
-          format: int32
+        type: integer
+        format: int32
+        description: ''
       - name: Content-Type
         in: header
-        schema:
-          type: string
-          enum:
-          - application/json
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AnomalyDetectionTargetUpdate'
+        required: false
+        enum:
+        - application/json
+        type: string
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetUpdate'
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      deprecated: false
-      x-codegen-request-body-name: body
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
     delete:
-      tags:
-      - "[Insight] Anomaly Detection"
+      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
       summary: DeleteAnomalyDetectionSettings
-      description: "Remove a target from anomaly detection, stopping and removing\
-        \ any scheduled tasks."
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: DeleteAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: settingSeq
         in: path
         required: true
-        schema:
-          type: integer
-          format: int32
+        type: integer
+        format: int32
+        description: ''
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      deprecated: false
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
-      tags:
-      - "[Insight] Anomaly Detection"
-      summary: GetTargetAnomalyDetectionSettings
       description: Fetch the current settings for a specific anomaly detection target.
+      summary: GetTargetAnomalyDetectionSettings
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: GetTargetAnomalyDetectionSettings
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       - name: targetId
         in: path
         required: true
-        schema:
-          type: string
+        type: string
+        description: ''
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyAnomalyDetectionSettings'
-      deprecated: false
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          headers: {}
   /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
     get:
-      tags:
-      - "[Insight] Anomaly Detection"
+      description: Fetch the results of anomaly detection for a specific target within a given time range.
       summary: GetAnomalyDetectionHistory
-      description: Fetch the results of anomaly detection for a specific target within
-        a given time range.
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: GetAnomalyDetectionHistory
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
-        description: The Namespace ID for the prediction.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The Namespace ID for the prediction.
       - name: targetId
         in: path
-        description: The ID of the target vm or mci group.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
-        description: The type of metric to retrieve.
         required: true
-        schema:
-          type: string
-          enum:
-          - cpu
-          - mem
+        enum:
+        - cpu
+        - mem
+        type: string
+        description: The type of metric to retrieve.
       - name: start_time
         in: query
-        description: "The start timestamp for the range of Anomaly data to retrieve.\
-          \  \nFormat 'YYYY-MM-DDTHH:MM:SSZ'.  \nDefaults to 12 hours before the current\
-          \ time if not provided.\n"
-        schema:
-          type: string
+        required: false
+        type: string
+        description: "The start timestamp for the range of Anomaly data to retrieve.  \nFormat 'YYYY-MM-DDTHH:MM:SSZ'.  \nDefaults to 12 hours before the current time if not provided."
       - name: end_time
         in: query
-        description: "The end timestamp for the range of Anomaly data to retrieve.\
-          \  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not\
-          \ provided.\n"
-        schema:
-          type: string
+        required: false
+        type: string
+        description: "The end timestamp for the range of Anomaly data to retrieve.  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not provided."
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyAnomalyDetectionHistoryResponse'
-      deprecated: false
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
+          headers: {}
   /api/o11y/insight/anomaly-detection/{settingSeq}:
     post:
-      tags:
-      - "[Insight] Anomaly Detection"
-      summary: PostAnomalyDetection
       description: Request anomaly detection
+      summary: PostAnomalyDetection
+      tags:
+      - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetection
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: settingSeq
         in: path
         required: true
-        schema:
-          type: integer
-          format: int32
+        type: integer
+        format: int32
+        description: ''
       responses:
-        "200":
+        '200':
           description: Successful Response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyVoid'
-      deprecated: false
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+          headers: {}
   /api/o11y/insight/predictions/options:
     get:
-      tags:
-      - "[Insight] Prediction"
+      description: Fetch the available target types, metric types, and prediction range options for the prediction API.
       summary: GetPredictionOptions
-      description: "Fetch the available target types, metric types, and prediction\
-        \ range options for the prediction API."
+      tags:
+      - '[Insight] Prediction'
       operationId: GetPredictionOptions
-      responses:
-        "200":
-          description: Successful retrieval of prediction options
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyPredictionOptions'
-              example:
-                data:
-                  target_types:
-                  - vm
-                  - mci
-                  measurements:
-                  - cpu
-                  - mem
-                  - disk
-                  - system load
-                  prediction_ranges:
-                    min: 1h
-                    max: 2160h
-                rs_code: "200"
-                rs_msg: Success
       deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful retrieval of prediction options
+          schema:
+            $ref: '#/definitions/ResBodyPredictionOptions'
+          examples:
+            application/json:
+              data:
+                target_types:
+                - vm
+                - mci
+                measurements:
+                - cpu
+                - mem
+                - disk
+                - system load
+                prediction_ranges:
+                  min: 1h
+                  max: 2160h
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      tags:
-      - "[Insight] Prediction"
+      description: "Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem load : load1\n"
       summary: PostPrediction
-      description: "Predict future metrics (cpu, mem, disk, system load) for a given\
-        \ vm or mci group.\n(measurememt : field) Relationships are as follows.  \n\
-        cpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem load\
-        \ : load1\n"
+      tags:
+      - '[Insight] Prediction'
       operationId: PostPrediction
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
       parameters:
       - name: nsId
         in: path
-        description: The Namespace ID for the prediction.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The Namespace ID for the prediction.
       - name: targetId
         in: path
-        description: The ID of the target vm or mci group.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The ID of the target vm or mci group.
       - name: Content-Type
         in: header
-        schema:
-          type: string
-          enum:
-          - application/json
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PredictionBody'
+        required: false
+        enum:
+        - application/json
+        type: string
+      - name: body
+        in: body
         required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PredictionBody'
       responses:
-        "200":
+        '200':
           description: Successful prediction response
-          content:
+          schema:
+            $ref: '#/definitions/ResBodyPredictionResult'
+          examples:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyPredictionResult'
-              example:
-                data:
-                  ns_id: string
-                  target_id: string
-                  measurement: cpu
-                  target_type: VM
-                  values:
-                  - timestamp: 2024-08-22T00:00:00Z
-                    value: 75
-                  - timestamp: 2024-08-22T01:00:00Z
-                    value: 78
-                  - timestamp: 2024-08-22T02:00:00Z
-                    value: 80
-                rs_code: "200"
-                rs_msg: Success
-      deprecated: false
-      x-codegen-request-body-name: body
+              data:
+                ns_id: string
+                target_id: string
+                measurement: cpu
+                target_type: vm
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 75
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 78
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 80
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
     get:
-      tags:
-      - "[Insight] Prediction"
+      description: Get previously stored prediction data for a specific vm or mci group.
       summary: GetPredictionHistory
-      description: Get previously stored prediction data for a specific vm or mci
-        group.
+      tags:
+      - '[Insight] Prediction'
       operationId: GetPredictionHistory
+      deprecated: false
+      produces:
+      - application/json
       parameters:
       - name: nsId
         in: path
-        description: The Namespace ID for the prediction.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The Namespace ID for the prediction.
       - name: targetId
         in: path
-        description: The ID of the target vm or mci group.
         required: true
-        schema:
-          type: string
+        type: string
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
-        description: The type of metric to retrieve.
         required: true
-        schema:
-          type: string
-          enum:
-          - cpu
-          - mem
-          - disk
-          - system load
+        enum:
+        - cpu
+        - mem
+        - disk
+        - system load
+        type: string
+        description: The type of metric to retrieve.
       - name: start_time
         in: query
-        description: "The start timestamp for the range of prediction data to retrieve.\
-          \  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not\
-          \ provided.\n"
-        schema:
-          type: string
+        required: false
+        type: string
+        description: "The start timestamp for the range of prediction data to retrieve.  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not provided."
       - name: end_time
         in: query
-        description: "The end timestamp for the range of prediction data to retrieve.\
-          \ \nFormat YYYY-MM-DDTHH:MM:SSZ. \nDefaults to 7 days after the current\
-          \ time if not provided.\n"
-        schema:
-          type: string
+        required: false
+        type: string
+        description: "The end timestamp for the range of prediction data to retrieve. \nFormat YYYY-MM-DDTHH:MM:SSZ. \nDefaults to 7 days after the current time if not provided."
       responses:
-        "200":
+        '200':
           description: Successfully retrieved prediction history
-          content:
+          schema:
+            $ref: '#/definitions/ResBodyPredictionHistory'
+          examples:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ResBodyPredictionHistory'
-              example:
-                data:
-                  ns_id: string
-                  target_id: string
-                  measurement: cpu
-                  values:
-                  - timestamp: 2024-08-22T00:00:00Z
-                    value: 50
-                  - timestamp: 2024-08-22T01:00:00Z
-                    value: 55
-                  - timestamp: 2024-08-22T02:00:00Z
-                    value: 60
-                rs_code: "200"
-                rs_msg: Success
-      deprecated: false
+              data:
+                ns_id: string
+                target_id: string
+                measurement: cpu
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 50
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 55
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 60
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
   /api/o11y/readyz:
     get:
+      description: ''
+      summary: GetReadyz
       tags:
-      - "[Health] Check API Health"
-      summary: Check API health status
+      - '[Health] Check API Health'
       operationId: GetReadyz
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
       responses:
-        "200":
+        '200':
           description: OK
-          content:
-            '*/*':
-              schema:
-                type: object
-                additionalProperties:
-                  type: object
-components:
-  schemas:
-    ResBodyObject:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: object
-          description: Response data
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    ResBodyVoid:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: object
-          description: Response data
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    TargetInfo:
-      type: object
-      properties:
-        ns_id:
-          type: string
-        mci_id:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        alias_name:
-          type: string
-        description:
-          type: string
-        state:
-          type: string
-    TargetInfoCreateUpdateDTO:
-      type: object
-      properties:
-        name:
-          type: string
-        alias_name:
-          type: string
-        description:
-          type: string
-    ConditionInfo:
-      type: object
-      properties:
-        key:
-          type: string
-        value:
-          type: string
-    LogsInfo:
-      type: object
-      properties:
-        range:
-          type: string
-        limit:
-          type: integer
-          format: int64
-        conditions:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConditionInfo'
-    ResBodyListMapStringObject:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
+          schema:
             type: object
             additionalProperties:
               type: object
-              description: Response data
-            description: Response data
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    MetricInfo:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Measurement name
-        columns:
-          type: array
-          description: Column name of values index
-          items:
-            type: string
-            description: Column name of values index
-        tags:
+              default: ''
+          headers: {}
+definitions:
+  ResBodyObject:
+    title: ResBodyObject
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: object
+      error_message:
+        description: Error message
+        type: string
+  ResBodyVoid:
+    title: ResBodyVoid
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: object
+      error_message:
+        description: Error message
+        type: string
+  TargetInfo:
+    title: TargetInfo
+    type: object
+    properties:
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      alias_name:
+        type: string
+      description:
+        type: string
+      state:
+        type: string
+  TargetInfoCreateUpdateDTO:
+    title: TargetInfoCreateUpdateDTO
+    type: object
+    properties:
+      name:
+        type: string
+      alias_name:
+        type: string
+      description:
+        type: string
+  ConditionInfo:
+    title: ConditionInfo
+    type: object
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+  LogsInfo:
+    title: LogsInfo
+    type: object
+    properties:
+      range:
+        type: string
+      limit:
+        type: integer
+        format: int64
+      conditions:
+        type: array
+        items:
+          $ref: '#/definitions/ConditionInfo'
+  ResBodyListMapStringObject:
+    title: ResBodyListMapStringObject
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
           type: object
-          additionalProperties:
-            type: string
-            description: tag list of metric
-          description: tag list of metric
-        values:
-          type: array
-          description: Sequence by monitoring item
-          items:
-            type: array
-            description: Sequence by monitoring item
-            items:
-              type: object
-              description: Sequence by monitoring item
-      description: Metric information
-    ResBodyListMetricInfo:
-      type: object
-      properties:
-        rs_code:
+      error_message:
+        description: Error message
+        type: string
+  MetricInfo:
+    title: MetricInfo
+    description: Metric information
+    type: object
+    properties:
+      name:
+        description: Measurement name
+        type: string
+      columns:
+        description: Column name of values index
+        type: array
+        items:
           type: string
-          description: Response code
-        rs_msg:
+      tags:
+        description: tag list of metric
+        type: object
+        additionalProperties:
           type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/MetricInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    FieldInfo:
-      type: object
-      properties:
-        function:
-          type: string
-        field:
-          type: string
-      example:
-      - function: mean
-        field: usage_idle
-    MetricsInfo:
-      required:
-      - measurement
-      - range
-      type: object
-      properties:
-        measurement:
-          type: string
-          example: cpu
-        range:
-          type: string
-          description: "timeunit s,m,h,d(second, minute, hour, day)"
-          example: 1h
-        group_time:
-          type: string
-          description: "timeunit s,m,h,d(second, minute, hour, day)"
-          example: 1h
-        group_by:
-          type: array
-          example:
-          - cpu
-          items:
-            type: string
-            example: "[\"cpu\"]"
-        limit:
-          type: integer
-          format: int64
-          example: 10
-        fields:
-          type: array
-          example:
-          - function: mean
-            field: usage_idle
-          items:
-            $ref: '#/components/schemas/FieldInfo'
-        conditions:
-          type: array
-          example:
-          - key: cpu
-            value: cpu-total
-          items:
-            $ref: '#/components/schemas/ConditionInfo'
-    ResBodyListTargetInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/TargetInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    ResBodyTargetInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          $ref: '#/components/schemas/TargetInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    MonitoringConfigInfo:
-      type: object
-      properties:
-        seq:
-          type: integer
-          format: int64
-        ns_id:
-          type: string
-        mci_id:
-          type: string
-        target_id:
-          type: string
-        name:
-          type: string
-        state:
-          type: string
-        plugin_seq:
-          type: integer
-          format: int64
-        plugin_name:
-          type: string
-        plugin_type:
-          type: string
-        plugin_config:
-          type: string
-      description: Response data
-    MonitoringConfigInfoCreateDTO:
-      type: object
-      properties:
-        name:
-          type: string
-        plugin_seq:
-          type: integer
-          format: int64
-        plugin_config:
-          type: string
-    MonitoringConfigInfoUpdateDTO:
-      type: object
-      properties:
-        seq:
-          type: integer
-          format: int64
-        plugin_config:
-          type: string
-    ResBodyListMonitoringConfigInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/MonitoringConfigInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    MiningDBSetDTO:
-      type: object
-      properties:
-        url:
-          type: string
-        database:
-          type: string
-        retention_policy:
-          type: string
-        username:
-          type: string
-        password:
-          type: string
-      description: MiningDB information
-    Data:
-      type: object
-      properties:
-        metric_name:
-          type: string
-        metric_unit:
-          type: string
-        timestamp_values:
+      values:
+        description: Sequence by monitoring item
+        type: array
+        items:
           type: array
           items:
-            $ref: '#/components/schemas/TimestampValue'
-      description: Response data
-    ResBodyData:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          $ref: '#/components/schemas/Data'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    TimestampValue:
-      type: object
-      properties:
-        timestamp:
-          type: string
-        value:
-          type: string
-    PluginDefInfo:
-      type: object
-      properties:
-        seq:
-          type: integer
-          description: Plugin identify sequence number
-          format: int64
-        name:
-          type: string
-          description: Plugin name
-        plugin_id:
-          type: string
-          description: Plugin ID
-        plugin_type:
-          type: string
-          description: Plugin type
-      description: Response data
-    ResBodyListPluginDefInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/PluginDefInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    OpenSearchInfo:
-      type: object
-      properties:
-        seq:
-          type: integer
-          format: int64
-        url:
-          type: string
-        index_name:
-          type: string
-        username:
-          type: string
-        password:
-          type: string
-      description: Response data
-    ResBodyListOpenSearchInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/OpenSearchInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    NS:
-      type: object
-      properties:
-        id:
-          type: string
-        description:
-          type: string
-        name:
-          type: string
-        resource_type:
-          type: string
-        uid:
-          type: string
-    TumblebugNS:
-      type: object
-      properties:
-        ns:
-          type: array
-          items:
-            $ref: '#/components/schemas/NS'
-    MiningDBInfo:
-      type: object
-      properties:
-        url:
-          type: string
-        database:
-          type: string
-        retention_policy:
-          type: string
-        username:
-          type: string
-        password:
-          type: string
-      description: Response data
-    ResBodyMiningDBInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          $ref: '#/components/schemas/MiningDBInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    MeasurementTagInfo:
-      type: object
-      properties:
-        measurement:
-          type: string
-          description: influxDB measurement name
-          example: cpu
-        tags:
-          type: array
-          description: influxDB tag list on measurement
-          example:
-          - cpu
-          - host
-          items:
-            type: string
-            description: influxDB tag list on measurement
-            example: "[\"cpu\",\"host\"]"
-      description: InfluxDB measurement tag information
-    ResBodyListMeasurementTagInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/MeasurementTagInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    MeasurementFieldInfo:
-      type: object
-      properties:
-        measurement:
-          type: string
-          description: influxDB measurement name
-          example: cpu
-        fields:
-          type: array
-          description: influxDB field list on measurement
-          example:
-          - key: usage_guest
-            type: float
-          items:
-            $ref: '#/components/schemas/FieldInfo'
-      description: Measurement field information
-    ResBodyListMeasurementFieldInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/MeasurementFieldInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    InfluxDBInfo:
-      type: object
-      properties:
-        seq:
-          type: integer
-          description: Sequence number
-          format: int64
-        url:
-          type: string
-          description: Host url
-          example: http://localhost:8086
-        database:
-          type: string
-          description: Database name
-          example: mc-agent
-        retention_policy:
-          type: string
-          description: Data retention policy name
-          example: autogen
-        username:
-          type: string
-          description: Authentication username
-          example: mc-agent
-        password:
-          type: string
-          description: Authentication password
-          example: mc-agent
-      description: InfluxDB information
-    ResBodyListInfluxDBInfo:
-      type: object
-      properties:
-        rs_code:
-          type: string
-          description: Response code
-        rs_msg:
-          type: string
-          description: Response message
-        data:
-          type: array
-          description: Response data
-          items:
-            $ref: '#/components/schemas/InfluxDBInfo'
-        error_message:
-          type: string
-          description: Error message
-      description: Generic response body wrapper
-    TriggerEmailUserCreateDto:
-      title: TriggerEmailUserCreateDto
-      type: object
-      properties:
-        email:
-          type: string
-          description: Alert Receiver Email
-        name:
-          type: string
-          description: Trigger Alert Email User name
-    ResBodyListTriggerEmailUserInfo:
-      title: ResBodyListTriggerEmailUserInfo
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerEmailUserInfo'
-        rs_code:
-          type: string
-        rs_msg:
-          type: string
-    TriggerEmailUserInfo:
-      title: TriggerEmailUserInfo
-      type: object
-      properties:
-        email:
-          type: string
-          description: Alert Receiver Email
-        name:
-          type: string
-          description: Trigger Alert Email User name
-        policy_seq:
-          type: integer
-          description: Sequence by trigger policy
-          format: int64
-          example: 1
-        seq:
-          type: integer
-          description: Sequence by Trigger Email User
-          format: int64
-          example: 1
-    ResBodyListTriggerSlackUserInfo:
-      title: ResBodyListTriggerSlackUserInfo
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerSlackUserInfo'
-        rs_code:
-          type: string
-        rs_msg:
-          type: string
-    TriggerSlackUserCreateDto:
-      title: TriggerSlackUserCreateDto
-      type: object
-      properties:
-        channel:
-          type: string
-          description: Base64 Encoded value
-        name:
-          type: string
-          description: Trigger Alert Slack User name
-        token:
-          type: string
-          description: Base64 Encoded value
-    TriggerSlackUserInfo:
-      title: TriggerSlackUserInfo
-      type: object
-      properties:
-        channel:
-          type: string
-          description: Base64 Encoded value
-        name:
-          type: string
-          description: Trigger Alert Slack User name
-        policy_seq:
-          type: integer
-          description: Sequence by trigger policy
-          format: int64
-          example: 1
-        seq:
-          type: integer
-          description: Sequence by Trigger Slack User
-          format: int64
-          example: 1
-        token:
-          type: string
-          description: Base64 Encoded value
-    ResBodyListTriggerHistoryInfo:
-      title: ResBodyListTriggerHistoryInfo
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerHistoryInfo'
-        rs_code:
-          type: string
-        rs_msg:
-          type: string
-    TriggerHistoryInfo:
-      title: TriggerHistoryInfo
-      type: object
-      properties:
-        create_at:
-          type: string
-          description: The time when the history was inserted into the database
-          example: 2024-05-24T11:31:55Z
-        data:
-          type: string
-          description: Trigger event alarm details
-        level:
-          type: string
-          description: Trigger event level
-        measurement:
-          type: string
-          description: Trigger event target metric name
-        name:
-          type: string
-          description: Base64 Encoded value
-          example: localhost
-        ns_id:
-          type: string
-          description: Namespace Id
-        occur_time:
-          type: string
-          description: The time when the history occurred
-        policy_seq:
-          type: integer
-          description: Sequence by trigger policy
-          format: int64
-          example: 1
-        seq:
-          type: integer
-          description: Sequence by history
-          format: int64
-          example: 1
-        target_id:
-          type: string
-          description: Vm Id
-        target_seq:
-          type: integer
-          description: Sequence by trigger target
-          format: int64
-          example: 1
-    ResBodyListTriggerPolicyInfo:
-      title: ResBodyListTriggerPolicyInfo
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerPolicyInfo'
-        rs_code:
-          type: string
-        rs_msg:
-          type: string
-    TriggerPolicyInfo:
-      title: TriggerPolicyInfo
-      type: object
-      properties:
-        agent_manager_ip:
-          type: string
-          description: Agent Manager IP
-          example: http://mc-o11y-manager:18080
-        create_at:
-          type: string
-          description: The time when the trigger policy was registered
-          example: 2024-05-24T11:31:55Z
-        description:
-          type: string
-          description: Host description
-          example: ZGVzY3JpcHRpb24=
-        field:
-          type: string
-          description: Trigger target metric field
-          example: usage_idle
-        measurement:
-          type: string
-          description: Trigger target metric
-          example: cpu
-        name:
-          type: string
-          description: Base64 Encoded value
-          example: Y3B1IHVzYWdlX2lkbGUgY2hlY2sgcG9saWN5
-        seq:
-          type: integer
-          description: Sequence by trigger policy
-          format: int64
-          example: 1
-        statistics:
-          type: string
-          description: Trigger target metric statistics
-          example: min
-        status:
-          type: string
-          description: Trigger Policy enablement status
-          enum:
-          - DISABLED
-          - ENABLED
-        threshold:
-          type: string
-          description: Base64 Encoded value
-          example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-        update_at:
-          type: string
-          description: The time when the trigger policy was updated
-    TriggerPolicyCreateDTO:
-      title: TriggerPolicyCreateDTO
-      type: object
-      properties:
-        description:
-          type: string
-          description: Host description
-          example: ZGVzY3JpcHRpb24=
-        field:
-          type: string
-          description: Trigger target metric field
-          example: usage_idle
-        measurement:
-          type: string
-          description: Trigger target metric
-          enum:
-          - cpu
-          - disk
-          - mem
-        name:
-          type: string
-          description: Base64 Encoded value
-          example: Y3B1IHBvbGljeQ==
-        statistics:
-          type: string
-          description: Trigger target metric statistics
-          example: min
-        status:
-          type: string
-          description: Trigger Policy enablement status
-          enum:
-          - DISABLED
-          - ENABLED
-        threshold:
-          type: string
-          description: Base64 Encoded value
-          example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-    TriggerPolicyUpdateDto:
-      title: TriggerPolicyUpdateDto
-      type: object
-      properties:
-        description:
-          type: string
-          description: Host description
-          example: ZGVzY3JpcHRpb24=
-        field:
-          type: string
-          description: Trigger target metric field
-          example: usage_idle
-        measurement:
-          type: string
-          description: Trigger target metric
-          example: cpu
-        name:
-          type: string
-          description: Base64 Encoded value
-          example: Y3B1IHBvbGljeQ==
-        statistics:
-          type: string
-          description: Trigger target metric statistics
-          example: min
-        status:
-          type: string
-          description: Trigger Policy enablement status
-          enum:
-          - DISABLED
-          - ENABLED
-        threshold:
-          type: string
-          description: Base64 Encoded value
-          example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-    ResBodyListTriggerTargetInfo:
-      title: ResBodyListTriggerTargetInfo
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/TriggerTargetInfo'
-        rs_code:
-          type: string
-        rs_msg:
-          type: string
-    TriggerTargetInfo:
-      type: object
-      properties:
-        alias_name:
-          type: string
-          description: Host Alias Name
-          example: test-vm
-        create_at:
-          type: string
-          description: The time when the trigger target was registered
-          example: 2024-05-24T11:31:55Z
-        name:
-          type: string
-          description: Host name
-          example: vm1
-        ns_id:
-          type: string
-          description: Namespace Id
-        policy_seq:
-          type: integer
-          description: Sequence by trigger policy
-          format: int64
-          example: 1
-        seq:
-          type: integer
-          description: Sequence by trigger target
-          format: int64
-          example: 1
-        targetId:
-          type: string
-    AnomalyDetectionHistoryResponse:
-      title: AnomalyDetectionHistoryResponse
-      required:
-      - measurement
-      - ns_id
-      - target_id
-      - values
-      type: object
-      properties:
-        ns_id:
-          type: string
-          description: The Namespace ID.
-        target_id:
-          type: string
-          description: The ID of the target (VM ID or MCI ID).
-        measurement:
-          type: string
-          description: "The type of metric being monitored for anomalies (e.g., cpu,\
-            \ mem)."
-          example: cpu
-        values:
-          type: array
-          description: List of anomaly detection results for the given time range.
-          items:
-            $ref: '#/components/schemas/AnomalyDetectionHistoryValue'
-    AnomalyDetectionHistoryValue:
-      title: AnomalyDetectionHistoryValue
-      required:
-      - anomaly_score
-      - isAnomaly
-      - timestamp
-      - value
-      type: object
-      properties:
-        timestamp:
-          type: string
-          description: The timestamp for the anomaly detection result.
-          example: 2024-10-10T06:08:00Z
-        anomaly_score:
-          type: number
-          description: The anomaly score for the corresponding timestamp.
-          format: double
-          example: 0.85
-        isAnomaly:
-          type: integer
-          description: Whether the data point is considered an anomaly (1) or normal
-            (0).
-          format: int32
-          example: 1
-        value:
-          type: number
-          description: The original monitoring data value for the corresponding timestamp.
-          format: double
-          example: 99.5
-    AnomalyDetectionOptions:
-      title: AnomalyDetectionOptions
-      required:
-      - execution_intervals
-      - measurements
-      - target_types
-      type: object
-      properties:
-        target_types:
-          type: array
-          items:
-            type: string
-        measurements:
-          type: array
-          items:
-            type: string
-        execution_intervals:
-          type: array
-          items:
-            type: string
-    AnomalyDetectionSettings:
-      title: AnomalyDetectionSettings
-      required:
-      - create_at
-      - execution_interval
-      - last_execution
-      - measurement
-      - ns_id
-      - seq
-      - target_id
-      - target_type
-      type: object
-      properties:
-        seq:
-          type: integer
-          format: int32
-          example: 1
-        ns_id:
-          type: string
-          example: ns01
-        target_id:
-          type: string
-          example: vm01
-        target_type:
-          type: string
-          example: vm
-        measurement:
-          type: string
-          example: cpu
-        execution_interval:
-          type: string
-          example: 5m
-        last_execution:
-          type: string
-          example: 2024-10-10T06:08:48Z
-        create_at:
-          type: string
-          example: 2024-10-10T03:08:48Z
-    AnomalyDetectionTargetRegistration:
-      title: AnomalyDetectionTargetRegistration
-      required:
-      - execution_interval
-      - measurement
-      - ns_id
-      - target_id
-      - target_type
-      type: object
-      properties:
-        ns_id:
-          type: string
-        target_id:
-          type: string
-        target_type:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/TargetType'
-          - type: object
-            description: The type of the target (vm or mci).
-            example: vm
-        measurement:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/MetricType'
-          - type: object
-            description: The type of metric being monitored for anomalies (cpu or
-              mem)
-            example: cpu
-        execution_interval:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/ExecutionInterval'
-          - type: object
-            description: "The interval at which anomaly detection runs (5m, 10m, 30m)"
-            example: 5m
-    AnomalyDetectionTargetUpdate:
-      title: AnomalyDetectionTargetUpdate
-      required:
-      - execution_interval
-      type: object
-      properties:
-        execution_interval:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/ExecutionInterval'
-          - type: object
-            description: "The interval at which anomaly detection runs (5m, 10m, 30m)"
-            example: 5m
-    ExecutionInterval:
-      title: ExecutionInterval
-      type: string
-      description: An enumeration.
-      enum:
-      - 5m
-      - 10m
-      - 30m
-    HistoryValue:
-      title: HistoryValue
-      required:
-      - timestamp
-      type: object
-      properties:
-        timestamp:
-          type: string
-        value:
-          type: number
-          format: double
-    Measurement:
-      title: Measurement
-      type: string
-      description: An enumeration.
-      enum:
-      - cpu
-      - mem
-    PredictValue:
-      title: PredictValue
-      required:
-      - timestamp
-      type: object
-      properties:
-        timestamp:
-          type: string
-        value:
-          type: number
-          format: double
-    PredictionBody:
-      title: PredictionBody
-      required:
-      - measurement
-      - prediction_range
-      - target_type
-      type: object
-      properties:
-        target_type:
-          type: string
-          description: The type of the target (vm or mci).
-          example: vm
-        measurement:
-          type: object
-          allOf:
-          - $ref: '#/components/schemas/PredictionMetricType'
-          - type: object
-            description: "The type of metric being monitored for predictions(cpu,\
-              \ mem, disk, system load)"
-            example: cpu
-        prediction_range:
-          type: string
-          description: "Data prediction range as of now (1h~2,160h)"
-          example: 24h
-    PredictionHistory:
-      title: PredictionHistory
-      required:
-      - measurement
-      - ns_id
-      - target_id
-      - values
-      type: object
-      properties:
-        ns_id:
-          type: string
-        target_id:
-          type: string
-        measurement:
-          type: string
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/HistoryValue'
-    PredictionMetricType:
-      title: PredictionMetricType
-      type: string
-      description: An enumeration.
-      enum:
-      - cpu
-      - mem
-      - disk
-      - system load
-    PredictionOptions:
-      title: PredictionOptions
-      required:
-      - measurements
-      - prediction_ranges
-      - target_types
-      type: object
-      properties:
-        target_types:
-          type: array
-          items:
-            type: string
-        measurements:
-          type: array
-          items:
-            type: string
-        prediction_ranges:
-          type: object
-          additionalProperties:
-            type: string
-    PredictionResult:
-      title: PredictionResult
-      required:
-      - measurement
-      - ns_id
-      - target_id
-      - target_type
-      - values
-      type: object
-      properties:
-        ns_id:
-          type: string
-        target_id:
-          type: string
-        measurement:
-          type: string
-        target_type:
-          type: string
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/PredictValue'
-    ResBodyAnomalyDetectionHistoryResponse:
-      title: ResBodyAnomalyDetectionHistoryResponse
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/AnomalyDetectionHistoryResponse'
-        rs_code:
-          type: string
-          description: Response code
-          default: "200"
-        rs_msg:
-          type: string
-          description: Response message
-          default: Success
-    ResBodyAnomalyDetectionOptions:
-      title: ResBodyAnomalyDetectionOptions
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/AnomalyDetectionOptions'
-        rs_code:
-          type: string
-          default: "200"
-        rs_msg:
-          type: string
-          default: Success
-    ResBodyAnomalyDetectionSettings:
-      title: ResBodyAnomalyDetectionSettings
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnomalyDetectionSettings'
-        rs_code:
-          type: string
-          default: "200"
-        rs_msg:
-          type: string
-          default: Success
-    ResBodyPredictionHistory:
-      title: ResBodyPredictionHistory
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/PredictionHistory'
-        rs_code:
-          type: string
-          default: "200"
-        rs_msg:
-          type: string
-          default: Success
-    ResBodyPredictionOptions:
-      title: ResBodyPredictionOptions
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/PredictionOptions'
-        rs_code:
-          type: string
-          default: "200"
-        rs_msg:
-          type: string
-          default: Success
-    ResBodyPredictionResult:
-      title: ResBodyPredictionResult
-      required:
-      - data
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/PredictionResult'
-        rs_code:
-          type: string
-          default: "200"
-        rs_msg:
-          type: string
-          default: Success
-    TargetType:
-      title: TargetType
-      type: string
-      description: An enumeration.
-      enum:
-      - vm
-      - mci
-    MetricType:
-      title: MetricType
-      type: string
-      description: An enumeration.
-      enum:
-      - cpu
-      - mem
-
-x-original-swagger-version: "2.0"
+            type: object
+  ResBodyListMetricInfo:
+    title: ResBodyListMetricInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/MetricInfo'
+      error_message:
+        description: Error message
+        type: string
+  FieldInfo:
+    title: FieldInfo
+    type: object
+    properties:
+      function:
+        type: string
+      field:
+        type: string
+  MetricsInfo:
+    title: MetricsInfo
+    type: object
+    properties:
+      measurement:
+        example: cpu
+        type: string
+      range:
+        description: timeunit s,m,h,d(second, minute, hour, day)
+        example: 1h
+        type: string
+      group_time:
+        description: timeunit s,m,h,d(second, minute, hour, day)
+        example: 1h
+        type: string
+      group_by:
+        example:
+        - cpu
+        type: array
+        items:
+          type: string
+      limit:
+        example: 10
+        type: integer
+        format: int64
+      fields:
+        example:
+        - function: mean
+          field: usage_idle
+        type: array
+        items:
+          $ref: '#/definitions/FieldInfo'
+      conditions:
+        example:
+        - key: target_id
+          value: vm-1
+        type: array
+        items:
+          $ref: '#/definitions/ConditionInfo'
+    required:
+    - measurement
+    - range
+  ResBodyListTargetInfo:
+    title: ResBodyListTargetInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/TargetInfo'
+      error_message:
+        description: Error message
+        type: string
+  ResBodyTargetInfo:
+    title: ResBodyTargetInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        $ref: '#/definitions/TargetInfo'
+      error_message:
+        description: Error message
+        type: string
+  MonitoringConfigInfo:
+    title: MonitoringConfigInfo
+    description: Response data
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      target_id:
+        type: string
+      name:
+        type: string
+      state:
+        type: string
+      plugin_seq:
+        type: integer
+        format: int64
+      plugin_name:
+        type: string
+      plugin_type:
+        type: string
+      plugin_config:
+        type: string
+  MonitoringConfigInfoCreateDTO:
+    title: MonitoringConfigInfoCreateDTO
+    type: object
+    properties:
+      name:
+        type: string
+      plugin_seq:
+        type: integer
+        format: int64
+      plugin_config:
+        type: string
+  MonitoringConfigInfoUpdateDTO:
+    title: MonitoringConfigInfoUpdateDTO
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      plugin_config:
+        type: string
+  ResBodyListMonitoringConfigInfo:
+    title: ResBodyListMonitoringConfigInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/MonitoringConfigInfo'
+      error_message:
+        description: Error message
+        type: string
+  MiningDBSetDTO:
+    title: MiningDBSetDTO
+    description: MiningDB information
+    type: object
+    properties:
+      url:
+        type: string
+      database:
+        type: string
+      retention_policy:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+  Data:
+    title: Data
+    description: Response data
+    type: object
+    properties:
+      metric_name:
+        type: string
+      metric_unit:
+        type: string
+      timestamp_values:
+        type: array
+        items:
+          $ref: '#/definitions/TimestampValue'
+  ResBodyData:
+    title: ResBodyData
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        type: object
+        allOf:
+        - $ref: '#/definitions/Data'
+        - description: Response data
+      error_message:
+        description: Error message
+        type: string
+  TimestampValue:
+    title: TimestampValue
+    type: object
+    properties:
+      timestamp:
+        type: string
+      value:
+        type: string
+  PluginDefInfo:
+    title: PluginDefInfo
+    description: Response data
+    type: object
+    properties:
+      seq:
+        description: Plugin identify sequence number
+        type: integer
+        format: int64
+      name:
+        description: Plugin name
+        type: string
+      plugin_id:
+        description: Plugin ID
+        type: string
+      plugin_type:
+        description: Plugin type
+        type: string
+  ResBodyListPluginDefInfo:
+    title: ResBodyListPluginDefInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/PluginDefInfo'
+      error_message:
+        description: Error message
+        type: string
+  OpenSearchInfo:
+    title: OpenSearchInfo
+    description: Response data
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      url:
+        type: string
+      index_name:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+  ResBodyListOpenSearchInfo:
+    title: ResBodyListOpenSearchInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/OpenSearchInfo'
+      error_message:
+        description: Error message
+        type: string
+  NS:
+    title: NS
+    type: object
+    properties:
+      id:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      resource_type:
+        type: string
+      uid:
+        type: string
+  TumblebugNS:
+    title: TumblebugNS
+    type: object
+    properties:
+      ns:
+        type: array
+        items:
+          $ref: '#/definitions/NS'
+  MiningDBInfo:
+    title: MiningDBInfo
+    description: Response data
+    type: object
+    properties:
+      url:
+        type: string
+      database:
+        type: string
+      retention_policy:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
+  ResBodyMiningDBInfo:
+    title: ResBodyMiningDBInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        type: object
+        allOf:
+        - $ref: '#/definitions/MiningDBInfo'
+        - description: Response data
+      error_message:
+        description: Error message
+        type: string
+  MeasurementTagInfo:
+    title: MeasurementTagInfo
+    description: InfluxDB measurement tag information
+    type: object
+    properties:
+      measurement:
+        description: influxDB measurement name
+        example: cpu
+        type: string
+      tags:
+        description: influxDB tag list on measurement
+        example:
+        - cpu
+        - host
+        type: array
+        items:
+          type: string
+  ResBodyListMeasurementTagInfo:
+    title: ResBodyListMeasurementTagInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/MeasurementTagInfo'
+      error_message:
+        description: Error message
+        type: string
+  MeasurementFieldInfo:
+    title: MeasurementFieldInfo
+    description: Measurement field information
+    type: object
+    properties:
+      measurement:
+        description: influxDB measurement name
+        example: cpu
+        type: string
+      fields:
+        description: influxDB field list on measurement
+        example:
+        - key: usage_guest
+          type: float
+        type: array
+        items:
+          $ref: '#/definitions/FieldInfo'
+  ResBodyListMeasurementFieldInfo:
+    title: ResBodyListMeasurementFieldInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/MeasurementFieldInfo'
+      error_message:
+        description: Error message
+        type: string
+  InfluxDBInfo:
+    title: InfluxDBInfo
+    description: InfluxDB information
+    type: object
+    properties:
+      seq:
+        description: Sequence number
+        type: integer
+        format: int64
+      url:
+        description: Host url
+        example: http://localhost:8086
+        type: string
+      database:
+        description: Database name
+        example: mc-agent
+        type: string
+      retention_policy:
+        description: Data retention policy name
+        example: autogen
+        type: string
+      username:
+        description: Authentication username
+        example: mc-agent
+        type: string
+      password:
+        description: Authentication password
+        example: mc-agent
+        type: string
+  ResBodyListInfluxDBInfo:
+    title: ResBodyListInfluxDBInfo
+    description: Generic response body wrapper
+    type: object
+    properties:
+      rs_code:
+        description: Response code
+        type: string
+      rs_msg:
+        description: Response message
+        type: string
+      data:
+        description: Response data
+        type: array
+        items:
+          $ref: '#/definitions/InfluxDBInfo'
+      error_message:
+        description: Error message
+        type: string
+  TriggerEmailUserCreateDto:
+    title: TriggerEmailUserCreateDto
+    type: object
+    properties:
+      email:
+        description: Alert Receiver Email
+        type: string
+      name:
+        description: Trigger Alert Email User name
+        type: string
+  ResBodyListTriggerEmailUserInfo:
+    title: ResBodyListTriggerEmailUserInfo
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerEmailUserInfo'
+      rs_code:
+        type: string
+      rs_msg:
+        type: string
+  TriggerEmailUserInfo:
+    title: TriggerEmailUserInfo
+    type: object
+    properties:
+      email:
+        description: Alert Receiver Email
+        type: string
+      name:
+        description: Trigger Alert Email User name
+        type: string
+      policy_seq:
+        description: Sequence by trigger policy
+        example: 1
+        type: integer
+        format: int64
+      seq:
+        description: Sequence by Trigger Email User
+        example: 1
+        type: integer
+        format: int64
+  ResBodyListTriggerSlackUserInfo:
+    title: ResBodyListTriggerSlackUserInfo
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerSlackUserInfo'
+      rs_code:
+        type: string
+      rs_msg:
+        type: string
+  TriggerSlackUserCreateDto:
+    title: TriggerSlackUserCreateDto
+    type: object
+    properties:
+      channel:
+        description: Base64 Encoded value
+        type: string
+      name:
+        description: Trigger Alert Slack User name
+        type: string
+      token:
+        description: Base64 Encoded value
+        type: string
+  TriggerSlackUserInfo:
+    title: TriggerSlackUserInfo
+    type: object
+    properties:
+      channel:
+        description: Base64 Encoded value
+        type: string
+      name:
+        description: Trigger Alert Slack User name
+        type: string
+      policy_seq:
+        description: Sequence by trigger policy
+        example: 1
+        type: integer
+        format: int64
+      seq:
+        description: Sequence by Trigger Slack User
+        example: 1
+        type: integer
+        format: int64
+      token:
+        description: Base64 Encoded value
+        type: string
+  ResBodyListTriggerHistoryInfo:
+    title: ResBodyListTriggerHistoryInfo
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerHistoryInfo'
+      rs_code:
+        type: string
+      rs_msg:
+        type: string
+  TriggerHistoryInfo:
+    title: TriggerHistoryInfo
+    type: object
+    properties:
+      create_at:
+        description: The time when the history was inserted into the database
+        example: 2024-05-24T11:31:55Z
+        type: string
+      data:
+        description: Trigger event alarm details
+        type: string
+      level:
+        description: Trigger event level
+        type: string
+      measurement:
+        description: Trigger event target metric name
+        type: string
+      name:
+        description: Base64 Encoded value
+        example: localhost
+        type: string
+      ns_id:
+        description: Namespace Id
+        type: string
+      occur_time:
+        description: The time when the history occurred
+        type: string
+      policy_seq:
+        description: Sequence by trigger policy
+        example: 1
+        type: integer
+        format: int64
+      seq:
+        description: Sequence by history
+        example: 1
+        type: integer
+        format: int64
+      target_id:
+        description: Vm Id
+        type: string
+      target_seq:
+        description: Sequence by trigger target
+        example: 1
+        type: integer
+        format: int64
+  ResBodyListTriggerPolicyInfo:
+    title: ResBodyListTriggerPolicyInfo
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerPolicyInfo'
+      rs_code:
+        type: string
+      rs_msg:
+        type: string
+  TriggerPolicyInfo:
+    title: TriggerPolicyInfo
+    type: object
+    properties:
+      agent_manager_ip:
+        description: Agent Manager IP
+        example: http://mc-o11y-manager:18080
+        type: string
+      create_at:
+        description: The time when the trigger policy was registered
+        example: 2024-05-24T11:31:55Z
+        type: string
+      description:
+        description: Host description
+        example: ZGVzY3JpcHRpb24=
+        type: string
+      field:
+        description: Trigger target metric field
+        example: usage_idle
+        type: string
+      measurement:
+        description: Trigger target metric
+        example: cpu
+        type: string
+      name:
+        description: Base64 Encoded value
+        example: Y3B1IHVzYWdlX2lkbGUgY2hlY2sgcG9saWN5
+        type: string
+      seq:
+        description: Sequence by trigger policy
+        example: 1
+        type: integer
+        format: int64
+      statistics:
+        description: Trigger target metric statistics
+        example: min
+        type: string
+      status:
+        type: object
+        allOf:
+        - $ref: '#/definitions/Status'
+        - description: Trigger Policy enablement status
+      threshold:
+        description: Base64 Encoded value
+        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
+        type: string
+      update_at:
+        description: The time when the trigger policy was updated
+        type: string
+  TriggerPolicyCreateDTO:
+    title: TriggerPolicyCreateDTO
+    type: object
+    properties:
+      description:
+        description: Host description
+        example: ZGVzY3JpcHRpb24=
+        type: string
+      field:
+        description: Trigger target metric field
+        example: usage_idle
+        type: string
+      measurement:
+        type: object
+        allOf:
+        - $ref: '#/definitions/TriggerMeasurement'
+        - description: Trigger target metric
+      name:
+        description: Base64 Encoded value
+        example: Y3B1IHBvbGljeQ==
+        type: string
+      statistics:
+        description: Trigger target metric statistics
+        example: min
+        type: string
+      status:
+        type: object
+        allOf:
+        - $ref: '#/definitions/Status'
+        - description: Trigger Policy enablement status
+      threshold:
+        description: Base64 Encoded value
+        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
+        type: string
+  TriggerPolicyUpdateDto:
+    title: TriggerPolicyUpdateDto
+    type: object
+    properties:
+      description:
+        description: Host description
+        example: ZGVzY3JpcHRpb24=
+        type: string
+      field:
+        description: Trigger target metric field
+        example: usage_idle
+        type: string
+      measurement:
+        description: Trigger target metric
+        example: cpu
+        type: string
+      name:
+        description: Base64 Encoded value
+        example: Y3B1IHBvbGljeQ==
+        type: string
+      statistics:
+        description: Trigger target metric statistics
+        example: min
+        type: string
+      status:
+        type: object
+        allOf:
+        - $ref: '#/definitions/Status'
+        - description: Trigger Policy enablement status
+      threshold:
+        description: Base64 Encoded value
+        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
+        type: string
+  ResBodyListTriggerTargetInfo:
+    title: ResBodyListTriggerTargetInfo
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TriggerTargetInfo'
+      rs_code:
+        type: string
+      rs_msg:
+        type: string
+  TriggerTargetInfo:
+    title: TriggerTargetInfo
+    type: object
+    properties:
+      alias_name:
+        description: Host Alias Name
+        example: test-vm
+        type: string
+      create_at:
+        description: The time when the trigger target was registered
+        example: 2024-05-24T11:31:55Z
+        type: string
+      name:
+        description: Host name
+        example: vm1
+        type: string
+      ns_id:
+        description: Namespace Id
+        type: string
+      policy_seq:
+        description: Sequence by trigger policy
+        example: 1
+        type: integer
+        format: int64
+      seq:
+        description: Sequence by trigger target
+        example: 1
+        type: integer
+        format: int64
+      targetId:
+        type: string
+  AnomalyDetectionHistoryResponse:
+    title: AnomalyDetectionHistoryResponse
+    type: object
+    properties:
+      ns_id:
+        description: The Namespace ID.
+        type: string
+      target_id:
+        description: The ID of the target (vm ID or mci ID).
+        type: string
+      measurement:
+        description: The type of metric being monitored for anomalies (e.g., cpu, mem).
+        example: cpu
+        type: string
+      values:
+        description: List of anomaly detection results for the given time range.
+        type: array
+        items:
+          $ref: '#/definitions/AnomalyDetectionHistoryValue'
+    required:
+    - ns_id
+    - target_id
+    - measurement
+    - values
+  AnomalyDetectionHistoryValue:
+    title: AnomalyDetectionHistoryValue
+    type: object
+    properties:
+      timestamp:
+        description: The timestamp for the anomaly detection result.
+        example: 2024-10-10T06:08:00Z
+        type: string
+      anomaly_score:
+        description: The anomaly score for the corresponding timestamp.
+        example: 0.85
+        type: number
+        format: double
+      isAnomaly:
+        description: Whether the data point is considered an anomaly (1) or normal (0).
+        example: 1
+        type: integer
+        format: int32
+      value:
+        description: The original monitoring data value for the corresponding timestamp.
+        example: 99.5
+        type: number
+        format: double
+    required:
+    - timestamp
+    - anomaly_score
+    - isAnomaly
+    - value
+  AnomalyDetectionOptions:
+    title: AnomalyDetectionOptions
+    type: object
+    properties:
+      target_types:
+        type: array
+        items:
+          type: string
+      measurements:
+        type: array
+        items:
+          type: string
+      execution_intervals:
+        type: array
+        items:
+          type: string
+    required:
+    - target_types
+    - measurements
+    - execution_intervals
+  AnomalyDetectionSettings:
+    title: AnomalyDetectionSettings
+    type: object
+    properties:
+      seq:
+        example: 1
+        type: integer
+        format: int32
+      ns_id:
+        example: ns01
+        type: string
+      target_id:
+        example: vm01
+        type: string
+      target_type:
+        example: vm
+        type: string
+      measurement:
+        example: cpu
+        type: string
+      execution_interval:
+        example: 5m
+        type: string
+      last_execution:
+        example: 2024-10-10T06:08:48Z
+        type: string
+      create_at:
+        example: 2024-10-10T03:08:48Z
+        type: string
+    required:
+    - seq
+    - ns_id
+    - target_id
+    - target_type
+    - measurement
+    - execution_interval
+    - last_execution
+    - create_at
+  AnomalyDetectionTargetRegistration:
+    title: AnomalyDetectionTargetRegistration
+    type: object
+    properties:
+      ns_id:
+        type: string
+      target_id:
+        type: string
+      target_type:
+        $ref: '#/definitions/TargetType'
+      measurement:
+        $ref: '#/definitions/Measurement'
+      execution_interval:
+        $ref: '#/definitions/ExecutionInterval'
+    required:
+    - ns_id
+    - target_id
+    - target_type
+    - measurement
+    - execution_interval
+  AnomalyDetectionTargetUpdate:
+    title: AnomalyDetectionTargetUpdate
+    type: object
+    properties:
+      execution_interval:
+        $ref: '#/definitions/ExecutionInterval'
+    required:
+    - execution_interval
+  ExecutionInterval:
+    title: ExecutionInterval
+    description: An enumeration.
+    type: string
+    enum:
+    - 5m
+    - 10m
+    - 30m
+  HistoryValue:
+    title: HistoryValue
+    type: object
+    properties:
+      timestamp:
+        type: string
+      value:
+        type: number
+        format: double
+    required:
+    - timestamp
+  Measurement:
+    title: Measurement
+    description: An enumeration.
+    type: string
+    enum:
+    - cpu
+    - mem
+  PredictValue:
+    title: PredictValue
+    type: object
+    properties:
+      timestamp:
+        type: string
+      value:
+        type: number
+        format: double
+    required:
+    - timestamp
+  PredictionBody:
+    title: PredictionBody
+    type: object
+    properties:
+      target_type:
+        description: The type of the target (vm or mci).
+        example: vm
+        type: string
+      measurement:
+        $ref: '#/definitions/PredictionMetricType'
+      prediction_range:
+        description: Data prediction range as of now (1h~2,160h)
+        example: 24h
+        type: string
+    required:
+    - target_type
+    - measurement
+    - prediction_range
+  PredictionHistory:
+    title: PredictionHistory
+    type: object
+    properties:
+      ns_id:
+        type: string
+      target_id:
+        type: string
+      measurement:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/HistoryValue'
+    required:
+    - ns_id
+    - target_id
+    - measurement
+    - values
+  PredictionMetricType:
+    title: PredictionMetricType
+    description: An enumeration.
+    type: string
+    enum:
+    - cpu
+    - mem
+    - disk
+    - system load
+  PredictionOptions:
+    title: PredictionOptions
+    type: object
+    properties:
+      target_types:
+        type: array
+        items:
+          type: string
+      measurements:
+        type: array
+        items:
+          type: string
+      prediction_ranges:
+        type: object
+        additionalProperties:
+          type: string
+    required:
+    - target_types
+    - measurements
+    - prediction_ranges
+  PredictionResult:
+    title: PredictionResult
+    type: object
+    properties:
+      ns_id:
+        type: string
+      target_id:
+        type: string
+      measurement:
+        type: string
+      target_type:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/PredictValue'
+    required:
+    - ns_id
+    - target_id
+    - measurement
+    - target_type
+    - values
+  ResBodyAnomalyDetectionHistoryResponse:
+    title: ResBodyAnomalyDetectionHistoryResponse
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/AnomalyDetectionHistoryResponse'
+      rs_code:
+        description: Response code
+        type: string
+        default: '200'
+      rs_msg:
+        description: Response message
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyAnomalyDetectionOptions:
+    title: ResBodyAnomalyDetectionOptions
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/AnomalyDetectionOptions'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyAnomalyDetectionSettings:
+    title: ResBodyAnomalyDetectionSettings
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/AnomalyDetectionSettings'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyPredictionHistory:
+    title: ResBodyPredictionHistory
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionHistory'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyPredictionOptions:
+    title: ResBodyPredictionOptions
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionOptions'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyPredictionResult:
+    title: ResBodyPredictionResult
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionResult'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+    - data
+  TargetType:
+    title: TargetType
+    description: An enumeration.
+    type: string
+    enum:
+    - vm
+    - mci
+  ApiO11yTriggerPolicyTargetRequest:
+    title: ApiO11yTriggerPolicyTargetRequest
+    type: object
+    properties:
+      ns_id:
+        type: string
+      target_id:
+        type: string
+  TriggerMeasurement:
+    title: TriggerMeasurement
+    description: Trigger target metric
+    type: string
+    enum:
+    - cpu
+    - disk
+    - mem
+  Status:
+    title: Status
+    description: Trigger Policy enablement status
+    type: string
+    enum:
+    - DISABLED
+    - ENABLED
+tags:
+- name: '[System] environment'
+  description: ''
+- name: '[Target] Monitoring target management'
+  description: ''
+- name: '[Monitoring storage] Monitoring target storage management'
+  description: ''
+- name: '[Monitoring item] Monitoring target item management'
+  description: ''
+- name: '[Mining InfluxDB] Monitoring metric downsampling'
+  description: ''
+- name: '[Monitoring log] Monitoring log'
+  description: ''
+- name: '[Monitoring metric] Monitoring metric'
+  description: ''
+- name: '[Monitoring CSP] Monitoring target from the CSP'
+  description: ''
+- name: '[Metric Event] monitoring measurement trigger'
+  description: ''
+- name: '[Metric Event] monitoring trigger event handler'
+  description: ''
+- name: '[Insight] Anomaly Detection'
+  description: ''
+- name: '[Insight] Prediction'
+  description: ''
+- name: '[Health] Check API Health'
+  description: ''
