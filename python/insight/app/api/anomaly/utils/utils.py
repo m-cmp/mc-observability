@@ -104,6 +104,7 @@ class AnomalyService:
         df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
         df = self.null_ratio_preprocessing(df=df)
         df = self.data_interpolation(df=df)
+        df = df.sort_values(by='timestamp')
 
         return df
 
