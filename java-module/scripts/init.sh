@@ -27,6 +27,7 @@ if [ $? -ne 0 ]; then
   sudo apt-get install -y git
 fi
 
+rm -rf mc-observability
 git clone https://github.com/m-cmp/mc-observability.git
 
 cd mc-observability/java-module/mc-o11y-agent/
