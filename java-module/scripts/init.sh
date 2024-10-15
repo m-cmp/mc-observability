@@ -4,7 +4,7 @@ cd $HOME
 
 docker -v
 if [ $? -ne 0 ]; then
-  mkdir -p /etc/docker/
+  sudo mkdir -p /etc/docker/
   echo -e '{
           "log-driver": "syslog",
           "log-opts": {
