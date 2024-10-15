@@ -2,6 +2,7 @@ package mcmp.mc.observability.mco11yagent.monitoring.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.mapper.MonitoringConfigMapper;
 import mcmp.mc.observability.mco11yagent.monitoring.mapper.PluginMapper;
 import mcmp.mc.observability.mco11yagent.monitoring.model.MonitoringConfigInfo;
@@ -35,7 +36,7 @@ public class MonitoringConfigService {
 
         monitoringConfigInfo.setState("ADD");
         monitoringConfigMapper.insert(monitoringConfigInfo);
-        return ResBody.builder().build();
+        return new ResBody<>(ResultCode.SUCCESS);
     }
 
     public ResBody update(String nsId, String mciId, String targetId, MonitoringConfigInfo monitoringConfigInfo) {
@@ -54,7 +55,7 @@ public class MonitoringConfigService {
         if("influxdb".equals(monitoringConfigInfo.getPluginName())) {
             triggerTaskManageService.updateStorage(originalConfig, monitoringConfigInfo);
         }
-        return ResBody.builder().build();
+        return new ResBody<>(ResultCode.SUCCESS);
     }
 
     public ResBody delete(Long seq) {
@@ -65,7 +66,7 @@ public class MonitoringConfigService {
         if("influxdb".equals(monitoringConfigInfo.getPluginName())) {
             triggerTaskManageService.deleteStorage(monitoringConfigInfo);
         }
-        return ResBody.builder().build();
+        return new ResBody<>(ResultCode.SUCCESS);
     }
 
     public int updateState(MonitoringConfigInfo monitoringConfigInfo, String state) {

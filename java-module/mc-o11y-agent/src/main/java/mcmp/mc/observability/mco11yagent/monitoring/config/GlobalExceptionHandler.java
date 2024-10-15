@@ -18,6 +18,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ResultCodeException e = (ResultCodeException)exception;
         log.error("ResultCodeException throw Exception message : " + e.getMessage(), e.getObjects());
         log.error("ResultCodeException throw Exception stacktrace : {}", ExceptionUtils.getStackTrace(e));
-        return ResBody.builder().code(e.getResultCode()).build();
+        return new ResBody(e.getResultCode());
     }
 }

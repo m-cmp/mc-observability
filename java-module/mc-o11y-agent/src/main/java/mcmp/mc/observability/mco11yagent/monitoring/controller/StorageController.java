@@ -40,7 +40,7 @@ public class StorageController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PostMapping
-    public ResBody insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
+    public ResBody<?> insert(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoCreateDTO storageCreateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setName(storageCreateInfo.getName());
         monitoringConfigInfo.setPluginSeq(storageCreateInfo.getPluginSeq());
@@ -51,7 +51,7 @@ public class StorageController {
 
     @Base64Decode(MonitoringConfigInfo.class)
     @PutMapping
-    public ResBody update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
+    public ResBody<?> update(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody MonitoringConfigInfoUpdateDTO storageUpdateInfo) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(storageUpdateInfo.getSeq());
         monitoringConfigInfo.setPluginConfig(storageUpdateInfo.getPluginConfig());
@@ -60,12 +60,12 @@ public class StorageController {
     }
 
     @DeleteMapping("/{storageSeq}")
-    public ResBody delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
+    public ResBody<?> delete(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable Long storageSeq) {
         MonitoringConfigInfo monitoringConfigInfo = new MonitoringConfigInfo();
         monitoringConfigInfo.setSeq(storageSeq);
         if( monitoringConfigService.updateState(monitoringConfigInfo, "DELETE") <= 0 ) {
-            return ResBody.builder().code(ResultCode.FAILED).build();
+            return new ResBody<>(ResultCode.FAILED);
         }
-        return ResBody.builder().build();
+        return new ResBody<>(ResultCode.SUCCESS);
     }
 }

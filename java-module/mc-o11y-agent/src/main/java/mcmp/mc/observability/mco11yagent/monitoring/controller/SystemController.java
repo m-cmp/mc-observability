@@ -3,6 +3,7 @@ package mcmp.mc.observability.mco11yagent.monitoring.controller;
 import lombok.RequiredArgsConstructor;
 import mcmp.mc.observability.mco11yagent.monitoring.common.Constants;
 import mcmp.mc.observability.mco11yagent.monitoring.enums.OS;
+import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 import mcmp.mc.observability.mco11yagent.monitoring.model.PluginDefInfo;
 import mcmp.mc.observability.mco11yagent.monitoring.model.dto.ResBody;
 import mcmp.mc.observability.mco11yagent.monitoring.service.PluginService;
@@ -34,6 +35,6 @@ public class SystemController {
             case WINDOWS -> data = Utils.runExec(new String[]{"powershell", "/c", "$(curl ifconfig.me).Content"});
             case LINUX, UNIX -> data = Utils.runExec(new String[]{"/bin/sh", "-c", "curl ifconfig.me"});
         }
-        return ResBody.builder().data(data).build();
+        return new ResBody<>(data);
     }
 }

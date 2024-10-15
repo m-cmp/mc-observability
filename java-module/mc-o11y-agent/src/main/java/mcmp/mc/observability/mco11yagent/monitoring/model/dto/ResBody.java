@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import mcmp.mc.observability.mco11yagent.monitoring.annotation.Base64EncodeField;
@@ -12,7 +11,6 @@ import mcmp.mc.observability.mco11yagent.monitoring.enums.ResultCode;
 
 @Setter
 @Getter
-@Builder
 @AllArgsConstructor
 public class ResBody<T> {
     @JsonIgnore
@@ -42,6 +40,11 @@ public class ResBody<T> {
 
     public ResBody(ResultCode code, T data) {
         this.setCode(code);
+        this.data = data;
+    }
+
+    public ResBody(T data) {
+        this.setCode(ResultCode.SUCCESS);
         this.data = data;
     }
 

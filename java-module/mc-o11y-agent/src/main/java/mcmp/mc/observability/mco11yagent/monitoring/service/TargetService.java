@@ -40,10 +40,10 @@ public class TargetService {
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.insert(targetInfo) > 0 ) {
-            return ResBody.builder().code(ResultCode.SUCCESS).build();
+            return new ResBody<>(ResultCode.SUCCESS);
         }
         else {
-            return ResBody.builder().code(ResultCode.FAILED).build();
+            return new ResBody<>(ResultCode.FAILED);
         }
     }
 
@@ -52,10 +52,10 @@ public class TargetService {
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.update(targetInfo) > 0 ) {
-            return ResBody.builder().code(ResultCode.SUCCESS).build();
+            return new ResBody<>(ResultCode.SUCCESS);
         }
         else {
-            return ResBody.builder().code(ResultCode.DATABASE_ERROR).build();
+            return new ResBody<>(ResultCode.DATABASE_ERROR);
         }
     }
 
@@ -65,10 +65,10 @@ public class TargetService {
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
         if( targetMapper.delete(targetInfo) > 0 ) {
-            return ResBody.builder().code(ResultCode.SUCCESS).build();
+            return new ResBody<>(ResultCode.SUCCESS);
         }
         else {
-            return ResBody.builder().code(ResultCode.DATABASE_ERROR).build();
+            return new ResBody<>(ResultCode.DATABASE_ERROR);
         }
     }
 }
