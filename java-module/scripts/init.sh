@@ -4,12 +4,22 @@ cd $HOME
 
 docker -v
 if [ $? -ne 0 ]; then
+  mkdir -p /etc/docker/
+  echo -e '{
+          "log-driver": "syslog",
+          "log-opts": {
+                  "syslog-format": "rfc3164",
+                  "tag": "{{.Name}}"
+          }
+  }
+  ' > /etc/docker/daemon.json
+
   # Install Docker CE
-    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get update
-    sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
+  sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 fi
 
 git --version
