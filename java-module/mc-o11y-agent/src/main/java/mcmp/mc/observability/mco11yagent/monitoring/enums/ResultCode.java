@@ -6,6 +6,7 @@ import lombok.Getter;
 public enum ResultCode {
 
     SUCCESS("0000", "완료되었습니다."),
+    SUCCESS_ALREADY_INSTALLED("0000", "이미 설치 되었습니다."),
     SUCCESS_NO_DATA("0000", "데이터가 없습니다."),
 
 

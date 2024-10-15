@@ -84,7 +84,7 @@ public class MonitoringController {
     public ResBody insertTarget(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @RequestBody TargetInfoCreateUpdateDTO targetCreateInfo) {
         ResBody<TargetInfo> obj = monitoringClient.getTarget(nsId, mciId, targetId);
         if( obj.getData() != null ) {
-            return new ResBody(ResultCode.NOT_FOUND_DATA);
+            return new ResBody(ResultCode.SUCCESS_ALREADY_INSTALLED);
         }
 
         boolean success = monitoringService.installAgent(nsId, mciId, targetId);
