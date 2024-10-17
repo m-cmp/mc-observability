@@ -1,4 +1,4 @@
-commit 31243ee4365f2eab7fcba79147d030da3d0effd6
+commit d2900899198ff6c31d7e9a3f75e58e2c870bee03
 Author: ish <ish@innogrid.com>
 Date:   Fri Sep 13 10:51:37 2024 +0900
 
@@ -159,10 +159,10 @@ index 032bdee1..51ca7aaf 100644
  		IntervalMinute: periodMinute,
  		TimeBeforeHour: timeBeforeHour,
 diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
-index ddc6008b..b8c70ee8 100644
+index 3a9f5d86..a9fb3562 100644
 --- a/api-runtime/rest-runtime/CBSpiderRuntime.go
 +++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
-@@ -444,6 +444,7 @@ func RunServer() {
+@@ -450,6 +450,7 @@ func RunServer() {
  
  		//----------Monitoring Handler
  		{"GET", "/monitoring/vm/:VMName/:MetricType", GetVMMetricData},
@@ -235,10 +235,10 @@ index b192c829..e8e8bbcb 100644
 +	return c.JSON(http.StatusOK, result)
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-index 30fc3c36..59f41b0d 100644
+index 6ec4c9dd..e086aa9a 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-@@ -247,11 +247,17 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
+@@ -248,11 +248,17 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
  func (cloudConn *AzureCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
  	cblogger.Info("Azure Cloud Driver: called CreateMonitoringHandler()!")
  	monitoringHandler := azrs.AzureMonitoringHandler{
@@ -262,10 +262,10 @@ index 30fc3c36..59f41b0d 100644
  	return &monitoringHandler, nil
  }
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
-index 8e4fab1c..a942de72 100644
+index 0ac2e76b..fa53b36e 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
-@@ -2050,7 +2050,8 @@ func testMonitoringHandlerListPrint() {
+@@ -2123,7 +2123,8 @@ func testMonitoringHandlerListPrint() {
  	cblogger.Info("Test MonitoringHandler")
  	cblogger.Info("0. Print Menu")
  	cblogger.Info("1. GetVMMetricData()")
@@ -275,7 +275,7 @@ index 8e4fab1c..a942de72 100644
  }
  
  func testMonitoringHandlerMetricTypeListPrint() {
-@@ -2144,7 +2145,7 @@ Loop:
+@@ -2217,7 +2218,7 @@ Loop:
  				timeBeforeHour = strings.TrimSpace(timeBeforeHour)
  
  				if getVMMetricData, err := monitoringHandler.GetVMMetricData(
@@ -284,7 +284,7 @@ index 8e4fab1c..a942de72 100644
  						VMIID: irs.IID{
  							NameId: vmName,
  						},
-@@ -2158,6 +2159,99 @@ Loop:
+@@ -2231,6 +2232,99 @@ Loop:
  				}
  				cblogger.Info("Finish GetVMMetricData()")
  			case 2:

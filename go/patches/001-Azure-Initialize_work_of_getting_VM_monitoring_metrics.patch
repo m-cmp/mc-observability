@@ -1,4 +1,4 @@
-commit 71782d223d99771dcce20a5f8770f3591f4d1ce6
+commit 212d6dbfa9be33528f59b56b131c33a75b667bb1
 Author: ish <ish@innogrid.com>
 Date:   Fri Sep 13 10:51:18 2024 +0900
 
@@ -105,10 +105,10 @@ index 00000000..032bdee1
 +	return &info, nil
 +}
 diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
-index d1d1da56..ddc6008b 100644
+index 122ff442..3a9f5d86 100644
 --- a/api-runtime/rest-runtime/CBSpiderRuntime.go
 +++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
-@@ -442,6 +442,9 @@ func RunServer() {
+@@ -448,6 +448,9 @@ func RunServer() {
  		{"GET", "/tag/:Key", GetTag},
  		{"DELETE", "/tag/:Key", RemoveTag},
  
@@ -931,11 +931,11 @@ index bb0c3875..69877447 100644
  	//=========== PMKS: Provider-Managed K8S
  	CLUSTER RES_TYPE = "CLUSTER"
 diff --git a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
-index 0d20d07d..3e2f5f66 100644
+index fbfb09b5..98df2eb1 100644
 --- a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
 @@ -178,3 +178,7 @@ func (cloudConn *AlibabaCloudConnection) CreateTagHandler() (irs.TagHandler, err
- 	handler := alirs.AlibabaTagHandler{cloudConn.Region, cloudConn.VMClient, cloudConn.Cs2015Client, cloudConn.VpcClient}
+ 	handler := alirs.AlibabaTagHandler{cloudConn.Region, cloudConn.VMClient, cloudConn.Cs2015Client, cloudConn.VpcClient, cloudConn.NLBClient}
  	return &handler, nil
  }
 +
@@ -943,7 +943,7 @@ index 0d20d07d..3e2f5f66 100644
 +	return nil, errors.New("Alibaba Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
-index 4b9ba562..7cd5e0e3 100644
+index e0bf7b51..150ff3c3 100644
 --- a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 @@ -11,6 +11,7 @@
@@ -954,7 +954,7 @@ index 4b9ba562..7cd5e0e3 100644
  	cblog "github.com/cloud-barista/cb-log"
  	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
  
-@@ -202,3 +203,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
+@@ -206,3 +207,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
  	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
  	return &handler, nil
  }
@@ -1173,10 +1173,10 @@ index 00000000..4b9ba562
 +	return &handler, nil
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-index 8ae229ad..30fc3c36 100644
+index 3ae61376..6ec4c9dd 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-@@ -243,3 +243,15 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
+@@ -244,3 +244,15 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
  	return &tagHandler, nil
  	// return nil, errors.New("Azure Driver: not implemented")
  }
@@ -1193,10 +1193,10 @@ index 8ae229ad..30fc3c36 100644
 +	return &monitoringHandler, nil
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
-index a1721e98..8e4fab1c 100644
+index e1630089..0ac2e76b 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
-@@ -166,7 +166,8 @@ func showTestHandlerInfo() {
+@@ -167,7 +167,8 @@ func showTestHandlerInfo() {
  	cblogger.Info("11. PriceInfoHandler")
  	cblogger.Info("12. ClusterHandler")
  	cblogger.Info("13. TagHandler")
@@ -1206,117 +1206,16 @@ index a1721e98..8e4fab1c 100644
  	cblogger.Info("==========================================================")
  }
  
-@@ -218,8 +219,10 @@ func getResourceHandler(resourceType string, config Config) (interface{}, error)
- 		resourceHandler, err = cloudConnection.CreatePriceInfoHandler()
- 	case "cluster":
+@@ -221,6 +222,8 @@ func getResourceHandler(resourceType string, config Config) (interface{}, error)
  		resourceHandler, err = cloudConnection.CreateClusterHandler()
--	case "tag": 
-+	case "tag":
+ 	case "tag":
  		resourceHandler, err = cloudConnection.CreateTagHandler()
 +	case "monitoring":
 +		resourceHandler, err = cloudConnection.CreateMonitoringHandler()
  	}
  
  	if err != nil {
-@@ -388,7 +391,7 @@ Loop:
- 				reqInfo := irs.SecurityReqInfo{
- 					IId:           securityIId,
- 					SecurityRules: &securityRulesInfos,
--					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+					TagList:       []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 					VpcIID:        targetVPCIId,
- 				}
- 				security, err := securityHandler.CreateSecurity(reqInfo)
-@@ -468,7 +471,7 @@ func testVPCHandler(config Config) {
- 	VPCReqInfo := irs.VPCReqInfo{
- 		IId:            vpcIID,
- 		IPv4_CIDR:      config.Azure.Resources.VPC.IPv4CIDR,
--		TagList:[]irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		TagList:        []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 		SubnetInfoList: subnetInfoList,
- 	}
- 	addSubnet := config.Azure.Resources.VPC.AddSubnet
-@@ -617,8 +620,8 @@ Loop:
- 			case 3:
- 				cblogger.Info("Start CreateKey() ...")
- 				reqInfo := irs.KeyPairReqInfo{
--					IId: keypairIId,
--					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+					IId:     keypairIId,
-+					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 				}
- 				if keyInfo, err := keyPairHandler.CreateKey(reqInfo); err != nil {
- 					cblogger.Error(err)
-@@ -775,7 +778,7 @@ func testVMHandler(config Config) {
- 		SecurityGroupIIDs: SecurityGroupIIDs,
- 		VMUserId:          config.Azure.Resources.Vm.VMUserId,
- 		VMUserPasswd:      config.Azure.Resources.Vm.VMUserPasswd,
--		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		TagList:           []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 	}
- 
- Loop:
-@@ -915,7 +918,7 @@ func testNLBHandler(config Config) {
- 		},
- 		VMGroup: irs.VMGroupInfo{
- 			Port:     "22",
--			Protocol: "TCP", 
-+			Protocol: "TCP",
- 			VMs: &[]irs.IID{
- 				{NameId: "vm-01"},
- 				{NameId: "vm-02"},
-@@ -925,11 +928,11 @@ func testNLBHandler(config Config) {
- 			Protocol:  "TCP",
- 			Port:      "22",
- 			Interval:  10,
--			Timeout: -1,
-+			Timeout:   -1,
- 			Threshold: 5,
- 			// Threshold: 429496728,
- 		},
--		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 	}
- 	updateListener := irs.ListenerInfo{
- 		Protocol: "TCP",
-@@ -1086,8 +1089,8 @@ func testDiskHandler(config Config) {
- 		IId: irs.IID{
- 			NameId: config.Azure.Resources.Disk.IID.NameId,
- 		},
--		Zone: config.Azure.Zone,
--		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		Zone:     config.Azure.Zone,
-+		TagList:  []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 		DiskSize: config.Azure.Resources.Disk.DiskSize,
- 		DiskType: config.Azure.Resources.Disk.DiskType,
- 	}
-@@ -1200,7 +1203,7 @@ func testMyImageHandler(config Config) {
- 	targetvm := irs.MyImageInfo{
- 		IId:      irs.IID{NameId: config.Azure.Resources.MyImage.IID.NameId},
- 		SourceVM: irs.IID{NameId: config.Azure.Resources.MyImage.SourceVM.NameId},
--		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		TagList:  []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 	}
- 	delimageIId := irs.IID{NameId: config.Azure.Resources.MyImage.IID.NameId}
- Loop:
-@@ -1492,7 +1495,7 @@ func testClusterHandler(config Config) {
- 			//	OnAutoScaling:   true,
- 			//},
- 		},
--		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
-+		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
- 	}
- 	addNodeGroup := irs.NodeGroupInfo{
- 		IId:             irs.IID{NameId: "nodegroup3"},
-@@ -1982,7 +1985,6 @@ func testTagHandler(config Config) {
- 	// resIID := irs.IID{NameId: "keypair-01", SystemId: ""}
- 	// resIID := irs.IID{NameId: "vm-01", SystemId: ""}
- 
--
- Loop:
- 	for {
- 		var commandNum int
-@@ -2044,6 +2046,125 @@ Loop:
+@@ -2116,6 +2119,125 @@ Loop:
  	}
  }
  
@@ -1442,7 +1341,7 @@ index a1721e98..8e4fab1c 100644
  func main() {
  	showTestHandlerInfo()
  	config := readConfigFile()
-@@ -2097,6 +2218,9 @@ Loop:
+@@ -2169,6 +2291,9 @@ Loop:
  				testTagHandler(config)
  				showTestHandlerInfo()
  			case 14:
@@ -2306,10 +2205,10 @@ index 00000000..6cd8471f
 +	GetVMMetricData(monitoringReqInfo MonitoringReqInfo) (MetricData, error)
 +}
 diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
-index 300e34cc..1f87d21c 100644
+index 07069f43..c155143b 100644
 --- a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
 +++ b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
-@@ -13,18 +13,19 @@ package resources
+@@ -18,18 +18,19 @@ import (
  type RSType string
  
  const (
