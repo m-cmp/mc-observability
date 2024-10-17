@@ -1,11 +1,13 @@
 package mcmp.mc.observability.mco11ymanager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TumblebugMCI {
     private String id;
 
@@ -13,6 +15,7 @@ public class TumblebugMCI {
 
     @Getter
     @Setter
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Vm {
         private String resourceType;
 
