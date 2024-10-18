@@ -89,7 +89,8 @@ public class MonitoringService {
                             "  database = \"mc-observability\"\n" +
                             "  retention_policy = \"autogen\"\n" +
                             "  username = \"mc-agent\"\n" +
-                            "  password = \"mc-agent\"");
+                            "  password = \"mc-agent\"\n" +
+                            "  namedrop = [\"tail\"]");
                 } else {
                     continue;
                 }
