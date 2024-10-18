@@ -7,6 +7,7 @@ import requests
 from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
 from config.ConfigManager import ConfigManager
 from app.api.prediction.repo.repo import InfluxDBRepository
+from datetime import datetime
 
 
 class PredictionService:
@@ -39,8 +40,6 @@ class PredictionService:
             raise ValueError(f'Unsupported HTTP method: {method}')
 
     def _build_body(self, nsId: str, targetId: str, target_type: str, measurement: str, prediction_range: str):
-        if measurement == 'system load': measurement = 'system'
-
         target_mapping = {
             'vm': 'target_id',
             'mci': 'mci_id'
@@ -133,7 +132,6 @@ class PredictionService:
         return result_dict
 
     def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
-        if measurement == 'system load': measurement = 'system'
         self.influxdb_repo.save_results(df, nsId, targetId, measurement)
 
     @staticmethod
@@ -146,8 +144,6 @@ class PredictionService:
     def preprocess_data(self, df: pd.DataFrame):
         df['ds'] = pd.to_datetime(df['ds'])
         df['ds'] = df['ds'].apply(self.remove_timezone)
-        null_datetime = df['ds'].max()
-        df = df[df['ds'] != null_datetime]
         last_datetime = df['ds'].max()
 
         return df, last_datetime
@@ -177,4 +173,9 @@ class PredictionService:
             }
             values.append(value_dict)
 
-        return values
+        start_time_dt = datetime.strptime(query_params.start_time, '%Y-%m-%dT%H:%M:%SZ')
+        end_time_dt = datetime.strptime(query_params.end_time, '%Y-%m-%dT%H:%M:%SZ')
+        filtered_values = [v for v in values
+                           if start_time_dt <= datetime.strptime(v['timestamp'], '%Y-%m-%dT%H:%M:%SZ') <= end_time_dt]
+
+        return filtered_values

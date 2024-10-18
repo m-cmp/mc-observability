@@ -15,7 +15,7 @@ get_options_description = {
                                 "cpu",
                                 "mem",
                                 "disk",
-                                "system load"
+                                "system"
                             ],
                             "prediction_ranges": {
                                 "min": "1h",
@@ -33,7 +33,7 @@ get_options_description = {
 
 
 post_prediction_description = {
-    "api_description": "Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.",
     "response": {
         "200": {
             "description": "Successful prediction response",
