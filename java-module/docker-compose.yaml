@@ -33,7 +33,7 @@ services:
       - /docker/mariadb/var/lib/mysql:/var/lib/mysql
       - /docker/mariadb/var/log/maria:/var/log/maria
       - ./maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
-      - ./mariadb-conf/99-max-connections.conf:/etc/mysql/mariadb.conf.d/99-max-connections.conf
+      - ./mariadb-conf/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no
