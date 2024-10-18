@@ -38,7 +38,7 @@ class InfluxDBRepository:
         FROM "insight"."autogen".f"{measurement}" \
         WHERE "namespace_id" = '{nsId}' \
         AND "target_id" = '{targetId}' \
-        AND time > '{start_time}' \
+        AND time >= '{start_time}' \
         AND time <= '{end_time}' \
         GROUP BY time(1h) FILL(null) \
         '''
