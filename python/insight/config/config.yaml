@@ -47,7 +47,7 @@ prediction:
       - cpu
       - mem
       - disk
-      - system load
+      - system
   prediction_ranges:
     min: 1h
     max: 2160h
