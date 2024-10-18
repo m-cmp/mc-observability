@@ -1488,7 +1488,7 @@ paths:
                 - cpu
                 - mem
                 - disk
-                - system load
+                - system
                 prediction_ranges:
                   min: 1h
                   max: 2160h
@@ -1497,7 +1497,7 @@ paths:
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      description: "Predict future metrics (cpu, mem, disk, system load) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem load : load1\n"
+      description: "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem : load1\n"
       summary: PostPrediction
       tags:
       - '[Insight] Prediction'
@@ -1580,7 +1580,7 @@ paths:
         - cpu
         - mem
         - disk
-        - system load
+        - system
         type: string
         description: The type of metric to retrieve.
       - name: start_time
@@ -2773,7 +2773,7 @@ definitions:
     - cpu
     - mem
     - disk
-    - system load
+    - system
   PredictionOptions:
     title: PredictionOptions
     type: object
