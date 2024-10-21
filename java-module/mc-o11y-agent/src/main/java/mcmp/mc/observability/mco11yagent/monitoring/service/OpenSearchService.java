@@ -90,16 +90,18 @@ public class OpenSearchService {
             try (RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(HttpHost.create(opensearchInfo.getUrl())).setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)))) {
                 BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
 
+                Map<String, String> fieldMapping = Map.of(
+                        "ns_id", "tag.ns_id",
+                        "mci_id", "tag.mci_id",
+                        "target_id", "tag.target_id"
+                );
+
                 if (logsInfo.getConditions() != null) {
                     logsInfo.getConditions().forEach(condition -> {
                         String key = condition.getKey();
                         String value = condition.getValue();
 
-                        String[] parts = key.split("\\.");
-
-                        if (parts.length > 0) {
-                            key = parts[parts.length - 1];
-                        }
+                        value = fieldMapping.getOrDefault(key, value);
 
                         boolQueryBuilder.must(QueryBuilders.matchQuery(key, value));
                     });
