@@ -8,6 +8,7 @@ services:
   mc-o11y-manager:
     image: cloudbaristaorg/mc-observability:edge
     container_name: mc-o11y-service
+    restart: always
     ports:
       - 18080:18080
       - 18081:18081
@@ -26,6 +27,7 @@ services:
   mariadb:
     image: mariadb:10.7.6
     container_name: mc-o11y-maria
+    restart: always
     ports:
       - 3306:3306
     volumes:
@@ -49,6 +51,7 @@ services:
   cb-tumblebug:
     image: cloudbaristaorg/cb-tumblebug:0.9.18
     container_name: cb-tumblebug
+    restart: always
     platform: linux/amd64
     networks:
       - internal_network
@@ -104,6 +107,7 @@ services:
   cb-tumblebug-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.14
     container_name: cb-tumblebug-etcd
+    restart: always
     networks:
       - internal_network
     ports:
@@ -149,6 +153,7 @@ services:
   cb-spider:
     image: cloudbaristaorg/cb-spider_azure_monitoring:edge
     container_name: cb-spider
+    restart: always
     platform: linux/amd64
     networks:
       - internal_network
@@ -177,6 +182,7 @@ services:
   influxdb:
     image: influxdb:1.8
     container_name: mc-o11y-influx
+    restart: always
     ports:
       - 8086:8086
       - 8082:8082
@@ -195,6 +201,7 @@ services:
   chronograf:
     image: chronograf:1.9.4
     container_name: mc-o11y-chronograf
+    restart: always
     ports:
       - 8888:8888
     volumes:
@@ -206,6 +213,7 @@ services:
   kapacitor:
     image: kapacitor:1.7.5
     container_name: mc-o11y-kapacitor
+    restart: always
     ports:
       - 9092:9092
     environment:
@@ -219,6 +227,7 @@ services:
   opensearch-node1:
     image: opensearchproject/opensearch:1.3.19
     container_name: opensearch-node1
+    restart: always
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1
@@ -246,6 +255,7 @@ services:
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:1.3.19
     container_name: opensearch-dashboards
+    restart: always
     ports:
       - 5601:5601
     environment:
@@ -259,6 +269,7 @@ services:
     build: ../python/insight
     # image: mc-o11y-insight:0.3.0
     container_name: mc-o11y-insight-service
+    restart: always
     ports:
       - 9001:9001
     environment:
@@ -273,6 +284,7 @@ services:
     build: ../python/scheduler
     # image: mc-o11y-insight-scheduler:0.3.0
     container_name: mc-o11y-insight-scheduler
+    restart: always
     ports:
       - 9002:9002
     environment:
