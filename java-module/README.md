@@ -13,7 +13,7 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 - Through integrated monitoring and operational management of multi-clouds, it avoids the complexity between different clouds and centralizes management, enabling stable and efficient system operation.
 - The overall flow of the integrated system is as follows: Information, Metrics, events, and log details of the monitoring target are collected through the cloud API and agents installed on vitual servers or physical equipment.\
 
-### System architecture
+## System architecture
 <details>
 <summary>접기/펼치기</summary>
 
@@ -103,19 +103,19 @@ UpdateRelStyle(container13, database12, $lineColor="green")
 ```
 </details>
 
+## Development environment
+- MariaDB (10.7.6)
+- InfluxDB (1.8.10)
+- Chronograf (1.10)
+- Telegraf (1.29.5)
+- SpringBoot (2.7.6)
+- Java (17)
+- cb-tumblebug (v0.9.18)
+- cb-spider (edge + Azure Monitoring PoC patched)
+
 ## How to Use
 
-### Development environment
-  - MariaDB (10.7.6)
-  - InfluxDB (1.8.10)
-  - Chronograf (1.10)
-  - Telegraf (1.29.5)
-  - SpringBoot (2.7.6)
-  - Java (17)
-  - cb-tumblebug (edge)
-  - cb-spider (edge + Azure Monitoring PoC patched)
-
-### 1. Install Docker to CSP's VM
+### 1. Install Docker to Public VM
 ```shell
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -124,7 +124,7 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
-### 2. Clone observability source to CSP's VM
+### 2. Clone observability source to Public VM
 ```
 git clone https://github.com/m-cmp/mc-observability.git
 ```
@@ -179,16 +179,16 @@ LISTEN 0      4096                 [::]:18080         [::]:*    users:(("docker-
 LISTEN 0      4096                 [::]:18081         [::]:*    users:(("docker-proxy",pid=21873,fd=4))
 ```
 
-### 7. Clone tumblebug source (Run on the same CSP's VM)
+### 7. Clone tumblebug source (Run on the same Public VM)
 ```
 git clone https://github.com/m-cmp/mc-observability.git
 cd cb-tumblebug
 ```
 
-### 8. Initialize tumblebug (Run on the same CSP's VM)
+### 8. Initialize tumblebug (Run on the same Public  VM)
 [Initialize CB-Tumblebug to configure Multi-Cloud info](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info)
 
-### 9. Create namespace to tumblebug (Run on the same CSP's VM)
+### 9. Create namespace to tumblebug (Run on the same Public VM)
 ```shell
 curl -u default:default -X 'POST' \
   'http://127.0.0.1:1323/tumblebug/ns' \
@@ -200,7 +200,7 @@ curl -u default:default -X 'POST' \
 }'
 ```
 
-### 10. Create MCI dynamically (Run on the same CSP's VM)
+### 10. Create MCI dynamically (Run on the same Public VM)
 ```shell
 curl -u default:default -X 'POST' \
   'http://127.0.0.1:1323/tumblebug/ns/ns01/mciDynamic' \
@@ -209,7 +209,6 @@ curl -u default:default -X 'POST' \
   -d '{
   "description": "Made in CB-TB",
   "installMonAgent": "no",
-  "label": "DynamicVM",
   "name": "mci01",
   "systemLabel": "",
   "vm": [
@@ -218,12 +217,10 @@ curl -u default:default -X 'POST' \
       "commonSpec": "azure+koreacentral+standard_b4ls_v2",
       "connectionName": "azure-koreacentral",
       "description": "Description",
-      "label": "DynamicVM",
       "name": "g1-1",
       "rootDiskSize": "default",
       "rootDiskType": "default",
-      "subGroupSize": "3",
-      "vmUserPassword": "string"
+      "subGroupSize": "2"
     }
   ]
 }'
@@ -231,7 +228,7 @@ curl -u default:default -X 'POST' \
 
 ### 11. Register monitoring targets to observability manager (Run on any host)
 ```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
@@ -240,7 +237,7 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01
 }'
 ```
 ```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-2' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-2' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
@@ -248,92 +245,43 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01
   "aliasName": "g2"
 }'
 ```
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-3' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "description": "vm3",
-  "aliasName": "g3"
-}'
-```
 
 ### 12. Check registered monitoring targets from observability (Run on any host)
 ```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target' \
 --header 'Accept: */*' | jq
 ```
 
-### 13. Register tail monitoring item (Run on any host)
-g1-1-1 example)
 
-- Encode tail configuration to base64
-```shell
-echo -e '  files = ["/var/log/syslog"]
-  from_beginning = false
-  watch_method = "inotify"
-
-  # Data format to parse syslog entries
-  data_format = "grok"
-  grok_patterns = ["%{SYSLOGTIMESTAMP:timestamp} %{SYSLOGHOST:hostname} %{PROG:program}: %{GREEDYDATA:message}"]
-
-  # Add these fields if you want to tag the logs
-  [inputs.tail.tags]
-    vm_id = "g1-1-1"
-    mci_group_id = "mci01"' | base64 -w 0
-```
-
-- Send request with encoded pluginConfig content
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "tail",
-  "pluginSeq": "7",
-  "pluginConfig": "ICBmaWxlcyA9IFsiL3Zhci9sb2cvc3lzbG9nIl0KICBmcm9tX2JlZ2lubmluZyA9IGZhbHNlCiAgd2F0Y2hfbWV0aG9kID0gImlub3RpZnkiCgogICMgRGF0YSBmb3JtYXQgdG8gcGFyc2Ugc3lzbG9nIGVudHJpZXMKICBkYXRhX2Zvcm1hdCA9ICJncm9rIgogIGdyb2tfcGF0dGVybnMgPSBbIiV7U1lTTE9HVElNRVNUQU1QOnRpbWVzdGFtcH0gJXtTWVNMT0dIT1NUOmhvc3RuYW1lfSAle1BST0c6cHJvZ3JhbX06ICV7R1JFRURZREFUQTptZXNzYWdlfSJdCgogICMgQWRkIHRoZXNlIGZpZWxkcyBpZiB5b3Ugd2FudCB0byB0YWcgdGhlIGxvZ3MKICBbaW5wdXRzLnRhaWwudGFnc10KICAgIHZtX2lkID0gImcxLTEtMSIKICAgIG1jaV9ncm91cF9pZCA9ICJtY2kwMSIK"
-}'
-```
-
-### 14. Register OpenSearch monitoring item (Run on any host)
-g1-1-1 example)
-
-- Encode pluginConfig content
-```shell
-echo -e '  urls = ["http://observability_VM_PUBLIC_IP:9200"]
-  index_name = "telegraf-test"
-  template_name = "telegraf-*"' | base64 -w 0
-```
-
-- Send request with encoded pluginConfig content
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "opensearch",
-  "pluginSeq": "10",
-  "pluginConfig": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-}'
-```
-
-### 15. Check registered OpenSearch servers
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch' \
---header 'Accept: */*' | jq
-```
-
-### 16. Check VM's syslog (Run on any host)
+### 13. Check VM's syslog (Run on any host)
 g1-1-1 example)
 
 ```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/1/logs' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/logs' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
-  "range": "1d/d",
-  "limit": "3"
-}' | jq
+    "conditions": [
+        {
+            "key": "tail.message",
+            "value": "mc-o11y-agent"
+        },
+        {
+            "key": "ns_id",
+            "value": "ns01"
+        },
+        {
+            "key": "mci_id",
+            "value": "mci01"
+        },
+        {
+            "key": "target_id",
+            "value": "g1-1-1"
+        }
+    ],
+    "range": "7d",
+    "limit": 3
+} | jq
 ```
 
 - Response example
@@ -344,71 +292,263 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch
     {
         "data": [
             {
-                "@timestamp": "2024-09-19T10:56:56.641954674Z",
+                "@timestamp": "2024-10-21T10:10:04.232093678Z",
                 "measurement_name": "tail",
                 "tag": {
-                    "host": "44f7ab229e2b",
-                    "mci_group_id": "mci01",
+                    "host": "7ba96fb72305",
                     "mci_id": "mci01",
                     "ns_id": "ns01",
                     "path": "/var/log/syslog",
-                    "target_id": "g1-1-1",
-                    "vm_id": "g1-1-1"
+                    "target_id": "g1-1-1"
                 },
                 "tail": {
-                    "hostname": "crlrvke4322s738t4bvg",
-                    "message": "[17296.138673] docker0: port 1(veth64c8848) entered disabled state",
-                    "program": "kernel",
-                    "timestamp": "Sep 19 10:56:56"
+                    "host": "cs8s1jv02jcs73dqejhg",
+                    "message": "cs8s1jv02jcs73dqejhg mc-o11y-agent[678]: 2024-10-21 10:10:04.231 ERROR 7 --- [   scheduling-1] m.m.o.m.m.service.MonitoringService      : NullPointerException: Cannot invoke \"java.util.List.iterator()\" because the return value of \"mcmp.mc.observability.mco11yagent.monitoring.model.SpiderMonitoringInfo$Data.getTimestampValues()\" is null",
+                    "timestamp": "Oct 21 10:10:04"
                 }
             },
             {
-                "@timestamp": "2024-09-19T10:56:56.80143192Z",
+                "@timestamp": "2024-10-21T10:09:03.806398856Z",
                 "measurement_name": "tail",
                 "tag": {
-                    "host": "44f7ab229e2b",
-                    "mci_group_id": "mci01",
+                    "host": "7ba96fb72305",
                     "mci_id": "mci01",
                     "ns_id": "ns01",
                     "path": "/var/log/syslog",
-                    "target_id": "g1-1-1",
-                    "vm_id": "g1-1-1"
+                    "target_id": "g1-1-1"
                 },
                 "tail": {
-                    "hostname": "crlrvke4322s738t4bvg",
-                    "message": "[17296.295880] eth0: renamed from veth74b7f62",
-                    "program": "kernel",
-                    "timestamp": "Sep 19 10:56:56"
+                    "host": "cs8s1jv02jcs73dqejhg",
+                    "message": "cs8s1jv02jcs73dqejhg mc-o11y-agent[678]: 2024-10-21 10:09:03.805 ERROR 7 --- [   scheduling-1] m.m.o.m.m.service.MonitoringService      : NullPointerException: Cannot invoke \"java.util.List.iterator()\" because the return value of \"mcmp.mc.observability.mco11yagent.monitoring.model.SpiderMonitoringInfo$Data.getTimestampValues()\" is null",
+                    "timestamp": "Oct 21 10:09:03"
                 }
             },
             {
-                "@timestamp": "2024-09-19T10:56:56.825379239Z",
+                "@timestamp": "2024-10-21T10:08:03.972426034Z",
                 "measurement_name": "tail",
                 "tag": {
-                    "host": "44f7ab229e2b",
-                    "mci_group_id": "mci01",
+                    "host": "7ba96fb72305",
                     "mci_id": "mci01",
                     "ns_id": "ns01",
                     "path": "/var/log/syslog",
-                    "target_id": "g1-1-1",
-                    "vm_id": "g1-1-1"
+                    "target_id": "g1-1-1"
                 },
                 "tail": {
-                    "hostname": "crlrvke4322s738t4bvg",
-                    "message": "[17296.319992] docker0: port 1(veth64c8848) entered blocking state",
-                    "program": "kernel",
-                    "timestamp": "Sep 19 10:56:56"
+                    "host": "cs8s1jv02jcs73dqejhg",
+                    "message": "cs8s1jv02jcs73dqejhg mc-o11y-agent[678]: 2024-10-21 10:08:03.971 ERROR 7 --- [   scheduling-1] m.m.o.m.m.service.MonitoringService      : NullPointerException: Cannot invoke \"java.util.List.iterator()\" because the return value of \"mcmp.mc.observability.mco11yagent.monitoring.model.SpiderMonitoringInfo$Data.getTimestampValues()\" is null",
+                    "timestamp": "Oct 21 10:08:03"
                 }
             }
         ],
-        "errorMessage": null,
-        "rsCode": "0000",
-        "rsMsg": "완료되었습니다."
+        "error_message": "",
+        "rs_code": "0000",
+        "rs_msg": "완료되었습니다."
     }
     ```
     </details>
 
-### 17. Check VM's monitoring data
+### 14. Check VM's monitoring data from o11y storage
+#### 14.1 Get collected measurement & field list
+```shell
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/csp/cpu_usage' \
+--header 'Accept: */*' | jq
+```
+
+- Response example
+    <details>
+    <summary>접기/펼치기</summary>
+
+    ```json
+    {
+      "data": [
+        {
+          "measurement": "cpu",
+          "fields": [
+            {
+              "field_key": "usage_guest",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_guest_nice",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_idle",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_iowait",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_irq",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_nice",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_softirq",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_steal",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_system",
+              "field_type": "float"
+            },
+            {
+              "field_key": "usage_user",
+              "field_type": "float"
+            }
+          ]
+        },
+        {
+          "measurement": "disk",
+          "fields": ...
+        },
+        {
+          "measurement": "diskio",
+          "fields": ...
+        },
+        {
+          "measurement": "mem",
+          "fields": ...
+        },
+        {
+          "measurement": "processes",
+          "fields": ...
+        },
+        {
+          "measurement": "swap",
+          "fields": ...
+        },
+        {
+          "measurement": "system",
+          "fields": ...
+        },
+        {
+          "measurement": "tail",
+          "fields": ...
+        }
+      ],
+      "error_message": "",
+      "rs_code": "0000",
+      "rs_msg": "완료되었습니다."
+    }
+    ```
+    </details>
+
+
+#### 14.2 Get VM's monitoring data (g1-1-1 example)
+
+```shell
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/influxdb/metric' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+  "measurement": "cpu",
+  "range": "1h",
+  "group_time": "1m",
+  "group_by": [
+    "uuid",
+    "cpu"
+  ],
+  "limit": 10,
+  "fields": [
+    {
+      "function": "mean",
+      "field": "usage_idle"
+    }
+  ],
+  "conditions": [
+    {
+      "key": "cpu",
+      "value": "cpu-total"
+    },
+    {
+      "key": "target_id",
+      "value": "g1-1-1"
+    }
+  ]
+}' | jq
+```
+
+- Response example
+    <details>
+    <summary>접기/펼치기</summary>
+
+    ```json
+    {
+      "data": [
+        {
+          "name": "cpu",
+          "columns": [
+            "timestamp",
+            "usage_idle"
+          ],
+          "tags": {
+            "cpu": "cpu-total",
+            "uuid": ""
+          },
+          "values": [
+            [
+              "2024-10-21T10:46:00Z",
+              99.76217768454649
+            ],
+            [
+              "2024-10-21T10:45:00Z",
+              99.76207420680639
+            ],
+            [
+              "2024-10-21T10:44:00Z",
+              99.76556577083716
+            ],
+            [
+              "2024-10-21T10:43:00Z",
+              99.73291702300929
+            ],
+            [
+              "2024-10-21T10:42:00Z",
+              99.73715154596097
+            ],
+            [
+              "2024-10-21T10:41:00Z",
+              99.71906643784685
+            ],
+            [
+              "2024-10-21T10:40:00Z",
+              99.77460653983535
+            ],
+            [
+              "2024-10-21T10:39:00Z",
+              99.73011568466434
+            ],
+            [
+              "2024-10-21T10:38:00Z",
+              99.68277242593535
+            ],
+            [
+              "2024-10-21T10:37:00Z",
+              99.65347458194857
+            ]
+          ]
+        }
+      ],
+      "error_message": "",
+      "rs_code": "0000",
+      "rs_msg": "완료되었습니다."
+    }
+    ```
+    </details>
+
+### 15. Check VM's monitoring data from CSP (Get from cb-spider Azure Monitoring PoC)
+
+The API below only works with VMs deployed on Azure.
+
 - Supported metric types
   - cpu_usage (%)
   - memory_usage (Bytes)
@@ -425,7 +565,7 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch
 g1-1-1 cpu_usage example)
 
 ```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/csp/cpu_usage' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/csp/cpu_usage' \
 --header 'Accept: */*' | jq
 ```
 
@@ -687,70 +827,6 @@ curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01
     }
     ```
     </details>
-
-### 14. Register agent monitoring items (Run on any host)
-g1-1-1 example)
-
-- Encode pluginConfig content
-```shell
-echo -e '  interval = "10s"' | base64 -w 0
-```
-
-- Send metric requests with encoded pluginConfig content
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "cpu",
-  "pluginSeq": "1",
-  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
-}'
-```
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "disk",
-  "pluginSeq": "2",
-  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
-}'
-```
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "mem",
-  "pluginSeq": "4",
-  "pluginConfig": "ICBpbnRlcnZhbCA9ICIxMHMiCg=="
-}'
-```
-
-### 14. Register InfluxDB (Run on any host)
-g1-1-1 example)
-
-- Encode pluginConfig content
-```shell
-echo -e '  urls = ["http://observability_VM_PUBLIC_IP:8086"]
-  database = "mc-observability"
-  retention_policy = "autogen"
-  username = "mc-agent"
-  password = "mc-agent"' | base64 -w 0
-```
-
-- Send request with encoded pluginConfig content
-```shell
-curl --location 'observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/item' \
---header 'Content-Type: application/json' \
---header 'Accept: */*' \
---data '{
-  "name": "influxdb",
-  "pluginSeq": "9",
-  "pluginConfig": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-}'
-```
 
 ### Swagger Docs
 #### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
