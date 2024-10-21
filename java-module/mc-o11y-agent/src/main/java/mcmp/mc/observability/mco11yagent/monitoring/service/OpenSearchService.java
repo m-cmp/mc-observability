@@ -101,9 +101,7 @@ public class OpenSearchService {
                         String key = condition.getKey();
                         String value = condition.getValue();
 
-                        value = fieldMapping.getOrDefault(key, value);
-
-                        boolQueryBuilder.must(QueryBuilders.matchQuery(key, value));
+                        boolQueryBuilder.must(QueryBuilders.matchQuery(fieldMapping.getOrDefault(key, key), value));
                     });
                 }
 
