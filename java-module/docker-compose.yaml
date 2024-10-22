@@ -16,11 +16,13 @@ services:
       - internal_network
       - external_network
     environment:
+      - TARGET_ID=mc-o11y
       - TUMBLEBUG_URL="${TUMBLEBUG_URL:-http://cb-tumblebug:1323}"
       - TUMBLEBUG_ID="${TUMBLEBUG_ID:-default}"
       - TUMBLEBUG_PW="${TUMBLEBUG_PW:-default}"
+      - INSIGHT_URL=http://mc-o11y-insight:9001
     volumes:
-      - ./manager-conf:/etc/mc-observability-agent:rw
+      - ./manager-conf:/etc/mc-observability-agent/conf:rw
       - /var/log/syslog:/var/log/syslog:ro
 
   mariadb:
