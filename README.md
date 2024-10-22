@@ -13,8 +13,11 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
 
 ## How to Use
 
-### MCMP-Agent Use
+### MC-Agent & Monitoring & Logging API Use 
  - [MC-Observability-Agent Readme](./java-module/README.md)
+
+### MC-Observability-Trigger/Event API Use
+ - [MC-Observability-Trigger/Event API usage scenarios](https://github.com/m-cmp/mc-observability/issues/39)
 
 ### MC-Observability-Insight API Use
  - [MC-Observability-Insight Readme](./python/README.md)
