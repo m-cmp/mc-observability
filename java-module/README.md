@@ -181,7 +181,7 @@ LISTEN 0      4096                 [::]:18081         [::]:*    users:(("docker-
 
 ### 7. Clone tumblebug source (Run on the same Public VM)
 ```
-git clone https://github.com/m-cmp/mc-observability.git
+git clone https://github.com/cloud-barista/cb-tumblebug.git
 cd cb-tumblebug
 ```
 
