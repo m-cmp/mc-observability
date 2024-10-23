@@ -15,10 +15,12 @@ import mcmp.mc.observability.mco11yagent.trigger.model.TriggerPolicyInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerTargetStorageInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.dto.ManageTriggerTargetDto;
+import mcmp.mc.observability.mco11yagent.trigger.util.TimeConverterUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,7 +38,9 @@ public class TriggerTargetService {
         if(triggerPolicyInfo == null)
             throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
-        return triggerTargetMapper.getList(policySeq);
+        return triggerTargetMapper.getList(policySeq).stream()
+                .peek(this::formatTriggerTargetInfo)
+                .collect(Collectors.toList());
     }
 
     public ResBody<TriggerTargetInfo> getDetail(ResBody<TriggerTargetInfo> ResBody, Long seq) {
@@ -52,7 +56,17 @@ public class TriggerTargetService {
 
     public TriggerTargetInfo getDetail(Long seq) {
         TriggerTargetInfo info = triggerTargetMapper.getDetail(seq);
+        formatTriggerTargetInfo(info);
         return info;
+    }
+
+    private void formatTriggerTargetInfo(TriggerTargetInfo target) {
+        if (target.getCreateAt() != null) {
+            target.setCreateAt(TimeConverterUtils.toUTCFormat(target.getCreateAt()));
+        }
+        if (target.getUpdateAt() != null) {
+            target.setUpdateAt(TimeConverterUtils.toUTCFormat(target.getUpdateAt()));
+        }
     }
 
     public ResBody<Void> setTargets(Long policySeq, List<ManageTriggerTargetDto> targets) {

@@ -69,11 +69,11 @@ public class TriggerPolicyInfo {
     @JsonProperty("tick_script")
     private String tickScript;
 
-    @ApiModelProperty(value = "The time when the trigger policy was registered", example = "2024-05-24 11:31:55")
+    @ApiModelProperty(value = "The time when the trigger policy was registered", example = "2024-05-24T11:31:55Z")
     @JsonProperty("create_at")
     private String createAt;
 
-    @ApiModelProperty(value = "The time when the trigger policy was updated")
+    @ApiModelProperty(value = "The time when the trigger policy was updated", example = "2024-05-24T11:31:55Z")
     @JsonProperty("update_at")
     private String updateAt;
 

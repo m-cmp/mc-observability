@@ -37,11 +37,11 @@ public class TriggerTargetInfo {
     @JsonProperty("alias_name")
     private String aliasName;
 
-    @ApiModelProperty(value = "The time when the trigger target was registered", example = "2024-05-24 11:31:55")
+    @ApiModelProperty(value = "The time when the trigger target was registered", example = "2024-05-24T11:31:55Z")
     @JsonProperty("create_at")
     private String createAt;
 
-    @ApiModelProperty(value = "The time when the trigger target was updated")
+    @ApiModelProperty(value = "The time when the trigger target was updated", example = "2024-05-24T11:31:55Z")
     @JsonProperty("update_at")
     private String updateAt;
 }

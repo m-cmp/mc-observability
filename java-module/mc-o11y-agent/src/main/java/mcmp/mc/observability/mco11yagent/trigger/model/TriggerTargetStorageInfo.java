@@ -33,7 +33,7 @@ public class TriggerTargetStorageInfo {
     @JsonProperty("retention_policy")
     private String retentionPolicy;
 
-    @ApiModelProperty(value = "The time when the trigger target storage was registered", example = "2024-05-24 11:31:55")
+    @ApiModelProperty(value = "The time when the trigger target storage was registered", example = "2024-05-24T11:31:55Z")
     @JsonProperty("create_at")
     private String createAt;
 
