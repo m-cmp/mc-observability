@@ -12,6 +12,7 @@ import mcmp.mc.observability.mco11yagent.trigger.model.ManageTriggerTargetStorag
 import mcmp.mc.observability.mco11yagent.trigger.model.TriggerPolicyInfo;
 import mcmp.mc.observability.mco11yagent.trigger.model.dto.TriggerPolicyCreateDto;
 import mcmp.mc.observability.mco11yagent.trigger.model.dto.TriggerPolicyUpdateDto;
+import mcmp.mc.observability.mco11yagent.trigger.util.TimeConverterUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -35,12 +38,14 @@ public class TriggerPolicyService {
     private String agentManagerIp;
 
     public List<TriggerPolicyInfo> getList() {
-        return triggerPolicyMapper.getList();
+        return triggerPolicyMapper.getList().stream()
+                .peek(this::formatTriggerPolicyInfo)
+                .collect(Collectors.toList());
     }
 
     public ResBody<TriggerPolicyInfo> getDetail(ResBody<TriggerPolicyInfo> ResBody, Long seq) {
         TriggerPolicyInfo triggerHistoryInfo = getDetail(seq);
-        if( triggerHistoryInfo == null ) {
+        if (triggerHistoryInfo == null) {
             ResBody.setCode(ResultCode.INVALID_REQUEST);
             return ResBody;
         }
@@ -51,7 +56,17 @@ public class TriggerPolicyService {
 
     public TriggerPolicyInfo getDetail(Long seq) {
         TriggerPolicyInfo info = triggerPolicyMapper.getDetail(seq);
+        formatTriggerPolicyInfo(info);
         return info;
+    }
+
+    private void formatTriggerPolicyInfo(TriggerPolicyInfo policy) {
+        if (policy.getCreateAt() != null) {
+            policy.setCreateAt(TimeConverterUtils.toUTCFormat(policy.getCreateAt()));
+        }
+        if (policy.getUpdateAt() != null) {
+            policy.setUpdateAt(TimeConverterUtils.toUTCFormat(policy.getUpdateAt()));
+        }
     }
 
     public ResBody<Void> createPolicy(TriggerPolicyCreateDto dto) {
@@ -90,12 +105,12 @@ public class TriggerPolicyService {
                 throw new TriggerResultCodeException(ResultCode.INVALID_ERROR, "Trigger Policy Update None");
             }
 
-            if(hasNonNullFields(dto)) {
+            if (hasNonNullFields(dto)) {
                 List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", info.getSeq()));
                 if (CollectionUtils.isEmpty(targetStorageInfoList))
                     return ResBody;
 
-                for(ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
+                for (ManageTriggerTargetStorageInfo targetStorageInfo : targetStorageInfoList) {
                     kapacitorApiService.updateTask(info, targetStorageInfo);
                 }
             }
@@ -122,11 +137,11 @@ public class TriggerPolicyService {
     public ResBody<Void> deletePolicy(Long seq) {
         ResBody<Void> ResBody = new ResBody<>();
         try {
-            if( seq <= 0 )
+            if (seq <= 0)
                 throw new TriggerResultCodeException(ResultCode.NOT_FOUND_REQUIRED, "Trigger Policy Sequence Error");
 
             TriggerPolicyInfo policyInfo = getDetail(seq);
-            if(policyInfo == null)
+            if (policyInfo == null)
                 throw new TriggerResultCodeException(ResultCode.INVALID_REQUEST, "Trigger Policy Sequence Error");
 
             List<ManageTriggerTargetStorageInfo> targetStorageInfoList = triggerTargetStorageMapper.getManageTriggerTargetStorageInfoList(Collections.singletonMap("policySeq", seq));
@@ -143,8 +158,7 @@ public class TriggerPolicyService {
             triggerTargetStorageMapper.deleteTriggerTargetStorageByPolicySeq(seq);
             triggerTargetMapper.deleteTriggerTargetByPolicySeq(seq);
             triggerPolicyMapper.deletePolicy(seq);
-        }
-        catch (TriggerResultCodeException e) {
+        } catch (TriggerResultCodeException e) {
             log.error(e.getMessage(), e.getObjects());
             ResBody.setCode(e.getResultCode());
         }

@@ -47,11 +47,11 @@ public class TriggerHistoryInfo {
     @JsonProperty("name")
     private String name;
 
-    @ApiModelProperty(value = "The time when the history was inserted into the database", example = "2024-05-24 11:31:55")
+    @ApiModelProperty(value = "The time when the history was inserted into the database", example = "2024-05-24T11:31:55Z")
     @JsonProperty("create_at")
     private String createAt;
 
-    @ApiModelProperty(value = "The time when the history occurred")
+    @ApiModelProperty(value = "The time when the history occurred", example = "2024-05-24T11:31:55Z")
     @JsonProperty("occur_time")
     private String occurTime;
 
