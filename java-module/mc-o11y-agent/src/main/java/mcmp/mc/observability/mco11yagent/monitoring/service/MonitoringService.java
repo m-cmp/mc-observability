@@ -23,8 +23,8 @@ public class MonitoringService {
     private final PluginMapper pluginMapper;
     private final SpiderClient spiderClient;
 
-    public SpiderMonitoringInfo.Data geSpiderVMMonitoring(String nsId, String mciId, String targetId, String measurement,
-                                                          String timeBeforeHour, String intervalMinute) {
+    public SpiderMonitoringInfo.Data getSpiderVMMonitoring(String nsId, String mciId, String targetId, String measurement,
+                                                           String timeBeforeHour, String intervalMinute) {
         TumblebugMCI.Vm vm = tumblebugClient.getVM(nsId, mciId, targetId);
 
         SpiderMonitoringInfo.Data data = null;

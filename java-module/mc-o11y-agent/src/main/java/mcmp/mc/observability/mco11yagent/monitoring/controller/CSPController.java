@@ -22,7 +22,7 @@ public class CSPController {
     public ResBody<SpiderMonitoringInfo.Data> getCSP(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId, @PathVariable String measurement) {
         ResBody<SpiderMonitoringInfo.Data> resBody = new ResBody<>();
         try {
-            resBody.setData(monitoringService.geSpiderVMMonitoring(nsId, mciId, targetId, measurement, "1", "1"));
+            resBody.setData(monitoringService.getSpiderVMMonitoring(nsId, mciId, targetId, measurement, "1", "1"));
         } catch (Exception e) {
             resBody.setCode(ResultCode.FAILED);
             resBody.setErrorMessage(e.getMessage());
