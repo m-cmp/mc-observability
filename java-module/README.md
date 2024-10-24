@@ -281,7 +281,7 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ope
     ],
     "range": "7d",
     "limit": 3
-} | jq
+}' | jq
 ```
 
 - Response example
