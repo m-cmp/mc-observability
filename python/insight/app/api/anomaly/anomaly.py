@@ -13,6 +13,7 @@ from app.api.anomaly.response.res import ResBodyVoid, ResBodyAnomalyDetectionHis
 from app.api.anomaly.request.req import (AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
 from config.ConfigManager import ConfigManager
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 
@@ -99,9 +100,19 @@ async def get_anomaly_detection_history(
         path_params: GetHistoryPathParams = Depends(),
         query_params: GetAnomalyHistoryFilter = Depends(),
 ):
-    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
-    data = service.get_anomaly_detection_results()
-    return ResBodyAnomalyDetectionHistoryResponse(data=data)
+    try:
+        service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+        data = service.get_anomaly_detection_results()
+        return ResBodyAnomalyDetectionHistoryResponse(data=data)
+    except Exception as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "error_message": e.detail,
+                "rs_code": e.status_code,
+                "rs_msg": "Fail"
+            }
+        )
 
 
 @router.post(
