@@ -5,6 +5,9 @@ from config.ConfigManager import ConfigManager
 import requests
 import pandas as pd
 import numpy as np
+from datetime import datetime
+import pytz
+from fastapi import HTTPException
 
 
 class AnomalyHistoryService:
@@ -62,6 +65,18 @@ class AnomalyHistoryService:
 
         field_value = field_mapping.get(self.query_params.measurement.value)
 
+        current_time = datetime.now(pytz.UTC)
+        start_time = pd.to_datetime(self.query_params.start_time)
+        time_diff_start = current_time - start_time
+        if time_diff_start.total_seconds() < 0:
+            raise HTTPException(status_code=400, detail=f"Invalid start_time format: {self.query_params.start_time}")
+
+        if time_diff_start.days > 0:
+            range_value = f"{time_diff_start.days + 1}d"
+        else:
+            hours_diff = int(time_diff_start.total_seconds() // 3600 + 1)
+            range_value = f"{hours_diff}h"
+
         return {
             "conditions": [
                 {
@@ -81,7 +96,7 @@ class AnomalyHistoryService:
             ],
             "group_time": "1m",
             "measurement": self.query_params.measurement.value.lower(),
-            "range": "12h"
+            "range": range_value
         }
 
     def _send_request(self, method: str, url: str, **kwargs):
