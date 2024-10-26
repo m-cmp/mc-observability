@@ -32,8 +32,13 @@ public class AgentService {
         try {
             if( datasourceUrl.contains(Constants.EMPTY_HOST) ) return false;
 
+            File confRootDirectory = new File(Constants.CONFIG_ROOT_PATH);
+            if (!confRootDirectory.exists()) {
+                confRootDirectory.mkdir();
+            }
+
             File confDirectory = new File(Constants.COLLECTOR_CONFIG_DIR_PATH);
-            if (!confDirectory.exists() || !confDirectory.isDirectory()) {
+            if (!confDirectory.exists()) {
                 confDirectory.mkdir();
             }
 
