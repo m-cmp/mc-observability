@@ -79,7 +79,7 @@ public class OpenSearchService {
         if( !delList.isEmpty() ) opensearchMapper.deleteOpenSearchInfoList(delList);
     }
 
-    public List<Map<String, Object>> getLogs(LogsInfo logsInfo) {
+    public List<Map<String, Object>> getLogs(LogsInfo logsInfo, Boolean isManager) {
         List<OpenSearchInfo> opensearchInfoList = opensearchMapper.getOpenSearchInfoList();
         List<Map<String, Object>> result = new ArrayList<>();
 
@@ -118,7 +118,13 @@ public class OpenSearchService {
 
                 searchSourceBuilder.sort("@timestamp", SortOrder.DESC);
 
-                SearchRequest searchRequest = new SearchRequest(opensearchInfo.getIndexName());
+                SearchRequest searchRequest = null;
+
+                if (isManager) {
+                    searchRequest = new SearchRequest("mcmp");
+                } else {
+                    searchRequest = new SearchRequest(opensearchInfo.getIndexName());
+                }
                 searchRequest.source(searchSourceBuilder);
 
                 SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);

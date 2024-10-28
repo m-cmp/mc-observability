@@ -28,10 +28,17 @@ public class OpenSearchController {
         return opensearchService.getList();
     }
 
-    @PostMapping("/logs")
-    public ResBody<List<Map<String, Object>>> metric(@RequestBody LogsInfo logsInfo) {
+    @PostMapping("/logs/vm")
+    public ResBody<List<Map<String, Object>>> getVMLog(@RequestBody LogsInfo logsInfo) {
         ResBody<List<Map<String, Object>>> resBody = new ResBody<>();
-        resBody.setData(opensearchService.getLogs(logsInfo));
+        resBody.setData(opensearchService.getLogs(logsInfo, false));
+        return resBody;
+    }
+
+    @PostMapping("/logs/mcmp")
+    public ResBody<List<Map<String, Object>>> getMCMPLog(@RequestBody LogsInfo logsInfo) {
+        ResBody<List<Map<String, Object>>> resBody = new ResBody<>();
+        resBody.setData(opensearchService.getLogs(logsInfo, true));
         return resBody;
     }
 }

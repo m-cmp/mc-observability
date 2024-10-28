@@ -229,12 +229,20 @@ public class MonitoringController {
         return monitoringClient.getOpenSearchList();
     }
 
-    @PostMapping(Constants.OPENSEARCH_PATH + "/logs")
-    @Operation(operationId = "GetOpenSearchLogs", summary = "Get collected logs from OpenSearch",
-            tags = "[Monitoring log] Monitoring log")
+    @PostMapping(Constants.OPENSEARCH_PATH + "/logs/vm")
+    @Operation(operationId = "GetVMOpenSearchLogs", summary = "Get VM's collected logs from OpenSearch",
+            tags = "[Monitoring log] Monitoring VM log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
-    public ResBody<List<Map<String, Object>>> getOpenSearchLogs(@RequestBody LogsInfo logsInfo) {
-        return monitoringClient.getOpenSearchLogs(logsInfo);
+    public ResBody<List<Map<String, Object>>> getVMOpenSearchLogs(@RequestBody LogsInfo logsInfo) {
+        return monitoringClient.getVMOpenSearchLogs(logsInfo);
+    }
+
+    @PostMapping(Constants.OPENSEARCH_PATH + "/logs/mcmp")
+    @Operation(operationId = "GetMCMPOpenSearchLogs", summary = "Get M-CMP collected logs from OpenSearch",
+            tags = "[Monitoring log] Monitoring M-CMP log")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
+    public ResBody<List<Map<String, Object>>> getMCMPOpenSearchLogs(@RequestBody LogsInfo logsInfo) {
+        return monitoringClient.getMCMPOpenSearchLogs(logsInfo);
     }
 
     // monitoring miningdb api
