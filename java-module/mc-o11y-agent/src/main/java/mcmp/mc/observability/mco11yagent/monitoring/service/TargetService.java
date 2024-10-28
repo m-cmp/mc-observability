@@ -17,6 +17,14 @@ public class TargetService {
 
     private final TargetMapper targetMapper;
 
+    private final InfluxDBService influxDBService;
+    private final OpenSearchService openSearchService;
+
+    private void updateLists() {
+        influxDBService.getList();
+        openSearchService.getList();
+    }
+
     public ResBody<List<TargetInfo>> getList() {
         ResBody<List<TargetInfo>> resBody = new ResBody<>();
         resBody.setData(targetMapper.getList());
@@ -39,7 +47,10 @@ public class TargetService {
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
+
         if( targetMapper.insert(targetInfo) > 0 ) {
+            updateLists();
+
             return new ResBody<>(ResultCode.SUCCESS);
         } else {
             return new ResBody<>(ResultCode.FAILED);
@@ -50,7 +61,10 @@ public class TargetService {
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
+
         if( targetMapper.update(targetInfo) > 0 ) {
+            updateLists();
+
             return new ResBody<>(ResultCode.SUCCESS);
         }
         else {
@@ -63,7 +77,10 @@ public class TargetService {
         targetInfo.setNsId(nsId);
         targetInfo.setMciId(mciId);
         targetInfo.setId(targetId);
+
         if( targetMapper.delete(targetInfo) > 0 ) {
+            updateLists();
+
             return new ResBody<>(ResultCode.SUCCESS);
         }
         else {
