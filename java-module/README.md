@@ -253,11 +253,12 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns0
 ```
 
 
-### 13. Check VM's syslog (Run on any host)
+### 13. Check collected logs (Run on any host)
+#### 13.1 Check VM's syslog (Run on any host)
 g1-1-1 example)
 
 ```shell
-curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/logs' \
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/logs/vm' \
 --header 'Content-Type: application/json' \
 --header 'Accept: */*' \
 --data '{
@@ -343,6 +344,148 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ope
         "error_message": "",
         "rs_code": "0000",
         "rs_msg": "완료되었습니다."
+    }
+    ```
+    </details>
+
+#### 13.2 Check M-CMP log (Run on any host)
+
+```shell
+curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/logs/mcmp' \
+--header 'Content-Type: application/json' \
+--header 'Accept: */*' \
+--data '{
+    "conditions": [
+        {
+            "key": "tail.program",
+            "value": "insight"
+        }
+    ],
+    "range": "7d",
+    "limit": 3
+}
+ ' | jq
+```
+
+- Response example
+    <details>
+    <summary>접기/펼치기</summary>
+
+    ```json
+    {
+      "data": [
+        {
+          "@timestamp": "2024-10-28T09:16:05.352240948Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.349+0000#033[0m] {#033[34mscheduler_job_runner.py:#033[0m695} INFO#033[0m - Received executor event with state success for task instance TaskInstanceKey(dag_id='anomaly_detection', task_id='execute_api_calls', run_id='scheduled__2024-10-28T09:15:00+00:00', try_number=1, map_index=-1)#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        },
+        {
+          "@timestamp": "2024-10-28T09:16:05.352328747Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.351+0000#033[0m] {#033[34mscheduler_job_runner.py:#033[0m732} INFO#033[0m - TaskInstance Finished: dag_id=anomaly_detection, task_id=execute_api_calls, run_id=scheduled__2024-10-28T09:15:00+00:00, map_index=-1, run_start_date=2024-10-28 09:16:03.303052+00:00, run_end_date=2024-10-28 09:16:05.127739+00:00, run_duration=1.82469, state=success, executor_state=success, try_number=1, max_tries=0, job_id=123352, pool=default_pool, queue=default, priority_weight=1, operator=PythonOperator, queued_dttm=2024-10-28 09:16:02.842627+00:00, queued_by_job_id=123281, pid=1367#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        },
+        {
+          "@timestamp": "2024-10-28T09:16:05.343930735Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.343+0000#033[0m] {#033[34mdag.py:#033[0m3834} INFO#033[0m - Setting next_dagrun for anomaly_detection to 2024-10-28 09:16:00+00:00, run_after=2024-10-28 09:17:00+00:00#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        },
+        {
+          "@timestamp": "2024-10-28T09:16:05.352240948Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.349+0000#033[0m] {#033[34mscheduler_job_runner.py:#033[0m695} INFO#033[0m - Received executor event with state success for task instance TaskInstanceKey(dag_id='anomaly_detection', task_id='execute_api_calls', run_id='scheduled__2024-10-28T09:15:00+00:00', try_number=1, map_index=-1)#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        },
+        {
+          "@timestamp": "2024-10-28T09:16:05.352328747Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.351+0000#033[0m] {#033[34mscheduler_job_runner.py:#033[0m732} INFO#033[0m - TaskInstance Finished: dag_id=anomaly_detection, task_id=execute_api_calls, run_id=scheduled__2024-10-28T09:15:00+00:00, map_index=-1, run_start_date=2024-10-28 09:16:03.303052+00:00, run_end_date=2024-10-28 09:16:05.127739+00:00, run_duration=1.82469, state=success, executor_state=success, try_number=1, max_tries=0, job_id=123352, pool=default_pool, queue=default, priority_weight=1, operator=PythonOperator, queued_dttm=2024-10-28 09:16:02.842627+00:00, queued_by_job_id=123281, pid=1367#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        },
+        {
+          "@timestamp": "2024-10-28T09:16:05.343930735Z",
+          "measurement_name": "tail",
+          "tag": {
+            "host": "24c3a9b19b20",
+            "mci_id": "",
+            "ns_id": "",
+            "path": "/var/log/syslog",
+            "target_id": "mc-o11y"
+          },
+          "tail": {
+            "host": "o11y",
+            "message": "[#033[34m2024-10-28T09:16:05.343+0000#033[0m] {#033[34mdag.py:#033[0m3834} INFO#033[0m - Setting next_dagrun for anomaly_detection to 2024-10-28 09:16:00+00:00, run_after=2024-10-28 09:17:00+00:00#033[0m",
+            "pid": "866",
+            "program": "mc-o11y-insight-scheduler",
+            "timestamp": "Oct 28 09:16:05"
+          }
+        }
+      ],
+      "error_message": "",
+      "rs_code": "0000",
+      "rs_msg": "완료되었습니다."
     }
     ```
     </details>
