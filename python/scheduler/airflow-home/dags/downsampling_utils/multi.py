@@ -46,11 +46,13 @@ class DataProcessor:
                     print('data empty')
                     continue
 
-                tags = metric_data[0]['tags']
-                # "tags": {"mci_id": "mci01", "ns_id": "ns01", "target_id": "g1-1-1"}
-                result_df = self.downsample_and_reduce(measurement=measurement, field=field['field_key'],
-                                                       metric_data=metric_data[0]['values'])
-                self.save_to_influx(measurement, result_df, tags=tags, field=field['field_key'])
+                for metric_entry in metric_data:
+                    try:
+                        tags = metric_entry['tags']
+                        result_df = self.downsample_and_reduce(metric_data=metric_entry['values'])
+                        self.save_to_influx(measurement, result_df, tags=tags, field=field['field_key'])
+                    except Exception as e_msg:
+                        print(f"Error processing metric data for {measurement}, field: {field['field_key']}. Error: {e_msg}")
 
             print(f"{measurement} is saved.")
 
@@ -77,8 +79,9 @@ class DataProcessor:
 
         return metric_data
 
-    def downsample_and_reduce(self, field, measurement, metric_data):
+    def downsample_and_reduce(self, metric_data):
         metric_data_df = pd.DataFrame(metric_data, columns=['time', 'y'])
+        metric_data_df.dropna(subset=['y'], inplace=True)
         result_df = pd.DataFrame()
 
         wma_df = weighted_moving_average(metric_data_df, ['y'])

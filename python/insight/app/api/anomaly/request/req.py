@@ -9,7 +9,7 @@ import pytz
 
 def set_time_delta(delta=0) -> str:
     utc_now = datetime.utcnow().replace(microsecond=0)
-    new_time_utc = utc_now + timedelta(hours=delta)
+    new_time_utc = utc_now - timedelta(hours=delta)
     return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 

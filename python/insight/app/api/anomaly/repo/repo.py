@@ -122,13 +122,12 @@ class AnomalyServiceRepository:
         return self.db.query(AnomalyDetectionSettings).filter_by(SEQ=seq).first()
 
     def update_last_exe_time(self, seq: int):
-        kst = pytz.timezone('Asia/Seoul')
-        current_time_kst = datetime.now(kst)
+        current_time_utc = datetime.now(pytz.UTC)
 
         stmt = (
             update(AnomalyDetectionSettings)
             .where(AnomalyDetectionSettings.SEQ == seq)
-            .values(LAST_EXECUTION=current_time_kst)
+            .values(LAST_EXECUTION=current_time_utc)
         )
 
         self.db.execute(stmt)

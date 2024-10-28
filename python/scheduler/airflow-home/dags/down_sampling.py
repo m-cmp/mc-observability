@@ -79,6 +79,3 @@ with DAG(
     )
 
     call_influxdb_seq >> data_down_sampling
-
-if __name__ == "__main__":
-    dag.cli()
