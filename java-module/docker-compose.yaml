@@ -193,7 +193,7 @@ services:
       - INFLUXDB_DB="mc-observability"
     volumes:
       - /docker/influxdb/config:/etc/influxdb
-      - /docker/influxdb/var/lib/influxdb:/var/lib/influxdb
+      - /docker/influxdb/var/lib/influxdb:/root/.influxdb
       - ./influxdb_init:/docker-entrypoint-initdb.d
     networks:
       - internal_network
