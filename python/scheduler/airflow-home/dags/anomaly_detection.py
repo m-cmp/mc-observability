@@ -45,7 +45,12 @@ def filter_records_to_execute(records):
     current_time = datetime.now()
 
     for record in records:
-        record['LAST_EXECUTION'] = pd.to_datetime(record['LAST_EXECUTION'])
+        last_execution = record['LAST_EXECUTION']
+        if last_execution == 'NaT':
+            record['LAST_EXECUTION'] = pd.Timestamp('1970-01-01')
+        else:
+            record['LAST_EXECUTION'] = pd.to_datetime(last_execution)
+
         interval = parse_execution_intervals(record)
         record['next_execution_time'] = record['LAST_EXECUTION'] + interval
 
