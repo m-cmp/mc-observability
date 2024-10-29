@@ -1,19 +1,15 @@
 from influxdb import InfluxDBClient
 import warnings
 import pandas as pd
-import numpy as np
 from downsampling_utils.downsampling import weighted_moving_average, data_reduction
 from urllib.parse import urlparse
-import ast
-from functools import reduce
-import time
 import requests
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 
 class DataProcessor:
-    def __init__(self, api_base_url, influxdb, influx_seq, metric_info_list, end: str):
+    def __init__(self, api_base_url: str, influxdb, metric_info_list):
         self.save_client = InfluxDBClient(
             host=influxdb.host, port=influxdb.port,
             username=influxdb.login, password=influxdb.password,
@@ -21,12 +17,8 @@ class DataProcessor:
         )
 
         self.api_base_url = api_base_url
-
         self.influxdb = influxdb
-        self.influx_seq = influx_seq
         self.metric_info_list = metric_info_list
-        self.end = end
-
         self.headers = {'Content-Type': 'application/json'}
 
     @staticmethod
@@ -73,7 +65,6 @@ class DataProcessor:
             'range': '1h'
         }
 
-        # api_url = self.api_base_url + f'/monitoring/influxdb/{self.influx_seq[0]}/metric'
         api_url = self.api_base_url + f'/monitoring/influxdb/metric'
         metric_data = requests.post(api_url, headers=self.headers, json=body).json().get('data', [])
 
@@ -82,15 +73,14 @@ class DataProcessor:
     def downsample_and_reduce(self, metric_data):
         metric_data_df = pd.DataFrame(metric_data, columns=['time', 'y'])
         metric_data_df.dropna(subset=['y'], inplace=True)
-        result_df = pd.DataFrame()
+        metric_data_df.sort_values(by='time', inplace=True)
+        metric_data_df.reset_index(drop=True, inplace=True)
 
         wma_df = weighted_moving_average(metric_data_df, ['y'])
         reduced_df = data_reduction(wma_df, ['y'], cut_size=6)
-        for tag in ['y']:
-            reduced_df[tag] = metric_data_df[tag].iloc[0]
-        result_df = pd.concat([result_df, reduced_df], ignore_index=True)
+        reduced_df = pd.concat([reduced_df, metric_data_df.loc[[0], ['time', 'y']]], ignore_index=True)
 
-        return result_df
+        return reduced_df
 
     def save_to_influx(self, measurement, result_df, tags, field):
         try:
