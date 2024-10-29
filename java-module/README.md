@@ -115,40 +115,26 @@ UpdateRelStyle(container13, database12, $lineColor="green")
 
 ## How to Use
 
-### 1. Install Docker to Public VM
-```shell
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
-```
-
-### 2. Clone observability source to Public VM
+### 1. Clone observability source to Public VM
 ```
 git clone https://github.com/m-cmp/mc-observability.git
 ```
 
-### 3. Go to Java folder
+### 2. Run manager install script
 ```
-cd mc-observability/java-module
-```
-
-### 4. set .env (edit .env) (Or skip this step for use defaults.)
-```
-cp .env.sample .env
+cd mc-observability
+./java-module/scripts/install-manager.sh
 ```
 
-### 5. Run docker services
+### 3. (Optional) Configure .env file if you want to use other cb-spider or cb-tumblebug etc...
 ```
-sudo mkdir -p /docker/opensearch
-sudo mkdir -p /docker/kapacitor_data
-sudo chown -R 1000:1000 /docker/opensearch
-sudo chown -R 999:999 /docker/kapacitor_data
-sudo docker compose up -d
+cd java-module/
+docker compose down
+vi .env ## Edit this file
+docker compose up -d
 ```
 
-### 6. Check network listen states
+### 4. Check network listen states
 ```
 sudo ss -nltp | grep docker                                                                                                       12:03:20 PM
 LISTEN 0      4096              0.0.0.0:1024       0.0.0.0:*    users:(("docker-proxy",pid=21828,fd=4))
@@ -179,16 +165,16 @@ LISTEN 0      4096                 [::]:18080         [::]:*    users:(("docker-
 LISTEN 0      4096                 [::]:18081         [::]:*    users:(("docker-proxy",pid=21873,fd=4))
 ```
 
-### 7. Clone tumblebug source (Run on the same Public VM)
+### 5. Clone tumblebug source (Run on the same Public VM)
 ```
 git clone https://github.com/cloud-barista/cb-tumblebug.git
 cd cb-tumblebug
 ```
 
-### 8. Initialize tumblebug (Run on the same Public  VM)
+### 6. Initialize tumblebug (Run on the same Public  VM)
 [Initialize CB-Tumblebug to configure Multi-Cloud info](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info)
 
-### 9. Create namespace to tumblebug (Run on the same Public VM)
+### 7. Create namespace to tumblebug (Run on the same Public VM)
 ```shell
 curl -u default:default -X 'POST' \
   'http://127.0.0.1:1323/tumblebug/ns' \
@@ -200,7 +186,7 @@ curl -u default:default -X 'POST' \
 }'
 ```
 
-### 10. Create MCI dynamically (Run on the same Public VM)
+### 8. Create MCI dynamically (Run on the same Public VM)
 ```shell
 curl -u default:default -X 'POST' \
   'http://127.0.0.1:1323/tumblebug/ns/ns01/mciDynamic' \
@@ -226,7 +212,7 @@ curl -u default:default -X 'POST' \
 }'
 ```
 
-### 11. Register monitoring targets to observability manager (Run on any host)
+### 9. Register monitoring targets to observability manager (Run on any host)
 ```shell
 curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1' \
 --header 'Content-Type: application/json' \
@@ -246,15 +232,15 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns0
 }'
 ```
 
-### 12. Check registered monitoring targets from observability (Run on any host)
+### 10. Check registered monitoring targets from observability (Run on any host)
 ```shell
 curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target' \
 --header 'Accept: */*' | jq
 ```
 
 
-### 13. Check collected logs (Run on any host)
-#### 13.1 Check VM's syslog (Run on any host)
+### 11. Check collected logs (Run on any host)
+#### 11.1 Check VM's syslog (Run on any host)
 g1-1-1 example)
 
 ```shell
@@ -348,7 +334,7 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ope
     ```
     </details>
 
-#### 13.2 Check M-CMP log (Run on any host)
+#### 11.2 Check M-CMP log (Run on any host)
 
 ```shell
 curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/opensearch/logs/mcmp' \
@@ -490,8 +476,8 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ope
     ```
     </details>
 
-### 14. Check VM's monitoring data from o11y storage
-#### 14.1 Get collected measurement & field list
+### 12. Check VM's monitoring data from o11y storage
+#### 12.1 Get collected measurement & field list
 ```shell
 curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns01/mci01/target/g1-1-1/csp/cpu_usage' \
 --header 'Accept: */*' | jq
@@ -586,7 +572,7 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns0
     </details>
 
 
-#### 14.2 Get VM's monitoring data (g1-1-1 example)
+#### 12.2 Get VM's monitoring data (g1-1-1 example)
 
 ```shell
 curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/influxdb/metric' \
@@ -682,7 +668,7 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/inf
     ```
     </details>
 
-### 15. Check VM's monitoring data from CSP (Get from cb-spider Azure Monitoring PoC)
+### 13. Check VM's monitoring data from CSP (Get from cb-spider Azure Monitoring PoC)
 
 The API below only works with VMs deployed on Azure.
 
