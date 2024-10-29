@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_history` (
     `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '고유번호',
     `POLICY_SEQ` int(10) unsigned NOT NULL COMMENT '트리거 정책 고유번호',
     `TARGET_SEQ` int(10) unsigned NOT NULL COMMENT '트리거 대상 고유번호',
-    `NAME` varchar(50) NOT NULL DEFAULT '' COMMENT '트리거 대상 호스트명',
+    `NAME` varchar(50) DEFAULT '' COMMENT '트리거 대상 호스트명',
     `NS_ID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '추가정보(cmp agent에서는 처리 없음)',
     `TARGET_ID` varchar(50) NOT NULL COMMENT '호스트 고유 ID Agent 실행시 Host 구분값으로 사용 Agent 등록시 자체 발행 및 파일 기록',
     `METRIC` varchar(50) NOT NULL DEFAULT '' COMMENT '메트릭 이름',
@@ -215,7 +215,7 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
   `TARGET_TYPE` varchar(100) NOT NULL,
   `MEASUREMENT` varchar(100) NOT NULL,
   `EXECUTION_INTERVAL` varchar(100) NOT NULL,
-  `LAST_EXECUTION` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `LAST_EXECUTION` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `REGDATE` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`SEQ`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
