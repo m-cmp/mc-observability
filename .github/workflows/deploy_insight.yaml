@@ -23,7 +23,6 @@ on:
       - "LICENSE"
       - ".gitignore"
       - "go/**"
-      - "java-module/**"
   # workflow trigger button
   # workflow_dispatch:
 
