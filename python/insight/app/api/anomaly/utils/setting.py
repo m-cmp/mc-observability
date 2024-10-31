@@ -20,7 +20,7 @@ class AnomalySettingsService:
                 target_type=setting.TARGET_TYPE,
                 measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
-                last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ') if setting.LAST_EXECUTION else None,
                 create_at=setting.REGDATE.strftime('%Y-%m-%dT%H:%M:%SZ')
             )
             for setting in settings

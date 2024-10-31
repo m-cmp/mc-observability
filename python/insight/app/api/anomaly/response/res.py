@@ -21,8 +21,12 @@ class AnomalyDetectionSettings(BaseModel):
     target_type: str
     measurement: str
     execution_interval: str
-    last_execution: str = Field(..., description="The timestamp for the anomaly detection last run.",
-                                format="date-time", example="2024-10-08T06:50:37Z")
+    last_execution: Optional[str] = Field(
+        None,
+        description="The timestamp for the anomaly detection last run.",
+        format="date-time",
+        example="2024-10-08T06:50:37Z"
+    )
     create_at: str = Field(..., description="The timestamp for the registration for anomaly detection target.",
                            format="date-time", example="2024-10-08T06:50:37Z")
 
