@@ -23,8 +23,7 @@ on:
       - "LICENSE"
       - ".gitignore"
       - "go/**"
-  # workflow trigger button
-  # workflow_dispatch:
+  workflow_dispatch:
 
 env:
   DOCKER_REGISTRY_NAME: cloudbaristaorg
