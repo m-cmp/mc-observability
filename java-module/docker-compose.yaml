@@ -50,7 +50,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.9.18
+    image: cloudbaristaorg/cb-tumblebug:0.9.22
     container_name: cb-tumblebug
     restart: always
     platform: linux/amd64
