@@ -267,8 +267,7 @@ services:
       - external_network
 
   mc-o11y-insight:
-    build: ../python/insight
-    # image: mc-o11y-insight:0.3.0
+    image: cloudbaristaorg/mc-o11y-insight:edge
     container_name: mc-o11y-insight-service
     restart: always
     ports:
@@ -282,8 +281,7 @@ services:
       - external_network
 
   mc-o11y-insight-scheduler:
-    build: ../python/scheduler
-    # image: mc-o11y-insight-scheduler:0.3.0
+    image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
     container_name: mc-o11y-insight-scheduler
     restart: always
     ports:
