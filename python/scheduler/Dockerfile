@@ -19,5 +19,8 @@ ENV AIRFLOW_HOME='/usr/local/airflow'
 # Set wd
 WORKDIR /usr/local/airflow
 
+# Copy local Airflow files to image
+COPY ./airflow-home /usr/local/airflow
+
 # Sleep forever
 CMD sleep infinity
