@@ -28,22 +28,22 @@ public class MonitoringService {
     private final TumblebugClient tumblebugClient;
 
     @Value("${feign.cb-tumblebug.url}")
-    private String tumblebugURL;
+    private final String tumblebugURL = "";
 
-    @Value("${feign.cb-tumblebug.id}")
-    private String tumblebugID;
+    @Value("${feign.cb-tumblebug.id:}")
+    private final String tumblebugID = "";
 
-    @Value("${feign.cb-tumblebug.pw}")
-    private String tumblebugPW;
+    @Value("${feign.cb-tumblebug.pw:}")
+    private final String tumblebugPW = "";
 
-    @Value("${feign.cb-spider.url}")
-    private String spiderURL;
+    @Value("${feign.cb-spider.url:}")
+    private final String spiderURL = "";
 
-    @Value("${feign.cb-spider.id}")
-    private String spiderID;
+    @Value("${feign.cb-spider.id:}")
+    private final String spiderID = "";
 
-    @Value("${feign.cb-spider.pw}")
-    private String spiderPW;
+    @Value("${feign.cb-spider.pw:}")
+    private final String spiderPW = "";
 
     public TumblebugNS getNs() {
         return tumblebugClient.getNSList();
@@ -138,26 +138,6 @@ public class MonitoringService {
 
                 for (TumblebugMCI.Vm vm : mci.getVm()) {
                     if (!vm.getId().equals(targetId)) continue;
-
-                    if (tumblebugURL == null) {
-                        tumblebugURL = "";
-                    }
-                    if (tumblebugID == null) {
-                        tumblebugID = "";
-                    }
-                    if (tumblebugPW == null) {
-                        tumblebugPW = "";
-                    }
-
-                    if (spiderURL == null) {
-                        spiderURL = "";
-                    }
-                    if (spiderID == null) {
-                        spiderID = "";
-                    }
-                    if (spiderPW == null) {
-                        spiderPW = "";
-                    }
 
                     List<String> cmdList = new ArrayList<>();
                     cmdList.add("wget https://github.com/m-cmp/mc-observability/raw/main/java-module/scripts/init.sh -O init.sh");
