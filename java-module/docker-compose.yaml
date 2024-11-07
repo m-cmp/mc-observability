@@ -295,7 +295,6 @@ services:
       - internal_network
       - external_network
     volumes:
-      - ../python/scheduler/airflow-home:/usr/local/airflow
       - /etc/localtime:/etc/localtime:ro
     command: >
       /bin/bash -c "
@@ -312,12 +311,10 @@ services:
         airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
 
         # Import variables & Make connections
-        # airflow variables import -a overwrite /usr/local/airflow/airflow_variables.json
         airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-o11y-manager:18080/api/o11y
 
         airflow connections add --conn-type http --conn-host mc-o11y-insight-service --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mariadb --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type http --conn-host mc-manager --conn-port 18080 o11y-manager
         airflow connections add --conn-type influxdb --conn-host mc-o11y-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
         # Reload & Run dags
