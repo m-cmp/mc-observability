@@ -129,9 +129,9 @@ cd mc-observability
 ### 3. (Optional) Configure .env file if you want to use other cb-spider or cb-tumblebug etc...
 ```
 cd java-module/
-docker compose down
+sudo docker compose down
 vi .env ## Edit this file
-docker compose up -d
+sudo docker compose up -d
 ```
 
 ### 4. Check network listen states
