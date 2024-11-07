@@ -21,5 +21,9 @@ feign:
     url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
     id: ${TUMBLEBUG_ID:default}
     pw: ${TUMBLEBUG_PW:default}
+  cb-spider:
+    url: ${SPIDER_URL:http://cb-spider:1024}
+    id: ${SPIDER_ID:}
+    pw: ${SPIDER_PW:}
   insight:
     url: ${INSIGHT_URL:http://mc-o11y-insight:9001}

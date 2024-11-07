@@ -66,8 +66,8 @@ feign:
     pw: ${TUMBLEBUG_PW:default}
   cb-spider:
     url: ${SPIDER_URL:http://cb-spider:1024}
-    id: ${SPIDER_ID:default}
-    pw: ${SPIDER_PW:default}
+    id: ${SPIDER_ID:}
+    pw: ${SPIDER_PW:}
     monitoring:
       influxdb_url: ${SPIDER_MONITORING_INFLUXDB_URL:http://mc-o11y-influx:8086}
       influxdb_database: ${SPIDER_MONITORING_INFLUXDB_DATABASE:mc-observability}

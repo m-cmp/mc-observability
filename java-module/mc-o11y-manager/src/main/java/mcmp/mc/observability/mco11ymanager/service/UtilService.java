@@ -24,13 +24,22 @@ public class UtilService {
     private String agentManagerURL;
 
     @Value("${feign.cb-tumblebug.url}")
-    private String tumblebugURL;
+    static String tumblebugURL;
 
     @Value("${feign.cb-tumblebug.id}")
-    private String tumblebugID;
+    static String tumblebugID;
 
     @Value("${feign.cb-tumblebug.pw}")
-    private String tumblebugPW;
+    static String tumblebugPW;
+
+    @Value("${feign.cb-spider.url}")
+    static String spiderURL;
+
+    @Value("${feign.cb-spider.id}")
+    static String spiderID;
+
+    @Value("${feign.cb-spider.pw}")
+    static String spiderPW;
 
     @Value("${feign.insight.url}")
     private String insightURL;

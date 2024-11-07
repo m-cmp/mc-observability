@@ -123,7 +123,9 @@ public class MonitoringService {
                     List<String> cmdList = new ArrayList<>();
                     cmdList.add("wget https://github.com/m-cmp/mc-observability/raw/main/java-module/scripts/init.sh -O init.sh");
                     cmdList.add("chmod +x init.sh");
-                    cmdList.add("./init.sh " + myIp + " " + nsId + " " + mci.getId() + " " + targetId);
+                    cmdList.add("./init.sh " + myIp + " " + nsId + " " + mci.getId() + " " + targetId +
+                            " " + UtilService.tumblebugURL + " " + UtilService.tumblebugID + " " + UtilService.tumblebugPW +
+                            " " + UtilService.spiderURL + " " + UtilService.spiderID + " " + UtilService.spiderPW);
                     TumblebugCmd tumblebugCmd  = new TumblebugCmd();
                     tumblebugCmd.setCommand(cmdList);
                     tumblebugCmd.setUserName(vm.getVmUserName());
