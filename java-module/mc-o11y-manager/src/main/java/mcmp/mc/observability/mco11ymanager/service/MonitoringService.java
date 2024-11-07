@@ -12,6 +12,7 @@ import mcmp.mc.observability.mco11ymanager.model.TumblebugMCI;
 import mcmp.mc.observability.mco11ymanager.model.TumblebugNS;
 import mcmp.mc.observability.mco11ymanager.model.dto.MonitoringConfigInfoCreateDTO;
 import mcmp.mc.observability.mco11ymanager.util.Utils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,6 +26,24 @@ import java.util.Objects;
 public class MonitoringService {
     private final MonitoringClient monitoringClient;
     private final TumblebugClient tumblebugClient;
+
+    @Value("${feign.cb-tumblebug.url}")
+    private String tumblebugURL;
+
+    @Value("${feign.cb-tumblebug.id}")
+    private String tumblebugID;
+
+    @Value("${feign.cb-tumblebug.pw}")
+    private String tumblebugPW;
+
+    @Value("${feign.cb-spider.url}")
+    private String spiderURL;
+
+    @Value("${feign.cb-spider.id}")
+    private String spiderID;
+
+    @Value("${feign.cb-spider.pw}")
+    private String spiderPW;
 
     public TumblebugNS getNs() {
         return tumblebugClient.getNSList();
@@ -120,12 +139,32 @@ public class MonitoringService {
                 for (TumblebugMCI.Vm vm : mci.getVm()) {
                     if (!vm.getId().equals(targetId)) continue;
 
+                    if (tumblebugURL == null) {
+                        tumblebugURL = "";
+                    }
+                    if (tumblebugID == null) {
+                        tumblebugID = "";
+                    }
+                    if (tumblebugPW == null) {
+                        tumblebugPW = "";
+                    }
+
+                    if (spiderURL == null) {
+                        spiderURL = "";
+                    }
+                    if (spiderID == null) {
+                        spiderID = "";
+                    }
+                    if (spiderPW == null) {
+                        spiderPW = "";
+                    }
+
                     List<String> cmdList = new ArrayList<>();
                     cmdList.add("wget https://github.com/m-cmp/mc-observability/raw/main/java-module/scripts/init.sh -O init.sh");
                     cmdList.add("chmod +x init.sh");
                     cmdList.add("./init.sh " + myIp + " " + nsId + " " + mci.getId() + " " + targetId +
-                            " " + UtilService.tumblebugURL + " " + UtilService.tumblebugID + " " + UtilService.tumblebugPW +
-                            " " + UtilService.spiderURL + " " + UtilService.spiderID + " " + UtilService.spiderPW);
+                            " " + tumblebugURL + " " + tumblebugID + " " + tumblebugPW +
+                            " " + spiderURL + " " + spiderID + " " + spiderPW);
                     TumblebugCmd tumblebugCmd  = new TumblebugCmd();
                     tumblebugCmd.setCommand(cmdList);
                     tumblebugCmd.setUserName(vm.getVmUserName());
