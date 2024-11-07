@@ -27,23 +27,23 @@ public class MonitoringService {
     private final MonitoringClient monitoringClient;
     private final TumblebugClient tumblebugClient;
 
-    @Value("${feign.cb-tumblebug.url}")
-    private final String tumblebugURL = "";
+    @Value("${feign.cb-tumblebug.url:}")
+    private String tumblebugURL;
 
     @Value("${feign.cb-tumblebug.id:}")
-    private final String tumblebugID = "";
+    private String tumblebugID;
 
     @Value("${feign.cb-tumblebug.pw:}")
-    private final String tumblebugPW = "";
+    private String tumblebugPW;
 
     @Value("${feign.cb-spider.url:}")
-    private final String spiderURL = "";
+    private String spiderURL;
 
     @Value("${feign.cb-spider.id:}")
-    private final String spiderID = "";
+    private String spiderID;
 
     @Value("${feign.cb-spider.pw:}")
-    private final String spiderPW = "";
+    private String spiderPW;
 
     public TumblebugNS getNs() {
         return tumblebugClient.getNSList();
