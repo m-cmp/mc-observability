@@ -229,7 +229,10 @@ public class MonitoringController {
         return monitoringClient.getOpenSearchList();
     }
 
-    @PostMapping(Constants.OPENSEARCH_PATH + "/logs/vm")
+    @PostMapping({
+            Constants.OPENSEARCH_PATH + "/logs",
+            Constants.OPENSEARCH_PATH + "/logs/vm"
+    })
     @Operation(operationId = "GetVMOpenSearchLogs", summary = "Get VM's collected logs from OpenSearch",
             tags = "[Monitoring log] Monitoring VM log")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", useReturnTypeSchema = true)})
