@@ -26,6 +26,15 @@ anomaly:
     types:
       - cpu
       - mem
+  measurement_fields:
+    - measurement: cpu
+      fields:
+        - field_key: usage_idle
+          unit: percent
+    - measurement: mem
+      fields:
+        - field_key: used_percent
+          unit: percent
   execution_intervals:
     intervals:
       - 5m
@@ -48,6 +57,24 @@ prediction:
       - mem
       - disk
       - system
+  measurement_fields:
+    - measurement: cpu
+      fields:
+        - field_key: usage_idle
+          unit: percent
+    - measurement: disk
+      fields:
+        - field_key: used_percent
+          unit: percent
+    - measurement: mem
+      fields:
+        - field_key: used_percent
+          unit: percent
+    - measurement: system
+      fields:
+        - field_key: load1
+          unit: percent
+
   prediction_ranges:
     min: 1h
     max: 2160h
