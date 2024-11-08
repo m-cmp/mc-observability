@@ -1,14 +1,40 @@
 from fastapi import APIRouter, Depends
 from config.ConfigManager import ConfigManager
-from app.api.prediction.request.req import PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
-from app.api.prediction.response.res import ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
+from app.api.prediction.request.req import GetMeasurementPath, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
+from app.api.prediction.response.res import ResBodyPredictionMeasurement, ResBodyPredictionSpecificMeasurement, ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
     PredictionResult, PredictionHistory, ResBodyPredictionHistory
 from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
 from app.api.prediction.utils.utils import PredictionService
-
-
+from app.api.anomaly.utils.utils import get_db
+from sqlalchemy.orm import Session
 router = APIRouter()
 
+
+@router.get(
+    path='/predictions/measurement'
+)
+async def get_prediction_measurements(db: Session = Depends(get_db)):
+    config = ConfigManager()
+    measurement_field_config = config.get_prediction_config()['measurement_fields']
+    prediction_service = PredictionService(db=db)
+    result_dict = prediction_service.map_plugin_info(measurement_field_config)
+
+    return ResBodyPredictionMeasurement(data=result_dict)
+
+
+@router.get(
+    path='/predictions/measurement/{measurement}'
+)
+async def get_specific_measurement(
+        path_params: GetMeasurementPath = Depends(),
+        db: Session = Depends(get_db)
+):
+    config = ConfigManager()
+    measurement_field_config = config.get_prediction_config()['measurement_fields']
+    prediction_service = PredictionService(db=db)
+    result_dict = prediction_service.map_plugin_info(measurement_field_config, target_measurement=path_params)
+
+    return ResBodyPredictionSpecificMeasurement(data=result_dict)
 
 @router.get(
     path='/predictions/options',

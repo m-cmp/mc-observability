@@ -1,4 +1,4 @@
-from app.api.anomaly.model.models import AnomalyDetectionSettings
+from app.api.anomaly.model.models import AnomalyDetectionSettings, AgentPlugin
 from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
 from config.ConfigManager import ConfigManager
 from influxdb import InfluxDBClient
@@ -12,6 +12,9 @@ from sqlalchemy import update
 class AnomalySettingsRepository:
     def __init__(self, db: Session):
         self.db = db
+
+    def get_plugin_info(self):
+        return self.db.query(AgentPlugin).all()
 
     def get_all_settings(self):
         return self.db.query(AnomalyDetectionSettings).all()

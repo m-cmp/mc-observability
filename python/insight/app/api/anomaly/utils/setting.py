@@ -9,6 +9,25 @@ class AnomalySettingsService:
     def __init__(self, db: Session):
         self.repo = AnomalySettingsRepository(db=db)
 
+    def map_plugin_info(self, measurement_field_config, target_measurement=None):
+        plugin_list = self.repo.get_plugin_info()
+        plugin_dict = {}
+        for plugin in plugin_list:
+            plugin_dict[plugin.NAME] = plugin.SEQ
+
+        if target_measurement:
+            target_measurement = target_measurement.measurement
+            for measurement in measurement_field_config:
+                if measurement['measurement'] == target_measurement:
+                    measurement['plugin_seq'] = plugin_dict[measurement['measurement']]
+                    return measurement
+
+        result_dict = []
+        for measurement in measurement_field_config:
+            measurement['plugin_seq'] = plugin_dict[measurement['measurement']]
+            result_dict.append(measurement)
+        return result_dict
+
     def get_all_settings(self) -> ResBodyAnomalyDetectionSettings:
         settings = self.repo.get_all_settings()
 

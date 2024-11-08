@@ -6,14 +6,16 @@ import numpy as np
 import requests
 from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
 from config.ConfigManager import ConfigManager
-from app.api.prediction.repo.repo import InfluxDBRepository
+from app.api.prediction.repo.repo import PredictionRepository, InfluxDBRepository
 from datetime import datetime
+from sqlalchemy.orm import Session
 
 
 class PredictionService:
-    def __init__(self):
+    def __init__(self, db: Session=None):
         config = ConfigManager()
         self.prophet_config = config.get_prophet_config()
+        self.prediction_repo = PredictionRepository(db=db)
         self.influxdb_repo = InfluxDBRepository()
         self.o11y_url = config.get_o11y_config()['url']
         self.o11y_port = config.get_o11y_config()['port']
@@ -74,6 +76,27 @@ class PredictionService:
             "measurement": measurement.lower(),
             "range": prediction_range
         }
+
+    def map_plugin_info(self, measurement_field_config, target_measurement=None):
+        plugin_list = self.prediction_repo.get_plugin_info()
+        plugin_dict = {}
+        for plugin in plugin_list:
+            plugin_dict[plugin.NAME] = plugin.SEQ
+
+        if target_measurement:
+            target_measurement = target_measurement.measurement
+            for measurement in measurement_field_config:
+                if measurement['measurement'] == target_measurement:
+                    measurement['plugin_seq'] = plugin_dict[measurement['measurement']]
+                    return measurement
+
+        result_dict = []
+        for measurement in measurement_field_config:
+            measurement['plugin_seq'] = plugin_dict[measurement['measurement']]
+            result_dict.append(measurement)
+        return result_dict
+
+
 
     def get_data(self, path_params: PredictionPath, body_params: PredictionBody):
         nsId = path_params.nsId

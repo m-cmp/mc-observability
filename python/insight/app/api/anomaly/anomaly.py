@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from requests.packages import target
 from sqlalchemy.orm import Session
 from app.api.anomaly.description.description import (get_options_description, get_settings_description,
                                                      post_settings_description, put_settings_description,
@@ -9,13 +10,39 @@ from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, Anomal
 from app.api.anomaly.utils.utils import AnomalyService, get_db
 from app.api.anomaly.utils.history import AnomalyHistoryService
 from app.api.anomaly.utils.setting import AnomalySettingsService
-from app.api.anomaly.response.res import ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse
-from app.api.anomaly.request.req import (AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
+from app.api.anomaly.response.res import ResBodyAnomalyDetectionMeasurement, ResBodyAnomalyDetectionSpecificMeasurement,ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse
+from app.api.anomaly.request.req import (GetMeasurementPath, AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
 from config.ConfigManager import ConfigManager
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+
+@router.get(
+    path='/anomaly-detection/measurement'
+)
+async def get_anomaly_detection_measurements(db: Session = Depends(get_db)):
+    config = ConfigManager()
+    measurement_field_config = config.get_anomaly_config()['measurement_fields']
+    anomaly_setting_service = AnomalySettingsService(db=db)
+    result_dict = anomaly_setting_service.map_plugin_info(measurement_field_config)
+
+    return ResBodyAnomalyDetectionMeasurement(data=result_dict)
+
+@router.get(
+    path='/anomaly-detection/measurement/{measurement}'
+)
+async def get_specific_measurement(
+        path_params: GetMeasurementPath = Depends(),
+        db: Session = Depends(get_db)
+):
+    config = ConfigManager()
+    measurement_field_config = config.get_anomaly_config()['measurement_fields']
+    anomaly_setting_service = AnomalySettingsService(db=db)
+    result_dict = anomaly_setting_service.map_plugin_info(measurement_field_config, target_measurement=path_params)
+
+    return ResBodyAnomalyDetectionSpecificMeasurement(data=result_dict)
 
 
 @router.get(
