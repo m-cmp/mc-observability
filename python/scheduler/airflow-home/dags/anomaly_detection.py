@@ -46,7 +46,7 @@ def filter_records_to_execute(records):
 
     for record in records:
         last_execution = record['LAST_EXECUTION']
-        if last_execution == 'NaT':
+        if last_execution == 'None' or last_execution == 'NaT':
             record['LAST_EXECUTION'] = pd.Timestamp('1970-01-01')
         else:
             record['LAST_EXECUTION'] = pd.to_datetime(last_execution)
