@@ -1,17 +1,25 @@
 from fastapi import APIRouter, Depends
 from config.ConfigManager import ConfigManager
 from app.api.prediction.request.req import GetMeasurementPath, PredictionBody, PredictionPath, GetHistoryPath, GetPredictionHistoryQuery
-from app.api.prediction.response.res import ResBodyPredictionMeasurement, ResBodyPredictionSpecificMeasurement, ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
+from app.api.prediction.response.res import ResBodyPredictionMeasurement, ResBodyPredictionSpecificMeasurement, \
+    ResBodyPredictionOptions, PredictionOptions, ResBodyPredictionResult, \
     PredictionResult, PredictionHistory, ResBodyPredictionHistory
-from app.api.prediction.description.description import get_options_description, post_prediction_description, get_history_description
+from app.api.prediction.description.description import (get_options_description, post_prediction_description,
+                                                        get_history_description, get_prediction_measurements_description,
+                                                        get_specific_measurement_description)
 from app.api.prediction.utils.utils import PredictionService
 from app.api.anomaly.utils.utils import get_db
 from sqlalchemy.orm import Session
+
 router = APIRouter()
 
 
 @router.get(
-    path='/predictions/measurement'
+    path='/predictions/measurement',
+    description=get_prediction_measurements_description['api_description'],
+    responses=get_prediction_measurements_description['response'],
+    response_model=ResBodyPredictionMeasurement,
+    operation_id="GetPredictionMeasurementList"
 )
 async def get_prediction_measurements(db: Session = Depends(get_db)):
     config = ConfigManager()
@@ -23,7 +31,11 @@ async def get_prediction_measurements(db: Session = Depends(get_db)):
 
 
 @router.get(
-    path='/predictions/measurement/{measurement}'
+    path='/predictions/measurement/{measurement}',
+    description=get_specific_measurement_description['api_description'],
+    responses=get_specific_measurement_description['response'],
+    response_model=ResBodyPredictionSpecificMeasurement,
+    operation_id="GetPredictionFieldListByMeasurement"
 )
 async def get_specific_measurement(
         path_params: GetMeasurementPath = Depends(),
@@ -35,6 +47,7 @@ async def get_specific_measurement(
     result_dict = prediction_service.map_plugin_info(measurement_field_config, target_measurement=path_params)
 
     return ResBodyPredictionSpecificMeasurement(data=result_dict)
+
 
 @router.get(
     path='/predictions/options',

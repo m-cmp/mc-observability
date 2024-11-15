@@ -31,7 +31,6 @@ get_options_description = {
     }
 }
 
-
 post_prediction_description = {
     "api_description": "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.",
     "response": {
@@ -69,7 +68,6 @@ post_prediction_description = {
     }
 }
 
-
 get_history_description = {
     "api_description": "Get previously stored prediction data for a specific vm or mci group.",
     "response": {
@@ -94,6 +92,92 @@ get_history_description = {
                                 {
                                     "timestamp": "2024-08-22T02:00:00Z",
                                     "value": 60
+                                }
+                            ]
+                        },
+                        "rs_code": "200",
+                        "rs_msg": "Success"
+                    }
+                }
+            }
+        }
+    }
+}
+
+get_prediction_measurements_description = {
+    "api_description": "Get measurements, field lists available for the feature",
+    "response": {
+        "200": {
+            "description": "Successfully retrieved prediction history",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "data": [
+                            {
+                                "plugin_seq": 1,
+                                "measurement": "cpu",
+                                "fields": [
+                                    {
+                                        "field_key": "usage_idle",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            },
+                            {
+                                "plugin_seq": 2,
+                                "measurement": "disk",
+                                "fields": [
+                                    {
+                                        "field_key": "used_percent",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            },
+                            {
+                                "plugin_seq": 4,
+                                "measurement": "mem",
+                                "fields": [
+                                    {
+                                        "field_key": "used_percent",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            },
+                            {
+                                "plugin_seq": 8,
+                                "measurement": "system",
+                                "fields": [
+                                    {
+                                        "field_key": "load1",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            }
+                        ],
+                        "rs_code": "200",
+                        "rs_msg": "Success"
+                    }
+                }
+            }
+        }
+    }
+}
+
+get_specific_measurement_description = {
+    "api_description": "Get Field list of specific measurements available for that feature",
+    "response": {
+        "200": {
+            "description": "Successfully retrieved prediction history",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "data": {
+                            "plugin_seq": 1,
+                            "measurement": "cpu",
+                            "fields": [
+                                {
+                                    "field_key": "usage_idle",
+                                    "unit": "percent"
                                 }
                             ]
                         },
