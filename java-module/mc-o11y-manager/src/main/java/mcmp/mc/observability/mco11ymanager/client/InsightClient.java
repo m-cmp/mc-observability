@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "insight", url = "${feign.insight.url:}")
 public interface InsightClient {
 
+    @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/measurement")
+    Object getPredictionMeasurement();
+    @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/measurement/{measurement}")
+    Object getPredictionSpecificMeasurement(@PathVariable measurement);
     @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/options")
     Object getPredictionOptions();
     @PostMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/nsId/{nsId}/target/{targetId}")
@@ -20,6 +24,10 @@ public interface InsightClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/nsId/{nsId}/target/{targetId}/history")
     Object getPredictionHistory(@PathVariable String nsId, @PathVariable String targetId, @RequestParam String measurement, @RequestParam(required = false) String start_time, @RequestParam(required = false) String end_time);
 
+    @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/measurement")
+    Object getAnomalyDetectionMeasurement();
+    @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/measurement/{measurement}")
+    Object getAnomalyDetectionSpecificMeasurement(@PathVariable measurement);
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/options")
     Object getAnomalyDetectionOptions();
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings")
