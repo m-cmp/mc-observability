@@ -64,3 +64,69 @@ post_anomaly_detection_description = {
     "api_description": "Request anomaly detection",
     "response": {}
 }
+
+get_anomaly_detection_measurements_description = {
+    "api_description": "Get measurements, field lists available for the feature",
+    "response": {
+        "200": {
+            "description": "Successfully retrieved prediction history",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "data": [
+                            {
+                                "plugin_seq": 1,
+                                "measurement": "cpu",
+                                "fields": [
+                                    {
+                                        "field_key": "usage_idle",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            },
+                            {
+                                "plugin_seq": 4,
+                                "measurement": "mem",
+                                "fields": [
+                                    {
+                                        "field_key": "used_percent",
+                                        "unit": "percent"
+                                    }
+                                ]
+                            }
+                        ],
+                        "rs_code": "200",
+                        "rs_msg": "Success"
+                    }
+                }
+            }
+        }
+    }
+}
+
+get_specific_measurement_description = {
+    "api_description": "Get Field list of specific measurements available for that feature",
+    "response": {
+        "200": {
+            "description": "Successfully retrieved prediction history",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "data": {
+                            "plugin_seq": 1,
+                            "measurement": "cpu",
+                            "fields": [
+                                {
+                                    "field_key": "usage_idle",
+                                    "unit": "percent"
+                                }
+                            ]
+                        },
+                        "rs_code": "200",
+                        "rs_msg": "Success"
+                    }
+                }
+            }
+        }
+    }
+}
