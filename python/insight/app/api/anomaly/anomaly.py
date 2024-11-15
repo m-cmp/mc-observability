@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from requests.packages import target
 from sqlalchemy.orm import Session
 from app.api.anomaly.description.description import (get_options_description, get_settings_description,
                                                      post_settings_description, put_settings_description,
