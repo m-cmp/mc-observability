@@ -42,7 +42,7 @@ async def get_anomaly_detection_measurements(db: Session = Depends(get_db)):
     description=get_specific_measurement_description['api_description'],
     responses=get_specific_measurement_description['response'],
     response_model=ResBodyAnomalyDetectionSpecificMeasurement,
-    operation_id="GetAnomalyFieldListByMesurement"
+    operation_id="GetAnomalyFieldListByMeasurement"
 )
 async def get_specific_measurement(
         path_params: GetMeasurementPath = Depends(),
