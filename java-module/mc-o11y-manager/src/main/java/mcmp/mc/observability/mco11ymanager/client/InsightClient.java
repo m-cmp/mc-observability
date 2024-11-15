@@ -16,7 +16,7 @@ public interface InsightClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/measurement")
     Object getPredictionMeasurement();
     @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/measurement/{measurement}")
-    Object getPredictionSpecificMeasurement(@PathVariable measurement);
+    Object getPredictionSpecificMeasurement(@PathVariable String measurement);
     @GetMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/options")
     Object getPredictionOptions();
     @PostMapping(Constants.PREFIX_V1 + Constants.PREDICTION_PATH + "/nsId/{nsId}/target/{targetId}")
@@ -27,7 +27,7 @@ public interface InsightClient {
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/measurement")
     Object getAnomalyDetectionMeasurement();
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/measurement/{measurement}")
-    Object getAnomalyDetectionSpecificMeasurement(@PathVariable measurement);
+    Object getAnomalyDetectionSpecificMeasurement(@PathVariable String measurement);
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/options")
     Object getAnomalyDetectionOptions();
     @GetMapping(Constants.PREFIX_V1 + Constants.ANOMALY_PATH + "/settings")

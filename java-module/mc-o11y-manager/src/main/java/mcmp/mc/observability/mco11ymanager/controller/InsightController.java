@@ -25,7 +25,7 @@ public class InsightController {
         return insightClient.getPredictionMeasurement();
     }
     @GetMapping(Constants.PREDICTION_PATH + "/measurement/{measurement}")
-    public object getPredictionSpecificMeasurement(@PathVariable string measurement) {
+    public Object getPredictionSpecificMeasurement(@PathVariable String measurement) {
         return insightClient.getPredictionSpecificMeasurement(measurement);
     }
     @GetMapping(Constants.PREDICTION_PATH + "/options")
@@ -47,7 +47,7 @@ public class InsightController {
         return insightClient.getAnomalyDetectionMeasurement();
     }
     @GetMapping(Constants.ANOMALY_PATH + "/measurement/{measurement}")
-    public Object getAnomalyDetectionSpecificMeasurement() {
+    public Object getAnomalyDetectionSpecificMeasurement(@PathVariable String measurement) {
         return insightClient.getAnomalyDetectionSpecificMeasurement(measurement);
     }
     @GetMapping(Constants.ANOMALY_PATH + "/options")

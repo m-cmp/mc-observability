@@ -1229,6 +1229,70 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+  /api/o11y/insight/anomaly-detection/measurement:
+    get:
+      description: Get measurements, field lists available for the feature.
+      summary: GetAnomalyMeasurementList
+      tags:
+        - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyMeasurementList
+      deprecated: false
+      produces:
+        - application/json
+      parameters: [ ]
+      responses:
+        '200':
+          description: Successful retrieval of anomaly detection measurements
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionMeasurement'
+          examples:
+            application/json:
+              data:
+                - plugin_seq: 1
+                  measurement: cpu
+                  fields:
+                    - field_key: usage_idle
+                      unit: percent
+                - plugin_seq: 4
+                  measurement: mem
+                  fields:
+                    - field_key: used_percent
+                      unit: percent
+              rs_code: '200'
+              rs_msg: Success
+          headers: { }
+  /api/o11y/insight/anomaly-detection/measurement/{measurement}:
+    get:
+      description: Get Field list of specific measurement available for that feature
+      summary: GetAnomalyFieldListByMeasurement
+      tags:
+        - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyFieldListByMeasurement
+      deprecated: false
+      produces:
+        - application/json
+      parameters:
+        - name: measurement
+          in: path
+          required: true
+          type: string
+          description: Specific Measurement.
+      responses:
+        '200':
+          description: Successfully retrieved anomaly detection field list of specific measurement
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSpecificMeasurement'
+          examples:
+            application/json:
+              data:
+                plugin_seq: 1
+                measurement: cpu
+                fields:
+                  - field_key: usage_idle
+                    unit: percent
+              rs_code: '200'
+              rs_msg: Success
+          headers: { }
   /api/o11y/insight/anomaly-detection/options:
     get:
       description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
@@ -1462,6 +1526,80 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+  /api/o11y/insight/predictions/measurement:
+    get:
+      description: Get measurements, field lists available for the feature.
+      summary: GetPredictionMeasurementList
+      tags:
+        - '[Insight] Prediction'
+      operationId: GetPredictionMeasurementList
+      deprecated: false
+      produces:
+        - application/json
+      parameters: [ ]
+      responses:
+        '200':
+          description: Successful retrieval of prediction measurements
+          schema:
+            $ref: '#/definitions/ResBodyPredictionMeasurement'
+          examples:
+            application/json:
+              data:
+                - plugin_seq: 1
+                  measurement: cpu
+                  fields:
+                    - field_key: usage_idle
+                      unit: percent
+                - plugin_seq: 2
+                  measurement: disk
+                  fields:
+                    - field_key: used_percent
+                      unit: percent
+                - plugin_seq: 4
+                  measurement: mem
+                  fields:
+                    - field_key: used_percent
+                      unit: percent
+                - plugin_seq: 8
+                  measurement: system
+                  fields:
+                    - field_key: load1
+                      unit: percent
+              rs_code: '200'
+              rs_msg: Success
+          headers: { }
+  /api/o11y/insight/predictions/measurement/{measurement}:
+    get:
+      description: Get Field list of specific measurement available for that feature
+      summary: GetPredictionFieldListByMeasurement
+      tags:
+        - '[Insight] Prediction'
+      operationId: GetPredictionFieldListByMeasurement
+      deprecated: false
+      produces:
+        - application/json
+      parameters:
+        - name: measurement
+          in: path
+          required: true
+          type: string
+          description: Specific Measurement.
+      responses:
+        '200':
+          description: Successfully retrieved prediction field list of specific measurement
+          schema:
+            $ref: '#/definitions/ResBodyPredictionSpecificMeasurement'
+          examples:
+            application/json:
+              data:
+                plugin_seq: 1
+                measurement: cpu
+                fields:
+                  - field_key: usage_idle
+                    unit: percent
+              rs_code: '200'
+              rs_msg: Success
+          headers: { }
   /api/o11y/insight/predictions/options:
     get:
       description: Fetch the available target types, metric types, and prediction range options for the prediction API.
@@ -2728,6 +2866,20 @@ definitions:
         format: double
     required:
     - timestamp
+  AnomalyDetectionMeasurement:
+    title: AnomalyDetectionMeasurement
+    type: object
+    properties:
+      plugin_seq:
+        type: string
+      measurement:
+        type: string
+      fields:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: string
   PredictionBody:
     title: PredictionBody
     type: object
@@ -2794,6 +2946,20 @@ definitions:
     - target_types
     - measurements
     - prediction_ranges
+  PredictionMeasurement:
+    title: PredictionMeasurement
+    type: object
+    properties:
+      plugin_seq:
+        type: string
+      measurement:
+        type: string
+      fields:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: string
   PredictionResult:
     title: PredictionResult
     type: object
@@ -2862,6 +3028,32 @@ definitions:
         default: Success
     required:
     - data
+  ResBodyAnomalyDetectionMeasurement:
+    title: ResBodyAnomalyDetectionMeasurement
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/AnomalyDetectionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+  ResBodyAnomalyDetectionSpecificMeasurement:
+    title: ResBodyAnomalyDetectionSpecificMeasurement
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/AnomalyDetectionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
   ResBodyPredictionHistory:
     title: ResBodyPredictionHistory
     type: object
@@ -2890,6 +3082,32 @@ definitions:
         default: Success
     required:
     - data
+  ResBodyPredictionMeasurement:
+    title: ResBodyPredictionMeasurement
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/PredictionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+  ResBodyPredictionSpecificMeasurement:
+    title: ResBodyPredictionSpecificMeasurement
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
   ResBodyPredictionResult:
     title: ResBodyPredictionResult
     type: object

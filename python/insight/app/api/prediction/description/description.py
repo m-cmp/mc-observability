@@ -108,7 +108,7 @@ get_prediction_measurements_description = {
     "api_description": "Get measurements, field lists available for the feature",
     "response": {
         "200": {
-            "description": "Successfully retrieved prediction history",
+            "description": "Successfully retrieved prediction measurements",
             "content": {
                 "application/json": {
                     "example": {
@@ -164,10 +164,10 @@ get_prediction_measurements_description = {
 }
 
 get_specific_measurement_description = {
-    "api_description": "Get Field list of specific measurements available for that feature",
+    "api_description": "Get Field list of specific measurement available for that feature",
     "response": {
         "200": {
-            "description": "Successfully retrieved prediction history",
+            "description": "Successfully retrieved prediction field list of specific measurement",
             "content": {
                 "application/json": {
                     "example": {
