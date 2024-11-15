@@ -21,6 +21,7 @@ class AnomalyService:
             "Content-Type": "application/json"
         }
 
+
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
         # storage_seq_list = self.get_storage_seq_list()

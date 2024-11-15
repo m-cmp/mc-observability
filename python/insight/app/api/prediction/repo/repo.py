@@ -1,8 +1,21 @@
+from config.ConfigManager import ConfigManager
+from app.api.prediction.model.models import AgentPlugin
+
 import pytz
 from datetime import datetime
 import pandas as pd
 from influxdb import InfluxDBClient
-from config.ConfigManager import ConfigManager
+
+from sqlalchemy.orm import Session
+
+
+
+class PredictionRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_plugin_info(self):
+        return self.db.query(AgentPlugin).all()
 
 
 class InfluxDBRepository:

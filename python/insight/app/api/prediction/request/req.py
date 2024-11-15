@@ -12,6 +12,9 @@ class Item(BaseModel):
     tax: float | None = None
 
 
+class GetMeasurementPath(BaseModel):
+    measurement: str = Field(Path(description='Specific Measurement.'))
+
 # post prediction request parameters
 class PredictionPath(BaseModel):
     nsId: str = Field(Path(description='The Namespace ID for the prediction.'))

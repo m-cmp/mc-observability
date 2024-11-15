@@ -2,6 +2,22 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
+class AnomalyDetectionMeasurement(BaseModel):
+    plugin_seq: int
+    measurement: str
+    fields: list[dict[str, str]]
+
+class ResBodyAnomalyDetectionMeasurement(BaseModel):
+    data: list[AnomalyDetectionMeasurement]
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
+
+class ResBodyAnomalyDetectionSpecificMeasurement(BaseModel):
+    data: AnomalyDetectionMeasurement
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
 class AnomalyDetectionOptions(BaseModel):
     target_types: list[str]
     measurements: list[str]

@@ -15,7 +15,8 @@ class ConfigManager:
         return {
             "target_types": anomaly.get('target_types', {}).get('types', []),
             "measurements": anomaly.get('measurements', {}).get('types', []),
-            "execution_intervals": anomaly.get('execution_intervals', {}).get('intervals', [])
+            "execution_intervals": anomaly.get('execution_intervals', {}).get('intervals', []),
+            "measurement_fields": anomaly.get('measurement_fields', {})
         }
 
     def get_rrcf_config(self):
@@ -32,7 +33,8 @@ class ConfigManager:
         return {
             'target_types': prediction.get('target_types', {}).get('types', []),
             'measurements': prediction.get('measurements', {}).get('types', []),
-            'prediction_ranges': prediction.get('prediction_ranges', [])
+            'prediction_ranges': prediction.get('prediction_ranges', []),
+            'measurement_fields': prediction.get('measurement_fields', {})
         }
 
     def get_prefix(self):

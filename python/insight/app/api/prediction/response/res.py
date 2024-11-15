@@ -3,6 +3,25 @@ from datetime import datetime
 from typing import Union
 
 
+
+
+# GET /predictions/measurement
+class PredictionMeasurement(BaseModel):
+    plugin_seq: int
+    measurement: str
+    fields: list[dict[str, str]]
+
+class ResBodyPredictionMeasurement(BaseModel):
+    data: list[PredictionMeasurement]
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
+class ResBodyPredictionSpecificMeasurement(BaseModel):
+    data: PredictionMeasurement
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
+
 # GET /predictions/options
 class PredictionOptions(BaseModel):
     target_types: list[str]

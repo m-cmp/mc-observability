@@ -30,6 +30,8 @@ TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType
 AnomalyMetricType = generate_enum_from_config('anomaly.measurements.types', 'MetricType')
 ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
 
+class GetMeasurementPath(BaseModel):
+    measurement: str = Field(Path(description='Specific Measurement.'))
 
 class AnomalyDetectionTargetRegistration(BaseModel):
     ns_id: str
