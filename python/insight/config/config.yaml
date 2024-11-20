@@ -2,19 +2,19 @@ common:
   prefix:
     /api/o11y/insight
   DB:
-    URL: mariadb
+    URL: mc-observability-maria
     USERNAME: mc-agent
     PASSWORD: mc-agent
     DATABASE: mc_observability
   InfluxDB:
-    HOST: influxdb
+    HOST: mc-observability-influx
     PORT: 8086
     USERNAME: mc-agent
     PASSWORD: mc-agent
     DATABASE: insight
     POLICY: autogen
   MC-O11Y:
-    URL: mc-o11y-manager
+    URL: mc-observability-manager
     PORT: 18080
 
 anomaly:
