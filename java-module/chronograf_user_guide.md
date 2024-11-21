@@ -2,7 +2,7 @@
 
 ## 1. 접속 안내
 - chronograf는 mc-o11y가 설치된 URL의 8888 Port로 접속 가능합니다.
-- **Ex:** `http://{mc-o11y-server url}:8086`
+- **Ex:** `http://{mc-o11y-server url}:8888`
 
 ---
 
