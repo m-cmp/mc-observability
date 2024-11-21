@@ -291,6 +291,7 @@ services:
       - 9002:9002
     environment:
       - TZ=Asia/Seoul
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
     networks:
       - internal_network
       - external_network
