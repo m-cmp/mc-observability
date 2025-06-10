@@ -8,7 +8,7 @@ from app.api.prediction.description.description import (get_options_description,
                                                         get_history_description, get_prediction_measurements_description,
                                                         get_specific_measurement_description)
 from app.api.prediction.utils.utils import PredictionService
-from app.api.anomaly.utils.utils import get_db
+from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 
 router = APIRouter()
