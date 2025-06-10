@@ -8,7 +8,7 @@ from app.api.anomaly.description.description import (get_options_description, ge
                                                      get_specific_measurement_description)
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, AnomalyDetectionOptions,
                                           ResBodyAnomalyDetectionSettings)
-from app.api.anomaly.utils.utils import AnomalyService, get_db
+from app.api.anomaly.utils.utils import AnomalyService
 from app.api.anomaly.utils.history import AnomalyHistoryService
 from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionMeasurement, ResBodyAnomalyDetectionSpecificMeasurement,
@@ -16,6 +16,7 @@ from app.api.anomaly.response.res import (ResBodyAnomalyDetectionMeasurement, Re
 from app.api.anomaly.request.req import (GetMeasurementPath, AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
 from config.ConfigManager import ConfigManager
+from app.core.dependencies.db import get_db
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
