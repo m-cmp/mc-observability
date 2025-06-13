@@ -6,11 +6,11 @@ from app.core.llm.ollama_client import OllamaClient
 async def get_mcp_context():
     mcp_client = MCPGrafanaClient()
     llm_client = OllamaClient()
-    _mcp_context = MCPContext(mcp_client, llm_client)
-    await _mcp_context.start()
+    mcp_context = MCPContext(mcp_client, llm_client)
+    await mcp_context.start()
 
-    return _mcp_context
-
-
-
+    try:
+        yield mcp_context
+    finally:
+        await mcp_context.stop()
 

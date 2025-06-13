@@ -20,6 +20,7 @@ class MCPGrafanaClient:
         self.session = ClientSession(self._read, self._write)
         await self.session.__aenter__()
         await self.session.initialize()
+
         return self.session
 
     async def stop(self):
@@ -30,5 +31,6 @@ class MCPGrafanaClient:
 
     async def get_tools(self):
         self.tools = await self.session.list_tools()
+
         return self.tools
 
