@@ -1,6 +1,8 @@
 from app.core.llm.ollama_client import OllamaClient
 from app.core.mcp.mcp_grafana_client import MCPGrafanaClient
 
+from langchain_mcp_adapters.tools import load_mcp_tools
+
 from datetime import datetime, UTC
 
 
@@ -17,10 +19,13 @@ class MCPContext:
 
     async def start(self):
         self.mcp_session = await self.mcp_client.start()
-        self.tools = await self.mcp_client.get_tools()
+        # self.tools = await self.mcp_client.get_tools()
+        self.tools = await load_mcp_tools(self.mcp_session)
 
-        self.agent, self.memory = await self.llm_client.setup(self.tools)
+        self.agent, self.memory = self.llm_client.setup(self.tools)
 
+    async def stop(self):
+        await self.mcp_client.stop()
 
     @staticmethod
     def _build_prompt(messages):
@@ -49,3 +54,6 @@ class MCPContext:
     @staticmethod
     def get_config(user_id):
         return {'configurable': {'thread_id': user_id}}
+
+
+
