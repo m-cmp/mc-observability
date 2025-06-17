@@ -3,14 +3,16 @@ from typing import List, Optional
 from datetime import datetime
 
 
+class BaseResponse(BaseModel):
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
 class LogAnalysisModel(BaseModel):
     provider: str
     model_name: list[str]
 
-class ResBodyLogAnalysisModel(BaseModel):
+class ResBodyLogAnalysisModel(BaseResponse):
     data: list[LogAnalysisModel]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
 
 
 class LogAnalysisSession(BaseModel):
@@ -21,7 +23,10 @@ class LogAnalysisSession(BaseModel):
     model_name: str
     regdate: datetime
 
-class ResBodyLogAnalysisSession(BaseModel):
+class ResBodyLogAnalysisSession(BaseResponse):
+    data: LogAnalysisSession
+
+class ResBodyLogAnalysisSessions(BaseResponse):
     data: list[LogAnalysisSession]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+
+
