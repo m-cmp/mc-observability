@@ -1,5 +1,5 @@
 from config.ConfigManager import ConfigManager
-from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory
+from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory, SessionHistoryMessage
 from app.api.log_analysis.repo.repo import LogAnalysisRepository
 from app.api.log_analysis.request.req import PostSessionBody, GetHistoryPath
 from app.core.mcp.mcp_context import MCPContext
@@ -71,26 +71,37 @@ class LogAnalysisService:
 
     async def get_chat_session_history(self, path: GetHistoryPath):
         session_id = path.sessionId
-        session_id = 'dbe2cb8c-1d91-4361-80ed-9df8623cb857'
+        session_info = self.repo.get_session_by_id(session_id)
+
         history = await self.mcp_context.get_chat_history(session_id)
-
-        channel_values = history['channel_values']
-
         result = []
-        for message in channel_values['messages']:
-            if self.filter_message(message):
-                result.append(
-                    SessionHistory(
-                        message_type=message.type,
-                        message=message.content
+        if history:
+            channel_values = history['channel_values']
+            for message in channel_values['messages']:
+                if self.filter_message(message):
+                    result.append(
+                        SessionHistoryMessage(
+                            message_type=message.type,
+                            message=message.content
+                        )
                     )
-                )
-        return result
-
+        return self.map_history_to_res(session_info, result)
 
     @staticmethod
     def filter_message(element):
         return (
             element.type == 'human' or
             (element.type == 'ai' and element.content)
+        )
+
+    @staticmethod
+    def map_history_to_res(session, messages):
+        return SessionHistory(
+            seq=session.SEQ,
+            user_id=session.USER_ID,
+            session_id=session.SESSION_ID,
+            provider=session.PROVIDER,
+            model_name=session.MODEL_NAME,
+            regdate=session.REGDATE,
+            messages=messages
         )
