@@ -29,9 +29,18 @@ class ResBodyLogAnalysisSession(BaseResponse):
 class ResBodyLogAnalysisSessions(BaseResponse):
     data: list[LogAnalysisSession]
 
-class SessionHistory(BaseModel):
+class SessionHistoryMessage(BaseModel):
     message_type: str
     message: str
 
+class SessionHistory(BaseModel):
+    messages: List[SessionHistoryMessage]
+    seq: int
+    user_id: str
+    session_id: str
+    provider: str
+    model_name: str
+    regdate: datetime
+
 class ResBodySessionHistory(BaseResponse):
-    data: list[SessionHistory]
+    data: SessionHistory
