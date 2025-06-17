@@ -2,7 +2,8 @@ common:
   prefix:
     /api/o11y/insight
   DB:
-    URL: mc-observability-maria
+    # URL: mc-observability-maria
+    URL: 192.168.170.229
     USERNAME: mc-agent
     PASSWORD: mc-agent
     DATABASE: mc_observability
@@ -103,3 +104,17 @@ prediction:
       - multiplicative_terms
       - multiplicative_terms_lower
       - multiplicative_terms_upper
+
+log_analysis:
+  model:
+    - provider: ollama
+      model_name:
+        - llama3.1:8b
+        - mistral:7b
+    - provider: openai
+      model_name:
+        - gpt-4o
+        - gpt-4o-mini
+        - gpt-3.5-turbo
+  mcp:
+    grafana: http://192.168.110.214:8000/sse
