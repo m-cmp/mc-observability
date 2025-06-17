@@ -43,8 +43,8 @@ class MCPContext:
             {"role": "user", "content": messages}
         ]
 
-    async def query(self, messages, user_id):
-        config = self.get_config(user_id)
+    async def query(self, messages, user_id, session_id):
+        config = self.get_config(user_id, session_id)
         prompt = self._build_prompt(messages)
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
 
@@ -52,8 +52,8 @@ class MCPContext:
 
 
     @staticmethod
-    def get_config(user_id):
-        return {'configurable': {'thread_id': user_id}}
+    def get_config(user_id, session_id):
+        return {'configurable': {'thread_id': f'{user_id}_{session_id}'}}
 
 
 

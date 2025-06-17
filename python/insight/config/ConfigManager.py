@@ -76,3 +76,9 @@ class ConfigManager:
             "url": o11y.get('URL', ''),
             "port": o11y.get('PORT', '')
         }
+
+
+    def get_model_config(self):
+        model = self.config.get('log_analysis', {}).get('model', [])
+
+        return model

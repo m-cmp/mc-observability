@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
 
 from app.api.log_analysis.request.req import LogAnalysisQuery
+from app.api.log_analysis.response.res import ResBodyLogAnalysisModel, LogAnalysisModel, ResBodyLogAnalysisSession, LogAnalysisSession
+from app.api.log_analysis.utils.utils import LogAnalysisService
 from app.core.llm.ollama_client import OllamaClient
 from app.core.dependencies.mcp import get_mcp_context
 from app.core.mcp.mcp_context import MCPContext
@@ -8,21 +10,44 @@ from app.core.dependencies.db import get_db
 
 from sqlalchemy.orm import Session
 
+from config.ConfigManager import ConfigManager
+
 router = APIRouter()
 
 
 @router.get(
-    path='/log-analysis/model',
+    path="/log-analysis/model",
+    description="",
+    # responses="",
+    # response_model=ResBodyLogAnalysisModel,
+    operation_id="GetLogAnalysisModel"
 )
-async def log_analysis():
-    ollama_client = OllamaClient()
-    response = ollama_client.generate('안녕')
+async def get_log_analysis_model():
+    config = ConfigManager()
+    model_info_config = config.get_model_config()
 
-    return response
+    log_analysis_service = LogAnalysisService()
+    result = log_analysis_service.get_model_list(model_info_config)
+
+    return ResBodyLogAnalysisModel(data=result)
+    # return ResBodyLogAnalysisModel(data=model_info_config)
+
+@router.get(
+    path="/log-analysis/session",
+    description="",
+    responses="",
+    response_model=ResBodyLogAnalysisSession,
+    operation_id="GetLogAnalysisModelOptions"
+)
+async def get_log_analysis_session(db: Session = Depends(get_db)):
+    log_analysis_service = LogAnalysisService(db=db)
+    results = log_analysis_service.get_chat_session()
+    return ResBodyLogAnalysisSession(data=results)
+
 
 
 @router.post(
-    path='/log-analysis/query'
+    path="/log-analysis/query"
 )
 async def query_log_analysis(
         body: LogAnalysisQuery,
