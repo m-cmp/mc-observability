@@ -1,7 +1,8 @@
 from config.ConfigManager import ConfigManager
-from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession
+from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory
 from app.api.log_analysis.repo.repo import LogAnalysisRepository
-from app.api.log_analysis.request.req import LogAnalysisSessionBody
+from app.api.log_analysis.request.req import PostSessionBody, GetHistoryPath
+from app.core.mcp.mcp_context import MCPContext
 
 from sqlalchemy.orm import Session
 
@@ -10,9 +11,9 @@ import uuid
 
 
 class LogAnalysisService:
-    def __init__(self, db: Session=None):
+    def __init__(self, db: Session=None, mcp_context: MCPContext=None):
         self.repo = LogAnalysisRepository(db=db)
-        pass
+        self.mcp_context = mcp_context
 
     def get_model_list(self, model_info_config):
         result = []
@@ -43,7 +44,7 @@ class LogAnalysisService:
         ]
         return results
 
-    def create_chat_session(self, body: LogAnalysisSessionBody):
+    def create_chat_session(self, body: PostSessionBody):
         provider, model_name = body.provider, body.model_name
         session_id = uuid.uuid4()
 
@@ -66,4 +67,30 @@ class LogAnalysisService:
             provider=session.PROVIDER,
             model_name=session.MODEL_NAME,
             regdate=session.REGDATE
+        )
+
+    async def get_chat_session_history(self, path: GetHistoryPath):
+        session_id = path.sessionId
+        session_id = 'dbe2cb8c-1d91-4361-80ed-9df8623cb857'
+        history = await self.mcp_context.get_chat_history(session_id)
+
+        channel_values = history['channel_values']
+
+        result = []
+        for message in channel_values['messages']:
+            if self.filter_message(message):
+                result.append(
+                    SessionHistory(
+                        message_type=message.type,
+                        message=message.content
+                    )
+                )
+        return result
+
+
+    @staticmethod
+    def filter_message(element):
+        return (
+            element.type == 'human' or
+            (element.type == 'ai' and element.content)
         )

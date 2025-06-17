@@ -6,7 +6,7 @@ from datetime import datetime, UTC
 
 
 class MCPGrafanaClient:
-    def __init__(self, mcp_url='http://192.168.110.214:8000/sse'):
+    def __init__(self, mcp_url):
         self.mcp_url = mcp_url
         self._sse = None
         self.session = None

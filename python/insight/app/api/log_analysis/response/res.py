@@ -29,4 +29,9 @@ class ResBodyLogAnalysisSession(BaseResponse):
 class ResBodyLogAnalysisSessions(BaseResponse):
     data: list[LogAnalysisSession]
 
+class SessionHistory(BaseModel):
+    message_type: str
+    message: str
 
+class ResBodySessionHistory(BaseResponse):
+    data: list[SessionHistory]

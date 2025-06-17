@@ -3,12 +3,13 @@ from pydantic import BaseModel, validator, Field
 from app.api.log_analysis.response.res import LogAnalysisModel
 
 
-class LogAnalysisSessionBody(BaseModel):
+class PostSessionBody(BaseModel):
     provider: str
     model_name: str
 
+class GetHistoryPath(BaseModel):
+    sessionId: str = Field(description='The session ID for the request.')
 
-
-class LogAnalysisQueryBody(BaseModel):
-    user_id: str
+class PostQueryBody(BaseModel):
+    session_id: str
     message: str

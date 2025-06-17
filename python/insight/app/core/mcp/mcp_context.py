@@ -3,28 +3,31 @@ from app.core.mcp.mcp_grafana_client import MCPGrafanaClient
 
 from langchain_mcp_adapters.tools import load_mcp_tools
 
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
 from datetime import datetime, UTC
+import aiosqlite
 
 
 class MCPContext:
-    def __init__(self, mcp_client, llm_client):
+    def __init__(self, mcp_client):
+        self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
+
         self.mcp_client = mcp_client
         self.mcp_session = None
-
-        self.llm_client = llm_client
+        self.llm_client = None
 
         self.tools = None
         self.agent = None
-        self.memory = None
 
-    async def start(self):
+    async def astart(self):
         self.mcp_session = await self.mcp_client.start()
         # self.tools = await self.mcp_client.get_tools()
         self.tools = await load_mcp_tools(self.mcp_session)
 
-        self.agent, self.memory = self.llm_client.setup(self.tools)
+        # self.agent = self.llm_client.setup(self.tools, self.memory)
 
-    async def stop(self):
+    async def astop(self):
         await self.mcp_client.stop()
 
     @staticmethod
@@ -43,8 +46,8 @@ class MCPContext:
             {"role": "user", "content": messages}
         ]
 
-    async def query(self, messages, user_id, session_id):
-        config = self.get_config(user_id, session_id)
+    async def aquery(self, session_id, messages):
+        config = self.create_config(session_id)
         prompt = self._build_prompt(messages)
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
 
@@ -52,8 +55,20 @@ class MCPContext:
 
 
     @staticmethod
-    def get_config(user_id, session_id):
-        return {'configurable': {'thread_id': f'{user_id}_{session_id}'}}
+    def create_config(session_id):
+        return {'configurable': {'thread_id': f'{session_id}'}}
 
+    async def get_chat_history(self, session_id):
+        config = self.create_config(session_id)
+        checkpoint = await self.memory.aget(config)
+        return checkpoint
 
+    async def aget_tuple(self, session_id):
+        config = self.create_config(session_id)
+        result = await self.memory.aget_tuple(config)
+        return result
 
+    async def qwe(self, session_id):
+        config = self.create_config(session_id)
+        result = await self.memory.alist(config)
+        return result

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from app.api.log_analysis.request.req import LogAnalysisQueryBody, LogAnalysisSessionBody
-from app.api.log_analysis.response.res import ResBodyLogAnalysisModel, LogAnalysisModel, ResBodyLogAnalysisSession, ResBodyLogAnalysisSessions, LogAnalysisSession
+from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, GetHistoryPath
+from app.api.log_analysis.response.res import ResBodyLogAnalysisModel, LogAnalysisModel, ResBodyLogAnalysisSession, ResBodyLogAnalysisSessions, LogAnalysisSession, ResBodySessionHistory
 from app.api.log_analysis.utils.utils import LogAnalysisService
 from app.core.llm.ollama_client import OllamaClient
 from app.core.dependencies.mcp import get_mcp_context
@@ -52,27 +52,42 @@ async def get_log_analysis_session(db: Session = Depends(get_db)):
     operation_id="PostLogAnalysisSession"
 )
 async def post_log_analysis_session(
-        body_params: LogAnalysisSessionBody,
+        body_params: PostSessionBody,
         db: Session = Depends(get_db)
 ):
     log_analysis_service = LogAnalysisService(db=db)
-    result = log_analysis_service.create_chat_session(body_params)
+    result = log_analysis_service.create_chat_session(body=body_params)
 
     return ResBodyLogAnalysisSession(data=result)
+
+@router.get(
+    path="/log-analysis/session/{sessionId}/history",
+    description="",
+    responses="",
+    response_model=ResBodySessionHistory,
+    operation_id="GetLogAnalysisSessionHistory"
+)
+async def get_log_analysis_session_history(
+        path_params: GetHistoryPath = Depends(),
+        db: Session = Depends(get_db),
+        mcp_context: MCPContext = Depends(get_mcp_context)
+):
+    log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
+    result = await log_analysis_service.get_chat_session_history(path=path_params)
+    return ResBodySessionHistory(data=result)
 
 
 @router.post(
     path="/log-analysis/query"
 )
 async def query_log_analysis(
-        body: LogAnalysisQueryBody,
+        body_params: PostQueryBody,
         db: Session = Depends(get_db),
         mcp_context: MCPContext = Depends(get_mcp_context)
 ):
-    print(body.user_id)
-    print(body.message)
+    session_id = 'dbe2cb8c-1d91-4361-80ed-9df8623cb857'
+    response = await mcp_context.aquery(session_id, body_params.message)
 
-    response = await mcp_context.query(body.message, body.user_id)
+    await mcp_context.aload_checkpoint(session_id)
 
-    print(response)
     return response
