@@ -22,3 +22,14 @@ class LogAnalysisRepository:
         return self.db.query(LogAnalysisChatSession).filter_by(
             SESSION_ID=session_id
         ).first()
+
+    def delete_session_by_id(self, session_id: str):
+        session = self.db.query(LogAnalysisChatSession).filter_by(
+            SESSION_ID=session_id
+        ).first()
+        if session:
+            self.db.delete(session)
+            self.db.commit()
+            return session
+        return None
+

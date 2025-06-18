@@ -29,12 +29,12 @@ class ResBodyLogAnalysisSession(BaseResponse):
 class ResBodyLogAnalysisSessions(BaseResponse):
     data: list[LogAnalysisSession]
 
-class SessionHistoryMessage(BaseModel):
+class Message(BaseModel):
     message_type: str
     message: str
 
 class SessionHistory(BaseModel):
-    messages: List[SessionHistoryMessage]
+    messages: List[Message]
     seq: int
     user_id: str
     session_id: str
@@ -44,3 +44,6 @@ class SessionHistory(BaseModel):
 
 class ResBodySessionHistory(BaseResponse):
     data: SessionHistory
+
+class ResBodyQuery(BaseResponse):
+    data: Message
