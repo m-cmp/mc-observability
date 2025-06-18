@@ -1,5 +1,5 @@
 from app.core.llm.ollama_client import OllamaClient
-from app.core.mcp.mcp_grafana_client import MCPGrafanaClient
+from app.core.llm.openai_client import OpenAIClient
 
 from langchain_mcp_adapters.tools import load_mcp_tools
 
@@ -22,13 +22,19 @@ class MCPContext:
 
     async def astart(self):
         self.mcp_session = await self.mcp_client.start()
-        # self.tools = await self.mcp_client.get_tools()
         self.tools = await load_mcp_tools(self.mcp_session)
-
-        # self.agent = self.llm_client.setup(self.tools, self.memory)
 
     async def astop(self):
         await self.mcp_client.stop()
+
+    async def get_agent(self, provider, model_name):
+        if provider == 'ollama':
+            self.llm_client = OllamaClient()
+        elif provider == 'openai':
+            self.llm_client = OpenAIClient()
+
+        self.llm_client.setup(model=model_name)
+        self.agent = self.llm_client.bind_tools(self.tools, self.memory)
 
     @staticmethod
     def _build_prompt(messages):
@@ -47,6 +53,8 @@ class MCPContext:
         ]
 
     async def aquery(self, session_id, messages):
+        # self.tools = await self.mcp_client.get_tools()
+        # self.agent = self.llm_client.setup(self.tools, self.memory)
         config = self.create_config(session_id)
         prompt = self._build_prompt(messages)
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
@@ -62,13 +70,3 @@ class MCPContext:
         config = self.create_config(session_id)
         checkpoint = await self.memory.aget(config)
         return checkpoint
-
-    async def aget_tuple(self, session_id):
-        config = self.create_config(session_id)
-        result = await self.memory.aget_tuple(config)
-        return result
-
-    async def qwe(self, session_id):
-        config = self.create_config(session_id)
-        result = await self.memory.alist(config)
-        return result

@@ -7,7 +7,7 @@ class PostSessionBody(BaseModel):
     provider: str
     model_name: str
 
-class GetHistoryPath(BaseModel):
+class SessionIdPath(BaseModel):
     sessionId: str = Field(description='The session ID for the request.')
 
 class PostQueryBody(BaseModel):
