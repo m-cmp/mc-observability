@@ -76,3 +76,14 @@ class ConfigManager:
             "url": o11y.get('URL', ''),
             "port": o11y.get('PORT', '')
         }
+
+    def get_model_config(self):
+        model = self.config.get('log_analysis', {}).get('model', [])
+
+        return model
+
+    def get_mcp_config(self):
+        mcp = self.config.get('log_analysis', {}).get('mcp', {})
+        return {
+            "mcp_grafana_url": mcp.get('mcp_grafana_url', '')
+        }

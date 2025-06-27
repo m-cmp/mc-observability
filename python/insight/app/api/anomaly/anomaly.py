@@ -8,7 +8,7 @@ from app.api.anomaly.description.description import (get_options_description, ge
                                                      get_specific_measurement_description)
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, AnomalyDetectionOptions,
                                           ResBodyAnomalyDetectionSettings)
-from app.api.anomaly.utils.utils import AnomalyService, get_db
+from app.api.anomaly.utils.utils import AnomalyService
 from app.api.anomaly.utils.history import AnomalyHistoryService
 from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionMeasurement, ResBodyAnomalyDetectionSpecificMeasurement,
@@ -16,6 +16,7 @@ from app.api.anomaly.response.res import (ResBodyAnomalyDetectionMeasurement, Re
 from app.api.anomaly.request.req import (GetMeasurementPath, AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
                                          GetHistoryPathParams, GetAnomalyHistoryFilter)
 from config.ConfigManager import ConfigManager
+from app.core.dependencies.db import get_db
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -28,7 +29,9 @@ router = APIRouter()
     response_model=ResBodyAnomalyDetectionMeasurement,
     operation_id="GetAnomalyMeasurementList"
 )
-async def get_anomaly_detection_measurements(db: Session = Depends(get_db)):
+async def get_anomaly_detection_measurements(
+        db: Session = Depends(get_db)
+):
     config = ConfigManager()
     measurement_field_config = config.get_anomaly_config()['measurement_fields']
     anomaly_setting_service = AnomalySettingsService(db=db)
@@ -78,7 +81,9 @@ async def get_available_options_for_anomaly_detection():
     response_model=ResBodyAnomalyDetectionSettings,
     operation_id="GetAllAnomalyDetectionSettings"
 )
-async def get_all_anomaly_detection_settings(db: Session = Depends(get_db)):
+async def get_all_anomaly_detection_settings(
+        db: Session = Depends(get_db)
+):
     anomaly_setting_service = AnomalySettingsService(db=db)
     response = anomaly_setting_service.get_all_settings()
     return response
@@ -90,7 +95,10 @@ async def get_all_anomaly_detection_settings(db: Session = Depends(get_db)):
     response_model=ResBodyVoid,
     operation_id="PostAnomalyDetectionSettings"
 )
-async def register_anomaly_detection_target(body: AnomalyDetectionTargetRegistration, db: Session = Depends(get_db)):
+async def register_anomaly_detection_target(
+        body: AnomalyDetectionTargetRegistration,
+        db: Session = Depends(get_db)
+):
     service = AnomalySettingsService(db=db)
     return service.create_setting(setting_data=body.dict())
 
@@ -101,7 +109,11 @@ async def register_anomaly_detection_target(body: AnomalyDetectionTargetRegistra
     response_model=ResBodyVoid,
     operation_id="PutAnomalyDetectionSettings"
 )
-async def update_anomaly_detection_target(settingSeq: int, body: AnomalyDetectionTargetUpdate, db: Session = Depends(get_db)):
+async def update_anomaly_detection_target(
+        settingSeq: int,
+        body: AnomalyDetectionTargetUpdate,
+        db: Session = Depends(get_db)
+):
     service = AnomalySettingsService(db=db)
     return service.update_setting(setting_seq=settingSeq, update_data=body.dict())
 
@@ -112,7 +124,10 @@ async def update_anomaly_detection_target(settingSeq: int, body: AnomalyDetectio
     response_model=ResBodyVoid,
     operation_id="DeleteAnomalyDetectionSettings"
 )
-async def delete_anomaly_detection_target(settingSeq: int, db: Session = Depends(get_db)):
+async def delete_anomaly_detection_target(
+        settingSeq: int,
+        db: Session = Depends(get_db)
+):
     service = AnomalySettingsService(db=db)
     return service.delete_setting(setting_seq=settingSeq)
 
@@ -123,7 +138,11 @@ async def delete_anomaly_detection_target(settingSeq: int, db: Session = Depends
     response_model=ResBodyAnomalyDetectionSettings,
     operation_id="GetTargetAnomalyDetectionSettings"
 )
-async def get_specific_anomaly_detection_target(nsId: str, targetId: str, db: Session = Depends(get_db)):
+async def get_specific_anomaly_detection_target(
+        nsId: str,
+        targetId: str,
+        db: Session = Depends(get_db)
+):
     service = AnomalySettingsService(db=db)
     return service.get_setting(ns_id=nsId, target_id=targetId)
 
@@ -159,7 +178,10 @@ async def get_anomaly_detection_history(
     response_model=ResBodyVoid,
     operation_id="PostAnomalyDetection"
 )
-async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db)):
+async def post_anomaly_detection(
+        settingSeq: int,
+        db: Session = Depends(get_db)
+):
     service = AnomalyService(db=db, seq=settingSeq)
     service.anomaly_detection()
 
