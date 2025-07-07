@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath, PostAPIKeyBody
-from app.api.log_analysis.response.res import (ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResNone,
+from app.api.log_analysis.response.res import (ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResBodyOpenAIAPIKey,
                                                ResBodyLogAnalysisSessions, ResBodySessionHistory, ResBodyQuery)
 from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
@@ -116,7 +116,7 @@ async def query_log_analysis(
     path="/log-analysis/openai/api_keys",
     # description="",
     # responses="",
-    response_model=ResNone,
+    response_model=ResBodyOpenAIAPIKey,
     operation_id="PostOpenAIAPIKey"
 )
 async def create_api_key(
@@ -125,14 +125,14 @@ async def create_api_key(
 ):
     service = OpenAIAPIKeyService(db=db)
     result = service.post_key(body_params.api_key)
-    return ResNone(data=result)
+    return ResBodyOpenAIAPIKey(data=result)
 
 
 @router.delete(
     path="/log-analysis/openai/api_keys",
     # description="",
     # responses="",
-    response_model=ResNone,
+    response_model=ResBodyOpenAIAPIKey,
     operation_id="DeleteOpenAIAPIKey"
 )
 async def delete_api_key(
@@ -140,4 +140,4 @@ async def delete_api_key(
 ):
     service = OpenAIAPIKeyService(db=db)
     result = service.delete_key()
-    return ResNone(data=result)
+    return ResBodyOpenAIAPIKey(data=result)

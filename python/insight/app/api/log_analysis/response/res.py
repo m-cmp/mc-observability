@@ -52,5 +52,5 @@ class OpenAIAPIKey(BaseModel):
     seq: int
     api_key: str
 
-class ResNone(BaseResponse):
+class ResBodyOpenAIAPIKey(BaseResponse):
     data: OpenAIAPIKey
