@@ -1,6 +1,4 @@
-from pydantic import BaseModel, validator, Field
-
-from app.api.log_analysis.response.res import LogAnalysisModel
+from pydantic import BaseModel, Field
 
 
 class PostSessionBody(BaseModel):
@@ -13,3 +11,6 @@ class SessionIdPath(BaseModel):
 class PostQueryBody(BaseModel):
     session_id: str
     message: str
+
+class PostAPIKeyBody(BaseModel):
+    api_key: str = Field(..., min_length=20, description="OpenAI API key")

@@ -1,7 +1,5 @@
-from app.api.log_analysis.model.models import LogAnalysisChatSession
-
+from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey
 from sqlalchemy.orm import Session
-
 
 
 class LogAnalysisRepository:
@@ -33,3 +31,19 @@ class LogAnalysisRepository:
             return session
         return None
 
+    def get_openai_key(self):
+        return self.db.query(OpenAIAPIKey).first()
+
+    def create_openai_key(self, key: str) -> OpenAIAPIKey:
+        record = self.db.query(OpenAIAPIKey).first()
+        if record:
+            record.API_KEY = key
+        else:
+            record = OpenAIAPIKey(API_KEY=key)
+            self.db.add(record)
+        self.db.commit()
+        return record
+
+    def delete_openai_key(self) -> None:
+        self.db.query(OpenAIAPIKey).delete()
+        self.db.commit()
