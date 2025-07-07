@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Depends
-
-from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath
-from app.api.log_analysis.response.res import ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResBodyLogAnalysisSessions, ResBodySessionHistory, ResBodyQuery
-from app.api.log_analysis.utils.utils import LogAnalysisService
+from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath, PostAPIKeyBody
+from app.api.log_analysis.response.res import (ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResBodyOpenAIAPIKey,
+                                               ResBodyLogAnalysisSessions, ResBodySessionHistory, ResBodyQuery)
+from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
 from app.core.mcp.mcp_context import MCPContext
 from app.core.dependencies.db import get_db
-
 from sqlalchemy.orm import Session
-
 from config.ConfigManager import ConfigManager
+
 
 router = APIRouter()
 
@@ -18,14 +17,14 @@ router = APIRouter()
     path="/log-analysis/model",
     description="",
     # responses="",
-    # response_model=ResBodyLogAnalysisModel,
+    response_model=ResBodyLogAnalysisModel,
     operation_id="GetLogAnalysisModel"
 )
-async def get_log_analysis_model():
+async def get_log_analysis_model(db: Session = Depends(get_db)):
     config = ConfigManager()
     model_info_config = config.get_model_config()
 
-    log_analysis_service = LogAnalysisService()
+    log_analysis_service = LogAnalysisService(db=db)
     result = log_analysis_service.get_model_list(model_info_config)
 
     return ResBodyLogAnalysisModel(data=result)
@@ -100,7 +99,6 @@ async def get_log_analysis_session_history(
     # responses="",
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery"
-
 )
 async def query_log_analysis(
         body_params: PostQueryBody,
@@ -112,3 +110,34 @@ async def query_log_analysis(
     result = await log_analysis_service.query(body=body_params)
 
     return ResBodyQuery(data=result)
+
+
+@router.post(
+    path="/log-analysis/openai/api_keys",
+    # description="",
+    # responses="",
+    response_model=ResBodyOpenAIAPIKey,
+    operation_id="PostOpenAIAPIKey"
+)
+async def create_api_key(
+    body_params: PostAPIKeyBody,
+    db: Session = Depends(get_db)
+):
+    service = OpenAIAPIKeyService(db=db)
+    result = service.post_key(body_params.api_key)
+    return ResBodyOpenAIAPIKey(data=result)
+
+
+@router.delete(
+    path="/log-analysis/openai/api_keys",
+    # description="",
+    # responses="",
+    response_model=ResBodyOpenAIAPIKey,
+    operation_id="DeleteOpenAIAPIKey"
+)
+async def delete_api_key(
+    db: Session = Depends(get_db)
+):
+    service = OpenAIAPIKeyService(db=db)
+    result = service.delete_key()
+    return ResBodyOpenAIAPIKey(data=result)

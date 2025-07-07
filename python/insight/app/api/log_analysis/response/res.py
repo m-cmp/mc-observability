@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal, Any, Dict
 from datetime import datetime
 
 
@@ -7,13 +7,13 @@ class BaseResponse(BaseModel):
     rs_code: str = '200'
     rs_msg: str = 'Success'
 
+
 class LogAnalysisModel(BaseModel):
-    provider: str
+    provider: Literal["ollama", "openai"]
     model_name: list[str]
 
 class ResBodyLogAnalysisModel(BaseResponse):
     data: list[LogAnalysisModel]
-
 
 class LogAnalysisSession(BaseModel):
     seq: int
@@ -47,3 +47,10 @@ class ResBodySessionHistory(BaseResponse):
 
 class ResBodyQuery(BaseResponse):
     data: Message
+
+class OpenAIAPIKey(BaseModel):
+    seq: int
+    api_key: str
+
+class ResBodyOpenAIAPIKey(BaseResponse):
+    data: OpenAIAPIKey

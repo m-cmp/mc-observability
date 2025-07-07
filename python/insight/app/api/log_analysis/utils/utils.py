@@ -1,14 +1,11 @@
-from config.ConfigManager import ConfigManager
-from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory, Message
+from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory, Message, \
+    OpenAIAPIKey
 from app.api.log_analysis.repo.repo import LogAnalysisRepository
 from app.api.log_analysis.request.req import PostSessionBody, SessionIdPath, PostQueryBody
 from app.core.mcp.mcp_context import MCPContext
-
 from sqlalchemy.orm import Session
-
-from fastapi.responses import JSONResponse
 from fastapi import HTTPException, status
-
+from typing import Callable
 import os
 import uuid
 
@@ -27,8 +24,12 @@ class LogAnalysisService:
         result = []
         for model_info in model_info_config:
             env_key = self.PROVIDER_ENV_MAP[model_info['provider']]
-            if env_key and os.getenv(env_key):
+            if model_info['provider']=="ollama" and os.getenv(env_key):
                 result.append(self.map_model_to_res(model_info))
+            elif model_info['provider']=="openai" and self.repo.get_openai_key():
+                result.append(self.map_model_to_res(model_info))
+            else:
+                pass
         return result
 
     @staticmethod
@@ -132,7 +133,8 @@ class LogAnalysisService:
     async def query(self, body: PostQueryBody):
         session_id, message = body.session_id, body.message
         session = self.repo.get_session_by_id(session_id)
-        await self.mcp_context.get_agent(session.PROVIDER, session.MODEL_NAME)
+        provider_credential = CredentialService(repo=self.repo).get_provider_credential(provider=session.PROVIDER)
+        await self.mcp_context.get_agent(session.PROVIDER, session.MODEL_NAME, provider_credential)
 
         query_result = await self.mcp_context.aquery(session_id, message)
         result = query_result['messages'][-1].content
@@ -140,4 +142,60 @@ class LogAnalysisService:
         return Message(
             message_type='ai',
             message=result
+        )
+
+
+class CredentialService:
+    def __init__(self, repo):
+        self.repo = repo
+        self._fetchers: dict[str, Callable[[], str]] = {
+            'openai': self._fetch_openai_key,
+            'ollama': self._fetch_ollama_url,
+        }
+
+    def get_provider_credential(self, provider: str) -> str:
+        return self._fetchers[provider]()
+
+    def _fetch_openai_key(self) -> str:
+        api_key = self.repo.get_openai_key()
+        if not api_key:
+            raise HTTPException(
+                detail="API Key Not Found",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        return api_key.API_KEY
+
+    @staticmethod
+    def _fetch_ollama_url() -> str:
+        url = os.getenv("OLLAMA_BASE_URL")
+        if not url:
+            raise HTTPException(
+                detail="OLLAMA_BASE_URL not set",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        return url
+
+
+class OpenAIAPIKeyService:
+    def __init__(self, db: Session=None):
+        self.repo = LogAnalysisRepository(db=db)
+
+    def post_key(self, api_key: str):
+        result = self.repo.create_openai_key(api_key)
+        return OpenAIAPIKey(
+            seq=result.SEQ,
+            api_key=result.API_KEY
+        )
+
+    def delete_key(self):
+        result = self.repo.get_openai_key()
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No API key to delete"
+            )
+        self.repo.delete_openai_key()
+        return OpenAIAPIKey(
+            seq=result.SEQ,
+            api_key=result.API_KEY
         )
