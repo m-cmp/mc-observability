@@ -40,7 +40,6 @@ langchain-ollama==0.3.3
 langchain-openai==0.3.26
 langgraph==0.4.8
 langgraph-checkpoint==2.1.0
-langgraph-checkpoint-sqlite==2.0.10
 langgraph-prebuilt==0.5.0
 langgraph-sdk==0.1.72
 langsmith==0.4.2
