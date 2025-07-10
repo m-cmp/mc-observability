@@ -1,14 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '2.7.6'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 bootJar.enabled = false
 
 allprojects {
     group = 'mcmp.mc.observability'
-    version = '0.2.0'
-    sourceCompatibility = JavaVersion.VERSION_17
+    version = '0.3.1'
+    sourceCompatibility = JavaLanguageVersion.of(21)
 
     repositories {
         mavenCentral()
@@ -40,7 +41,4 @@ subprojects {
 }
 
 project(':mc-o11y-manager') {
-}
-
-project(':mc-o11y-agent') {
 }
