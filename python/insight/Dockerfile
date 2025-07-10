@@ -1,8 +1,9 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /mc-insight
 
 COPY requirements.txt /mc-insight
+COPY /external /mc-insight/external
 RUN pip install -r requirements.txt
 COPY . /mc-insight
 
