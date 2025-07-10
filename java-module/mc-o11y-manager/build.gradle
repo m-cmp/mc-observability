@@ -1,14 +1,55 @@
 plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'mcmp.mc.observability'
+version = '0.3.1'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
-    api 'org.influxdb:influxdb-java:2.23'
-    api 'org.apache.commons:commons-lang3:3.12.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.jcraft:jsch:0.1.44-1'
-    implementation 'io.github.openfeign:feign-httpclient:11.1'
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:3.1.5'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.2.1'
+    implementation 'com.jcraft:jsch:0.1.55'
+    implementation 'io.github.openfeign:feign-httpclient:13.5'
+    implementation 'org.codehaus.janino:janino:3.1.12'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.apache.sshd:sshd-core:2.15.0'
+    implementation 'org.apache.sshd:sshd-sftp:2.15.0'
+    implementation 'org.springframework.retry:spring-retry'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 jar {
@@ -16,46 +57,46 @@ jar {
 }
 
 bootJar {
-    archivesBaseName = "mcmp-observability-manager"
+    archivesBaseName = "mc-o11y-manager"
     archiveFileName = "mc-o11y-manager.jar"
-    archiveVersion = "0.0.1"
+    archiveVersion = "0.3.1"
 }
 
 tasks.register('runSpringBootInBackground') {
     doLast {
-        println 'Starting mc-o11y-manager in the background...'
-        def processBuilder = new ProcessBuilder('java', '-jar', 'mc-o11y-manager/build/libs/mc-o11y-manager.jar')
-        processBuilder.redirectOutput(new File("mc-o11y-manager/build/mc-o11y-manager.log"))
-        processBuilder.redirectError(new File("mc-o11y-manager/build/mc-o11y-manager-error.log"))
+        println 'Starting o11y-manager in the background...'
+        def processBuilder = new ProcessBuilder('java', '-jar', 'build/libs/o11y-manager.jar')
+        processBuilder.redirectOutput(new File("build/o11y-manager.log"))
+        processBuilder.redirectError(new File("build/o11y-manager-error.log"))
         processBuilder.start()
-        println 'mc-o11y-manager started in the background (logs in mc-o11y-manager/build/mc-o11y-manager.log).'
+        println 'o11y-manager started in the background (logs in build/o11y-manager.log).'
 
-        println 'Waiting for 5 seconds before generating Swagger documentation...'
-        Thread.sleep(5000)
+        println 'Waiting for 20 seconds before generating Swagger documentation...'
+        Thread.sleep(20000)
     }
 }
 
 tasks.register('stopSpringBoot') {
     doLast {
-        println 'Stopping mc-o11y-manager...'
-        def pidFile = file("../mc-o11y-manager.pid")
+        println 'Stopping o11y-manager...'
+        def pidFile = file("../o11y-manager.pid")
         println pidFile.path
         if (pidFile.exists()) {
             def pid = pidFile.text.trim()
             exec {
                 commandLine 'kill', '-9', pid
             }
-            println "mc-o11y-manager stopped (PID: ${pid})"
+            println "o11y-manager stopped (PID: ${pid})"
             pidFile.delete()
         } else {
-            println "PID file not found, mc-o11y-manager might not be running."
+            println "PID file not found, o11y-manager might not be running."
         }
     }
 }
 
 tasks.register('generateSwaggerYaml', Exec) {
     println 'Generating Swagger documentation...'
-    commandLine 'curl', '-o', 'build/swagger.yaml', 'http://localhost:18080/v3/api-docs.yaml'
+    commandLine 'curl', '-o', 'swagger/swagger.yaml', 'http://127.0.0.1:18080/v3/api-docs.yaml'
     doLast {
         println 'Swagger YAML file has been generated.'
     }

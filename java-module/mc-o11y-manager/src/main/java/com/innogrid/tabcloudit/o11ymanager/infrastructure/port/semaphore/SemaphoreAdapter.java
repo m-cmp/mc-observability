@@ -1,0 +1,82 @@
+package com.innogrid.tabcloudit.o11ymanager.infrastructure.port.semaphore;
+
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Inventory;
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.LoginRequest;
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Project;
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Repository;
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Task;
+import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Template;
+import com.innogrid.tabcloudit.o11ymanager.port.SemaphorePort;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class SemaphoreAdapter implements SemaphorePort {
+    private final SemaphoreClient semaphoreClient;
+
+    @Override
+    public void login(LoginRequest loginRequest) {
+        semaphoreClient.login(loginRequest);
+    }
+
+    @Override
+    public Task createTask(Integer projectId, Task task) {
+        return semaphoreClient.createTask(projectId, task);
+    }
+
+    @Override
+    public Task getTask(Integer projectId, Integer taskId) {
+        return semaphoreClient.getTask(projectId, taskId);
+    }
+
+    @Override
+    public List<Project> getProjects() {
+        return semaphoreClient.getProjects().orElseThrow();
+    }
+
+    @Override
+    public Project getProjectByName(String name) {
+        return getProjects().stream().filter(i -> i.getName().equals(name)).findFirst()
+                .orElseThrow(NoSuchElementException::new);
+    }
+
+    @Override
+    public List<Template> getTemplates(Integer projectId) {
+        return semaphoreClient.getTemplates(projectId);
+    }
+
+    @Override
+    public Project createProject(Project project) {
+        return semaphoreClient.createProject(project);
+    }
+
+    @Override
+    public List<Inventory> getInventories(Integer id) {
+        return semaphoreClient.getInventories(id).orElseThrow();
+    }
+
+    @Override
+    public Inventory createInventory(Integer projectId, Inventory inventory) {
+        return semaphoreClient.createInventory(projectId, inventory);
+    }
+
+    @Override
+    public List<Repository> getRepositories(Integer projectId) {
+        return semaphoreClient.getRepositories(projectId).orElseThrow();
+    }
+
+    @Override
+    public Repository createRepository(Integer projectId, Repository repository) {
+        return semaphoreClient.createRepository(projectId, repository);
+    }
+
+    @Override
+    public Template createTemplate(Integer projectId, Template template) {
+        return semaphoreClient.createTemplate(projectId, template);
+    }
+
+} 

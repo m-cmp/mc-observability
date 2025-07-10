@@ -1,8 +1,77 @@
-project:
-  version: 0.2.0
-
+# 공통 설정만 작성
 server:
   port: 18080
+
+deploy:
+  site-code: jb
+
+spring:
+  application:
+    name: o11y-manager
+  datasource:
+    url: jdbc:mariadb://127.0.0.1:3306/agent
+    username: tabcloudit
+    password: tabcloudit
+    hikari:
+      max-lifetime: 150000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: false
+        use_sql_comments: false
+    open-in-view: false
+    show-sql: false
+  banner:
+    location: classpath:banner.txt
+
+springdoc:
+  packages-to-scan: com.innogrid.tabcloudit.o11ymanager.controller
+  paths-to-match: "/**"
+  paths-to-exclude:
+    - "/api/**/test/**"
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /api/docs
+  default-produces-media-type: application/json
+
+  mvc:
+    converters:
+      preferred-json-mapper: jackson
+    jackson:
+      default-property-inclusion: non_null
+      serialization:
+        fail-on-empty-beans: false
+    http:
+      encoding:
+        charset: UTF-8
+        enabled: true
+        force: true
+    messages:
+      encoding: UTF-8
+
+loki:
+  url: http://192.168.110.24:3100
+  endpoints:
+    query: /loki/api/v1/query
+    range: /loki/api/v1/query_range
+
+influxdb:
+  url: http://192.168.110.48:8086
+  database: cmp
+  username: tabcloudit
+  password: qwe1212!Q
+
+health:
+  check-interval: 10000
+  host-connection-check-timeout: 5000
+
+ssh:
+  connection-timeout: 10000
+  ssh-connection-cache-timeout: 120000
 
 feign:
   okhttp:
@@ -12,18 +81,35 @@ feign:
       default:
         connect-timeout: 5000
         read-timeout: 30000
-      cb-tumblebug:
-        connect-timeout: 5000
-        read-timeout: 100000
-  agent-manager:
-    url: http://localhost:18081
-  cb-tumblebug:
-    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
-    id: ${TUMBLEBUG_ID:default}
-    pw: ${TUMBLEBUG_PW:default}
-  cb-spider:
-    url: ${SPIDER_URL:http://cb-spider:1024}
-    id: ${SPIDER_ID:}
-    pw: ${SPIDER_PW:}
-  insight:
-    url: ${INSIGHT_URL:http://mc-o11y-insight:9001}
+        loggerLevel: full
+      LokiFeignClient: # LokiFeignClient에 대한 특별 설정
+        loggerLevel: full
+  semaphore:
+    url: http://127.0.0.1:13000
+    username: admin
+    password: semaphorepass
+    project-name: ansible
+    init-max-parallel-tasks: 10
+    template-names:
+      agent-install: install-agent
+      agent-config-update: config-update
+    task-check-scheduler:
+      check-interval-sec: 5
+      max-wait-minutes: 10
+
+logging:
+  level:
+    org.apache.sshd.client: ERROR
+    org.apache.sshd.common: ERROR
+    com.innogrid.tabcloudit.o11ymanager.infrastructure.log.client.LokiFeignClient: DEBUG
+    feign: DEBUG
+    feign.Logger: DEBUG
+    feign.template: WARN
+
+  file:
+    path: /applog
+    name: ${spring.application.name}
+  logback:
+    rollingpolicy:
+      max-history: 14
+      max-file-size: 200MB

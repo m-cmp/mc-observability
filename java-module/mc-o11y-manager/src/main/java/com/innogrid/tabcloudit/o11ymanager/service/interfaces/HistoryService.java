@@ -1,0 +1,18 @@
+package com.innogrid.tabcloudit.o11ymanager.service.interfaces;
+
+import com.innogrid.tabcloudit.o11ymanager.dto.history.HistoryDTO;
+import com.innogrid.tabcloudit.o11ymanager.dto.history.HistoryListDTO;
+import com.innogrid.tabcloudit.o11ymanager.entity.HistoryEntity;
+
+import java.util.List;
+
+public interface HistoryService {
+
+    List<HistoryListDTO> list();
+
+    HistoryDTO findHostsById(String id);
+
+    List<HistoryEntity> listHistory(String hostId);
+
+    HistoryEntity save(HistoryEntity history);
+}

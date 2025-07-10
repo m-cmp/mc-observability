@@ -1,0 +1,5 @@
+UUID=@ID
+LOKI_HOST=@LOKI_HOST
+credential_id=@CREDENTIAL_ID
+cloud_service=@CLOUD_SERVICE
+type=@TYPE

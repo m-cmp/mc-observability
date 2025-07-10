@@ -1,0 +1,3 @@
+  [inputs.vsphere.tags]
+    vcenter_service_id = "@REPLACEMENT"
+    target = "host"

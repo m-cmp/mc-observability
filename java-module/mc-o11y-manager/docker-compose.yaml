@@ -1,0 +1,18 @@
+services:
+  o11y-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: o11y-manager:latest
+    container_name: o11y-manager
+    restart: always
+    network_mode: "host"
+    volumes:
+      - ./config:/config
+      - ./applog:/applog
+    healthcheck:
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:18080/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30

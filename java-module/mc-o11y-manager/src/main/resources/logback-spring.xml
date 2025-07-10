@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">/-
+
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" />
+    <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name" />
+    <springProperty scope="context" name="MAX_FILE_SIZE" source="logging.logback.rollingpolicy.max-file-size" />
+    <springProperty scope="context" name="MAX_HISTORY" source="logging.logback.max-history" />
+    <springProperty scope="context" name="APPLICATION_NAME" source="spring.application.name" />
+
+    <!-- Feign 클라이언트 로깅을 위한 특별 설정 -->
+    <logger name="com.innogrid.tabcloudit.o11ymanager.infrastructure.log.client.LokiFeignClient" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
+    
+    <logger name="feign" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
+    
+    <logger name="feign.Logger" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+    </logger>
+
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+
+    <property name="CONSOLE_LOG_PATTERN" value="%clr(%-5level) %clr(%d{yy-MM-dd HH:mm:ss}){faint}%clr([%thread]){magenta} %clr([%logger{0}:%line]){cyan} %clr(- %msg%n){faint}%wEx" />
+    <property name="FILE_LOG_PATTERN" value="%-5level %d{yy-MM-dd HH:mm:ss}[%thread] [%logger{0}:%line] - %msg%n" />
+    <property name="ERR_LOG_FILE_NAME" value="${LOG_FILE_NAME}-error" />
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 파일경로 설정 -->
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+        <!-- 출력패턴 설정 -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <!-- Rolling 정책 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- .gz,.zip 등을 넣으면 자동 일자별 로그파일 압축 -->
+            <fileNamePattern>${LOG_PATH}/${APPLICATION_NAME}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log.gz</fileNamePattern>
+            <!-- 파일당 최고 용량 kb, mb, gb -->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!-- 일자별 로그파일 최대 보관주기(~일), 해당 설정일 이상된 파일은 자동으로 제거 -->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 에러의 경우 파일에 로그 처리 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>error</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <!-- 파일경로 설정 -->
+        <file>${LOG_PATH}/${ERR_LOG_FILE_NAME}.log</file>
+        <!-- 출력패턴 설정 -->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <!-- Rolling 정책 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- .gz,.zip 등을 넣으면 자동 일자별 로그파일 압축 -->
+            <fileNamePattern>${LOG_PATH}/${APPLICATION_NAME}/${ERR_LOG_FILE_NAME}.%d{yyyy-MM-dd}_%i.log.gz</fileNamePattern>
+            <!-- 파일당 최고 용량 kb, mb, gb -->
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <!-- 일자별 로그파일 최대 보관주기(~일), 해당 설정일 이상된 파일은 자동으로 제거 -->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 기본 로깅 레벨 설정 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </root>
+</configuration>

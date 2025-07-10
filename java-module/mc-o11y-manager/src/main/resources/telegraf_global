@@ -1,0 +1,6 @@
+[global_tags]
+  uuid = "@ID"
+  credential_id = "@CREDENTIAL_ID"
+  cloud_service = "@CLOUD_SERVICE"
+  type = "@TYPE"
+  collection_type = "agent"

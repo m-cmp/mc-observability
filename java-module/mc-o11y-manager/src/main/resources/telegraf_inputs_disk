@@ -1,0 +1,2 @@
+[[inputs.disk]]
+  ignore_fs = ["tmpfs", "devtmpfs", "squashfs", "overlay", "nsfs"]

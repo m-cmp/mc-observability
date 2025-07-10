@@ -1,0 +1,6 @@
+[[inputs.procstat]]
+  properties = ["cpu", "limits", "memory", "mmap"]
+  tag_with = ["user"]
+
+[[inputs.procstat.filter]]
+  name = "@VM-ID"
