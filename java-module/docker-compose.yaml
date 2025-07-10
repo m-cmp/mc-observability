@@ -53,19 +53,24 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.9.22
+    image: cloudbaristaorg/cb-tumblebug:0.10.9
     container_name: cb-tumblebug
-    restart: always
-    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network
+      # - terrarium_network # Uncomment this line when you use this compose and the terrarium compose
     ports:
       - 1323:1323
     depends_on:
-      - cb-tumblebug-etcd
-      # - cb-tumblebug-etcd-conf
-#       - cb-spider
+      cb-tumblebug-etcd:
+        condition: service_started
+      cb-spider:
+        condition: service_started
+      cb-tumblebug-postgres:
+        condition: service_healthy
     volumes:
       - ./conf/setup.env:/app/conf/setup.env
       - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
@@ -74,21 +79,28 @@ services:
       - /docker/cb-tumblebug-container/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
+      # # Enable TB_SELF_ENDPOINT to specify an endpoint for CB-TB API (default: localhost:1323)
+      # # Use public IP if you want to access the API Dashboard from outside of localhost
+      # - TB_SELF_ENDPOINT=xxx.xxx.xxx.xxx:1323
       - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
       - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
-      # - TB_ETCD_AUTH_ENABLED=true
+      - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
+      # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      # - TB_SQLITE_URL=localhost:3306
-      # - TB_SQLITE_DATABASE=cb_tumblebug
-      # - TB_SQLITE_USER=cb_tumblebug
-      # - TB_SQLITE_PASSWORD=cb_tumblebug
+      - TB_POSTGRES_ENDPOINT=cb-tumblebug-postgres:5432
+      - TB_POSTGRES_DATABASE=cb_tumblebug
+      - TB_POSTGRES_USER=cb_tumblebug
+      - TB_POSTGRES_PASSWORD=cb_tumblebug
+      # - TB_TERRARIUM_API_USERNAME=default
+      # - TB_TERRARIUM_API_PASSWORD=default
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
+      # - TB_AUTH_MODE=jwt
       # - TB_API_USERNAME=default
-      # - TB_API_PASSWORD=default
+      # - TB_API_PASSWORD=$$2a$$10$$4PKzCuJ6fPYsbCF.HR//ieLjaCzBAdwORchx62F2JRXQsuR3d9T0q
       # - TB_AUTOCONTROL_DURATION_MS=10000
-      # - TB_SELF_ENDPOINT=localhost:1323
       # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
       # - TB_DEFAULT_NAMESPACE=default
       # - TB_DEFAULT_CREDENTIALHOLDER=admin
@@ -101,17 +113,17 @@ services:
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug
-      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
       interval: 1m
       timeout: 5s
       retries: 3
       start_period: 10s
 
-  # cb-tumblebug-etcd
+  # CB-Tumblebug ETCD
+  # This is used for storing CB-Tumblebug metadata.
   cb-tumblebug-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.14
     container_name: cb-tumblebug-etcd
-    restart: always
     networks:
       - internal_network
     ports:
@@ -148,20 +160,49 @@ services:
       - --auth-token
       - simple
     healthcheck: # for etcd
-      test: [ "CMD", "/usr/local/bin/etcd", "--version"]
+      test: ["CMD", "/usr/local/bin/etcd", "--version"]
       interval: 1m
       timeout: 5s
       retries: 3
       start_period: 10s
 
-  cb-spider:
-    image: cloudbaristaorg/cb-spider_azure_monitoring:edge
-    container_name: cb-spider
+  # CB-Tumblebug PostgreSQL
+  # This is used for storing CB-Tumblebug Spec and Image.
+  cb-tumblebug-postgres:
+    image: postgres:16-alpine
+    container_name: cb-tumblebug-postgres
     restart: always
-    platform: linux/amd64
     networks:
       - internal_network
-      - external_network
+      # # Enable external network for outbound access (not ideal for security)
+      # - external_network
+    ports:
+      - 5432:5432
+    volumes:
+      - /docker/cb-tumblebug-container/meta_db/postgres/:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=cb_tumblebug
+      - POSTGRES_PASSWORD=cb_tumblebug
+      - POSTGRES_DB=cb_tumblebug
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # CB-Spider
+  cb-spider:
+    image: cloudbaristaorg/cb-spider:0.10.8
+    container_name: cb-spider
+    # build:
+    #   context: ../cb-spider
+    #   dockerfile: Dockerfile
+    networks:
+      - internal_network
+      - external_network # for outbound access (not ideal for security)
+    # expose:
+    #   - 1024
     ports:
       - 1024:1024
     volumes:
@@ -169,7 +210,7 @@ services:
       - /docker/cb-spider_azure_monitoring/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - PLUGIN_SW=OFF
-      - SERVER_ADDRESS=localhost
+      - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
       # - API_USERNAME=
       # - API_PASSWORD=
@@ -177,7 +218,7 @@ services:
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
     healthcheck: # for CB-Spider
-      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
+      test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
       interval: 1m
       timeout: 5s
       retries: 3
