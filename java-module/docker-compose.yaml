@@ -225,7 +225,7 @@ services:
       start_period: 10s
 
   influxdb:
-    image: influxdb:1.8
+    image: influxdb:1.11.8
     container_name: mc-o11y-influx
     restart: always
     ports:
