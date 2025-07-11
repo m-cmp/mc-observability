@@ -6,23 +6,18 @@ import com.innogrid.tabcloudit.o11ymanager.dto.host.ConfigResponseDTO;
 import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
 import com.innogrid.tabcloudit.o11ymanager.entity.HostEntity;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.AgentConfigNotFoundException;
 import com.innogrid.tabcloudit.o11ymanager.global.annotation.Base64Encode;
-import com.innogrid.tabcloudit.o11ymanager.global.aspect.request.RequestInfo;
 import com.innogrid.tabcloudit.o11ymanager.global.definition.ConfigDefinition;
 import com.innogrid.tabcloudit.o11ymanager.mapper.host.ConfigMapper;
 import com.innogrid.tabcloudit.o11ymanager.model.agentHealth.SshConnection;
 import com.innogrid.tabcloudit.o11ymanager.model.config.ConfigFileNode;
 import com.innogrid.tabcloudit.o11ymanager.service.domain.HostDomainService;
-import com.innogrid.tabcloudit.o11ymanager.service.domain.SemaphoreDomainService;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.*;
 import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -211,25 +206,21 @@ public class FluentBitConfigFacadeService {
 
 
   public ConfigFileListResponseDTO getFluentBitConfigFileList(String requestId, String hostId,
-      String commitHash, Agent agent) {
+      String commitHash) {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
 
-    agent = Agent.FLUENT_BIT;
-    commitHash = host.getLog_agent_config_git_hash();
-
     if (commitHash == null || commitHash.isEmpty()) {
-      log.info(commitHash);
-      throw new AgentConfigNotFoundException(requestId, host.getId(), agent);
+      commitHash = host.getLog_agent_config_git_hash();
     }
 
     List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
-        commitHash, agent);
+        commitHash, Agent.FLUENT_BIT);
 
     return ConfigFileListResponseDTO.builder()
         .hostId(host.getId())
         .commitHash(commitHash)
-        .agentType(agent.getName())
+        .agentType(Agent.FLUENT_BIT.getName())
         .files(configMapper.toFileDTOList(configFiles))
         .build();
 
@@ -238,16 +229,12 @@ public class FluentBitConfigFacadeService {
 
   @Base64Encode
   public ConfigFileContentResponseDTO getFluentBitConfigContent(String requestId, String hostId,
-      String commitHash,
-      String path, Agent agent) {
-
-    agent = Agent.FLUENT_BIT;
+      String commitHash, String path) {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
-    commitHash = host.getLog_agent_config_git_hash();
 
     if (commitHash == null || commitHash.isEmpty()) {
-      throw new AgentConfigNotFoundException(requestId, host.getId(), Agent.FLUENT_BIT);
+      commitHash = host.getLog_agent_config_git_hash();
     }
 
     String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),

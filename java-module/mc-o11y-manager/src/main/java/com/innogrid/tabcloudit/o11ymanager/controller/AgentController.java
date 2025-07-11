@@ -408,7 +408,7 @@ public class AgentController {
       @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id) {
 
     ConfigFileListResponseDTO result = telegrafConfigService.getTelegrafConfigFileList(
-        requestInfo.getRequestId(), id, null, Agent.TELEGRAF);
+        requestInfo.getRequestId(), id, null);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -425,7 +425,7 @@ public class AgentController {
       @Parameter(description = "Commit Hash") @PathVariable String commitHash) {
 
     ConfigFileListResponseDTO result = telegrafConfigService.getTelegrafConfigFileList(
-        requestInfo.getRequestId(), id, commitHash, Agent.TELEGRAF);
+        requestInfo.getRequestId(), id, commitHash);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -441,7 +441,7 @@ public class AgentController {
       @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id) {
 
     ConfigFileListResponseDTO result = fluentBitConfigService.getFluentBitConfigFileList(
-        requestInfo.getRequestId(), id, null, Agent.FLUENT_BIT);
+        requestInfo.getRequestId(), id, null);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -458,7 +458,7 @@ public class AgentController {
       @Parameter(description = "Commit Hash") @PathVariable String commitHash) {
 
     ConfigFileListResponseDTO result = fluentBitConfigService.getFluentBitConfigFileList(
-        requestInfo.getRequestId(), id, commitHash, Agent.FLUENT_BIT);
+        requestInfo.getRequestId(), id, commitHash);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -475,7 +475,7 @@ public class AgentController {
       @Parameter(description = "파일 경로") @RequestParam String path) {
 
     ConfigFileContentResponseDTO result = telegrafConfigService.getTelegrafConfigContent(
-        requestInfo.getRequestId(), id, null, path, Agent.TELEGRAF);
+        requestInfo.getRequestId(), id, null, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -493,7 +493,7 @@ public class AgentController {
       @Parameter(description = "파일 경로") @RequestParam String path) {
 
     ConfigFileContentResponseDTO result = telegrafConfigService.getTelegrafConfigContent(
-        requestInfo.getRequestId(), id, commitHash, path, Agent.TELEGRAF);
+        requestInfo.getRequestId(), id, commitHash, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -510,7 +510,7 @@ public class AgentController {
       @Parameter(description = "파일 경로") @RequestParam String path) {
 
     ConfigFileContentResponseDTO result = fluentBitConfigService.getFluentBitConfigContent(
-        requestInfo.getRequestId(), id, null, path, Agent.FLUENT_BIT);
+        requestInfo.getRequestId(), id, null, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -528,7 +528,7 @@ public class AgentController {
       @Parameter(description = "파일 경로") @RequestParam String path) {
 
     ConfigFileContentResponseDTO result = fluentBitConfigService.getFluentBitConfigContent(
-        requestInfo.getRequestId(), id, commitHash, path, Agent.FLUENT_BIT);
+        requestInfo.getRequestId(), id, commitHash, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }

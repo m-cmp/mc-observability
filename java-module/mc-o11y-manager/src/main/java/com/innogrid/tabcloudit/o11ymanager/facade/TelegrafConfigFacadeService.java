@@ -6,7 +6,6 @@ import com.innogrid.tabcloudit.o11ymanager.dto.host.ConfigResponseDTO;
 import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
 import com.innogrid.tabcloudit.o11ymanager.entity.HostEntity;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.AgentConfigNotFoundException;
 import com.innogrid.tabcloudit.o11ymanager.global.annotation.Base64Encode;
 import com.innogrid.tabcloudit.o11ymanager.global.aspect.request.RequestInfo;
 import com.innogrid.tabcloudit.o11ymanager.global.definition.ConfigDefinition;
@@ -269,16 +268,12 @@ public class TelegrafConfigFacadeService {
 
   @Base64Encode
   public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String hostId,
-      String commitHash,
-      String path, Agent agent) {
-
-    agent = Agent.TELEGRAF;
+      String commitHash, String path) {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
-    commitHash = host.getMonitoring_agent_config_git_hash();
 
     if (commitHash == null || commitHash.isEmpty()) {
-      throw new AgentConfigNotFoundException(requestId, host.getId(), Agent.TELEGRAF);
+      commitHash = host.getMonitoring_agent_config_git_hash();
     }
 
     String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),
@@ -294,24 +289,21 @@ public class TelegrafConfigFacadeService {
 
 
   public ConfigFileListResponseDTO getTelegrafConfigFileList(String requestId, String hostId,
-      String commitHash, Agent agent) {
+      String commitHash) {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
 
-    agent = Agent.TELEGRAF;
-    commitHash = host.getMonitoring_agent_config_git_hash();
-
     if (commitHash == null || commitHash.isEmpty()) {
-      throw new AgentConfigNotFoundException(requestId, host.getId(), agent);
+      commitHash = host.getMonitoring_agent_config_git_hash();
     }
 
     List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
-        commitHash, agent);
+        commitHash, Agent.TELEGRAF);
 
     return ConfigFileListResponseDTO.builder()
         .hostId(host.getId())
         .commitHash(commitHash)
-        .agentType(agent.getName())
+        .agentType(Agent.TELEGRAF.getName())
         .files(configMapper.toFileDTOList(configFiles))
         .build();
 
