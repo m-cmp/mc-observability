@@ -142,7 +142,7 @@ public class TelegrafConfigFacadeService {
   }
 
 
-  public void updateTelegrafConfig(String hostId, String content) {
+  public void updateTelegrafConfig(String hostId, String content, String path) {
 
     // 1) 동기 작업 방지
     ReentrantLock lock = gitFacadeService.getRepositoryLock(hostId, Agent.TELEGRAF);
@@ -151,12 +151,11 @@ public class TelegrafConfigFacadeService {
       lock.lock();
 
       // 1) TelegrafConf 위치 확인
-      // 1) TelegrafConf 위치 확인
       Path telegrafConfPath = fileFacadeService.resolveAgentConfigPath(hostId, Agent.TELEGRAF);
 
       // 2) 파일 작성
       File updatedConfigFile = new File(String.valueOf(telegrafConfPath));
-      fileService.writeFile(updatedConfigFile, updatedConfigFile.getName(), content);
+      fileService.writeFile(updatedConfigFile, path, content);
 
 
     } finally {
@@ -168,20 +167,6 @@ public class TelegrafConfigFacadeService {
     return fileFacadeService.resolveAgentConfigPath(hostId, Agent.TELEGRAF);
   }
 
-
-  private boolean isTelegrafConfigFileExist(String requestId, String uuid, Agent agent,
-      String path) {
-    List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, uuid, null,
-        Agent.TELEGRAF);
-
-    for (ConfigFileNode configFileNode : configFiles) {
-      if (configFileNode.getPath().equals(path)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
 
   // 원격에 있는 파일 내용 가져와서 로컬에 복사
   public void downloadTelegrafConfig(HostConnectionDTO host) throws IOException {

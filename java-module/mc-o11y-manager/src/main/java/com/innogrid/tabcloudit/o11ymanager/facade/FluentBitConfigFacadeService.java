@@ -187,7 +187,7 @@ public class FluentBitConfigFacadeService {
     hostService.updateLogAgentConfigGitHash(host.getHostId(), commitHash);
   }
 
-  public void updateFluentBitConfig(String hostId, String content) {
+  public void updateFluentBitConfig(String hostId, String content, String path) {
 
     // 1) 동기 작업 방지
     ReentrantLock lock = gitFacadeService.getRepositoryLock(hostId, Agent.FLUENT_BIT);
@@ -200,7 +200,7 @@ public class FluentBitConfigFacadeService {
 
       // 2) 파일 작성
       File updatedConfigFile = new File(String.valueOf(fluentbitConfPath));
-      fileService.writeFile(updatedConfigFile, updatedConfigFile.getName(), content);
+      fileService.writeFile(updatedConfigFile, path, content);
 
     } finally {
       lock.unlock();

@@ -253,26 +253,23 @@ public class AgentFacadeService {
   public List<ResultDTO> updateTelegrafConfig(String requestId, AgentDTO request,
       ConfigDTO configDTO, String requestUserId) {
 
-    List<String> ids = List.of(request.getHost_id_list());
+    // 1) 에이전트 설치 종류 확인
+    if (!request.isSelectMonitoringAgent() && !request.isSelectLogAgent()) {
+      throw new BadRequestException(requestId, null, null, "에이전트가 선택되지 않았습니다!");
+    }
 
-    String id = null;
+    List<String> ids = List.of(request.getHost_id_list());
     List<ResultDTO> results = new ArrayList<>();
+
     for (String hostId : CheckUtil.emptyIfNull(ids)) {
 
       try {
-
-        id = hostId;
-
-        // 1) 에이전트 설치 종류 확인
-        if (!request.isSelectMonitoringAgent() && !request.isSelectLogAgent()) {
-          throw new BadRequestException(requestId, null, null, "에이전트가 선택되지 않았습니다!");
-        }
-
-        // 2) host에 설치된 agent 확인
+        // 2) 호스트 상태 확인
         hostService.isIdleMonitoringAgent(hostId);
+        // 3) 에이전트 상태 확인
         hostService.isMonitoringAgentInstalled(hostId);
 
-        //템플릿 카운트
+        // 4) 템플릿 카운트
         int templateCount;
         semaphoreConfigUpdateTemplateCurrentCountLock.lock();
         try {
@@ -285,13 +282,13 @@ public class AgentFacadeService {
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
 
         // 6) 파일 수정
-        telegrafConfigFacadeService.updateTelegrafConfig(hostId, configDTO.getContent());
+        telegrafConfigFacadeService.updateTelegrafConfig(hostId, configDTO.getContent(), configDTO.getPath());
 
         // 7) Git 커밋
         Path telegrafConfigWorkingPath = telegrafConfigFacadeService.getTelegrafConfigWorkingPath(
             hostId);
         Git git = gitService.getGit(telegrafConfigWorkingPath.toFile());
-        gitService.commit(git, ".", "Config updated (" + telegrafConfigWorkingPath + ")",
+        gitService.commit(git, ".", "Config updated (" + configDTO.getPath() + ")",
             "innogrid",
             "cmp@innogrid.com");
 
@@ -308,7 +305,10 @@ public class AgentFacadeService {
         task = semaphoreDomainService.updateConfig(hostConnectionInfo, remoteConfigPath,
             configDTO.getContent(), Agent.TELEGRAF, templateCount);
 
-        Integer taskId = (task != null) ? task.getId() : null;
+        Integer taskId = null;
+        if (task != null) {
+          taskId = task.getId();
+        }
 
         // 10) 호스트 상태 변경
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
@@ -329,7 +329,7 @@ public class AgentFacadeService {
             SemaphoreInstallMethod.CONFIG_UPDATE, Agent.TELEGRAF, requestUserId);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
 
@@ -346,7 +346,7 @@ public class AgentFacadeService {
         event.publishEvent(failEvent);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
@@ -363,28 +363,21 @@ public class AgentFacadeService {
   public List<ResultDTO> updateFluentbitConfig(String requestId, AgentDTO request,
       ConfigDTO configDTO, String requestUserId) {
 
-    List<ResultDTO> results = new ArrayList<>();
-    String id = null;
-
     // 1) 에이전트 설치 종류 확인
     if (!request.isSelectLogAgent()) {
       throw new BadRequestException(requestId, null, null, "에이전트가 선택되지 않았습니다!");
     }
 
     List<String> ids = List.of(request.getHost_id_list());
+    List<ResultDTO> results = new ArrayList<>();
 
     for (String hostId : CheckUtil.emptyIfNull(ids)) {
 
       try {
-        id = hostId;
         // 2) 호스트 상태 확인
+        hostService.isIdleLogAgent(hostId);
         // 3) 에이전트 상태 확인
-        try {
-          hostService.isIdleLogAgent(hostId);
-          hostService.isLogAgentInstalled(hostId);
-        } catch (HostAgentTaskProcessingException | MonitoringAgentNotInstalled e) {
-          continue;
-        }
+        hostService.isLogAgentInstalled(hostId);
 
         // 4) 템플릿 카운트
         int templateCount;
@@ -399,13 +392,13 @@ public class AgentFacadeService {
         hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
 
         // 6) 파일 수정
-        fluentBitConfigFacadeService.updateFluentBitConfig(hostId, configDTO.getContent());
+        fluentBitConfigFacadeService.updateFluentBitConfig(hostId, configDTO.getContent(), configDTO.getPath());
 
         // 7) Git 커밋
         Path fluentbitConfigWorkingPath = fluentBitConfigFacadeService.getFluentbitConfigWorkingPath(
             hostId);
         Git git = gitService.getGit(fluentbitConfigWorkingPath.toFile());
-        gitService.commit(git, ".", "Config updated (" + fluentbitConfigWorkingPath + ")",
+        gitService.commit(git, ".", "Config updated (" + configDTO.getPath() + ")",
             "innogrid",
             "cmp@innogrid.com");
 
@@ -430,22 +423,23 @@ public class AgentFacadeService {
         // 10) 호스트 상태 변경
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
 
+        // 11) 액션 기록
+        AgentHistoryEvent successsEvent = AgentHistoryEvent.builder()
+                .requestId(requestId)
+                .agentAction(AgentAction.LOG_AGENT_CONFIG_UPDATE_STARTED)
+                .hostId(hostId)
+                .requestUserId(requestUserId)
+                .reason("")
+                .build();
+
         // 12) 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), taskId, hostId,
             SemaphoreInstallMethod.CONFIG_UPDATE, Agent.FLUENT_BIT, requestUserId);
 
-        AgentHistoryEvent successsEvent = AgentHistoryEvent.builder()
-            .requestId(requestId)
-            .agentAction(AgentAction.LOG_AGENT_CONFIG_UPDATE_STARTED)
-            .hostId(hostId)
-            .requestUserId(requestUserId)
-            .reason("")
-            .build();
-
         event.publishEvent(successsEvent);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
 
@@ -462,7 +456,7 @@ public class AgentFacadeService {
         event.publishEvent(failEvent);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
