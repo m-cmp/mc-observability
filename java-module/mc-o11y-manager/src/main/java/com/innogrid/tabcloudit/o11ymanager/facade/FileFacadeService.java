@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
@@ -31,7 +30,6 @@ public class FileFacadeService {
 
   private final FileService fileService;
   private final SshPort sshPort;
-  private final GitFacadeService gitFacadeService;
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -95,89 +93,82 @@ public class FileFacadeService {
 
   //agent config 보내기
   public void sendConfigs(String requestId, HostConnectionDTO host, Agent agent) {
-    ReentrantLock lock = gitFacadeService.getRepositoryLock(host.getHostId(), agent);
 
+    Path agentConfigPath = resolveAgentConfigPath(host.getHostId(), agent);
+    File agentConfigDir = agentConfigPath.toFile();
+
+    String remotePath = getAgentRemotePath(agent);
+
+    List<File> filesToSend = fileService.getFilesRecursively(agentConfigDir);
+    if (filesToSend.isEmpty()) {
+      log.warn("[{}] No files to send for {} at {}", requestId, agent, agentConfigDir);
+      return;
+    }
+
+    SshConnection sshConnection = null;
     try {
-      lock.lock();
+      String username = host.getUserId();
+      String ip = host.getIp();
+      int port = host.getPort();
+      String password = host.getPassword();
 
-      Path agentConfigPath = resolveAgentConfigPath(host.getHostId(), agent);
-      File agentConfigDir = agentConfigPath.toFile();
+      sshConnection = sshPort.openSession(username, ip, port, password);
 
-      String remotePath = getAgentRemotePath(agent);
-
-      List<File> filesToSend = fileService.getFilesRecursively(agentConfigDir);
-      if (filesToSend.isEmpty()) {
-        log.warn("[{}] No files to send for {} at {}", requestId, agent, agentConfigDir);
-        return;
+      String mkdirCmd = "mkdir -p " + remotePath;
+      AgentCommandResult mkdirResult = sshPort.executeCommand(sshConnection, mkdirCmd);
+      if (mkdirResult.getExitCode() != 0) {
+        String errMsg = "Failed to create remote directory: " + remotePath + ", Error: "
+                + mkdirResult.getError();
+        log.error(errMsg);
+        throw new IOException(errMsg);
       }
 
-      SshConnection sshConnection = null;
-      try {
-        String username = host.getUserId();
-        String ip = host.getIp();
-        int port = host.getPort();
-        String password = host.getPassword();
+      for (File file : filesToSend) {
+        String relativeFilePath = agentConfigDir.toPath().relativize(file.toPath()).toString();
+        String remoteFilePath = remotePath + "/" + relativeFilePath;
 
-        sshConnection = sshPort.openSession(username, ip, port, password);
-
-        String mkdirCmd = "mkdir -p " + remotePath;
-        AgentCommandResult mkdirResult = sshPort.executeCommand(sshConnection, mkdirCmd);
-        if (mkdirResult.getExitCode() != 0) {
-          String errMsg = "Failed to create remote directory: " + remotePath + ", Error: "
-              + mkdirResult.getError();
-          log.error(errMsg);
-          throw new IOException(errMsg);
-        }
-
-        for (File file : filesToSend) {
-          String relativeFilePath = agentConfigDir.toPath().relativize(file.toPath()).toString();
-          String remoteFilePath = remotePath + "/" + relativeFilePath;
-
-          String remoteParentDir = new File(remoteFilePath).getParent();
-          if (remoteParentDir != null) {
-            String mkdirParentCmd = "mkdir -p " + remoteParentDir;
-            AgentCommandResult mkdirParentResult = sshPort.executeCommand(sshConnection,
-                mkdirParentCmd);
-            if (mkdirParentResult.getExitCode() != 0) {
-              log.warn("Failed to create remote parent directory: {}, Error: {}",
-                  remoteParentDir, mkdirParentResult.getError());
-            }
-          }
-
-          String fileContent = fileService.singleFileReader(file);
-
-          fileContent = fileContent.replace("'", "'\\''");
-
-          String writeCmd = "cat > '" + remoteFilePath + "' << 'EOL'\n" + fileContent + "\nEOL";
-          AgentCommandResult writeResult = sshPort.executeCommand(sshConnection, writeCmd);
-
-          if (writeResult.getExitCode() != 0) {
-            log.error("Failed to write file to remote path: {}, Error: {}",
-                remoteFilePath, writeResult.getError());
-          } else {
-            log.info("Successfully transferred file to: {}", remoteFilePath);
+        String remoteParentDir = new File(remoteFilePath).getParent();
+        if (remoteParentDir != null) {
+          String mkdirParentCmd = "mkdir -p " + remoteParentDir;
+          AgentCommandResult mkdirParentResult = sshPort.executeCommand(sshConnection,
+                  mkdirParentCmd);
+          if (mkdirParentResult.getExitCode() != 0) {
+            log.warn("Failed to create remote parent directory: {}, Error: {}",
+                    remoteParentDir, mkdirParentResult.getError());
           }
         }
 
-        log.info("Successfully sent all configuration files from {} to remote path: {}",
-            agentConfigDir, remotePath);
+        String fileContent = fileService.singleFileReader(file);
 
-      } catch (Exception e) {
-        String errMsg = "Failed to send config files to remote host: " + e.getMessage();
-        log.error(errMsg, e);
-        throw new GitCommitContentsException();
-      } finally {
-        if (sshConnection != null) {
-          try {
-            sshConnection.getSession().close();
-            sshConnection.getClient().stop();
-          } catch (Exception e) {
-            log.warn("Error closing SSH connection: {}", e.getMessage());
-          }
+        fileContent = fileContent.replace("'", "'\\''");
+
+        String writeCmd = "cat > '" + remoteFilePath + "' << 'EOL'\n" + fileContent + "\nEOL";
+        AgentCommandResult writeResult = sshPort.executeCommand(sshConnection, writeCmd);
+
+        if (writeResult.getExitCode() != 0) {
+          log.error("Failed to write file to remote path: {}, Error: {}",
+                  remoteFilePath, writeResult.getError());
+        } else {
+          log.info("Successfully transferred file to: {}", remoteFilePath);
         }
       }
+
+      log.info("Successfully sent all configuration files from {} to remote path: {}",
+              agentConfigDir, remotePath);
+
+    } catch (Exception e) {
+      String errMsg = "Failed to send config files to remote host: " + e.getMessage();
+      log.error(errMsg, e);
+      throw new GitCommitContentsException();
     } finally {
-      lock.unlock();
+      if (sshConnection != null) {
+        try {
+          sshConnection.getSession().close();
+          sshConnection.getClient().stop();
+        } catch (Exception e) {
+          log.warn("Error closing SSH connection: {}", e.getMessage());
+        }
+      }
     }
   }
 

@@ -47,7 +47,6 @@ public class FluentBitFacadeService {
   private final SchedulerFacadeService schedulerFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
 
-
   public void install(@NotBlank String hostId, @NotBlank String requestUserId,
       @NotBlank int templateCount) throws Exception {
 

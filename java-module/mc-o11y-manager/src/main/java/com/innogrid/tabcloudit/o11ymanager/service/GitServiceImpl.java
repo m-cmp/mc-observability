@@ -1,12 +1,8 @@
 package com.innogrid.tabcloudit.o11ymanager.service;
 
-import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
 import com.innogrid.tabcloudit.o11ymanager.exception.git.*;
-import com.innogrid.tabcloudit.o11ymanager.exception.host.BadRequestException;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.GitService;
 import jakarta.validation.constraints.NotNull;
-import java.nio.file.Path;
-import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
@@ -210,8 +206,5 @@ public class GitServiceImpl implements GitService {
     } catch (GitAPIException e) {
       throw new GitCommitFailureException();
     }
-
   }
-
-
 }

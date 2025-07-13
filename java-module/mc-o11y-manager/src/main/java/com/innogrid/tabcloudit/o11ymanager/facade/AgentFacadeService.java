@@ -10,7 +10,6 @@ import com.innogrid.tabcloudit.o11ymanager.enums.ResponseStatus;
 import com.innogrid.tabcloudit.o11ymanager.enums.SemaphoreInstallMethod;
 import com.innogrid.tabcloudit.o11ymanager.event.AgentHistoryEvent;
 import com.innogrid.tabcloudit.o11ymanager.event.AgentHistoryFailEvent;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.MonitoringAgentNotInstalled;
 import com.innogrid.tabcloudit.o11ymanager.exception.host.*;
 import com.innogrid.tabcloudit.o11ymanager.global.annotation.Base64Decode;
 import com.innogrid.tabcloudit.o11ymanager.global.aspect.request.RequestInfo;
@@ -34,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -67,9 +67,15 @@ public class AgentFacadeService {
   private final SchedulerFacadeService schedulerFacadeService;
   private final SshService sshService;
 
+  private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks = new ConcurrentHashMap<>();
+
+  private ReentrantLock getAgentLock(String uuid, Agent agent) {
+    String lockKey = uuid + "-" + agent.name();
+    return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
+  }
+
   @Transactional
   public List<ResultDTO> install(AgentDTO request, String requestUserId) {
-
     List<ResultDTO> results = new ArrayList<>();
 
     List<String> ids = List.of(request.getHost_id_list());
@@ -78,6 +84,9 @@ public class AgentFacadeService {
       throw new BadRequestException(requestInfo.getRequestId(), null, null, "에이전트가 선택되지 않았습니다!");
     }
     for (String id : CheckUtil.emptyIfNull(ids)) {
+      ReentrantLock monitoringLock = getAgentLock(id, Agent.TELEGRAF);
+      ReentrantLock loggingLock = getAgentLock(id, Agent.FLUENT_BIT);
+
       try {
         if (!hostService.existsById(id)) {
           throw new HostNotExistException(requestInfo.getRequestId(), String.join(", ", id));
@@ -94,11 +103,13 @@ public class AgentFacadeService {
 
         // 2 ) 에이전트 설치
         // 2-1 ) Telegraf 설치
+        monitoringLock.lock();
         if (request.isSelectMonitoringAgent()) {
           telegrafFacadeService.install(id, requestUserId, templateCount);
         }
 
         // 2-1 ) FluentBit 설치
+        loggingLock.lock();
         if (request.isSelectLogAgent()) {
           fluentBitFacadeService.install(id, requestUserId, templateCount);
         }
@@ -114,6 +125,9 @@ public class AgentFacadeService {
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
+      } finally {
+        loggingLock.unlock();
+        monitoringLock.unlock();
       }
     }
 
@@ -131,6 +145,9 @@ public class AgentFacadeService {
       throw new BadRequestException(requestInfo.getRequestId(), null, null, "에이전트가 선택되지 않았습니다!");
     }
     for (String id : CheckUtil.emptyIfNull(ids)) {
+      ReentrantLock monitoringLock = getAgentLock(id, Agent.TELEGRAF);
+      ReentrantLock loggingLock = getAgentLock(id, Agent.FLUENT_BIT);
+
       try {
         if (!hostService.existsById(id)) {
           throw new HostNotExistException(requestInfo.getRequestId(), String.join(", ", id));
@@ -147,11 +164,13 @@ public class AgentFacadeService {
 
         // 2 ) 에이전트 업데이트
         // 2-1 ) Telegraf 업데이트
+        monitoringLock.lock();
         if (request.isSelectMonitoringAgent()) {
           telegrafFacadeService.update(id, requestUserId, templateCount);
         }
 
         // 2-1 ) FluentBit 업데이트
+        loggingLock.lock();
         if (request.isSelectLogAgent()) {
           fluentBitFacadeService.update(id, requestUserId, templateCount);
         }
@@ -167,6 +186,9 @@ public class AgentFacadeService {
                 .status(ResponseStatus.ERROR)
                 .errorMessage(e.getMessage())
                 .build());
+      } finally {
+        loggingLock.unlock();
+        monitoringLock.unlock();
       }
     }
 
@@ -207,6 +229,8 @@ public class AgentFacadeService {
     }
 
     for (String id : CheckUtil.emptyIfNull(ids)) {
+      ReentrantLock monitoringLock = getAgentLock(id, Agent.TELEGRAF);
+      ReentrantLock loggingLock = getAgentLock(id, Agent.FLUENT_BIT);
 
       try {
         hostId = id;
@@ -220,11 +244,13 @@ public class AgentFacadeService {
 
         // 4 ) 에이전트 제거
         // 4-1 ) Telegraf 제거
+        monitoringLock.lock();
         if (request.isSelectMonitoringAgent()) {
           telegrafFacadeService.uninstall(id, templateCount, requestUserId);
         }
 
         // 4-1 ) FluentBit 제거
+        loggingLock.lock();
         if (request.isSelectLogAgent()) {
           fluentBitFacadeService.uninstall(id, templateCount, requestUserId);
         }
@@ -234,13 +260,15 @@ public class AgentFacadeService {
             .status(ResponseStatus.SUCCESS)
             .build());
       } catch (Exception e) {
-
         results.add(ResultDTO.builder()
             .id(hostId)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
 
+      } finally {
+        loggingLock.unlock();
+        monitoringLock.unlock();
       }
     }
 
@@ -262,8 +290,11 @@ public class AgentFacadeService {
     List<ResultDTO> results = new ArrayList<>();
 
     for (String hostId : CheckUtil.emptyIfNull(ids)) {
+      ReentrantLock monitoringLock = getAgentLock(hostId, Agent.TELEGRAF);
 
       try {
+        monitoringLock.lock();
+
         // 2) 호스트 상태 확인
         hostService.isIdleMonitoringAgent(hostId);
         // 3) 에이전트 상태 확인
@@ -334,7 +365,6 @@ public class AgentFacadeService {
             .build());
 
       } catch (Exception e) {
-
         AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
             .agentAction(AgentAction.MONITORING_AGENT_CONFIG_UPDATE_FAILED)
             .hostId(hostId)
@@ -350,7 +380,8 @@ public class AgentFacadeService {
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
-
+      } finally {
+        monitoringLock.unlock();
       }
     }
 
@@ -372,8 +403,11 @@ public class AgentFacadeService {
     List<ResultDTO> results = new ArrayList<>();
 
     for (String hostId : CheckUtil.emptyIfNull(ids)) {
+      ReentrantLock loggingLock = getAgentLock(hostId, Agent.FLUENT_BIT);
 
       try {
+        loggingLock.lock();
+
         // 2) 호스트 상태 확인
         hostService.isIdleLogAgent(hostId);
         // 3) 에이전트 상태 확인
@@ -442,9 +476,7 @@ public class AgentFacadeService {
             .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
-
       } catch (Exception e) {
-
         AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
             .requestId(requestId)
             .agentAction(AgentAction.LOG_AGENT_CONFIG_UPDATE_FAILED)
@@ -460,6 +492,8 @@ public class AgentFacadeService {
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
+      } finally {
+        loggingLock.unlock();
       }
     }
 
@@ -473,16 +507,18 @@ public class AgentFacadeService {
       String requestUserId) {
 
     List<ResultDTO> results = new ArrayList<>();
-    String id = null;
 
     for (String hostId : CheckUtil.emptyIfNull(hostIds)) {
+      ReentrantLock monitoringLock = getAgentLock(hostId, Agent.TELEGRAF);
+
       try {
-        id = hostId;
+        monitoringLock.lock();
+
         log.info("[RUN}====================Start rollback telegraf config====================");
 
         // 1) 호스트 상태 확인
-        // 2) 에이전트 상태 확인
         hostService.isIdleMonitoringAgent(hostId);
+        // 2) 에이전트 상태 확인
         hostService.isMonitoringAgentInstalled(hostId);
 
         // 3) 상태 변경
@@ -541,11 +577,10 @@ public class AgentFacadeService {
         log.info("[DONE}====================End rollback telegraf config====================");
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
       } catch (Exception e) {
-
         AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
             .requestId(requestInfo.getRequestId())
             .agentAction(AgentAction.MONITORING_AGENT_CONFIG_ROLLBACK_FAILED)
@@ -558,11 +593,12 @@ public class AgentFacadeService {
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
-
+      } finally {
+        monitoringLock.unlock();
       }
     }
     return results;
@@ -576,16 +612,16 @@ public class AgentFacadeService {
       String requestUserId) {
 
     List<ResultDTO> results = new ArrayList<>();
-    String id = null;
 
     for (String hostId : CheckUtil.emptyIfNull(hostIds)) {
+      ReentrantLock loggingLock = getAgentLock(hostId, Agent.FLUENT_BIT);
 
       try {
-        id = hostId;
-        // 1) 호스트 상태 확인
-        // 2) 에이전트 상태 확인
+        loggingLock.lock();
 
+        // 1) 호스트 상태 확인
         hostService.isIdleLogAgent(hostId);
+        // 2) 에이전트 상태 확인
         hostService.isLogAgentInstalled(hostId);
 
         // 3) 상태 변경
@@ -642,12 +678,10 @@ public class AgentFacadeService {
         event.publishEvent(successEvent);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
-
       } catch (Exception e) {
-
         AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
             .requestId(requestInfo.getRequestId())
             .agentAction(AgentAction.LOG_AGENT_CONFIG_ROLLBACK_FAILED)
@@ -660,14 +694,15 @@ public class AgentFacadeService {
         hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
 
         results.add(ResultDTO.builder()
-            .id(id)
+            .id(hostId)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
+      } finally {
+        loggingLock.unlock();
       }
     }
+
     return results;
   }
-
-
 }
