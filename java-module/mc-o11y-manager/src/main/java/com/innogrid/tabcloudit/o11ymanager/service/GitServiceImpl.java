@@ -101,8 +101,7 @@ public class GitServiceImpl implements GitService {
 
   public TreeWalk getTreeWalk(@NotNull Repository repo, @NotNull RevTree revTree, String filePath) {
     try (TreeWalk treeWalk = new TreeWalk(repo)) {
-      log.info("[RUN}====================Start getTreeWalk====================",
-          System.currentTimeMillis());
+      log.info("[RUN}====================Start getTreeWalk====================");
 
       log.info("[GitService] Start getTreeWalk - filePath: {}", filePath);
       treeWalk.addTree(revTree);
@@ -118,8 +117,7 @@ public class GitServiceImpl implements GitService {
       }
 
       log.info("[GitService] Git tree walk at {}", filePath);
-      log.info("[DONE}====================End getTreeWalk====================",
-          System.currentTimeMillis());
+      log.info("[DONE}====================End getTreeWalk====================");
       return treeWalk;
     } catch (CorruptObjectException | IncorrectObjectTypeException | MissingObjectException e) {
       log.error("[GitService] Failed to open git tree walk", e);

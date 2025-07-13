@@ -421,7 +421,7 @@ public class AgentFacadeService {
         }
 
         // 10) 호스트 상태 변경
-        hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
+        hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
 
         // 11) 액션 기록
         AgentHistoryEvent successsEvent = AgentHistoryEvent.builder()
@@ -489,6 +489,7 @@ public class AgentFacadeService {
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
 
         // 4) Rollback 실행
+        hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.ROLLING_BACK_CONFIG);
         Path telegrafWorkingPath = telegrafConfigFacadeService.getTelegrafConfigWorkingPath(hostId);
         Path telegrafConfFilePath = telegrafWorkingPath.resolve(
             ConfigDefinition.HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG);
@@ -524,9 +525,7 @@ public class AgentFacadeService {
             hostConnectionInfo.getPort(), hostConnectionInfo.getUserId(),
             hostConnectionInfo.getPassword());
 
-        // 8) 상태 변경
-        hostService.updateMonitoringAgentTaskStatus(hostId,
-            HostAgentTaskStatus.ROLLING_BACK_CONFIG);
+        // 8) GitHash 값 수정
         hostService.updateMonitoringAgentConfigGitHash(hostId, commitHash);
 
         // 9) 액션 기록
@@ -555,6 +554,8 @@ public class AgentFacadeService {
             .reason(e.getMessage())
             .build();
         event.publishEvent(failEvent);
+
+        hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
 
         results.add(ResultDTO.builder()
             .id(id)
@@ -591,6 +592,7 @@ public class AgentFacadeService {
         hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
 
         // 4) Rollback 실행
+        hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.ROLLING_BACK_CONFIG);
         Path fluentbitWorkingPath = fluentBitConfigFacadeService.getFluentbitConfigWorkingPath(
             hostId);
         Path fluentbitConfFilePath = fluentbitWorkingPath.resolve(
@@ -626,12 +628,10 @@ public class AgentFacadeService {
             hostConnectionInfo.getPort(), hostConnectionInfo.getUserId(),
             hostConnectionInfo.getPassword());
 
-        // 8) 상태 변경, GitHash 값 수정
-        hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.ROLLING_BACK_CONFIG);
+        // 8) GitHash 값 수정
         hostService.updateLogAgentConfigGitHash(hostId, commitHash);
 
         // 9) 액션 기록
-
         AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
             .requestId(requestInfo.getRequestId())
             .agentAction(AgentAction.LOG_AGENT_CONFIG_ROLLBACK_STARTED)
@@ -657,13 +657,13 @@ public class AgentFacadeService {
             .build();
         event.publishEvent(failEvent);
 
+        hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+
         results.add(ResultDTO.builder()
             .id(id)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
-
-
       }
     }
     return results;
