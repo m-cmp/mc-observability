@@ -280,8 +280,8 @@ public class HostServiceImpl implements HostService {
   }
 
   @Override
-  public void updateHostAgentTaskStatusAndTaskId(String hostId, HostAgentTaskStatus status,
-      String taskId) {
+  public void updateMonitoringAgentTaskStatusAndTaskId(String hostId, HostAgentTaskStatus status,
+                                                       String taskId) {
 
     HostEntity host = hostJpaRepository.findById(hostId)
         .orElseThrow(

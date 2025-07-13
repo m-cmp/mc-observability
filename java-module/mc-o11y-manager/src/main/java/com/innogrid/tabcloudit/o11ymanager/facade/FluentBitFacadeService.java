@@ -108,10 +108,10 @@ public class FluentBitFacadeService {
                      @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
-    hostService.isIdleMonitoringAgent(hostId);
+    hostService.isIdleLogAgent(hostId);
 
     // 2. host 상태 업데이트
-    hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING);
+    hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING);
 
     // 3. 전송(semaphore) - 업데이트 요청
     HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
@@ -120,7 +120,7 @@ public class FluentBitFacadeService {
             templateCount);
 
     // 4. task ID, task status 업데이트
-    hostService.updateHostAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UPDATING,
+    hostService.updateLogAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UPDATING,
             String.valueOf(task.getId()));
 
     // 5. 이력 남기기

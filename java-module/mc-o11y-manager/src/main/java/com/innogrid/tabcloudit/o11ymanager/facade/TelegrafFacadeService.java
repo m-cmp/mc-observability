@@ -85,7 +85,7 @@ public class TelegrafFacadeService {
     hostService.updateMonitoringAgentConfigGitHash(hostId, commitHash);
 
     // 6. task ID, task status 업데이트
-    hostService.updateHostAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.INSTALLING,
+    hostService.updateMonitoringAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
     // 7. 이력 남기기
@@ -120,7 +120,7 @@ public class TelegrafFacadeService {
             templateCount);
 
     // 4. task ID, task status 업데이트
-    hostService.updateHostAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UPDATING,
+    hostService.updateMonitoringAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UPDATING,
             String.valueOf(task.getId()));
 
     // 5. 이력 남기기
@@ -155,7 +155,7 @@ public class TelegrafFacadeService {
         templateCount);
 
     // 4) task ID, task status 업데이트
-    hostService.updateHostAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UNINSTALLING,
+    hostService.updateMonitoringAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UNINSTALLING,
         String.valueOf(task.getId()));
 
     // 5) 이력 남기기

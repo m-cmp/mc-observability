@@ -41,7 +41,7 @@ public interface HostService {
 
   HostConnectionDTO getHostConnectionInfo(String hostId) throws Exception;
 
-  void updateHostAgentTaskStatusAndTaskId(String hostId, HostAgentTaskStatus status, String taskId);
+  void updateMonitoringAgentTaskStatusAndTaskId(String hostId, HostAgentTaskStatus status, String taskId);
 
   void updateLogAgentTaskStatusAndTaskId(String hostId, HostAgentTaskStatus status, String taskId);
 
