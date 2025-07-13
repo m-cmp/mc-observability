@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
@@ -41,6 +43,8 @@ public class TelegrafConfigFacadeService {
   private final GitService gitService;
   private final HostService hostService;
   private final ConfigMapper configMapper;
+
+  private static final Lock configDownloadLock = new ReentrantLock();
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -131,7 +135,6 @@ public class TelegrafConfigFacadeService {
     fileService.generateFile(telegrafConfigFile, configContent);
   }
 
-
   public void updateTelegrafConfig(String hostId, String content, String path) {
 
     // 1) TelegrafConf 위치 확인
@@ -149,46 +152,51 @@ public class TelegrafConfigFacadeService {
 
   // 원격에 있는 파일 내용 가져와서 로컬에 복사
   public void downloadTelegrafConfig(HostConnectionDTO host) throws IOException {
+    try {
+      configDownloadLock.lock();
 
-    // 1) SSH로 원격 파일 확인
-    log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
+      // 1) SSH로 원격 파일 확인
+      log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
 
-    SshConnection connection = sshService.getConnection(
-            host.getIp(),
-            host.getPort(),
-            host.getUserId(),
-            host.getPassword()
-    );
+      SshConnection connection = sshService.getConnection(
+              host.getIp(),
+              host.getPort(),
+              host.getUserId(),
+              host.getPassword()
+      );
 
-    // 2) 원격에 파일 없을시 종료
-    if (!sshService.isExistTelegrafConfigDirectory(connection)) {
-      return;
+      // 2) 원격에 파일 없을시 종료
+      if (!sshService.isExistTelegrafConfigDirectory(connection)) {
+        return;
+      }
+
+      // 원격에 파일 있을 경우 아래 내용 실행
+      // 3) 로컬에 telegraf 폴더 생성
+      Path path = Path.of(configBasePath, host.getHostId(),
+              ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
+
+      fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
+      Path configDir = fileService.createDirectory(path);
+
+      // 4) git 초기화
+      gitService.init(configDir.toFile());
+
+      // 5) 원격 파일 내용 가져오기
+      sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
+              path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
+
+      String commitMessage = "Config updated (Telegraf)";
+
+      // 6) Git 커밋
+      Git git = gitService.getGit(path.toFile());
+      gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
+
+      // 7) Git 커밋 해시 업데이트
+      String commitHash = gitService.getHashName(git);
+      hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
+    } finally {
+      configDownloadLock.unlock();
     }
-
-    // 원격에 파일 있을 경우 아래 내용 실행
-    // 3) 로컬에 telegraf 폴더 생성
-    Path path = Path.of(configBasePath, host.getHostId(),
-            ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
-
-    fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
-    Path configDir = fileService.createDirectory(path);
-
-    // 4) git 초기화
-    gitService.init(configDir.toFile());
-
-    // 5) 원격 파일 내용 가져오기
-    sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
-            path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
-
-    String commitMessage = "Config updated (Telegraf)";
-
-    // 6) Git 커밋
-    Git git = gitService.getGit(path.toFile());
-    gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-    // 7) Git 커밋 해시 업데이트
-    String commitHash = gitService.getHashName(git);
-    hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
   }
 
   public void initTelegrafConfig(HostConnectionDTO host, String type, String credentialId,

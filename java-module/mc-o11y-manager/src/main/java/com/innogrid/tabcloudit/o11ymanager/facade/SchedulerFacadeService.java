@@ -106,6 +106,16 @@ public class SchedulerFacadeService {
         }
 
         if (action != null) {
+          if (isSuccess && method == SemaphoreInstallMethod.UPDATE) {
+            HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
+
+            if (agent == Agent.TELEGRAF) {
+              telegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
+            } else if (agent == Agent.FLUENT_BIT) {
+              fluentBitConfigFacadeService.downloadFluentbitConfig(hostConnectionInfo);
+            }
+          }
+
           log.debug(
               "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
               requestId, hostId, agent, action, requestUserId);
@@ -118,16 +128,6 @@ public class SchedulerFacadeService {
           log.info("🔨🔨 --------------------task end-------------------- 🔨🔨");
 
           if (isSuccess) {
-            if (method == SemaphoreInstallMethod.UPDATE) {
-              HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
-
-              if (agent == Agent.TELEGRAF) {
-                telegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
-              } else if (agent == Agent.FLUENT_BIT) {
-                fluentBitConfigFacadeService.downloadFluentbitConfig(hostConnectionInfo);
-              }
-            }
-
             AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, hostId,
                 requestUserId, null);
             event.publishEvent(successEvent);

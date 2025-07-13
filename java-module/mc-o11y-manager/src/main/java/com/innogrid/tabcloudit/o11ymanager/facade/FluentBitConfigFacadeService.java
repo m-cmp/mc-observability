@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
@@ -40,6 +41,8 @@ public class FluentBitConfigFacadeService {
   private final GitService gitService;
   private final HostService hostService;
   private final ConfigMapper configMapper;
+
+  private static final Lock configDownloadLock = new ReentrantLock();
 
   @Value("${loki.url}")
   private String lokiURL;
@@ -97,46 +100,51 @@ public class FluentBitConfigFacadeService {
 
   // 원격에 있는 파일 내용 가져와서 로컬에 복사
   public void downloadFluentbitConfig(HostConnectionDTO host) throws IOException {
+    try {
+      configDownloadLock.lock();
 
-    // 1) SSH로 원격 파일 확인
-    log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
+      // 1) SSH로 원격 파일 확인
+      log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
 
-    SshConnection connection = sshService.getConnection(
-            host.getIp(),
-            host.getPort(),
-            host.getUserId(),
-            host.getPassword()
-    );
+      SshConnection connection = sshService.getConnection(
+              host.getIp(),
+              host.getPort(),
+              host.getUserId(),
+              host.getPassword()
+      );
 
-    // 2) 원격에 파일 없을시 종료
-    if (!sshService.isExistFluentbitConfigDirectory(connection)) {
-      return;
+      // 2) 원격에 파일 없을시 종료
+      if (!sshService.isExistFluentbitConfigDirectory(connection)) {
+        return;
+      }
+
+      // 원격에 파일 있을 경우 아래 내용 실행
+      // 3) 로컬에 fluentbit 폴더 생성
+      Path path = Path.of(configBasePath, host.getHostId(),
+              ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT);
+
+      fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
+      Path configDir = fileService.createDirectory(path);
+
+      // 4) git 초기화
+      gitService.init(configDir.toFile());
+
+      // 5) 원격 파일 내용 가져오기
+      sshService.download(connection, fileFacadeService.getHostConfigFluentBitRemotePath(),
+              path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
+
+      String commitMessage = "Config updated (Fluentbit)";
+
+      // 6) Git 커밋
+      Git git = gitService.getGit(path.toFile());
+      gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
+
+      // 7) Git 커밋 해시 업데이트
+      String commitHash = gitService.getHashName(git);
+      hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
+    } finally {
+      configDownloadLock.unlock();
     }
-
-    // 원격에 파일 있을 경우 아래 내용 실행
-    // 3) 로컬에 fluentbit 폴더 생성
-    Path path = Path.of(configBasePath, host.getHostId(),
-            ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT);
-
-    fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
-    Path configDir = fileService.createDirectory(path);
-
-    // 4) git 초기화
-    gitService.init(configDir.toFile());
-
-    // 5) 원격 파일 내용 가져오기
-    sshService.download(connection, fileFacadeService.getHostConfigFluentBitRemotePath(),
-            path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
-
-    String commitMessage = "Config updated (Fluentbit)";
-
-    // 6) Git 커밋
-    Git git = gitService.getGit(path.toFile());
-    gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-    // 7) Git 커밋 해시 업데이트
-    String commitHash = gitService.getHashName(git);
-    hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
   }
 
   public void initFluentbitConfig(HostConnectionDTO host, String type, String credentialId,
