@@ -16,7 +16,12 @@ import java.nio.file.Files;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.TreeWalk;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -152,36 +157,65 @@ public class GitFacadeService {
   }
 
   public List<ConfigFileNode> getConfigFileList(String requestId,
-      String uuid, String commitHash, Agent agent) {
-    // TODO: commitHash
+                                                String uuid, String commitHash, Agent agent) {
+
+    Path hostConfigDir = Path.of(configBasePath, uuid);
+    String subPath = switch (agent) {
+      case TELEGRAF -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF;
+      case FLUENT_BIT -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT;
+    };
+    Path agentConfigDir = hostConfigDir.resolve(subPath);
+    if (!Files.exists(agentConfigDir) || !Files.isDirectory(agentConfigDir)) {
+      throw new FileReadingException("Config directory not found: " + agentConfigDir);
+    }
 
     try {
-      Path hostConfigDir = Path.of(configBasePath, uuid);
-      String subPath = switch (agent) {
-        case TELEGRAF -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF;
-        case FLUENT_BIT -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT;
-        default -> throw new FileReadingException("Unsupported agent: " + agent);
-      };
-      Path agentConfigDir = hostConfigDir.resolve(subPath);
+      Git git = gitService.getGit(agentConfigDir.toFile());
+      Repository repository = gitService.getRepository(git);
+      ObjectId commitId = gitService.getObjectId(git, commitHash);
 
-      File baseDir = agentConfigDir.toFile();
+      if (commitId == null) {
+        throw new IllegalArgumentException("Invalid commit hash: " + commitHash);
+      }
 
-      List<File> fileList = fileService.getFilesRecursively(baseDir);
+      RevTree tree = gitService.getRevTree(repository, commitId);
 
       Map<String, ConfigFileNode> nodeMap = new HashMap<>();
       List<ConfigFileNode> rootNodes = new ArrayList<>();
 
-      for (File f : fileList) {
-        Path relPath = baseDir.toPath().relativize(f.toPath());
-        String path = relPath.toString().replace(File.separator, "/");
+      try (TreeWalk treeWalk = new TreeWalk(repository)) {
+        treeWalk.addTree(tree);
+        treeWalk.setRecursive(true);
 
-        ConfigFileNode node = new ConfigFileNode();
-        node.setPath(path);
-        node.setName(getNameFromPath(path));
-        node.setDirectory(f.isDirectory());
-        node.setChildren(new ArrayList<>());
+        while (treeWalk.next()) {
+          String relativePath = treeWalk.getPathString();
+          if (relativePath.isEmpty()) {
+            continue;
+          }
 
-        nodeMap.put(path, node);
+          String[] pathParts = relativePath.split("/");
+          StringBuilder currentPath = new StringBuilder();
+
+          for (int i = 0; i < pathParts.length; i++) {
+            if (pathParts[i].startsWith(".git")) {
+              continue;
+            }
+
+            if (i > 0) {
+              currentPath.append("/");
+            }
+            currentPath.append(pathParts[i]);
+
+            if (!nodeMap.containsKey(currentPath.toString())) {
+              ConfigFileNode node = new ConfigFileNode();
+              node.setPath(currentPath.toString());
+              node.setName(pathParts[i]);
+              node.setDirectory(i < pathParts.length - 1 || treeWalk.isSubtree());
+              node.setChildren(new ArrayList<>());
+              nodeMap.put(currentPath.toString(), node);
+            }
+          }
+        }
       }
 
       for (ConfigFileNode node : nodeMap.values()) {
@@ -194,7 +228,6 @@ public class GitFacadeService {
       }
 
       return fileService.sortFile(rootNodes);
-
     } catch (Exception e) {
       throw new AgentConfigNotFoundException(requestId, uuid, agent);
     }
