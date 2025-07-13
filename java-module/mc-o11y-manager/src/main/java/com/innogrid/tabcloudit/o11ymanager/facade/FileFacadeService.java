@@ -181,9 +181,7 @@ public class FileFacadeService {
     }
   }
 
-  public ConfigTemplateFileListResponseDTO getFluentBitTemplateFileList(Agent agent) {
-
-    agent = Agent.FLUENT_BIT;
+  public ConfigTemplateFileListResponseDTO getFluentBitTemplateFileList() {
 
     List<ConfigFileDTO> files = new ArrayList<>();
 
@@ -229,14 +227,13 @@ public class FileFacadeService {
     files.add(variables);
 
     return ConfigTemplateFileListResponseDTO.builder()
-        .agentType(agent.getName())
+        .agentType(Agent.FLUENT_BIT.getName())
         .files(files)
         .build();
   }
 
 
-  public ConfigTemplateFileListResponseDTO getTelegrafTemplateFileList(Agent agent) {
-    agent = Agent.TELEGRAF;
+  public ConfigTemplateFileListResponseDTO getTelegrafTemplateFileList() {
 
     List<ConfigFileDTO> files = new ArrayList<>();
 
@@ -249,7 +246,7 @@ public class FileFacadeService {
     files.add(telegrafConfig);
 
     return ConfigTemplateFileListResponseDTO.builder()
-        .agentType(agent.getName())
+        .agentType(Agent.TELEGRAF.getName())
         .files(files)
         .build();
   }

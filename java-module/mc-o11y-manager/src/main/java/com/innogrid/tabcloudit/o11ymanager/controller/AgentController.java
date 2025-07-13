@@ -270,8 +270,7 @@ public class AgentController {
   @GetMapping("/agent/config/template/files/telegraf")
   public ResponseEntity<SuccessResponse<ConfigTemplateFileListResponseDTO>> getTelegrafConfigTemplateFileList() {
 
-    ConfigTemplateFileListResponseDTO result = fileFacadeService.getTelegrafTemplateFileList(
-        Agent.TELEGRAF);
+    ConfigTemplateFileListResponseDTO result = fileFacadeService.getTelegrafTemplateFileList();
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -286,8 +285,7 @@ public class AgentController {
   @GetMapping("/agent/config/template/files/fluent-bit")
   public ResponseEntity<SuccessResponse<ConfigTemplateFileListResponseDTO>> getFluentBitConfigTemplateFileList() {
 
-    ConfigTemplateFileListResponseDTO result = fileFacadeService.getFluentBitTemplateFileList(
-        Agent.FLUENT_BIT);
+    ConfigTemplateFileListResponseDTO result = fileFacadeService.getFluentBitTemplateFileList();
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
