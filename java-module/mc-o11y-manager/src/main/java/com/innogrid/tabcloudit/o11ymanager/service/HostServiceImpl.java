@@ -180,7 +180,7 @@ public class HostServiceImpl implements HostService {
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "HostEntity", hostId));
 
-    if (host.getLogServiceStatus().equals(AgentServiceStatus.NOT_EXIST.toString())) {
+    if (host.getMonitoringServiceStatus().equals(AgentServiceStatus.NOT_EXIST.toString())) {
       throw new MonitoringAgentNotInstalled(requestInfo.getRequestId(), hostId);
     }
   }
