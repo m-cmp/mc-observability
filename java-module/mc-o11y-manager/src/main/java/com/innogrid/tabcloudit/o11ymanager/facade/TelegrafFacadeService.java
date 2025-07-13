@@ -47,7 +47,6 @@ public class TelegrafFacadeService {
   private final SchedulerFacadeService schedulerFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
 
-
   public void install(@NotBlank String hostId, @NotBlank String requestUserId,
       @NotBlank int templateCount) throws Exception {
 
@@ -103,6 +102,41 @@ public class TelegrafFacadeService {
     // 8. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
         SemaphoreInstallMethod.INSTALL, Agent.TELEGRAF, requestUserId);
+  }
+
+  public void update(@NotBlank String hostId, @NotBlank String requestUserId,
+                      @NotBlank int templateCount) throws Exception {
+
+    // 1. host IDLE 상태 확인
+    hostService.isIdleMonitoringAgent(hostId);
+
+    // 2. host 상태 업데이트
+    hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING);
+
+    // 3. 전송(semaphore) - 업데이트 요청
+    HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
+    Task task = semaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.UPDATE,
+            null, Agent.TELEGRAF,
+            templateCount);
+
+    // 4. task ID, task status 업데이트
+    hostService.updateHostAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.UPDATING,
+            String.valueOf(task.getId()));
+
+    // 5. 이력 남기기
+    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
+            .requestId(requestInfo.getRequestId())
+            .requestUserId(requestUserId)
+            .hostId(hostId)
+            .agentAction(AgentAction.MONITORING_AGENT_UPDATE_STARTED)
+            .reason("")
+            .build();
+
+    event.publishEvent(successEvent);
+
+    // 6. 스케줄러 등록
+    schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
+            SemaphoreInstallMethod.UPDATE, Agent.TELEGRAF, requestUserId);
   }
 
   public void uninstall(String hostId, int templateCount, String requestUserId) throws Exception {

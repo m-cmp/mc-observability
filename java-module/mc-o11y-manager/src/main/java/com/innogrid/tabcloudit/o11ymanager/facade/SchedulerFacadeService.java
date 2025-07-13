@@ -1,5 +1,7 @@
 package com.innogrid.tabcloudit.o11ymanager.facade;
 
+import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
+import com.innogrid.tabcloudit.o11ymanager.dto.host.HostDTO;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
 import com.innogrid.tabcloudit.o11ymanager.enums.AgentAction;
 import com.innogrid.tabcloudit.o11ymanager.enums.SemaphoreInstallMethod;
@@ -33,6 +35,8 @@ public class SchedulerFacadeService {
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
   private final SemaphorePort semaphorePort;
   private final GitFacadeService gitFacadeService;
+  private final TelegrafConfigFacadeService telegrafConfigFacadeService;
+  private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private final ApplicationEventPublisher event;
   private final HostService hostService;
 
@@ -105,16 +109,25 @@ public class SchedulerFacadeService {
           log.debug(
               "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
               requestId, hostId, agent, action, requestUserId);
-          switch (agent) {
-            case TELEGRAF ->
+            if (agent == Agent.TELEGRAF) {
                 hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
-            case FLUENT_BIT ->
+            } else if (agent == Agent.FLUENT_BIT) {
                 hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
-          }
+            }
 
           log.info("🔨🔨 --------------------task end-------------------- 🔨🔨");
 
           if (isSuccess) {
+            if (method == SemaphoreInstallMethod.UPDATE) {
+              HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
+
+              if (agent == Agent.TELEGRAF) {
+                telegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
+              } else if (agent == Agent.FLUENT_BIT) {
+                fluentBitConfigFacadeService.downloadFluentbitConfig(hostConnectionInfo);
+              }
+            }
+
             AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, hostId,
                 requestUserId, null);
             event.publishEvent(successEvent);
@@ -156,7 +169,6 @@ public class SchedulerFacadeService {
 
     futureRef.set(future);
   }
-
 
   private AgentAction getAgentActionFinished(SemaphoreInstallMethod method, Agent agent) {
     AgentAction action = null;

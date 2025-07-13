@@ -67,7 +67,6 @@ public class AgentFacadeService {
   private final SchedulerFacadeService schedulerFacadeService;
   private final SshService sshService;
 
-
   @Transactional
   public List<ResultDTO> install(AgentDTO request, String requestUserId) {
 
@@ -75,20 +74,16 @@ public class AgentFacadeService {
 
     List<String> ids = List.of(request.getHost_id_list());
 
-    String hostId = null;
-
     if (!request.isSelectMonitoringAgent() && !request.isSelectLogAgent()) {
       throw new BadRequestException(requestInfo.getRequestId(), null, null, "에이전트가 선택되지 않았습니다!");
     }
     for (String id : CheckUtil.emptyIfNull(ids)) {
-      hostId = id;
-
       try {
         if (!hostService.existsById(id)) {
           throw new HostNotExistException(requestInfo.getRequestId(), String.join(", ", id));
         }
 
-        // 3) Lock 걸기
+        // 1) Lock 걸기
         int templateCount;
         try {
           semaphoreInstallTemplateCurrentCountLock.lock();
@@ -97,13 +92,13 @@ public class AgentFacadeService {
           semaphoreInstallTemplateCurrentCountLock.unlock();
         }
 
-        // 4 ) 에이전트 설치
-        // 4-1 ) Telegraf 설치
+        // 2 ) 에이전트 설치
+        // 2-1 ) Telegraf 설치
         if (request.isSelectMonitoringAgent()) {
           telegrafFacadeService.install(id, requestUserId, templateCount);
         }
 
-        // 4-1 ) FluentBit 설치
+        // 2-1 ) FluentBit 설치
         if (request.isSelectLogAgent()) {
           fluentBitFacadeService.install(id, requestUserId, templateCount);
         }
@@ -115,7 +110,7 @@ public class AgentFacadeService {
       } catch (Exception e) {
 
         results.add(ResultDTO.builder()
-            .id(hostId)
+            .id(id)
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
@@ -125,6 +120,58 @@ public class AgentFacadeService {
     return results;
   }
 
+  @Transactional
+  public List<ResultDTO> update(AgentDTO request, String requestUserId) {
+
+    List<ResultDTO> results = new ArrayList<>();
+
+    List<String> ids = List.of(request.getHost_id_list());
+
+    if (!request.isSelectMonitoringAgent() && !request.isSelectLogAgent()) {
+      throw new BadRequestException(requestInfo.getRequestId(), null, null, "에이전트가 선택되지 않았습니다!");
+    }
+    for (String id : CheckUtil.emptyIfNull(ids)) {
+      try {
+        if (!hostService.existsById(id)) {
+          throw new HostNotExistException(requestInfo.getRequestId(), String.join(", ", id));
+        }
+
+        // 1) Lock 걸기
+        int templateCount;
+        try {
+          semaphoreInstallTemplateCurrentCountLock.lock();
+          templateCount = getSemaphoreInstallTemplateCurrentCount();
+        } finally {
+          semaphoreInstallTemplateCurrentCountLock.unlock();
+        }
+
+        // 2 ) 에이전트 업데이트
+        // 2-1 ) Telegraf 업데이트
+        if (request.isSelectMonitoringAgent()) {
+          telegrafFacadeService.update(id, requestUserId, templateCount);
+        }
+
+        // 2-1 ) FluentBit 업데이트
+        if (request.isSelectLogAgent()) {
+          fluentBitFacadeService.update(id, requestUserId, templateCount);
+        }
+
+        results.add(ResultDTO.builder()
+                .id(id)
+                .status(ResponseStatus.SUCCESS)
+                .build());
+      } catch (Exception e) {
+
+        results.add(ResultDTO.builder()
+                .id(id)
+                .status(ResponseStatus.ERROR)
+                .errorMessage(e.getMessage())
+                .build());
+      }
+    }
+
+    return results;
+  }
 
   private int getSemaphoreInstallTemplateCurrentCount() {
     if (semaphoreInstallTemplateCurrentCount > SEMAPHORE_MAX_PARALLEL_TASKS) {
@@ -253,7 +300,7 @@ public class AgentFacadeService {
         hostService.updateMonitoringAgentConfigGitHash(hostId, commitHash);
 
         // 9) Semaphore 수정 요청
-        Task task = null;
+        Task task;
         HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
         String remoteConfigPath =
             fileFacadeService.getHostConfigTelegrafRemotePath() + "/" + configDTO.getPath();
@@ -367,7 +414,7 @@ public class AgentFacadeService {
         hostService.updateLogAgentConfigGitHash(hostId, commitHash);
 
         // 9) Semaphore 수정 요청
-        Task task = null;
+        Task task;
         HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
         String remoteConfigPath =
             fileFacadeService.getHostConfigFluentBitRemotePath() + "/" + configDTO.getPath();

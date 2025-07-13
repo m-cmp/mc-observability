@@ -28,7 +28,6 @@ public class FileServiceImpl implements FileService {
   @Value("${config.base-path:./config}")
   private String configBasePath;
 
-
   @Override
   public String singleFileReader(File file) throws FileReadingException {
     if (!file.exists() || !file.isFile()) {
@@ -47,7 +46,6 @@ public class FileServiceImpl implements FileService {
       throw new FileReadingException(errMsg);
     }
   }
-
 
   //파일 수집
   @Override
@@ -77,7 +75,6 @@ public class FileServiceImpl implements FileService {
     return files;
   }
 
-
   @Override
   public List<ConfigFileNode> sortFile(List<ConfigFileNode> nodes) {
     nodes.sort(Comparator.comparing(ConfigFileNode::isDirectory).reversed()
@@ -105,7 +102,6 @@ public class FileServiceImpl implements FileService {
     }
   }
 
-
   //파일 이름, 내용 write
   @Override
   public void writeFile(File directory, String fileName, String content) throws FileReadingException {
@@ -121,7 +117,6 @@ public class FileServiceImpl implements FileService {
     }
   }
 
-
   //파일, 내용 write
   @Override
   public void generateFile(File file, String content) throws FileReadingException {
@@ -135,8 +130,6 @@ public class FileServiceImpl implements FileService {
       throw new FileReadingException("파일 작성 중 오류가 발생했습니다: " + e.getMessage());
     }
   }
-
-
 
 
   @Override
@@ -163,8 +156,8 @@ public class FileServiceImpl implements FileService {
     }
   }
 
-
   //config 디렉토리 삭제, 호스트 삭제 시 호출
+  @Override
   public void deleteDirectoryByHostId(String uuid) {
     Path dir = Path.of(configBasePath, uuid);
 
@@ -194,12 +187,62 @@ public class FileServiceImpl implements FileService {
     } catch (IOException e) {
       throw new FailedDeleteFileException("디렉터리 탐색 중 오류 발생: " + dir);
     }
-
   }
 
+  private void deleteRecursively(Path path) throws IOException {
+    if (Files.isDirectory(path)) {
+      try (var paths = Files.walk(path)) {
+        paths
+                .sorted(Comparator.reverseOrder())
+                .forEach(p -> {
+                  try {
+                    DosFileAttributeView view = Files.getFileAttributeView(p, DosFileAttributeView.class);
+                    if (view != null) {
+                      view.setReadOnly(false);
+                    }
+                    Files.delete(p);
+                    log.debug("Deleted: {}", p);
+                  } catch (IOException e) {
+                    String errMsg = "Failed deleted file: " + p;
+                    log.error(errMsg, e);
+                    throw new FailedDeleteFileException(errMsg);
+                  }
+                });
+      }
+    } else {
+      DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
+      if (view != null) {
+        view.setReadOnly(false);
+      }
+      Files.delete(path);
+      log.debug("Deleted: {}", path);
+    }
+  }
 
+  @Override
+  public void deleteDirectoryExceptGitByHostId(String uuid) {
+    Path dir = Path.of(configBasePath, uuid);
+    if (!Files.exists(dir)) {
+      return;
+    }
 
-
+    try (var paths = Files.walk(dir, 1)) {
+      paths
+              .filter(path -> !path.equals(dir))
+              .filter(path -> !path.getFileName().toString().equals(".git"))
+              .forEach(path -> {
+                try {
+                  deleteRecursively(path);
+                } catch (IOException e) {
+                  String errMsg = "Failed to delete: " + path;
+                  log.error(errMsg, e);
+                  throw new FailedDeleteFileException(errMsg);
+                }
+              });
+    } catch (IOException e) {
+      throw new FailedDeleteFileException("디렉터리 탐색 중 오류 발생: " + dir);
+    }
+  }
 
   //템플릿 리소스 로딩
   @Override

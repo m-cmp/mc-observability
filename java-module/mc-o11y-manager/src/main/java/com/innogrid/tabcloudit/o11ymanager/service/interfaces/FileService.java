@@ -6,7 +6,6 @@ import com.innogrid.tabcloudit.o11ymanager.model.config.ConfigFileNode;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -25,8 +24,9 @@ public interface FileService {
 
     void writeFile(File agentConfigDir, String configFilename, String configContent) throws FileReadingException;
 
-
     void deleteDirectoryByHostId(String uuid);
+
+    void deleteDirectoryExceptGitByHostId(String uuid);
 
     String getFileContent(ClassPathResource classPathResource) throws FileReadingException;
 

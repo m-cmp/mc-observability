@@ -7,24 +7,20 @@ import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
 import com.innogrid.tabcloudit.o11ymanager.entity.HostEntity;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
 import com.innogrid.tabcloudit.o11ymanager.global.annotation.Base64Encode;
-import com.innogrid.tabcloudit.o11ymanager.global.aspect.request.RequestInfo;
 import com.innogrid.tabcloudit.o11ymanager.global.definition.ConfigDefinition;
 import com.innogrid.tabcloudit.o11ymanager.mapper.host.ConfigMapper;
 import com.innogrid.tabcloudit.o11ymanager.model.agentHealth.SshConnection;
 import com.innogrid.tabcloudit.o11ymanager.model.config.ConfigFileNode;
 import com.innogrid.tabcloudit.o11ymanager.service.domain.HostDomainService;
-import com.innogrid.tabcloudit.o11ymanager.service.domain.SemaphoreDomainService;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -44,14 +40,8 @@ public class TelegrafConfigFacadeService {
   private final FileFacadeService fileFacadeService;
   private final SshService sshService;
   private final GitService gitService;
-  private static final Lock agentTaskStatusLock = new ReentrantLock();
   private final HostService hostService;
-  private final RequestInfo requestInfo;
-  private final SemaphoreDomainService semaphoreDomainService;
-  private final ApplicationEventPublisher event;
-  private final AgentHealthCheckService agentHealthCheckService;
   private final ConfigMapper configMapper;
-  private final StatusService statusService;
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -195,45 +185,53 @@ public class TelegrafConfigFacadeService {
 
   // 원격에 있는 파일 내용 가져와서 로컬에 복사
   public void downloadTelegrafConfig(HostConnectionDTO host) throws IOException {
-    // 1) SSH로 원격 파일 확인
-    log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
+    ReentrantLock lock = gitFacadeService.getRepositoryLock(host.getHostId(), Agent.TELEGRAF);
 
-    SshConnection connection = sshService.getConnection(
-        host.getIp(),
-        host.getPort(),
-        host.getUserId(),
-        host.getPassword()
-    );
+    try {
+      lock.lock();
 
-    // 2) 원격에 파일 없을시 종료
-    if (!sshService.isExistTelegrafConfigDirectory(connection)) {
-      return;
+      // 1) SSH로 원격 파일 확인
+      log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
+
+      SshConnection connection = sshService.getConnection(
+              host.getIp(),
+              host.getPort(),
+              host.getUserId(),
+              host.getPassword()
+      );
+
+      // 2) 원격에 파일 없을시 종료
+      if (!sshService.isExistTelegrafConfigDirectory(connection)) {
+        return;
+      }
+
+      // 원격에 파일 있을 경우 아래 내용 실행
+      // 3) 로컬에 telegraf 폴더 생성
+      Path path = Path.of(configBasePath, host.getHostId(),
+              ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
+
+      fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
+      Path configDir = fileService.createDirectory(path);
+
+      // 4) git 초기화
+      gitService.init(configDir.toFile());
+
+      // 5) 원격 파일 내용 가져오기
+      sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
+              path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
+
+      String commitMessage = "Config updated (Telegraf)";
+
+      // 6) Git 커밋
+      Git git = gitService.getGit(path.toFile());
+      gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
+
+      // 7) Git 커밋 해시 업데이트
+      String commitHash = gitService.getHashName(git);
+      hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
+    } finally {
+      lock.unlock();
     }
-
-    // 원격에 파일 있을 경우 아래 내용 실행
-    // 3) 로컬에 telegraf 폴더 생성
-    Path path = Path.of(configBasePath, host.getHostId(),
-        ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
-
-    Path configDir = fileService.createDirectory(path);
-
-    // 4) git 초기화
-    gitService.init(configDir.toFile());
-
-    // 5) 원격 파일 내용 가져오기
-    sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
-        path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
-
-    String commitMessage = "Config updated (Telegraf)";
-
-    // 6) Git 커밋
-    Git git = gitService.getGit(path.toFile());
-    gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-    // 7) Git 커밋 해시 업데이트
-    String commitHash = gitService.getHashName(git);
-    hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
-
   }
 
   public void initTelegrafConfig(HostConnectionDTO host, String type, String credentialId,
@@ -262,9 +260,7 @@ public class TelegrafConfigFacadeService {
     // 5) Git 커밋 해시 업데이트
     String commitHash = gitService.getHashName(git);
     hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
-
   }
-
 
   @Base64Encode
   public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String hostId,

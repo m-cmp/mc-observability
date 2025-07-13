@@ -22,7 +22,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import javax.xml.transform.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -54,12 +53,29 @@ public class AgentController {
   @CommonErrorResponse
   @PostMapping("/agent/install")
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> installAgent(@RequestBody AgentDTO request,
-      @Parameter(hidden = true) @AuthorizationHeader String token) throws Exception {
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
     String requestUserId = JwtUtil.getRequestUserId(token);
-
 
     List<ResultDTO> result;
     result = agentFacadeService.install(request, requestUserId);
+
+    return SuccessResponse.of(requestInfo.getRequestId(), result);
+  }
+
+  @Tag(name = "Agent API", description = "에이전트 관리 API")
+  @Operation(
+          summary = "호스트 에이전트 업데이트",
+          description = "호스트의 에이전트를 업데이트합니다."
+  )
+  @CommonSuccessResponse
+  @CommonErrorResponse
+  @PostMapping("/agent/update")
+  public ResponseEntity<SuccessResponse<List<ResultDTO>>> updateAgent(@RequestBody AgentDTO request,
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
+    String requestUserId = JwtUtil.getRequestUserId(token);
+
+    List<ResultDTO> result;
+    result = agentFacadeService.update(request, requestUserId);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -73,8 +89,7 @@ public class AgentController {
   @CommonErrorResponse
   @PostMapping("/agent/uninstall")
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> uninstallAgent(
-      @RequestBody AgentDTO request, @Parameter(hidden = true) @AuthorizationHeader String token)
-      throws Exception {
+      @RequestBody AgentDTO request, @Parameter(hidden = true) @AuthorizationHeader String token) {
 
     String requestUserId = JwtUtil.getRequestUserId(token);
 
@@ -288,7 +303,7 @@ public class AgentController {
 
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> updateTelegrafConfig(
       @RequestBody ConfigDTO request,
-      @Parameter(hidden = true) @AuthorizationHeader String token) throws Exception {
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
     String requestUserId = JwtUtil.getRequestUserId(token);
     List<ResultDTO> result;
     AgentDTO agentDTO = new AgentDTO(true, false, request.getHost_id_list());
@@ -308,7 +323,7 @@ public class AgentController {
   @PostMapping("/agent/config/update/fluent-bit")
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> updateFluentBitConfig(
       @RequestBody ConfigDTO request,
-      @Parameter(hidden = true) @AuthorizationHeader String token) throws Exception {
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
 
     String requestUserId = JwtUtil.getRequestUserId(token);
     List<ResultDTO> result;
@@ -330,7 +345,7 @@ public class AgentController {
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> rollbackTelegrafConfig(
       @PathVariable String id,
       @RequestParam String commitHash,
-      @Parameter(hidden = true) @AuthorizationHeader String token) throws Exception {
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
 
     String requestUserId = JwtUtil.getRequestUserId(token);
     List<ResultDTO> result;
@@ -351,7 +366,7 @@ public class AgentController {
   public ResponseEntity<SuccessResponse<List<ResultDTO>>> rollbackFluentBitConfig(
       @PathVariable String id,
       @RequestParam String commitHash,
-      @Parameter(hidden = true) @AuthorizationHeader String token) throws Exception {
+      @Parameter(hidden = true) @AuthorizationHeader String token) {
     String requestUserId = JwtUtil.getRequestUserId(token);
     List<ResultDTO> result;
     String[] ids = {id};
