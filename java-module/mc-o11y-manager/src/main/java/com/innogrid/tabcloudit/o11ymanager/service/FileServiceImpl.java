@@ -56,10 +56,9 @@ public class FileServiceImpl implements FileService {
         File[] entries = dir.listFiles();
         if (entries != null) {
           for (File entry : entries) {
+            files.add(entry);
             if (entry.isDirectory()) {
               files.addAll(getFilesRecursively(entry));
-            } else {
-              files.add(entry);
             }
           }
         }
