@@ -81,17 +81,12 @@ public class GitServiceImpl implements GitService {
   }
 
   public RevTree getRevTree(@NotNull Repository repo, @NotNull ObjectId objectId) {
-    RevWalk revWalk = null;
-
-    try {
-      revWalk = new RevWalk(repo);
+    try (RevWalk revWalk = new RevWalk(repo)) {
       revWalk.parseCommit(objectId);
       RevCommit commit = revWalk.parseCommit(objectId);
       return revWalk.parseTree(commit);
     } catch (IOException e) {
       throw new GitRevTreeException();
-    } finally {
-      Objects.requireNonNull(revWalk).dispose();
     }
   }
 

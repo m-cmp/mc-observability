@@ -527,13 +527,10 @@ public class AgentFacadeService {
         // 4) Rollback 실행
         hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.ROLLING_BACK_CONFIG);
         Path telegrafWorkingPath = telegrafConfigFacadeService.getTelegrafConfigWorkingPath(hostId);
-        Path telegrafConfFilePath = telegrafWorkingPath.resolve(
-            ConfigDefinition.HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG);
 
         String telegrafConfContents = gitFacadeService.getFileContentOfCommitHash(
             requestInfo.getRequestId(), hostId,
-            Agent.TELEGRAF, commitHash,
-            String.valueOf(telegrafConfFilePath.toAbsolutePath()));
+            Agent.TELEGRAF, commitHash, ConfigDefinition.HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG);
         log.info("Telegraf Commit Hash : {}", commitHash);
         fileService.writeFile(telegrafWorkingPath.toFile(),
             ConfigDefinition.HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG,
@@ -631,13 +628,10 @@ public class AgentFacadeService {
         hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.ROLLING_BACK_CONFIG);
         Path fluentbitWorkingPath = fluentBitConfigFacadeService.getFluentbitConfigWorkingPath(
             hostId);
-        Path fluentbitConfFilePath = fluentbitWorkingPath.resolve(
-            ConfigDefinition.HOST_CONFIG_NAME_FLUENTBIT_VARIABLES);
 
         String fluentbitConfContents = gitFacadeService.getFileContentOfCommitHash(
             requestInfo.getRequestId(), hostId,
-            Agent.FLUENT_BIT, commitHash,
-            String.valueOf(fluentbitConfFilePath.toAbsolutePath()));
+            Agent.FLUENT_BIT, commitHash, ConfigDefinition.HOST_CONFIG_NAME_FLUENTBIT_VARIABLES);
 
         fileService.writeFile(fluentbitWorkingPath.toFile(),
             ConfigDefinition.HOST_CONFIG_NAME_FLUENTBIT_VARIABLES,

@@ -124,6 +124,10 @@ public class FileFacadeService {
       }
 
       for (File file : filesToSend) {
+        if (file.isDirectory()) {
+          continue;
+        }
+
         String relativeFilePath = agentConfigDir.toPath().relativize(file.toPath()).toString();
         String remoteFilePath = remotePath + "/" + relativeFilePath;
 
