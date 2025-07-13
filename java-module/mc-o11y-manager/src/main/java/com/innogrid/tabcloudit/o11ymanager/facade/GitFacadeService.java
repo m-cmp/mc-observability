@@ -131,42 +131,17 @@ public class GitFacadeService {
       String subPath = switch (agent) {
         case TELEGRAF -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF;
         case FLUENT_BIT -> ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT;
-        default -> throw new FileReadingException("Unsupported agent: " + agent);
       };
       Path agentConfigDir = hostConfigDir.resolve(subPath);
 
       log.info("[GitFacadeService] agentConfigDir: {}", agentConfigDir);
-      // /home/kimsua/ideaProjects/o11y/o11y-manager/config/3/telegraf
       log.info("[GitFacadeService] Input filePath: {}", filePath);
-      // /home/kimsua/ideaProjects/o11y/o11y-manager/config/3/telegraf
-
       log.info("[GitFacadeService] commitHash: {}", commitHash);
-      // 리퀘스트 바디에 넣은 커밋 해시값과 일치 (문제 없음)
 
       try {
         Git git = gitService.getGit(agentConfigDir.toFile());
-        Repository repo = git.getRepository();
-        log.info("[GitFacadeService] git.getRepository().getWorkTree(): {}", repo.getWorkTree());
-        // 레포티지토리 : Repository[/home/kimsua/Ideaprojects/o11y/o11y-manager/config/3/telegraf/.git]
 
-        // 경로 확인: Git 기준에서 상대 경로로 변환 (테스트용)
-        Path repoRoot = repo.getWorkTree().toPath();
-        Path originalPath = agentConfigDir.resolve(filePath);
-        String gitFilePath = null;
-        if (originalPath.startsWith(repoRoot)) {
-          Path relative = repoRoot.relativize(originalPath);
-          gitFilePath = relative.toString().replace("\\", "/");
-          log.info("[GitFacadeService] Resolved relative file path: {}", relative);
-          // originPath = /home~ 에서부터 telegraf.conf 까지나옴
-        } else {
-          log.warn(
-              "[GitFacadeService] filePath is not under repository root! filePath={}, repoRoot={}",
-              filePath, repoRoot);
-          // rootPath는 /telegraf 디렉토리까지만 나옴
-        }
-
-        return gitService.getCommitContents(git, commitHash, gitFilePath);
-        // 최종 file path는 .telegraf.conf까지 나옴
+        return gitService.getCommitContents(git, commitHash, filePath);
       } catch (GitFileOpenException | GitCommitContentsException e) {
         log.error("[GitFacadeService] Failed to read commit content: {}", e.getMessage(), e);
         statusService.resetHostAgentTaskStatus(requestId, uuid, agent);
