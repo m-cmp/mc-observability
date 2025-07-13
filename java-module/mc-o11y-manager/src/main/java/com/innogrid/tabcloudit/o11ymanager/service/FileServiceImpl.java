@@ -51,19 +51,19 @@ public class FileServiceImpl implements FileService {
   @Override
   public List<File> getFilesRecursively(File dir) throws FileReadingException {
     List<File> files = new ArrayList<>();
-    try {
-      if (dir.isDirectory() && !dir.getName().equals(".git")) {
-        File[] entries = dir.listFiles();
-        if (entries != null) {
-          for (File entry : entries) {
-            files.add(entry);
-            if (entry.isDirectory()) {
-              files.addAll(getFilesRecursively(entry));
-            }
+  try {
+      File[] entries = dir.listFiles();
+      if (entries != null) {
+        for (File entry : entries) {
+          if (entry.getName().startsWith(".git")) {
+            continue;
+          }
+
+          files.add(entry);
+          if (entry.isDirectory()) {
+            files.addAll(getFilesRecursively(entry));
           }
         }
-      } else if (dir.isFile()) {
-        files.add(dir);
       }
     } catch (Exception e) {
       String errMsg = "Failed to get files recursively: " + dir.getAbsolutePath();
