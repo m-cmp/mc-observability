@@ -8,7 +8,7 @@
     <springProperty scope="context" name="APPLICATION_NAME" source="spring.application.name" />
 
     <!-- Feign 클라이언트 로깅을 위한 특별 설정 -->
-    <logger name="com.innogrid.tabcloudit.o11ymanager.infrastructure.log.client.LokiFeignClient" level="DEBUG" additivity="false">
+    <logger name="com.mcmp.o11ymanager.infrastructure.log.client.LokiFeignClient" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE" />
     </logger>
     

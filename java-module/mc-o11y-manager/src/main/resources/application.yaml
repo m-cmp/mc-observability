@@ -3,15 +3,15 @@ server:
   port: 18080
 
 deploy:
-  site-code: jb
+  site-code: m-cmp
 
 spring:
   application:
     name: o11y-manager
   datasource:
     url: jdbc:mariadb://127.0.0.1:3306/agent
-    username: tabcloudit
-    password: tabcloudit
+    username: o11ymanager
+    password: o11ymanager
     hikari:
       max-lifetime: 150000
   jpa:
@@ -28,7 +28,7 @@ spring:
     location: classpath:banner.txt
 
 springdoc:
-  packages-to-scan: com.innogrid.tabcloudit.o11ymanager.controller
+  packages-to-scan: com.mcmp.o11ymanager.controller
   paths-to-match: "/**"
   paths-to-exclude:
     - "/api/**/test/**"
@@ -101,7 +101,7 @@ logging:
   level:
     org.apache.sshd.client: ERROR
     org.apache.sshd.common: ERROR
-    com.innogrid.tabcloudit.o11ymanager.infrastructure.log.client.LokiFeignClient: DEBUG
+    com.mcmp.o11ymanager.infrastructure.log.client.LokiFeignClient: DEBUG
     feign: DEBUG
     feign.Logger: DEBUG
     feign.template: WARN

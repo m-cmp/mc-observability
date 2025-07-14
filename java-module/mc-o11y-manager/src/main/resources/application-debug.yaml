@@ -1,7 +1,4 @@
-deploy:
-  site-code: debug
-
 logging:
   level:
-    com.innogrid.tabcloudit.o11ymanager.facade: DEBUG
-    com.innogrid.tabcloudit.o11ymanager.global.scheduler: DEBUG
+    com.mcmp.o11ymanager.facade: DEBUG
+    com.mcmp.o11ymanager.global.scheduler: DEBUG

@@ -1,10 +1,10 @@
-package com.innogrid.tabcloudit.o11ymanager.service;
+package com.mcmp.o11ymanager.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.innogrid.tabcloudit.o11ymanager.model.host.HostStatus;
+import com.mcmp.o11ymanager.model.host.HostStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;

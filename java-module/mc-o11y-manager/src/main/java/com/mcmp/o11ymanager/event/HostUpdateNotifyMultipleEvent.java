@@ -1,0 +1,13 @@
+package com.mcmp.o11ymanager.event;
+
+import com.mcmp.o11ymanager.enums.AgentAction;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
+@Builder
+public class HostUpdateNotifyMultipleEvent extends BaseDomainEvent{
+
+}
