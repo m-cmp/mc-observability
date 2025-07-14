@@ -2,11 +2,8 @@ package com.innogrid.tabcloudit.o11ymanager.global.error;
 
 import com.innogrid.tabcloudit.o11ymanager.dto.common.ErrorResponse;
 import com.innogrid.tabcloudit.o11ymanager.enums.ResponseCode;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.AgentConfigNotFoundException;
 import com.innogrid.tabcloudit.o11ymanager.exception.agent.AgentStatusException;
 import com.innogrid.tabcloudit.o11ymanager.exception.config.ConfigInitException;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.SshConnectionException;
-import com.innogrid.tabcloudit.o11ymanager.exception.git.GitRevTreeException;
 import com.innogrid.tabcloudit.o11ymanager.exception.host.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -48,7 +45,6 @@ public class GlobalExceptionHandler {
       BadRequestException.class,
       ConfigInitException.class,
       AgentStatusException.class,
-      GitRevTreeException.class,
   })
   protected ResponseEntity<ErrorResponse> handleBadRequestException(Exception e) {
     String requestId = UUID.randomUUID().toString();

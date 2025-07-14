@@ -218,31 +218,6 @@ public class FileServiceImpl implements FileService {
     }
   }
 
-  @Override
-  public void deleteDirectoryExceptGitByHostId(String uuid) {
-    Path dir = Path.of(configBasePath, uuid);
-    if (!Files.exists(dir)) {
-      return;
-    }
-
-    try (var paths = Files.walk(dir, 1)) {
-      paths
-              .filter(path -> !path.equals(dir))
-              .filter(path -> !path.getFileName().toString().equals(".git"))
-              .forEach(path -> {
-                try {
-                  deleteRecursively(path);
-                } catch (IOException e) {
-                  String errMsg = "Failed to delete: " + path;
-                  log.error(errMsg, e);
-                  throw new FailedDeleteFileException(errMsg);
-                }
-              });
-    } catch (IOException e) {
-      throw new FailedDeleteFileException("디렉터리 탐색 중 오류 발생: " + dir);
-    }
-  }
-
   //템플릿 리소스 로딩
   @Override
   public String getFileContent(ClassPathResource classPathResource) throws FileReadingException {

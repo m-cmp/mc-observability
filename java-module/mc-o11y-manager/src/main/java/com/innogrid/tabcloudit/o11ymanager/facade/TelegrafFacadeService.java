@@ -39,7 +39,6 @@ public class TelegrafFacadeService {
   private final HostService hostService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
   private final RequestInfo requestInfo;
-  private final GitFacadeService gitFacadeService;
   private final ApplicationEventPublisher event;
   private final SemaphoreDomainService semaphoreDomainService;
   private final FileFacadeService fileFacadeService;
@@ -79,16 +78,11 @@ public class TelegrafFacadeService {
         configContent, Agent.TELEGRAF,
         templateCount);
 
-    // 5.commitHash 업데이트
-    String commitHash = gitFacadeService.getConfigGitHash(requestInfo.getRequestId(), hostId,
-        Agent.TELEGRAF);
-    hostService.updateMonitoringAgentConfigGitHash(hostId, commitHash);
-
-    // 6. task ID, task status 업데이트
+    // 5. task ID, task status 업데이트
     hostService.updateMonitoringAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
-    // 7. 이력 남기기
+    // 6. 이력 남기기
     AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
         .requestId(requestInfo.getRequestId())
         .requestUserId(requestUserId)
@@ -99,7 +93,7 @@ public class TelegrafFacadeService {
 
     event.publishEvent(successEvent);
 
-    // 8. 스케줄러 등록
+    // 7. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
         SemaphoreInstallMethod.INSTALL, Agent.TELEGRAF, requestUserId);
   }

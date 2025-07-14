@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -36,12 +35,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class TelegrafConfigFacadeService {
 
   private final FileService fileService;
-  private final GitFacadeService gitFacadeService;
   private final HostDomainService hostDomainService;
   private final FileFacadeService fileFacadeService;
   private final SshService sshService;
-  private final GitService gitService;
-  private final HostService hostService;
   private final ConfigMapper configMapper;
 
   private static final Lock configDownloadLock = new ReentrantLock();
@@ -174,26 +170,11 @@ public class TelegrafConfigFacadeService {
       // 3) 로컬에 telegraf 폴더 생성
       Path path = Path.of(configBasePath, host.getHostId(),
               ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
+      fileService.createDirectory(path);
 
-      fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
-      Path configDir = fileService.createDirectory(path);
-
-      // 4) git 초기화
-      gitService.init(configDir.toFile());
-
-      // 5) 원격 파일 내용 가져오기
+      // 4) 원격 파일 내용 가져오기
       sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
               path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
-
-      String commitMessage = "Config updated (Telegraf)";
-
-      // 6) Git 커밋
-      Git git = gitService.getGit(path.toFile());
-      gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-      // 7) Git 커밋 해시 업데이트
-      String commitHash = gitService.getHashName(git);
-      hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
     } finally {
       configDownloadLock.unlock();
     }
@@ -211,40 +192,29 @@ public class TelegrafConfigFacadeService {
 
     log.info("로컬 경로 : {}", configDir.toString());
 
-    // 2) git 초기화
-    gitService.init(configDir.toFile());
-
-    // 3) 로컬 파일 복사하여 telegraf.conf 생성
+    // 2) 로컬 파일 복사하여 telegraf.conf 생성
     initConfig(host.getHostId(), path, type, credentialId, cloudService);
-
-    // 4) Git 커밋
-    String commitMessage = "Config initialized";
-    Git git = gitService.getGit(path.toFile());
-    gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-    // 5) Git 커밋 해시 업데이트
-    String commitHash = gitService.getHashName(git);
-    hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
   }
 
   @Base64Encode
-  public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String hostId,
-      String commitHash, String path) {
+  public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String hostId, String path) {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
 
-    if (commitHash == null || commitHash.isEmpty()) {
-      commitHash = host.getMonitoring_agent_config_git_hash();
-    }
-
-    String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),
-        Agent.TELEGRAF, commitHash, path);
+    // TODO: Get content from config folder directly
+//    if (commitHash == null || commitHash.isEmpty()) {
+//      commitHash = host.getMonitoring_agent_config_git_hash();
+//    }
+//
+//    String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),
+//        Agent.TELEGRAF, commitHash, path);
 
     return ConfigFileContentResponseDTO.builder()
         .hostId(host.getId())
-        .commitHash(commitHash)
+//        .commitHash(commitHash)
         .path(path)
-        .content(content)
+//        .content(content)
+        .content("TODO")
         .build();
   }
 
@@ -258,8 +228,10 @@ public class TelegrafConfigFacadeService {
       commitHash = host.getMonitoring_agent_config_git_hash();
     }
 
-    List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
-        commitHash, Agent.TELEGRAF);
+    // TODO: Get file list from config folder directly
+    List<ConfigFileNode> configFiles = null;
+//    List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
+//            commitHash, Agent.TELEGRAF);
 
     return ConfigFileListResponseDTO.builder()
         .hostId(host.getId())

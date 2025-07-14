@@ -16,7 +16,6 @@ import com.innogrid.tabcloudit.o11ymanager.service.interfaces.*;
 import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jgit.api.Git;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -34,12 +33,9 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FluentBitConfigFacadeService {
 
   private final FileService fileService;
-  private final GitFacadeService gitFacadeService;
   private final HostDomainService hostDomainService;
   private final FileFacadeService fileFacadeService;
   private final SshService sshService;
-  private final GitService gitService;
-  private final HostService hostService;
   private final ConfigMapper configMapper;
 
   private static final Lock configDownloadLock = new ReentrantLock();
@@ -50,7 +46,6 @@ public class FluentBitConfigFacadeService {
   @Value("${config.base-path:./config}")
   private String configBasePath;
 
-
   private final ClassPathResource fluentBitMainConfig = new ClassPathResource("fluent-bit.conf");
   private final ClassPathResource fluentBitVariables = new ClassPathResource(
       "fluent-bit_variables");
@@ -58,7 +53,6 @@ public class FluentBitConfigFacadeService {
   private final ClassPathResource fluentBitAddTimestampLua = new ClassPathResource(
       "add-timestamp.lua");
   private final ClassPathResource fluentBitParsersConf = new ClassPathResource("parsers.conf");
-
 
   public void initConfig(String id, String credentialId, String cloudService, String hostType,
       Path fluentbitBaseDir) {
@@ -122,26 +116,11 @@ public class FluentBitConfigFacadeService {
       // 3) 로컬에 fluentbit 폴더 생성
       Path path = Path.of(configBasePath, host.getHostId(),
               ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT);
+      fileService.createDirectory(path);
 
-      fileService.deleteDirectoryExceptGitByHostId(host.getHostId());
-      Path configDir = fileService.createDirectory(path);
-
-      // 4) git 초기화
-      gitService.init(configDir.toFile());
-
-      // 5) 원격 파일 내용 가져오기
+      // 4) 원격 파일 내용 가져오기
       sshService.download(connection, fileFacadeService.getHostConfigFluentBitRemotePath(),
               path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
-
-      String commitMessage = "Config updated (Fluentbit)";
-
-      // 6) Git 커밋
-      Git git = gitService.getGit(path.toFile());
-      gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-      // 7) Git 커밋 해시 업데이트
-      String commitHash = gitService.getHashName(git);
-      hostService.updateMonitoringAgentConfigGitHash(host.getHostId(), commitHash);
     } finally {
       configDownloadLock.unlock();
     }
@@ -159,22 +138,8 @@ public class FluentBitConfigFacadeService {
 
     log.info("로컬 경로 : {}", configDir.toString());
 
-    // 2) git 초기화
-    gitService.init(configDir.toFile());
-
-    // 3) 로컬에 파일 생성
+    // 2) 로컬에 파일 생성
     initConfig(host.getHostId(), credentialId, cloudService, type, path);
-
-    // 4) Git 커밋
-    Git git = gitService.getGit(path.toFile());
-    String commitMessage = "Config initialized";
-    gitService.commit(git, ".", commitMessage, "innogrid", "cmp@innogrid.com");
-
-    // 5) Git 커밋 해시 업데이트
-    String commitHash = gitService.getHashName(git);
-    log.debug(">>>> DEBUG: About to log commit hash. Git object: {}", git);
-    log.debug("log agent git hash : {}", commitHash);
-    hostService.updateLogAgentConfigGitHash(host.getHostId(), commitHash);
   }
 
   public void updateFluentBitConfig(String hostId, String content, String path) {
@@ -200,8 +165,10 @@ public class FluentBitConfigFacadeService {
       commitHash = host.getLog_agent_config_git_hash();
     }
 
-    List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
-        commitHash, Agent.FLUENT_BIT);
+    // TODO: Get file list from config folder directly
+    List<ConfigFileNode> configFiles = null;
+//    List<ConfigFileNode> configFiles = gitFacadeService.getConfigFileList(requestId, host.getId(),
+//        commitHash, Agent.FLUENT_BIT);
 
     return ConfigFileListResponseDTO.builder()
         .hostId(host.getId())
@@ -218,18 +185,20 @@ public class FluentBitConfigFacadeService {
 
     HostEntity host = hostDomainService.getHostById(requestId, hostId);
 
-    if (commitHash == null || commitHash.isEmpty()) {
-      commitHash = host.getLog_agent_config_git_hash();
-    }
-
-    String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),
-        Agent.FLUENT_BIT, commitHash, path);
+    // TODO: Get content from config folder directly
+//    if (commitHash == null || commitHash.isEmpty()) {
+//      commitHash = host.getLog_agent_config_git_hash();
+//    }
+//
+//    String content = gitFacadeService.getFileContentOfCommitHash(requestId, host.getId(),
+//        Agent.FLUENT_BIT, commitHash, path);
 
     ConfigFileContentResponseDTO response = ConfigFileContentResponseDTO.builder()
         .hostId(host.getId())
         .commitHash(commitHash)
         .path(path)
-        .content(content)
+//        .content(content)
+        .content("TODO")
         .build();
 
     log.info("getFluentBitConfigContent response: " + response.toString());

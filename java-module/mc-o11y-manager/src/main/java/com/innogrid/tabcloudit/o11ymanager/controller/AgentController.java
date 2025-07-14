@@ -335,83 +335,6 @@ public class AgentController {
 
   @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
   @Operation(
-      summary = "Telegraf config 롤백"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @PostMapping("/{id}/agent/config/rollback/telegraf")
-  public ResponseEntity<SuccessResponse<List<ResultDTO>>> rollbackTelegrafConfig(
-      @PathVariable String id,
-      @RequestParam String commitHash,
-      @Parameter(hidden = true) @AuthorizationHeader String token) {
-
-    String requestUserId = JwtUtil.getRequestUserId(token);
-    List<ResultDTO> result;
-    String[] ids = {id};
-
-    result = agentFacadeService.rollbackTelegrafConfig(List.of(ids), commitHash, requestUserId);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "Fluent-Bit config 롤백"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @PostMapping("/{id}/agent/config/rollback/fluent-bit")
-  public ResponseEntity<SuccessResponse<List<ResultDTO>>> rollbackFluentBitConfig(
-      @PathVariable String id,
-      @RequestParam String commitHash,
-      @Parameter(hidden = true) @AuthorizationHeader String token) {
-    String requestUserId = JwtUtil.getRequestUserId(token);
-    List<ResultDTO> result;
-    String[] ids = {id};
-
-    result = agentFacadeService.rollbackFluentbitConfig(List.of(ids), commitHash, requestUserId);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "Telegraf config 이력 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/history/telegraf")
-  public ResponseEntity<SuccessResponse<List<ConfigHistoryDTO>>> getTelegrafConfigHistory(
-      @PathVariable String id,
-      @RequestParam(required = false) Integer page,
-      @RequestParam(required = false) Integer row) {
-
-    List<ConfigHistoryDTO> configHistory = hostFacadeService.getHostConfigHistory(
-        requestInfo.getRequestId(), Agent.TELEGRAF, id, page, row);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), configHistory);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "Fluent-Bit config 이력 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/history/fluent-bit")
-  public ResponseEntity<SuccessResponse<List<ConfigHistoryDTO>>> getFluentBitConfigHistory(
-      @PathVariable String id,
-      @RequestParam(required = false) Integer page,
-      @RequestParam(required = false) Integer row) {
-
-    List<ConfigHistoryDTO> configHistory = hostFacadeService.getHostConfigHistory(
-        requestInfo.getRequestId(), Agent.FLUENT_BIT, id, page, row);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), configHistory);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
       summary = "현재 Telegraf 설정 파일 목록 조회"
   )
   @CommonSuccessResponse
@@ -422,23 +345,6 @@ public class AgentController {
 
     ConfigFileListResponseDTO result = telegrafConfigService.getTelegrafConfigFileList(
         requestInfo.getRequestId(), id, null);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "특정 commit 시점의 Telegraf 설정 파일 목록 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/files/telegraf/{commitHash}")
-  public ResponseEntity<SuccessResponse<ConfigFileListResponseDTO>> getTelegrafConfigFileList(
-      @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id,
-      @Parameter(description = "Commit Hash") @PathVariable String commitHash) {
-
-    ConfigFileListResponseDTO result = telegrafConfigService.getTelegrafConfigFileList(
-        requestInfo.getRequestId(), id, commitHash);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -461,23 +367,6 @@ public class AgentController {
 
   @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
   @Operation(
-      summary = "특정 commit 시점의 Fluent-Bit 설정 파일 목록 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/files/fluent-bit/{commitHash}")
-  public ResponseEntity<SuccessResponse<ConfigFileListResponseDTO>> getFluentBitConfigFileList(
-      @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id,
-      @Parameter(description = "Commit Hash") @PathVariable String commitHash) {
-
-    ConfigFileListResponseDTO result = fluentBitConfigService.getFluentBitConfigFileList(
-        requestInfo.getRequestId(), id, commitHash);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
       summary = "현재 Telegraf 설정 파일 내용 조회"
   )
   @CommonSuccessResponse
@@ -488,25 +377,7 @@ public class AgentController {
       @Parameter(description = "파일 경로") @RequestParam String path) {
 
     ConfigFileContentResponseDTO result = telegrafConfigService.getTelegrafConfigContent(
-        requestInfo.getRequestId(), id, null, path);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "특정 commit 시점의 Telegraf 설정 파일 내용 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/file/content/telegraf/{commitHash}")
-  public ResponseEntity<SuccessResponse<ConfigFileContentResponseDTO>> getTelegrafConfigFileContent(
-      @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id,
-      @Parameter(description = "Commit Hash") @PathVariable String commitHash,
-      @Parameter(description = "파일 경로") @RequestParam String path) {
-
-    ConfigFileContentResponseDTO result = telegrafConfigService.getTelegrafConfigContent(
-        requestInfo.getRequestId(), id, commitHash, path);
+        requestInfo.getRequestId(), id, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }
@@ -524,24 +395,6 @@ public class AgentController {
 
     ConfigFileContentResponseDTO result = fluentBitConfigService.getFluentBitConfigContent(
         requestInfo.getRequestId(), id, null, path);
-
-    return SuccessResponse.of(requestInfo.getRequestId(), result);
-  }
-
-  @Tag(name = "Agent Config API", description = "에이전트 설정 관리 API")
-  @Operation(
-      summary = "특정 commit 시점의 Fluent-Bit 설정 파일 내용 조회"
-  )
-  @CommonSuccessResponse
-  @CommonErrorResponse
-  @GetMapping("/{id}/agent/config/file/content/fluent-bit/{commitHash}")
-  public ResponseEntity<SuccessResponse<ConfigFileContentResponseDTO>> getFluentBitConfigFileContent(
-      @Parameter(description = "호스트 ID", example = "8b3558e7-b4b8-460d-960a-10bc57b8ef6b") @PathVariable String id,
-      @Parameter(description = "Commit Hash") @PathVariable String commitHash,
-      @Parameter(description = "파일 경로") @RequestParam String path) {
-
-    ConfigFileContentResponseDTO result = fluentBitConfigService.getFluentBitConfigContent(
-        requestInfo.getRequestId(), id, commitHash, path);
 
     return SuccessResponse.of(requestInfo.getRequestId(), result);
   }

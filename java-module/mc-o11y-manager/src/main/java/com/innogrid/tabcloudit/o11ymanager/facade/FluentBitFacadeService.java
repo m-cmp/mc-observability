@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FluentBitFacadeService {
 
-  private final GitFacadeService gitFacadeService;
   private final FileFacadeService fileFacadeService;
   private final HostService hostService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
@@ -79,16 +78,11 @@ public class FluentBitFacadeService {
         configContent, Agent.FLUENT_BIT,
         templateCount);
 
-    // 5.commitHash 업데이트
-    String commitHash = gitFacadeService.getConfigGitHash(requestInfo.getRequestId(),
-        hostConnectionInfo.getHostId(), Agent.FLUENT_BIT);
-    hostService.updateLogAgentConfigGitHash(hostId, commitHash);
-
-    // 6. task ID, task status 업데이트
+    // 5. task ID, task status 업데이트
     hostService.updateLogAgentTaskStatusAndTaskId(hostId, HostAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
-    // 7. 이력 남기기
+    // 6. 이력 남기기
     AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
         .requestId(requestInfo.getRequestId())
         .requestUserId(requestUserId)
@@ -99,7 +93,7 @@ public class FluentBitFacadeService {
 
     event.publishEvent(successEvent);
 
-    // 8. 스케줄러 등록
+    // 7. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
         SemaphoreInstallMethod.INSTALL, Agent.FLUENT_BIT, requestUserId);
   }

@@ -40,14 +40,6 @@ out/
 ### log files ###
 *.log*
 
-.diff_*
-.git_*
-
-*.key
-*.pid
-
-semaphore-cookie
-
 container-volume/
 /config/
 /applog/

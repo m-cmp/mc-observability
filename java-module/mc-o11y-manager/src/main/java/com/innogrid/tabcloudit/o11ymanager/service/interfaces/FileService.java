@@ -26,8 +26,6 @@ public interface FileService {
 
     void deleteDirectoryByHostId(String uuid);
 
-    void deleteDirectoryExceptGitByHostId(String uuid);
-
     String getFileContent(ClassPathResource classPathResource) throws FileReadingException;
 
     void appendConfig(ClassPathResource classPathResource, StringBuilder sb);

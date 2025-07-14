@@ -8,19 +8,12 @@ import com.innogrid.tabcloudit.o11ymanager.enums.AgentServiceStatus;
 import com.innogrid.tabcloudit.o11ymanager.enums.ResponseStatus;
 import com.innogrid.tabcloudit.o11ymanager.event.AgentHistoryEvent;
 import com.innogrid.tabcloudit.o11ymanager.event.AgentHistoryFailEvent;
-import com.innogrid.tabcloudit.o11ymanager.event.HostUpdateNotifySingleEvent;
-import com.innogrid.tabcloudit.o11ymanager.exception.agent.SshConnectionException;
 import com.innogrid.tabcloudit.o11ymanager.exception.host.*;
 import com.innogrid.tabcloudit.o11ymanager.global.aspect.request.RequestInfo;
 import com.innogrid.tabcloudit.o11ymanager.global.definition.TimestampDefinition;
-import com.innogrid.tabcloudit.o11ymanager.global.error.ErrorCode;
-import com.innogrid.tabcloudit.o11ymanager.global.error.ResourceNotExistsException;
 import com.innogrid.tabcloudit.o11ymanager.infrastructure.util.CheckUtil;
 import com.innogrid.tabcloudit.o11ymanager.mapper.host.ConfigMapper;
 import com.innogrid.tabcloudit.o11ymanager.mapper.host.HostMapper;
-import com.innogrid.tabcloudit.o11ymanager.model.agentHealth.SshConnection;
-import com.innogrid.tabcloudit.o11ymanager.model.config.GitCommit;
-import com.innogrid.tabcloudit.o11ymanager.model.host.HostAgentTaskStatus;
 import com.innogrid.tabcloudit.o11ymanager.model.host.HostStatus;
 import com.innogrid.tabcloudit.o11ymanager.repository.HostJpaRepository;
 import com.innogrid.tabcloudit.o11ymanager.service.AgentHealthCheckServiceImpl;
@@ -29,13 +22,9 @@ import com.innogrid.tabcloudit.o11ymanager.service.interfaces.FileService;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.HostService;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.SshService;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.TcpService;
-import javax.xml.transform.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,8 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +56,6 @@ public class HostFacadeService {
   private final HostJpaRepository hostJpaRepository;
 
   private final Map<String, HostResponseDTO> processingHost = new ConcurrentHashMap<>();
-  private final GitFacadeService gitFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private ExecutorService checkAgentsExecutor;
@@ -245,7 +231,6 @@ public class HostFacadeService {
     return result;
   }
 
-
   private void checkAgents() {
     try {
       List<HostResponseDTO> hostResponseDTOList = hostService.list().stream()
@@ -278,7 +263,6 @@ public class HostFacadeService {
       log.debug("HostService - Agent check failed: {}", e.getMessage(), e);
     }
   }
-
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void processHostCheck(HostResponseDTO hostResponseDTO) {
@@ -450,7 +434,6 @@ public class HostFacadeService {
     return results;
   }
 
-
   public HostStatisticsResponseDTO hostStatistics() {
 
     HostStatisticsResponseDTO hostStatisticsResponseDTO = new HostStatisticsResponseDTO();
@@ -485,16 +468,4 @@ public class HostFacadeService {
 
     return hostStatisticsResponseDTO;
   }
-
-  public List<ConfigHistoryDTO> getHostConfigHistory(String requestId, Agent agent, String id,
-      Integer page, Integer size) {
-    HostEntity host = hostDomainService.getHostById(requestId, id);
-
-    List<GitCommit> configHistory = gitFacadeService.getConfigHistory(requestId,
-        host.getId(), agent, page, size);
-
-    return configHistory.stream().map(configMapper::toHistoryDTO).toList();
-  }
-
-
 }

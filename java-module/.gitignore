@@ -42,4 +42,5 @@ out/
 .diff_*
 .git_*
 
+*.key
 *.pid

@@ -1,7 +1,6 @@
 package com.innogrid.tabcloudit.o11ymanager.facade;
 
 import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
-import com.innogrid.tabcloudit.o11ymanager.dto.host.HostDTO;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
 import com.innogrid.tabcloudit.o11ymanager.enums.AgentAction;
 import com.innogrid.tabcloudit.o11ymanager.enums.SemaphoreInstallMethod;
@@ -13,6 +12,8 @@ import com.innogrid.tabcloudit.o11ymanager.model.semaphore.Task;
 import com.innogrid.tabcloudit.o11ymanager.port.SemaphorePort;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.HostService;
 import jakarta.transaction.Transactional;
+
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -34,7 +35,6 @@ public class SchedulerFacadeService {
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
   private final SemaphorePort semaphorePort;
-  private final GitFacadeService gitFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private final ApplicationEventPublisher event;
@@ -80,11 +80,10 @@ public class SchedulerFacadeService {
               "Task timed out after {} minutes. Resetting status to IDLE. Host ID: {}, Agent: {}",
               maxWaitMinutes, hostId, agent);
 
-          switch (agent) {
-            case TELEGRAF ->
-                hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
-            case FLUENT_BIT ->
-                hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+          if (Objects.requireNonNull(agent) == Agent.TELEGRAF) {
+              hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+          } else if (agent == Agent.FLUENT_BIT) {
+              hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
           }
 
           throw new TimeoutException(
@@ -96,11 +95,11 @@ public class SchedulerFacadeService {
           action = getAgentActionFinished(method, agent);
           log.debug(action.toString());
           isSuccess = true;
-          log.debug(isSuccess ? "Task successful" : "Task failed");
+          log.debug("Task successful");
         } else if ("error".equals(currentTask.getStatus())) {
           action = getAgentActionFailed(method, agent);
           isSuccess = false;
-          revertLastCommit(requestId, hostId, action);
+          log.debug("Task failed");
         } else {
           return;
         }
@@ -156,13 +155,11 @@ public class SchedulerFacadeService {
               "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
               requestId, hostId, agent, action, requestUserId);
 
-          switch (agent) {
-            case TELEGRAF ->
-                hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
-            case FLUENT_BIT ->
-                hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+          if (agent == Agent.TELEGRAF) {
+              hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+          } else if (agent == Agent.FLUENT_BIT) {
+              hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
           }
-
         }
       }
     }, 0, checkIntervalSec, TimeUnit.SECONDS);
@@ -232,16 +229,5 @@ public class SchedulerFacadeService {
     }
 
     return action;
-  }
-
-  // TODO  해결 필요
-  private void revertLastCommit(String requestId, String hostId, AgentAction action) {
-    if (action == AgentAction.MONITORING_AGENT_UPDATE_FAILED ||
-        action == AgentAction.MONITORING_AGENT_CONFIG_ROLLBACK_FAILED) {
-      gitFacadeService.revertLastCommit(requestId, hostId, Agent.TELEGRAF);
-    } else if (action == AgentAction.LOG_AGENT_UPDATE_FAILED ||
-        action == AgentAction.LOG_AGENT_CONFIG_ROLLBACK_FAILED) {
-      gitFacadeService.revertLastCommit(requestId, hostId, Agent.FLUENT_BIT);
-    }
   }
 }

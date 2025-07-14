@@ -2,13 +2,9 @@ package com.innogrid.tabcloudit.o11ymanager.facade;
 
 import com.innogrid.tabcloudit.o11ymanager.dto.host.ConfigFileDTO;
 import com.innogrid.tabcloudit.o11ymanager.dto.host.ConfigTemplateFileListResponseDTO;
-import com.innogrid.tabcloudit.o11ymanager.dto.host.HostConnectionDTO;
 import com.innogrid.tabcloudit.o11ymanager.enums.Agent;
 import com.innogrid.tabcloudit.o11ymanager.exception.config.FileReadingException;
-import com.innogrid.tabcloudit.o11ymanager.exception.git.GitCommitContentsException;
 import com.innogrid.tabcloudit.o11ymanager.global.definition.ConfigDefinition;
-import com.innogrid.tabcloudit.o11ymanager.model.agentHealth.AgentCommandResult;
-import com.innogrid.tabcloudit.o11ymanager.model.agentHealth.SshConnection;
 import com.innogrid.tabcloudit.o11ymanager.port.SshPort;
 import com.innogrid.tabcloudit.o11ymanager.service.interfaces.FileService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -90,92 +85,6 @@ public class FileFacadeService {
     return agentConfigDir;
   }
 
-
-  //agent config 보내기
-  public void sendConfigs(String requestId, HostConnectionDTO host, Agent agent) {
-
-    Path agentConfigPath = resolveAgentConfigPath(host.getHostId(), agent);
-    File agentConfigDir = agentConfigPath.toFile();
-
-    String remotePath = getAgentRemotePath(agent);
-
-    List<File> filesToSend = fileService.getFilesRecursively(agentConfigDir);
-    if (filesToSend.isEmpty()) {
-      log.warn("[{}] No files to send for {} at {}", requestId, agent, agentConfigDir);
-      return;
-    }
-
-    SshConnection sshConnection = null;
-    try {
-      String username = host.getUserId();
-      String ip = host.getIp();
-      int port = host.getPort();
-      String password = host.getPassword();
-
-      sshConnection = sshPort.openSession(username, ip, port, password);
-
-      String mkdirCmd = "mkdir -p " + remotePath;
-      AgentCommandResult mkdirResult = sshPort.executeCommand(sshConnection, mkdirCmd);
-      if (mkdirResult.getExitCode() != 0) {
-        String errMsg = "Failed to create remote directory: " + remotePath + ", Error: "
-                + mkdirResult.getError();
-        log.error(errMsg);
-        throw new IOException(errMsg);
-      }
-
-      for (File file : filesToSend) {
-        if (file.isDirectory()) {
-          continue;
-        }
-
-        String relativeFilePath = agentConfigDir.toPath().relativize(file.toPath()).toString();
-        String remoteFilePath = remotePath + "/" + relativeFilePath;
-
-        String remoteParentDir = new File(remoteFilePath).getParent();
-        if (remoteParentDir != null) {
-          String mkdirParentCmd = "mkdir -p " + remoteParentDir;
-          AgentCommandResult mkdirParentResult = sshPort.executeCommand(sshConnection,
-                  mkdirParentCmd);
-          if (mkdirParentResult.getExitCode() != 0) {
-            log.warn("Failed to create remote parent directory: {}, Error: {}",
-                    remoteParentDir, mkdirParentResult.getError());
-          }
-        }
-
-        String fileContent = fileService.singleFileReader(file);
-
-        fileContent = fileContent.replace("'", "'\\''");
-
-        String writeCmd = "cat > '" + remoteFilePath + "' << 'EOL'\n" + fileContent + "\nEOL";
-        AgentCommandResult writeResult = sshPort.executeCommand(sshConnection, writeCmd);
-
-        if (writeResult.getExitCode() != 0) {
-          log.error("Failed to write file to remote path: {}, Error: {}",
-                  remoteFilePath, writeResult.getError());
-        } else {
-          log.info("Successfully transferred file to: {}", remoteFilePath);
-        }
-      }
-
-      log.info("Successfully sent all configuration files from {} to remote path: {}",
-              agentConfigDir, remotePath);
-
-    } catch (Exception e) {
-      String errMsg = "Failed to send config files to remote host: " + e.getMessage();
-      log.error(errMsg, e);
-      throw new GitCommitContentsException();
-    } finally {
-      if (sshConnection != null) {
-        try {
-          sshConnection.getSession().close();
-          sshConnection.getClient().stop();
-        } catch (Exception e) {
-          log.warn("Error closing SSH connection: {}", e.getMessage());
-        }
-      }
-    }
-  }
-
   public ConfigTemplateFileListResponseDTO getFluentBitTemplateFileList() {
 
     List<ConfigFileDTO> files = new ArrayList<>();
@@ -245,9 +154,4 @@ public class FileFacadeService {
         .files(files)
         .build();
   }
-
-
-
-
-
 }
