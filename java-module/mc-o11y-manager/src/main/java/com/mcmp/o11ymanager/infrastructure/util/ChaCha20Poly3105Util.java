@@ -23,7 +23,7 @@ public class ChaCha20Poly3105Util {
     private static final int KEY_FILE_SIZE = 8192; // 키 파일 크기
     private static final int NONCE_SIZE = 12;
     private static final int KEY_SIZE = 32;
-    public static final String KEY_FILE_PATH = "o11y-manager.key";
+    public static final String KEY_FILE_PATH = "mc-o11y-manager.key";
 
     public static void generateKeyFile() throws Exception {
         SecureRandom random = new SecureRandom();

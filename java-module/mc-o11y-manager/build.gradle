@@ -52,12 +52,12 @@ bootJar {
 
 tasks.register('runSpringBootInBackground') {
     doLast {
-        println 'Starting o11y-manager in the background...'
+        println 'Starting mc-o11y-manager in the background...'
         def processBuilder = new ProcessBuilder('java', '-jar', 'build/libs/mc-o11y-manager.jar')
-        processBuilder.redirectOutput(new File("build/o11y-manager.log"))
-        processBuilder.redirectError(new File("build/o11y-manager-error.log"))
+        processBuilder.redirectOutput(new File("build/mc-o11y-manager.log"))
+        processBuilder.redirectError(new File("build/mc-o11y-manager-error.log"))
         processBuilder.start()
-        println 'o11y-manager started in the background (logs in build/o11y-manager.log).'
+        println 'mc-o11y-manager started in the background (logs in build/mc-o11y-manager.log).'
 
         println 'Waiting for 20 seconds before generating Swagger documentation...'
         Thread.sleep(20000)
@@ -66,18 +66,18 @@ tasks.register('runSpringBootInBackground') {
 
 tasks.register('stopSpringBoot') {
     doLast {
-        println 'Stopping o11y-manager...'
-        def pidFile = file("../o11y-manager.pid")
+        println 'Stopping mc-o11y-manager...'
+        def pidFile = file("../mc-o11y-manager.pid")
         println pidFile.path
         if (pidFile.exists()) {
             def pid = pidFile.text.trim()
             exec {
                 commandLine 'kill', '-9', pid
             }
-            println "o11y-manager stopped (PID: ${pid})"
+            println "mc-o11y-manager stopped (PID: ${pid})"
             pidFile.delete()
         } else {
-            println "PID file not found, o11y-manager might not be running."
+            println "PID file not found, mc-o11y-manager might not be running."
         }
     }
 }

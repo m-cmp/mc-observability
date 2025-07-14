@@ -16,12 +16,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAsync
 @EnableJpaAuditing
-public class O11yManagerApplication {
+public class McO11yManagerApplication {
 
     public static void main(String[] args) {
         String pid = ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
 
-        String pidFilePath = "o11y-manager.pid";
+        String pidFilePath = "mc-o11y-manager.pid";
 
         try (FileWriter fileWriter = new FileWriter(pidFilePath)) {
             fileWriter.write(pid);
@@ -30,6 +30,6 @@ public class O11yManagerApplication {
             System.err.println("Error creating PID file: " + e.getMessage());
         }
 
-        SpringApplication.run(O11yManagerApplication.class, args);
+        SpringApplication.run(McO11yManagerApplication.class, args);
     }
 }

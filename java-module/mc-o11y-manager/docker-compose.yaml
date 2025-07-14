@@ -1,10 +1,10 @@
 services:
-  o11y-manager:
+  mc-o11y-manager:
     build:
       context: .
       dockerfile: Dockerfile
-    image: o11y-manager:latest
-    container_name: o11y-manager
+    image: mc-o11y-manager:latest
+    container_name: mc-o11y-manager
     restart: always
     network_mode: "host"
     volumes:

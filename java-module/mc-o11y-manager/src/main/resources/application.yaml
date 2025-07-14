@@ -7,11 +7,11 @@ deploy:
 
 spring:
   application:
-    name: o11y-manager
+    name: mc-o11y-manager
   datasource:
-    url: jdbc:mariadb://127.0.0.1:3306/agent
-    username: o11ymanager
-    password: o11ymanager
+    url: jdbc:mariadb://mc-o11y-mariadb:3306/mc_observability
+    username: mc-agent
+    password: mc-agent
     hikari:
       max-lifetime: 150000
   jpa:

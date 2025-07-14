@@ -1,6 +1,6 @@
 SHELL = /bin/bash
 
-MANAGER := "o11y-manager"
+MANAGER := "mc-o11y-manager"
 PID_FILE_MANAGER := $(MANAGER).pid
 
 .PHONY: all build stop run_jar run run_docker stop stop_docker clean help
@@ -57,8 +57,8 @@ stop_docker: ## Stop Docker containers
 
 build_docker: build
 	@docker compose build --no-cache
-	@docker save o11y-manager:latest -o o11y-manager_latest.tar
-	@xz -9 -T0 -v o11y-manager_latest.tar
+	@docker save mc-o11y-manager:latest -o mc-o11y-manager_latest.tar
+	@xz -9 -T0 -v mc-o11y-manager_latest.tar
 
 swag: stop build ## Generate Swagger doc YAML file
 	@echo Generating Swagger doc YAML file...
