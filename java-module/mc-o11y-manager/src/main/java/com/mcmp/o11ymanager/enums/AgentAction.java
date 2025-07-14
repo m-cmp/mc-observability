@@ -9,10 +9,6 @@ public enum AgentAction {
     HOST_UPDATED("Host updated"),
     HOST_DELETED("Host deleted"),
 
-    VSPHERE_HOST_CREATED("vSphere Host created"),
-    VSPHERE_HOST_UPDATED("vSphere Host updated"),
-    VSPHERE_HOST_DELETED("vSphere Host deleted"),
-
     MONITORING_AGENT_INSTALL_STARTED("Monitoring Agent Install Started"),
     MONITORING_AGENT_INSTALL_FINISHED("Monitoring Agent Install Finished"),
     MONITORING_AGENT_INSTALL_FAILED("Monitoring Agent Install Failed"),

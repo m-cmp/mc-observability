@@ -104,27 +104,6 @@ import java.lang.annotation.Target;
         ),
         @ApiResponse(
                 responseCode = "409",
-                description = "연결된 vspehre들이 존재합니다.",
-                content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(implementation = ErrorResponse.class),
-                        examples = {
-                                @ExampleObject(
-                                        name = "VsphereNotDeletedExample",
-                                        value = "{\n" +
-                                                "  \"timestamp\": \"2025-04-14T10:02:00\",\n" +
-                                                "  \"status\": \"ERROR\",\n" +
-                                                "  \"code\": \"1003\",\n" +
-                                                "  \"message\": \"연결된 vspehre들이 존재합니다.\",\n" +
-                                                "  \"requestId\": \"uuid-409-vsphere\",\n" +
-                                                "  \"errors\": []\n" +
-                                                "}"
-                                )
-                        }
-                )
-        ),
-        @ApiResponse(
-                responseCode = "409",
                 description = "호스트에서 에이전트 관련 작업이 진행 중입니다.",
                 content = @Content(
                         mediaType = "application/json",
