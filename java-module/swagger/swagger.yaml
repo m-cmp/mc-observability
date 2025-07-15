@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: '0.2.3'
+  version: '0.4.0'
   title: mc-o11y-manager API Documentation
   description: API documentation for mc-o11y-manager
   contact: {}
@@ -1752,6 +1752,194 @@ paths:
               rs_code: '200'
               rs_msg: Success
           headers: {}
+  /api/o11y/insight/log-analysis/model:
+    get:
+      description: ''
+      summary: GetLogAnalysisModelOptions
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: GetLogAnalysisModelOptions
+      deprecated: false
+      produces:
+        - application/json
+      parameters: [ ]
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLogAnalysisModel'
+          headers: { }
+  /api/o11y/insight/log-analysis/session:
+    get:
+      description: ''
+      summary: GetLogAnalysisSessions
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: GetLogAnalysisSessions
+      deprecated: false
+      produces:
+        - application/json
+      parameters: [ ]
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLogAnalysisSessions'
+          headers: { }
+    post:
+      description: ''
+      summary: PostLogAnalysisSession
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: PostLogAnalysisSession
+      deprecated: false
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostSessionBody'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLogAnalysisSession'
+          headers: { }
+    delete:
+      description: ''
+      summary: DeleteLogAnalysisSession
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: DeleteLogAnalysisSession
+      deprecated: false
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          type: string
+          description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLogAnalysisSession'
+          headers: { }
+  /api/o11y/insight/log-analysis/session/{sessionId}/history:
+    get:
+      description: ''
+      summary: GetLogAnalysisSessionHistory
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: GetLogAnalysisSessionHistory
+      deprecated: false
+      produces:
+        - application/json
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          type: string
+          description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodySessionHistory'
+          headers: { }
+  /api/o11y/insight/log-analysis/query:
+    post:
+      description: ''
+      summary: PostLogAnalysisQuery
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: PostLogAnalysisQuery
+      deprecated: false
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostQueryBody'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyQuery'
+          headers: { }
+  /api/o11y/insight/log-analysis/openai/api_keys:
+    post:
+      description: ''
+      summary: PostOpenAIAPIKey
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: PostOpenAIAPIKey
+      deprecated: false
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostAPIKeyBody'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyOpenAIAPIKey'
+          headers: { }
+    delete:
+      description: ''
+      summary: DeleteOpenAIAPIKey
+      tags:
+        - '[Insight] Log Analysis'
+      operationId: DeleteOpenAIAPIKey
+      deprecated: false
+      produces:
+        - application/json
+      parameters: [ ]
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyOpenAIAPIKey'
+          headers: { }
   /api/o11y/readyz:
     get:
       description: ''
@@ -3122,6 +3310,225 @@ definitions:
         default: Success
     required:
     - data
+  LogAnalysisModel:
+    title: LogAnalysisModel
+    type: object
+    properties:
+      provider:
+        $ref: '#/definitions/Provider'
+      model_name:
+        type: array
+        items:
+          type: string
+    required:
+      - provider
+      - model_name
+  LogAnalysisSession:
+    title: LogAnalysisSession
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int32
+      user_id:
+        type: string
+      session_id:
+        type: string
+      provider:
+        type: string
+      model_name:
+        type: string
+      regdate:
+        type: string
+        format: date-time
+    required:
+      - seq
+      - user_id
+      - session_id
+      - provider
+      - model_name
+      - regdate
+  Message:
+    title: Message
+    type: object
+    properties:
+      message_type:
+        type: string
+      message:
+        type: string
+    required:
+      - message_type
+      - message
+  MetricType:
+    title: MetricType
+    type: string
+    enum:
+      - cpu
+      - mem
+  OpenAIAPIKey:
+    title: OpenAIAPIKey
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int32
+      api_key:
+        type: string
+    required:
+      - seq
+      - api_key
+  PostAPIKeyBody:
+    title: PostAPIKeyBody
+    type: object
+    properties:
+      api_key:
+        description: OpenAI API key
+        type: string
+        minLength: 20
+    required:
+      - api_key
+  PostQueryBody:
+    title: PostQueryBody
+    type: object
+    properties:
+      session_id:
+        type: string
+      message:
+        type: string
+    required:
+      - session_id
+      - message
+  PostSessionBody:
+    title: PostSessionBody
+    type: object
+    properties:
+      provider:
+        type: string
+      model_name:
+        type: string
+    required:
+      - provider
+      - model_name
+  ResBodyLogAnalysisModel:
+    title: ResBodyLogAnalysisModel
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/LogAnalysisModel'
+    required:
+      - data
+  ResBodyLogAnalysisSession:
+    title: ResBodyLogAnalysisSession
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/LogAnalysisSession'
+    required:
+      - data
+  ResBodyLogAnalysisSessions:
+    title: ResBodyLogAnalysisSessions
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/LogAnalysisSession'
+    required:
+      - data
+  ResBodyOpenAIAPIKey:
+    title: ResBodyOpenAIAPIKey
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/OpenAIAPIKey'
+    required:
+      - data
+  ResBodySessionHistory:
+    title: ResBodySessionHistory
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/SessionHistory'
+  SessionHistory:
+    title: SessionHistory
+    type: object
+    properties:
+      messages:
+        type: array
+        items:
+          $ref: '#/definitions/Message'
+      seq:
+        type: integer
+        format: int32
+      user_id:
+        type: string
+      session_id:
+        type: string
+      provider:
+        type: string
+      model_name:
+        type: string
+      regdate:
+        type: string
+        format: date-time
+    required:
+    - messages
+    - seq
+    - user_id
+    - session_id
+    - provider
+    - model_name
+    - regdate
+  ResBodyQuery:
+    title: ResBodyQuery
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/Message'
+  Provider:
+    title: Provider
+    type: string
+    enum:
+    - ollama
+    - openai
   TargetType:
     title: TargetType
     description: An enumeration.
