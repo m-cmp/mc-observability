@@ -318,6 +318,7 @@ services:
       - 9001:9001
     environment:
       - TZ=Asia/Seoul
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
     volumes:
       - ../python/insight/log:/mc-insight/log
     networks:
@@ -370,3 +371,22 @@ services:
         # Keep the server on no matter what
         sleep infinity
             "
+
+  mcp-grafana:
+    image: mcp/grafana:latest
+    container_name: mc-o11y-mcp-grafana
+    restart: always
+    tty: true
+    stdin_open: true
+    ports:
+      - "8000:8000"
+    environment:
+      - GRAFANA_URL=${GRAFANA_URL:-}
+      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+    command:
+      - "--disable-sift"
+      - "--disable-incident"
+      - "--disable-search"
+    networks:
+      - internal_network
+      - external_network
