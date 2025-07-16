@@ -221,6 +221,23 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 
+CREATE TABLE `mc_o11y_insight_openai_api_key` (
+  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `API_KEY` text NOT NULL,
+  PRIMARY KEY (`SEQ`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE `mc_o11y_insight_chat_session` (
+  `SEQ` bigint(20) NOT NULL AUTO_INCREMENT,
+  `USER_ID` varchar(100) NOT NULL DEFAULT '1',
+  `SESSION_ID` varchar(100) NOT NULL,
+  `PROVIDER` varchar(20) NOT NULL,
+  `MODEL_NAME` varchar(20) NOT NULL,
+  `REGDATE` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`SEQ`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
+
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
