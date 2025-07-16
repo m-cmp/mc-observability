@@ -1,0 +1,30 @@
+package com.mcmp.o11ymanager.repository;
+
+import com.mcmp.o11ymanager.entity.TargetEntity;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface TargetJpaRepository extends JpaRepository<TargetEntity, String> {
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("SELECT CASE WHEN COUNT(h) > 0 THEN true ELSE false END FROM TargetEntity h WHERE h.id = :id")
+  boolean existsById(@NonNull String id);
+
+  List<TargetEntity> findByIpAndPort(String ip, int port);
+
+  Optional<TargetEntity> findById(String id);
+
+  List<TargetEntity> findAll();
+
+  Optional<TargetEntity> findByNsIdAndMciId(String nsId, String mciId);
+  Optional<TargetEntity> findByNsIdAndMciIdTargetId(String nsId, String mciId, String targetId);
+
+}
