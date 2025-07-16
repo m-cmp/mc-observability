@@ -1,0 +1,31 @@
+- name: Restart CMP Fluent Bit service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_become_password: "{{ target_password }}"
+  shell: "systemctl restart cmp-fluent-bit-{{ site_code }}"
+
+- name: Run CMP Fluent Bit status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_become_password: "{{ target_password }}"
+  raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
+  register: cmp_fluent_bit_status
+  failed_when: cmp_fluent_bit_status.rc not in [0, 3]
+
+- name: Display Fluent Bit status
+  debug:
+    var: cmp_fluent_bit_status

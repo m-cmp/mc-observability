@@ -1,0 +1,14 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: python3
+    config_content: "{{ config_content }}"
+  tasks:
+    - name: Check variables
+      include_role:
+        name: check
+
+    - name: Config Update Operation
+      include_role:
+        name: config-update
+

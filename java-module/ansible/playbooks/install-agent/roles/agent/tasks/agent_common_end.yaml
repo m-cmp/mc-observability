@@ -1,0 +1,38 @@
+- name: Remove temporary busybox
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_become_password: "{{ target_password }}"
+  raw: "rm -f /tmp/busybox_{{ request_id }}"
+
+- name: Remove Remote Common Agent Install File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_become_password: "{{ target_password }}"
+  raw: "rm -f /tmp/cmp-agent-common_{{ request_id }}.tar.gz"
+
+- name: Remove Remote Common Agent Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_become_password: "{{ target_password }}"
+  raw: "rm -f /tmp/cmp-agent_install_common_{{ request_id }}"

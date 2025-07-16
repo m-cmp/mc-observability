@@ -1,0 +1,10 @@
+FROM alpine:3.22.0
+
+RUN apk --no-cache add bash curl tzdata
+RUN echo "Asia/Seoul" >  /etc/timezone
+RUN cp -f /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+
+COPY ./minio /minio
+RUN chmod +x /minio/run.sh
+
+ENTRYPOINT ["/minio/run.sh"]

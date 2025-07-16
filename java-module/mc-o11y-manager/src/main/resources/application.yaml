@@ -54,16 +54,16 @@ springdoc:
       encoding: UTF-8
 
 loki:
-  url: http://192.168.110.24:3100
+  url: http://mc-o11y-loki:3100
   endpoints:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
 
 influxdb:
-  url: http://192.168.110.48:8086
-  database: cmp
-  username: tabcloudit
-  password: qwe1212!Q
+  url: http://mc-o11y-influxdb:8086
+  database: mc-observability
+  username: mc-agent
+  password: mc-agent
 
 health:
   check-interval: 10000
@@ -85,7 +85,7 @@ feign:
       LokiFeignClient: # LokiFeignClient에 대한 특별 설정
         loggerLevel: full
   semaphore:
-    url: http://127.0.0.1:13000
+    url: http://mc-o11y-infra:3000
     username: admin
     password: semaphorepass
     project-name: ansible

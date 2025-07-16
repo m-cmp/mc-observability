@@ -18,6 +18,11 @@ services:
       - external_network
     ports:
       - 18080:18080
+    depends_on:
+      mc-o11y-mariadb:
+        condition: service_healthy
+      mc-o11y-infra:
+        condition: service_healthy
     environment:
       - TARGET_ID=mc-o11y
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
@@ -32,8 +37,47 @@ services:
       - ./mc-o11y-manager/applog:/applog
       # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
-      start_period: 120s
+      start_period: 30s
       test: 'curl -s http://127.0.0.1:18080/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-o11y-infra:
+    # image: cloudbaristaorg/mc-observability-infra:edge
+    build:
+      context: .
+      dockerfile: Dockerfile.semaphore
+    image: mc-o11y-infra:latest
+    container_name: mc-o11y-infra
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 33000:3000
+    depends_on:
+      mc-o11y-mariadb:
+        condition: service_healthy
+    environment:
+      SEMAPHORE_DB_DIALECT: mysql
+      SEMAPHORE_DB_HOST: mc-o11y-mariadb
+      SEMAPHORE_DB_NAME: semaphore
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: semaphorepass
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: semaphorepass
+      SEMAPHORE_ADMIN_NAME: rnd-admin
+      SEMAPHORE_ADMIN_EMAIL: rnd-admin@innogrid.com
+      MAX_TASK_DURATION_SEC: 600
+      SEMAPHORE_MAX_PARALLEL_TASKS: 10
+      SEMAPHORE_MAX_TASKS_PER_TEMPLATE: 10
+      ANSIBLE_HOST_KEY_CHECKING: False
+    volumes:
+      - ./ansible:/ansible
+    healthcheck:
+      start_period: 30s
+      test: 'curl -s http://127.0.0.1:3000/api/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
       retries: 30
@@ -60,6 +104,12 @@ services:
       - MARIADB_USER=mc-agent
       - MARIADB_DATABASE=mc_observability
       - MARIADB_PASSWORD=mc-agent
+    healthcheck:
+      start_period: 30s
+      test: 'mysql -uroot -p"$$MARIADB_ROOT_PASSWORD" -e"SELECT 1;" || exit 1'
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   # CB-Tumblebug
   cb-tumblebug:
@@ -234,23 +284,157 @@ services:
       retries: 3
       start_period: 10s
 
-  influxdb:
+  mc-o11y-influxdb:
     image: influxdb:1.11.8
-    container_name: mc-o11y-influx
+    container_name: mc-o11y-influxdb
     restart: always
+    networks:
+      - internal_network
+      - external_network
     ports:
       - 8086:8086
     environment:
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
-      - INFLUXDB_DB="mc-observability"
+      - INFLUXDB_DB=mc-observability
     volumes:
       - /docker/influxdb/config:/etc/influxdb
       - /docker/influxdb/var/lib/influxdb:/root/.influxdb
       - ./influxdb_init:/docker-entrypoint-initdb.d
+    healthcheck:
+      start_period: 30s
+      test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-o11y-loki:
+    image: grafana/loki:3.4.2
+    container_name: mc-o11y-loki
+    restart: always
     networks:
       - internal_network
       - external_network
+    ports:
+      - "3100:3100"
+    depends_on:
+      mc-o11y-loki-init-volumes:
+        condition: service_completed_successfully
+      mc-o11y-minio:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./loki-conf/config.yml:/etc/loki/local-config.yaml
+      - /docker/loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      start_period: 30s
+      test: 'wget --quiet --spider http://127.0.0.1:3100/metrics || exit 1'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-o11y-loki-init-volumes:
+    image: busybox:stable
+    container_name: mc-o11y-loki-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 10001:10001 /loki"]
+    volumes:
+      - /docker/loki_data:/loki
+    user: root
+    init: true
+    networks:
+      - internal_network
+
+  mc-o11y-minio:
+    # image: cloudbaristaorg/mc-observability-minio:edge
+    build:
+      context: .
+      dockerfile: Dockerfile.minio
+    image: mc-o11y-minio:latest
+    container_name: mc-o11y-minio
+    restart: always
+    networks:
+      - internal_network
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=mc-agent
+    volumes:
+      - /docker/minio_data:/minio/data
+    healthcheck:
+      start_period: 30s
+      test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-o11y-grafana:
+    # image: cloudbaristaorg/mc-observability-grafana:edge
+    build:
+      context: .
+      dockerfile: Dockerfile.grafana
+    image: mc-o11y-grafana:latest
+    container_name: mc-o11y-grafana
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - "8443:8443"
+    depends_on:
+      mc-o11y-grafana-init-volumes:
+        condition: service_completed_successfully
+    environment:
+      - TZ=Asia/Seoul
+      - GF_DATE_FORMATS_DEFAULT_TIMEZONE=Asia/Seoul
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=mc-agent
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_LOG_FILTERS=debug
+      - GF_ALERTING_PROVISIONING_ENABLED=true
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_SMTP_ENABLED=true
+      - GF_ALERTING_EVALUATION_INTERVAL=10s
+      - ALARM_END_POINT_URL=http://mc-o11y-alarm:8888/api/alarm/send-alarm
+      - ALARM_END_POINT_USERNAME=admin
+      - ALARM_END_POINT_PASSWORD=mc-agent
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - /docker/grafana_data/data:/var/lib/grafana
+      - /docker/grafana_data/log:/var/log/grafana
+    healthcheck:
+      start_period: 30s
+      test: |
+        curl -s http://127.0.0.1:3000
+        STATUS=`echo $$?`
+        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
+          exit 1
+        fi
+        curl -k -s https://127.0.0.1:8443
+        STATUS=`echo $$?`
+        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
+          exit 1
+        fi
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-o11y-grafana-init-volumes:
+    image: busybox:stable
+    container_name: mc-o11y-grafana-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana"]
+    volumes:
+      - /docker/grafana_data/data:/var/lib/grafana
+      - /docker/grafana_data/log:/var/log/grafana
+    user: root
+    init: true
+    networks:
+      - internal_network
 
   chronograf:
     image: chronograf:1.9.4
@@ -286,7 +470,7 @@ services:
       - 9002:9002
     environment:
       - TZ=Asia/Seoul
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-o11y-maria:3306/mc_airflow
     networks:
       - internal_network
       - external_network
@@ -324,3 +508,9 @@ services:
         # Keep the server on no matter what
         sleep infinity
             "
+    healthcheck:
+      start_period: 30s
+      test: 'curl -s http://127.0.0.1:9002 ; STATUS=`echo $?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30

@@ -1,0 +1,18 @@
+- hosts: 127.0.0.1
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: python3
+    install_method: "{{ install_method | default('install') }}"
+  tasks:
+    - name: Check variables
+      include_role:
+        name: check
+
+    - name: Agent Operation
+      include_role:
+        name: agent
+
+    - name: Config Update Operation
+      include_role:
+        name: config-update
+      when: install_method == 'install'

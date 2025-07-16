@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://mc-o11y-influxdb:8086
+    version: 1
+    editable: false
+    database: mc-observability
+    user: mc-agent
+    secureJsonData:
+      password: mc-agent
+    jsonData:
+      httpMode: GET
