@@ -18,9 +18,9 @@ router = APIRouter()
     description="",
     # responses="",
     response_model=ResBodyLogAnalysisModel,
-    operation_id="GetLogAnalysisModel"
+    operation_id="GetLogAnalysisModelOptions"
 )
-async def get_log_analysis_model(db: Session = Depends(get_db)):
+async def get_log_analysis_model_options(db: Session = Depends(get_db)):
     config = ConfigManager()
     model_info_config = config.get_model_config()
 
@@ -34,7 +34,7 @@ async def get_log_analysis_model(db: Session = Depends(get_db)):
     # description="",
     # responses="",
     response_model=ResBodyLogAnalysisSessions,
-    operation_id="GetLogAnalysisModelOptions"
+    operation_id="GetLogAnalysisSessions"
 )
 async def get_log_analysis_session(db: Session = Depends(get_db)):
     log_analysis_service = LogAnalysisService(db=db)
@@ -119,7 +119,7 @@ async def query_log_analysis(
     response_model=ResBodyOpenAIAPIKey,
     operation_id="PostOpenAIAPIKey"
 )
-async def create_api_key(
+async def post_api_key(
     body_params: PostAPIKeyBody,
     db: Session = Depends(get_db)
 ):

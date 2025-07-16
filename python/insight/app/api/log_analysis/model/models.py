@@ -15,6 +15,6 @@ class LogAnalysisChatSession(Base):
     REGDATE = Column(DateTime)
 
 class OpenAIAPIKey(Base):
-    __tablename__ = "mc_o11y_openai_api_key"
+    __tablename__ = "mc_o11y_insight_openai_api_key"
     SEQ = Column(Integer, primary_key=True)
     API_KEY = Column(Text, nullable=False)
