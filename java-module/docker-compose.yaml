@@ -74,7 +74,7 @@ services:
     volumes:
       - ./conf/setup.env:/app/conf/setup.env
       - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
-      - ~/.cloud-barista/credentials.yaml.enc.:/app/conf/credentials.yaml.enc
+      - ~/.cloud-barista/credentials.yaml.enc:/app/conf/credentials.yaml.enc
       - /docker/cb-tumblebug-container/meta_db/:/app/meta_db/
       - /docker/cb-tumblebug-container/log/:/app/log/
     environment:
