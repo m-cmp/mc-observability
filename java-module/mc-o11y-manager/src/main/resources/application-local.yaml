@@ -1,0 +1,10 @@
+server:
+  port: 18089
+
+spring:
+  application:
+    name: o11y-manager
+  datasource:
+    url: jdbc:mariadb://127.0.0.1:3306/agent
+    username: root
+    password: qwe1212!Q
