@@ -7,7 +7,7 @@ server:
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://${DATABASE_HOST:mc-o11y-maria}:3306/${DATABASE_NAME:mc_observability}?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul
+    url: jdbc:mariadb://${DATABASE_HOST:mc-observability-maria}:3306/${DATABASE_NAME:mc_observability}?useUnicode=true&characterEncoding=utf8&serverTimeZone=Asia/Seoul
     username: ${DATABASE_ID:mc-agent}
     password: ${DATABASE_PW:mc-agent}
   mvc:
@@ -69,7 +69,7 @@ feign:
     id: ${SPIDER_ID:}
     pw: ${SPIDER_PW:}
     monitoring:
-      influxdb_url: ${SPIDER_MONITORING_INFLUXDB_URL:http://mc-o11y-influx:8086}
+      influxdb_url: ${SPIDER_MONITORING_INFLUXDB_URL:http://mc-observability-influx:8086}
       influxdb_database: ${SPIDER_MONITORING_INFLUXDB_DATABASE:mc-observability}
       influxdb_retention_policy: ${SPIDER_MONITORING_INFLUXDB_RETENTION_POLICY:autogen}
       influxdb_username: ${SPIDER_MONITORING_INFLUXDB_USERNAME:mc-agent}
@@ -83,4 +83,4 @@ settings:
   is_hosted: false
   token_rotation_enabled: false
 
-agent_manager_ip: ${AGENT_MANAGER_IP:http://mc-o11y-manager:18080}
+agent_manager_ip: ${AGENT_MANAGER_IP:http://mc-observability-manager:18080}

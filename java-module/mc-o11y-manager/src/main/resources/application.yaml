@@ -26,4 +26,4 @@ feign:
     id: ${SPIDER_ID:}
     pw: ${SPIDER_PW:}
   insight:
-    url: ${INSIGHT_URL:http://mc-o11y-insight:9001}
+    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
