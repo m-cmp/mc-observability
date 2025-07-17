@@ -19,7 +19,6 @@ public class HostCustomRepo {
 
   private final HostJpaRepository hostJpaRepository;
 
-
   public HostEntity save(String requestId, HostEntity input, boolean isUpdate) {
     LocalDateTime now = LocalDateTime.now();
     HostEntity entity;

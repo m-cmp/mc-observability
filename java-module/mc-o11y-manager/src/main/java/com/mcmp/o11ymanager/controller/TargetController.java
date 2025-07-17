@@ -9,6 +9,7 @@ import com.mcmp.o11ymanager.dto.host.HostStatisticsResponseDTO;
 import com.mcmp.o11ymanager.dto.host.HostUpdateDTO;
 import com.mcmp.o11ymanager.dto.host.ResultDTO;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
 import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.facade.HistoryFacadeService;
@@ -42,15 +43,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring")
-public class TargetController { ;
+public class TargetController {
 
   private final TargetFacadeService targetFacadeService;
+
+  @GetMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> getTarget(
       @PathVariable String nsId,
       @PathVariable String mciId,
       @PathVariable String targetId
   ) {
     return new ResBody<>(targetFacadeService.getTarget(nsId, mciId, targetId));
+  }
+
+  @PostMapping("/{nsId}/{mciId}/target/{targetId}")
+  public ResBody<TargetDTO> postTarget(
+      @PathVariable String nsId,
+      @PathVariable String mciId,
+      @PathVariable String targetId,
+      @RequestBody @Valid TargetRegisterDTO dto
+  ) {
+    dto.setId(targetId);
+    dto.setNsId(nsId);
+    dto.setMciId(mciId);
+    return new ResBody<>(targetFacadeService.postTarget(dto));
   }
 
   @PutMapping("/{nsId}/{mciId}/target/{targetId}")
@@ -90,6 +106,4 @@ public class TargetController { ;
   public ResBody<List<TumblebugNS.NS>> getNamespaceList() {
     return new ResBody<>(targetFacadeService.getNamespaceList());
   }
-
-
 }
