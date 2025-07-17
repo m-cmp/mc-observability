@@ -23,7 +23,7 @@ services:
       - SPIDER_URL=${SPIDER_URL:-http://cb-spider:1024}
       - SPIDER_ID=${SPIDER_ID:-}
       - SPIDER_PW=${SPIDER_PW:-}
-      - INSIGHT_URL=http://mc-o11y-insight:9001
+      - INSIGHT_URL=http://mc-observability-insight:9001
     volumes:
       - ./manager-conf:/etc/mc-observability-agent/conf:rw
       - /var/log/syslog:/var/log/syslog:ro
