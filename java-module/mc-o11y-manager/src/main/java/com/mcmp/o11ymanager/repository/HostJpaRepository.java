@@ -19,5 +19,4 @@ public interface HostJpaRepository extends JpaRepository<HostEntity, String> {
     boolean existsById(@NonNull String id);
 
     List<HostEntity> findByIpAndPort(String ip, int port);
-
 }

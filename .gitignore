@@ -1,5 +1,6 @@
 .idea/
-target/
+**/target/
+!**/src/main/java/**/target/
 __pycache__/
 venv/
 .conda/
