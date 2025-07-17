@@ -5,9 +5,9 @@ networks:
     driver: bridge
 
 services:
-  mc-o11y-manager:
+  mc-observability-manager:
     image: cloudbaristaorg/mc-observability:edge
-    container_name: mc-o11y-service
+    container_name: mc-observability-manager
     restart: always
     ports:
       - 18080:18080
@@ -28,9 +28,9 @@ services:
       - ./manager-conf:/etc/mc-observability-agent/conf:rw
       - /var/log/syslog:/var/log/syslog:ro
 
-  mariadb:
+  mc-observability-maria:
     image: mariadb:10.7.6
-    container_name: mc-o11y-maria
+    container_name: mc-observability-maria
     restart: always
     ports:
       - 3306:3306
@@ -224,9 +224,9 @@ services:
       retries: 3
       start_period: 10s
 
-  influxdb:
+  mc-observability-influx:
     image: influxdb:1.11.8
-    container_name: mc-o11y-influx
+    container_name: mc-observability-influx
     restart: always
     ports:
       - 8086:8086
@@ -243,9 +243,9 @@ services:
       - internal_network
       - external_network
 
-  chronograf:
+  mc-observability-chronograf:
     image: chronograf:1.9.4
-    container_name: mc-o11y-chronograf
+    container_name: mc-observability-chronograf
     restart: always
     ports:
       - 8888:8888
@@ -255,14 +255,14 @@ services:
       - internal_network
       - external_network
 
-  kapacitor:
+  mc-observability-kapacitor:
     image: kapacitor:1.7.5
-    container_name: mc-o11y-kapacitor
+    container_name: mc-observability-kapacitor
     restart: always
     ports:
       - 9092:9092
     environment:
-      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-o11y-influx:8086
+      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-observability-influx:8086
     volumes:
       - /docker/kapacitor_data:/var/lib/kapacitor
     networks:
@@ -297,9 +297,9 @@ services:
       - internal_network
       - external_network
         
-  opensearch-dashboards:
+  mc-observability-opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:1.3.19
-    container_name: opensearch-dashboards
+    container_name: mc-observability-opensearch-dashboards
     restart: always
     ports:
       - 5601:5601
@@ -310,9 +310,9 @@ services:
       - internal_network
       - external_network
 
-  mc-o11y-insight:
+  mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
-    container_name: mc-o11y-insight-service
+    container_name: mc-observability-insight
     restart: always
     ports:
       - 9001:9001
@@ -325,9 +325,9 @@ services:
       - internal_network
       - external_network
 
-  mc-o11y-insight-scheduler:
+  mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
-    container_name: mc-o11y-insight-scheduler
+    container_name: mc-observability-insight-scheduler
     restart: always
     ports:
       - 9002:9002
@@ -354,11 +354,11 @@ services:
         airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
 
         # Import variables & Make connections
-        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-o11y-manager:18080/api/o11y
+        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
-        airflow connections add --conn-type http --conn-host mc-o11y-insight-service --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mariadb --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type influxdb --conn-host mc-o11y-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
+        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
         # Reload & Run dags
         airflow dags reserialize
@@ -372,9 +372,9 @@ services:
         sleep infinity
             "
 
-  mcp-grafana:
+  mc-observability-mcp-grafana:
     image: mcp/grafana:latest
-    container_name: mc-o11y-mcp-grafana
+    container_name: mc-observability-mcp-grafana
     restart: always
     tty: true
     stdin_open: true
