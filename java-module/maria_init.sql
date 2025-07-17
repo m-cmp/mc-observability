@@ -7,6 +7,8 @@ CREATE DATABASE IF NOT EXISTS mc_airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_u
 GRANT ALL PRIVILEGES ON mc_airflow.* TO 'mc-agent'@'%';
 FLUSH PRIVILEGES;
 
+USE mc_observability;
+
 CREATE TABLE `mc_o11y_insight_anomaly_setting` (
                                                    `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
                                                    `NAMESPACE_ID` varchar(100) NOT NULL,

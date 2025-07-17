@@ -4,7 +4,7 @@ datasources:
   - name: Loki
     type: loki
     access: proxy
-    url: http://mc-o11y-loki:3100
+    url: http://mc-observability-loki:3100
     isDefault: true
     version: 1
     editable: false

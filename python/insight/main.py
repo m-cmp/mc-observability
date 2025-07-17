@@ -26,7 +26,7 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*']
 )
-init_otel_trace(app)
+# init_otel_trace(app)
 
 api_prefix = config.get_prefix()
 app.include_router(anomaly.router, prefix=api_prefix, tags=["[Insight] Anomaly Detection"])
