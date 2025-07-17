@@ -1757,7 +1757,7 @@ paths:
       description: ''
       summary: GetLogAnalysisModelOptions
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: GetLogAnalysisModelOptions
       deprecated: false
       produces:
@@ -1774,7 +1774,7 @@ paths:
       description: ''
       summary: GetLogAnalysisSessions
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: GetLogAnalysisSessions
       deprecated: false
       produces:
@@ -1790,7 +1790,7 @@ paths:
       description: ''
       summary: PostLogAnalysisSession
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: PostLogAnalysisSession
       deprecated: false
       produces:
@@ -1821,7 +1821,7 @@ paths:
       description: ''
       summary: DeleteLogAnalysisSession
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: DeleteLogAnalysisSession
       deprecated: false
       produces:
@@ -1843,7 +1843,7 @@ paths:
       description: ''
       summary: GetLogAnalysisSessionHistory
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: GetLogAnalysisSessionHistory
       deprecated: false
       produces:
@@ -1865,7 +1865,7 @@ paths:
       description: ''
       summary: PostLogAnalysisQuery
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: PostLogAnalysisQuery
       deprecated: false
       produces:
@@ -1897,7 +1897,7 @@ paths:
       description: ''
       summary: PostOpenAIAPIKey
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: PostOpenAIAPIKey
       deprecated: false
       produces:
@@ -1928,7 +1928,7 @@ paths:
       description: ''
       summary: DeleteOpenAIAPIKey
       tags:
-        - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis (WIP)'
       operationId: DeleteOpenAIAPIKey
       deprecated: false
       produces:

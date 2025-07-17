@@ -5,13 +5,13 @@ networks:
     driver: bridge
 
 services:
-  mc-o11y-manager:
+  mc-observability-manager:
     # image: cloudbaristaorg/mc-observability:edge
     build:
       context: .
       dockerfile: Dockerfile
-    image: mc-o11y-manager:latest
-    container_name: mc-o11y-manager
+    image: mc-observability-manager:latest
+    container_name: mc-observability-manager
     restart: always
     networks:
       - internal_network
@@ -19,19 +19,18 @@ services:
     ports:
       - 18080:18080
     depends_on:
-      mc-o11y-mariadb:
+      mc-observability-maria:
         condition: service_healthy
-      mc-o11y-infra:
+      mc-observability-infra:
         condition: service_healthy
     environment:
-      - TARGET_ID=mc-o11y
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
       - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
       - SPIDER_URL=${SPIDER_URL:-http://cb-spider:1024}
       - SPIDER_ID=${SPIDER_ID:-}
       - SPIDER_PW=${SPIDER_PW:-}
-      - INSIGHT_URL=http://mc-o11y-insight:9001
+      - INSIGHT_URL=http://mc-observability-insight:9001
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
@@ -43,13 +42,13 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-infra:
+  mc-observability-infra:
     # image: cloudbaristaorg/mc-observability-infra:edge
     build:
       context: .
       dockerfile: Dockerfile.semaphore
-    image: mc-o11y-infra:latest
-    container_name: mc-o11y-infra
+    image: mc-observability-infra:latest
+    container_name: mc-observability-infra
     restart: always
     networks:
       - internal_network
@@ -57,11 +56,11 @@ services:
     ports:
       - 33000:3000
     depends_on:
-      mc-o11y-mariadb:
+      mc-observability-maria:
         condition: service_healthy
     environment:
       SEMAPHORE_DB_DIALECT: mysql
-      SEMAPHORE_DB_HOST: mc-o11y-mariadb
+      SEMAPHORE_DB_HOST: mc-observability-maria
       SEMAPHORE_DB_NAME: semaphore
       SEMAPHORE_DB_USER: semaphore
       SEMAPHORE_DB_PASS: semaphorepass
@@ -82,9 +81,9 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-mariadb:
+  mc-observability-maria:
     image: mariadb:10.11.11
-    container_name: mc-o11y-mariadb
+    container_name: mc-observability-maria
     restart: always
     networks:
       - internal_network
@@ -134,7 +133,7 @@ services:
     volumes:
       - ./conf/setup.env:/app/conf/setup.env
       - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
-      - ~/.cloud-barista/credentials.yaml.enc.:/app/conf/credentials.yaml.enc
+      - ~/.cloud-barista/credentials.yaml.enc:/app/conf/credentials.yaml.enc
       - /docker/cb-tumblebug-container/meta_db/:/app/meta_db/
       - /docker/cb-tumblebug-container/log/:/app/log/
     environment:
@@ -284,9 +283,9 @@ services:
       retries: 3
       start_period: 10s
 
-  mc-o11y-influxdb:
+  mc-observability-influx:
     image: influxdb:1.11.8
-    container_name: mc-o11y-influxdb
+    container_name: mc-observability-influx
     restart: always
     networks:
       - internal_network
@@ -308,9 +307,9 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-loki:
+  mc-observability-loki:
     image: grafana/loki:3.4.2
-    container_name: mc-o11y-loki
+    container_name: mc-observability-loki
     restart: always
     networks:
       - internal_network
@@ -318,9 +317,9 @@ services:
     ports:
       - "3100:3100"
     depends_on:
-      mc-o11y-loki-init-volumes:
+      mc-observability-loki-init-volumes:
         condition: service_completed_successfully
-      mc-o11y-minio:
+      mc-observability-minio:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul
@@ -336,9 +335,9 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-loki-init-volumes:
+  mc-observability-loki-init-volumes:
     image: busybox:stable
-    container_name: mc-o11y-loki-init-volumes
+    container_name: mc-observability-loki-init-volumes
     restart: no
     command: ["sh", "-c", "chown -R 10001:10001 /loki"]
     volumes:
@@ -348,13 +347,13 @@ services:
     networks:
       - internal_network
 
-  mc-o11y-minio:
+  mc-observability-minio:
     # image: cloudbaristaorg/mc-observability-minio:edge
     build:
       context: .
       dockerfile: Dockerfile.minio
-    image: mc-o11y-minio:latest
-    container_name: mc-o11y-minio
+    image: mc-observability-minio:latest
+    container_name: mc-observability-minio
     restart: always
     networks:
       - internal_network
@@ -370,13 +369,13 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-grafana:
+  mc-observability-grafana:
     # image: cloudbaristaorg/mc-observability-grafana:edge
     build:
       context: .
       dockerfile: Dockerfile.grafana
-    image: mc-o11y-grafana:latest
-    container_name: mc-o11y-grafana
+    image: mc-observability-grafana:latest
+    container_name: mc-observability-grafana
     restart: always
     networks:
       - internal_network
@@ -384,7 +383,7 @@ services:
     ports:
       - "8443:8443"
     depends_on:
-      mc-o11y-grafana-init-volumes:
+      mc-observability-grafana-init-volumes:
         condition: service_completed_successfully
     environment:
       - TZ=Asia/Seoul
@@ -397,7 +396,7 @@ services:
       - GF_UNIFIED_ALERTING_ENABLED=true
       - GF_SMTP_ENABLED=true
       - GF_ALERTING_EVALUATION_INTERVAL=10s
-      - ALARM_END_POINT_URL=http://mc-o11y-alarm:8888/api/alarm/send-alarm
+      - ALARM_END_POINT_URL=http://mc-observability-alarm:8888/api/alarm/send-alarm
       - ALARM_END_POINT_USERNAME=admin
       - ALARM_END_POINT_PASSWORD=mc-agent
     volumes:
@@ -423,9 +422,9 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-o11y-grafana-init-volumes:
+  mc-observability-grafana-init-volumes:
     image: busybox:stable
-    container_name: mc-o11y-grafana-init-volumes
+    container_name: mc-observability-grafana-init-volumes
     restart: no
     command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana"]
     volumes:
@@ -436,9 +435,9 @@ services:
     networks:
       - internal_network
 
-  chronograf:
+  mc-observability-chronograf:
     image: chronograf:1.9.4
-    container_name: mc-o11y-chronograf
+    container_name: mc-observability-chronograf
     restart: always
     ports:
       - 8888:8888
@@ -448,29 +447,30 @@ services:
       - internal_network
       - external_network
 
-  mc-o11y-insight:
+  mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
-    container_name: mc-o11y-insight-service
+    container_name: mc-observability-insight
     restart: always
     ports:
       - 9001:9001
     environment:
       - TZ=Asia/Seoul
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
     volumes:
       - ../python/insight/log:/mc-insight/log
     networks:
       - internal_network
       - external_network
 
-  mc-o11y-insight-scheduler:
+  mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
-    container_name: mc-o11y-insight-scheduler
+    container_name: mc-observability-insight-scheduler
     restart: always
     ports:
       - 9002:9002
     environment:
       - TZ=Asia/Seoul
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-o11y-mariadb:3306/mc_airflow
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
     networks:
       - internal_network
       - external_network
@@ -491,11 +491,11 @@ services:
         airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
 
         # Import variables & Make connections
-        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-o11y-manager:18080/api/o11y
+        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
-        airflow connections add --conn-type http --conn-host mc-o11y-insight-service --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mariadb --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type influxdb --conn-host mc-o11y-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
+        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
         # Reload & Run dags
         airflow dags reserialize
@@ -514,3 +514,22 @@ services:
       interval: 10s
       timeout: 10s
       retries: 30
+
+  mc-observability-mcp-grafana:
+    image: mcp/grafana:latest
+    container_name: mc-observability-mcp-grafana
+    restart: always
+    tty: true
+    stdin_open: true
+    ports:
+      - "8000:8000"
+    environment:
+      - GRAFANA_URL=${GRAFANA_URL:-}
+      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+    command:
+      - "--disable-sift"
+      - "--disable-incident"
+      - "--disable-search"
+    networks:
+      - internal_network
+      - external_network

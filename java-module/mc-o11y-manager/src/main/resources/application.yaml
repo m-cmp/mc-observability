@@ -9,7 +9,7 @@ spring:
   application:
     name: mc-o11y-manager
   datasource:
-    url: jdbc:mariadb://mc-o11y-mariadb:3306/mc_observability
+    url: jdbc:mariadb://mc-observability-maria:3306/mc_observability
     username: mc-agent
     password: mc-agent
     hikari:
@@ -54,7 +54,7 @@ springdoc:
       encoding: UTF-8
 
 loki:
-  url: http://mc-o11y-loki:3100
+  url: http://mc-observability-loki:3100
   endpoints:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
@@ -81,11 +81,12 @@ feign:
       default:
         connect-timeout: 5000
         read-timeout: 30000
+<<<<<<< HEAD
         loggerLevel: full
       LokiFeignClient: # LokiFeignClient에 대한 특별 설정
         loggerLevel: full
   semaphore:
-    url: http://mc-o11y-infra:3000
+    url: http://mc-observability-infra:3000
     username: admin
     password: semaphorepass
     project-name: ansible
@@ -113,3 +114,20 @@ logging:
     rollingpolicy:
       max-history: 14
       max-file-size: 200MB
+=======
+      cb-tumblebug:
+        connect-timeout: 5000
+        read-timeout: 100000
+  agent-manager:
+    url: http://localhost:18081
+  cb-tumblebug:
+    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
+    id: ${TUMBLEBUG_ID:default}
+    pw: ${TUMBLEBUG_PW:default}
+  cb-spider:
+    url: ${SPIDER_URL:http://cb-spider:1024}
+    id: ${SPIDER_ID:}
+    pw: ${SPIDER_PW:}
+  insight:
+    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
+>>>>>>> mcmp/main
