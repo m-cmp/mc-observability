@@ -55,41 +55,39 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(TargetRegisterDTO targetRegisterDTO) {
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
 
     String encryptedSshKey = null;
 
     try {
-      if (targetRegisterDTO.getAccessInfo() != null &&
-          targetRegisterDTO.getAccessInfo().getSshKey() != null &&
-          !targetRegisterDTO.getAccessInfo().getSshKey().isBlank()) {
+      if (dto.getAccessInfo() != null &&
+          dto.getAccessInfo().getSshKey() != null &&
+          !dto.getAccessInfo().getSshKey().isBlank()) {
 
-        encryptedSshKey = ChaCha20Poly3105Util.encryptString(
-            targetRegisterDTO.getAccessInfo().getSshKey());
+        encryptedSshKey = ChaCha20Poly3105Util.encryptString(dto.getAccessInfo().getSshKey());
       }
     } catch (Exception e) {
       throw new RuntimeException("SSH Key encryption failed", e);
     }
 
     TargetEntity target = TargetEntity.builder()
-        .id(targetRegisterDTO.getId())
-        .name(targetRegisterDTO.getName())
-        .aliasName(targetRegisterDTO.getAliasName())
-        .description(targetRegisterDTO.getDescription())
-        .csp(targetRegisterDTO.getCsp())
-        .nsId(targetRegisterDTO.getNsId())
-        .mciId(targetRegisterDTO.getMciId())
-        .vmId(targetRegisterDTO.getVmId())
-        .subGroup(targetRegisterDTO.getSubGroup())
+        .id(targetId)
+        .name(dto.getName())
+        .aliasName(dto.getAliasName())
+        .description(dto.getDescription())
+        .csp(dto.getCsp())
+        .nsId(nsId)
+        .mciId(mciId)
+        .subGroup(dto.getSubGroup())
         .monitoringServiceStatus(TargetAgentTaskStatus.IDLE)
         .logServiceStatus(TargetAgentTaskStatus.IDLE)
         .build();
 
     AccessInfoEntity accessInfoEntity = AccessInfoEntity.builder()
-        .id(targetRegisterDTO.getId())
-        .ip(targetRegisterDTO.getAccessInfo().getIp())
-        .port(targetRegisterDTO.getAccessInfo().getPort())
-        .user(targetRegisterDTO.getAccessInfo().getUser())
+        .id(targetId)
+        .ip(dto.getAccessInfo().getIp())
+        .port(dto.getAccessInfo().getPort())
+        .user(dto.getAccessInfo().getUser())
         .sshKey(encryptedSshKey)
         .target(target)
         .build();
@@ -102,7 +100,7 @@ public class TargetServiceImpl implements TargetService {
         HostUpdateNotifyMultipleEvent.builder().build()
     );
 
-    return com.mcmp.o11ymanager.dto.target.TargetDTO.fromEntity(saved);
+    return TargetDTO.fromEntity(saved);
   }
 
 

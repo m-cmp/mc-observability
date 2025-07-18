@@ -7,7 +7,7 @@ import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKeyList;
 
 public interface TumblebugPort {
 
-  TumblebugMCI.Vm getVM(String nsId, String mciId, String vmId);
+  TumblebugMCI.Vm getVM(String nsId, String mciId, String targetId);
 
   TumblebugSshKeyList getSshKeyList(String nsId);
 
@@ -15,6 +15,6 @@ public interface TumblebugPort {
 
   TumblebugMCI getMCIList(String nsId, String mciId);
 
-  Object sendCommand(String nsId, String mciId, String subGroupId, String vmId, TumblebugCmd command);
+  Object sendCommand(String nsId, String mciId, String subGroupId, String targetId, TumblebugCmd command);
 
 }

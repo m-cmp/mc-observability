@@ -70,8 +70,6 @@ public class TargetEntity {
 
   private String mciId;
 
-  private String vmId;
-
   private String subGroup;
 
   private String state;
