@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
@@ -62,6 +63,11 @@ public class HostFacadeService {
   private static final int AGENT_CHECK_THREAD_MAX = 30;
   private final ConfigMapper configMapper;
 
+  private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks = new ConcurrentHashMap<>();
+
+  private ReentrantLock getHostLock(String uuid) {
+    return repositoryLocks.computeIfAbsent(uuid, k -> new ReentrantLock());
+  }
 
   public List<HostResponseDTO> list() {
     List<HostDTO> hosts = hostService.list();
@@ -108,8 +114,10 @@ public class HostFacadeService {
     List<ResultDTO> results = new ArrayList<>();
 
     for (HostCreateDTO host : CheckUtil.emptyIfNull(hosts)) {
+      ReentrantLock hostLock = getHostLock(host.getId());
 
       try {
+        hostLock.lock();
 
         // 1) Ping 체크
         String ip = host.getIps().stream()
@@ -161,13 +169,13 @@ public class HostFacadeService {
             e.getMessage()
         ));
 
-
         results.add(ResultDTO.builder()
             .id(host.getId())
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
-
+      } finally {
+        hostLock.unlock();
       }
     }
 
@@ -181,8 +189,10 @@ public class HostFacadeService {
     List<ResultDTO> result = new ArrayList<>();
 
     for (String hostId : CheckUtil.emptyIfNull(request.getHost_id_list())) {
+      ReentrantLock hostLock = getHostLock(hostId);
 
       try {
+        hostLock.lock();
 
         // 1) Host 조회
         HostDTO host = hostService.findById(hostId);
@@ -211,7 +221,6 @@ public class HostFacadeService {
             .build());
 
       } catch (Exception e) {
-
         AgentHistoryFailEvent failureEvent = new AgentHistoryFailEvent(
             requestInfo.getRequestId(),
             AgentAction.HOST_UPDATED,
@@ -226,6 +235,8 @@ public class HostFacadeService {
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
+      } finally {
+        hostLock.unlock();
       }
     }
     return result;
@@ -381,7 +392,10 @@ public class HostFacadeService {
     List<ResultDTO> results = new ArrayList<>();
 
     for (String hostId : CheckUtil.emptyIfNull(List.of(request.getHost_id_list()))) {
+      ReentrantLock hostLock = getHostLock(hostId);
+
       try {
+        hostLock.lock();
 
         // 1) 호스트 존재 확인
         hostService.findById(hostId);
@@ -411,7 +425,6 @@ public class HostFacadeService {
 
 
       } catch (Exception e) {
-
         // 실패
         AgentHistoryFailEvent failureEvent = new AgentHistoryFailEvent(
             requestInfo.getRequestId(),
@@ -427,7 +440,8 @@ public class HostFacadeService {
             .status(ResponseStatus.ERROR)
             .errorMessage(e.getMessage())
             .build());
-
+      } finally {
+        hostLock.unlock();
       }
     }
 

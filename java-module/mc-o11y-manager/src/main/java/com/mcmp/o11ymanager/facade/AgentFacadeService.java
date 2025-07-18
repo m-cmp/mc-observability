@@ -169,7 +169,6 @@ public class AgentFacadeService {
                 .status(ResponseStatus.SUCCESS)
                 .build());
       } catch (Exception e) {
-
         results.add(ResultDTO.builder()
                 .id(id)
                 .status(ResponseStatus.ERROR)
