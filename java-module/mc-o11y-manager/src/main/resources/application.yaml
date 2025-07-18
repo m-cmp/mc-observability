@@ -81,6 +81,7 @@ feign:
       default:
         connect-timeout: 5000
         read-timeout: 30000
+<<<<<<< HEAD
         loggerLevel: full
       LokiFeignClient: # LokiFeignClient에 대한 특별 설정
         loggerLevel: full
