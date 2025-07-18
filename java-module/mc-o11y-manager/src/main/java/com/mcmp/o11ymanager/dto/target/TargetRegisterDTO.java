@@ -15,9 +15,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TargetRegisterDTO {
 
-    @NotBlank(message = "Target ID는 필수입니다")
-    private String id;
-
     @NotBlank(message = "Target name은 필수입니다")
     private String name;
 
@@ -28,17 +25,6 @@ public class TargetRegisterDTO {
 
     @NotBlank(message = "CSP는 필수입니다")
     private String csp;
-
-    @NotBlank(message = "Namespace ID는 필수입니다")
-    @JsonProperty("ns_id")
-    private String nsId;
-
-    @NotBlank(message = "MCI ID는 필수입니다")
-    @JsonProperty("mci_id")
-    private String mciId;
-
-    @JsonProperty("vm_id")
-    private String vmId;
 
     @JsonProperty("sub_group")
     private String subGroup;

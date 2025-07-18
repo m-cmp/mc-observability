@@ -45,19 +45,18 @@ public class TargetFacadeService {
     return targetService.list();
   }
 
-  public TargetDTO postTarget(TargetRegisterDTO dto) {
 
-    TumblebugMCI.Vm vm = tumblebugPort.getVM(dto.getNsId(), dto.getMciId(), dto.getId());
+  public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
 
-    TumblebugSshKeyList sshKeyList = tumblebugPort.getSshKeyList(dto.getNsId());
+    TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
 
+    TumblebugSshKeyList sshKeyList = tumblebugPort.getSshKeyList(nsId);
 
     String privateKey = sshKeyList.getSshKey().stream()
         .filter(k -> k.getId().equals(vm.getSshKeyId()))
         .map(SshKey::getPrivateKey)
         .findFirst()
         .orElseThrow(() -> new RuntimeException("SSH private key not found"));
-
 
     TargetRegisterDTO.AccessInfoDTO accessInfo = TargetRegisterDTO.AccessInfoDTO.builder()
         .ip(vm.getPublicIP())
@@ -68,9 +67,10 @@ public class TargetFacadeService {
 
     dto.setAccessInfo(accessInfo);
 
-
-    return targetService.post(dto);
+    return targetService.post(nsId, mciId, targetId, dto);
   }
+
+
 
   public TargetDTO putTarget(String targetId, String nsId, String mciId, TargetUpdateDTO dto) {
     return targetService.put(targetId, nsId, mciId, dto);

@@ -66,10 +66,7 @@ public class TargetController {
       @PathVariable String targetId,
       @RequestBody @Valid TargetRegisterDTO dto
   ) {
-    dto.setId(targetId);
-    dto.setNsId(nsId);
-    dto.setMciId(mciId);
-    return new ResBody<>(targetFacadeService.postTarget(dto));
+    return new ResBody<>(targetFacadeService.postTarget(nsId, mciId, targetId, dto));
   }
 
 

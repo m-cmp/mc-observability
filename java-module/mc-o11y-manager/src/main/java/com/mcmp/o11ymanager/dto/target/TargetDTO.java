@@ -59,9 +59,6 @@ public class TargetDTO {
     @JsonProperty("mci_id")
     private String mciId;
 
-    @JsonProperty("vm_id")
-    private String vmId;
-
     @JsonProperty("sub_group")
     private String subGroup;
 
@@ -84,7 +81,6 @@ public class TargetDTO {
                 .updatedAt(entity.getUpdatedAt())
                 .nsId(entity.getNsId())
                 .mciId(entity.getMciId())
-                .vmId(entity.getVmId())
                 .subGroup(entity.getSubGroup())
                 .state(entity.getState())
                 .build();

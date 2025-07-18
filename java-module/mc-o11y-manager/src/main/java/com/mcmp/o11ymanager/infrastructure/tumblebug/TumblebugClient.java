@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "cb-tumblebug", url = "${feign.cb-tumblebug.url:}", configuration = TumblebugFeignConfig.class)
 public interface TumblebugClient {
   @GetMapping(value = "/tumblebug/ns/{nsId}/mci/{mciId}/vm/{vmId}", produces = "application/json")
-  TumblebugMCI.Vm getVM(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String vmId);
+  TumblebugMCI.Vm getVM(@PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId);
 
   @GetMapping("/tumblebug/ns/{nsId}/resources/sshKey")
   TumblebugSshKeyList getSshKeyList(@PathVariable String nsId);
@@ -24,6 +24,6 @@ public interface TumblebugClient {
   @PostMapping("/tumblebug/ns/{nsId}/cmd/mci/{mciId}")
   Object sendCommand(@PathVariable String nsId, @PathVariable String mciId,
       @RequestParam String subGroupId,
-      @RequestParam String vmId,
+      @RequestParam String targetId,
       @RequestBody TumblebugCmd tumblebugCmd);
 }

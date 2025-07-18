@@ -13,7 +13,7 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(TargetRegisterDTO targetRegisterDTO);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto);
 
   TargetDTO put(String targetId, String nsId, String mciId, TargetUpdateDTO request);
 
