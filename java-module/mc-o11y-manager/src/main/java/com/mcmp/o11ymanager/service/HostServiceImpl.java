@@ -19,6 +19,7 @@ import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
 import com.mcmp.o11ymanager.infrastructure.util.ChaCha20Poly3105Util;
 import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
 import com.mcmp.o11ymanager.repository.HostJpaRepository;
+import com.mcmp.o11ymanager.service.domain.HostDomainService;
 import com.mcmp.o11ymanager.service.interfaces.HostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class HostServiceImpl implements HostService {
+
+  private final HostDomainService hostDomainService;
 
   private final HostJpaRepository hostJpaRepository;
   private final RequestInfo requestInfo;
@@ -79,7 +82,7 @@ public class HostServiceImpl implements HostService {
         host_log_agent_task_status(HostAgentTaskStatus.IDLE).
         build();
 
-    HostEntity result = hostJpaRepository.save(entity);
+    HostEntity result = hostDomainService.updateHost(entity);
 
     event.publishEvent(
         HostUpdateNotifyMultipleEvent.builder()
@@ -99,7 +102,7 @@ public class HostServiceImpl implements HostService {
     host.setPassword(dto.getData().getPassword());
     host.setPort(dto.getData().getPort());
 
-    HostEntity result = hostJpaRepository.save(host);
+    HostEntity result = hostDomainService.updateHost(host);
 
     event.publishEvent(
         HostUpdateNotifySingleEvent.builder()
@@ -194,12 +197,11 @@ public class HostServiceImpl implements HostService {
 
     host.setHost_monitoring_agent_task_status(status);
 
-    // TODO 다른 방법 고민할 것
     if (status.equals(HostAgentTaskStatus.IDLE)) {
       host.setHost_monitoring_agent_task_id("");
     }
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     log.info("[HostService] Monitoring Service Status {}: {}",
         host.getHost_monitoring_agent_task_id(), host.getHost_monitoring_agent_task_status());
     event.publishEvent(
@@ -217,12 +219,11 @@ public class HostServiceImpl implements HostService {
 
     host.setHost_log_agent_task_status(status);
 
-    // TODO 다른 방법 고민할 것
     if (status.equals(HostAgentTaskStatus.IDLE)) {
       host.setHost_log_agent_task_id("");
     }
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     log.info("[HostService] Log Service Status {}: {}", host.getHost_log_agent_task_id(),
         host.getHost_log_agent_task_status());
     event.publishEvent(
@@ -240,7 +241,7 @@ public class HostServiceImpl implements HostService {
 
     host.setMonitoring_agent_config_git_hash(commitHash);
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     event.publishEvent(
         HostUpdateNotifySingleEvent.builder()
             .hostId(hostId)
@@ -256,7 +257,7 @@ public class HostServiceImpl implements HostService {
 
     host.setLog_agent_config_git_hash(commitHash);
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     event.publishEvent(
         HostUpdateNotifySingleEvent.builder()
             .hostId(hostId)
@@ -290,14 +291,13 @@ public class HostServiceImpl implements HostService {
     host.setHost_monitoring_agent_task_status(status);
     host.setHost_monitoring_agent_task_id(taskId);
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     log.info("[HostService] Monitoring Service Status {}", host);
     event.publishEvent(
         HostUpdateNotifySingleEvent.builder()
             .hostId(hostId)
             .build()
     );
-
   }
 
   @Override
@@ -311,7 +311,7 @@ public class HostServiceImpl implements HostService {
     host.setHost_log_agent_task_status(status);
     host.setHost_log_agent_task_id(taskId);
 
-    hostJpaRepository.save(host);
+    hostDomainService.updateHost(host);
     event.publishEvent(
         HostUpdateNotifySingleEvent.builder()
             .hostId(hostId)

@@ -1,9 +1,7 @@
 package com.mcmp.o11ymanager.service.domain;
 
 import com.mcmp.o11ymanager.entity.HostEntity;
-import com.mcmp.o11ymanager.exception.host.DuplicatedHostIpException;
 import com.mcmp.o11ymanager.mapper.host.HostMapper;
-import com.mcmp.o11ymanager.repository.HostCustomRepo;
 import com.mcmp.o11ymanager.repository.HostJpaRepository;
 import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import java.util.List;
 public class HostDomainService {
 
   private final HostMapper hostMapper;
-  private final HostCustomRepo hostCustomRepo;
 
   private final HostNotificationService hostNotificationService;
 
@@ -42,18 +39,14 @@ public class HostDomainService {
         ));
   }
 
-
-
   @Transactional
-  public HostEntity updateHost(String requestId, HostEntity hostEntity) {
-    HostEntity savedHost = hostCustomRepo.save(requestId, hostEntity, true);
+  public HostEntity updateHost(HostEntity hostEntity) {
+    HostEntity savedHost = hostJpaRepository.save(hostEntity);
 
     hostNotificationService.notifyHostUpdate(savedHost.getId(), hostMapper.toDTO(savedHost));
     hostNotificationService.notifyAllHostsUpdate(hostJpaRepository.findAll());
-    log.info("[HostDomainService : {}", savedHost);
+    log.info("HostDomainService : {}", savedHost);
+
     return savedHost;
   }
-
-
-
 }

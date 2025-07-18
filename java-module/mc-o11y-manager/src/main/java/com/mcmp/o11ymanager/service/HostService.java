@@ -48,7 +48,7 @@ public class HostService {
       } else {
         host.setHost_monitoring_agent_task_status(HostAgentTaskStatus.IDLE);
         host.setHost_log_agent_task_id("");
-        hostDomainService.updateHost("", host);
+        hostDomainService.updateHost(host);
         log.info(host.getMonitoring_agent_version());
       }
 
@@ -67,14 +67,14 @@ public class HostService {
       } else {
         host.setHost_monitoring_agent_task_status(HostAgentTaskStatus.IDLE);
         host.setHost_log_agent_task_id("");
-        hostDomainService.updateHost("", host);
+        hostDomainService.updateHost(host);
       }
 
       if (host.getHost_monitoring_agent_task_id() != null && monitoringMethod != null) {
         if (host.getHost_monitoring_agent_task_id().isEmpty()) {
           host.setHost_monitoring_agent_task_status(HostAgentTaskStatus.IDLE);
           host.setHost_monitoring_agent_task_id("");
-          hostDomainService.updateHost("", host);
+          hostDomainService.updateHost(host);
         } else {
           schedulerFacadeService.scheduleTaskStatusCheck("INIT",
               Integer.valueOf(host.getHost_monitoring_agent_task_id()),
@@ -83,14 +83,14 @@ public class HostService {
       } else {
         host.setHost_monitoring_agent_task_status(HostAgentTaskStatus.IDLE);
         host.setHost_monitoring_agent_task_id("");
-        hostDomainService.updateHost("", host);
+        hostDomainService.updateHost(host);
       }
 
       if (host.getHost_log_agent_task_id() != null && logMethod != null) {
         if (host.getHost_log_agent_task_id().isEmpty()) {
           host.setHost_log_agent_task_status(HostAgentTaskStatus.IDLE);
           host.setHost_log_agent_task_id("");
-          hostDomainService.updateHost("", host);
+          hostDomainService.updateHost(host);
         } else {
           schedulerFacadeService.scheduleTaskStatusCheck("INIT",
               Integer.valueOf(host.getHost_log_agent_task_id()),
@@ -99,7 +99,7 @@ public class HostService {
       } else {
         host.setHost_log_agent_task_status(HostAgentTaskStatus.IDLE);
         host.setHost_log_agent_task_id("");
-        hostDomainService.updateHost("", host);
+        hostDomainService.updateHost(host);
       }
     }
   }

@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.service;
 
-
 import com.mcmp.o11ymanager.entity.HostEntity;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
@@ -19,7 +18,6 @@ public class StatusServiceImpl implements StatusService {
 
   private final HostDomainService hostDomainService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
-
 
   @Override
   public void updateHostAgentTaskStatus(String requestId, Integer taskId,
@@ -53,10 +51,8 @@ public class StatusServiceImpl implements StatusService {
       }
     }
 
-    hostDomainService.updateHost(requestId, updateHost);
+    hostDomainService.updateHost(updateHost);
   }
-
-
 
   @Override
   public void resetHostAgentTaskStatus(String requestId, String hostId, Agent agent) {
@@ -71,5 +67,4 @@ public class StatusServiceImpl implements StatusService {
       agentTaskStatusLock.unlock();
     }
   }
-
 }

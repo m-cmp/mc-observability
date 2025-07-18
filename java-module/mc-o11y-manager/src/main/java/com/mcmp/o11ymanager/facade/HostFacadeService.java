@@ -364,7 +364,7 @@ public class HostFacadeService {
       }
 
       if (needUpdate) {
-        hostJpaRepository.save(host);
+        hostDomainService.updateHost(host);
       }
     } catch (Exception e) {
       log.debug("Error checking host {}:{} - {}", ip, port, e.getMessage());
