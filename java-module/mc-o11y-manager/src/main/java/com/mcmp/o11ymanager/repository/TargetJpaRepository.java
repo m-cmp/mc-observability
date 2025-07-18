@@ -18,8 +18,6 @@ public interface TargetJpaRepository extends JpaRepository<TargetEntity, String>
   @Query("SELECT CASE WHEN COUNT(h) > 0 THEN true ELSE false END FROM TargetEntity h WHERE h.id = :id")
   boolean existsById(@NonNull String id);
 
-  List<TargetEntity> findByIpAndPort(String ip, int port);
-
   Optional<TargetEntity> findById(String id);
 
   List<TargetEntity> findAll();
@@ -28,4 +26,7 @@ public interface TargetJpaRepository extends JpaRepository<TargetEntity, String>
 
   @Query("SELECT t FROM TargetEntity t WHERE t.nsId = :nsId AND t.mciId = :mciId AND t.id = :targetId")
   Optional<TargetEntity> findByNsIdAndMciIdTargetId(String nsId, String mciId, String targetId);
+
+
 }
+

@@ -43,11 +43,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring")
+
 public class TargetController {
 
   private final TargetFacadeService targetFacadeService;
 
   @GetMapping("/{nsId}/{mciId}/target/{targetId}")
+
   public ResBody<TargetDTO> getTarget(
       @PathVariable String nsId,
       @PathVariable String mciId,
@@ -55,6 +57,7 @@ public class TargetController {
   ) {
     return new ResBody<>(targetFacadeService.getTarget(nsId, mciId, targetId));
   }
+
 
   @PostMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> postTarget(
@@ -68,6 +71,8 @@ public class TargetController {
     dto.setMciId(mciId);
     return new ResBody<>(targetFacadeService.postTarget(dto));
   }
+
+
 
   @PutMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> putTarget(
