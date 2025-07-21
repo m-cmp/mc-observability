@@ -1,0 +1,1258 @@
+commit 00695cc337c938bd10efe4d4a2abca42846ba03a
+Author: 임수현 <ish@innogrid.com>
+Date:   Mon Jul 21 14:03:16 2025 +0900
+
+    Add Azure Monitoring PoC
+
+diff --git a/api-runtime/common-runtime/MonitoringManager.go b/api-runtime/common-runtime/MonitoringManager.go
+new file mode 100644
+index 00000000..51ca7aaf
+--- /dev/null
++++ b/api-runtime/common-runtime/MonitoringManager.go
+@@ -0,0 +1,195 @@
++// Cloud Control Manager's Rest Runtime of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// by CB-Spider Team, 2020.09.
++
++package commonruntime
++
++import (
++	"fmt"
++	ccm "github.com/cloud-barista/cb-spider/cloud-control-manager"
++	cres "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++	infostore "github.com/cloud-barista/cb-spider/info-store"
++	"strconv"
++)
++
++//================ Monitoring Handler
++
++func GetVMMetricData(connectionName string, nameID string, metricType cres.MetricType, periodMinute string, timeBeforeHour string) (*cres.MetricData, error) {
++	cblog.Info("call GetVMMetricData()")
++
++	// check empty and trim user inputs
++	connectionName, err := EmptyCheckAndTrim("connectionName", connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	nameID, err = EmptyCheckAndTrim("nameID", nameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	cldConn, err := ccm.GetCloudConnection(connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	vmHandler, err := cldConn.CreateVMHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	vmSPLock.RLock(connectionName, nameID)
++	defer vmSPLock.RUnlock(connectionName, nameID)
++
++	// (1) get IID(NameId)
++	var iidInfo VMIIDInfo
++	err = infostore.GetByConditions(&iidInfo, CONNECTION_NAME_COLUMN, connectionName, NAME_ID_COLUMN, nameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (2) get resource(SystemId)
++	vm, err := vmHandler.GetVM(getDriverIID(cres.IID{NameId: iidInfo.NameId, SystemId: iidInfo.SystemId}))
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	monitoringHandler, err := cldConn.CreateMonitoringHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (4) get monitoring info
++	info, err := monitoringHandler.GetVMMetricData(cres.VMMonitoringReqInfo{
++		VMIID:          vm.IId,
++		MetricType:     metricType,
++		IntervalMinute: periodMinute,
++		TimeBeforeHour: timeBeforeHour,
++	})
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	return &info, nil
++}
++
++func GetClusterNodeMetricData(connectionName string, clusterNameID string, nodeGroupNameID string, nodeNumber string, metricType cres.MetricType, periodMinute string, timeBeforeHour string) (*cres.MetricData, error) {
++	cblog.Info("call GetClusterNodeMetricData()")
++
++	// check empty and trim user inputs
++	connectionName, err := EmptyCheckAndTrim("connectionName", connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	clusterNameID, err = EmptyCheckAndTrim("clusterNameID", clusterNameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	nodeGroupNameID, err = EmptyCheckAndTrim("nodeGroupNameID", nodeGroupNameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	nodeNumber, err = EmptyCheckAndTrim("nodeNumber", nodeNumber)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	nodeNumberInt, err := strconv.Atoi(nodeNumber)
++	if err != nil || nodeNumberInt <= 0 {
++		errMsg := "Invalid node number " + nodeNumber
++		cblog.Error(errMsg)
++		return nil, fmt.Errorf(errMsg)
++	}
++
++	cldConn, err := ccm.GetCloudConnection(connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	clusterSPLock.RLock(connectionName, clusterNameID)
++	defer clusterSPLock.RUnlock(connectionName, clusterNameID)
++
++	cluserDriverIID, nodeGroupDriverIID, err := getClusterDriverIIDNodeGroupDriverIID(connectionName, clusterNameID, nodeGroupNameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	clusterHandler, err := cldConn.CreateClusterHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	clusterInfo, err := clusterHandler.GetCluster(cluserDriverIID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	var nodeGroupExist bool
++	var nodeNameId string
++
++	for _, nodeGroup := range clusterInfo.NodeGroupList {
++		if nodeGroup.IId.NameId == nodeGroupDriverIID.NameId {
++			if nodeNumberInt > len(nodeGroup.Nodes) {
++				errMsg := fmt.Sprintf("Node number %s is greater than the number of nodes (%d).", nodeNumber, len(nodeGroup.Nodes))
++				cblog.Error(errMsg)
++				return nil, fmt.Errorf(errMsg)
++			}
++
++			nodeNameId = nodeGroup.Nodes[nodeNumberInt-1].NameId
++
++			nodeGroupExist = true
++			break
++		}
++	}
++
++	if !nodeGroupExist {
++		errMsg := fmt.Sprintf("node group %s not exist", nodeGroupDriverIID.NameId)
++		cblog.Error(errMsg)
++		return nil, fmt.Errorf(errMsg)
++	}
++
++	monitoringHandler, err := cldConn.CreateMonitoringHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (4) get monitoring info
++	info, err := monitoringHandler.GetClusterNodeMetricData(cres.ClusterNodeMonitoringReqInfo{
++		ClusterIID:     cluserDriverIID,
++		NodeGroupID:    nodeGroupDriverIID,
++		NodeIID:        cres.IID{NameId: nodeNameId},
++		MetricType:     metricType,
++		IntervalMinute: periodMinute,
++		TimeBeforeHour: timeBeforeHour,
++	})
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	return &info, nil
++}
+diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
+index a03208a4..8f9ae074 100644
+--- a/api-runtime/rest-runtime/CBSpiderRuntime.go
++++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
+@@ -465,6 +465,10 @@ func RunServer() {
+ 		{"GET", "/filesystem/:Name/accesssubnet", ListAccessSubnet},
+ 		{"DELETE", "/filesystem/:Name/accesssubnet", RemoveAccessSubnet},
+ 
++		//----------Monitoring Handler
++		{"GET", "/monitoring/vm/:VMName/:MetricType", GetVMMetricData},
++		{"GET", "/monitoring/clusternode/:ClusterName/:NodeGroupName/:NodeNumber/:MetricType", GetClusterNodeMetricData},
++
+ 		//----------Destory All Resources in a Connection
+ 		{"DELETE", "/destroy", Destroy},
+ 
+diff --git a/api-runtime/rest-runtime/MonitoringRest.go b/api-runtime/rest-runtime/MonitoringRest.go
+new file mode 100644
+index 00000000..b44940f7
+--- /dev/null
++++ b/api-runtime/rest-runtime/MonitoringRest.go
+@@ -0,0 +1,115 @@
++// Cloud Control Manager's Rest Runtime of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// by CB-Spider Team, 2020.
++
++package restruntime
++
++import (
++	cmrt "github.com/cloud-barista/cb-spider/api-runtime/common-runtime"
++	cres "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++
++	// REST API (echo)
++	"net/http"
++
++	"github.com/labstack/echo/v4"
++)
++
++//================ Monitoring Handler
++
++func GetVMMetricData(c echo.Context) error {
++	cblog.Info("call GetVMMetricData()")
++
++	var req struct {
++		ConnectionName string
++		IntervalMinute string
++		TimeBeforeHour string
++	}
++
++	if err := c.Bind(&req); err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	// To support for Get-Query Param Type API
++	if req.ConnectionName == "" {
++		req.ConnectionName = c.QueryParam("ConnectionName")
++	}
++
++	strMetricType := c.Param("MetricType")
++	metricType := cres.StringMetricType(strMetricType)
++	if metricType == cres.Unknown {
++		return echo.NewHTTPError(http.StatusInternalServerError, "Invalid Metric Type")
++	}
++
++	if req.IntervalMinute == "" {
++		req.IntervalMinute = c.QueryParam("IntervalMinute")
++	}
++	if req.IntervalMinute == "" {
++		req.IntervalMinute = "1"
++	}
++
++	if req.TimeBeforeHour == "" {
++		req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
++	}
++	if req.TimeBeforeHour == "" {
++		req.TimeBeforeHour = "1"
++	}
++
++	// Call common-runtime API
++	result, err := cmrt.GetVMMetricData(req.ConnectionName, c.Param("VMName"), metricType, req.IntervalMinute, req.TimeBeforeHour)
++	if err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	return c.JSON(http.StatusOK, result)
++}
++
++func GetClusterNodeMetricData(c echo.Context) error {
++	cblog.Info("call GetClusterNodeMetricData()")
++
++	var req struct {
++		ConnectionName string
++		IntervalMinute string
++		TimeBeforeHour string
++	}
++
++	if err := c.Bind(&req); err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	// To support for Get-Query Param Type API
++	if req.ConnectionName == "" {
++		req.ConnectionName = c.QueryParam("ConnectionName")
++	}
++
++	strMetricType := c.Param("MetricType")
++	metricType := cres.StringMetricType(strMetricType)
++	if metricType == cres.Unknown {
++		return echo.NewHTTPError(http.StatusInternalServerError, "Invalid Metric Type")
++	}
++
++	if req.IntervalMinute == "" {
++		req.IntervalMinute = c.QueryParam("IntervalMinute")
++	}
++	if req.IntervalMinute == "" {
++		req.IntervalMinute = "1"
++	}
++
++	if req.TimeBeforeHour == "" {
++		req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
++	}
++	if req.TimeBeforeHour == "" {
++		req.TimeBeforeHour = "1"
++	}
++
++	// Call common-runtime API
++	result, err := cmrt.GetClusterNodeMetricData(req.ConnectionName, c.Param("ClusterName"), c.Param("NodeGroupName"), c.Param("NodeNumber"), metricType, req.IntervalMinute, req.TimeBeforeHour)
++	if err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	return c.JSON(http.StatusOK, result)
++}
+diff --git a/cloud-control-manager/cloud-driver/call-log/calllogger.go b/cloud-control-manager/cloud-driver/call-log/calllogger.go
+index 5c779e1e..009ecb31 100644
+--- a/cloud-control-manager/cloud-driver/call-log/calllogger.go
++++ b/cloud-control-manager/cloud-driver/call-log/calllogger.go
+@@ -60,6 +60,7 @@ const (
+ 	MYIMAGE       RES_TYPE = "MYIMAGE"
+ 	NLB           RES_TYPE = "NETWORKLOADBALANCER"
+ 	TAG           RES_TYPE = "TAG"
++	MONITORING    RES_TYPE = "MONITORING"
+ 
+ 	//=========== PMKS: Provider-Managed K8S
+ 	CLUSTER RES_TYPE = "CLUSTER"
+diff --git a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
+index be918c96..25b4137e 100644
+--- a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
+@@ -183,3 +183,7 @@ func (cloudConn *AlibabaCloudConnection) CreateTagHandler() (irs.TagHandler, err
+ 	handler := alirs.AlibabaTagHandler{cloudConn.Region, cloudConn.VMClient, cloudConn.Cs2015Client, cloudConn.VpcClient, cloudConn.NLBClient}
+ 	return &handler, nil
+ }
++
++func (cloudConn *AlibabaCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Alibaba Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
+index 643c007c..8723b43c 100644
+--- a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
+@@ -11,6 +11,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	cblog "github.com/cloud-barista/cb-log"
+ 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
+ 
+@@ -214,3 +215,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
+ 	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
+ 	return &handler, nil
+ }
++
++func (cloudConn *AwsCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("GCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
+index 075e67e5..08b99a91 100644
+--- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
+@@ -269,3 +269,21 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
+ 	return &tagHandler, nil
+ 	// return nil, errors.New("Azure Driver: not implemented")
+ }
++
++func (cloudConn *AzureCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	cblogger.Info("Azure Cloud Driver: called CreateMonitoringHandler()!")
++	monitoringHandler := azrs.AzureMonitoringHandler{
++		CredentialInfo:                  cloudConn.CredentialInfo,
++		Region:                          cloudConn.Region,
++		Ctx:                             cloudConn.Ctx,
++		VMClient:                        cloudConn.VMClient,
++		ManagedClustersClient:           cloudConn.ManagedClustersClient,
++		SecurityGroupsClient:            cloudConn.SecurityGroupClient,
++		VirtualNetworksClient:           cloudConn.VNetClient,
++		AgentPoolsClient:                cloudConn.AgentPoolsClient,
++		VirtualMachineScaleSetsClient:   cloudConn.VirtualMachineScaleSetsClient,
++		VirtualMachineScaleSetVMsClient: cloudConn.VirtualMachineScaleSetVMsClient,
++		MetricClient:                    cloudConn.MetricClient,
++	}
++	return &monitoringHandler, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
+index 2c7b5668..23dbfec5 100644
+--- a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
++++ b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
+@@ -2278,6 +2278,219 @@ Loop:
+ 	}
+ }
+ 
++func testMonitoringHandlerListPrint() {
++	cblogger.Info("Test MonitoringHandler")
++	cblogger.Info("0. Print Menu")
++	cblogger.Info("1. GetVMMetricData()")
++	cblogger.Info("2. GetClusterNodeMetricData()")
++	cblogger.Info("3. Exit")
++}
++
++func testMonitoringHandlerMetricTypeListPrint() {
++	cblogger.Info("Metric Types")
++	cblogger.Info("1. CPUUsage")
++	cblogger.Info("2. MemoryUsage")
++	cblogger.Info("3. DiskRead")
++	cblogger.Info("4. DiskWrite")
++	cblogger.Info("5. DiskReadOps")
++	cblogger.Info("6. DiskWriteOps")
++	cblogger.Info("7. NetworkIn")
++	cblogger.Info("8. NetworkOut")
++}
++
++func testMonitoringHandler(config Config) {
++	resourceHandler, err := getResourceHandler("monitoring", config)
++	if err != nil {
++		cblogger.Error(err)
++		return
++	}
++	monitoringHandler := resourceHandler.(irs.MonitoringHandler)
++
++	testMonitoringHandlerListPrint()
++Loop:
++	for {
++		var commandNum int
++		inputCnt, err := fmt.Scan(&commandNum)
++		if err != nil {
++			cblogger.Error(err)
++		}
++
++		if inputCnt == 1 {
++			switch commandNum {
++			case 0:
++				testMonitoringHandlerListPrint()
++			case 1:
++				cblogger.Info("Start GetMetricData() ...")
++
++				fmt.Println("=== Enter VM's name ===")
++				in := bufio.NewReader(os.Stdin)
++				vmName, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				vmName = strings.TrimSpace(vmName)
++
++				fmt.Println("=== Enter metric type (Default: cpu_usage) ===")
++				testMonitoringHandlerMetricTypeListPrint()
++				inputCnt, err := fmt.Scan(&commandNum)
++				if err != nil {
++					cblogger.Error(err)
++				}
++				var metricType irs.MetricType
++				if inputCnt == 1 {
++					switch commandNum {
++					case 1:
++						metricType = irs.CPUUsage
++					case 2:
++						metricType = irs.MemoryUsage
++					case 3:
++						metricType = irs.DiskRead
++					case 4:
++						metricType = irs.DiskWrite
++					case 5:
++						metricType = irs.DiskReadOps
++					case 6:
++						metricType = irs.DiskWriteOps
++					case 7:
++						metricType = irs.NetworkIn
++					case 8:
++						metricType = irs.NetworkOut
++					default:
++						cblogger.Error("Invalid input")
++					}
++				}
++
++				fmt.Println("=== Enter period (minute) (Default: 1m) ===")
++				in = bufio.NewReader(os.Stdin)
++				periodMinute, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				periodMinute = strings.TrimSpace(periodMinute)
++
++				fmt.Println("=== Enter time before (hour) (Default: 1h) ===")
++				in = bufio.NewReader(os.Stdin)
++				timeBeforeHour, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				timeBeforeHour = strings.TrimSpace(timeBeforeHour)
++
++				if getVMMetricData, err := monitoringHandler.GetVMMetricData(
++					irs.VMMonitoringReqInfo{
++						VMIID: irs.IID{
++							NameId: vmName,
++						},
++						MetricType:     metricType,
++						IntervalMinute: periodMinute,
++						TimeBeforeHour: timeBeforeHour,
++					}); err != nil {
++					cblogger.Error(err)
++				} else {
++					spew.Dump(getVMMetricData)
++				}
++				cblogger.Info("Finish GetVMMetricData()")
++			case 2:
++				cblogger.Info("Start GetClusterNodeMetricData() ...")
++
++				fmt.Println("=== Enter Cluster's name ===")
++				in := bufio.NewReader(os.Stdin)
++				clusterName, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				clusterName = strings.TrimSpace(clusterName)
++
++				fmt.Println("=== Enter NodeGroup's name ===")
++				in = bufio.NewReader(os.Stdin)
++				nodeGroupName, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				nodeGroupName = strings.TrimSpace(nodeGroupName)
++
++				fmt.Println("=== Enter VM's name ===")
++				in = bufio.NewReader(os.Stdin)
++				vmName, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				vmName = strings.TrimSpace(vmName)
++
++				fmt.Println("=== Enter metric type (Default: cpu_usage) ===")
++				testMonitoringHandlerMetricTypeListPrint()
++				inputCnt, err := fmt.Scan(&commandNum)
++				if err != nil {
++					cblogger.Error(err)
++				}
++				var metricType irs.MetricType
++				if inputCnt == 1 {
++					switch commandNum {
++					case 1:
++						metricType = irs.CPUUsage
++					case 2:
++						metricType = irs.MemoryUsage
++					case 3:
++						metricType = irs.DiskRead
++					case 4:
++						metricType = irs.DiskWrite
++					case 5:
++						metricType = irs.DiskReadOps
++					case 6:
++						metricType = irs.DiskWriteOps
++					case 7:
++						metricType = irs.NetworkIn
++					case 8:
++						metricType = irs.NetworkOut
++					default:
++						cblogger.Error("Invalid input")
++					}
++				}
++
++				fmt.Println("=== Enter period (minute) (Default: 1m) ===")
++				in = bufio.NewReader(os.Stdin)
++				periodMinute, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				periodMinute = strings.TrimSpace(periodMinute)
++
++				fmt.Println("=== Enter time before (hour) (Default: 1h) ===")
++				in = bufio.NewReader(os.Stdin)
++				timeBeforeHour, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				timeBeforeHour = strings.TrimSpace(timeBeforeHour)
++
++				if getVMMetricData, err := monitoringHandler.GetClusterNodeMetricData(
++					irs.ClusterNodeMonitoringReqInfo{
++						ClusterIID: irs.IID{
++							NameId: clusterName,
++						},
++						NodeGroupID: irs.IID{
++							NameId: nodeGroupName,
++						},
++						NodeIID: irs.IID{
++							NameId: vmName,
++						},
++						MetricType:     metricType,
++						IntervalMinute: periodMinute,
++						TimeBeforeHour: timeBeforeHour,
++					}); err != nil {
++					cblogger.Error(err)
++				} else {
++					spew.Dump(getVMMetricData)
++				}
++				cblogger.Info("Finish GetVMMetricData()")
++			case 3:
++				cblogger.Info("Exit")
++				break Loop
++			}
++		}
++	}
++}
++
+ func main() {
+ 	showTestHandlerInfo()
+ 	config := readConfigFile()
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+new file mode 100644
+index 00000000..4cda7b34
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+@@ -0,0 +1,332 @@
++// Proof of Concepts of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// Azure Monitoring PoC by ish@innogrid.com, 2024.08.
++
++package resources
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
++	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
++	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice/v6"
++	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
++	"strconv"
++	"strings"
++	"time"
++
++	call "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/call-log"
++
++	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
++	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++)
++
++type AzureMonitoringHandler struct {
++	CredentialInfo                  idrv.CredentialInfo
++	Region                          idrv.RegionInfo
++	Ctx                             context.Context
++	VMClient                        *armcompute.VirtualMachinesClient
++	ManagedClustersClient           *armcontainerservice.ManagedClustersClient
++	SecurityGroupsClient            *armnetwork.SecurityGroupsClient
++	VirtualNetworksClient           *armnetwork.VirtualNetworksClient
++	AgentPoolsClient                *armcontainerservice.AgentPoolsClient
++	VirtualMachineScaleSetsClient   *armcompute.VirtualMachineScaleSetsClient
++	VirtualMachineScaleSetVMsClient *armcompute.VirtualMachineScaleSetVMsClient
++	MetricClient                    *azquery.MetricsClient
++}
++
++var availableIntervalMinutes = []string{
++	"1",
++	"5",
++	"15",
++	"30",
++	"60",
++	"360",
++	"720",
++	"1440",
++}
++
++func toAzureIntervalMinute(intervalMinute string) (string, error) {
++	switch intervalMinute {
++	case availableIntervalMinutes[0]:
++		return "PT1M", nil
++	case availableIntervalMinutes[1]:
++		return "PT5M", nil
++	case availableIntervalMinutes[2]:
++		return "PT15M", nil
++	case availableIntervalMinutes[3]:
++		return "PT30M", nil
++	case availableIntervalMinutes[4]:
++		return "PT1H", nil
++	case availableIntervalMinutes[5]:
++		return "PT6H", nil
++	case availableIntervalMinutes[6]:
++		return "PT12H", nil
++	case availableIntervalMinutes[7]:
++		return "P1D", nil
++	default:
++		return "", errors.New(fmt.Sprintf("Unsupported interval minute: %s. "+
++			"Available interval miniutes: %s", intervalMinute, strings.Join(availableIntervalMinutes, ",")))
++	}
++}
++
++func (monitoringHandler *AzureMonitoringHandler) getMetricData(metricType irs.MetricType, interval string, timeBeforeHour int, resourceID string) (irs.MetricData, error) {
++	endTime := time.Now().UTC()
++	startTime := endTime.Add(time.Duration(-timeBeforeHour) * time.Hour)
++	timespan := azquery.TimeInterval(fmt.Sprintf("%s/%s", startTime.Format(time.RFC3339), endTime.Format(time.RFC3339)))
++
++	var metricName = "Percentage CPU" // irs.CPUUsage
++	var aggregation = azquery.AggregationTypeAverage
++
++	switch metricType {
++	case irs.MemoryUsage:
++		metricName = "Available Memory Bytes"
++	case irs.DiskRead:
++		metricName = "Disk Read Bytes"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.DiskWrite:
++		metricName = "Disk Write Bytes"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.DiskReadOps:
++		metricName = "Disk Read Operations/Sec"
++	case irs.DiskWriteOps:
++		metricName = "Disk Write Operations/Sec"
++	case irs.NetworkIn:
++		metricName = "Network In"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.NetworkOut:
++		metricName = "Network Out"
++		aggregation = azquery.AggregationTypeTotal
++	}
++
++	metrics := make([]string, 0)
++	metrics = append(metrics, metricName)
++	metricNames := strings.Join(metrics, ",")
++	resultType := azquery.ResultTypeData
++
++	resp, err := monitoringHandler.MetricClient.QueryResource(context.Background(), resourceID, &azquery.MetricsClientQueryResourceOptions{
++		Aggregation:     []*azquery.AggregationType{&aggregation},
++		Filter:          nil,
++		Interval:        toStrPtr(interval),
++		MetricNames:     &metricNames,
++		MetricNamespace: nil,
++		OrderBy:         nil,
++		ResultType:      &resultType,
++		Timespan:        &timespan,
++		Top:             nil,
++	})
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		return irs.MetricData{}, getErr
++	}
++
++	var vmMonitoringInfo irs.MetricData
++	var timestampValues []irs.TimestampValue
++
++	for i, metric := range resp.Value {
++		if i == 0 && metric.Unit != nil {
++			if metric.Name != nil && metric.Name.Value != nil {
++				vmMonitoringInfo.MetricName = *metric.Name.Value
++			}
++			vmMonitoringInfo.MetricUnit = string(*metric.Unit)
++		}
++
++		for _, timeseries := range metric.TimeSeries {
++			if timeseries.Data == nil {
++				continue
++			}
++			for _, data := range timeseries.Data {
++				timestamp := data.TimeStamp
++				if timestamp == nil {
++					continue
++				}
++
++				var value *float64
++				if aggregation == azquery.AggregationTypeTotal {
++					value = data.Total
++				} else {
++					value = data.Average
++				}
++
++				if value == nil {
++					continue
++				}
++
++				timestampValues = append(timestampValues, irs.TimestampValue{
++					Timestamp: *timestamp,
++					Value:     strconv.FormatFloat(*value, 'f', -1, 64),
++				})
++			}
++		}
++	}
++
++	vmMonitoringInfo.TimestampValues = timestampValues
++
++	return vmMonitoringInfo, nil
++}
++
++func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(vmMonitoringReqInfo irs.VMMonitoringReqInfo) (irs.MetricData, error) {
++	intervalMinute, err := strconv.Atoi(vmMonitoringReqInfo.IntervalMinute)
++	if err != nil {
++		if vmMonitoringReqInfo.IntervalMinute == "" {
++			vmMonitoringReqInfo.IntervalMinute = "1"
++			intervalMinute = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
++		}
++	}
++
++	interval, err := toAzureIntervalMinute(vmMonitoringReqInfo.IntervalMinute)
++	if err != nil {
++		return irs.MetricData{}, err
++	}
++
++	timeBeforeHour, err := strconv.Atoi(vmMonitoringReqInfo.TimeBeforeHour)
++	if err != nil {
++		if vmMonitoringReqInfo.TimeBeforeHour == "" {
++			vmMonitoringReqInfo.TimeBeforeHour = "1"
++			timeBeforeHour = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++		}
++	}
++	if timeBeforeHour < 0 {
++		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++	}
++
++	if timeBeforeHour*60 < intervalMinute {
++		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
++	}
++
++	// log HisCall
++	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, vmMonitoringReqInfo.VMIID.NameId, "GetVMMetricData()")
++	start := call.Start()
++
++	convertedIID, err := ConvertVMIID(vmMonitoringReqInfo.VMIID, monitoringHandler.CredentialInfo, monitoringHandler.Region)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	vm, err := GetRawVM(convertedIID, monitoringHandler.Region.Region, monitoringHandler.VMClient, monitoringHandler.Ctx)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	vmMonitoringInfo, err := monitoringHandler.getMetricData(vmMonitoringReqInfo.MetricType, interval, timeBeforeHour, *vm.ID)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	LoggingInfo(hiscallInfo, start)
++
++	return vmMonitoringInfo, nil
++}
++
++func (monitoringHandler *AzureMonitoringHandler) GetClusterNodeMetricData(clusterNodeMonitoringReqInfo irs.ClusterNodeMonitoringReqInfo) (irs.MetricData, error) {
++	intervalMinute, err := strconv.Atoi(clusterNodeMonitoringReqInfo.IntervalMinute)
++	if err != nil {
++		if clusterNodeMonitoringReqInfo.IntervalMinute == "" {
++			clusterNodeMonitoringReqInfo.IntervalMinute = "1"
++			intervalMinute = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
++		}
++	}
++
++	interval, err := toAzureIntervalMinute(clusterNodeMonitoringReqInfo.IntervalMinute)
++	if err != nil {
++		return irs.MetricData{}, err
++	}
++
++	timeBeforeHour, err := strconv.Atoi(clusterNodeMonitoringReqInfo.TimeBeforeHour)
++	if err != nil {
++		if clusterNodeMonitoringReqInfo.TimeBeforeHour == "" {
++			clusterNodeMonitoringReqInfo.TimeBeforeHour = "1"
++			timeBeforeHour = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++		}
++	}
++	if timeBeforeHour < 0 {
++		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++	}
++
++	if timeBeforeHour*60 < intervalMinute {
++		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
++	}
++
++	// log HisCall
++	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, clusterNodeMonitoringReqInfo.ClusterIID.NameId, "GetClusterNodeMetricData()")
++	start := call.Start()
++
++	clusterHandler := AzureClusterHandler{
++		Region:                          monitoringHandler.Region,
++		CredentialInfo:                  monitoringHandler.CredentialInfo,
++		Ctx:                             monitoringHandler.Ctx,
++		ManagedClustersClient:           monitoringHandler.ManagedClustersClient,
++		SecurityGroupsClient:            monitoringHandler.SecurityGroupsClient,
++		VirtualNetworksClient:           monitoringHandler.VirtualNetworksClient,
++		AgentPoolsClient:                monitoringHandler.AgentPoolsClient,
++		VirtualMachineScaleSetsClient:   monitoringHandler.VirtualMachineScaleSetsClient,
++		VirtualMachineScaleSetVMsClient: monitoringHandler.VirtualMachineScaleSetVMsClient,
++	}
++
++	cluster, err := clusterHandler.GetCluster(clusterNodeMonitoringReqInfo.ClusterIID)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get cluster info. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	var nodeFound bool
++	var resourceID string
++
++	for _, nodeGroup := range cluster.NodeGroupList {
++		if nodeGroup.IId.NameId == clusterNodeMonitoringReqInfo.NodeGroupID.NameId ||
++			nodeGroup.IId.SystemId == clusterNodeMonitoringReqInfo.NodeGroupID.SystemId {
++			for _, node := range nodeGroup.Nodes {
++				if node.NameId == clusterNodeMonitoringReqInfo.NodeIID.NameId ||
++					node.SystemId == clusterNodeMonitoringReqInfo.NodeIID.SystemId {
++					nodeFound = true
++					resourceID = node.SystemId
++					break
++				}
++			}
++		}
++	}
++
++	if !nodeFound {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = Node not found from the cluster"))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	vmMonitoringInfo, err := monitoringHandler.getMetricData(clusterNodeMonitoringReqInfo.MetricType, interval, timeBeforeHour, resourceID)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	LoggingInfo(hiscallInfo, start)
++
++	return vmMonitoringInfo, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
+index 1185b380..3070ac22 100644
+--- a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
+@@ -187,3 +187,7 @@ func (cloudConn *GCPCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ 
+ 	return &tagHandler, nil
+ }
++
++func (cloudConn *GCPCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("GCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
+index 2e394bb3..c18daf1d 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
+@@ -212,3 +212,7 @@ func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ 	}
+ 	return &TagHandler, nil
+ }
++
++func (cloudConn *IbmCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Ibm Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+index b68652a4..1dac5ae3 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+@@ -12,6 +12,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 	"github.com/sirupsen/logrus"
+ 
+@@ -146,3 +147,7 @@ func (cloudConn *KtCloudConnection) Close() error {
+ 	cblogger.Info("KT Cloud Driver: called Close()!")
+ 	return nil
+ }
++
++func (cloudConn *KtCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("KT Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
+index 69c4e7b9..af5e5b6b 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
+@@ -136,3 +136,7 @@ func (cloudConn *KTCloudVpcConnection) Close() error {
+ func (cloudConn *KTCloudVpcConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
+ }
++
++func (cloudConn *KTCloudVpcConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
+index ad6c9a4e..62eef661 100644
+--- a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
+@@ -1,6 +1,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	cblog "github.com/cloud-barista/cb-log"
+ 	mkrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/mock/resources"
+ 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
+@@ -123,3 +124,7 @@ func (cloudConn *MockConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	handler := mkrs.MockTagHandler{MockName: cloudConn.MockName}
+ 	return &handler, nil
+ }
++
++func (cloudConn *MockConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Mock Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
+index 3b424f1d..7995c12b 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
+@@ -12,6 +12,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 
+ 	"github.com/sirupsen/logrus"
+@@ -164,3 +165,7 @@ func (cloudConn *NcpCloudConnection) Close() error {
+ 
+ 	return nil
+ }
++
++func (cloudConn *NcpCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("NCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
+index 46bbc467..cce9048d 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
+@@ -174,3 +174,7 @@ func (cloudConn *NcpVpcCloudConnection) Close() error {
+ func (cloudConn *NcpVpcCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, fmt.Errorf("NCP VPC Cloud Driver: not implemented")
+ }
++
++func (cloudConn *NcpVpcCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("NCP VPC Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
+index 20426b4b..6b6dbe81 100644
+--- a/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
+@@ -161,3 +161,7 @@ func (cloudConn *NhnCloudConnection) Close() error {
+ func (cloudConn *NhnCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, errors.New("NHN Cloud Driver: not implemented")
+ }
++
++func (cloudConn *NhnCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("NHN Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
+index 942d354a..3be996b3 100644
+--- a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
+@@ -194,3 +194,7 @@ func (cloudConn *OpenStackCloudConnection) CreateTagHandler() (irs.TagHandler, e
+ 	}
+ 	return &tagHandler, nil
+ }
++
++func (cloudConn *OpenStackCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("OpenStack Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
+index f25314de..c4700711 100644
+--- a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
+@@ -164,3 +164,7 @@ func (cloudConn *TencentCloudConnection) CreateTagHandler() (irs.TagHandler, err
+ 	}
+ 	return &handler, nil
+ }
++
++func (cloudConn *TencentCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Tencent Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
+index c00dec51..717713a6 100644
+--- a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
++++ b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
+@@ -23,6 +23,7 @@ type CloudConnection interface {
+ 	CreateSecurityHandler() (irs.SecurityHandler, error)
+ 	CreateKeyPairHandler() (irs.KeyPairHandler, error)
+ 	CreateVMHandler() (irs.VMHandler, error)
++	CreateMonitoringHandler() (irs.MonitoringHandler, error)
+ 
+ 	CreateNLBHandler() (irs.NLBHandler, error)
+ 	CreateDiskHandler() (irs.DiskHandler, error)
+diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go
+new file mode 100644
+index 00000000..e32a3061
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go
+@@ -0,0 +1,85 @@
++// Cloud Driver Interface of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// This is Resouces interfaces of Cloud Driver.
++//
++// by CB-Spider Team, 2020.04.
++// by CB-Spider Team, 2019.06.
++
++package resources
++
++import (
++	"time"
++)
++
++type VMMonitoringReqInfo struct {
++	VMIID          IID
++	MetricType     MetricType
++	IntervalMinute string
++	TimeBeforeHour string
++}
++
++type ClusterNodeMonitoringReqInfo struct {
++	ClusterIID     IID
++	NodeGroupID    IID
++	NodeIID        IID
++	MetricType     MetricType
++	IntervalMinute string
++	TimeBeforeHour string
++}
++
++type TimestampValue struct {
++	Timestamp time.Time `json:"timestamp"`
++	Value     string    `json:"value"`
++}
++
++type MetricData struct {
++	MetricName      string           `json:"metricName"`
++	MetricUnit      string           `json:"metricUnit"`
++	TimestampValues []TimestampValue `json:"timestampValues"`
++}
++
++type MetricType string
++
++const (
++	CPUUsage     MetricType = "cpu_usage"
++	MemoryUsage  MetricType = "memory_usage"
++	DiskRead     MetricType = "disk_read"
++	DiskWrite    MetricType = "disk_write"
++	DiskReadOps  MetricType = "disk_read_ops"
++	DiskWriteOps MetricType = "disk_write_ops"
++	NetworkIn    MetricType = "network_in"
++	NetworkOut   MetricType = "network_out"
++	Unknown      MetricType = "unknown"
++)
++
++func StringMetricType(input string) MetricType {
++	switch input {
++	case "cpu_usage":
++		return CPUUsage
++	case "memory_usage":
++		return MemoryUsage
++	case "disk_read":
++		return DiskRead
++	case "disk_write":
++		return DiskWrite
++	case "disk_read_ops":
++		return DiskReadOps
++	case "disk_write_ops":
++		return DiskWriteOps
++	case "network_in":
++		return NetworkIn
++	case "network_out":
++		return NetworkOut
++	default:
++		return Unknown
++	}
++}
++
++type MonitoringHandler interface {
++	GetVMMetricData(vmMonitoringReqInfo VMMonitoringReqInfo) (MetricData, error)
++	GetClusterNodeMetricData(clusterMonitoringReqInfo ClusterNodeMonitoringReqInfo) (MetricData, error)
++}
+diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
+index 5639ddad..09b27c42 100644
+--- a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
++++ b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
+@@ -18,18 +18,19 @@ import (
+ type RSType string
+ 
+ const (
+-	ALL       RSType = "all"
+-	IMAGE     RSType = "image"
+-	VPC       RSType = "vpc"
+-	SUBNET    RSType = "subnet"
+-	SG        RSType = "sg"
+-	KEY       RSType = "keypair"
+-	VM        RSType = "vm"
+-	NLB       RSType = "nlb"
+-	DISK      RSType = "disk"
+-	MYIMAGE   RSType = "myimage"
+-	CLUSTER   RSType = "cluster"
+-	NODEGROUP RSType = "nodegroup"
++	ALL          RSType = "all"
++	IMAGE        RSType = "image"
++	VPC          RSType = "vpc"
++	SUBNET       RSType = "subnet"
++	SG           RSType = "sg"
++	KEY          RSType = "keypair"
++	VM           RSType = "vm"
++	VMMONITORING RSType = "vmmonitoring"
++	NLB          RSType = "nlb"
++	DISK         RSType = "disk"
++	MYIMAGE      RSType = "myimage"
++	CLUSTER      RSType = "cluster"
++	NODEGROUP    RSType = "nodegroup"
+ 
+ 	FILESYSTEM RSType = "filesystem"
+ )
