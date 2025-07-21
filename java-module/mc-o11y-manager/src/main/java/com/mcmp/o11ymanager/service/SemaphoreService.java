@@ -2,10 +2,10 @@ package com.mcmp.o11ymanager.service;
 
 
 import com.mcmp.o11ymanager.model.semaphore.SurveyVar;
-
-import java.util.*;
-
-import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
+import com.mcmp.o11ymanager.oldService.domain.OldSemaphoreDomainService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SemaphoreService {
 
-    private final SemaphoreDomainService semaphoreDomainService;
+    private final OldSemaphoreDomainService oldSemaphoreDomainService;
 
     @Value("${feign.semaphore.template-names.agent-install}")
     private String templateNameAgentInstall;
@@ -35,46 +35,46 @@ public class SemaphoreService {
 
         // 1. init project
         try {
-            semaphoreDomainService.getProjectByName(projectName);
+            oldSemaphoreDomainService.getProjectByName(projectName);
         } catch (NoSuchElementException e) {
             log.info("프로젝트 생성중... ⚙️");
-            semaphoreDomainService.initProject(projectName);
+            oldSemaphoreDomainService.initProject(projectName);
         }
 
         // 2. init inventory
         try {
-            semaphoreDomainService.getInventoryByName(projectName, inventoryName);
+            oldSemaphoreDomainService.getInventoryByName(projectName, inventoryName);
         } catch (NoSuchElementException e) {
             log.info("인벤토리 생성중... ⚙️");
-            semaphoreDomainService.initProjectInventory(projectName, inventoryName);
+            oldSemaphoreDomainService.initProjectInventory(projectName, inventoryName);
         }
 
         // 3. init repository
         try {
-            semaphoreDomainService.getProjectRepositoryId(projectName, templateNameAgentInstall);
+            oldSemaphoreDomainService.getProjectRepositoryId(projectName, templateNameAgentInstall);
         } catch (NoSuchElementException e) {
             log.info(templateNameAgentInstall + " 레포지토리 생성중... ⚙️");
-            semaphoreDomainService.initProjectRepository(projectName, templateNameAgentInstall,
+            oldSemaphoreDomainService.initProjectRepository(projectName, templateNameAgentInstall,
                     PLAYBOOK_ROOT_PATH + "/" + templateNameAgentInstall);
         }
 
         try {
-            semaphoreDomainService.getProjectRepositoryId(projectName, templateNameAgentConfigUpdate);
+            oldSemaphoreDomainService.getProjectRepositoryId(projectName, templateNameAgentConfigUpdate);
         } catch (NoSuchElementException e) {
             log.info(templateNameAgentConfigUpdate + " 레포지토리 생성중... ⚙️");
-            semaphoreDomainService.initProjectRepository(projectName, templateNameAgentConfigUpdate,
+            oldSemaphoreDomainService.initProjectRepository(projectName, templateNameAgentConfigUpdate,
                     PLAYBOOK_ROOT_PATH + "/" + templateNameAgentConfigUpdate);
         }
 
         // 4. init project template
         try {
-            for (int i = 0; i < SemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS; i++) {
-                semaphoreDomainService.checkProjectTemplate(projectName, templateNameAgentInstall + "_" + (i + 1));
+            for (int i = 0; i < OldSemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS; i++) {
+                oldSemaphoreDomainService.checkProjectTemplate(projectName, templateNameAgentInstall + "_" + (i + 1));
             }
         } catch (NoSuchElementException e) {
             log.info("{} 템플릿 생성중... ⚙️", templateNameAgentInstall);
             List<SurveyVar> surveyVars = createAgentInstallTemplate();
-            semaphoreDomainService.initProjectTemplate(projectName,
+            oldSemaphoreDomainService.initProjectTemplate(projectName,
                     inventoryName,
                     templateNameAgentInstall,
                     PLAYBOOK_FILE_NAME,
@@ -82,13 +82,13 @@ public class SemaphoreService {
         }
 
         try {
-            for (int i = 0; i < SemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS; i++) {
-                semaphoreDomainService.checkProjectTemplate(projectName, templateNameAgentConfigUpdate + "_" + (i + 1));
+            for (int i = 0; i < OldSemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS; i++) {
+                oldSemaphoreDomainService.checkProjectTemplate(projectName, templateNameAgentConfigUpdate + "_" + (i + 1));
             }
         } catch (NoSuchElementException e) {
             log.info("{} 템플릿 생성중... ⚙️", templateNameAgentConfigUpdate);
             List<SurveyVar> surveyVars = createAgentConfigUpdateTemplate();
-            semaphoreDomainService.initProjectTemplate(projectName,
+            oldSemaphoreDomainService.initProjectTemplate(projectName,
                     inventoryName,
                     templateNameAgentConfigUpdate,
                     PLAYBOOK_FILE_NAME,

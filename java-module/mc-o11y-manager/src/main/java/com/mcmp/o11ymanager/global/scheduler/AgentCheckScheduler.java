@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.global.scheduler;
 
 import com.mcmp.o11ymanager.dto.host.HostResponseDTO;
 import com.mcmp.o11ymanager.facade.HostFacadeService;
-import com.mcmp.o11ymanager.service.HostService;
+import com.mcmp.o11ymanager.oldService.domain.HostService;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

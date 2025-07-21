@@ -15,13 +15,14 @@ import com.mcmp.o11ymanager.infrastructure.util.CheckUtil;
 import com.mcmp.o11ymanager.mapper.host.ConfigMapper;
 import com.mcmp.o11ymanager.mapper.host.HostMapper;
 import com.mcmp.o11ymanager.model.host.HostStatus;
+import com.mcmp.o11ymanager.oldFacade.OldTelegrafConfigFacadeService;
 import com.mcmp.o11ymanager.repository.HostJpaRepository;
-import com.mcmp.o11ymanager.service.AgentHealthCheckServiceImpl;
-import com.mcmp.o11ymanager.service.domain.HostDomainService;
-import com.mcmp.o11ymanager.service.interfaces.FileService;
-import com.mcmp.o11ymanager.service.interfaces.HostService;
-import com.mcmp.o11ymanager.service.interfaces.SshService;
-import com.mcmp.o11ymanager.service.interfaces.TcpService;
+import com.mcmp.o11ymanager.oldService.domain.AgentHealthCheckServiceImpl;
+import com.mcmp.o11ymanager.oldService.domain.HostDomainService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.FileService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HostService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.TcpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,7 +58,7 @@ public class HostFacadeService {
   private final HostJpaRepository hostJpaRepository;
 
   private final Map<String, HostResponseDTO> processingHost = new ConcurrentHashMap<>();
-  private final TelegrafConfigFacadeService telegrafConfigFacadeService;
+  private final OldTelegrafConfigFacadeService oldTelegrafConfigFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private ExecutorService checkAgentsExecutor;
   private static final int AGENT_CHECK_THREAD_MAX = 30;
@@ -139,7 +140,7 @@ public class HostFacadeService {
         HostConnectionDTO connectionDTO = hostService.getHostConnectionInfo(saved.getId());
 
         // 5) Telegraf 설정 복사
-        telegrafConfigFacadeService.downloadTelegrafConfig(connectionDTO);
+        oldTelegrafConfigFacadeService.downloadTelegrafConfig(connectionDTO);
 
         // 6) Fluentbit 설정 복사
         fluentBitConfigFacadeService.downloadFluentbitConfig(connectionDTO);

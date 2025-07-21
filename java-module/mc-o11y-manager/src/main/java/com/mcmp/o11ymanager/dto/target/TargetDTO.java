@@ -1,6 +1,8 @@
 package com.mcmp.o11ymanager.dto.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mcmp.o11ymanager.enums.Agent;
+import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import lombok.AllArgsConstructor;
@@ -42,10 +44,10 @@ public class TargetDTO {
     private String targetLogAgentTaskId;
 
     @JsonProperty("monitoring_service_status")
-    private TargetAgentTaskStatus monitoringServiceStatus;
+    private String monitoringServiceStatus;
 
     @JsonProperty("log_service_status")
-    private TargetAgentTaskStatus logServiceStatus;
+    private String logServiceStatus;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
@@ -72,7 +74,6 @@ public class TargetDTO {
                 .description(entity.getDescription())
                 .csp(entity.getCsp())
                 .targetStatus(entity.getTargetStatus())
-                .targetAgentTaskStatus(entity.getTargetAgentTaskStatus())
                 .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
                 .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
                 .monitoringServiceStatus(entity.getMonitoringServiceStatus())

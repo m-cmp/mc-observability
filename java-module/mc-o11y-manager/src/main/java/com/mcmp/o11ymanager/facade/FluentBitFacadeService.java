@@ -17,9 +17,9 @@ import com.mcmp.o11ymanager.infrastructure.util.CheckUtil;
 import com.mcmp.o11ymanager.model.agentHealth.SshConnection;
 import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Task;
-import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
-import com.mcmp.o11ymanager.service.interfaces.HostService;
-import com.mcmp.o11ymanager.service.interfaces.SshService;
+import com.mcmp.o11ymanager.oldService.domain.OldSemaphoreDomainService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HostService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +40,10 @@ public class FluentBitFacadeService {
   private final HostService hostService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
   private final RequestInfo requestInfo;
-  private final SemaphoreDomainService semaphoreDomainService;
+  private final OldSemaphoreDomainService oldSemaphoreDomainService;
   private final ApplicationEventPublisher event;
   private final SshService sshService;
-  private final SchedulerFacadeService schedulerFacadeService;
+  private final OldSchedulerFacadeService oldSchedulerFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
 
   public void install(@NotBlank String hostId, @NotBlank String requestUserId,
@@ -74,7 +74,7 @@ public class FluentBitFacadeService {
     }
 
     // 4. 전송(semaphore) - 설치 요청
-    Task task = semaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.INSTALL,
+    Task task = oldSemaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.FLUENT_BIT,
         templateCount);
 
@@ -94,7 +94,7 @@ public class FluentBitFacadeService {
     event.publishEvent(successEvent);
 
     // 7. 스케줄러 등록
-    schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
+    oldSchedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
         SemaphoreInstallMethod.INSTALL, Agent.FLUENT_BIT, requestUserId);
   }
 
@@ -109,7 +109,7 @@ public class FluentBitFacadeService {
 
     // 3. 전송(semaphore) - 업데이트 요청
     HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
-    Task task = semaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.UPDATE,
+    Task task = oldSemaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.UPDATE,
             null, Agent.FLUENT_BIT,
             templateCount);
 
@@ -129,7 +129,7 @@ public class FluentBitFacadeService {
     event.publishEvent(successEvent);
 
     // 6. 스케줄러 등록
-    schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
+    oldSchedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
             SemaphoreInstallMethod.UPDATE, Agent.FLUENT_BIT, requestUserId);
   }
 
@@ -144,7 +144,7 @@ public class FluentBitFacadeService {
     // 3. 전송(semaphore) - 삭제 요청
     HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
 
-    Task task = semaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.UNINSTALL,
+    Task task = oldSemaphoreDomainService.install(hostConnectionInfo, SemaphoreInstallMethod.UNINSTALL,
         null, Agent.FLUENT_BIT,
         templateCount);
 
@@ -163,7 +163,7 @@ public class FluentBitFacadeService {
 
     event.publishEvent(successEvent);
     // 6) 스케줄러 등록
-    schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
+    oldSchedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), hostId,
         SemaphoreInstallMethod.UNINSTALL, Agent.FLUENT_BIT, requestUserId);
 
   }

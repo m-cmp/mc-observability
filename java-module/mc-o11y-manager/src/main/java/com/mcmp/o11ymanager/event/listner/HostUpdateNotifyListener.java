@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.event.listner;
 
 import com.mcmp.o11ymanager.event.HostUpdateNotifyMultipleEvent;
 import com.mcmp.o11ymanager.event.HostUpdateNotifySingleEvent;
-import com.mcmp.o11ymanager.service.interfaces.HostService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
