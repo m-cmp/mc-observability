@@ -1,0 +1,2343 @@
+commit 71782d223d99771dcce20a5f8770f3591f4d1ce6
+Author: ish <ish@innogrid.com>
+Date:   Fri Sep 13 10:51:18 2024 +0900
+
+    Azure: Initialize work of getting VM monitoring metrics
+
+diff --git a/api-runtime/common-runtime/MonitoringManager.go b/api-runtime/common-runtime/MonitoringManager.go
+new file mode 100644
+index 00000000..032bdee1
+--- /dev/null
++++ b/api-runtime/common-runtime/MonitoringManager.go
+@@ -0,0 +1,94 @@
++// Cloud Control Manager's Rest Runtime of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// by CB-Spider Team, 2020.09.
++
++package commonruntime
++
++import (
++	ccm "github.com/cloud-barista/cb-spider/cloud-control-manager"
++	cres "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++	infostore "github.com/cloud-barista/cb-spider/info-store"
++)
++
++//================ Monitoring Handler
++
++func GetVMMetricData(connectionName string, nameID string, metricType cres.MetricType, periodMinute string, timeBeforeHour string) (*cres.MetricData, error) {
++	cblog.Info("call GetMetricData()")
++
++	// check empty and trim user inputs
++	connectionName, err := EmptyCheckAndTrim("connectionName", connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	nameID, err = EmptyCheckAndTrim("nameID", nameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	cldConn, err := ccm.GetCloudConnection(connectionName)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	vmHandler, err := cldConn.CreateVMHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	vmSPLock.RLock(connectionName, nameID)
++	defer vmSPLock.RUnlock(connectionName, nameID)
++
++	// (1) get IID(NameId)
++	var iidInfo VMIIDInfo
++	err = infostore.GetByConditions(&iidInfo, CONNECTION_NAME_COLUMN, connectionName, NAME_ID_COLUMN, nameID)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (2) get resource(SystemId)
++	vm, err := vmHandler.GetVM(getDriverIID(cres.IID{NameId: iidInfo.NameId, SystemId: iidInfo.SystemId}))
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (3) set ResourceInfo(IID.NameId)
++	// set ResourceInfo
++	vm.IId = getUserIID(cres.IID{NameId: iidInfo.NameId, SystemId: iidInfo.SystemId})
++
++	err = getSetNameId(connectionName, &vm)
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	monitoringHandler, err := cldConn.CreateMonitoringHandler()
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	// (4) get monitoring info
++	info, err := monitoringHandler.GetVMMetricData(cres.MonitoringReqInfo{
++		VMIID:          vm.IId,
++		MetricType:     metricType,
++		IntervalMinute: periodMinute,
++		TimeBeforeHour: timeBeforeHour,
++	})
++	if err != nil {
++		cblog.Error(err)
++		return nil, err
++	}
++
++	return &info, nil
++}
+diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
+index d1d1da56..ddc6008b 100644
+--- a/api-runtime/rest-runtime/CBSpiderRuntime.go
++++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
+@@ -442,6 +442,9 @@ func RunServer() {
+ 		{"GET", "/tag/:Key", GetTag},
+ 		{"DELETE", "/tag/:Key", RemoveTag},
+ 
++		//----------Monitoring Handler
++		{"GET", "/monitoring/vm/:VMName/:MetricType", GetVMMetricData},
++
+ 		//----------Destory All Resources in a Connection
+ 		{"DELETE", "/destroy", Destroy},
+ 
+diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go.orig b/api-runtime/rest-runtime/CBSpiderRuntime.go.orig
+new file mode 100644
+index 00000000..d1d1da56
+--- /dev/null
++++ b/api-runtime/rest-runtime/CBSpiderRuntime.go.orig
+@@ -0,0 +1,725 @@
++// Rest Runtime Server of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// by CB-Spider Team, 2019.10.
++
++package restruntime
++
++import (
++	"crypto/subtle"
++	"fmt"
++	"path/filepath"
++	"strings"
++	"time"
++
++	"net/http"
++	"os"
++
++	"github.com/chyeh/pubip"
++
++	cblogger "github.com/cloud-barista/cb-log"
++	cr "github.com/cloud-barista/cb-spider/api-runtime/common-runtime"
++	aw "github.com/cloud-barista/cb-spider/api-runtime/rest-runtime/admin-web"
++	infostore "github.com/cloud-barista/cb-spider/info-store"
++
++	"github.com/sirupsen/logrus"
++
++	// REST API (echo)
++	"github.com/labstack/echo/v4"
++	"github.com/labstack/echo/v4/middleware"
++
++	// echo-swagger middleware
++	_ "github.com/cloud-barista/cb-spider/api"
++	echoSwagger "github.com/swaggo/echo-swagger"
++
++	"github.com/natefinch/lumberjack"
++)
++
++var cblog *logrus.Logger
++
++// @title CB-Spider REST API
++// @version latest
++// @description **🕷️ [User Guide](https://github.com/cloud-barista/cb-spider/wiki/features-and-usages)**  **🕷️ [API Guide](https://github.com/cloud-barista/cb-spider/wiki/REST-API-Examples)**
++
++// @contact.name API Support
++// @contact.url http://cloud-barista.github.io
++// @contact.email contact-to-cloud-barista@googlegroups.com
++
++// @license.name Apache 2.0
++// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
++
++// @host localhost:1024
++
++// @BasePath /spider
++
++// @schemes http
++
++// @securityDefinitions.basic BasicAuth
++
++func init() {
++	cblog = cblogger.GetLogger("CLOUD-BARISTA")
++	currentTime := time.Now()
++	cr.StartTime = currentTime.Format("2006.01.02 15:04:05 Mon")
++	cr.MiddleStartTime = currentTime.Format("2006.01.02.15:04:05")
++	cr.ShortStartTime = fmt.Sprintf("T%02d:%02d:%02d", currentTime.Hour(), currentTime.Minute(), currentTime.Second())
++
++	// REST and GO SERVER_ADDRESS since v0.4.4
++	cr.ServerIPorName = getServerIPorName("SERVER_ADDRESS")
++	cr.ServerPort = getServerPort("SERVER_ADDRESS")
++
++	// REST SERVICE_ADDRESS for AdminWeb since v0.4.4
++	cr.ServiceIPorName = getServiceIPorName("SERVICE_ADDRESS")
++	cr.ServicePort = getServicePort("SERVICE_ADDRESS")
++}
++
++// ex) {"POST", "/driver", registerCloudDriver}
++type route struct {
++	method, path string
++	function     echo.HandlerFunc
++}
++
++// JSON Simple message struct
++type SimpleMsg struct {
++	Message string `json:"message" validate:"required" example:"Any message" description:"A simple message to be returned by the API"`
++}
++
++//// CB-Spider Servcie Address Configuration
++////   cf)  https://github.com/cloud-barista/cb-spider/wiki/CB-Spider-Service-Address-Configuration
++
++// REST and GO SERVER_ADDRESS since v0.4.4
++
++// unset                           # default: like 'curl ifconfig.co':1024
++// SERVER_ADDRESS="1.2.3.4:3000"  # => 1.2.3.4:3000
++// SERVER_ADDRESS=":3000"         # => like 'curl ifconfig.co':3000
++// SERVER_ADDRESS="localhost"      # => localhost:1024
++// SERVER_ADDRESS="1.2.3.4:3000"        # => 1.2.3.4::3000
++func getServerIPorName(env string) string {
++
++	hostEnv := os.Getenv(env) // SERVER_ADDRESS or SERVICE_ADDRESS
++
++	if hostEnv == "" {
++		return getPublicIP()
++	}
++
++	// "1.2.3.4" or "localhost"
++	if !strings.Contains(hostEnv, ":") {
++		return hostEnv
++	}
++
++	strs := strings.Split(hostEnv, ":")
++	if strs[0] == "" { // ":31024"
++		return getPublicIP()
++	} else { // "1.2.3.4:31024" or "localhost:31024"
++		return strs[0]
++	}
++}
++
++func getPublicIP() string {
++	ip, err := pubip.Get()
++	if err != nil {
++		cblog.Error(err)
++		hostName, err := os.Hostname()
++		if err != nil {
++			cblog.Error(err)
++		}
++		return hostName
++	}
++
++	return ip.String()
++}
++
++func getServerPort(env string) string {
++	// default REST Service Port
++	servicePort := ":1024"
++
++	hostEnv := os.Getenv(env) // SERVER_ADDRESS or SERVICE_ADDRESS
++	if hostEnv == "" {
++		return servicePort
++	}
++
++	// "1.2.3.4" or "localhost"
++	if !strings.Contains(hostEnv, ":") {
++		return servicePort
++	}
++
++	// ":31024" or "1.2.3.4:31024" or "localhost:31024"
++	strs := strings.Split(hostEnv, ":")
++	servicePort = ":" + strs[1]
++
++	return servicePort
++}
++
++// unset  SERVER_ADDRESS => SERVICE_ADDRESS
++func getServiceIPorName(env string) string {
++	hostEnv := os.Getenv(env)
++	if hostEnv == "" {
++		return cr.ServerIPorName
++	}
++	return getServerIPorName(env)
++}
++
++// unset  SERVER_ADDRESS => SERVICE_ADDRESS
++func getServicePort(env string) string {
++	hostEnv := os.Getenv(env)
++	if hostEnv == "" {
++		return cr.ServerPort
++	}
++	return getServerPort(env)
++}
++
++func RunServer() {
++
++	//======================================= setup routes
++	routes := []route{
++		//----------root
++		{"GET", "", aw.SpiderInfo},
++		{"GET", "/", aw.SpiderInfo},
++
++		//----------Swagger
++		{"GET", "/api", func(c echo.Context) error {
++			return c.Redirect(http.StatusMovedPermanently, "/spider/api/")
++		}},
++		{"GET", "/api/", echoSwagger.EchoWrapHandler(echoSwagger.DocExpansion("none"))},
++		{"GET", "/api/*", echoSwagger.EchoWrapHandler(echoSwagger.DocExpansion("none"))},
++
++		//----------EndpointInfo
++		{"GET", "/endpointinfo", endpointInfo},
++
++		//----------healthcheck
++		{"GET", "/healthcheck", healthCheck},
++		{"GET", "/health", healthCheck},
++		{"GET", "/ping", healthCheck},
++		{"GET", "/readyz", healthCheck},
++
++		//----------CloudOS
++		{"GET", "/cloudos", ListCloudOS},
++
++		//----------CloudOSMetaInfo
++		{"GET", "/cloudos/metainfo/:CloudOSName", GetCloudOSMetaInfo},
++
++		//----------CloudDriverInfo
++		{"POST", "/driver", RegisterCloudDriver},
++		{"POST", "/driver/upload", UploadCloudDriver},
++		{"GET", "/driver", ListCloudDriver},
++		{"GET", "/driver/:DriverName", GetCloudDriver},
++		{"DELETE", "/driver/:DriverName", UnRegisterCloudDriver},
++
++		//----------CredentialInfo
++		{"POST", "/credential", RegisterCredential},
++		{"GET", "/credential", ListCredential},
++		{"GET", "/credential/:CredentialName", GetCredential},
++		{"DELETE", "/credential/:CredentialName", UnRegisterCredential},
++
++		//----------RegionInfo
++		{"POST", "/region", RegisterRegion},
++		{"GET", "/region", ListRegion},
++		{"GET", "/region/:RegionName", GetRegion},
++		{"DELETE", "/region/:RegionName", UnRegisterRegion},
++
++		//----------ConnectionConfigInfo
++		{"POST", "/connectionconfig", CreateConnectionConfig},
++		{"GET", "/connectionconfig", ListConnectionConfig},
++		{"GET", "/connectionconfig/:ConfigName", GetConnectionConfig},
++		{"DELETE", "/connectionconfig/:ConfigName", DeleteConnectionConfig},
++		//-- for dashboard
++		{"GET", "/countconnectionconfig", CountAllConnections},
++		{"GET", "/countconnectionconfig/:ProviderName", CountConnectionsByProvider},
++
++		//-------------------------------------------------------------------//
++
++		//----------RegionZone Handler
++		{"GET", "/regionzone", ListRegionZone},
++		{"GET", "/regionzone/:Name", GetRegionZone},
++		{"GET", "/orgregion", ListOrgRegion},
++		{"GET", "/orgzone", ListOrgZone},
++		// by driverName & credentialName
++		{"GET", "/preconfig/regionzone", ListRegionZonePreConfig},
++		{"GET", "/preconfig/regionzone/:Name", GetRegionZonePreConfig},
++		{"GET", "/preconfig/orgregion", ListOrgRegionPreConfig},
++
++		//----------PriceInfo Handler
++		{"GET", "/productfamily/:RegionName", ListProductFamily},
++		{"GET", "/priceinfo/:ProductFamily/:RegionName", GetPriceInfo},  // GET with a body for backward compatibility
++		{"POST", "/priceinfo/:ProductFamily/:RegionName", GetPriceInfo}, // POST with a body for standard
++
++		//----------Image Handler
++		{"GET", "/vmimage", ListImage},
++		{"GET", "/vmimage/:Name", GetImage},
++
++		//----------VMSpec Handler
++		{"GET", "/vmspec", ListVMSpec},
++		{"GET", "/vmspec/:Name", GetVMSpec},
++		{"GET", "/vmorgspec", ListOrgVMSpec},
++		{"GET", "/vmorgspec/:Name", GetOrgVMSpec},
++
++		//----------VPC Handler
++		{"POST", "/regvpc", RegisterVPC},
++		{"DELETE", "/regvpc/:Name", UnregisterVPC},
++		{"POST", "/regsubnet", RegisterSubnet},
++		{"DELETE", "/regsubnet/:Name", UnregisterSubnet},
++
++		{"POST", "/vpc", CreateVPC},
++		{"GET", "/vpc", ListVPC},
++		{"GET", "/vpc/:Name", GetVPC},
++		{"DELETE", "/vpc/:Name", DeleteVPC},
++		//-- for subnet
++		{"POST", "/vpc/:VPCName/subnet", AddSubnet},
++		{"GET", "/vpc/:VPCName/subnet/:Name", GetSubnet},
++		{"DELETE", "/vpc/:VPCName/subnet/:SubnetName", RemoveSubnet},
++		{"DELETE", "/vpc/:VPCName/cspsubnet/:Id", RemoveCSPSubnet},
++		//-- for management
++		{"GET", "/allvpc", ListAllVPC},
++		{"DELETE", "/cspvpc/:Id", DeleteCSPVPC},
++		//-- for dashboard
++		{"GET", "/countvpc", CountAllVPCs},
++		{"GET", "/countvpc/:ConnectionName", CountVPCsByConnection},
++		{"GET", "/countsubnet", CountAllSubnets},
++		{"GET", "/countsubnet/:ConnectionName", CountSubnetsByConnection},
++
++		//----------SecurityGroup Handler
++		{"GET", "/getsecuritygroupowner", GetSGOwnerVPC},
++		{"POST", "/regsecuritygroup", RegisterSecurity},
++		{"DELETE", "/regsecuritygroup/:Name", UnregisterSecurity},
++
++		{"POST", "/securitygroup", CreateSecurity},
++		{"GET", "/securitygroup", ListSecurity},
++		{"GET", "/securitygroup/:Name", GetSecurity},
++		{"DELETE", "/securitygroup/:Name", DeleteSecurity},
++		//-- for rule
++		{"POST", "/securitygroup/:SGName/rules", AddRules},
++		{"DELETE", "/securitygroup/:SGName/rules", RemoveRules}, // no force option
++		// no CSP Option, {"DELETE", "/securitygroup/:SGName/csprules", RemoveCSPRules},
++		//-- for management
++		{"GET", "/allsecuritygroup", ListAllSecurity},
++		{"DELETE", "/cspsecuritygroup/:Id", DeleteCSPSecurity},
++		//-- for dashboard
++		{"GET", "/countsecuritygroup", CountAllSecurityGroups},
++		{"GET", "/countsecuritygroup/:ConnectionName", CountSecurityGroupsByConnection},
++
++		//----------KeyPair Handler
++		{"POST", "/regkeypair", RegisterKey},
++		{"DELETE", "/regkeypair/:Name", UnregisterKey},
++
++		{"POST", "/keypair", CreateKey},
++		{"GET", "/keypair", ListKey},
++		{"GET", "/keypair/:Name", GetKey},
++		{"DELETE", "/keypair/:Name", DeleteKey},
++		//-- for management
++		{"GET", "/allkeypair", ListAllKey},
++		{"DELETE", "/cspkeypair/:Id", DeleteCSPKey},
++		//-- for dashboard
++		{"GET", "/countkeypair", CountAllKeys},
++		{"GET", "/countkeypair/:ConnectionName", CountKeysByConnection},
++		/*
++			//----------VNic Handler
++			{"POST", "/vnic", createVNic},
++			{"GET", "/vnic", listVNic},
++			{"GET", "/vnic/:VNicId", getVNic},
++			{"DELETE", "/vnic/:VNicId", deleteVNic},
++
++			//----------PublicIP Handler
++			{"POST", "/publicip", createPublicIP},
++			{"GET", "/publicip", listPublicIP},
++			{"GET", "/publicip/:PublicIPId", getPublicIP},
++			{"DELETE", "/publicip/:PublicIPId", deletePublicIP},
++		*/
++		//----------VM Handler
++		{"GET", "/getvmusingresources", GetVMUsingRS},
++		{"POST", "/regvm", RegisterVM},
++		{"DELETE", "/regvm/:Name", UnregisterVM},
++
++		{"POST", "/vm", StartVM},
++		{"GET", "/vm", ListVM},
++		{"GET", "/vm/:Name", GetVM},
++		{"DELETE", "/vm/:Name", TerminateVM},
++
++		{"GET", "/vmstatus", ListVMStatus},
++		{"GET", "/vmstatus/:Name", GetVMStatus},
++
++		{"GET", "/controlvm/:Name", ControlVM}, // suspend, resume, reboot
++		// only for AdminWeb
++		{"PUT", "/controlvm/:Name", ControlVM}, // suspend, resume, reboot
++
++		//-- for management
++		{"GET", "/allvm", ListAllVM},
++		{"DELETE", "/cspvm/:Id", TerminateCSPVM},
++		//-- for dashboard
++		{"GET", "/countvm", CountAllVMs},
++		{"GET", "/countvm/:ConnectionName", CountVMsByConnection},
++
++		//----------NLB Handler
++		{"GET", "/getnlbowner", GetNLBOwnerVPC},
++		{"POST", "/getnlbowner", GetNLBOwnerVPC},
++		{"POST", "/regnlb", RegisterNLB},
++		{"DELETE", "/regnlb/:Name", UnregisterNLB},
++
++		{"POST", "/nlb", CreateNLB},
++		{"GET", "/nlb", ListNLB},
++		{"GET", "/nlb/:Name", GetNLB},
++		{"DELETE", "/nlb/:Name", DeleteNLB},
++		//-- for vm
++		{"POST", "/nlb/:Name/vms", AddNLBVMs},
++		{"DELETE", "/nlb/:Name/vms", RemoveNLBVMs}, // no force option
++		{"PUT", "/nlb/:Name/listener", ChangeListener},
++		{"PUT", "/nlb/:Name/vmgroup", ChangeVMGroup},
++		{"PUT", "/nlb/:Name/healthchecker", ChangeHealthChecker},
++		{"GET", "/nlb/:Name/health", GetVMGroupHealthInfo},
++
++		//-- for management
++		{"GET", "/allnlb", ListAllNLB},
++		{"DELETE", "/cspnlb/:Id", DeleteCSPNLB},
++		//-- for dashboard
++		{"GET", "/countnlb", CountAllNLBs},
++		{"GET", "/countnlb/:ConnectionName", CountNLBsByConnection},
++
++		//----------Disk Handler
++		{"POST", "/regdisk", RegisterDisk},
++		{"DELETE", "/regdisk/:Name", UnregisterDisk},
++
++		{"POST", "/disk", CreateDisk},
++		{"GET", "/disk", ListDisk},
++		{"GET", "/disk/:Name", GetDisk},
++		{"PUT", "/disk/:Name/size", IncreaseDiskSize},
++		{"DELETE", "/disk/:Name", DeleteDisk},
++		//-- for vm
++		{"PUT", "/disk/:Name/attach", AttachDisk},
++		{"PUT", "/disk/:Name/detach", DetachDisk},
++
++		//-- for management
++		{"GET", "/alldisk", ListAllDisk},
++		{"DELETE", "/cspdisk/:Id", DeleteCSPDisk},
++		//-- for dashboard
++		{"GET", "/countdisk", CountAllDisks},
++		{"GET", "/countdisk/:ConnectionName", CountDisksByConnection},
++
++		//----------MyImage Handler
++		{"POST", "/regmyimage", RegisterMyImage},
++		{"DELETE", "/regmyimage/:Name", UnregisterMyImage},
++
++		{"POST", "/myimage", SnapshotVM},
++		{"GET", "/myimage", ListMyImage},
++		{"GET", "/myimage/:Name", GetMyImage},
++		{"DELETE", "/myimage/:Name", DeleteMyImage},
++
++		//-- for management
++		{"GET", "/allmyimage", ListAllMyImage},
++		{"DELETE", "/cspmyimage/:Id", DeleteCSPMyImage},
++		//-- for dashboard
++		{"GET", "/countmyimage", CountAllMyImages},
++		{"GET", "/countmyimage/:ConnectionName", CountMyImagesByConnection},
++
++		//----------Cluster Handler
++		{"GET", "/getclusterowner", GetClusterOwnerVPC},
++		{"POST", "/getclusterowner", GetClusterOwnerVPC},
++		{"POST", "/regcluster", RegisterCluster},
++		{"DELETE", "/regcluster/:Name", UnregisterCluster},
++
++		{"POST", "/cluster", CreateCluster},
++		{"GET", "/cluster", ListCluster},
++		{"GET", "/cluster/:Name", GetCluster},
++		{"DELETE", "/cluster/:Name", DeleteCluster},
++		//-- for NodeGroup
++		{"POST", "/cluster/:Name/nodegroup", AddNodeGroup},
++		{"DELETE", "/cluster/:Name/nodegroup/:NodeGroupName", RemoveNodeGroup},
++		{"PUT", "/cluster/:Name/nodegroup/:NodeGroupName/onautoscaling", SetNodeGroupAutoScaling},
++		{"PUT", "/cluster/:Name/nodegroup/:NodeGroupName/autoscalesize", ChangeNodeGroupScaling},
++		{"PUT", "/cluster/:Name/upgrade", UpgradeCluster},
++		{"GET", "/cspvm/:Id", GetCSPVM},
++
++		//-- for management
++		{"GET", "/allcluster", ListAllCluster},
++		{"DELETE", "/cspcluster/:Id", DeleteCSPCluster},
++		//-- for dashboard
++		{"GET", "/countcluster", CountAllClusters},
++		{"GET", "/countcluster/:ConnectionName", CountClustersByConnection},
++
++		//----------Tag Handler
++		{"POST", "/tag", AddTag},
++		{"GET", "/tag", ListTag},
++		{"GET", "/tag/:Key", GetTag},
++		{"DELETE", "/tag/:Key", RemoveTag},
++
++		//----------Destory All Resources in a Connection
++		{"DELETE", "/destroy", Destroy},
++
++		//----------checking TCP and UDP ports for NLB
++		{"GET", "/check/tcp", CheckTCPPort},
++		{"GET", "/check/udp", CheckUDPPort},
++
++		//-------------------------------------------------------------------//
++		//----------Additional Info
++		{"GET", "/cspresourcename/:Name", GetCSPResourceName},
++		{"GET", "/cspresourceinfo/:Name", GetCSPResourceInfo},
++
++		//----------AnyCall Handler
++		{"POST", "/anycall", AnyCall},
++
++		//-------------------------------------------------------------------//
++		//----------SPLock Info
++		{"GET", "/splockinfo", GetAllSPLockInfo},
++		//----------SSH RUN
++		{"POST", "/sshrun", SSHRun},
++
++		//----------AdminWeb Handler
++		{"GET", "/adminweb", aw.Frame},
++		{"GET", "/adminweb/top", aw.Top},
++		{"GET", "/adminweb/log", aw.Log},
++
++		{"GET", "/adminweb2", aw.MainPage},
++		{"GET", "/adminweb2/", aw.MainPage},
++		{"GET", "/adminweb/left_menu", aw.LeftMenu},
++		{"GET", "/adminweb/body_frame", aw.BodyFrame},
++
++		{"GET", "/adminweb/dashboard", aw.Dashboard},
++
++		{"GET", "/adminweb/driver", aw.Driver},
++		{"GET", "/adminweb2/driver", aw.DriverManagement},
++
++		{"GET", "/adminweb/credential", aw.Credential},
++		{"GET", "/adminweb2/credential", aw.CredentialManagement},
++
++		{"GET", "/adminweb/region", aw.Region},
++		{"GET", "/adminweb2/region", aw.RegionManagement},
++
++		{"GET", "/adminweb/connectionconfig", aw.Connectionconfig},
++		{"GET", "/adminweb2/connectionconfig", aw.ConnectionManagement},
++
++		{"GET", "/adminweb/dashboard", aw.Dashboard},
++
++		{"GET", "/adminweb/spiderinfo", aw.SpiderInfo},
++
++		{"GET", "/adminweb/vpc/:ConnectConfig", aw.VPCSubnetManagement},
++		{"GET", "/adminweb/vpcmgmt/:ConnectConfig", aw.VPCMgmt},
++		{"GET", "/adminweb/securitygroup/:ConnectConfig", aw.SecurityGroupManagement},
++		{"GET", "/adminweb/securitygroupmgmt/:ConnectConfig", aw.SecurityGroupMgmt},
++		{"GET", "/adminweb/keypair/:ConnectConfig", aw.KeyPairManagement},
++		{"GET", "/adminweb/keypairmgmt/:ConnectConfig", aw.KeyPairMgmt},
++		{"GET", "/adminweb/vm/:ConnectConfig", aw.VMManagement},
++		{"GET", "/adminweb/vmmgmt/:ConnectConfig", aw.VMMgmt},
++		{"GET", "/adminweb/nlb/:ConnectConfig", aw.NLBManagement},
++		{"GET", "/adminweb/nlbmgmt/:ConnectConfig", aw.NLBMgmt},
++		{"GET", "/adminweb/disk/:ConnectConfig", aw.DiskManagement},
++		{"GET", "/adminweb/diskmgmt/:ConnectConfig", aw.DiskMgmt},
++		{"GET", "/adminweb/cluster/:ConnectConfig", aw.Cluster},
++		{"GET", "/adminweb/clustermgmt/:ConnectConfig", aw.ClusterMgmt},
++		{"GET", "/adminweb/myimage/:ConnectConfig", aw.MyImageManagement},
++		{"GET", "/adminweb/myimagemgmt/:ConnectConfig", aw.MyImageMgmt},
++		{"GET", "/adminweb/vmimage/:ConnectConfig", aw.VMImage},
++		{"GET", "/adminweb/vmspec/:ConnectConfig", aw.VMSpec},
++		{"GET", "/adminweb/regionzone/:ConnectConfig", aw.RegionZone},
++
++		{"GET", "/adminweb/priceinfo/:ConnectConfig", aw.PriceInfoRequest},
++		{"GET", "/adminweb/priceinfotablelist/:ProductFamily/:RegionName/:ConnectConfig", aw.PriceInfoTableList},
++		// download price info with JSON file
++		{"GET", "/adminweb/priceinfo/download/:FileName", aw.DownloadPriceInfo},
++
++		//----------SSH WebTerminal Handler
++		{"GET", "/adminweb/sshwebterminal/ws", aw.HandleWebSocket},
++	}
++	//======================================= setup routes
++
++	// Run API Server
++	ApiServer(routes)
++
++}
++
++// ================ REST API Server: setup & start
++func ApiServer(routes []route) {
++	e := echo.New()
++
++	// Middleware
++	e.Use(middleware.CORS())
++	e.Use(middleware.Logger())
++	e.Use(middleware.Recover())
++
++	cbspiderRoot := os.Getenv("CBSPIDER_ROOT")
++
++	// for HTTP Access Log
++	e.Logger.SetOutput(&lumberjack.Logger{
++		Filename:   cbspiderRoot + "/log/http-access.log",
++		MaxSize:    10, // megabytes
++		MaxBackups: 10, // number of backups
++		MaxAge:     31, // days
++	})
++
++	API_USERNAME := os.Getenv("API_USERNAME")
++	API_PASSWORD := os.Getenv("API_PASSWORD")
++
++	// SkipAuthPaths defines paths to skip authentication
++	SkipAuthPaths := map[string]bool{
++		"/spider/healthcheck": true,
++		"/spider/health":      true,
++		"/spider/ping":        true,
++		"/spider/readyz":      true,
++	}
++
++	if API_USERNAME != "" && API_PASSWORD != "" {
++		cblog.Info("**** Rest Auth Enabled ****")
++		e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{
++			Skipper: func(c echo.Context) bool {
++				return SkipAuthPaths[c.Path()]
++			},
++			Validator: func(username, password string, c echo.Context) (bool, error) {
++				// Be careful to use constant time comparison to prevent timing attacks
++				if subtle.ConstantTimeCompare([]byte(username), []byte(API_USERNAME)) == 1 &&
++					subtle.ConstantTimeCompare([]byte(password), []byte(API_PASSWORD)) == 1 {
++					return true, nil
++				}
++				return false, nil
++			},
++		}))
++	} else {
++		cblog.Info("**** Rest Auth Disabled ****")
++	}
++
++	for _, route := range routes {
++		// /driver => /spider/driver
++		route.path = "/spider" + route.path
++		switch route.method {
++		case "POST":
++			e.POST(route.path, route.function)
++		case "GET":
++			e.GET(route.path, route.function)
++		case "PUT":
++			e.PUT(route.path, route.function)
++		case "DELETE":
++			e.DELETE(route.path, route.function)
++
++		}
++	}
++
++	// for spider logo
++	e.Static("/spider/adminweb/images", filepath.Join(cbspiderRoot, "api-runtime/rest-runtime/admin-web/images"))
++
++	// for admin-web
++	e.File("/spider/adminweb/html/priceinfo-filter-gen.html", cbspiderRoot+"/api-runtime/rest-runtime/admin-web/html/priceinfo-filter-gen.html")
++
++	// for WebTerminal
++	e.Static("/spider/adminweb/static", filepath.Join(cbspiderRoot, "api-runtime/rest-runtime/admin-web/static"))
++
++	e.HideBanner = true
++	e.HidePort = true
++
++	spiderBanner()
++
++	if err := e.Start(cr.ServerPort); err != nil {
++		cblog.Fatalf("Failed to start the server: %v", err)
++	}
++
++}
++
++// ================ API Info
++func apiInfo(c echo.Context) error {
++	cblog.Info("call apiInfo()")
++
++	apiInfo := "api info"
++	return c.String(http.StatusOK, apiInfo)
++}
++
++// ================ Endpoint Info
++func endpointInfo(c echo.Context) error {
++	cblog.Info("call endpointInfo()")
++
++	endpointInfo := fmt.Sprintf("\n  <CB-Spider> Multi-Cloud Infrastructure Federation Framework\n")
++	adminWebURL := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider/adminweb"
++	endpointInfo += fmt.Sprintf("     - AdminWeb: %s\n", adminWebURL)
++	restEndPoint := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider"
++	endpointInfo += fmt.Sprintf("     - REST API: %s\n", restEndPoint)
++	// swaggerURL := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider/swagger/index.html"
++	// endpointInfo += fmt.Sprintf("     - Swagger : %s\n", swaggerURL)
++	// gRPCServer := "grpc://" + cr.ServiceIPorName + cr.GoServicePort
++	// endpointInfo += fmt.Sprintf("     - Go   API: %s\n", gRPCServer)
++
++	return c.String(http.StatusOK, endpointInfo)
++}
++
++// HealthCheckResponse represents the response body for the healthCheck API.
++type HealthCheckResponse struct {
++	Message string `json:"message" validate:"required" example:"CB-Spider is ready"`
++}
++
++// healthCheck godoc
++// @ID health-check-healthcheck
++// @Summary Perform Health Check
++// @Description Checks the health of CB-Spider service and its dependencies via /healthcheck endpoint. 🕷️ [[User Guide](https://github.com/cloud-barista/cb-spider/wiki/Readiness-Check-Guide)]
++// @Tags [Health Check]
++// @Accept  json
++// @Produce  json
++// @Success 200 {object} HealthCheckResponse "Service is ready"
++// @Failure 503 {object} SimpleMsg "Service Unavailable"
++// @Router /healthcheck [get]
++func healthCheckHealthCheck(c echo.Context) error {
++	return healthCheck(c)
++}
++
++// healthCheck godoc
++// @ID health-check-health
++// @Summary Perform Health Check
++// @Description Checks the health of CB-Spider service and its dependencies via /health endpoint. 🕷️ [[User Guide](https://github.com/cloud-barista/cb-spider/wiki/Readiness-Check-Guide)]
++// @Tags [Health Check]
++// @Accept  json
++// @Produce  json
++// @Success 200 {object} HealthCheckResponse "Service is ready"
++// @Failure 503 {object} SimpleMsg "Service Unavailable"
++// @Router /health [get]
++func healthCheckHealth(c echo.Context) error {
++	return healthCheck(c)
++}
++
++// healthCheck godoc
++// @ID health-check-ping
++// @Summary Perform Health Check
++// @Description Checks the health of CB-Spider service and its dependencies via /ping endpoint. 🕷️ [[User Guide](https://github.com/cloud-barista/cb-spider/wiki/Readiness-Check-Guide)]
++// @Tags [Health Check]
++// @Accept  json
++// @Produce  json
++// @Success 200 {object} HealthCheckResponse "Service is ready"
++// @Failure 503 {object} SimpleMsg "Service Unavailable"
++// @Router /ping [get]
++func healthCheckPing(c echo.Context) error {
++	return healthCheck(c)
++}
++
++// healthCheck godoc
++// @ID health-check-readyz
++// @Summary Perform Health Check
++// @Description Checks the health of CB-Spider service and its dependencies via /readyz endpoint. 🕷️ [[User Guide](https://github.com/cloud-barista/cb-spider/wiki/Readiness-Check-Guide)]
++// @Tags [Health Check]
++// @Accept  json
++// @Produce  json
++// @Success 200 {object} HealthCheckResponse "Service is ready"
++// @Failure 503 {object} SimpleMsg "Service Unavailable"
++// @Router /readyz [get]
++func healthCheckReadyz(c echo.Context) error {
++	return healthCheck(c)
++}
++
++// Common health check logic
++func healthCheck(c echo.Context) error {
++	// check database connection
++	err := infostore.Ping()
++	if err != nil {
++		return echo.NewHTTPError(http.StatusServiceUnavailable, err.Error())
++	}
++
++	return c.JSON(http.StatusOK, map[string]string{"message": "CB-Spider is ready"})
++}
++
++func spiderBanner() {
++	fmt.Println("\n  <CB-Spider> Multi-Cloud Infrastructure Federation Framework")
++
++	// AdminWeb
++	adminWebURL := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider/adminweb"
++	fmt.Printf("     - AdminWeb: %s\n", adminWebURL)
++
++	// REST API EndPoint
++	restEndPoint := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider"
++	fmt.Printf("     - REST API: %s\n", restEndPoint)
++
++	// Swagger
++	// swaggerURL := "http://" + cr.ServiceIPorName + cr.ServicePort + "/spider/swagger/index.html"
++	// fmt.Printf("     - Swagger : %s\n", swaggerURL)
++}
+diff --git a/api-runtime/rest-runtime/MonitoringRest.go b/api-runtime/rest-runtime/MonitoringRest.go
+new file mode 100644
+index 00000000..b192c829
+--- /dev/null
++++ b/api-runtime/rest-runtime/MonitoringRest.go
+@@ -0,0 +1,63 @@
++// Cloud Control Manager's Rest Runtime of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// by CB-Spider Team, 2020.
++
++package restruntime
++
++import (
++	cmrt "github.com/cloud-barista/cb-spider/api-runtime/common-runtime"
++	cres "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++
++	// REST API (echo)
++	"net/http"
++
++	"github.com/labstack/echo/v4"
++)
++
++//================ Monitoring Handler
++
++func GetVMMetricData(c echo.Context) error {
++	cblog.Info("call GetVMMetricData()")
++
++	var req struct {
++		ConnectionName string
++		PeriodMinute   string
++		TimeBeforeHour string
++	}
++
++	if err := c.Bind(&req); err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	// To support for Get-Query Param Type API
++	if req.ConnectionName == "" {
++		req.ConnectionName = c.QueryParam("ConnectionName")
++	}
++
++	strMetricType := c.Param("MetricType")
++	metricType := cres.StringMetricType(strMetricType)
++	if metricType == cres.Unknown {
++		return echo.NewHTTPError(http.StatusInternalServerError, "Invalid Metric Type")
++	}
++
++	req.PeriodMinute = c.QueryParam("IntervalMinute")
++	if req.PeriodMinute == "" {
++		req.PeriodMinute = "1"
++	}
++	req.TimeBeforeHour = c.QueryParam("TimeBeforeHour")
++	if req.TimeBeforeHour == "" {
++		req.TimeBeforeHour = "1"
++	}
++
++	// Call common-runtime API
++	result, err := cmrt.GetVMMetricData(req.ConnectionName, c.Param("VMName"), metricType, req.PeriodMinute, req.TimeBeforeHour)
++	if err != nil {
++		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
++	}
++
++	return c.JSON(http.StatusOK, result)
++}
+diff --git a/cloud-control-manager/cloud-driver/call-log/calllogger.go b/cloud-control-manager/cloud-driver/call-log/calllogger.go
+index bb0c3875..69877447 100644
+--- a/cloud-control-manager/cloud-driver/call-log/calllogger.go
++++ b/cloud-control-manager/cloud-driver/call-log/calllogger.go
+@@ -62,6 +62,7 @@ const (
+ 	MYIMAGE       RES_TYPE = "MYIMAGE"
+ 	NLB           RES_TYPE = "NETWORKLOADBALANCER"
+ 	TAG           RES_TYPE = "TAG"
++	MONITORING    RES_TYPE = "MONITORING"
+ 
+ 	//=========== PMKS: Provider-Managed K8S
+ 	CLUSTER RES_TYPE = "CLUSTER"
+diff --git a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
+index 0d20d07d..3e2f5f66 100644
+--- a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
+@@ -178,3 +178,7 @@ func (cloudConn *AlibabaCloudConnection) CreateTagHandler() (irs.TagHandler, err
+ 	handler := alirs.AlibabaTagHandler{cloudConn.Region, cloudConn.VMClient, cloudConn.Cs2015Client, cloudConn.VpcClient}
+ 	return &handler, nil
+ }
++
++func (cloudConn *AlibabaCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Alibaba Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
+index 4b9ba562..7cd5e0e3 100644
+--- a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
+@@ -11,6 +11,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	cblog "github.com/cloud-barista/cb-log"
+ 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
+ 
+@@ -202,3 +203,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
+ 	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
+ 	return &handler, nil
+ }
++
++func (cloudConn *AwsCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("GCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go.orig b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go.orig
+new file mode 100644
+index 00000000..4b9ba562
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go.orig
+@@ -0,0 +1,204 @@
++// Proof of Concepts of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// This is a Cloud Driver Example for PoC Test.
++//
++// by powerkim@etri.re.kr, 2019.06.
++
++package connect
++
++import (
++	cblog "github.com/cloud-barista/cb-log"
++	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
++
++	//irs2 "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/new-resources"
++	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++	"github.com/sirupsen/logrus"
++
++	ars "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/aws/resources"
++
++	//ec2drv "github.com/aws/aws-sdk-go/service/ec2"
++	"github.com/aws/aws-sdk-go/service/costexplorer"
++	"github.com/aws/aws-sdk-go/service/ec2"
++	"github.com/aws/aws-sdk-go/service/elbv2"
++	"github.com/aws/aws-sdk-go/service/pricing"
++
++	"github.com/aws/aws-sdk-go/service/autoscaling"
++	"github.com/aws/aws-sdk-go/service/eks"
++	"github.com/aws/aws-sdk-go/service/iam"
++)
++
++// type AwsCloudConnection struct{}
++type AwsCloudConnection struct {
++	CredentialInfo idrv.CredentialInfo
++	Region         idrv.RegionInfo
++	KeyPairClient  *ec2.EC2
++	VMClient       *ec2.EC2
++
++	VNetworkClient *ec2.EC2
++	//VNicClient     *ec2.EC2
++	ImageClient *ec2.EC2
++	//PublicIPClient *ec2.EC2
++	SecurityClient *ec2.EC2
++	VmSpecClient   *ec2.EC2
++
++	//NLBClient *elb.ELB
++	NLBClient *elbv2.ELBV2
++
++	//RegionZoneClient
++	RegionZoneClient *ec2.EC2
++
++	//PriceInfoClient
++	PriceInfoClient *pricing.Pricing
++
++	DiskClient    *ec2.EC2
++	MyImageClient *ec2.EC2
++
++	EKSClient         *eks.EKS
++	IamClient         *iam.IAM
++	AutoScalingClient *autoscaling.AutoScaling
++
++	AnyCallClient *ec2.EC2
++	TagClient     *ec2.EC2
++
++	CostExplorerClient *costexplorer.CostExplorer
++}
++
++var cblogger *logrus.Logger
++
++func init() {
++	// cblog is a global variable.
++	cblogger = cblog.GetLogger("CB-SPIDER")
++}
++
++func (cloudConn *AwsCloudConnection) IsConnected() (bool, error) {
++	return true, nil
++}
++
++func (cloudConn *AwsCloudConnection) Close() error {
++	return nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateKeyPairHandler() (irs.KeyPairHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	keyPairHandler := ars.AwsKeyPairHandler{CredentialInfo: cloudConn.CredentialInfo, Region: cloudConn.Region, Client: cloudConn.KeyPairClient, TagHandler: &tagHandler}
++	//keyPairHandler := ars.AwsKeyPairHandler{cloudConn.Region, cloudConn.KeyPairClient}
++
++	return &keyPairHandler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateVMHandler() (irs.VMHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	vmHandler := ars.AwsVMHandler{Region: cloudConn.Region, Client: cloudConn.VMClient, TagHandler: &tagHandler}
++	return &vmHandler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateVPCHandler() (irs.VPCHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	handler := ars.AwsVPCHandler{Region: cloudConn.Region, Client: cloudConn.VNetworkClient, TagHandler: &tagHandler}
++
++	return &handler, nil
++}
++
++// func (cloudConn *AwsCloudConnection) CreateImageHandler() (irs2.ImageHandler, error) {
++func (cloudConn *AwsCloudConnection) CreateImageHandler() (irs.ImageHandler, error) {
++	handler := ars.AwsImageHandler{Region: cloudConn.Region, Client: cloudConn.ImageClient}
++
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateSecurityHandler() (irs.SecurityHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	handler := ars.AwsSecurityHandler{Region: cloudConn.Region, Client: cloudConn.SecurityClient, TagHandler: &tagHandler}
++
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
++	handler := ars.AwsTagHandler{Region: cloudConn.Region, Client: cloudConn.VMClient, NLBClient: cloudConn.NLBClient, EKSClient: cloudConn.EKSClient}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateAwsTagHandler() ars.AwsTagHandler {
++	handler := ars.AwsTagHandler{Region: cloudConn.Region, Client: cloudConn.VMClient, NLBClient: cloudConn.NLBClient, EKSClient: cloudConn.EKSClient}
++	return handler
++}
++
++/*
++func (cloudConn *AwsCloudConnection) CreateVNicHandler() (irs.VNicHandler, error) {
++	cblogger.Info("Start")
++	handler := ars.AwsVNicHandler{cloudConn.Region, cloudConn.VNicClient}
++
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreatePublicIPHandler() (irs.PublicIPHandler, error) {
++	cblogger.Info("Start")
++	handler := ars.AwsPublicIPHandler{cloudConn.Region, cloudConn.PublicIPClient}
++
++	return &handler, nil
++}
++*/
++
++func (cloudConn *AwsCloudConnection) CreateVMSpecHandler() (irs.VMSpecHandler, error) {
++	handler := ars.AwsVmSpecHandler{Region: cloudConn.Region, Client: cloudConn.VmSpecClient}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateNLBHandler() (irs.NLBHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	handler := ars.AwsNLBHandler{Region: cloudConn.Region, Client: cloudConn.NLBClient, VMClient: cloudConn.VMClient, TagHandler: &tagHandler}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateDiskHandler() (irs.DiskHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	handler := ars.AwsDiskHandler{Region: cloudConn.Region, Client: cloudConn.DiskClient, TagHandler: &tagHandler}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateMyImageHandler() (irs.MyImageHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	handler := ars.AwsMyImageHandler{Region: cloudConn.Region, Client: cloudConn.MyImageClient, TagHandler: &tagHandler}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateClusterHandler() (irs.ClusterHandler, error) {
++	tagHandler := cloudConn.CreateAwsTagHandler()
++	cblogger.Info("CreateClusterHandler through")
++	if cloudConn.MyImageClient == nil {
++		cblogger.Info("cloudConn.MyImageClient is nil")
++	}
++	if cloudConn.EKSClient == nil {
++		cblogger.Info("cloudConn.EKSClient is nil")
++	}
++	if cloudConn.VNetworkClient == nil {
++		cblogger.Info("cloudConn.VNetworkClient is nil")
++	}
++	if cloudConn.IamClient == nil {
++		cblogger.Info("cloudConn.IamClient is nil")
++	}
++	if cloudConn.AutoScalingClient == nil {
++		cblogger.Info("cloudConn.AutoScalingClient is nil")
++	}
++	handler := ars.AwsClusterHandler{Region: cloudConn.Region, Client: cloudConn.EKSClient, EC2Client: cloudConn.VNetworkClient, Iam: cloudConn.IamClient, AutoScaling: cloudConn.AutoScalingClient, TagHandler: &tagHandler}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateAnyCallHandler() (irs.AnyCallHandler, error) {
++	handler := ars.AwsAnyCallHandler{Region: cloudConn.Region, CredentialInfo: cloudConn.CredentialInfo, Client: cloudConn.AnyCallClient, CeClient: cloudConn.CostExplorerClient}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreateRegionZoneHandler() (irs.RegionZoneHandler, error) {
++	handler := ars.AwsRegionZoneHandler{Region: cloudConn.Region, Client: cloudConn.RegionZoneClient}
++	return &handler, nil
++}
++
++func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, error) {
++	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
++	return &handler, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
+index 8ae229ad..30fc3c36 100644
+--- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
+@@ -243,3 +243,15 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
+ 	return &tagHandler, nil
+ 	// return nil, errors.New("Azure Driver: not implemented")
+ }
++
++func (cloudConn *AzureCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	cblogger.Info("Azure Cloud Driver: called CreateMonitoringHandler()!")
++	monitoringHandler := azrs.AzureMonitoringHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		Ctx:            cloudConn.Ctx,
++		Client:         cloudConn.VMClient,
++		MetricClient:   cloudConn.MetricClient,
++	}
++	return &monitoringHandler, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
+index a1721e98..8e4fab1c 100644
+--- a/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
++++ b/cloud-control-manager/cloud-driver/drivers/azure/main/Test_Resources.go
+@@ -166,7 +166,8 @@ func showTestHandlerInfo() {
+ 	cblogger.Info("11. PriceInfoHandler")
+ 	cblogger.Info("12. ClusterHandler")
+ 	cblogger.Info("13. TagHandler")
+-	cblogger.Info("14. Exit")
++	cblogger.Info("14. MonitoringHandler")
++	cblogger.Info("15. Exit")
+ 	cblogger.Info("==========================================================")
+ }
+ 
+@@ -218,8 +219,10 @@ func getResourceHandler(resourceType string, config Config) (interface{}, error)
+ 		resourceHandler, err = cloudConnection.CreatePriceInfoHandler()
+ 	case "cluster":
+ 		resourceHandler, err = cloudConnection.CreateClusterHandler()
+-	case "tag": 
++	case "tag":
+ 		resourceHandler, err = cloudConnection.CreateTagHandler()
++	case "monitoring":
++		resourceHandler, err = cloudConnection.CreateMonitoringHandler()
+ 	}
+ 
+ 	if err != nil {
+@@ -388,7 +391,7 @@ Loop:
+ 				reqInfo := irs.SecurityReqInfo{
+ 					IId:           securityIId,
+ 					SecurityRules: &securityRulesInfos,
+-					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++					TagList:       []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 					VpcIID:        targetVPCIId,
+ 				}
+ 				security, err := securityHandler.CreateSecurity(reqInfo)
+@@ -468,7 +471,7 @@ func testVPCHandler(config Config) {
+ 	VPCReqInfo := irs.VPCReqInfo{
+ 		IId:            vpcIID,
+ 		IPv4_CIDR:      config.Azure.Resources.VPC.IPv4CIDR,
+-		TagList:[]irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		TagList:        []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 		SubnetInfoList: subnetInfoList,
+ 	}
+ 	addSubnet := config.Azure.Resources.VPC.AddSubnet
+@@ -617,8 +620,8 @@ Loop:
+ 			case 3:
+ 				cblogger.Info("Start CreateKey() ...")
+ 				reqInfo := irs.KeyPairReqInfo{
+-					IId: keypairIId,
+-					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++					IId:     keypairIId,
++					TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 				}
+ 				if keyInfo, err := keyPairHandler.CreateKey(reqInfo); err != nil {
+ 					cblogger.Error(err)
+@@ -775,7 +778,7 @@ func testVMHandler(config Config) {
+ 		SecurityGroupIIDs: SecurityGroupIIDs,
+ 		VMUserId:          config.Azure.Resources.Vm.VMUserId,
+ 		VMUserPasswd:      config.Azure.Resources.Vm.VMUserPasswd,
+-		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		TagList:           []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 	}
+ 
+ Loop:
+@@ -915,7 +918,7 @@ func testNLBHandler(config Config) {
+ 		},
+ 		VMGroup: irs.VMGroupInfo{
+ 			Port:     "22",
+-			Protocol: "TCP", 
++			Protocol: "TCP",
+ 			VMs: &[]irs.IID{
+ 				{NameId: "vm-01"},
+ 				{NameId: "vm-02"},
+@@ -925,11 +928,11 @@ func testNLBHandler(config Config) {
+ 			Protocol:  "TCP",
+ 			Port:      "22",
+ 			Interval:  10,
+-			Timeout: -1,
++			Timeout:   -1,
+ 			Threshold: 5,
+ 			// Threshold: 429496728,
+ 		},
+-		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 	}
+ 	updateListener := irs.ListenerInfo{
+ 		Protocol: "TCP",
+@@ -1086,8 +1089,8 @@ func testDiskHandler(config Config) {
+ 		IId: irs.IID{
+ 			NameId: config.Azure.Resources.Disk.IID.NameId,
+ 		},
+-		Zone: config.Azure.Zone,
+-		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		Zone:     config.Azure.Zone,
++		TagList:  []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 		DiskSize: config.Azure.Resources.Disk.DiskSize,
+ 		DiskType: config.Azure.Resources.Disk.DiskType,
+ 	}
+@@ -1200,7 +1203,7 @@ func testMyImageHandler(config Config) {
+ 	targetvm := irs.MyImageInfo{
+ 		IId:      irs.IID{NameId: config.Azure.Resources.MyImage.IID.NameId},
+ 		SourceVM: irs.IID{NameId: config.Azure.Resources.MyImage.SourceVM.NameId},
+-		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		TagList:  []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 	}
+ 	delimageIId := irs.IID{NameId: config.Azure.Resources.MyImage.IID.NameId}
+ Loop:
+@@ -1492,7 +1495,7 @@ func testClusterHandler(config Config) {
+ 			//	OnAutoScaling:   true,
+ 			//},
+ 		},
+-		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"},{Key: "Environment2", Value: "Production2"}},
++		TagList: []irs.KeyValue{{Key: "Environment", Value: "Production"}, {Key: "Environment2", Value: "Production2"}},
+ 	}
+ 	addNodeGroup := irs.NodeGroupInfo{
+ 		IId:             irs.IID{NameId: "nodegroup3"},
+@@ -1982,7 +1985,6 @@ func testTagHandler(config Config) {
+ 	// resIID := irs.IID{NameId: "keypair-01", SystemId: ""}
+ 	// resIID := irs.IID{NameId: "vm-01", SystemId: ""}
+ 
+-
+ Loop:
+ 	for {
+ 		var commandNum int
+@@ -2044,6 +2046,125 @@ Loop:
+ 	}
+ }
+ 
++func testMonitoringHandlerListPrint() {
++	cblogger.Info("Test MonitoringHandler")
++	cblogger.Info("0. Print Menu")
++	cblogger.Info("1. GetVMMetricData()")
++	cblogger.Info("2. Exit")
++}
++
++func testMonitoringHandlerMetricTypeListPrint() {
++	cblogger.Info("Metric Types")
++	cblogger.Info("1. CPUUsage")
++	cblogger.Info("2. MemoryUsage")
++	cblogger.Info("3. DiskRead")
++	cblogger.Info("4. DiskWrite")
++	cblogger.Info("5. DiskReadOps")
++	cblogger.Info("6. DiskWriteOps")
++	cblogger.Info("7. NetworkIn")
++	cblogger.Info("8. NetworkOut")
++}
++
++func testMonitoringHandler(config Config) {
++	resourceHandler, err := getResourceHandler("monitoring", config)
++	if err != nil {
++		cblogger.Error(err)
++		return
++	}
++	monitoringHandler := resourceHandler.(irs.MonitoringHandler)
++
++	testMonitoringHandlerListPrint()
++Loop:
++	for {
++		var commandNum int
++		inputCnt, err := fmt.Scan(&commandNum)
++		if err != nil {
++			cblogger.Error(err)
++		}
++
++		if inputCnt == 1 {
++			switch commandNum {
++			case 0:
++				testMonitoringHandlerListPrint()
++			case 1:
++				cblogger.Info("Start GetMetricData() ...")
++
++				fmt.Println("=== Enter VM's name ===")
++				in := bufio.NewReader(os.Stdin)
++				vmName, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				vmName = strings.TrimSpace(vmName)
++
++				fmt.Println("=== Enter metric type (Default: cpu_usage) ===")
++				testMonitoringHandlerMetricTypeListPrint()
++				inputCnt, err := fmt.Scan(&commandNum)
++				if err != nil {
++					cblogger.Error(err)
++				}
++				var metricType irs.MetricType
++				if inputCnt == 1 {
++					switch commandNum {
++					case 1:
++						metricType = irs.CPUUsage
++					case 2:
++						metricType = irs.MemoryUsage
++					case 3:
++						metricType = irs.DiskRead
++					case 4:
++						metricType = irs.DiskWrite
++					case 5:
++						metricType = irs.DiskReadOps
++					case 6:
++						metricType = irs.DiskWriteOps
++					case 7:
++						metricType = irs.NetworkIn
++					case 8:
++						metricType = irs.NetworkOut
++					default:
++						cblogger.Error("Invalid input")
++					}
++				}
++
++				fmt.Println("=== Enter period (minute) (Default: 1m) ===")
++				in = bufio.NewReader(os.Stdin)
++				periodMinute, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				periodMinute = strings.TrimSpace(periodMinute)
++
++				fmt.Println("=== Enter time before (hour) (Default: 1h) ===")
++				in = bufio.NewReader(os.Stdin)
++				timeBeforeHour, err := in.ReadString('\n')
++				if err != nil {
++					cblogger.Error(err)
++				}
++				timeBeforeHour = strings.TrimSpace(timeBeforeHour)
++
++				if getVMMetricData, err := monitoringHandler.GetVMMetricData(
++					irs.MonitoringReqInfo{
++						VMIID: irs.IID{
++							NameId: vmName,
++						},
++						MetricType:     metricType,
++						IntervalMinute: periodMinute,
++						TimeBeforeHour: timeBeforeHour,
++					}); err != nil {
++					cblogger.Error(err)
++				} else {
++					spew.Dump(getVMMetricData)
++				}
++				cblogger.Info("Finish GetVMMetricData()")
++			case 2:
++				cblogger.Info("Exit")
++				break Loop
++			}
++		}
++	}
++}
++
+ func main() {
+ 	showTestHandlerInfo()
+ 	config := readConfigFile()
+@@ -2097,6 +2218,9 @@ Loop:
+ 				testTagHandler(config)
+ 				showTestHandlerInfo()
+ 			case 14:
++				testMonitoringHandler(config)
++				showTestHandlerInfo()
++			case 15:
+ 				cblogger.Info("Exit Test ResourceHandler Program")
+ 				break Loop
+ 			}
+diff --git a/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+new file mode 100644
+index 00000000..b93d7dee
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
+@@ -0,0 +1,225 @@
++// Proof of Concepts of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// This is a Cloud Driver Example for PoC Test.
++//
++// by hyokyung.kim@innogrid.co.kr, 2019.07.
++
++package resources
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"github.com/Azure/azure-sdk-for-go/sdk/monitor/azquery"
++	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v6"
++	"strconv"
++	"strings"
++	"time"
++
++	call "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/call-log"
++
++	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
++	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++)
++
++type AzureMonitoringHandler struct {
++	CredentialInfo idrv.CredentialInfo
++	Region         idrv.RegionInfo
++	Ctx            context.Context
++	Client         *armcompute.VirtualMachinesClient
++	MetricClient   *azquery.MetricsClient
++}
++
++var availableIntervalMinutes = []string{
++	"1",
++	"5",
++	"15",
++	"30",
++	"60",
++	"360",
++	"720",
++	"1440",
++}
++
++func toAzureIntervalMinute(intervalMinute string) (string, error) {
++	switch intervalMinute {
++	case availableIntervalMinutes[0]:
++		return "PT1M", nil
++	case availableIntervalMinutes[1]:
++		return "PT5M", nil
++	case availableIntervalMinutes[2]:
++		return "PT15M", nil
++	case availableIntervalMinutes[3]:
++		return "PT30M", nil
++	case availableIntervalMinutes[4]:
++		return "PT1H", nil
++	case availableIntervalMinutes[5]:
++		return "PT6H", nil
++	case availableIntervalMinutes[6]:
++		return "PT12H", nil
++	case availableIntervalMinutes[7]:
++		return "P1D", nil
++	default:
++		return "", errors.New(fmt.Sprintf("Unsupported interval minute: %s. "+
++			"Available interval miniutes: %s", intervalMinute, strings.Join(availableIntervalMinutes, ",")))
++	}
++}
++
++func (monitoringHandler *AzureMonitoringHandler) GetVMMetricData(monitoringReqInfo irs.MonitoringReqInfo) (irs.MetricData, error) {
++	intervalMinute, err := strconv.Atoi(monitoringReqInfo.IntervalMinute)
++	if err != nil {
++		if monitoringReqInfo.IntervalMinute == "" {
++			monitoringReqInfo.IntervalMinute = "1"
++			intervalMinute = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of IntervalMinute")
++		}
++	}
++
++	interval, err := toAzureIntervalMinute(monitoringReqInfo.IntervalMinute)
++	if err != nil {
++		return irs.MetricData{}, err
++	}
++
++	timeBeforeHour, err := strconv.Atoi(monitoringReqInfo.TimeBeforeHour)
++	if err != nil {
++		if monitoringReqInfo.TimeBeforeHour == "" {
++			monitoringReqInfo.TimeBeforeHour = "1"
++			timeBeforeHour = 1
++		} else {
++			return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++		}
++	}
++	if timeBeforeHour < 0 {
++		return irs.MetricData{}, errors.New("invalid value of TimeBeforeHour")
++	}
++
++	if timeBeforeHour*60 < intervalMinute {
++		return irs.MetricData{}, errors.New("IntervalMinute is too far in the past")
++	}
++
++	// log HisCall
++	hiscallInfo := GetCallLogScheme(monitoringHandler.Region, call.MONITORING, monitoringReqInfo.VMIID.NameId, "GetVMMonitoring()")
++	start := call.Start()
++
++	convertedIID, err := ConvertVMIID(monitoringReqInfo.VMIID, monitoringHandler.CredentialInfo, monitoringHandler.Region)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	vm, err := GetRawVM(convertedIID, monitoringHandler.Region.Region, monitoringHandler.Client, monitoringHandler.Ctx)
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	endTime := time.Now().UTC()
++	startTime := endTime.Add(time.Duration(-timeBeforeHour) * time.Hour)
++	timespan := azquery.TimeInterval(fmt.Sprintf("%s/%s", startTime.Format(time.RFC3339), endTime.Format(time.RFC3339)))
++
++	var metricName = "Percentage CPU" // irs.CPUUsage
++	var aggregation = azquery.AggregationTypeAverage
++
++	switch monitoringReqInfo.MetricType {
++	case irs.MemoryUsage:
++		metricName = "Available Memory Bytes"
++	case irs.DiskRead:
++		metricName = "Disk Read Bytes"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.DiskWrite:
++		metricName = "Disk Write Bytes"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.DiskReadOps:
++		metricName = "Disk Read Operations/Sec"
++	case irs.DiskWriteOps:
++		metricName = "Disk Write Operations/Sec"
++	case irs.NetworkIn:
++		metricName = "Network In"
++		aggregation = azquery.AggregationTypeTotal
++	case irs.NetworkOut:
++		metricName = "Network Out"
++		aggregation = azquery.AggregationTypeTotal
++	}
++
++	metrics := make([]string, 0)
++	metrics = append(metrics, metricName)
++	metricNames := strings.Join(metrics, ",")
++	resultType := azquery.ResultTypeData
++
++	resp, err := monitoringHandler.MetricClient.QueryResource(context.Background(), *vm.ID, &azquery.MetricsClientQueryResourceOptions{
++		Aggregation:     []*azquery.AggregationType{&aggregation},
++		Filter:          nil,
++		Interval:        toStrPtr(interval),
++		MetricNames:     &metricNames,
++		MetricNamespace: nil,
++		OrderBy:         nil,
++		ResultType:      &resultType,
++		Timespan:        &timespan,
++		Top:             nil,
++	})
++	if err != nil {
++		getErr := errors.New(fmt.Sprintf("Failed to get metric data. err = %s", err))
++		cblogger.Error(getErr.Error())
++		LoggingError(hiscallInfo, getErr)
++		return irs.MetricData{}, getErr
++	}
++
++	LoggingInfo(hiscallInfo, start)
++
++	var vmMonitoringInfo irs.MetricData
++	var timestampValues []irs.TimestampValue
++
++	for i, metric := range resp.Value {
++		if i == 0 && metric.Unit != nil {
++			if metric.Name != nil && metric.Name.Value != nil {
++				vmMonitoringInfo.MetricName = *metric.Name.Value
++			}
++			vmMonitoringInfo.MetricUnit = string(*metric.Unit)
++		}
++
++		for _, timeseries := range metric.TimeSeries {
++			for _, val := range timeseries.MetadataValues {
++				fmt.Println(*val.Name, *val.Value)
++			}
++
++			if timeseries.Data == nil {
++				continue
++			}
++			for _, data := range timeseries.Data {
++				timestamp := data.TimeStamp
++				if timestamp == nil {
++					continue
++				}
++
++				var value *float64
++				if aggregation == azquery.AggregationTypeTotal {
++					value = data.Total
++				} else {
++					value = data.Average
++				}
++
++				if value == nil {
++					continue
++				}
++
++				timestampValues = append(timestampValues, irs.TimestampValue{
++					Timestamp: *timestamp,
++					Value:     strconv.FormatFloat(*value, 'f', -1, 64),
++				})
++			}
++		}
++	}
++
++	vmMonitoringInfo.TimestampValues = timestampValues
++
++	return vmMonitoringInfo, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/cloudit/connect/Cloudit_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/cloudit/connect/Cloudit_CloudConnection.go
+index 952d890b..05896bc3 100644
+--- a/cloud-control-manager/cloud-driver/drivers/cloudit/connect/Cloudit_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/cloudit/connect/Cloudit_CloudConnection.go
+@@ -126,3 +126,7 @@ func (*ClouditCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, e
+ func (cloudConn *ClouditCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, errors.New("Cloudit Driver: not implemented")
+ }
++
++func (cloudConn *ClouditCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Cloudit Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/docker/connect/DockerCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/docker/connect/DockerCloudConnection.go
+index cd5017e1..945c9817 100644
+--- a/cloud-control-manager/cloud-driver/drivers/docker/connect/DockerCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/docker/connect/DockerCloudConnection.go
+@@ -12,7 +12,6 @@ package connect
+ 
+ import (
+ 	"context"
+-
+ 	cblog "github.com/cloud-barista/cb-log"
+ 	dkrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/docker/resources"
+ 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
+@@ -122,3 +121,7 @@ func (*DockerCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, er
+ func (cloudConn *DockerCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, errors.New("Docker Driver: not implemented")
+ }
++
++func (cloudConn *DockerCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Docker Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
+index 8528cad4..10d45f7e 100644
+--- a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
+@@ -181,3 +181,7 @@ func (cloudConn *GCPCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ 
+ 	return &tagHandler, nil
+ }
++
++func (cloudConn *GCPCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("GCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
+index fcc098c4..b0f95947 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go
+@@ -204,3 +204,7 @@ func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ 	}
+ 	return &TagHandler, nil
+ }
++
++func (cloudConn *IbmCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Ibm Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go.orig b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go.orig
+new file mode 100644
+index 00000000..fcc098c4
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/connect/Ibm_CloudConnection.go.orig
+@@ -0,0 +1,206 @@
++package connect
++
++import (
++	"context"
++	"errors"
++	"github.com/IBM/platform-services-go-sdk/globalsearchv2"
++
++	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
++	vpcv0230 "github.com/IBM/vpc-go-sdk/0.23.0/vpcv1"
++	"github.com/IBM/vpc-go-sdk/vpcv1"
++	cblog "github.com/cloud-barista/cb-log"
++	ibmrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/resources"
++	"github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/ibmcloud-vpc/utils/kubernetesserviceapiv1"
++	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
++	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++	"github.com/sirupsen/logrus"
++)
++
++var cblogger *logrus.Logger
++
++func init() {
++	// cblog is a global variable.
++	cblogger = cblog.GetLogger("CB-SPIDER")
++}
++
++type IbmCloudConnection struct {
++	CredentialInfo idrv.CredentialInfo
++	Region         idrv.RegionInfo
++	VpcService     *vpcv1.VpcV1
++	ClusterService *kubernetesserviceapiv1.KubernetesServiceApiV1
++	TaggingService *globaltaggingv1.GlobalTaggingV1
++	SearchService  *globalsearchv2.GlobalSearchV2
++	VpcService0230 *vpcv0230.VpcV1
++	Ctx            context.Context
++}
++
++func (cloudConn *IbmCloudConnection) CreateImageHandler() (irs.ImageHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateImageHandler()!")
++	imageHandler := ibmrs.IbmImageHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++	}
++	return &imageHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateVMHandler() (irs.VMHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateVMHandler()!")
++	vmHandler := ibmrs.IbmVMHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		VpcService0230: cloudConn.VpcService0230,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &vmHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateVPCHandler() (irs.VPCHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateVPCHandler()!")
++	vpcHandler := ibmrs.IbmVPCHandler{
++		Region:         cloudConn.Region,
++		CredentialInfo: cloudConn.CredentialInfo,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &vpcHandler, nil
++}
++func (cloudConn *IbmCloudConnection) CreateSecurityHandler() (irs.SecurityHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateSecurityHandler()!")
++	securityHandler := ibmrs.IbmSecurityHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &securityHandler, nil
++}
++func (cloudConn *IbmCloudConnection) CreateKeyPairHandler() (irs.KeyPairHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateVPCHandler()!")
++	keyPairHandler := ibmrs.IbmKeyPairHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &keyPairHandler, nil
++}
++func (cloudConn *IbmCloudConnection) CreateVMSpecHandler() (irs.VMSpecHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateVMSpecHandler()!")
++	vmSpecHandler := ibmrs.IbmVmSpecHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++	}
++	return &vmSpecHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateNLBHandler() (irs.NLBHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateNLBHandler()!")
++	nlbHandler := ibmrs.IbmNLBHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &nlbHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) IsConnected() (bool, error) {
++	cblogger.Info("Ibm Cloud Driver: called IsConnected()!")
++	return true, nil
++}
++func (cloudConn *IbmCloudConnection) Close() error {
++	cblogger.Info("Ibm Cloud Driver: called Close()!")
++	return nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateDiskHandler() (irs.DiskHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateDiskHandler()!")
++	diskHandler := ibmrs.IbmDiskHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &diskHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateClusterHandler() (irs.ClusterHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateClusterHandler()!")
++	clusterHandler := ibmrs.IbmClusterHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		ClusterService: cloudConn.ClusterService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &clusterHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateMyImageHandler() (irs.MyImageHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateMyImageHandler()!")
++	myIamgeHandler := ibmrs.IbmMyImageHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		Region:         cloudConn.Region,
++		VpcService:     cloudConn.VpcService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &myIamgeHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateAnyCallHandler() (irs.AnyCallHandler, error) {
++	return nil, errors.New("Ibm Driver: not implemented")
++}
++
++func (cloudConn *IbmCloudConnection) CreateRegionZoneHandler() (irs.RegionZoneHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateRegionZoneHandler()!")
++	regionZoneHandler := ibmrs.IbmRegionZoneHandler{
++		Region:     cloudConn.Region,
++		VpcService: cloudConn.VpcService,
++		Ctx:        cloudConn.Ctx,
++	}
++	return &regionZoneHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreatePriceInfoHandler()!")
++	priceInfoHandler := ibmrs.IbmPriceInfoHandler{
++		Region: cloudConn.Region,
++		Ctx:    cloudConn.Ctx,
++	}
++	return &priceInfoHandler, nil
++}
++
++func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
++	cblogger.Info("Ibm Cloud Driver: called CreateTagHandler()!")
++	TagHandler := ibmrs.IbmTagHandler{
++		Region:         cloudConn.Region,
++		CredentialInfo: cloudConn.CredentialInfo,
++		VpcService:     cloudConn.VpcService,
++		ClusterService: cloudConn.ClusterService,
++		Ctx:            cloudConn.Ctx,
++		TaggingService: cloudConn.TaggingService,
++		SearchService:  cloudConn.SearchService,
++	}
++	return &TagHandler, nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+index 7cb5825e..e4886a67 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+@@ -141,3 +141,7 @@ func (cloudConn *KtCloudConnection) Close() error {
+ 	cblogger.Info("KT Cloud Driver: called Close()!")
+ 	return nil
+ }
++
++func (cloudConn *KtCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("KT Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go.orig b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go.orig
+new file mode 100644
+index 00000000..7cb5825e
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go.orig
+@@ -0,0 +1,143 @@
++// Proof of Concepts of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// This is a Cloud Driver Example for PoC Test.
++//
++// by ETRI, 2021.05.
++// Updated by ETRI, 2023.10.
++
++package connect
++
++import (
++	"fmt"
++	"github.com/sirupsen/logrus"
++
++	cblog "github.com/cloud-barista/cb-log"
++	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
++	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
++
++	ktsdk "github.com/cloud-barista/ktcloud-sdk-go"
++	//ktrs "github.com/cloud-barista/ktcloud/ktcloud/resources"
++	ktrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/ktcloud/resources"
++)
++
++type KtCloudConnection struct {
++	CredentialInfo idrv.CredentialInfo
++	RegionInfo     idrv.RegionInfo
++	Client         *ktsdk.KtCloudClient
++	NLBClient      *ktsdk.KtCloudClient
++}
++
++var cblogger *logrus.Logger
++
++func init() {
++	// cblog is a global variable.
++	cblogger = cblog.GetLogger("KT Cloud Connect")
++}
++
++func (cloudConn *KtCloudConnection) CreateVMHandler() (irs.VMHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateVMHandler()!")
++
++	//NOTE Just for Test!!
++	// cblogger.Info("cloudConn.CredentialInfo.ClientId : ")
++	// spew.Dump(cloudConn.CredentialInfo.ClientId)
++	// cblogger.Info("cloudConn.RegionInfo : ")
++	// spew.Dump(cloudConn.RegionInfo)
++
++	vmHandler := ktrs.KtCloudVMHandler{
++		CredentialInfo: cloudConn.CredentialInfo,
++		RegionInfo:     cloudConn.RegionInfo,
++		Client:         cloudConn.Client,
++	}
++	return &vmHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateVMSpecHandler() (irs.VMSpecHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateVMSpecHandler()!")
++	vmspecHandler := ktrs.KtCloudVMSpecHandler{cloudConn.CredentialInfo, cloudConn.RegionInfo, cloudConn.Client}
++	return &vmspecHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateImageHandler() (irs.ImageHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateImagehandler()!")
++	imageHandler := ktrs.KtCloudImageHandler{cloudConn.CredentialInfo, cloudConn.RegionInfo, cloudConn.Client}
++	return &imageHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateKeyPairHandler() (irs.KeyPairHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateKeyPairHandler()!")
++	keypairHandler := ktrs.KtCloudKeyPairHandler{cloudConn.CredentialInfo, cloudConn.RegionInfo, cloudConn.Client}
++	return &keypairHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateSecurityHandler() (irs.SecurityHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateSecurityHandler()!")
++	sgHandler := ktrs.KtCloudSecurityHandler{cloudConn.CredentialInfo, cloudConn.RegionInfo, cloudConn.Client}
++	return &sgHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateVPCHandler() (irs.VPCHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateVPCHandler()!")
++	vpcHandler := ktrs.KtCloudVPCHandler{cloudConn.CredentialInfo, cloudConn.RegionInfo, cloudConn.Client}
++	return &vpcHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateNLBHandler() (irs.NLBHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateNLBHandler()!")
++	nlbHandler := ktrs.KtCloudNLBHandler{RegionInfo: cloudConn.RegionInfo, Client: cloudConn.Client, NLBClient: cloudConn.NLBClient}
++	return &nlbHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateDiskHandler() (irs.DiskHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateDiskHandler()!")
++	diskHandler := ktrs.KtCloudDiskHandler{RegionInfo: cloudConn.RegionInfo, Client: cloudConn.Client}
++	return &diskHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateClusterHandler() (irs.ClusterHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateClusterHandler()!")
++	return nil, fmt.Errorf("KT Cloud Driver does not support CreateClusterHandler yet.")
++}
++
++func (cloudConn *KtCloudConnection) CreateMyImageHandler() (irs.MyImageHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateMyImageHandler()!")
++	myimageHandler := ktrs.KtCloudMyImageHandler{RegionInfo: cloudConn.RegionInfo, Client: cloudConn.Client}
++	return &myimageHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) CreateAnyCallHandler() (irs.AnyCallHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateAnyCallHandler()!")
++	return nil, fmt.Errorf("KT Cloud Driver does not support CreateAnyCallHandler yet.")
++}
++
++func (cloudConn *KtCloudConnection) CreateRegionZoneHandler() (irs.RegionZoneHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateRegionZoneHandler()!")
++	regionZoneHandler := ktrs.KtCloudRegionZoneHandler{CredentialInfo: cloudConn.CredentialInfo, RegionInfo: cloudConn.RegionInfo, Client: cloudConn.Client}
++	return &regionZoneHandler, nil
++}
++
++func (*KtCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHandler, error) {
++	return nil, fmt.Errorf("KT Cloud Driver does not support CreatePriceInfoHandler yet.")
++}
++
++func (cloudConn *KtCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
++	cblogger.Info("KT Cloud Driver: called CreateTagHandler()!")
++	tagHandler := ktrs.KtCloudTagHandler{cloudConn.RegionInfo, cloudConn.Client}
++	return &tagHandler, nil
++}
++
++func (cloudConn *KtCloudConnection) IsConnected() (bool, error) {
++	cblogger.Info("KT Cloud Driver: called IsConnected()!")
++	if cloudConn == nil {
++		return false, nil
++	}
++	return true, nil
++}
++
++func (cloudConn *KtCloudConnection) Close() error {
++	cblogger.Info("KT Cloud Driver: called Close()!")
++	return nil
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
+index 44748a34..cb7e12c3 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloudvpc/connect/KTCloudVpc_Connection.go
+@@ -131,3 +131,7 @@ func (cloudConn *KTCloudVpcConnection) Close() error {
+ func (cloudConn *KTCloudVpcConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
+ }
++
++func (cloudConn *KTCloudVpcConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
+index 84d9d92a..8796ab5d 100644
+--- a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
+@@ -1,6 +1,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	cblog "github.com/cloud-barista/cb-log"
+ 	mkrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/mock/resources"
+ 	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
+@@ -118,3 +119,7 @@ func (cloudConn *MockConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	handler := mkrs.MockTagHandler{MockName: cloudConn.MockName}
+ 	return &handler, nil
+ }
++
++func (cloudConn *MockConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Mock Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
+index 9957520c..b4946869 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpCloudConnection.go
+@@ -12,6 +12,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 
+ 	"github.com/sirupsen/logrus"
+@@ -159,3 +160,7 @@ func (cloudConn *NcpCloudConnection) Close() error {
+ 
+ 	return nil
+ }
++
++func (cloudConn *NcpCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("NCP Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
+index 26047c13..5d76f49e 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ncpvpc/connect/NcpVpcCloudConnection.go
+@@ -169,3 +169,7 @@ func (cloudConn *NcpVpcCloudConnection) Close() error {
+ func (cloudConn *NcpVpcCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, fmt.Errorf("NCP VPC Cloud Driver: not implemented")
+ }
++
++func (cloudConn *NcpVpcCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("NCP VPC Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
+index 7e88e54c..b02e560b 100644
+--- a/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/nhncloud/connect/NHN_CloudConnection.go
+@@ -156,3 +156,7 @@ func (cloudConn *NhnCloudConnection) Close() error {
+ func (cloudConn *NhnCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
+ 	return nil, errors.New("NHN Cloud Driver: not implemented")
+ }
++
++func (cloudConn *NhnCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, fmt.Errorf("NHN Cloud Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
+index 101a6550..2f80bd5f 100644
+--- a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
+@@ -189,3 +189,7 @@ func (cloudConn *OpenStackCloudConnection) CreateTagHandler() (irs.TagHandler, e
+ 	}
+ 	return &tagHandler, nil
+ }
++
++func (cloudConn *OpenStackCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("OpenStack Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
+index b76570a2..ade3c193 100644
+--- a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
++++ b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
+@@ -159,3 +159,7 @@ func (cloudConn *TencentCloudConnection) CreateTagHandler() (irs.TagHandler, err
+ 	}
+ 	return &handler, nil
+ }
++
++func (cloudConn *TencentCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
++	return nil, errors.New("Tencent Driver: not implemented")
++}
+diff --git a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
+index 30aa0642..ff0f671a 100644
+--- a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
++++ b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
+@@ -23,6 +23,7 @@ type CloudConnection interface {
+ 	CreateSecurityHandler() (irs.SecurityHandler, error)
+ 	CreateKeyPairHandler() (irs.KeyPairHandler, error)
+ 	CreateVMHandler() (irs.VMHandler, error)
++	CreateMonitoringHandler() (irs.MonitoringHandler, error)
+ 
+ 	CreateNLBHandler() (irs.NLBHandler, error)
+ 	CreateDiskHandler() (irs.DiskHandler, error)
+diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go
+new file mode 100644
+index 00000000..6cd8471f
+--- /dev/null
++++ b/cloud-control-manager/cloud-driver/interfaces/resources/MonitoringHandler.go
+@@ -0,0 +1,75 @@
++// Cloud Driver Interface of CB-Spider.
++// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
++// The CB-Spider Mission is to connect all the clouds with a single interface.
++//
++//      * Cloud-Barista: https://github.com/cloud-barista
++//
++// This is Resouces interfaces of Cloud Driver.
++//
++// by CB-Spider Team, 2020.04.
++// by CB-Spider Team, 2019.06.
++
++package resources
++
++import (
++	"time"
++)
++
++type MonitoringReqInfo struct {
++	VMIID          IID
++	MetricType     MetricType
++	IntervalMinute string
++	TimeBeforeHour string
++}
++
++type TimestampValue struct {
++	Timestamp time.Time
++	Value     string
++}
++
++type MetricData struct {
++	MetricName      string
++	MetricUnit      string
++	TimestampValues []TimestampValue
++}
++
++type MetricType string
++
++const (
++	CPUUsage     MetricType = "cpu_usage"
++	MemoryUsage  MetricType = "memory_usage"
++	DiskRead     MetricType = "disk_read"
++	DiskWrite    MetricType = "disk_write"
++	DiskReadOps  MetricType = "disk_read_ops"
++	DiskWriteOps MetricType = "disk_write_ops"
++	NetworkIn    MetricType = "network_in"
++	NetworkOut   MetricType = "network_out"
++	Unknown      MetricType = "unknown"
++)
++
++func StringMetricType(input string) MetricType {
++	switch input {
++	case "cpu_usage":
++		return CPUUsage
++	case "memory_usage":
++		return MemoryUsage
++	case "disk_read":
++		return DiskRead
++	case "disk_write":
++		return DiskWrite
++	case "disk_read_ops":
++		return DiskReadOps
++	case "disk_write_ops":
++		return DiskWriteOps
++	case "network_in":
++		return NetworkIn
++	case "network_out":
++		return NetworkOut
++	default:
++		return Unknown
++	}
++}
++
++type MonitoringHandler interface {
++	GetVMMetricData(monitoringReqInfo MonitoringReqInfo) (MetricData, error)
++}
+diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
+index 300e34cc..1f87d21c 100644
+--- a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
++++ b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
+@@ -13,18 +13,19 @@ package resources
+ type RSType string
+ 
+ const (
+-	ALL       RSType = "all"
+-	IMAGE     RSType = "image"
+-	VPC       RSType = "vpc"
+-	SUBNET    RSType = "subnet"
+-	SG        RSType = "sg"
+-	KEY       RSType = "keypair"
+-	VM        RSType = "vm"
+-	NLB       RSType = "nlb"
+-	DISK      RSType = "disk"
+-	MYIMAGE   RSType = "myimage"
+-	CLUSTER   RSType = "cluster"
+-	NODEGROUP RSType = "nodegroup"
++	ALL          RSType = "all"
++	IMAGE        RSType = "image"
++	VPC          RSType = "vpc"
++	SUBNET       RSType = "subnet"
++	SG           RSType = "sg"
++	KEY          RSType = "keypair"
++	VM           RSType = "vm"
++	VMMONITORING RSType = "vmmonitoring"
++	NLB          RSType = "nlb"
++	DISK         RSType = "disk"
++	MYIMAGE      RSType = "myimage"
++	CLUSTER      RSType = "cluster"
++	NODEGROUP    RSType = "nodegroup"
+ )
+ 
+ func RSTypeString(rsType RSType) string {

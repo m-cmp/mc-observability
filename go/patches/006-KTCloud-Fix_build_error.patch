@@ -1,0 +1,18 @@
+commit 3502bbb7a43db55eb71a174d279a3383f499d586
+Author: ish <ish@innogrid.com>
+Date:   Fri Sep 13 16:43:12 2024 +0900
+
+    KTCloud: Fix build error
+
+diff --git a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+index e4886a67..869c162f 100644
+--- a/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
++++ b/cloud-control-manager/cloud-driver/drivers/ktcloud/connect/KtCloud_Connection.go
+@@ -12,6 +12,7 @@
+ package connect
+ 
+ import (
++	"errors"
+ 	"fmt"
+ 	"github.com/sirupsen/logrus"
+ 
