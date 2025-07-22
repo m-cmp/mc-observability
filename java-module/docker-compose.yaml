@@ -331,6 +331,9 @@ services:
     restart: always
     ports:
       - 9002:9002
+    depends_on:
+      mc-observability-maria:
+        condition: service_started
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
@@ -348,7 +351,7 @@ services:
         rm -f airflow-webserver.pid
 
         # Set up metadata database
-        airflow db migrate
+        airflow db init
 
         # Create default user
         airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
