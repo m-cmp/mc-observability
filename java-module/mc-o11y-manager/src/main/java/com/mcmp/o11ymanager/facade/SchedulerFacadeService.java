@@ -9,10 +9,10 @@ import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
 import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Project;
 import com.mcmp.o11ymanager.model.semaphore.Task;
+import com.mcmp.o11ymanager.oldFacade.OldTelegrafConfigFacadeService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HostService;
 import com.mcmp.o11ymanager.port.SemaphorePort;
-import com.mcmp.o11ymanager.service.interfaces.HostService;
 import jakarta.transaction.Transactional;
-
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,7 +35,7 @@ public class SchedulerFacadeService {
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
   private final SemaphorePort semaphorePort;
-  private final TelegrafConfigFacadeService telegrafConfigFacadeService;
+  private final OldTelegrafConfigFacadeService oldTelegrafConfigFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private final ApplicationEventPublisher event;
   private final HostService hostService;
@@ -50,7 +50,7 @@ public class SchedulerFacadeService {
   private int maxWaitMinutes;
 
   public void scheduleTaskStatusCheck(String requestId, Integer taskId, String hostId,
-      SemaphoreInstallMethod method, Agent agent, String requestUserId) {
+      SemaphoreInstallMethod method, Agent agent) {
     AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
 
@@ -66,8 +66,7 @@ public class SchedulerFacadeService {
         log.info("🔨🔨 --------------------Task Status-------------------- 🔨🔨");
         log.debug(
             "Task Status - Request ID: {}, Host ID: {}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}, Request User ID: {}",
-            requestId, hostId, agent, method, currentTask.getId(), currentTask.getStatus(),
-            requestUserId);
+            requestId, hostId, agent, method, currentTask.getId(), currentTask.getStatus());
 
         if ("waiting".equals(currentTask.getStatus())) {
           startTime.set(System.currentTimeMillis());
@@ -109,7 +108,7 @@ public class SchedulerFacadeService {
             HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
 
             if (agent == Agent.TELEGRAF) {
-              telegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
+              oldTelegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
             } else if (agent == Agent.FLUENT_BIT) {
               fluentBitConfigFacadeService.downloadFluentbitConfig(hostConnectionInfo);
             }
@@ -117,7 +116,7 @@ public class SchedulerFacadeService {
 
           log.debug(
               "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
-              requestId, hostId, agent, action, requestUserId);
+              requestId, hostId, agent, action);
             if (agent == Agent.TELEGRAF) {
                 hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
             } else if (agent == Agent.FLUENT_BIT) {
@@ -127,12 +126,11 @@ public class SchedulerFacadeService {
           log.info("🔨🔨 --------------------task end-------------------- 🔨🔨");
 
           if (isSuccess) {
-            AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, hostId,
-                requestUserId, null);
+            AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, hostId, null,null);
             event.publishEvent(successEvent);
           } else {
             AgentHistoryFailEvent failureEvent = new AgentHistoryFailEvent(requestId, action,
-                hostId, requestUserId,
+                hostId, null,
                 "호스트에서 작업을 수행하던 중 실패하였습니다.");
             event.publishEvent(failureEvent);
           }
@@ -153,7 +151,7 @@ public class SchedulerFacadeService {
         if (action != null) {
           log.debug(
               "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
-              requestId, hostId, agent, action, requestUserId);
+              requestId, hostId, agent, action);
 
           if (agent == Agent.TELEGRAF) {
               hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);

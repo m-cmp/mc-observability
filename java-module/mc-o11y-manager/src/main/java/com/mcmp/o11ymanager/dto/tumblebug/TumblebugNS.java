@@ -26,7 +26,6 @@ public class TumblebugNS {
         @JsonProperty("name")
         private String name;
 
-        @JsonProperty("resource_type")
         private String resourceType;
 
         @JsonProperty("uid")

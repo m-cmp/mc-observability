@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.global.runner;
 
-import com.mcmp.o11ymanager.service.HostService;
-import com.mcmp.o11ymanager.service.SemaphoreService;
+import com.mcmp.o11ymanager.oldService.domain.HostService;
+import com.mcmp.o11ymanager.oldService.domain.OldSemaphoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -22,7 +22,7 @@ import static com.mcmp.o11ymanager.infrastructure.util.ChaCha20Poly3105Util.*;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class PreparationRunner implements ApplicationContextAware {
 
-  private final SemaphoreService semaphoreService;
+  private final OldSemaphoreService oldSemaphoreService;
   private final HostService hostService;
 
   @Override
@@ -41,7 +41,7 @@ public class PreparationRunner implements ApplicationContextAware {
 
     try {
       log.info("Semaphore 초기화를 시작 합니다. 🚀");
-      semaphoreService.initSemaphore();
+      oldSemaphoreService.initSemaphore();
       log.info("Semaphore 초기화가 완료 되었습니다. 🎉");
     } catch (Exception e) {
       log.error("Semaphore 초기화를 실패 하였습니다. 😵💫\n {}", e.getMessage(), e);

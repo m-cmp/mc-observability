@@ -1,8 +1,10 @@
 package com.mcmp.o11ymanager.dto.tumblebug;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SshKey {
   private String resourceType;
   private String id;

@@ -3,31 +3,32 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.dto.host.ConfigFileContentResponseDTO;
 import com.mcmp.o11ymanager.dto.host.ConfigFileListResponseDTO;
 import com.mcmp.o11ymanager.dto.host.ConfigResponseDTO;
-import com.mcmp.o11ymanager.dto.host.HostConnectionDTO;
-import com.mcmp.o11ymanager.entity.HostEntity;
+import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
+import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.global.annotation.Base64Encode;
 import com.mcmp.o11ymanager.global.definition.ConfigDefinition;
 import com.mcmp.o11ymanager.mapper.host.ConfigMapper;
 import com.mcmp.o11ymanager.model.agentHealth.SshConnection;
 import com.mcmp.o11ymanager.model.config.ConfigFileNode;
-import com.mcmp.o11ymanager.service.domain.HostDomainService;
-import com.mcmp.o11ymanager.service.interfaces.*;
-
+import com.mcmp.o11ymanager.oldService.domain.HostDomainService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.FileService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.TargetService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
@@ -41,6 +42,7 @@ public class TelegrafConfigFacadeService {
   private final ConfigMapper configMapper;
 
   private static final Lock configDownloadLock = new ReentrantLock();
+  private final TargetService targetService;
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -110,17 +112,14 @@ public class TelegrafConfigFacadeService {
           CONFIG_METRIC_SWAP + "," +
           CONFIG_METRIC_SYSTEM;
 
-  public void initConfig(String hostId, Path telegrafBaseDir, String hostType,
-      String credentialId, String cloudService) {
+  public void initConfig(String targetId, Path telegrafBaseDir, String cloudService) {
 
     // 1) telegraf.conf 만들 위치 지정
     Path telegraConfFilePath = telegrafBaseDir.resolve(
             ConfigDefinition.HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG);
 
     // 2) telegraf.conf 파일 작성
-    String configContent = generateTelegrafConfig(hostId, hostType, CONFIG_DEFAULT_METRICS,
-            credentialId,
-            cloudService);
+    String configContent = generateTelegrafConfig(targetId, CONFIG_DEFAULT_METRICS, cloudService);
 
     // 3) 파일 생성
     File telegrafConfigFile = new File(String.valueOf(telegraConfFilePath));
@@ -131,34 +130,34 @@ public class TelegrafConfigFacadeService {
     fileService.generateFile(telegrafConfigFile, configContent);
   }
 
-  public void updateTelegrafConfig(String hostId, String content, String path) {
+  public void updateTelegrafConfig(String targetId, String content, String path) {
 
     // 1) TelegrafConf 위치 확인
-    Path telegrafConfPath = fileFacadeService.resolveAgentConfigPath(hostId, Agent.TELEGRAF);
+    Path telegrafConfPath = fileFacadeService.resolveAgentConfigPath(targetId, Agent.TELEGRAF);
 
     // 2) 파일 작성
     File updatedConfigFile = new File(String.valueOf(telegrafConfPath));
     fileService.writeFile(updatedConfigFile, path, content);
   }
 
-  public Path getTelegrafConfigWorkingPath(String hostId) {
-    return fileFacadeService.resolveAgentConfigPath(hostId, Agent.TELEGRAF);
+  public Path getTelegrafConfigWorkingPath(String targetId) {
+    return fileFacadeService.resolveAgentConfigPath(targetId, Agent.TELEGRAF);
   }
 
 
   // 원격에 있는 파일 내용 가져와서 로컬에 복사
-  public void downloadTelegrafConfig(HostConnectionDTO host) throws IOException {
+  public void downloadTelegrafConfig(TargetRegisterDTO target) throws IOException {
     try {
       configDownloadLock.lock();
 
       // 1) SSH로 원격 파일 확인
-      log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
+      log.debug(target.getAccessInfo().getIp(), target.getAccessInfo().getPort(), target.getAccessInfo().getUser());
 
       SshConnection connection = sshService.getConnection(
-              host.getIp(),
-              host.getPort(),
-              host.getUserId(),
-              host.getPassword()
+              target.getAccessInfo().getIp(),
+              target.getAccessInfo().getPort(),
+              target.getAccessInfo().getUser(),
+              target.getAccessInfo().getSshKey()
       );
 
       // 2) 원격에 파일 없을시 종료
@@ -168,24 +167,22 @@ public class TelegrafConfigFacadeService {
 
       // 원격에 파일 있을 경우 아래 내용 실행
       // 3) 로컬에 telegraf 폴더 생성
-      Path path = Path.of(configBasePath, host.getHostId(),
+      Path path = Path.of(configBasePath, target.getName(),
               ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
       fileService.createDirectory(path);
 
       // 4) 원격 파일 내용 가져오기
       sshService.download(connection, fileFacadeService.getHostConfigTelegrafRemotePath(),
-              path, host.getUserId(), host.getIp(), host.getPort(), host.getPassword());
+              path, target.getAccessInfo().getUser(), target.getAccessInfo().getIp(), target.getAccessInfo().getPort(), target.getAccessInfo().getSshKey());
     } finally {
       configDownloadLock.unlock();
     }
   }
 
-  public void initTelegrafConfig(HostConnectionDTO host, String type, String credentialId,
+  public void initTelegrafConfig(Optional<TargetEntity> target,
       String cloudService) {
-
-    log.debug(host.getIp(), host.getPort(), host.getUserId(), host.getPassword());
     // 1) 로컬에 telegraf 폴더 생성
-    Path path = Path.of(configBasePath, host.getHostId(),
+    Path path = Path.of(configBasePath, target.get().getId(),
         ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);
 
     Path configDir = fileService.createDirectory(path);
@@ -193,13 +190,14 @@ public class TelegrafConfigFacadeService {
     log.info("로컬 경로 : {}", configDir.toString());
 
     // 2) 로컬 파일 복사하여 telegraf.conf 생성
-    initConfig(host.getHostId(), path, type, credentialId, cloudService);
+    initConfig(target.get().getId(), path, cloudService);
   }
 
   @Base64Encode
-  public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String hostId, String path) {
+  public ConfigFileContentResponseDTO getTelegrafConfigContent(String requestId, String targetId, String path) {
 
-    HostEntity host = hostDomainService.getHostById(requestId, hostId);
+
+    targetService.findById(targetId);
 
     // TODO: Get content from config folder directly
 //    if (commitHash == null || commitHash.isEmpty()) {
@@ -210,7 +208,7 @@ public class TelegrafConfigFacadeService {
 //        Agent.TELEGRAF, commitHash, path);
 
     return ConfigFileContentResponseDTO.builder()
-        .hostId(host.getId())
+        .hostId(targetId)
 //        .commitHash(commitHash)
         .path(path)
 //        .content(content)
@@ -219,14 +217,10 @@ public class TelegrafConfigFacadeService {
   }
 
 
-  public ConfigFileListResponseDTO getTelegrafConfigFileList(String requestId, String hostId,
-      String commitHash) {
+  public ConfigFileListResponseDTO getTelegrafConfigFileList(String targetId) {
 
-    HostEntity host = hostDomainService.getHostById(requestId, hostId);
+    Optional<TargetEntity> target = targetService.findById(targetId);
 
-    if (commitHash == null || commitHash.isEmpty()) {
-      commitHash = host.getMonitoring_agent_config_git_hash();
-    }
 
     // TODO: Get file list from config folder directly
     List<ConfigFileNode> configFiles = null;
@@ -234,8 +228,7 @@ public class TelegrafConfigFacadeService {
 //            commitHash, Agent.TELEGRAF);
 
     return ConfigFileListResponseDTO.builder()
-        .hostId(host.getId())
-        .commitHash(commitHash)
+        .hostId(targetId)
         .agentType(Agent.TELEGRAF.getName())
         .files(configMapper.toFileDTOList(configFiles))
         .build();
@@ -254,8 +247,7 @@ public class TelegrafConfigFacadeService {
   }
 
 
-  public String generateTelegrafConfig(String uuid, String hostType, String metrics,
-      String credentialId, String cloudService) {
+  public String generateTelegrafConfig(String targetId, String metrics,String cloudService) {
     String errMsg;
 
     if (!telegrafConfigGlobal.exists()) {
@@ -384,14 +376,8 @@ public class TelegrafConfigFacadeService {
 
     fileService.appendConfig(telegrafConfigOutputsInfluxDB, sb);
 
-    String finalUuid = (uuid != null) ? uuid : "";
-    log.debug(finalUuid);
-
-    String finalHostType = (hostType != null) ? hostType : "";
-    log.debug(finalHostType);
-
-    String finalCredentialId = (credentialId != null) ? credentialId : "";
-    log.debug(finalCredentialId);
+    String finalTargetId = (targetId != null) ? targetId : "";
+    log.debug(finalTargetId);
 
     String finalCloudService = (cloudService != null) ? cloudService : "";
     log.debug(finalCloudService);
@@ -403,9 +389,7 @@ public class TelegrafConfigFacadeService {
 
     return sb.toString()
         .replace("@SITE_CODE", deploySiteCode)
-        .replace("@ID", finalUuid)
-        .replace("@TYPE", finalHostType)
-        .replace("@CREDENTIAL_ID", finalCredentialId)
+        .replace("@ID", finalTargetId)
         .replace("@CLOUD_SERVICE", finalCloudService)
         .replace("@URL", finalInfluxDBURL)
         .replace("@DATABASE", finalInfluxDBDatabase)

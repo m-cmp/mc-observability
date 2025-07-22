@@ -3,7 +3,7 @@ package com.mcmp.o11ymanager.event.listner;
 import com.mcmp.o11ymanager.entity.HistoryEntity;
 import com.mcmp.o11ymanager.event.AgentHistoryEvent;
 import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
-import com.mcmp.o11ymanager.service.interfaces.HistoryService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HistoryService;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

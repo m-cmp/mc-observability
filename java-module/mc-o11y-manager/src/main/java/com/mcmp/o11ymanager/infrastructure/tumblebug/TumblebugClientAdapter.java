@@ -35,8 +35,8 @@ public class TumblebugClientAdapter implements TumblebugPort {
   }
 
   @Override
-  public Object sendCommand(String nsId, String mciId, String subGroupId, String vmId, TumblebugCmd command) {
-    return tumblebugClient.sendCommand(nsId, mciId, subGroupId, vmId, command);
+  public Object sendCommand(String nsId, String mciId, TumblebugCmd command) {
+    return tumblebugClient.sendCommand(nsId, mciId, command);
   }
 
 }

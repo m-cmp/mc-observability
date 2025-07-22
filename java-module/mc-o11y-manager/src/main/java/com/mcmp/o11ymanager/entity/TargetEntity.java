@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import jakarta.persistence.*;
@@ -13,8 +14,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "host",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"ip", "port"}))
+@Table(name = "target")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -28,10 +28,6 @@ public class TargetEntity {
 
   @Id
   private String id;
-
-  @OneToOne(mappedBy = "target", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JsonIgnore
-  private AccessInfoEntity credential;
 
   @Column(nullable = false)
   private String name;
@@ -47,17 +43,19 @@ public class TargetEntity {
   private TargetStatus targetStatus;
 
   @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus targetAgentTaskStatus;
+  private TargetAgentTaskStatus logTaskStatus;
+
+
+  @Enumerated(EnumType.STRING)
+  private TargetAgentTaskStatus monitoringTaskStatus;
 
   private String targetMonitoringAgentTaskId;
 
   private String targetLogAgentTaskId;
 
-  @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus monitoringServiceStatus;
+  private String monitoringServiceStatus;
 
-  @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus logServiceStatus;
+  private String logServiceStatus;
 
   @CreatedDate
   @Column(updatable = false)
