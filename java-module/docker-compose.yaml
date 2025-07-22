@@ -53,7 +53,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.10.10
+    image: cloudbaristaorg/cb-tumblebug:0.11.0
     container_name: cb-tumblebug
     build:
       context: .
