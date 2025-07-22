@@ -82,9 +82,4 @@ public class TargetController {
   public ResBody<List<TargetDTO>> getAllTargets() {
     return new ResBody<>(targetFacadeService.getTargets());
   }
-
-  @GetMapping("/ns")
-  public ResBody<List<TumblebugNS.NS>> getNamespaceList() {
-    return new ResBody<>(targetFacadeService.getNamespaceList());
-  }
 }
