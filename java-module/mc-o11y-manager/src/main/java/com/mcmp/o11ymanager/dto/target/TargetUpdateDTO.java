@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.dto.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +20,4 @@ public class TargetUpdateDTO {
     private String aliasName;
 
     private String description;
-
-    private String state;
 }

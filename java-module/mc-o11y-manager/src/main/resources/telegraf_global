@@ -1,6 +1,4 @@
 [global_tags]
-  uuid = "@ID"
-  credential_id = "@CREDENTIAL_ID"
-  cloud_service = "@CLOUD_SERVICE"
-  type = "@TYPE"
-  collection_type = "agent"
+  ns_id="@NS_ID"
+  mci_id="@MCI_ID"
+  target_id="@TARGET_ID"

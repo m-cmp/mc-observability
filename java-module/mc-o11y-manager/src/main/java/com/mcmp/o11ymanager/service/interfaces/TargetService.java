@@ -1,38 +1,44 @@
 package com.mcmp.o11ymanager.service.interfaces;
 
+import com.mcmp.o11ymanager.dto.host.HostConnectionDTO;
+
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
 import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
+import com.mcmp.o11ymanager.exception.agent.LogAgentNotInstalled;
+import com.mcmp.o11ymanager.exception.agent.MonitoringAgentNotInstalled;
+import com.mcmp.o11ymanager.exception.host.HostAgentTaskProcessingException;
+import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
+
 import java.util.List;
 
 public interface TargetService {
 
   TargetDTO get(String nsId, String mciId, String targetId);
 
-  TargetDTO getByNsMci(String nsId, String mciId);
+  List<TargetDTO> getByNsMci(String nsId, String mciId);
 
   List<TargetDTO> list();
 
   TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto);
 
-  TargetDTO put(String targetId, String nsId, String mciId, TargetUpdateDTO request);
+  TargetDTO put(String nsId, String mciId, String targetId, TargetUpdateDTO dto);
 
-  void delete(String targetId, String nsId, String mciId);
+  void delete(String nsId, String mciId, String targetId);
 
-  //getMiningDBs()
-  //{
-  //  "rs_code": "string",
-  //  "rs_msg": "string",
-  //  "data": {
-  //    "url": "string",
-  //    "database": "string",
-  //    "retention_policy": "string",
-  //    "username": "string",
-  //    "password": "string"
-  //  },
-  //  "error_message": "string"
-  //}
+  void isIdleMonitoringAgent(String nsId, String mciId, String targetId) throws HostAgentTaskProcessingException;
+  void isIdleLogAgent(String nsId, String mciId, String targetId) throws HostAgentTaskProcessingException;
 
+  void isLogAgentInstalled(String nsId, String mciId, String targetId) throws LogAgentNotInstalled;
+  void isMonitoringAgentInstalled(String nsId, String mciId, String targetId) throws MonitoringAgentNotInstalled;
 
+  void updateMonitoringAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status);
+  void updateLogAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status);
 
+  void updateMonitoringAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash);
+  void updateLogAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash);
+
+  void updateMonitoringAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
+
+  void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
 }

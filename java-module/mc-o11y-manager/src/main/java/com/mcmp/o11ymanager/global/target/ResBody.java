@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.global.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonPropertyOrder({"rs_code", "rs_msg", "data", "error_message"})
 public class ResBody<T> {
     
     @JsonProperty("rs_code")

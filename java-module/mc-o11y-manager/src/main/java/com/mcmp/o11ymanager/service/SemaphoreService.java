@@ -2,10 +2,10 @@ package com.mcmp.o11ymanager.service;
 
 
 import com.mcmp.o11ymanager.model.semaphore.SurveyVar;
-
-import java.util.*;
-
-import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
+import com.mcmp.o11ymanager.oldService.domain.SemaphoreDomainService;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

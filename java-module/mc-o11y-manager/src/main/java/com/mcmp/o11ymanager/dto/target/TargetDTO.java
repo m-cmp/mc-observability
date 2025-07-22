@@ -32,8 +32,11 @@ public class TargetDTO {
     @JsonProperty("target_status")
     private TargetStatus targetStatus;
 
-    @JsonProperty("target_agent_task_status")
-    private TargetAgentTaskStatus targetAgentTaskStatus;
+    @JsonProperty("monitoring_agent_task_status")
+    private TargetAgentTaskStatus monitoringAgentTaskStatus;
+
+    @JsonProperty("log_agent_task_status")
+    private TargetAgentTaskStatus logAgentTaskStatus;
 
     @JsonProperty("target_monitoring_agent_task_id")
     private String targetMonitoringAgentTaskId;
@@ -42,10 +45,10 @@ public class TargetDTO {
     private String targetLogAgentTaskId;
 
     @JsonProperty("monitoring_service_status")
-    private TargetAgentTaskStatus monitoringServiceStatus;
+    private String monitoringServiceStatus;
 
     @JsonProperty("log_service_status")
-    private TargetAgentTaskStatus logServiceStatus;
+    private String logServiceStatus;
 
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
@@ -59,9 +62,6 @@ public class TargetDTO {
     @JsonProperty("mci_id")
     private String mciId;
 
-    @JsonProperty("sub_group")
-    private String subGroup;
-
     private String state;
 
     public static TargetDTO fromEntity(com.mcmp.o11ymanager.entity.TargetEntity entity) {
@@ -72,7 +72,6 @@ public class TargetDTO {
                 .description(entity.getDescription())
                 .csp(entity.getCsp())
                 .targetStatus(entity.getTargetStatus())
-                .targetAgentTaskStatus(entity.getTargetAgentTaskStatus())
                 .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
                 .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
                 .monitoringServiceStatus(entity.getMonitoringServiceStatus())
@@ -81,8 +80,29 @@ public class TargetDTO {
                 .updatedAt(entity.getUpdatedAt())
                 .nsId(entity.getNsId())
                 .mciId(entity.getMciId())
-                .subGroup(entity.getSubGroup())
                 .state(entity.getState())
+                .build();
+    }
+
+    public com.mcmp.o11ymanager.entity.TargetEntity toEntity() {
+        return com.mcmp.o11ymanager.entity.TargetEntity.builder()
+                .id(this.id)
+                .name(this.name)
+                .aliasName(this.aliasName)
+                .description(this.description)
+                .csp(this.csp)
+                .targetStatus(this.targetStatus)
+                .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
+                .logAgentTaskStatus(this.logAgentTaskStatus)
+                .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
+                .targetLogAgentTaskId(this.targetLogAgentTaskId)
+                .monitoringServiceStatus(this.monitoringServiceStatus)
+                .logServiceStatus(this.logServiceStatus)
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
+                .nsId(this.nsId)
+                .mciId(this.mciId)
+                .state(this.state)
                 .build();
     }
 }

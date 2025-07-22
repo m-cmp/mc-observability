@@ -4,8 +4,8 @@ import com.mcmp.o11ymanager.dto.host.ConfigResponseDTO;
 
 public interface TelegrafConfigService {
 
-//    String generateTelegrafConfig(String uuid, String hostType, String metrics);
+    String generateTelegrafConfig(String uuid, String hostType, String metrics);
 
-//    ConfigResponseDTO getTelegrafConfigTemplate(String path);
+    ConfigResponseDTO getTelegrafConfigTemplate(String path);
 
 }

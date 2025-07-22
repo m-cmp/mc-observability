@@ -5,14 +5,16 @@ import com.mcmp.o11ymanager.dto.history.HistoryListDTO;
 import com.mcmp.o11ymanager.dto.history.HistoryResponseDTO;
 import com.mcmp.o11ymanager.dto.host.HostDTO;
 import com.mcmp.o11ymanager.dto.host.HostResponseDTO;
+import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.entity.HistoryEntity;
 import com.mcmp.o11ymanager.entity.HostEntity;
 import com.mcmp.o11ymanager.global.definition.TimestampDefinition;
 import com.mcmp.o11ymanager.mapper.history.HistoryMapper;
-import com.mcmp.o11ymanager.mapper.host.HostMapper;
-import com.mcmp.o11ymanager.service.domain.HostDomainService;
-import com.mcmp.o11ymanager.service.interfaces.HistoryService;
-import com.mcmp.o11ymanager.service.interfaces.HostService;
+import com.mcmp.o11ymanager.mapper.host.TargetMapper;
+import com.mcmp.o11ymanager.oldService.domain.HostDomainService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.HistoryService;
+import com.mcmp.o11ymanager.oldService.domain.interfaces.TargetService;
+import com.mcmp.o11ymanager.service.domain.TargetDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,9 +31,9 @@ import java.util.stream.Collectors;
 public class HistoryFacadeService {
 
     private final HistoryService historyService;
-    private final HostService hostService;
-    private final HostMapper hostMapper;
-    private final HostDomainService hostDomainService;
+    private final TargetService targetService;
+    private final TargetMapper hostMapper;
+    private final TargetDomainService targetDomainService;
     private final HistoryMapper historyMapper;
 
     @Transactional(readOnly = true)
@@ -43,7 +45,7 @@ public class HistoryFacadeService {
     public HistoryResponseDTO findByIdWithHost(String id) {
         HistoryDTO history = historyService.findHostsById(id);
 
-        HostDTO host = hostService.findById(history.getHostId());
+        TargetDTO target = targetService.get(history.getHostId());
 
         return HistoryResponseDTO.builder()
                 .id(history.getId())
