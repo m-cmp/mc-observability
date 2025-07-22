@@ -23,7 +23,7 @@ import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
-public class OldSemaphoreDomainService {
+public class SemaphoreDomainService {
 
   public static final int SEMAPHORE_MAX_PARALLEL_TASKS = 10;
 

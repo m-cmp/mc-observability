@@ -12,7 +12,8 @@ public class AgentHistoryEvent extends BaseDomainEvent{
 
     private final String requestId;
     private final AgentAction agentAction;
-    private final String hostId;
-    private final String requestUserId;
+    private final String nsId;
+    private final String mciId;
+    private final String targetId;
     private final String reason;
 }

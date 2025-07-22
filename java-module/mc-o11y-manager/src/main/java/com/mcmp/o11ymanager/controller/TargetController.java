@@ -3,7 +3,6 @@ package com.mcmp.o11ymanager.controller;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
 import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
-import com.mcmp.o11ymanager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.facade.TargetFacadeService;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import jakarta.validation.Valid;
@@ -71,7 +70,7 @@ public class TargetController {
   }
 
   @GetMapping("/{nsId}/{mciId}/target")
-  public ResBody<TargetDTO> getTargetByNsMci(
+  public ResBody<List<TargetDTO>> getTargetByNsMci(
       @PathVariable String nsId,
       @PathVariable String mciId
   ) {

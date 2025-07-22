@@ -1,18 +1,17 @@
 package com.mcmp.o11ymanager.facade;
 
-import com.mcmp.o11ymanager.dto.host.HostConnectionDTO;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentAction;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.event.AgentHistoryEvent;
 import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
-import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
+import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Project;
 import com.mcmp.o11ymanager.model.semaphore.Task;
-import com.mcmp.o11ymanager.oldFacade.OldTelegrafConfigFacadeService;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.HostService;
 import com.mcmp.o11ymanager.port.SemaphorePort;
+import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import jakarta.transaction.Transactional;
+
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,10 +34,8 @@ public class SchedulerFacadeService {
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
   private final SemaphorePort semaphorePort;
-  private final OldTelegrafConfigFacadeService oldTelegrafConfigFacadeService;
-  private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
   private final ApplicationEventPublisher event;
-  private final HostService hostService;
+  private final TargetService targetService;
 
   @Value("${feign.semaphore.project-name}")
   private String projectName;
@@ -49,7 +46,7 @@ public class SchedulerFacadeService {
   @Value("${feign.semaphore.task-check-scheduler.max-wait-minutes:30}")
   private int maxWaitMinutes;
 
-  public void scheduleTaskStatusCheck(String requestId, Integer taskId, String hostId,
+  public void scheduleTaskStatusCheck(String requestId, Integer taskId, String nsId, String mciId, String targetId,
       SemaphoreInstallMethod method, Agent agent) {
     AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
     AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
@@ -65,8 +62,8 @@ public class SchedulerFacadeService {
 
         log.info("🔨🔨 --------------------Task Status-------------------- 🔨🔨");
         log.debug(
-            "Task Status - Request ID: {}, Host ID: {}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}, Request User ID: {}",
-            requestId, hostId, agent, method, currentTask.getId(), currentTask.getStatus());
+            "Task Status - Request ID: {}, Target: {}/{}/{}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}",
+            requestId, nsId, mciId, targetId, agent, method, currentTask.getId(), currentTask.getStatus());
 
         if ("waiting".equals(currentTask.getStatus())) {
           startTime.set(System.currentTimeMillis());
@@ -76,13 +73,13 @@ public class SchedulerFacadeService {
         // 타임아웃의 경우
         if (currentTime - startTime.get() > TimeUnit.MINUTES.toMillis(maxWaitMinutes)) {
           log.warn(
-              "Task timed out after {} minutes. Resetting status to IDLE. Host ID: {}, Agent: {}",
-              maxWaitMinutes, hostId, agent);
+              "Task timed out after {} minutes. Resetting status to IDLE. Target: {}/{}/{}, Agent: {}",
+              maxWaitMinutes, nsId, mciId, targetId, agent);
 
           if (Objects.requireNonNull(agent) == Agent.TELEGRAF) {
-              hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+              targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
           } else if (agent == Agent.FLUENT_BIT) {
-              hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+              targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
           }
 
           throw new TimeoutException(
@@ -104,33 +101,23 @@ public class SchedulerFacadeService {
         }
 
         if (action != null) {
-          if (isSuccess && method == SemaphoreInstallMethod.UPDATE) {
-            HostConnectionDTO hostConnectionInfo = hostService.getHostConnectionInfo(hostId);
-
-            if (agent == Agent.TELEGRAF) {
-              oldTelegrafConfigFacadeService.downloadTelegrafConfig(hostConnectionInfo);
-            } else if (agent == Agent.FLUENT_BIT) {
-              fluentBitConfigFacadeService.downloadFluentbitConfig(hostConnectionInfo);
-            }
-          }
-
           log.debug(
-              "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
-              requestId, hostId, agent, action);
+              "Updating Agent History - Request ID: {}, Target: {}/{}/{}, Agent: {}, Action: {}",
+              requestId, nsId, mciId, targetId, agent, action);
             if (agent == Agent.TELEGRAF) {
-                hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+                targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
             } else if (agent == Agent.FLUENT_BIT) {
-                hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+              targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
             }
 
           log.info("🔨🔨 --------------------task end-------------------- 🔨🔨");
 
           if (isSuccess) {
-            AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, hostId, null,null);
+            AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, nsId, mciId, targetId, null);
             event.publishEvent(successEvent);
           } else {
             AgentHistoryFailEvent failureEvent = new AgentHistoryFailEvent(requestId, action,
-                hostId, null,
+                nsId, mciId, targetId,
                 "호스트에서 작업을 수행하던 중 실패하였습니다.");
             event.publishEvent(failureEvent);
           }
@@ -150,13 +137,13 @@ public class SchedulerFacadeService {
         AgentAction action = getAgentActionFailed(method, agent);
         if (action != null) {
           log.debug(
-              "Updating Agent History - Request ID: {}, Host ID: {}, Agent: {}, Action: {}, Request User ID: {}",
-              requestId, hostId, agent, action);
+              "Updating Agent History - Request ID: {}, Target: {}/{}/{}, Agent: {}, Action: {}",
+              requestId, nsId, mciId, targetId, agent, action);
 
           if (agent == Agent.TELEGRAF) {
-              hostService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+              targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
           } else if (agent == Agent.FLUENT_BIT) {
-              hostService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.IDLE);
+            targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
           }
         }
       }

@@ -1,8 +1,6 @@
 package com.mcmp.o11ymanager.dto.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mcmp.o11ymanager.enums.Agent;
-import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import lombok.AllArgsConstructor;
@@ -34,8 +32,11 @@ public class TargetDTO {
     @JsonProperty("target_status")
     private TargetStatus targetStatus;
 
-    @JsonProperty("target_agent_task_status")
-    private TargetAgentTaskStatus targetAgentTaskStatus;
+    @JsonProperty("monitoring_agent_task_status")
+    private TargetAgentTaskStatus monitoringAgentTaskStatus;
+
+    @JsonProperty("log_agent_task_status")
+    private TargetAgentTaskStatus logAgentTaskStatus;
 
     @JsonProperty("target_monitoring_agent_task_id")
     private String targetMonitoringAgentTaskId;
@@ -61,9 +62,6 @@ public class TargetDTO {
     @JsonProperty("mci_id")
     private String mciId;
 
-    @JsonProperty("sub_group")
-    private String subGroup;
-
     private String state;
 
     public static TargetDTO fromEntity(com.mcmp.o11ymanager.entity.TargetEntity entity) {
@@ -82,8 +80,29 @@ public class TargetDTO {
                 .updatedAt(entity.getUpdatedAt())
                 .nsId(entity.getNsId())
                 .mciId(entity.getMciId())
-                .subGroup(entity.getSubGroup())
                 .state(entity.getState())
+                .build();
+    }
+
+    public com.mcmp.o11ymanager.entity.TargetEntity toEntity() {
+        return com.mcmp.o11ymanager.entity.TargetEntity.builder()
+                .id(this.id)
+                .name(this.name)
+                .aliasName(this.aliasName)
+                .description(this.description)
+                .csp(this.csp)
+                .targetStatus(this.targetStatus)
+                .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
+                .logAgentTaskStatus(this.logAgentTaskStatus)
+                .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
+                .targetLogAgentTaskId(this.targetLogAgentTaskId)
+                .monitoringServiceStatus(this.monitoringServiceStatus)
+                .logServiceStatus(this.logServiceStatus)
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
+                .nsId(this.nsId)
+                .mciId(this.mciId)
+                .state(this.state)
                 .build();
     }
 }

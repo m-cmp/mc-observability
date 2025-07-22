@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.dto.history;
 
-import com.mcmp.o11ymanager.dto.host.HostDTO;
-import com.mcmp.o11ymanager.dto.host.HostResponseDTO;
+import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.enums.AgentAction;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -28,7 +27,7 @@ public class HistoryResponseDTO {
     private final String requestUserId;
 
     @Deprecated
-    @Schema(description = "호스트 정보(deprecated)")
-    private final HostResponseDTO hostResponseDTO;
+    @Schema(description = "타겟 정보(deprecated)")
+    private final TargetDTO targetDTO;
 
 }

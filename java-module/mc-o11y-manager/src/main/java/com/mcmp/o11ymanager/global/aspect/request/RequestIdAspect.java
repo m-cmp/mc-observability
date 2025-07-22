@@ -21,7 +21,7 @@ public class RequestIdAspect {
 
     private final RequestInfo requestInfo;
 
-    @Around("execution(* com.mcmp.o11ymanager.controller..*.*(..)) && !within(com.mcmp.o11ymanager.oldController.HostWebSocketController)")
+    @Around("execution(* com.mcmp.o11ymanager.controller..*.*(..)) && !within(com.mcmp.o11ymanager.controller.TargetWebSocketController)")
     public Object aroundControllerMethods(ProceedingJoinPoint joinPoint) throws Throwable {
         String requestId = UUID.randomUUID().toString();
         requestInfo.setRequestId(requestId);
@@ -31,7 +31,7 @@ public class RequestIdAspect {
 
     }
 
-    @Before("execution(* com.mcmp.o11ymanager.controller..*.*(..)) && !within(com.mcmp.o11ymanager.oldController.HostWebSocketController)")
+    @Before("execution(* com.mcmp.o11ymanager.controller..*.*(..)) && !within(com.mcmp.o11ymanager.controller.TargetWebSocketController)")
     public void setRequestUserId(JoinPoint joinPoint) {
         Object[] args = joinPoint.getArgs();
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();

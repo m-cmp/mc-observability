@@ -1,7 +1,5 @@
 package com.mcmp.o11ymanager.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import jakarta.persistence.*;
@@ -10,6 +8,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -21,13 +20,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Builder
 @DynamicUpdate
+@IdClass(TargetId.class)
 @EntityListeners(AuditingEntityListener.class)
 public class TargetEntity {
   public static final String HOST_TYPE_HOST = "target";
   public static final String HOST_TYPE_VM = "vm";
 
   @Id
-  private String id;
+  private String nsId;
+
+  @Id
+  private String mciId;
+
+  @Id
+  private String targetId;
 
   @Column(nullable = false)
   private String name;
@@ -43,11 +49,10 @@ public class TargetEntity {
   private TargetStatus targetStatus;
 
   @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus logTaskStatus;
-
-
+  private TargetAgentTaskStatus monitoringAgentTaskStatus;
+  
   @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus monitoringTaskStatus;
+  private TargetAgentTaskStatus logAgentTaskStatus;
 
   private String targetMonitoringAgentTaskId;
 
@@ -64,12 +69,5 @@ public class TargetEntity {
   @LastModifiedDate
   private LocalDateTime updatedAt;
 
-  private String nsId;
-
-  private String mciId;
-
-  private String subGroup;
-
   private String state;
-
 }

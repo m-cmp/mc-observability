@@ -1,11 +1,12 @@
 package com.mcmp.o11ymanager.oldService.domain;
 
-import com.mcmp.o11ymanager.entity.HostEntity;
-import com.mcmp.o11ymanager.enums.Agent;
-import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.StatusService;
+import com.mcmp.o11ymanager.entity.TargetEntity;
+import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.service.domain.TargetDomainService;
+import com.mcmp.o11ymanager.service.interfaces.StatusService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,54 +15,48 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class StatusServiceImpl implements StatusService {
-
-  private final HostDomainService hostDomainService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
+  private final TargetDomainService targetDomainService;
 
   @Override
-  public void updateHostAgentTaskStatus(String requestId, Integer taskId,
-      HostAgentTaskStatus hostAgentTaskStatus,
-      String hostId, Agent agent) {
+  public void updateTargetAgentTaskStatus(String requestId, Integer taskId,
+      TargetAgentTaskStatus hostAgentTaskStatus,
+      String nsId, String mciId, String targetId) {
     log.debug(
-        "Updating Agent Task Status - Request ID: {}, Host ID: {}, Agent: {}, Agent Task Status: {}",
-        requestId, hostId, agent, hostAgentTaskStatus);
+        "Updating Agent Task Status - Request ID: {}, Target: {}/{}/{}, Agent Task Status: {}",
+        requestId, nsId, mciId, targetId, hostAgentTaskStatus);
 
-    HostEntity updateHost = HostEntity.builder()
-        .id(hostId)
+    TargetEntity updateTarget = TargetEntity.builder()
+        .nsId(nsId)
+        .mciId(mciId)
+        .targetId(targetId)
         .build();
 
-    if (agent.equals(Agent.TELEGRAF)) {
-      updateHost.setHost_monitoring_agent_task_status(hostAgentTaskStatus);
-    } else if (agent.equals(Agent.FLUENT_BIT)) {
-      updateHost.setHost_log_agent_task_status(hostAgentTaskStatus);
-    }
+    updateTarget.setMonitoringAgentTaskStatus(hostAgentTaskStatus);
+    updateTarget.setLogAgentTaskStatus(hostAgentTaskStatus);
 
-    if (hostAgentTaskStatus == HostAgentTaskStatus.IDLE) {
-      if (agent.equals(Agent.TELEGRAF)) {
-        updateHost.setHost_monitoring_agent_task_id("");
-      } else if (agent.equals(Agent.FLUENT_BIT)) {
-        updateHost.setHost_log_agent_task_id("");
-      }
+    if (hostAgentTaskStatus == TargetAgentTaskStatus.IDLE) {
+      updateTarget.setTargetMonitoringAgentTaskId("");
+      updateTarget.setTargetLogAgentTaskId("");
     } else if (taskId != null) {
-      if (agent.equals(Agent.TELEGRAF)) {
-        updateHost.setHost_monitoring_agent_task_id(taskId.toString());
-      } else if (agent.equals(Agent.FLUENT_BIT)) {
-        updateHost.setHost_log_agent_task_id(taskId.toString());
-      }
+      updateTarget.setTargetMonitoringAgentTaskId(taskId.toString());
+      updateTarget.setTargetLogAgentTaskId(taskId.toString());
     }
 
-    hostDomainService.updateHost(updateHost);
+    targetDomainService.updateTarget(updateTarget);
   }
 
   @Override
-  public void resetHostAgentTaskStatus(String requestId, String hostId, Agent agent) {
-    if (hostId == null || hostId.isEmpty() || agent == null) {
+  public void resetTargetAgentTaskStatus(String requestId, String nsId, String mciId, String targetId) {
+    if (nsId == null || nsId.isEmpty() ||
+      mciId == null || mciId.isEmpty() ||
+      targetId == null || targetId.isEmpty()) {
       return;
     }
 
     try {
       agentTaskStatusLock.lock();
-      updateHostAgentTaskStatus(requestId, null, HostAgentTaskStatus.IDLE, hostId, agent);
+      updateTargetAgentTaskStatus(requestId, null, TargetAgentTaskStatus.IDLE, nsId, mciId, targetId);
     } finally {
       agentTaskStatusLock.unlock();
     }
