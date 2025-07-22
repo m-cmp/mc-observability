@@ -15,6 +15,6 @@ public interface TumblebugPort {
 
   TumblebugMCI getMCIList(String nsId, String mciId);
 
-  Object sendCommand(String nsId, String mciId, String subGroupId, String targetId, TumblebugCmd command);
+  Object sendCommand(String nsId, String mciId, TumblebugCmd command);
 
 }

@@ -149,9 +149,10 @@ public class TargetFacadeService {
     log.debug("🔥 [SERVICE] getNamespaceList() 호출됨");
 
     TumblebugNS result = tumblebugPort.getNSList();
-    log.debug("✅ [SERVICE] Feign 응답: {}", result);
 
     return result.getNs();
   }
+
+
 
 }
