@@ -29,10 +29,6 @@ public class AccessInfoEntity {
   @Id
   private String id;
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "target_id", referencedColumnName = "id", unique = true)
-  private TargetEntity target;
-
   @Column(nullable = false)
   private String ip;
 

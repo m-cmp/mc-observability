@@ -66,7 +66,6 @@ public class TargetFacadeService {
 
     try {
 
-      Thread.sleep(10_000);
 
       Map<String, Object> responseMap = (Map<String, Object>) tumblebugPort.sendCommand(nsId, mciId, cmd);
 
@@ -106,7 +105,10 @@ public class TargetFacadeService {
 
     TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, dto);
 
-//    agentFacadeService.install2(savedTarget);
+    log.info("=============================save target db=================================");
+
+
+    agentFacadeService.install2(savedTarget);
 
     return savedTarget;
   }

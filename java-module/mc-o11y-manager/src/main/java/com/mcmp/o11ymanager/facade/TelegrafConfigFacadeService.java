@@ -181,9 +181,6 @@ public class TelegrafConfigFacadeService {
 
   public void initTelegrafConfig(Optional<TargetEntity> target,
       String cloudService) {
-
-     log.debug(target.get().getAccessInfo().getIp(), target.get().getAccessInfo().getPort(), target.get().getAccessInfo().getUser());
-
     // 1) 로컬에 telegraf 폴더 생성
     Path path = Path.of(configBasePath, target.get().getId(),
         ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF);

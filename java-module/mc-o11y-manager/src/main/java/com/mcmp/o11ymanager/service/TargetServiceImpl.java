@@ -19,6 +19,7 @@ import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
 import com.mcmp.o11ymanager.infrastructure.util.ChaCha20Poly3105Util;
 import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.repository.AccessInfoJpaRepository;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.oldService.domain.interfaces.TargetService;
 import java.util.Optional;
@@ -38,6 +39,8 @@ public class TargetServiceImpl implements TargetService {
   private final TargetJpaRepository targetJpaRepository;
   private final RequestInfo requestInfo;
   private final ApplicationEventPublisher event;
+  private final AccessInfoJpaRepository accessInfoJpaRepository;
+
 
 
   @Override
@@ -68,6 +71,8 @@ public class TargetServiceImpl implements TargetService {
     return targetJpaRepository.findAll().stream().map(com.mcmp.o11ymanager.dto.target.TargetDTO::fromEntity).toList();
   }
 
+
+
   @Override
   public TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
 
@@ -84,6 +89,7 @@ public class TargetServiceImpl implements TargetService {
       throw new RuntimeException("SSH Key encryption failed", e);
     }
 
+    // 1. TargetEntity 생성 및 저장
     TargetEntity target = TargetEntity.builder()
         .id(targetId)
         .name(dto.getName())
@@ -95,25 +101,30 @@ public class TargetServiceImpl implements TargetService {
         .subGroup(dto.getSubGroup())
         .build();
 
-    AccessInfoEntity accessInfoEntity = AccessInfoEntity.builder()
-        .id(targetId)
-        .ip(dto.getAccessInfo().getIp())
-        .port(dto.getAccessInfo().getPort())
-        .user(dto.getAccessInfo().getUser())
-        .sshKey(encryptedSshKey)
-        .target(target)
-        .build();
+    TargetEntity savedTarget = targetJpaRepository.save(target);
 
-    target.setAccessInfo(accessInfoEntity);
+    // 2. AccessInfoEntity 별도 저장 (연관관계 없음)
+    if (dto.getAccessInfo() != null) {
+      AccessInfoEntity accessInfoEntity = AccessInfoEntity.builder()
+          .id(targetId) // targetId를 accessInfo의 PK로 사용
+          .ip(dto.getAccessInfo().getIp())
+          .port(dto.getAccessInfo().getPort())
+          .user(dto.getAccessInfo().getUser())
+          .sshKey(encryptedSshKey)
+          .build();
 
-    TargetEntity saved = targetJpaRepository.save(target);
+      accessInfoJpaRepository.save(accessInfoEntity);
+    }
 
+    // 3. 이벤트 발행
     event.publishEvent(
         HostUpdateNotifyMultipleEvent.builder().build()
     );
 
-    return TargetDTO.fromEntity(saved);
+    // 4. 결과 DTO 생성
+    return TargetDTO.fromEntity(savedTarget);
   }
+
 
 
   @Override
@@ -295,20 +306,26 @@ public TargetRegisterDTO getTargetInfo(String targetId) throws Exception {
       .build();
 }
 
-@Override
-public TargetRegisterDTO.AccessInfoDTO getAccessInfo(String targetId) throws Exception {
-  TargetEntity target = targetJpaRepository.findById(targetId)
-      .orElseThrow(
-          () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
+
+  @Override
+  public TargetRegisterDTO.AccessInfoDTO getAccessInfo(String targetId) throws Exception {
+    TargetEntity target = targetJpaRepository.findById(targetId)
+        .orElseThrow(() ->
+            new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
+
+    AccessInfoEntity accessInfo = accessInfoJpaRepository.findById(targetId)
+        .orElseThrow(() ->
+            new ResourceNotExistsException(requestInfo.getRequestId(), "AccessInfoEntity", targetId));
+
+    return TargetRegisterDTO.AccessInfoDTO.builder()
+        .ip(accessInfo.getIp())
+        .user(accessInfo.getUser())
+        .port(accessInfo.getPort())
+        .sshKey(ChaCha20Poly3105Util.decryptString(accessInfo.getSshKey()))
+        .build();
+  }
 
 
-  return TargetRegisterDTO.AccessInfoDTO.builder()
-      .ip(target.getAccessInfo().getIp())
-      .user(target.getAccessInfo().getUser())
-      .port(target.getAccessInfo().getPort())
-      .sshKey(ChaCha20Poly3105Util.decryptString(target.getAccessInfo().getSshKey()))
-      .build();
-}
 
 @Override
 public void updateMonitoringAgentTaskStatusAndTaskId(String targetId, TargetAgentTaskStatus status,

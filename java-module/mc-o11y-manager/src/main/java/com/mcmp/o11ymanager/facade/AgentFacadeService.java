@@ -78,7 +78,6 @@ public class AgentFacadeService {
     String id = request.getId();
 
     ReentrantLock monitoringLock = getAgentLock(id, Agent.TELEGRAF);
-    ReentrantLock loggingLock = getAgentLock(id, Agent.FLUENT_BIT);
 
     try {
       if (!targetService.existsById(id)) {
@@ -93,12 +92,72 @@ public class AgentFacadeService {
       } finally {
         semaphoreInstallTemplateCurrentCountLock.unlock();
       }
+      // 2 ) 에이전트 설치
 
+      // 2-1 ) Telegraf 설치
+      monitoringLock.lock();
+
+      log.info("=========================BEFORE START INSTALL================================");
+
+      telegrafFacadeService.install(id, templateCount);
+
+
+      result = ResDTO.builder()
+          .id(id)
+          .status(ResponseStatus.SUCCESS)
+          .build();
+    } catch (Exception e) {
+
+      result = ResDTO.builder()
+          .id(id)
+          .status(ResponseStatus.ERROR)
+          .errorMessage(e.getMessage())
+          .build();
+    } finally {
+      monitoringLock.unlock();
+    }
+    return result;
+}
+
+  @Transactional
+  public ResDTO install3(TargetDTO request) {
+
+    ResDTO result;
+
+    String id = request.getId();
+
+    ReentrantLock monitoringLock = getAgentLock(id, Agent.TELEGRAF);
+//    ReentrantLock loggingLock = getAgentLock(id, Agent.FLUENT_BIT);
+    log.info("======================== INSTALL 요청 시작================================");
+
+    try {
+      if (!targetService.existsById(id)) {
+        log.info("!!!!!!!!!!!대상 타겟 존재 하지 않음!!!!!!!");
+        throw new HostNotExistException(requestInfo.getRequestId(), String.join(", ", id));
+      }
+
+      // 1) Lock 걸기
+      int templateCount;
+      log.debug("[{}] 세마포어 카운트 획득 시도", id);
+      try {
+        semaphoreInstallTemplateCurrentCountLock.lock();
+        log.info("[{}] 세마포어 락 획득 성공", id);
+        templateCount = getSemaphoreInstallTemplateCurrentCount();
+        log.info("[{}] 세마포어 현재 카운트: {}", id, templateCount);
+      } finally {
+        semaphoreInstallTemplateCurrentCountLock.unlock();
+        log.info("[{}] 세마포어 락 해제", id);
+      }
       // 2 ) 에이전트 설치
       // 2-1 ) Telegraf 설치
       monitoringLock.lock();
-      telegrafFacadeService.install(id, templateCount);
+      log.info("[{}] 모니터링 락 획득 성공", id);
+      log.info("[{}] =========================BEFORE START INSTALL================================", id);
 
+
+
+      telegrafFacadeService.install(id, templateCount);
+      log.info("[{}] Telegraf 설치 완료", id);
       // 2-1 ) FluentBit 설치
 //      loggingLock.lock();
 //        fluentBitFacadeService.install(id, templateCount);
@@ -115,11 +174,12 @@ public class AgentFacadeService {
           .errorMessage(e.getMessage())
           .build();
     } finally {
-      loggingLock.unlock();
+//      loggingLock.unlock();
       monitoringLock.unlock();
     }
     return result;
-}
+  }
+
 
 
 @Transactional

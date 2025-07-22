@@ -29,10 +29,6 @@ public class TargetEntity {
   @Id
   private String id;
 
-  @OneToOne(mappedBy = "target", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  @JsonIgnore
-  private AccessInfoEntity accessInfo;
-
   @Column(nullable = false)
   private String name;
 

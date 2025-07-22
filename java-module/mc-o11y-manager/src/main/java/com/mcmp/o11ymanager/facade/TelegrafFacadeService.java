@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.facade;
 
 import com.mcmp.o11ymanager.dto.target.ResDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO.AccessInfoDTO;
 import com.mcmp.o11ymanager.entity.AccessInfoEntity;
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.Agent;
@@ -51,11 +52,17 @@ public class TelegrafFacadeService {
   public void install(@NotBlank String targetId,
       @NotBlank int templateCount) throws Exception {
 
+    log.info("=========================TELEGRAF 설치 요청 진입================================");
+
+//    targetService.updateMonitoringAgentTaskStatus(targetId, TargetAgentTaskStatus.IDLE);
+
     // 1. host IDLE 상태 확인
     targetService.isIdleMonitoringAgent(targetId);
+    log.info("=========================IDLE 상태 확인 완료================================");
 
     // 2. host 상태 업데이트
     targetService.updateMonitoringAgentTaskStatus(targetId, TargetAgentTaskStatus.INSTALLING);
+    log.info("=========================상태 업데이트 완료================================");
 
     // 3. 로컬 파일 확인
     TargetRegisterDTO target = targetService.getTargetInfo(targetId);
@@ -76,24 +83,31 @@ public class TelegrafFacadeService {
           Agent.TELEGRAF);
     }
 
+    log.info("=========================FINISH CONFIG================================");
+
     // 4. 전송(semaphore) - 설치 요청
+
+
+
+    log.info("[{}] START semaphore install", targetId);
     Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.TELEGRAF,
         templateCount);
-
-    // 5. task ID, task status 업데이트
+//
+//    // 5. task ID, task status 업데이트
+    log.info("[{}] UPDATE task status", targetId);
     targetService.updateMonitoringAgentTaskStatusAndTaskId(targetId, TargetAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
     // 6. 이력 남기기
-    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-        .requestId(requestInfo.getRequestId())
-        .hostId(targetId)
-        .agentAction(AgentAction.MONITORING_AGENT_INSTALL_STARTED)
-        .reason("")
-        .build();
-
-    event.publishEvent(successEvent);
+//    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
+//        .requestId(requestInfo.getRequestId())
+//        .hostId(targetId)
+//        .agentAction(AgentAction.MONITORING_AGENT_INSTALL_STARTED)
+//        .reason("")
+//        .build();
+//
+//    event.publishEvent(successEvent);
 
     // 7. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), targetId,
@@ -182,7 +196,7 @@ public class TelegrafFacadeService {
         agentTaskStatusLock.lock();
 
         Optional<TargetEntity> target = targetService.findById(id);
-        AccessInfoEntity accessInfo = target.get().getAccessInfo();
+        AccessInfoDTO accessInfo = targetService.getAccessInfo(id);
 
         targetService.isIdleMonitoringAgent(id);
         targetService.updateMonitoringAgentTaskStatus(id, TargetAgentTaskStatus.ENABLING);
@@ -257,8 +271,7 @@ public class TelegrafFacadeService {
       try {
         agentTaskStatusLock.lock();
 
-        Optional<TargetEntity> target = targetService.findById(id);
-        AccessInfoEntity accessInfo = target.get().getAccessInfo();
+        AccessInfoDTO accessInfo = targetService.getAccessInfo(id);
 
         targetService.isIdleMonitoringAgent(id);
         targetService.updateMonitoringAgentTaskStatus(id, TargetAgentTaskStatus.ENABLING);
@@ -331,7 +344,7 @@ public class TelegrafFacadeService {
         agentTaskStatusLock.lock();
 
         Optional<TargetEntity> target = targetService.findById(id);
-        AccessInfoEntity accessInfo = target.get().getAccessInfo();
+        AccessInfoDTO accessInfo = targetService.getAccessInfo(id);
 
         targetService.isIdleMonitoringAgent(id);
         targetService.updateMonitoringAgentTaskStatus(id, TargetAgentTaskStatus.ENABLING);
