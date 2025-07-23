@@ -87,3 +87,10 @@ class ConfigManager:
         return {
             "mcp_grafana_url": mcp.get('mcp_grafana_url', '')
         }
+
+    def get_system_prompt_config(self):
+        log_analysis = self.config.get('log_analysis', {})
+        return {
+            "system_prompt_first": log_analysis.get('system_prompt_first', ''),
+            "system_prompt_default": log_analysis.get('system_prompt_default', '')
+        }

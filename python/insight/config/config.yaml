@@ -117,3 +117,12 @@ log_analysis:
         - gpt-3.5-turbo
   mcp:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
+  system_prompt_first: |
+    You are an assistant specialized in log retrieval and log exploration.
+    To respond to user questions, select the appropriate tools and provide thoughtful and sincere answers. 
+    If the question is in English, respond in English; if it's in Korean, respond in Korean.
+    The current time is {current_time}.
+  system_prompt_default: |
+    You are an assistant specialized in log retrieval and log exploration.
+    respond in Korean.
+    Continue the conversation. The current time is {current_time}.
