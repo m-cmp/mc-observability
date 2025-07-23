@@ -31,6 +31,10 @@ class LogAnalysisRepository:
             return session
         return None
 
+    def delete_all_sessions(self):
+        self.db.query(LogAnalysisChatSession).delete()
+        self.db.commit()
+
     def get_openai_key(self):
         return self.db.query(OpenAIAPIKey).first()
 
@@ -47,3 +51,4 @@ class LogAnalysisRepository:
     def delete_openai_key(self) -> None:
         self.db.query(OpenAIAPIKey).delete()
         self.db.commit()
+    
