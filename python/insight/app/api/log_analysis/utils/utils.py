@@ -1,5 +1,5 @@
 from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSession, SessionHistory, Message, \
-    OpenAIAPIKey
+    OpenAIAPIKey, GoogleAPIKey
 from app.api.log_analysis.repo.repo import LogAnalysisRepository
 from app.api.log_analysis.request.req import PostSessionBody, SessionIdPath, PostQueryBody
 from app.core.mcp.mcp_context import MCPContext
@@ -13,7 +13,8 @@ import uuid
 class LogAnalysisService:
     PROVIDER_ENV_MAP = {
         'ollama': 'OLLAMA_BASE_URL',
-        'openai': 'OPENAI_API_KEY'
+        'openai': 'OPENAI_API_KEY',
+        'google': 'GOOGLE_API_KEY'
     }
 
     def __init__(self, db: Session=None, mcp_context: MCPContext=None):
@@ -27,6 +28,8 @@ class LogAnalysisService:
             if model_info['provider']=="ollama" and os.getenv(env_key):
                 result.append(self.map_model_to_res(model_info))
             elif model_info['provider']=="openai" and self.repo.get_openai_key():
+                result.append(self.map_model_to_res(model_info))
+            elif model_info['provider']=="google" and self.repo.get_google_key():
                 result.append(self.map_model_to_res(model_info))
             else:
                 pass
@@ -83,7 +86,10 @@ class LogAnalysisService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Session Not Found"
             )
-
+            
+    def delete_all_chat_sessions(self):
+        self.repo.delete_all_sessions()
+        return []
 
     async def get_chat_session_history(self, path: SessionIdPath):
         session_id = path.sessionId
@@ -151,6 +157,7 @@ class CredentialService:
         self._fetchers: dict[str, Callable[[], str]] = {
             'openai': self._fetch_openai_key,
             'ollama': self._fetch_ollama_url,
+            'google': self._fetch_google_key
         }
 
     def get_provider_credential(self, provider: str) -> str:
@@ -175,6 +182,15 @@ class CredentialService:
             )
         return url
 
+    def _fetch_google_key(self) -> str:
+        api_key = self.repo.get_google_key()
+        if not api_key:
+            raise HTTPException(
+                detail="GOOGLE_API_KEY not set",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        return api_key
+        
 
 class OpenAIAPIKeyService:
     def __init__(self, db: Session=None):
@@ -196,6 +212,31 @@ class OpenAIAPIKeyService:
             )
         self.repo.delete_openai_key()
         return OpenAIAPIKey(
+            seq=result.SEQ,
+            api_key=result.API_KEY
+        )
+
+
+class GoogleAPIKeyService:
+    def __init__(self, db: Session=None):
+        self.repo = LogAnalysisRepository(db=db)
+
+    def post_key(self, api_key: str):
+        result = self.repo.create_google_key(api_key)
+        return GoogleAPIKey(
+            seq=result.SEQ,
+            api_key=result.API_KEY
+        )
+
+    def delete_key(self):
+        result = self.repo.get_google_key()
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No API key to delete"
+            )
+        self.repo.delete_google_key()
+        return GoogleAPIKey(
             seq=result.SEQ,
             api_key=result.API_KEY
         )

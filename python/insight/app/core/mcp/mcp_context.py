@@ -1,5 +1,6 @@
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
+from app.core.llm.google_client import GoogleClient
 from config.ConfigManager import ConfigManager
 from langchain_mcp_adapters.tools import load_mcp_tools
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -22,7 +23,6 @@ class MCPContext:
         self.mcp_client = mcp_client
         self.mcp_session = None
         self.llm_client = None
-
         self.tools = None
         self.agent = None
 
@@ -43,6 +43,8 @@ class MCPContext:
             self.llm_client = OllamaClient(provider_credential)
         elif provider == 'openai':
             self.llm_client = OpenAIClient(provider_credential)
+        elif provider == 'google':
+            self.llm_client = GoogleClient(provider_credential)
 
         self.llm_client.setup(model=model_name)
         self.agent = self.llm_client.bind_tools(self.tools, self.memory)

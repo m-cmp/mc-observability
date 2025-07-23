@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath, PostAPIKeyBody
-from app.api.log_analysis.response.res import (ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResBodyOpenAIAPIKey,
+from app.api.log_analysis.response.res import (ResBodyLogAnalysisModel, ResBodyLogAnalysisSession, ResBodyOpenAIAPIKey, ResBodyGoogleAPIKey,
                                                ResBodyLogAnalysisSessions, ResBodySessionHistory, ResBodyQuery)
-from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService
+from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService, GoogleAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
 from app.core.mcp.mcp_context import MCPContext
 from app.core.dependencies.db import get_db
@@ -158,3 +158,35 @@ async def delete_api_key(
     service = OpenAIAPIKeyService(db=db)
     result = service.delete_key()
     return ResBodyOpenAIAPIKey(data=result)
+
+
+
+@router.post(
+    path="/log-analysis/google/api_keys",
+    # description="",
+    # responses="",
+    response_model=ResBodyGoogleAPIKey,
+    operation_id="PostGoogleAPIKey"
+)
+async def post_api_key(
+    body_params: PostAPIKeyBody,
+    db: Session = Depends(get_db)
+):
+    service = GoogleAPIKeyService(db=db)
+    result = service.post_key(body_params.api_key)
+    return ResBodyGoogleAPIKey(data=result)
+
+
+@router.delete(
+    path="/log-analysis/google/api_keys",
+    # description="",
+    # responses="",
+    response_model=ResBodyGoogleAPIKey,
+    operation_id="DeleteGoogleAPIKey"
+)
+async def delete_api_key(
+    db: Session = Depends(get_db)
+):
+    service = GoogleAPIKeyService(db=db)
+    result = service.delete_key()
+    return ResBodyGoogleAPIKey(data=result)

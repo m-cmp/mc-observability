@@ -18,3 +18,8 @@ class OpenAIAPIKey(Base):
     __tablename__ = "mc_o11y_insight_openai_api_key"
     SEQ = Column(Integer, primary_key=True)
     API_KEY = Column(Text, nullable=False)
+
+class GoogleAPIKey(Base):
+    __tablename__ = "mc_o11y_insight_google_api_key"
+    SEQ = Column(Integer, primary_key=True)
+    API_KEY = Column(Text, nullable=False)
