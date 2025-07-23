@@ -76,6 +76,23 @@ async def delete_log_analysis_session(
 
 
 
+@router.delete(
+    path="/log-analysis/sessions",
+    # description="Delete all sessions",
+    # responses="",
+    response_model=ResBodyLogAnalysisSessions,
+    operation_id="DeleteAllLogAnalysisSessions"
+)
+async def delete_all_log_analysis_session(
+        db: Session = Depends(get_db)
+):
+    log_analysis_service = LogAnalysisService(db=db)
+    result = log_analysis_service.delete_all_chat_sessions()
+
+    return ResBodyLogAnalysisSessions(data=result)
+
+
+
 @router.get(
     path="/log-analysis/session/{sessionId}/history",
     # description="",
