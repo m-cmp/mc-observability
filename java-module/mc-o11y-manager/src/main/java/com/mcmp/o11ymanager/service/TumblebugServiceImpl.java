@@ -43,6 +43,17 @@ public class TumblebugServiceImpl implements TumblebugService {
 
 
   @Override
+  public boolean isConnectedVM(String nsId, String mciId, String targetId, String userName) {
+    try {
+      String output = executeCommand(nsId, mciId, "echo hello", userName);
+      return "hello".equalsIgnoreCase(output.trim());
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+
+  @Override
   public TumblebugMCI.Vm getVm(String nsId, String mciId, String targetId) {
     return tumblebugPort.getVM(nsId, mciId, targetId);
   }
