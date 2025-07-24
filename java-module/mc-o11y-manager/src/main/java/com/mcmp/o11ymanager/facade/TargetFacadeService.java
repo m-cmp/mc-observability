@@ -37,8 +37,8 @@ public class TargetFacadeService {
       throw new RuntimeException("Connection Error: " + e.getMessage(), e);
     }
 
-    TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, dto);
-    savedTarget.setTargetStatus(TargetStatus.RUNNING);
+    TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, TargetStatus.RUNNING, dto);
+
 
     agentFacadeService.install(nsId, mciId, targetId);
 
