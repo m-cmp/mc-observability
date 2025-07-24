@@ -1,9 +1,9 @@
-package com.mcmp.o11ymanager.oldService.domain;
+package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.dto.host.ConfigResponseDTO;
 import com.mcmp.o11ymanager.global.annotation.Base64Encode;
 import com.mcmp.o11ymanager.global.definition.ConfigDefinition;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.FileService;
+import com.mcmp.o11ymanager.service.interfaces.FileService;
 import com.mcmp.o11ymanager.service.interfaces.TelegrafConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
