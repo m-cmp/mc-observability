@@ -3,14 +3,12 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.dto.target.ResultDTO;
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.Agent;
-import com.mcmp.o11ymanager.enums.AgentAction;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Task;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
-import com.mcmp.o11ymanager.service.SemaphoreDomainService;
+import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
@@ -148,7 +146,7 @@ public class TelegrafFacadeService {
 
       agentTaskStatusLock.unlock();
 
-      targetService.updateMonitoringAgentTaskStatus(id, TargetAgentTaskStatus.IDLE);
+      targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
 
       results.add(ResultDTO.builder()
