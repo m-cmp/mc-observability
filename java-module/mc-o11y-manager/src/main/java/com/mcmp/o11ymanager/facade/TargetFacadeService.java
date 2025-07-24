@@ -24,26 +24,23 @@ public class TargetFacadeService {
   private final TumblebugService tumblebugService;
 
 
+
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
 
-    String output;
-    try {
-      output = tumblebugService.executeCommand(nsId, mciId, "echo hello", "cb-user");
+    TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId, "cb-user")
+        ? TargetStatus.RUNNING
+        : TargetStatus.FAILED;
 
-      if (!"hello".equals(output.trim())) {
-        throw new RuntimeException("Response is not hello. Actual Response: '" + output + "'");
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Connection Error: " + e.getMessage(), e);
+    TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
+
+    if (status == TargetStatus.RUNNING) {
+      agentFacadeService.install(nsId, mciId, targetId);
     }
-
-    TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, TargetStatus.RUNNING, dto);
-
-
-    agentFacadeService.install(nsId, mciId, targetId);
 
     return savedTarget;
   }
+
+
 
   public TargetDTO getTarget(String nsId, String mciId, String targetId) {
     TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
