@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.oldService.domain;
+package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.exception.agent.AgentStatusException;
@@ -9,7 +9,7 @@ import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.model.agentHealth.AgentCommandResult;
 import com.mcmp.o11ymanager.model.agentHealth.SshConnection;
 import com.mcmp.o11ymanager.port.SshPort;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
+import com.mcmp.o11ymanager.service.interfaces.SshService;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
