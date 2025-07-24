@@ -6,7 +6,8 @@ import com.mcmp.o11ymanager.global.error.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class AgentStatusException extends BaseException {
+public class
+AgentStatusException extends BaseException {
 
   public AgentStatusException(String requestId, String message, Agent agent) {
     super(requestId, ErrorCode.AGENT_STATUS_ERROR,

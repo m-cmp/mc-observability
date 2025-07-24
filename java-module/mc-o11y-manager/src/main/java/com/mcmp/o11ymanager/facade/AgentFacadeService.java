@@ -3,11 +3,13 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.dto.host.ConfigDTO;
 import com.mcmp.o11ymanager.dto.target.ResultDTO;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
+import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.global.annotation.Base64Decode;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,8 +44,10 @@ public class AgentFacadeService {
 
   private final FluentBitFacadeService fluentBitFacadeService;
   private final TelegrafFacadeService telegrafFacadeService;
-  private final SchedulerFacadeService schedulerFacadeService;
   private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks = new ConcurrentHashMap<>();
+
+  private final TumblebugService tumblebugService;
+
 
   private ReentrantLock getAgentLock(String nsId, String mciId, String targetId) {
     String lockKey = nsId + "-" + mciId + "-" + targetId;
@@ -78,6 +82,11 @@ public class AgentFacadeService {
 
       // 2-2 ) FluentBit 설치
       fluentBitFacadeService.install(nsId, mciId, targetId, templateCount);
+
+
+
+      tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.TELEGRAF);
+      tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.FLUENT_BIT);
 
       results.add(ResultDTO.builder()
           .nsId(nsId)
