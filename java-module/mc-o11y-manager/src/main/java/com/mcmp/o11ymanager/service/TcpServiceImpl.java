@@ -1,7 +1,7 @@
-package com.mcmp.o11ymanager.oldService.domain;
+package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.model.host.HostStatus;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.TcpService;
+import com.mcmp.o11ymanager.service.interfaces.TcpService;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
