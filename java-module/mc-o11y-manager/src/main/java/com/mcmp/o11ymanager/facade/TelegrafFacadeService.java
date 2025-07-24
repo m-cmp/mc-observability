@@ -6,13 +6,7 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentAction;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
-import com.mcmp.o11ymanager.event.AgentHistoryEvent;
-import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
-import com.mcmp.o11ymanager.exception.config.FileReadingException;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
-import com.mcmp.o11ymanager.infrastructure.util.ChaCha20Poly3105Util;
-import com.mcmp.o11ymanager.infrastructure.util.CheckUtil;
-import com.mcmp.o11ymanager.model.agentHealth.SshConnection;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Task;
 import com.mcmp.o11ymanager.oldService.domain.interfaces.SshService;
@@ -40,7 +34,6 @@ public class TelegrafFacadeService {
   private final ApplicationEventPublisher event;
   private final SemaphoreDomainService semaphoreDomainService;
   private final FileFacadeService fileFacadeService;
-  private final SshService sshService;
   private final SchedulerFacadeService schedulerFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
 
@@ -64,17 +57,6 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatusAndTaskId(nsId, mciId, targetId, TargetAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
-    // 6. 이력 남기기
-    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-        .requestId(requestInfo.getRequestId())
-        .nsId(nsId)
-        .mciId(mciId)
-        .targetId(targetId)
-        .agentAction(AgentAction.MONITORING_AGENT_INSTALL_STARTED)
-        .reason("")
-        .build();
-
-    event.publishEvent(successEvent);
 
     // 7. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), nsId, mciId, targetId,
@@ -99,17 +81,6 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatusAndTaskId(nsId, mciId, targetId, TargetAgentTaskStatus.UPDATING,
             String.valueOf(task.getId()));
 
-    // 5. 이력 남기기
-    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-            .requestId(requestInfo.getRequestId())
-            .nsId(nsId)
-            .mciId(mciId)
-            .targetId(targetId)
-            .agentAction(AgentAction.MONITORING_AGENT_UPDATE_STARTED)
-            .reason("")
-            .build();
-
-    event.publishEvent(successEvent);
 
     // 6. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), nsId, mciId, targetId,
@@ -133,17 +104,6 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatusAndTaskId(nsId, mciId, targetId, TargetAgentTaskStatus.UNINSTALLING,
         String.valueOf(task.getId()));
 
-    // 5) 이력 남기기
-    AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-        .requestId(requestInfo.getRequestId())
-        .nsId(nsId)
-        .mciId(mciId)
-        .targetId(targetId)
-        .agentAction(AgentAction.MONITORING_AGENT_UNINSTALL_STARTED)
-        .reason("")
-        .build();
-
-    event.publishEvent(successEvent);
 
 
     // 6) 스케줄러 등록
@@ -175,16 +135,6 @@ public class TelegrafFacadeService {
 
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .agentAction(AgentAction.ENABLE_FLUENT_BIT)
-              .reason("")
-              .build();
-
-      event.publishEvent(successEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
@@ -200,16 +150,6 @@ public class TelegrafFacadeService {
 
       targetService.updateMonitoringAgentTaskStatus(id, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .reason(e.getMessage())
-              .agentAction(AgentAction.ENABLE_TELEGRAF)
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .build();
-
-      event.publishEvent(failEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
@@ -247,15 +187,6 @@ public class TelegrafFacadeService {
       // 4. 작업 완료 후 idle 변경
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .agentAction(AgentAction.DISABLE_TELEGRAF)
-              .reason("")
-              .build();
-      event.publishEvent(successEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
@@ -271,15 +202,6 @@ public class TelegrafFacadeService {
 
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .reason(e.getMessage())
-              .agentAction(AgentAction.DISABLE_TELEGRAF)
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .build();
-      event.publishEvent(failEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
@@ -318,15 +240,6 @@ public class TelegrafFacadeService {
 
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryEvent successEvent = AgentHistoryEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .reason("")
-              .build();
-
-      event.publishEvent(successEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
@@ -340,16 +253,6 @@ public class TelegrafFacadeService {
 
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 
-      AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
-              .requestId(requestInfo.getRequestId())
-              .reason(e.getMessage())
-              .agentAction(AgentAction.ENABLE_FLUENT_BIT)
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .build();
-
-      event.publishEvent(failEvent);
 
       results.add(ResultDTO.builder()
               .nsId(nsId)

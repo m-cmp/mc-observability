@@ -46,7 +46,8 @@ public class TargetEntity {
   private String csp;
 
   @Enumerated(EnumType.STRING)
-  private TargetStatus targetStatus;
+  private TargetStatus status;
+
 
   @Enumerated(EnumType.STRING)
   private TargetAgentTaskStatus monitoringAgentTaskStatus;

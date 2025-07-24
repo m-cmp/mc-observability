@@ -7,8 +7,6 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentAction;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
-import com.mcmp.o11ymanager.event.AgentHistoryEvent;
-import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
 import com.mcmp.o11ymanager.exception.host.*;
 import com.mcmp.o11ymanager.global.annotation.Base64Decode;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
@@ -48,7 +46,6 @@ public class AgentFacadeService {
   private int semaphoreInstallTemplateCurrentCount = 0;
   private int semaphoreConfigUpdateTemplateCurrentCount = 0;
 
-  private final ApplicationEventPublisher event;
 
   private final FluentBitFacadeService fluentBitFacadeService;
   private final TelegrafFacadeService telegrafFacadeService;
@@ -279,16 +276,6 @@ public class AgentFacadeService {
         // 8) 호스트 상태 변경
         targetService.updateMonitoringAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
 
-        // 9) 액션 기록
-        AgentHistoryEvent successsEvent = AgentHistoryEvent.builder()
-            .requestId(requestId)
-            .agentAction(AgentAction.MONITORING_AGENT_CONFIG_UPDATE_STARTED)
-            .hostId(hostId)
-            .requestUserId(requestUserId)
-            .reason("")
-            .build();
-
-        event.publishEvent(successsEvent);
 
         // 10) 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(requestId, taskId, hostId,
@@ -300,15 +287,6 @@ public class AgentFacadeService {
             .build());
 
       } catch (Exception e) {
-        AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
-            .agentAction(AgentAction.MONITORING_AGENT_CONFIG_UPDATE_FAILED)
-            .hostId(hostId)
-            .requestId(requestId)
-            .requestUserId(requestUserId)
-            .reason(e.getMessage())
-            .build();
-
-        event.publishEvent(failEvent);
 
         results.add(ResultDTO.builder()
             .id(hostId)
@@ -381,35 +359,17 @@ public class AgentFacadeService {
         // 8) 호스트 상태 변경
         targetService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
 
-        // 9) 액션 기록
-        AgentHistoryEvent successsEvent = AgentHistoryEvent.builder()
-            .requestId(requestId)
-            .agentAction(AgentAction.LOG_AGENT_CONFIG_UPDATE_STARTED)
-            .hostId(hostId)
-            .requestUserId(requestUserId)
-            .reason("")
-            .build();
 
         // 10) 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), taskId, hostId,
             SemaphoreInstallMethod.CONFIG_UPDATE, Agent.FLUENT_BIT, requestUserId);
 
-        event.publishEvent(successsEvent);
 
         results.add(ResultDTO.builder()
             .id(hostId)
             .status(ResponseStatus.SUCCESS)
             .build());
       } catch (Exception e) {
-        AgentHistoryFailEvent failEvent = AgentHistoryFailEvent.builder()
-            .requestId(requestId)
-            .agentAction(AgentAction.LOG_AGENT_CONFIG_UPDATE_FAILED)
-            .hostId(hostId)
-            .requestUserId(requestUserId)
-            .reason(e.getMessage())
-            .build();
-
-        event.publishEvent(failEvent);
 
         results.add(ResultDTO.builder()
             .id(hostId)
