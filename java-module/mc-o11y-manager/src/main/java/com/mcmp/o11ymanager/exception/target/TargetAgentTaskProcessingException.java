@@ -2,7 +2,6 @@ package com.mcmp.o11ymanager.exception.target;
 
 import com.mcmp.o11ymanager.exception.host.BaseException;
 import com.mcmp.o11ymanager.global.error.ErrorCode;
-import com.mcmp.o11ymanager.model.host.HostAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import lombok.Getter;
 

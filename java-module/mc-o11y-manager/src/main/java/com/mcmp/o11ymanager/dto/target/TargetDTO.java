@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.dto.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import lombok.AllArgsConstructor;
@@ -18,7 +19,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TargetDTO {
 
-    private String id;
+    @JsonProperty("target_id")
+    private String targetId;
 
     private String name;
 
@@ -26,8 +28,6 @@ public class TargetDTO {
     private String aliasName;
 
     private String description;
-
-    private String csp;
 
     @JsonProperty("target_status")
     private TargetStatus targetStatus;
@@ -66,11 +66,10 @@ public class TargetDTO {
 
     public static TargetDTO fromEntity(com.mcmp.o11ymanager.entity.TargetEntity entity) {
         return TargetDTO.builder()
-                .id(entity.getId())
+                .targetId(entity.getTargetId())
                 .name(entity.getName())
                 .aliasName(entity.getAliasName())
                 .description(entity.getDescription())
-                .csp(entity.getCsp())
                 .targetStatus(entity.getTargetStatus())
                 .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
                 .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
@@ -84,14 +83,13 @@ public class TargetDTO {
                 .build();
     }
 
-    public com.mcmp.o11ymanager.entity.TargetEntity toEntity() {
-        return com.mcmp.o11ymanager.entity.TargetEntity.builder()
-                .id(this.id)
+    public TargetEntity toEntity() {
+        return TargetEntity.builder()
+                .targetId(this.getTargetId())
                 .name(this.name)
                 .aliasName(this.aliasName)
                 .description(this.description)
-                .csp(this.csp)
-                .targetStatus(this.targetStatus)
+                .targetStatus(this.getTargetStatus())
                 .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
                 .logAgentTaskStatus(this.logAgentTaskStatus)
                 .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
