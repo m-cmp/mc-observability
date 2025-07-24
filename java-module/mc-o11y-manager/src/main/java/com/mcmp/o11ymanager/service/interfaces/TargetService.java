@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.service.interfaces;
 
-import com.mcmp.o11ymanager.dto.host.HostConnectionDTO;
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;

@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.oldController;
+package com.mcmp.o11ymanager.controller;
 
 import com.mcmp.o11ymanager.dto.log.LogVolumeResponseDto;
 import com.mcmp.o11ymanager.facade.LogFacadeService;

@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.oldService.domain.interfaces;
 
-import com.mcmp.o11ymanager.dto.host.HostConnectionDTO;
-import com.mcmp.o11ymanager.entity.HostEntity;
+
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.model.host.HostStatus;
 

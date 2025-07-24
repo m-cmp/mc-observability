@@ -16,8 +16,6 @@ import java.util.List;
 @Repository
 public interface TargetJpaRepository extends JpaRepository<TargetEntity, String> {
 
-  boolean existsById(@NonNull String id);
-
   @NotNull List<TargetEntity> findAll();
 
   @Query("SELECT t FROM TargetEntity t WHERE t.nsId = :nsId AND t.mciId = :mciId")
