@@ -4,7 +4,6 @@ import com.mcmp.o11ymanager.exception.config.ConfigInitException;
 import com.mcmp.o11ymanager.exception.config.FailedDeleteFileException;
 import com.mcmp.o11ymanager.exception.config.FileReadingException;
 import com.mcmp.o11ymanager.model.config.ConfigFileNode;
-import com.mcmp.o11ymanager.oldService.domain.FileServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;

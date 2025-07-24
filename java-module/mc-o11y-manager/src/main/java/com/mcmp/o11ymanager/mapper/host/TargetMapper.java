@@ -15,32 +15,33 @@ public class TargetMapper {
 
   public TargetEntity fromResponseDTO(TargetDTO dto) {
     return TargetEntity.builder()
-            .id(dto.getId())
-            .name(dto.getName())
-            .aliasName(dto.getAliasName())
-            .description(dto.getDescription())
-            .csp(dto.getCsp())
-            .targetStatus(dto.getTargetStatus())
-            .monitoringAgentTaskStatus(dto.getMonitoringAgentTaskStatus())
-            .logAgentTaskStatus(dto.getLogAgentTaskStatus())
-            .targetMonitoringAgentTaskId(dto.getTargetMonitoringAgentTaskId())
-            .targetLogAgentTaskId(dto.getTargetLogAgentTaskId())
-            .monitoringServiceStatus(dto.getMonitoringServiceStatus())
-            .logServiceStatus(dto.getLogServiceStatus())
-            .createdAt(dto.getCreatedAt())
-            .updatedAt(dto.getUpdatedAt())
-            .nsId(dto.getNsId())
-            .mciId(dto.getMciId())
-            .state(dto.getState())
-            .build();
+        .targetId(dto.getTargetId())
+        .nsId(dto.getNsId())
+        .mciId(dto.getMciId())
+        .name(dto.getName())
+        .aliasName(dto.getAliasName())
+        .description(dto.getDescription())
+        .targetStatus(dto.getTargetStatus())
+        .monitoringAgentTaskStatus(dto.getMonitoringAgentTaskStatus())
+        .logAgentTaskStatus(dto.getLogAgentTaskStatus())
+        .targetMonitoringAgentTaskId(dto.getTargetMonitoringAgentTaskId())
+        .targetLogAgentTaskId(dto.getTargetLogAgentTaskId())
+        .monitoringServiceStatus(dto.getMonitoringServiceStatus())
+        .logServiceStatus(dto.getLogServiceStatus())
+        .createdAt(dto.getCreatedAt())
+        .updatedAt(dto.getUpdatedAt())
+        .nsId(dto.getNsId())
+        .mciId(dto.getMciId())
+        .state(dto.getState())
+        .build();
   }
 
   public TargetEntity fromCreateDTO(TargetRegisterDTO dto) {
     return TargetEntity.builder()
-            .name(dto.getName())
-            .aliasName(dto.getAliasName())
-            .description(dto.getDescription())
-            .build();
+        .name(dto.getName())
+        .aliasName(dto.getAliasName())
+        .description(dto.getDescription())
+        .build();
   }
 
   public void fromUpdateDTO(TargetUpdateDTO dto, TargetEntity target) {

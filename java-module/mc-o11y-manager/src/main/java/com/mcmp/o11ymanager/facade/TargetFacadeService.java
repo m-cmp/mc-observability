@@ -1,5 +1,9 @@
 package com.mcmp.o11ymanager.facade;
 
+
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
 import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
@@ -7,9 +11,7 @@ import com.mcmp.o11ymanager.dto.tumblebug.TumblebugCmd;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.port.TumblebugPort;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,45 +25,46 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final TumblebugPort tumblebugPort;
   private final AgentFacadeService agentFacadeService;
+  private final ObjectMapper objectMapper;
+
+
+  public String executeCommand(String nsId, String mciId, String command, String userName) {
+    TumblebugCmd cmd = new TumblebugCmd();
+    cmd.setCommand(List.of(command));
+    cmd.setUserName(userName);
+
+    Object response = tumblebugPort.sendCommand(nsId, mciId, cmd);
+
+    try {
+      JsonNode root = objectMapper.valueToTree(response);
+      JsonNode results = root.path("results");
+      if (results.isArray() && results.size() > 0) {
+        JsonNode stdout = results.get(0).path("stdout");
+        return stdout.path("0").asText();
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Tumblebug 응답 파싱 실패: " + e.getMessage(), e);
+    }
+
+    throw new RuntimeException("Tumblebug 응답이 유효하지 않습니다.");
+  }
 
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
 
-    TumblebugCmd cmd = new TumblebugCmd();
-    cmd.setCommand(Arrays.asList("echo hello"));
-    cmd.setUserName("cb-user");
 
+    String output;
     try {
-      Map<String, Object> responseMap = (Map<String, Object>) tumblebugPort.sendCommand(nsId, mciId, cmd);
-      List<Map<String, Object>> results = (List<Map<String, Object>>) responseMap.get("results");
+      output = executeCommand(nsId, mciId, "echo hello", "cb-user");
 
-      if (results == null || results.isEmpty()) {
-        throw new RuntimeException("Result is empty");
+      if (!"hello".equals(output.trim())) {
+        throw new RuntimeException("Response is not hello. Actual Response: '" + output + "'");
       }
 
-      Map<String, Object> firstResult = results.get(0);
-
-      if (firstResult == null) {
-        throw new RuntimeException("first result is null.");
-      }
-
-      Map<String, String> stdoutMap = (Map<String, String>) firstResult.get("stdout");
-
-      if (stdoutMap == null || !stdoutMap.containsKey("0")) {
-        throw new RuntimeException("Result is empty or not in the expected format no '0' key");
-      }
-
-      String actualOutput = stdoutMap.get("0");
-
-      if (actualOutput == null || !"hello".equals(actualOutput.trim())) {
-        throw new RuntimeException("Response is not hello. Actual Response: '" + actualOutput + "'");
-      }
     } catch (Exception e) {
       throw new RuntimeException("Connection Error: " + e.getMessage(), e);
     }
 
     TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, dto);
-
-    log.info("=============================save target db=================================");
 
     agentFacadeService.install(nsId, mciId, targetId);
 
@@ -72,7 +75,7 @@ public class TargetFacadeService {
     TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
 
     return TargetDTO.builder()
-        .id(vm.getId())
+        .targetId(vm.getId())
         .name(vm.getName())
         .aliasName(vm.getAliasName())
         .description(vm.getDescription())

@@ -31,22 +31,4 @@ public class RequestIdAspect {
 
     }
 
-    @Before("execution(* com.mcmp.o11ymanager.controller..*.*(..)) && !within(com.mcmp.o11ymanager.controller.TargetWebSocketController)")
-    public void setRequestUserId(JoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Annotation[][] paramAnnotations = signature.getMethod().getParameterAnnotations();
-
-        for (int i = 0; i < paramAnnotations.length; i++) {
-            for (Annotation annotation : paramAnnotations[i]) {
-                if (annotation.annotationType() == AuthorizationHeader.class) {
-                    String token = (String) args[i];
-                    if (token != null && !token.isEmpty()) {
-                        String requestUserId = JwtUtil.getRequestUserId(token);
-                        requestInfo.setRequestUserId(requestUserId);
-                    }
-                }
-            }
-        }
-    }
 }

@@ -6,7 +6,7 @@ import com.mcmp.o11ymanager.model.log.Label;
 import com.mcmp.o11ymanager.model.log.Log;
 import com.mcmp.o11ymanager.model.log.LogCriteria;
 import com.mcmp.o11ymanager.model.log.LogVolume;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.LokiService;
+import com.mcmp.o11ymanager.service.interfaces.LokiService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

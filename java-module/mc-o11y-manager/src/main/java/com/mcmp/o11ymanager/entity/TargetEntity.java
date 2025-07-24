@@ -42,9 +42,6 @@ public class TargetEntity {
 
   private String description;
 
-  @Column(nullable = false)
-  private String csp;
-
   @Enumerated(EnumType.STRING)
   private TargetStatus status;
 

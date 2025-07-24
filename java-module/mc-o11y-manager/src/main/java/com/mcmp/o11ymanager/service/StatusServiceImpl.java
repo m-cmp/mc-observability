@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.oldService.domain;
+package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
