@@ -43,8 +43,7 @@ public class TargetEntity {
   private String description;
 
   @Enumerated(EnumType.STRING)
-  private TargetStatus status;
-
+  private TargetStatus targetStatus;
 
   @Enumerated(EnumType.STRING)
   private TargetAgentTaskStatus monitoringAgentTaskStatus;
