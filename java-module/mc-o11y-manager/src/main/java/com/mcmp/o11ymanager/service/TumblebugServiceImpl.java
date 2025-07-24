@@ -1,0 +1,65 @@
+package com.mcmp.o11ymanager.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mcmp.o11ymanager.dto.tumblebug.TumblebugCmd;
+import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.enums.Agent;
+import com.mcmp.o11ymanager.exception.agent.AgentStatusException;
+import com.mcmp.o11ymanager.port.TumblebugPort;
+import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+public class TumblebugServiceImpl implements TumblebugService {
+
+  private final TumblebugPort tumblebugPort;
+  private final ObjectMapper objectMapper;
+
+  @Override
+  public String executeCommand(String nsId, String mciId, String command, String userName) {
+    TumblebugCmd cmd = new TumblebugCmd();
+    cmd.setCommand(List.of(command));
+    cmd.setUserName(userName);
+
+    Object response = tumblebugPort.sendCommand(nsId, mciId, cmd);
+
+    try {
+      JsonNode root = objectMapper.valueToTree(response);
+      JsonNode results = root.path("results");
+      if (results.isArray() && results.size() > 0) {
+        JsonNode stdout = results.get(0).path("stdout");
+        return stdout.path("0").asText();
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Tumblebug 응답 파싱 실패: " + e.getMessage(), e);
+    }
+
+    throw new RuntimeException("Tumblebug 응답이 유효하지 않습니다.");
+  }
+
+
+  @Override
+  public TumblebugMCI.Vm getVm(String nsId, String mciId, String targetId) {
+    return tumblebugPort.getVM(nsId, mciId, targetId);
+  }
+
+
+  @Override
+  public boolean isServiceActive(String nsId, String mciId, String serviceName, String userName, Agent agent) {
+    String command = String.format("systemctl is-active %s", agent.name().toLowerCase());
+    String result = executeCommand(nsId, mciId, command, userName);
+    String trimmed = result.trim();
+
+    if (!"active".equalsIgnoreCase(trimmed)) {
+      throw new AgentStatusException("systemctl-check", "Agent 상태가 비정상입니다", agent);
+    }
+
+    return true;
+  }
+
+
+}
