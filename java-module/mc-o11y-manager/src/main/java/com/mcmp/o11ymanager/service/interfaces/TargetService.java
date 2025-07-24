@@ -9,6 +9,7 @@ import com.mcmp.o11ymanager.exception.agent.MonitoringAgentNotInstalled;
 import com.mcmp.o11ymanager.exception.host.HostAgentTaskProcessingException;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 
+import com.mcmp.o11ymanager.model.host.TargetStatus;
 import java.util.List;
 
 public interface TargetService {
@@ -19,7 +20,7 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRegisterDTO dto);
 
   TargetDTO put(String nsId, String mciId, String targetId, TargetUpdateDTO dto);
 

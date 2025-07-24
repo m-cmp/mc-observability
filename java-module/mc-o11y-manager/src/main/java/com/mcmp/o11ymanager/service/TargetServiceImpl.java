@@ -11,6 +11,7 @@ import com.mcmp.o11ymanager.exception.target.TargetAgentTaskProcessingException;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.model.host.TargetStatus;
 import com.mcmp.o11ymanager.repository.AccessInfoJpaRepository;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
@@ -51,7 +52,7 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRegisterDTO dto) {
     // 1. TargetEntity 생성 및 저장
     TargetEntity target = TargetEntity.builder()
         .nsId(nsId)
@@ -62,6 +63,7 @@ public class TargetServiceImpl implements TargetService {
         .description(dto.getDescription())
         .nsId(nsId)
         .mciId(mciId)
+        .targetStatus(targetStatus)
         .build();
 
     TargetEntity savedTarget = targetJpaRepository.save(target);
