@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.service;
 
 
 import com.mcmp.o11ymanager.model.semaphore.SurveyVar;
-import com.mcmp.o11ymanager.oldService.domain.SemaphoreDomainService;
+import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;

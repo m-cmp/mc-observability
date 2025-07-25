@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.oldService.domain.interfaces;
+package com.mcmp.o11ymanager.service.interfaces;
 
 import com.mcmp.o11ymanager.exception.config.FailedDeleteFileException;
 import com.mcmp.o11ymanager.exception.config.FileReadingException;

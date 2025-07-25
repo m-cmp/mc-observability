@@ -3,8 +3,6 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentAction;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
-import com.mcmp.o11ymanager.event.AgentHistoryEvent;
-import com.mcmp.o11ymanager.event.AgentHistoryFailEvent;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Project;
 import com.mcmp.o11ymanager.model.semaphore.Task;
@@ -34,7 +32,6 @@ public class SchedulerFacadeService {
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
   private final SemaphorePort semaphorePort;
-  private final ApplicationEventPublisher event;
   private final TargetService targetService;
 
   @Value("${feign.semaphore.project-name}")
@@ -112,15 +109,7 @@ public class SchedulerFacadeService {
 
           log.info("🔨🔨 --------------------task end-------------------- 🔨🔨");
 
-          if (isSuccess) {
-            AgentHistoryEvent successEvent = new AgentHistoryEvent(requestId, action, nsId, mciId, targetId, null);
-            event.publishEvent(successEvent);
-          } else {
-            AgentHistoryFailEvent failureEvent = new AgentHistoryFailEvent(requestId, action,
-                nsId, mciId, targetId,
-                "호스트에서 작업을 수행하던 중 실패하였습니다.");
-            event.publishEvent(failureEvent);
-          }
+
         }
 
         ScheduledFuture<?> scheduledFuture = futureRef.get();

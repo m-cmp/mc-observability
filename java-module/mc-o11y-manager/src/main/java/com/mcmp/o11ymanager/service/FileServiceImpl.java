@@ -1,10 +1,10 @@
-package com.mcmp.o11ymanager.oldService.domain;
+package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.exception.config.ConfigInitException;
 import com.mcmp.o11ymanager.exception.config.FailedDeleteFileException;
 import com.mcmp.o11ymanager.exception.config.FileReadingException;
 import com.mcmp.o11ymanager.model.config.ConfigFileNode;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.FileService;
+import com.mcmp.o11ymanager.service.interfaces.FileService;
 import jakarta.annotation.PostConstruct;
 import java.nio.file.attribute.DosFileAttributeView;
 import lombok.RequiredArgsConstructor;

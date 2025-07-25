@@ -12,6 +12,13 @@ import lombok.*;
 @AllArgsConstructor
 @Schema(description = "Config 업데이트를 위한 DTO")
 public class ConfigDTO {
+
+    private String targetId;
+
+    private String nsId;
+
+    private String mciId;
+
     @Schema(description = "파일 경로", example = "telegraf.conf")
     @NotBlank
     private String path;
@@ -20,8 +27,4 @@ public class ConfigDTO {
     @Base64DecodeField
     @NotBlank
     private String content;
-
-    @Schema(description = "호스트 ID 리스트", example = "[\"51cbd96c-797d-4ff1-a31b-1730ff5be0d2\", \"94c3e402-5042-4c8e-9248-cdfcb1462deb\"]")
-    @NotBlank
-    private String[] host_id_list;
 }

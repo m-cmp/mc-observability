@@ -6,7 +6,7 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.exception.config.FileReadingException;
 import com.mcmp.o11ymanager.global.definition.ConfigDefinition;
 import com.mcmp.o11ymanager.port.SshPort;
-import com.mcmp.o11ymanager.oldService.domain.interfaces.FileService;
+import com.mcmp.o11ymanager.service.interfaces.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

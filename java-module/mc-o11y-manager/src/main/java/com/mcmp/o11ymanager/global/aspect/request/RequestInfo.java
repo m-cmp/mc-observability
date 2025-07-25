@@ -13,5 +13,4 @@ import org.springframework.web.context.annotation.RequestScope;
 @NoArgsConstructor
 public class RequestInfo {
     private String requestId;
-    private String requestUserId;
 }

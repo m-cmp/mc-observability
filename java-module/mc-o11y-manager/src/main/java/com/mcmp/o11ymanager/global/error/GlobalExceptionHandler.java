@@ -41,7 +41,6 @@ public class GlobalExceptionHandler {
       ConstraintViolationException.class,
       IllegalStateException.class,
       IllegalArgumentException.class,
-      AgentFailureException.class,
       BadRequestException.class,
       ConfigInitException.class,
       AgentStatusException.class,
