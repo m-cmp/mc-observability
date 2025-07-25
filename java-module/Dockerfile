@@ -1,7 +1,7 @@
-FROM openjdk:21-slim
+FROM openjdk:17-slim
 
 RUN apt-get update \
-    && apt-get install -y curl git \
+    && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
     apt-get clean
 
