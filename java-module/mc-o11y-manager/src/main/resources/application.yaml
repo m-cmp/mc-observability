@@ -1,4 +1,3 @@
-# 공통 설정만 작성
 server:
   port: 18080
 
@@ -9,9 +8,9 @@ spring:
   application:
     name: mc-o11y-manager
   datasource:
-    url: jdbc:mariadb://mc-observability-maria:3306/mc_observability
-    username: mc-agent
-    password: mc-agent
+    url: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT:3306}/${DATABASE_NAME}
+    username: ${DATABASE_ID}
+    password: ${DATABASE_PW}
     hikari:
       max-lifetime: 150000
   jpa:
@@ -26,6 +25,17 @@ spring:
     show-sql: false
   banner:
     location: classpath:banner.txt
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_ENABLE_TLS:true}
 
 springdoc:
   packages-to-scan: com.mcmp.o11ymanager.controller
@@ -62,8 +72,8 @@ loki:
 influxdb:
   url: http://mc-o11y-influxdb:8086
   database: mc-observability
-  username: mc-agent
-  password: mc-agent
+  username: ${INFLUX_USER}
+  password: ${INFLUX_PASS}
 
 health:
   check-interval: 10000
@@ -82,12 +92,12 @@ feign:
         connect-timeout: 5000
         read-timeout: 30000
         loggerLevel: full
-      LokiFeignClient: # LokiFeignClient에 대한 특별 설정
+      LokiFeignClient:
         loggerLevel: full
   semaphore:
     url: http://mc-observability-infra:3000
-    username: admin
-    password: semaphorepass
+    username: ${SEMAPHORE_USER}
+    password: ${SEMAPHORE_PASS}
     project-name: ansible
     init-max-parallel-tasks: 10
     template-names:
@@ -101,15 +111,22 @@ feign:
   cb-tumblebug:
     connect-timeout: 5000
     read-timeout: 100000
-    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
-    id: ${TUMBLEBUG_ID:default}
-    pw: ${TUMBLEBUG_PW:default}
+    url: ${TUMBLEBUG_URL}
+    id: ${TUMBLEBUG_ID}
+    pw: ${TUMBLEBUG_PW}
   cb-spider:
-    url: ${SPIDER_URL:http://cb-spider:1024}
-    id: ${SPIDER_ID:default-id}
-    pw: ${SPIDER_PW:default-pw}
+    url: ${SPIDER_URL}
+    id: ${SPIDER_ID}
+    pw: ${SPIDER_PW}
   insight:
-    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
+    url: ${INSIGHT_URL}
+
+grafana:
+  url: ${GRAFANA_URL}
+  api-key: ${GRAFANA_API_KEY}
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL}
 
 logging:
   level:
@@ -127,4 +144,3 @@ logging:
     rollingpolicy:
       max-history: 14
       max-file-size: 200MB
-
