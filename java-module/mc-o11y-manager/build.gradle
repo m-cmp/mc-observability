@@ -24,13 +24,12 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.5'
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation 'io.github.openfeign:feign-core'
+    implementation 'io.github.openfeign:feign-httpclient'
     implementation 'com.jcraft:jsch:0.1.55'
-    implementation 'io.github.openfeign:feign-httpclient:13.5'
-    implementation 'org.codehaus.janino:janino:3.1.12'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
     implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.1.0.202411261347-r'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.apache.sshd:sshd-core:2.15.0'
     implementation 'org.apache.sshd:sshd-sftp:2.15.0'
@@ -42,28 +41,22 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.influxdb:influxdb-java:2.23'
-
-    // 1) Spring Boot Starter를 통한 자동 계측 기능
     implementation "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter"
-
-    // 2) Core API & SDK
     implementation "io.opentelemetry:opentelemetry-api"
     implementation "io.opentelemetry:opentelemetry-sdk"
-
-    // 3) OTLP Exporter (Tempo로 전송)
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
-
-    // 4) (선택 사항) Trace Propagator 등
     implementation "io.opentelemetry:opentelemetry-extension-trace-propagators"
-    implementation "io.opentelemetry:opentelemetry-exporter-logging" // 개발 중 Console 로그 확인 용
-
-    //micromiter
+    implementation "io.opentelemetry:opentelemetry-exporter-logging" 
     implementation "io.micrometer:micrometer-tracing"
     implementation "io.micrometer:micrometer-tracing-bridge-otel"
-
-    //log
     implementation 'com.github.loki4j:loki-logback-appender:2.0.0'
     implementation 'ch.qos.logback:logback-classic'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.0"
+    }
 }
 
 tasks.named('test') {

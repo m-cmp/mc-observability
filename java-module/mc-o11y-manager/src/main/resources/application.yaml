@@ -8,9 +8,9 @@ spring:
   application:
     name: mc-o11y-manager
   datasource:
-    url: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT:3306}/${DATABASE_NAME}
-    username: ${DATABASE_ID}
-    password: ${DATABASE_PW}
+    url: jdbc:mariadb://${DATABASE_HOST:mc-observability-maria}:${DATABASE_PORT:3306}/${DATABASE_NAME:mc_observability}
+    username: ${DATABASE_ID:mc-agent}
+    password: ${DATABASE_PW:mc-agent}
     hikari:
       max-lifetime: 150000
   jpa:
@@ -26,10 +26,10 @@ spring:
   banner:
     location: classpath:banner.txt
   mail:
-    host: ${SMTP_HOST}
-    port: ${SMTP_PORT}
-    username: ${SMTP_USERNAME}
-    password: ${SMTP_PASSWORD}
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -71,9 +71,9 @@ loki:
 
 influxdb:
   url: http://mc-o11y-influxdb:8086
-  database: mc-observability
-  username: ${INFLUX_USER}
-  password: ${INFLUX_PASS}
+  database: ${INFLUXDB_DB:mc-observability}
+  username: ${INFLUX_USER:mc-agent}
+  password: ${INFLUX_PASS:mc-agent}
 
 health:
   check-interval: 10000
@@ -96,8 +96,8 @@ feign:
         loggerLevel: full
   semaphore:
     url: http://mc-observability-infra:3000
-    username: ${SEMAPHORE_USER}
-    password: ${SEMAPHORE_PASS}
+    username: ${SEMAPHORE_USER:admin}
+    password: ${SEMAPHORE_PASS:semaphorepass}
     project-name: ansible
     init-max-parallel-tasks: 10
     template-names:
@@ -110,23 +110,23 @@ feign:
     url: http://localhost:18081
   cb-tumblebug:
     connect-timeout: 5000
-    read-timeout: 100000
-    url: ${TUMBLEBUG_URL}
-    id: ${TUMBLEBUG_ID}
-    pw: ${TUMBLEBUG_PW}
+    read-timeout: 600000
+    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
+    id: ${TUMBLEBUG_ID:default}
+    pw: ${TUMBLEBUG_PW:default}
   cb-spider:
-    url: ${SPIDER_URL}
-    id: ${SPIDER_ID}
-    pw: ${SPIDER_PW}
+    url: ${SPIDER_URL:http://cb-spider:1024}
+    id: ${SPIDER_ID:}
+    pw: ${SPIDER_PW:}
   insight:
-    url: ${INSIGHT_URL}
+    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
 
 grafana:
-  url: ${GRAFANA_URL}
-  api-key: ${GRAFANA_API_KEY}
+  url: ${GRAFANA_URL:https://mc-observability-grafana:8443}
+  api-key: ${GRAFANA_API_KEY:}
 
 ollama:
-  base-url: ${OLLAMA_BASE_URL}
+  base-url: ${OLLAMA_BASE_URL:}
 
 logging:
   level:
@@ -136,7 +136,6 @@ logging:
     feign: DEBUG
     feign.Logger: DEBUG
     feign.template: WARN
-
   file:
     path: /applog
     name: ${spring.application.name}
