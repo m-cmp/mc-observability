@@ -1,0 +1,94 @@
+<configuration>
+  <conversionRule conversionWord="sevNum" converterClass="com.innogrid.tabcloudit.o11ymanager.logging.SeverityNumberConverter"/>
+  <!-- console -->
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>
+        {
+        "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}",
+        "trace_id": "%X{trace_id}",
+        "span_id": "%X{span_id}",
+        "trace_flags": "%X{trace_flags}",
+        "severity_text": "%level",
+        "attributes": {
+        "component": "%X{component}",
+        "code.function": "%X{code.function}",
+        "code.file": "%X{code.file}",
+        "code.lineno": "%X{code.lineno}"
+        },
+        "body": "%message"
+        }
+      </pattern>
+    </encoder>
+  </appender>
+
+
+  <!-- File -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/applog/${spring.application.name}.log</file> <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+    <fileNamePattern>/applog/${spring.application.name}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+    <maxHistory>14</maxHistory>
+    <maxFileSize>200MB</maxFileSize>
+  </rollingPolicy>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"> <pattern>
+      {
+      "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}",
+      "trace_id": "%X{trace_id}",
+      "span_id": "%X{span_id}",
+      "trace_flags": "%X{trace_flags}",
+      "severity_text": "%level",
+      "severity_number": "%sevNum", "attributes": {
+      "component": "%X{component}",
+      "code.function": "%X{code.function}",
+      "code.file": "%X{code.file}",
+      "code.lineno": "%X{code.lineno}"
+      },
+      "body": "%message"
+      }
+    </pattern>
+    </encoder>
+  </appender>
+
+
+
+
+  <!-- Loki -->
+  <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+    <http>
+      <url>http://192.168.110.214:3000/loki/api/v1/push</url>
+    </http>
+    <format>
+      <label>
+        <pattern>level=%level,app=o11y-manager</pattern>
+      </label>
+      <message>
+        <pattern>%msg</pattern>
+      </message>
+    </format>
+    <encoder class="com.github.loki4j.logback.JsonEncoder">
+      <pattern>
+        {
+        "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}",
+        "trace_id": "%X{trace_id}",
+        "span_id": "%X{span_id}",
+        "trace_flags": "%X{trace_flags}",
+        "severity_text": "%level",
+        "severity_number": "%sevNum",
+        "attributes": {
+        "component": "%X{component}",
+        "code.function": "%X{code.function}",
+        "code.file": "%X{code.file}",
+        "code.lineno": "%X{code.lineno}"
+        },
+        "body": "%message"
+        }
+      </pattern>
+
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+    <appender-ref ref="LOKI"/>
+  </root>
+</configuration>
