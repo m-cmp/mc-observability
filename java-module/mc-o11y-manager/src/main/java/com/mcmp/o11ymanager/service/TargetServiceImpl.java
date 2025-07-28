@@ -183,23 +183,7 @@ public class TargetServiceImpl implements TargetService {
         target.getLogServiceStatus());
   }
 
-  @Override
-  public void updateMonitoringAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
-        .orElseThrow(
-            () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
-    targetJpaRepository.save(target);
-  }
-
-  @Override
-  public void updateLogAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
-        .orElseThrow(
-            () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
-
-    targetJpaRepository.save(target);
-  }
 
   @Override
   public void updateMonitoringAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status,

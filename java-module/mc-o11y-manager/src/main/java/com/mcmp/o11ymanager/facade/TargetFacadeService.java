@@ -28,19 +28,6 @@ public class TargetFacadeService {
   private final TumblebugService tumblebugService;
   private final TargetJpaRepository targetJpaRepository;
 
-  // TODO : Agent Task Status : IDLE
-  @Transactional
-  public TargetDTO updateTargetTaskStatuses(String nsId, String mciId, String targetId, TargetAgentTaskStatus monitoringStatus, TargetAgentTaskStatus logStatus) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
-        .orElseThrow(() -> new ResourceNotExistsException("...", "TargetEntity", targetId));
-
-    target.setMonitoringAgentTaskStatus(monitoringStatus);
-    target.setLogAgentTaskStatus(logStatus);
-
-    TargetEntity updatedEntity = targetJpaRepository.save(target);
-
-    return TargetDTO.fromEntity(updatedEntity);
-  }
 
 
   @Transactional
@@ -52,17 +39,11 @@ public class TargetFacadeService {
 
     TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
 
-    updateTargetTaskStatuses(
-        nsId, mciId, targetId,
-        TargetAgentTaskStatus.IDLE, // 모니터링 에이전트 상태를 IDLE로
-        TargetAgentTaskStatus.IDLE  // 로그 에이전트 상태를 IDLE로
-    );
-
-//    if (status == TargetStatus.RUNNING) {
-//      agentFacadeService.install(nsId, mciId, targetId);
-//    }
+    targetService.updateMonitoringAgentTaskStatusAndTaskId(savedTarget.getNsId(), savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE,  "");
+    targetService.updateLogAgentTaskStatusAndTaskId(savedTarget.getNsId(), savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE,  "");
 
     agentFacadeService.install(nsId, mciId, targetId);
+
 
     return savedTarget;
   }
