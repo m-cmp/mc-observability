@@ -8,6 +8,6 @@
     - target_host
     - target_port
     - target_user
-    - target_password
+    - target_sshkey
     - config_path
     - config_content

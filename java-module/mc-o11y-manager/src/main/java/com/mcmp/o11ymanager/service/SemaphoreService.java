@@ -153,14 +153,14 @@ public class SemaphoreService {
         targetUser.setRequired(true);
         surveyVars.add(targetUser);
 
-        SurveyVar targetPassword = new SurveyVar();
-        targetPassword.setValues(new ArrayList<>());
-        targetPassword.setName("target_password");
-        targetPassword.setTitle("target_password");
-        targetPassword.setDescription("");
-        targetPassword.setType("");
-        targetPassword.setRequired(true);
-        surveyVars.add(targetPassword);
+        SurveyVar targetSSHKey = new SurveyVar();
+        targetSSHKey.setValues(new ArrayList<>());
+        targetSSHKey.setName("target_sshkey");
+        targetSSHKey.setTitle("target_sshkey");
+        targetSSHKey.setDescription("");
+        targetSSHKey.setType("");
+        targetSSHKey.setRequired(true);
+        surveyVars.add(targetSSHKey);
 
         SurveyVar configContent = new SurveyVar();
         configContent.setValues(new ArrayList<>());

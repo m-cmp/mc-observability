@@ -7,8 +7,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl stop cmp-fluent-bit 2>&1 | true"
 
 - name: Disable old CMP Fluent Bit service
@@ -20,8 +19,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl disable cmp-fluent-bit 2>&1 | true"
   ignore_errors: true
 
@@ -34,8 +32,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
   register: cmp_fluent_bit_status
   ignore_errors: true
@@ -53,8 +50,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -f /lib/systemd/system/cmp-fluent-bit.service"
   ignore_errors: true
 
@@ -67,8 +63,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl daemon-reload && systemctl reset-failed cmp-fluent-bit > /dev/null 2>&1 | true"
 
 - name: Stop CMP Fluent Bit service
@@ -80,8 +75,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl stop cmp-fluent-bit-{{ site_code }} 2>&1 | true"
 
 - name: Disable CMP Fluent Bit service
@@ -93,8 +87,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl disable cmp-fluent-bit-{{ site_code }} 2>&1 | true"
 
 - name: Run CMP Fluent Bit status command
@@ -106,8 +99,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
   register: cmp_fluent_bit_status
   failed_when: cmp_fluent_bit_status.rc not in [3, 4]
@@ -137,8 +129,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "flock -x /tmp/cmp_old_fluent-bit_migration.lock /tmp/cmp_old_fluent-bit_migration_{{ request_id }} {{ site_code }}"
 
 - name: Remove old CMP Fluent Bit Migration Script File
@@ -150,8 +141,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -rf /tmp/cmp_old_fluent-bit_migration.lock /tmp/cmp_old_fluent-bit_migration_{{ request_id }}"
 
 - name: Compress agent files
@@ -178,8 +168,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "/tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-fluent-bit-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
 
 - name: Remove Remote Compressed Agent Install File
@@ -191,8 +180,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -f /tmp/cmp-fluent-bit-{{ site_code }}.tar.gz"
 
 - name: Remove Local Compressed Agent Install File
@@ -219,8 +207,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "/cmp-agent/common/podman/bin/run-podman load -i /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
 
 - name: Remove Remote Fluent Bit Image File
@@ -232,8 +219,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -f /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
 
 - name: End Agent Common Tasks
@@ -248,8 +234,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "cp -f /cmp-agent/sites/{{ site_code }}/fluent-bit/cmp-fluent-bit.service /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && sed -i 's@SITE_CODE@{{ site_code }}@g' /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && chown root:root /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && chmod 644 /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service"
 
 - name: Fix SELinux permission for CMP Fluent Bit service file
@@ -261,8 +246,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service"
   ignore_errors: true
 
@@ -275,8 +259,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl daemon-reload"
 
 - name: Enable CMP Fluent Bit service
@@ -288,8 +271,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl enable cmp-fluent-bit-{{ site_code }}"
 
 - name: Restart CMP Fluent Bit service
@@ -301,8 +283,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   shell: "systemctl restart cmp-fluent-bit-{{ site_code }}"
 
 - name: Run CMP Fluent Bit status command
@@ -314,8 +295,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
   register: cmp_fluent_bit_status
   failed_when: cmp_fluent_bit_status.rc not in [0, 3]

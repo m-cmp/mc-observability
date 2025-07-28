@@ -7,8 +7,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl stop cmp-telegraf 2>&1 | true"
 
 - name: Disable old CMP Telegraf service
@@ -20,8 +19,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   shell: "systemctl disable cmp-telegraf 2>&1 | true"
   ignore_errors: true
 
@@ -34,8 +32,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-telegraf"
   register: cmp_telegraf_status
   ignore_errors: true
@@ -53,8 +50,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -f /lib/systemd/system/cmp-telegraf.service"
   ignore_errors: true
 
@@ -67,8 +63,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl daemon-reload && systemctl reset-failed cmp-telegraf > /dev/null 2>&1 | true"
 
 - name: Stop CMP Telegraf service
@@ -80,8 +75,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl stop cmp-telegraf-{{ site_code }} 2>&1 | true"
   ignore_errors: true
 
@@ -94,8 +88,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   shell: "systemctl disable cmp-telegraf-{{ site_code }} 2>&1 | true"
   ignore_errors: true
 
@@ -108,8 +101,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
   register: cmp_telegraf_status
   failed_when: cmp_telegraf_status.rc not in [3, 4]
@@ -139,8 +131,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "flock -x /tmp/cmp_old_telegraf_migration.lock /tmp/cmp_old_telegraf_migration_{{ request_id }} {{ site_code }}"
 
 - name: Remove old CMP Telegraf Migration Script File
@@ -152,8 +143,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -rf /tmp/cmp_old_telegraf_migration.lock /tmp/cmp_old_telegraf_migration_{{ request_id }}"
 
 - name: Compress agent files
@@ -180,8 +170,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "mkdir -p /cmp-agent/sites/{{ site_code }} && /tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-telegraf-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
 
 - name: Remove Remote Compressed Agent Install File
@@ -193,8 +182,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "rm -f /tmp/cmp-telegraf-{{ site_code }}.tar.gz"
 
 - name: Remove Local Compressed Agent Install File
@@ -215,8 +203,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "cp -f /cmp-agent/sites/{{ site_code }}/telegraf/cmp-telegraf.service /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && sed -i 's@SITE_CODE@{{ site_code }}@g' /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && chown root:root /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && chmod 644 /lib/systemd/system/cmp-telegraf-{{ site_code }}.service"
 
 - name: Fix SELinux permission for CMP Telegraf service file
@@ -228,8 +215,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-telegraf-{{ site_code }}.service"
   ignore_errors: true
 
@@ -242,8 +228,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "chcon -Rt bin_t /cmp-agent/sites/{{ site_code }}/telegraf/bin/"
   ignore_errors: true
 
@@ -256,8 +241,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl daemon-reload"
 
 - name: Enable CMP Telegraf service
@@ -269,8 +253,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl enable cmp-telegraf-{{ site_code }}"
 
 - name: Restart CMP Telegraf service
@@ -282,8 +265,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   shell: "systemctl restart cmp-telegraf-{{ site_code }}"
 
 - name: Run CMP Telegraf status command
@@ -295,8 +277,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
   register: cmp_telegraf_status
   failed_when: cmp_telegraf_status.rc not in [0, 3]
