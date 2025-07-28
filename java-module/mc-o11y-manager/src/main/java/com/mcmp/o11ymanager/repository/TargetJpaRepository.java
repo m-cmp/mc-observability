@@ -21,7 +21,7 @@ public interface TargetJpaRepository extends JpaRepository<TargetEntity, String>
   @Query("SELECT t FROM TargetEntity t WHERE t.nsId = :nsId AND t.mciId = :mciId")
   List<TargetEntity> findByNsIdAndMciId(String nsId, String mciId);
 
-  @Query("SELECT t FROM TargetEntity t WHERE t.nsId = :nsId AND t.mciId = :mciId AND t.id = :targetId")
-  Optional<TargetEntity> findByNsIdAndMciIdTargetId(String nsId, String mciId, String targetId);
+  @Query("SELECT t FROM TargetEntity t WHERE t.nsId = :nsId AND t.mciId = :mciId AND t.targetId = :targetId")
+  Optional<TargetEntity> findByNsIdAndMciIdAndTargetId(String nsId, String mciId, String targetId);
 }
 

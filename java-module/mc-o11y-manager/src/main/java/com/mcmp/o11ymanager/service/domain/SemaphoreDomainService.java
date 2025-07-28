@@ -26,12 +26,14 @@ import java.util.NoSuchElementException;
 
 import com.mcmp.o11ymanager.port.TumblebugPort;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SemaphoreDomainService {
 
   public static final int SEMAPHORE_MAX_PARALLEL_TASKS = 10;
@@ -65,6 +67,21 @@ public class SemaphoreDomainService {
 
     TumblebugSshKeyList sshKeyList = tumblebugPort.getSshKeyList(nsId);
 
+    List<SshKey> keys  = sshKeyList.getSshKey();
+
+    if (keys == null) {
+      log.warn("🔴 sshKey list is NULL");
+    } else if (keys.isEmpty()) {
+      log.warn("🟠 sshKey list is EMPTY");
+    } else {
+      log.info("🟢 sshKey list count: {}", keys.size());
+      for (SshKey key : keys) {
+        log.info("🔑 key name={}, id={}, privateKey={}", key.getName(), key.getId(), key.getPrivateKey());
+      }
+    }
+
+
+
     String privateKey = sshKeyList.getSshKey().stream()
             .filter(k -> k.getId().equals(vm.getSshKeyId()))
             .map(SshKey::getPrivateKey)
@@ -82,10 +99,17 @@ public class SemaphoreDomainService {
   public Task install(String nsId, String mciId, String targetId, SemaphoreInstallMethod method,
                       String configContent, Agent agent, int templateCount) {
 
+
+    log.info("======================START SEMAPHORE INSTALL==============================");
+
     String methodStr = Strings.toLowerCase(method.toString());
 
     try {
+      log.info("📌 step1: getAccessInfo");
       AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
+
+
+      log.info("📌 step2: create env");
       Environment env = createEnvironment(agent, accessInfo.getIp(), accessInfo.getPort(),
               accessInfo.getUser(), accessInfo.getSshKey());
 
@@ -97,14 +121,27 @@ public class SemaphoreDomainService {
             Base64.getEncoder().encodeToString(configContent.getBytes()));
       }
 
+
+
+      log.info("📌 step3: get project");
       Project project = getProjectByName(projectName);
+      log.info("========================projectName={}============================", project.getName());
+
       String templateName = templateNameAgentInstall + "_" + templateCount;
 
+      log.info("========================templateName={}============================", templateName);
+
+
+      log.info("📌 step4: get template");
       Template template = getTemplates(project.getId()).stream()
           .filter(i -> i.getName().equals(templateName))
           .findFirst().orElseThrow(NoSuchElementException::new);
 
+
+      log.info("📌 step5: create task");
       Task task = createTask(template.getId(), env);
+
+      log.info("📌 step6: call semaphorePort.createTask()");
       return semaphorePort.createTask(project.getId(), task);
     } catch (Exception e) {
       throw new SemaphoreException("Failed to " + methodStr + " agent", e);

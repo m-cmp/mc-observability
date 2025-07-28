@@ -57,6 +57,9 @@ public class AgentFacadeService {
 
   @Transactional
   public List<ResultDTO> install(String nsId, String mciId, String targetId) {
+
+    log.info("===================================start Agent Install - targetId: {}===========================================", targetId);
+
     List<ResultDTO> results = new ArrayList<>();
     ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
     boolean lockAcquired = false;
@@ -83,9 +86,8 @@ public class AgentFacadeService {
       // 2-2 ) FluentBit 설치
       fluentBitFacadeService.install(nsId, mciId, targetId, templateCount);
 
-
-
       tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.TELEGRAF);
+
       tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.FLUENT_BIT);
 
       results.add(ResultDTO.builder()

@@ -1,8 +1,7 @@
 package com.mcmp.o11ymanager.controller;
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
-import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.facade.TargetFacadeService;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import jakarta.validation.Valid;
@@ -42,7 +41,7 @@ public class TargetController {
       @PathVariable String nsId,
       @PathVariable String mciId,
       @PathVariable String targetId,
-      @RequestBody @Valid TargetRegisterDTO dto
+      @RequestBody @Valid TargetRequestDTO dto
   ) {
     return new ResBody<>(targetFacadeService.postTarget(nsId, mciId, targetId, dto));
   }
@@ -54,9 +53,9 @@ public class TargetController {
       @PathVariable String nsId,
       @PathVariable String mciId,
       @PathVariable String targetId,
-      @RequestBody TargetUpdateDTO dto
+      @RequestBody TargetRequestDTO dto
   ) {
-    return new ResBody<>(targetFacadeService.putTarget(targetId, nsId, mciId, dto));
+    return new ResBody<>(targetFacadeService.putTarget(nsId, mciId, targetId, dto));
   }
 
   @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
@@ -65,7 +64,7 @@ public class TargetController {
       @PathVariable String mciId,
       @PathVariable String targetId
   ) {
-    targetFacadeService.deleteTarget(targetId, nsId, mciId);
+    targetFacadeService.deleteTarget(nsId, mciId,targetId);
     return new ResBody<>();
   }
 

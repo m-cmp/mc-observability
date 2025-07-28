@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.dto.target;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,8 +13,9 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TargetUpdateDTO {
+public class TargetRequestDTO {
 
+    @NotBlank(message = "Target name은 필수입니다")
     private String name;
 
     @JsonProperty("alias_name")

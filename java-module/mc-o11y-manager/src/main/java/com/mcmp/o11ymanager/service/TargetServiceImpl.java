@@ -1,9 +1,9 @@
 package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
-import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.entity.TargetEntity;
+import com.mcmp.o11ymanager.entity.TargetId;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.exception.agent.LogAgentNotInstalled;
 import com.mcmp.o11ymanager.exception.agent.MonitoringAgentNotInstalled;
@@ -34,7 +34,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public TargetDTO get(String nsId, String mciId, String targetId) {
-    TargetEntity entity = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity entity = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(() -> new ResourceNotExistsException(
             requestInfo.getRequestId(), "TargetEntity", nsId + "/" + mciId));
     return com.mcmp.o11ymanager.dto.target.TargetDTO.fromEntity(entity);
@@ -52,8 +52,7 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRegisterDTO dto) {
-    // 1. TargetEntity 생성 및 저장
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto) {
     TargetEntity target = TargetEntity.builder()
         .nsId(nsId)
         .mciId(mciId)
@@ -68,67 +67,55 @@ public class TargetServiceImpl implements TargetService {
 
     TargetEntity savedTarget = targetJpaRepository.save(target);
 
-    // 4. 결과 DTO 생성
     return TargetDTO.fromEntity(savedTarget);
   }
 
+
+
   @Override
-  public TargetDTO put(String nsId, String mciId, String targetId, TargetUpdateDTO dto) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+  public TargetDTO put(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(() -> new ResourceNotExistsException(
             requestInfo.getRequestId(), "TargetEntity", targetId));
 
-    if (!nsId.equals(target.getNsId()) || !mciId.equals(target.getMciId())) {
-      throw new IllegalArgumentException("failed to update target");
-    }
 
-    if (dto.getName() != null) {
-      target.setName(dto.getName());
-    }
+    if (dto.getName() != null)        target.setName(dto.getName());
+    if (dto.getAliasName() != null)   target.setAliasName(dto.getAliasName());
+    if (dto.getDescription() != null) target.setDescription(dto.getDescription());
 
-    if (dto.getAliasName() != null) {
-      target.setAliasName(dto.getAliasName());
-    }
-
-    if (dto.getDescription() != null) {
-      target.setDescription(dto.getDescription());
-    }
 
     TargetEntity updated = targetJpaRepository.save(target);
 
-    return com.mcmp.o11ymanager.dto.target.TargetDTO.fromEntity(updated);
+    return TargetDTO.fromEntity(updated);
   }
+
 
 
   @Override
   @Transactional
   public void delete(String nsId, String mciId, String targetId) {
-    TargetEntity entity = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity entity = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(() -> new ResourceNotExistsException(
             requestInfo.getRequestId(), "TargetEntity", targetId));
 
-    if (!nsId.equals(entity.getNsId()) || !mciId.equals(entity.getMciId())) {
-      throw new IllegalArgumentException("nsId 또는 mciId가 일치하지 않습니다.");
-    }
-
-    targetJpaRepository.deleteById(targetId);
+    targetJpaRepository.delete(entity);
   }
 
   @Override
   public void isIdleMonitoringAgent(String nsId, String mciId, String targetId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
     if (target.getMonitoringAgentTaskStatus() != TargetAgentTaskStatus.IDLE) {
-      throw new TargetAgentTaskProcessingException(requestInfo.getRequestId(), targetId, "모니터링",
+      throw new TargetAgentTaskProcessingException(requestInfo.getRequestId(), targetId, "monitoringAgentTask",
           target.getMonitoringAgentTaskStatus());
     }
   }
 
   @Override
   public void isIdleLogAgent(String nsId, String mciId, String targetId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -140,7 +127,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void isLogAgentInstalled(String nsId, String mciId, String targetId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -151,7 +138,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void isMonitoringAgentInstalled(String nsId, String mciId, String targetId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -162,7 +149,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void updateMonitoringAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -180,7 +167,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void updateLogAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -198,7 +185,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void updateMonitoringAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -207,7 +194,7 @@ public class TargetServiceImpl implements TargetService {
 
   @Override
   public void updateLogAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -217,7 +204,7 @@ public class TargetServiceImpl implements TargetService {
   @Override
   public void updateMonitoringAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status,
       String taskId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity", targetId));
 
@@ -231,7 +218,7 @@ public class TargetServiceImpl implements TargetService {
   @Override
   public void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status,
       String taskId) {
-    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdTargetId(nsId, mciId, targetId)
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
         .orElseThrow(
             () -> new ResourceNotExistsException(requestInfo.getRequestId(), "TargetEntity",
                 targetId));

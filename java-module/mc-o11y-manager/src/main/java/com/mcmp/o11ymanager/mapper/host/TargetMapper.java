@@ -1,8 +1,7 @@
 package com.mcmp.o11ymanager.mapper.host;
 
-import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +35,7 @@ public class TargetMapper {
         .build();
   }
 
-  public TargetEntity fromCreateDTO(TargetRegisterDTO dto) {
+  public TargetEntity fromCreateDTO(TargetRequestDTO dto) {
     return TargetEntity.builder()
         .name(dto.getName())
         .aliasName(dto.getAliasName())
@@ -44,7 +43,7 @@ public class TargetMapper {
         .build();
   }
 
-  public void fromUpdateDTO(TargetUpdateDTO dto, TargetEntity target) {
+  public void fromUpdateDTO(TargetRequestDTO dto, TargetEntity target) {
     if (dto.getName() != null && !dto.getName().isBlank()) {
       target.setName(dto.getName());
     }
