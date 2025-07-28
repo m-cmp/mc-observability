@@ -7,8 +7,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   copy:
     src: "{{ input_file_path }}"
     dest: "{{ output_file_path }}"

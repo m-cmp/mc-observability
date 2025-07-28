@@ -7,8 +7,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   shell: "systemctl restart cmp-telegraf-{{ site_code }}"
 
 - name: Run CMP Telegraf status command
@@ -20,8 +19,7 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_password: "{{ target_password }}"
-    ansible_become_password: "{{ target_password }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
   register: cmp_telegraf_status
   failed_when: cmp_telegraf_status.rc not in [0, 3]
