@@ -44,6 +44,8 @@ public class FluentBitFacadeService {
 
     String configContent = fluentBitConfigFacadeService.initFluentbitConfig(nsId, mciId, targetId);
 
+    log.info(String.format("Fluent-Bit config: %s", configContent));
+
     // 4. 전송(semaphore) - 설치 요청
     Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.FLUENT_BIT,

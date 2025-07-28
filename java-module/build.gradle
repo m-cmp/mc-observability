@@ -9,12 +9,14 @@ bootJar.enabled = false
 allprojects {
     group = 'mcmp.mc.observability'
     version = '0.3.1'
-    sourceCompatibility = JavaLanguageVersion.of(17)
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     repositories {
         mavenCentral()
     }
 }
+
 
 
 subprojects {
@@ -23,6 +25,13 @@ subprojects {
     apply plugin: 'java-library'
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
+
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
 
     configurations {
         compileOnly {

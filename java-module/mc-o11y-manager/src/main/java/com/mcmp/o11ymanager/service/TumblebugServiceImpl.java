@@ -10,9 +10,11 @@ import com.mcmp.o11ymanager.port.TumblebugPort;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TumblebugServiceImpl implements TumblebugService {
 
@@ -65,7 +67,10 @@ public class TumblebugServiceImpl implements TumblebugService {
     String result = executeCommand(nsId, mciId, command, userName);
     String trimmed = result.trim();
 
+    log.info("Tumblebug Command Result : '{}'", trimmed);
+
     if (!"active".equalsIgnoreCase(trimmed)) {
+      log.info("Agent Status Failed gent: {}, result: {}", agent, trimmed);
       throw new AgentStatusException("systemctl-check", "Agent 상태가 비정상입니다", agent);
     }
 
