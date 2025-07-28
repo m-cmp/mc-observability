@@ -34,9 +34,6 @@ public interface TargetService {
   void updateMonitoringAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status);
   void updateLogAgentTaskStatus(String nsId, String mciId, String targetId, TargetAgentTaskStatus status);
 
-  void updateMonitoringAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash);
-  void updateLogAgentConfigGitHash(String nsId, String mciId, String targetId, String commitHash);
-
   void updateMonitoringAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
 
   void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
