@@ -2,10 +2,13 @@ package com.mcmp.o11ymanager.facade;
 
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
-import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.entity.TargetEntity;
+import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
+import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.List;
@@ -13,6 +16,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -22,10 +26,25 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
+  private final TargetJpaRepository targetJpaRepository;
+
+  // TODO : Agent Task Status : IDLE
+  @Transactional
+  public TargetDTO updateTargetTaskStatuses(String nsId, String mciId, String targetId, TargetAgentTaskStatus monitoringStatus, TargetAgentTaskStatus logStatus) {
+    TargetEntity target = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
+        .orElseThrow(() -> new ResourceNotExistsException("...", "TargetEntity", targetId));
+
+    target.setMonitoringAgentTaskStatus(monitoringStatus);
+    target.setLogAgentTaskStatus(logStatus);
+
+    TargetEntity updatedEntity = targetJpaRepository.save(target);
+
+    return TargetDTO.fromEntity(updatedEntity);
+  }
 
 
-
-  public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRegisterDTO dto) {
+  @Transactional
+  public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
 
     TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId, "cb-user")
         ? TargetStatus.RUNNING
@@ -33,9 +52,17 @@ public class TargetFacadeService {
 
     TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
 
-    if (status == TargetStatus.RUNNING) {
-      agentFacadeService.install(nsId, mciId, targetId);
-    }
+    updateTargetTaskStatuses(
+        nsId, mciId, targetId,
+        TargetAgentTaskStatus.IDLE, // 모니터링 에이전트 상태를 IDLE로
+        TargetAgentTaskStatus.IDLE  // 로그 에이전트 상태를 IDLE로
+    );
+
+//    if (status == TargetStatus.RUNNING) {
+//      agentFacadeService.install(nsId, mciId, targetId);
+//    }
+
+    agentFacadeService.install(nsId, mciId, targetId);
 
     return savedTarget;
   }
@@ -65,11 +92,11 @@ public class TargetFacadeService {
     return targetService.list();
   }
 
-  public TargetDTO putTarget(String targetId, String nsId, String mciId, TargetUpdateDTO dto) {
-    return targetService.put(targetId, nsId, mciId, dto);
+  public TargetDTO putTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
+    return targetService.put(nsId, mciId, targetId, dto);
   }
 
-  public void deleteTarget(String targetId, String nsId, String mciId) {
-    targetService.delete(targetId, nsId, mciId);
+  public void deleteTarget(String nsId, String mciId, String targetId) {
+    targetService.delete(nsId, mciId, targetId);
   }
 }

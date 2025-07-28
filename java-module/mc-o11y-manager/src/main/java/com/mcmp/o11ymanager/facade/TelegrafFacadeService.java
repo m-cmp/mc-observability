@@ -39,17 +39,26 @@ public class TelegrafFacadeService {
       @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
+    log.info("==========================telegraf idle start===============================");
     targetService.isIdleMonitoringAgent(nsId, mciId, targetId);
+    log.info("==========================telegraf idle finish===============================");
 
     // 2. host 상태 업데이트
     targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.INSTALLING);
+    log.info("==========================update target status===============================");
 
     String configContent = telegrafConfigFacadeService.initTelegrafConfig(nsId, mciId, targetId);
 
+    log.info(String.format("Telegraf config: %s", configContent));
+
+
+    log.info("========================= START INSTALL REQUEST============================");
     // 4. 전송(semaphore) - 설치 요청
     Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.TELEGRAF,
         templateCount);
+
+    log.info("=========================FINISH INSTALL REQUEST============================");
 
     // 5. task ID, task status 업데이트
     targetService.updateMonitoringAgentTaskStatusAndTaskId(nsId, mciId, targetId, TargetAgentTaskStatus.INSTALLING,

@@ -2,8 +2,7 @@ package com.mcmp.o11ymanager.service.interfaces;
 
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.dto.target.TargetRegisterDTO;
-import com.mcmp.o11ymanager.dto.target.TargetUpdateDTO;
+import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.exception.agent.LogAgentNotInstalled;
 import com.mcmp.o11ymanager.exception.agent.MonitoringAgentNotInstalled;
 import com.mcmp.o11ymanager.exception.host.HostAgentTaskProcessingException;
@@ -20,9 +19,9 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRegisterDTO dto);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto);
 
-  TargetDTO put(String nsId, String mciId, String targetId, TargetUpdateDTO dto);
+  TargetDTO put(String nsId, String mciId, String targetId, TargetRequestDTO dto);
 
   void delete(String nsId, String mciId, String targetId);
 
