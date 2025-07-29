@@ -35,6 +35,7 @@
                 },
                 "body": "%message"
                 }
+                \n
             </pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">

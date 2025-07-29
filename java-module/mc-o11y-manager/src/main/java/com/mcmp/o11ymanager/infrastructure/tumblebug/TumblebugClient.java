@@ -4,6 +4,7 @@ import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKeyList;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugCmd;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugNS;
+import org.springdoc.core.converters.models.PageableAsQueryParam;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +23,7 @@ public interface TumblebugClient {
   TumblebugMCI getMCIList(@PathVariable String nsId, @PathVariable String mciId);
 
   @PostMapping("/tumblebug/ns/{nsId}/cmd/mci/{mciId}")
-  Object sendCommand(@PathVariable String nsId, @PathVariable String mciId,
+  Object sendCommand(@PathVariable String nsId, @PathVariable String mciId, @RequestParam String vmId,
       @RequestBody TumblebugCmd tumblebugCmd);
 }
 
