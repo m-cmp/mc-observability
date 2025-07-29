@@ -18,7 +18,7 @@
 
     <!-- File -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+        <file>${LOG_PATH}/${APPLICATION_NAME}.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>
                 {
@@ -29,9 +29,9 @@
                 "severity_text": "%level",
                 "attributes": {
                 "component": "%X{component}",
-                "code.function": "%X{code.function}",
-                "code.file": "%X{code.file}",
-                "code.lineno": "%X{code.lineno}"
+                "code.function": "%C.%M",
+                "code.file": "%F",
+                "code.lineno": "%L"
                 },
                 "body": "%message"
                 }
