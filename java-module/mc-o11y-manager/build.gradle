@@ -29,7 +29,6 @@ dependencies {
     implementation 'io.github.openfeign:feign-httpclient'
     implementation 'com.jcraft:jsch:0.1.55'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.apache.sshd:sshd-core:2.15.0'
     implementation 'org.apache.sshd:sshd-sftp:2.15.0'
