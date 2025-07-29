@@ -67,5 +67,4 @@ public class TargetEntity {
   @LastModifiedDate
   private LocalDateTime updatedAt;
 
-  private String state;
 }

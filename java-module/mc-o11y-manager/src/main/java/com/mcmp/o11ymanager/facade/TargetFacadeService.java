@@ -79,7 +79,6 @@ public class TargetFacadeService {
         .description(vm.getDescription())
         .nsId(nsId)
         .mciId(mciId)
-        .state(vm.getState())
         .monitoringServiceStatus(monitoringStatus)
         .logServiceStatus(logStatus)
         .build();

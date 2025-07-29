@@ -31,7 +31,6 @@ public class TargetMapper {
         .updatedAt(dto.getUpdatedAt())
         .nsId(dto.getNsId())
         .mciId(dto.getMciId())
-        .state(dto.getState())
         .build();
   }
 

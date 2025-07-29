@@ -63,7 +63,6 @@ public class TargetDTO {
   @JsonProperty("mci_id")
   private String mciId;
 
-  private String state;
 
   public static TargetDTO fromEntity(com.mcmp.o11ymanager.entity.TargetEntity entity) {
     return TargetDTO.builder()
@@ -80,7 +79,6 @@ public class TargetDTO {
         .updatedAt(entity.getUpdatedAt())
         .nsId(entity.getNsId())
         .mciId(entity.getMciId())
-        .state(entity.getState())
         .build();
   }
 
@@ -101,7 +99,6 @@ public class TargetDTO {
         .updatedAt(this.updatedAt)
         .nsId(this.nsId)
         .mciId(this.mciId)
-        .state(this.state)
         .build();
   }
 }
