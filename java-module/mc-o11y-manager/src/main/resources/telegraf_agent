@@ -1,0 +1,15 @@
+[agent]
+  interval = "10s"
+  flush_interval = "60s"
+
+  logfile = "/cmp-agent/sites/@SITE_CODE/telegraf/log/telegraf.log"
+  logfile_rotation_interval = "1d"
+  logfile_rotation_max_size = "10MB"
+  logfile_rotation_max_archives = 7
+
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 20000
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = "0s"

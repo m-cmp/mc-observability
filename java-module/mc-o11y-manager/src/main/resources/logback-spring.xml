@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Spring property  -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" />
+    <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name" />
+    <springProperty scope="context" name="MAX_FILE_SIZE" source="logging.logback.rollingpolicy.max-file-size" />
+    <springProperty scope="context" name="MAX_HISTORY" source="logging.logback.max-history" />
+    <springProperty scope="context" name="APPLICATION_NAME" source="spring.application.name" />
+
+
+    <!-- Custom as desired by developers -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %-5level %logger{36} --- [%thread] : %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                {
+                "timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}",
+                "trace_id": "%X{trace_id}",
+                "span_id": "%X{span_id}",
+                "trace_flags": "%X{trace_flags}",
+                "severity_text": "%level",
+                "attributes": {
+                "component": "%X{component}",
+                "code.function": "%X{code.function}",
+                "code.file": "%X{code.file}",
+                "code.lineno": "%X{code.lineno}"
+                },
+                "body": "%message"
+                }
+                \n
+            </pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APPLICATION_NAME}/${LOG_FILE_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+
+    <!-- root logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>

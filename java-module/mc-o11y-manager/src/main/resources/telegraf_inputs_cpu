@@ -1,0 +1,4 @@
+[[inputs.cpu]]
+  percpu = true
+  totalcpu = true
+  collect_cpu_time = false

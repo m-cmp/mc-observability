@@ -1,0 +1,40 @@
+package com.mcmp.o11ymanager.infrastructure.tumblebug;
+
+import com.mcmp.o11ymanager.dto.tumblebug.*;
+import com.mcmp.o11ymanager.port.TumblebugPort;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+@Component
+@Slf4j
+@RequiredArgsConstructor
+public class TumblebugClientAdapter implements TumblebugPort {
+
+  private final TumblebugClient tumblebugClient;
+
+  @Override
+  public TumblebugMCI.Vm getVM(String nsId, String mciId, String vmId) {
+    return tumblebugClient.getVM(nsId, mciId, vmId);
+  }
+
+  @Override
+  public TumblebugSshKey getSshKey(String nsId, String sshKeyId) {
+    return tumblebugClient.getSshKey(nsId, sshKeyId);
+  }
+
+  @Override
+  public TumblebugNS getNSList() {
+    return tumblebugClient.getNSList();
+  }
+
+  @Override
+  public TumblebugMCI getMCIList(String nsId, String mciId) {
+    return tumblebugClient.getMCIList(nsId, mciId);
+  }
+
+  @Override
+  public Object sendCommand(String nsId, String mciId, String targetId, TumblebugCmd command) {
+    return tumblebugClient.sendCommand(nsId, mciId, targetId, command);
+  }
+}

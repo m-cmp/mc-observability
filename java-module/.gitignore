@@ -4,6 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+**/src/main/**/application-local.yaml
 
 ### STS ###
 .apt_generated
@@ -16,6 +17,7 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+!**/ansible/**/bin/
 
 ### IntelliJ IDEA ###
 .idea
@@ -42,4 +44,5 @@ out/
 .diff_*
 .git_*
 
+*.key
 *.pid

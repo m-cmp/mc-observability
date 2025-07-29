@@ -1,0 +1,4 @@
+logging:
+  level:
+    com.mcmp.o11ymanager.facade: DEBUG
+    com.mcmp.o11ymanager.global.scheduler: DEBUG

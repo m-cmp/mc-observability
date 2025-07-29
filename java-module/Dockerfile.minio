@@ -1,0 +1,13 @@
+FROM minio/minio:RELEASE.2025-02-07T23-21-09Z AS minio
+
+FROM alpine:3.22.0 AS prod
+
+RUN apk --no-cache add bash curl tzdata
+RUN echo "Asia/Seoul" >  /etc/timezone
+RUN cp -f /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+
+COPY ./minio /minio
+COPY --from=minio ./usr/bin/minio /minio/bin/minio
+RUN chmod +x /minio/run.sh
+
+ENTRYPOINT ["/minio/run.sh"]

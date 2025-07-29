@@ -1,0 +1,108 @@
+- name: Create temporary fluent-bit config content
+  copy:
+    content: "{{ config_content | b64decode }}"
+    dest: "/tmp/new_fluentbit_config_{{ request_id }}"
+    mode: "0644"
+  delegate_to: 127.0.0.1
+
+- name: Get current fluent-bit config file hash
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "md5sum {{ config_path }} | awk '{print $1}'"
+  register: current_fluentbit_config_hash
+  ignore_errors: true
+
+- name: Get new fluent-bit config file hash
+  raw: "md5sum /tmp/new_fluentbit_config_{{ request_id }} | awk '{print $1}'"
+  delegate_to: 127.0.0.1
+  register: new_fluentbit_config_hash
+
+- name: Set fluent-bit config update required flag
+  set_fact:
+    update_required: "{{ current_fluentbit_config_hash.rc != 0 or current_fluentbit_config_hash.stdout | trim != new_fluentbit_config_hash.stdout | trim }}"
+
+- name: Display fluent-bit config update status
+  debug:
+    msg: "Configuration update is {{ 'required' if update_required else 'not required' }}"
+
+- name: Get fluent-bit config directory path
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  set_fact:
+    config_directory_path: "{{ config_path | dirname }}"
+  when: update_required
+
+- name: Create fluent-bit config directory if not exist
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p {{ config_directory_path }}"
+  when: update_required
+
+- name: Copy new fluent-bit config to target
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/new_fluentbit_config_{{ request_id }}"
+    output_file_path: "{{ config_path }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+  when: update_required
+
+- name: Restart CMP Fluent Bit service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl stop cmp-fluent-bit-{{ site_code }} > /dev/null 2>&1 | true ; /cmp-agent/common/podman/bin/run-podman rm -f --ignore -t 10 cmp-fluent-bit-{{ site_code }} > /dev/null 2>&1 | true ; systemctl start cmp-fluent-bit-{{ site_code }}"
+  when: update_required
+
+- name: Run CMP Fluent Bit status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
+  register: cmp_fluentbit_status
+  failed_when: cmp_fluentbit_status.rc not in [0, 3]
+  when: update_required
+
+- name: Display CMP Fluent Bit status
+  debug:
+    var: cmp_fluentbit_status
+
+- name: Cleanup temporary fluent-bit config file
+  file:
+    path: "/tmp/new_fluentbit_config_{{ request_id }}"
+    state: absent
+  delegate_to: 127.0.0.1
