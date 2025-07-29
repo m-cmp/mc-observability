@@ -5,12 +5,14 @@ import com.mcmp.o11ymanager.enums.Agent;
 
 public interface TumblebugService {
 
-  String executeCommand(String nsId, String mciId, String command, String userName);
 
-  boolean isConnectedVM(String nsId, String mciId, String targetId, String userName);
 
-  TumblebugMCI.Vm getVm(String nsId, String mciId, String targetId);
+  String executeCommand(String nsId, String mciId, String vmId, String command);
 
-  boolean isServiceActive(String nsId, String mciId, String serviceName, String userName, Agent agent);
+  boolean isConnectedVM(String nsId, String mciId, String vmId);
+
+  TumblebugMCI.Vm getVm(String nsId, String mciId, String vmId);
+
+  boolean isServiceActive(String nsId, String mciId, String vmId, Agent agent);
 
 }

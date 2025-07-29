@@ -196,7 +196,7 @@ public class TargetServiceImpl implements TargetService {
     target.setTargetMonitoringAgentTaskId(taskId);
 
     targetJpaRepository.save(target);
-    log.info("[TargetService] Monitoring Service Status {}", target);
+    log.info("==================================Monitoring Service Status {}===============================================", target);
   }
 
   @Override
