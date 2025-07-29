@@ -22,12 +22,12 @@ public class TumblebugServiceImpl implements TumblebugService {
   private final ObjectMapper objectMapper;
 
   @Override
-  public String executeCommand(String nsId, String mciId, String command, String userName) {
+  public String executeCommand(String nsId, String mciId, String targetId, String command, String userName) {
     TumblebugCmd cmd = new TumblebugCmd();
     cmd.setCommand(List.of(command));
     cmd.setUserName(userName);
 
-    Object response = tumblebugPort.sendCommand(nsId, mciId, cmd);
+    Object response = tumblebugPort.sendCommand(nsId, mciId, targetId, cmd);
 
     try {
       JsonNode root = objectMapper.valueToTree(response);
@@ -47,7 +47,7 @@ public class TumblebugServiceImpl implements TumblebugService {
   @Override
   public boolean isConnectedVM(String nsId, String mciId, String targetId, String userName) {
     try {
-      String output = executeCommand(nsId, mciId, "echo hello", userName);
+      String output = executeCommand(nsId, mciId, targetId, "echo hello", userName);
       return "hello".equalsIgnoreCase(output.trim());
     } catch (Exception e) {
       return false;
@@ -62,9 +62,9 @@ public class TumblebugServiceImpl implements TumblebugService {
 
 
   @Override
-  public boolean isServiceActive(String nsId, String mciId, String serviceName, String userName, Agent agent) {
+  public boolean isServiceActive(String nsId, String mciId, String targetId, String userName, Agent agent) {
     String command = String.format("systemctl is-active %s", agent.name().toLowerCase());
-    String result = executeCommand(nsId, mciId, command, userName);
+    String result = executeCommand(nsId, mciId, targetId, command, userName);
     String trimmed = result.trim();
 
     log.info("Tumblebug Command Result : '{}'", trimmed);

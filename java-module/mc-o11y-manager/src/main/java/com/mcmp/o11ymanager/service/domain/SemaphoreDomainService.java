@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.service.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mcmp.o11ymanager.dto.target.AccessInfoDTO;
-import com.mcmp.o11ymanager.dto.tumblebug.SshKey;
+import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKey;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKeyList;
 import com.mcmp.o11ymanager.enums.Agent;
@@ -64,36 +64,21 @@ public class SemaphoreDomainService {
 
   private AccessInfoDTO getAccessInfo(String nsId, String mciId, String targetId) {
     TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
+    TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
 
-    TumblebugSshKeyList sshKeyList = tumblebugPort.getSshKeyList(nsId);
-
-    List<SshKey> keys  = sshKeyList.getSshKey();
-
-    if (keys == null) {
-      log.warn("🔴 sshKey list is NULL");
-    } else if (keys.isEmpty()) {
-      log.warn("🟠 sshKey list is EMPTY");
+    if (sshKey == null) {
+      log.warn("🔴 SSH private key not found");
+      throw new RuntimeException("SSH private key not found");
     } else {
-      log.info("🟢 sshKey list count: {}", keys.size());
-      for (SshKey key : keys) {
-        log.info("🔑 key name={}, id={}, privateKey={}", key.getName(), key.getId(), key.getPrivateKey());
-      }
+      log.info("🔑 key name={}, id={}, privateKey={}", sshKey.getName(), sshKey.getId(), sshKey.getPrivateKey());
     }
 
-
-
-    String privateKey = sshKeyList.getSshKey().stream()
-            .filter(k -> k.getId().equals(vm.getSshKeyId()))
-            .map(SshKey::getPrivateKey)
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("SSH private key not found"));
-
-      return AccessInfoDTO.builder()
-              .ip(vm.getPublicIP())
-              .port(Integer.parseInt(vm.getSshPort()))
-              .user(vm.getVmUserName())
-              .sshKey(privateKey)
-              .build();
+    return AccessInfoDTO.builder()
+            .ip(vm.getPublicIP())
+            .port(Integer.parseInt(vm.getSshPort()))
+            .user(vm.getVmUserName())
+            .sshKey(sshKey.getPrivateKey())
+            .build();
   }
 
   public Task install(String nsId, String mciId, String targetId, SemaphoreInstallMethod method,
@@ -107,7 +92,6 @@ public class SemaphoreDomainService {
     try {
       log.info("📌 step1: getAccessInfo");
       AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
-
 
       log.info("📌 step2: create env");
       Environment env = createEnvironment(agent, accessInfo.getIp(), accessInfo.getPort(),
@@ -184,7 +168,7 @@ public class SemaphoreDomainService {
         .addVariable("target_host", ip)
         .addVariable("target_port", String.valueOf(port))
         .addVariable("target_user", user)
-        .addVariable("target_sshkey", sshkey);
+        .addVariable("target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
   }
 
   private Task createTask(Integer templateId, Environment environment)

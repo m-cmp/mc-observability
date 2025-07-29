@@ -7,6 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TumblebugSshKeyList {
-  private List<SshKey> sshKey;
+  private List<TumblebugSshKey> sshKey;
 
 }

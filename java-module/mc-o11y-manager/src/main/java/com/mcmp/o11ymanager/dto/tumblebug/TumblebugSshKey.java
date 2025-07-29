@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SshKey {
+public class TumblebugSshKey {
   private String resourceType;
   private String id;
   private String uid;
