@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.facade;
 
+import com.mcmp.o11ymanager.dto.target.AccessInfoDTO;
 import com.mcmp.o11ymanager.dto.target.ResultDTO;
-import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FluentBitFacadeService {
 
-  private final FileFacadeService fileFacadeService;
   private final TargetService targetService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
   private final RequestInfo requestInfo;
@@ -33,7 +32,7 @@ public class FluentBitFacadeService {
   private final SchedulerFacadeService schedulerFacadeService;
   private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
 
-  public void install(String nsId, String mciId, String targetId,
+  public void install(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
       @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
@@ -47,7 +46,7 @@ public class FluentBitFacadeService {
     log.info(String.format("Fluent-Bit config: %s", configContent));
 
     // 4. 전송(semaphore) - 설치 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.INSTALL,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.FLUENT_BIT,
         templateCount);
 
@@ -60,7 +59,7 @@ public class FluentBitFacadeService {
         SemaphoreInstallMethod.INSTALL, Agent.FLUENT_BIT);
   }
 
-  public void update(String nsId, String mciId, String targetId,
+  public void update(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
                      @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
@@ -70,7 +69,7 @@ public class FluentBitFacadeService {
     targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.UPDATING);
 
     // 3. 전송(semaphore) - 업데이트 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.UPDATE,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.UPDATE,
             null, Agent.FLUENT_BIT,
             templateCount);
 
@@ -84,7 +83,8 @@ public class FluentBitFacadeService {
             SemaphoreInstallMethod.UPDATE, Agent.FLUENT_BIT);
   }
 
-  public void uninstall(String nsId, String mciId, String targetId, int templateCount) throws Exception {
+  public void uninstall(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
+                        int templateCount) {
 
     // 1) 상태 확인
     targetService.isIdleLogAgent(nsId, mciId, targetId);
@@ -93,7 +93,7 @@ public class FluentBitFacadeService {
     targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.PREPARING);
 
     // 3. 전송(semaphore) - 삭제 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.UNINSTALL,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.UNINSTALL,
         null, Agent.FLUENT_BIT,
         templateCount);
 
@@ -115,10 +115,6 @@ public class FluentBitFacadeService {
     try {
       agentTaskStatusLock.lock();
 
-      TargetEntity target;
-
-      target = targetService.get(nsId, mciId, targetId).toEntity();
-
       // 1. 싫행 상태 확인
       targetService.isIdleLogAgent(nsId, mciId, targetId);
 
@@ -129,7 +125,6 @@ public class FluentBitFacadeService {
 
 
       targetService.updateLogAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
-
 
       results.add(ResultDTO.builder()
               .nsId(nsId)
