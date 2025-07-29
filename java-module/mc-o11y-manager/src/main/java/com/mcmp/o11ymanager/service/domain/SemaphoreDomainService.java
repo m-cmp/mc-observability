@@ -2,9 +2,6 @@ package com.mcmp.o11ymanager.service.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mcmp.o11ymanager.dto.target.AccessInfoDTO;
-import com.mcmp.o11ymanager.dto.tumblebug.SshKey;
-import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
-import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKeyList;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.exception.agent.SemaphoreException;
@@ -24,7 +21,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.mcmp.o11ymanager.port.TumblebugPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Strings;
@@ -41,8 +37,6 @@ public class SemaphoreDomainService {
   private final SemaphorePort semaphorePort;
   private final FileFacadeService fileFacadeService;
   private final RequestInfo requestInfo;
-
-  private final TumblebugPort tumblebugPort;
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -62,54 +56,15 @@ public class SemaphoreDomainService {
   @Value("${feign.semaphore.password}")
   private String password;
 
-  private AccessInfoDTO getAccessInfo(String nsId, String mciId, String targetId) {
-    TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
-
-    TumblebugSshKeyList sshKeyList = tumblebugPort.getSshKeyList(nsId);
-
-    List<SshKey> keys  = sshKeyList.getSshKey();
-
-    if (keys == null) {
-      log.warn("🔴 sshKey list is NULL");
-    } else if (keys.isEmpty()) {
-      log.warn("🟠 sshKey list is EMPTY");
-    } else {
-      log.info("🟢 sshKey list count: {}", keys.size());
-      for (SshKey key : keys) {
-        log.info("🔑 key name={}, id={}, privateKey={}", key.getName(), key.getId(), key.getPrivateKey());
-      }
-    }
-
-
-
-    String privateKey = sshKeyList.getSshKey().stream()
-            .filter(k -> k.getId().equals(vm.getSshKeyId()))
-            .map(SshKey::getPrivateKey)
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("SSH private key not found"));
-
-      return AccessInfoDTO.builder()
-              .ip(vm.getPublicIP())
-              .port(Integer.parseInt(vm.getSshPort()))
-              .user(vm.getVmUserName())
-              .sshKey(privateKey)
-              .build();
-  }
-
-  public Task install(String nsId, String mciId, String targetId, SemaphoreInstallMethod method,
+  public Task install(AccessInfoDTO accessInfo, SemaphoreInstallMethod method,
                       String configContent, Agent agent, int templateCount) {
-
 
     log.info("======================START SEMAPHORE INSTALL==============================");
 
     String methodStr = Strings.toLowerCase(method.toString());
 
     try {
-      log.info("📌 step1: getAccessInfo");
-      AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
-
-
-      log.info("📌 step2: create env");
+      log.info("📌 step1: create env");
       Environment env = createEnvironment(agent, accessInfo.getIp(), accessInfo.getPort(),
               accessInfo.getUser(), accessInfo.getSshKey());
 
@@ -121,9 +76,7 @@ public class SemaphoreDomainService {
             Base64.getEncoder().encodeToString(configContent.getBytes()));
       }
 
-
-
-      log.info("📌 step3: get project");
+      log.info("📌 step2: get project");
       Project project = getProjectByName(projectName);
       log.info("========================projectName={}============================", project.getName());
 
@@ -131,27 +84,25 @@ public class SemaphoreDomainService {
 
       log.info("========================templateName={}============================", templateName);
 
-
-      log.info("📌 step4: get template");
+      log.info("📌 step3: get template");
       Template template = getTemplates(project.getId()).stream()
           .filter(i -> i.getName().equals(templateName))
           .findFirst().orElseThrow(NoSuchElementException::new);
 
 
-      log.info("📌 step5: create task");
+      log.info("📌 step4: create task");
       Task task = createTask(template.getId(), env);
 
-      log.info("📌 step6: call semaphorePort.createTask()");
+      log.info("📌 step5: call semaphorePort.createTask()");
       return semaphorePort.createTask(project.getId(), task);
     } catch (Exception e) {
       throw new SemaphoreException("Failed to " + methodStr + " agent", e);
     }
   }
 
-  public Task updateConfig(String nsId, String mciId, String targetId, String configPath, String configContent,
+  public Task updateConfig(AccessInfoDTO accessInfo, String configPath, String configContent,
                            Agent agent, int templateCount) {
     try {
-      AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
       Environment env = createEnvironment(agent, accessInfo.getIp(), accessInfo.getPort(),
               accessInfo.getUser(), accessInfo.getSshKey());
 
@@ -184,7 +135,7 @@ public class SemaphoreDomainService {
         .addVariable("target_host", ip)
         .addVariable("target_port", String.valueOf(port))
         .addVariable("target_user", user)
-        .addVariable("target_sshkey", sshkey);
+        .addVariable("target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
   }
 
   private Task createTask(Integer templateId, Environment environment)

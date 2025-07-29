@@ -25,13 +25,11 @@ public class SemaphoreAdapter implements SemaphorePort {
     public void login(LoginRequest loginRequest) {
         try {
             semaphoreClient.login(loginRequest);
-            log.info("=======================Semaphore Login Success==============================");
         } catch (Exception e) {
             log.error("[Semaphore] Login failed for request: {}", loginRequest, e);
             throw e;
         }
     }
-
 
     @Override
     public Task createTask(Integer projectId, Task task) {
@@ -53,7 +51,6 @@ public class SemaphoreAdapter implements SemaphorePort {
                 throw new IllegalStateException("No projects returned from Semaphore API");
             }
 
-            log.info("[Semaphore] getProjects() success: {} items", result.get().size());
             return result.get();
         } catch (Exception e) {
             log.error("[Semaphore] Exception while calling getProjects()", e);

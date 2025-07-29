@@ -1,14 +1,16 @@
 package com.mcmp.o11ymanager.facade;
 
 import com.mcmp.o11ymanager.dto.host.ConfigDTO;
+import com.mcmp.o11ymanager.dto.target.AccessInfoDTO;
 import com.mcmp.o11ymanager.dto.target.ResultDTO;
-import com.mcmp.o11ymanager.dto.target.TargetDTO;
+import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKey;
 import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.global.annotation.Base64Decode;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
-import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
+import com.mcmp.o11ymanager.port.TumblebugPort;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import lombok.RequiredArgsConstructor;
@@ -35,29 +37,43 @@ public class AgentFacadeService {
   private static final Lock semaphoreInstallTemplateCurrentCountLock = new ReentrantLock();
 
 
-  private final TelegrafConfigFacadeService telegrafConfigFacadeService;
-  private final FluentBitConfigFacadeService fluentBitConfigFacadeService;
-  private final SemaphoreDomainService semaphoreDomainService;
-  private final FileFacadeService fileFacadeService;
   private int semaphoreInstallTemplateCurrentCount = 0;
   private int semaphoreConfigUpdateTemplateCurrentCount = 0;
 
+  private final TumblebugPort tumblebugPort;
 
   private final FluentBitFacadeService fluentBitFacadeService;
   private final TelegrafFacadeService telegrafFacadeService;
   private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks = new ConcurrentHashMap<>();
   private final TumblebugService tumblebugService;
 
-
   private ReentrantLock getAgentLock(String nsId, String mciId, String targetId) {
     String lockKey = nsId + "-" + mciId + "-" + targetId;
     return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
   }
 
+  private AccessInfoDTO getAccessInfo(String nsId, String mciId, String targetId) {
+    TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
+    TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
+
+    if (sshKey == null) {
+      log.warn("🔴 SSH private key not found");
+      throw new RuntimeException("SSH private key not found");
+    } else {
+      log.info("🔑 key name={}, id={}, privateKey={}", sshKey.getName(), sshKey.getId(), sshKey.getPrivateKey());
+    }
+
+    return AccessInfoDTO.builder()
+            .ip(vm.getPublicIP())
+            .port(Integer.parseInt(vm.getSshPort()))
+            .user(vm.getVmUserName())
+            .sshKey(sshKey.getPrivateKey())
+            .build();
+  }
 
 
-  public AgentServiceStatus getAgentServiceStatus(String nsId, String mciId, String targetId, Agent agent) {
-    boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, agent);
+  public AgentServiceStatus getAgentServiceStatus(String nsId, String mciId, String targetId, String userName, Agent agent) {
+    boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, userName, agent);
     return isActive ? AgentServiceStatus.ACTIVE : AgentServiceStatus.INACTIVE;
   }
 
@@ -71,10 +87,9 @@ public class AgentFacadeService {
 
     List<ResultDTO> results = new ArrayList<>();
     ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
-    boolean lockAcquired = false;
 
     try {
-      TargetDTO targetDTO = targetService.get(nsId, mciId, targetId);
+      AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
 
       // 1) Lock 걸기
       int templateCount;
@@ -88,12 +103,11 @@ public class AgentFacadeService {
       // 2 ) 에이전트 설치
       // 2-1 ) Telegraf 설치
       agentLock.lock();
-      lockAcquired = true;
 
-      telegrafFacadeService.install(nsId, mciId, targetId, templateCount);
+      telegrafFacadeService.install(nsId, mciId, targetId, accessInfo, templateCount);
 
       // 2-2 ) FluentBit 설치
-      fluentBitFacadeService.install(nsId, mciId, targetId, templateCount);
+      fluentBitFacadeService.install(nsId, mciId, targetId, accessInfo, templateCount);
 
       results.add(ResultDTO.builder()
           .nsId(nsId)
@@ -111,7 +125,7 @@ public class AgentFacadeService {
           .errorMessage(e.getMessage())
           .build());
     } finally {
-      if (lockAcquired) {
+      if (agentLock.isLocked()) {
         agentLock.unlock();
       }
     }
@@ -125,7 +139,7 @@ public class AgentFacadeService {
     ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
 
     try {
-      TargetDTO targetDTO = targetService.get(nsId, mciId, targetId);
+      AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
 
       // 1) Lock 걸기
       int templateCount;
@@ -139,11 +153,10 @@ public class AgentFacadeService {
       // 2 ) 에이전트 업데이트
       // 2-1 ) Telegraf 업데이트
       agentLock.lock();
-      telegrafFacadeService.update(nsId, mciId, targetId, templateCount);
+      telegrafFacadeService.update(nsId, mciId, targetId, accessInfo, templateCount);
 
       // 2-1 ) FluentBit 업데이트
-      agentLock.lock();
-      fluentBitFacadeService.update(nsId, mciId, targetId, templateCount);
+      fluentBitFacadeService.update(nsId, mciId, targetId, accessInfo, templateCount);
 
       results.add(ResultDTO.builder()
           .nsId(nsId)
@@ -160,7 +173,9 @@ public class AgentFacadeService {
           .errorMessage(e.getMessage())
           .build());
     } finally {
-      agentLock.unlock();
+      if (agentLock.isLocked()) {
+        agentLock.unlock();
+      }
     }
 
     return results;
@@ -189,15 +204,12 @@ public class AgentFacadeService {
   @Base64Decode(ConfigDTO.class)
   public List<ResultDTO> uninstall(String nsId, String mciId, String targetId) {
 
-    targetId = null;
     List<ResultDTO> results = new ArrayList<>();
 
     ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
-
-    String id = requestInfo.getRequestId();
+    AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
 
     try {
-      targetId = id;
       int templateCount;
       try {
         semaphoreInstallTemplateCurrentCountLock.lock();
@@ -209,10 +221,10 @@ public class AgentFacadeService {
       // 4 ) 에이전트 제거
       // 4-1 ) Telegraf 제거
       agentLock.lock();
-      telegrafFacadeService.uninstall(nsId, mciId, targetId, templateCount);
+      telegrafFacadeService.uninstall(nsId, mciId, targetId, accessInfo, templateCount);
 
       // 4-1 ) FluentBit 제거
-      fluentBitFacadeService.uninstall(nsId, mciId, targetId, templateCount);
+      fluentBitFacadeService.uninstall(nsId, mciId, targetId, accessInfo, templateCount);
 
       results.add(ResultDTO.builder()
           .nsId(nsId)
@@ -230,7 +242,9 @@ public class AgentFacadeService {
           .build());
 
     } finally {
-      agentLock.unlock();
+      if (agentLock.isLocked()) {
+        agentLock.unlock();
+      }
     }
 
     return results;

@@ -10,7 +10,7 @@
 
     - name: Create temporary SSH key file
       copy:
-        content: "{{ target_sshkey }}"
+        content: "{{ target_sshkey | b64decode }}"
         dest: /tmp/target_sshkey_{{ request_id }}
         mode: '0600'
       register: ssh_key_file

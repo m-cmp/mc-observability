@@ -82,7 +82,6 @@ health:
 ssh:
   connection-timeout: 10000
   ssh-connection-cache-timeout: 120000
-  username: "cb-user"
 
 feign:
   okhttp:

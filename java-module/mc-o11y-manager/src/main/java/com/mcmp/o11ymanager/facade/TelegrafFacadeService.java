@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.facade;
 
+import com.mcmp.o11ymanager.dto.target.AccessInfoDTO;
 import com.mcmp.o11ymanager.dto.target.ResultDTO;
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.Agent;
@@ -17,7 +18,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,13 +29,11 @@ public class TelegrafFacadeService {
   private final TargetService targetService;
   private static final Lock agentTaskStatusLock = new ReentrantLock();
   private final RequestInfo requestInfo;
-  private final ApplicationEventPublisher event;
   private final SemaphoreDomainService semaphoreDomainService;
-  private final FileFacadeService fileFacadeService;
   private final SchedulerFacadeService schedulerFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
 
-  public void install(String nsId, String mciId, String targetId,
+  public void install(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
       @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
@@ -54,7 +52,7 @@ public class TelegrafFacadeService {
 
     log.info("========================= START INSTALL REQUEST============================");
     // 4. 전송(semaphore) - 설치 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.INSTALL,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.INSTALL,
         configContent, Agent.TELEGRAF,
         templateCount);
 
@@ -74,7 +72,7 @@ public class TelegrafFacadeService {
 
   }
 
-  public void update(String nsId, String mciId, String targetId,
+  public void update(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
                       @NotBlank int templateCount) throws Exception {
 
     // 1. host IDLE 상태 확인
@@ -84,7 +82,7 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.UPDATING);
 
     // 3. 전송(semaphore) - 업데이트 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.UPDATE,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.UPDATE,
             null, Agent.TELEGRAF,
             templateCount);
 
@@ -98,7 +96,8 @@ public class TelegrafFacadeService {
             SemaphoreInstallMethod.UPDATE, Agent.TELEGRAF);
   }
 
-  public void uninstall(String nsId, String mciId, String targetId, int templateCount) throws Exception {
+  public void uninstall(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
+                        int templateCount) {
 
     // 1) 상태 확인
     targetService.isIdleMonitoringAgent(nsId, mciId, targetId);
@@ -107,8 +106,7 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.PREPARING);
 
     // 3) 전송(semaphore) - 삭제 요청
-    Task task = semaphoreDomainService.install(nsId, mciId, targetId, SemaphoreInstallMethod.UNINSTALL,
-        null, Agent.TELEGRAF,
+    Task task = semaphoreDomainService.install(accessInfo, SemaphoreInstallMethod.UNINSTALL, null, Agent.TELEGRAF,
         templateCount);
 
     // 4) task ID, task status 업데이트

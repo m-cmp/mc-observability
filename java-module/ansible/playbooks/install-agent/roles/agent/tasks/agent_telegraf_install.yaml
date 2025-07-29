@@ -35,6 +35,18 @@
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "mkdir -p /cmp-agent/sites/{{ site_code }} && /tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-telegraf-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
 
+- name: Decompress telegraf binary
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "cat $(find /cmp-agent/sites/{{ site_code }}/telegraf/bin -maxdepth 1 -name 'cmp-telegraf.tar.gz_*' | sort -n) > /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz && /tmp/busybox_{{ request_id }} tar xvf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz -C /cmp-agent/sites/{{ site_code }}/telegraf/bin/ && rm -rf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz"
+
 - name: Remove Remote Compressed Agent Install File
   become: true
   become_method: sudo

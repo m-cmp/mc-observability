@@ -22,19 +22,16 @@ public class TumblebugServiceImpl implements TumblebugService {
   private final TumblebugPort tumblebugPort;
   private final ObjectMapper objectMapper;
 
-  @Value("${ssh.username}")
-  private String username;
-
   @Value("${deploy.site-code}")
   private String sitecode;
 
   @Override
-  public String executeCommand(String nsId, String mciId, String vmId, String command) {
+  public String executeCommand(String nsId, String mciId, String targetId, String userName, String command) {
     TumblebugCmd cmd = new TumblebugCmd();
     cmd.setCommand(List.of(command));
-    cmd.setUserName(username);
+    cmd.setUserName(userName);
 
-    Object response = tumblebugPort.sendCommand(nsId, mciId, vmId, cmd);
+    Object response = tumblebugPort.sendCommand(nsId, mciId, targetId, cmd);
 
     try {
       JsonNode root = objectMapper.valueToTree(response);
@@ -53,9 +50,9 @@ public class TumblebugServiceImpl implements TumblebugService {
 
 
   @Override
-  public boolean isConnectedVM(String nsId, String mciId, String vmId) {
+  public boolean isConnectedVM(String nsId, String mciId, String targetId, String userName) {
     try {
-      String output = executeCommand(nsId, mciId, vmId, "echo hello");
+      String output = executeCommand(nsId, mciId, targetId, userName, "echo hello");
       return "hello".equalsIgnoreCase(output.trim());
     } catch (Exception e) {
       return false;
@@ -70,14 +67,14 @@ public class TumblebugServiceImpl implements TumblebugService {
 
 
   @Override
-  public boolean isServiceActive(String nsId, String mciId, String vmId, Agent agent) {
+    public boolean isServiceActive(String nsId, String mciId, String targetId, String userName, Agent agent) {
     log.info(">>> isServiceActive called with nsId: {}, mciId: {}, agent: {}", nsId, mciId, agent);
     String command = String.format("systemctl is-active cmp-%s-%s.service", agent.name().toLowerCase().replace("_", "-"), sitecode.toLowerCase());
 
     log.info("==================IS ACTIVE ? INACTIVE CMD : {}", command);
 
 
-    String result = executeCommand(nsId, mciId, vmId, command);
+    String result = executeCommand(nsId, mciId, targetId, userName, command);
     String trimmed = result.trim();
 
     log.info("===============================================Tumblebug Command Result : '{}'===============================================", trimmed);
