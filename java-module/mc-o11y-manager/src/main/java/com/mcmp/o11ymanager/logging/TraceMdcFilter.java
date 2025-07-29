@@ -32,23 +32,7 @@
 //      MDC.put("trace_flags", ctx.isValid() ? String.format("%02x", ctx.getTraceFlags().asByte()) : "00");
 //
 //      MDC.put("component", "o11y-manager");
-//
-//
-//      StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-//      for (StackTraceElement el : stackTrace) {
-//        if (!el.getClassName().startsWith("java.") &&
-//            !el.getClassName().startsWith("jakarta.") &&
-//            !el.getClassName().startsWith("org.springframework") &&
-//            !el.getClassName().startsWith("sun.") &&
-//            !el.getClassName().contains("Filter") &&
-//            !el.getMethodName().equals("doFilterInternal")) {
-//
-//          MDC.put("code.function", el.getClassName() + "." + el.getMethodName() + "()");
-//          MDC.put("code.file", el.getFileName());
-//          MDC.put("code.lineno", String.valueOf(el.getLineNumber()));
-//          break;
-//        }
-//      }
+
 //
 //      filterChain.doFilter(request, response);
 //    } finally {
