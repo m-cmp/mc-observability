@@ -4,15 +4,15 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
-import com.mcmp.o11ymanager.entity.TargetEntity;
-import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
+import com.mcmp.o11ymanager.enums.Agent;
+import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
-import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.List;
 
+import javax.swing.text.html.HTML.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,24 +26,33 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
-  private final TargetJpaRepository targetJpaRepository;
-
 
 
   @Transactional
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
 
-    TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId, "cb-user")
+    TargetDTO savedTarget;
+    TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+    if (vm == null) {
+      throw new RuntimeException("FAILED TO GET VM");
+    }
+
+    TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId, vm.getVmUserName())
         ? TargetStatus.RUNNING
         : TargetStatus.FAILED;
 
-    TargetDTO savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
+    if (status == TargetStatus.RUNNING) {
+      savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
+    } else {
+      throw new RuntimeException("FAILED TO CONNECT VM");
+    }
 
-    targetService.updateMonitoringAgentTaskStatusAndTaskId(savedTarget.getNsId(), savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE,  "");
-    targetService.updateLogAgentTaskStatusAndTaskId(savedTarget.getNsId(), savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE,  "");
+    targetService.updateMonitoringAgentTaskStatusAndTaskId(savedTarget.getNsId(),
+        savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE, "");
+    targetService.updateLogAgentTaskStatusAndTaskId(savedTarget.getNsId(), savedTarget.getMciId(),
+        savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE, "");
 
     agentFacadeService.install(nsId, mciId, targetId);
-
 
     return savedTarget;
   }
@@ -51,7 +60,24 @@ public class TargetFacadeService {
 
 
   public TargetDTO getTarget(String nsId, String mciId, String targetId) {
-    TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+    log.info(">>> getTarget() called with nsId: {}, mciId: {}, targetId: {}", nsId, mciId, targetId);
+
+    TumblebugMCI.Vm vm;
+    String userName;
+
+    try {
+      vm = tumblebugService.getVm(nsId, mciId, targetId);
+      userName = vm.getVmUserName();
+      log.info(">>> VM fetched: id={}, name={} userName={}", vm.getId(), vm.getName(), userName);
+    } catch (Exception e) {
+      log.error(">>> getVm() failed", e);
+      throw e;
+    }
+
+    log.info(">>> start checking monitoring agent status");
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.TELEGRAF);
+    log.info(">>> start checking log agent status");
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.FLUENT_BIT);
 
     return TargetDTO.builder()
         .targetId(vm.getId())
@@ -61,6 +87,8 @@ public class TargetFacadeService {
         .nsId(nsId)
         .mciId(mciId)
         .state(vm.getState())
+        .monitoringServiceStatus(monitoringStatus)
+        .logServiceStatus(logStatus)
         .build();
   }
 
@@ -80,4 +108,5 @@ public class TargetFacadeService {
   public void deleteTarget(String nsId, String mciId, String targetId) {
     targetService.delete(nsId, mciId, targetId);
   }
+
 }

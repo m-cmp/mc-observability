@@ -10,17 +10,25 @@ import com.mcmp.o11ymanager.port.SemaphorePort;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SemaphoreAdapter implements SemaphorePort {
     private final SemaphoreClient semaphoreClient;
 
     @Override
     public void login(LoginRequest loginRequest) {
-        semaphoreClient.login(loginRequest);
+        try {
+            semaphoreClient.login(loginRequest);
+        } catch (Exception e) {
+            log.error("[Semaphore] Login failed for request: {}", loginRequest, e);
+            throw e;
+        }
     }
 
     @Override
@@ -35,7 +43,19 @@ public class SemaphoreAdapter implements SemaphorePort {
 
     @Override
     public List<Project> getProjects() {
-        return semaphoreClient.getProjects().orElseThrow();
+        try {
+            Optional<List<Project>> result = semaphoreClient.getProjects();
+
+            if (result.isEmpty()) {
+                log.error("[Semaphore] getProjects() failed: empty result");
+                throw new IllegalStateException("No projects returned from Semaphore API");
+            }
+
+            return result.get();
+        } catch (Exception e) {
+            log.error("[Semaphore] Exception while calling getProjects()", e);
+            throw e;
+        }
     }
 
     @Override

@@ -62,10 +62,14 @@ public class TelegrafFacadeService {
     targetService.updateMonitoringAgentTaskStatusAndTaskId(nsId, mciId, targetId, TargetAgentTaskStatus.INSTALLING,
         String.valueOf(task.getId()));
 
+    log.info("==========================update target status task ID: {}============================", task.getId());
+
 
     // 7. 스케줄러 등록
     schedulerFacadeService.scheduleTaskStatusCheck(requestInfo.getRequestId(), task.getId(), nsId, mciId, targetId,
         SemaphoreInstallMethod.INSTALL, Agent.TELEGRAF);
+
+
   }
 
   public void update(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,

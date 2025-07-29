@@ -6,6 +6,7 @@ import com.mcmp.o11ymanager.dto.target.ResultDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugSshKey;
 import com.mcmp.o11ymanager.enums.Agent;
+import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.global.annotation.Base64Decode;
 import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
@@ -34,7 +35,7 @@ public class AgentFacadeService {
   private final RequestInfo requestInfo;
 
   private static final Lock semaphoreInstallTemplateCurrentCountLock = new ReentrantLock();
-  private static final Lock semaphoreConfigUpdateTemplateCurrentCountLock = new ReentrantLock();
+
 
   private int semaphoreInstallTemplateCurrentCount = 0;
   private int semaphoreConfigUpdateTemplateCurrentCount = 0;
@@ -44,7 +45,6 @@ public class AgentFacadeService {
   private final FluentBitFacadeService fluentBitFacadeService;
   private final TelegrafFacadeService telegrafFacadeService;
   private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks = new ConcurrentHashMap<>();
-
   private final TumblebugService tumblebugService;
 
   private ReentrantLock getAgentLock(String nsId, String mciId, String targetId) {
@@ -71,10 +71,19 @@ public class AgentFacadeService {
             .build();
   }
 
-  @Transactional
+
+  public AgentServiceStatus getAgentServiceStatus(String nsId, String mciId, String targetId, String userName, Agent agent) {
+    boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, userName, agent);
+    return isActive ? AgentServiceStatus.ACTIVE : AgentServiceStatus.INACTIVE;
+  }
+
+
+
   public List<ResultDTO> install(String nsId, String mciId, String targetId) {
 
-    log.info("===================================start Agent Install - targetId: {}===========================================", targetId);
+    log.info(
+        "===================================start Agent Install - targetId: {}===========================================",
+        targetId);
 
     List<ResultDTO> results = new ArrayList<>();
     ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
@@ -100,10 +109,6 @@ public class AgentFacadeService {
       // 2-2 ) FluentBit 설치
       fluentBitFacadeService.install(nsId, mciId, targetId, accessInfo, templateCount);
 
-      tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.TELEGRAF);
-
-      tumblebugService.isServiceActive(nsId, mciId, targetId, "cb-user", Agent.FLUENT_BIT);
-
       results.add(ResultDTO.builder()
           .nsId(nsId)
           .mciId(mciId)
@@ -124,7 +129,6 @@ public class AgentFacadeService {
         agentLock.unlock();
       }
     }
-
 
     return results;
   }
@@ -155,19 +159,19 @@ public class AgentFacadeService {
       fluentBitFacadeService.update(nsId, mciId, targetId, accessInfo, templateCount);
 
       results.add(ResultDTO.builder()
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .status(ResponseStatus.SUCCESS)
-              .build());
+          .nsId(nsId)
+          .mciId(mciId)
+          .targetId(targetId)
+          .status(ResponseStatus.SUCCESS)
+          .build());
     } catch (Exception e) {
       results.add(ResultDTO.builder()
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .status(ResponseStatus.ERROR)
-              .errorMessage(e.getMessage())
-              .build());
+          .nsId(nsId)
+          .mciId(mciId)
+          .targetId(targetId)
+          .status(ResponseStatus.ERROR)
+          .errorMessage(e.getMessage())
+          .build());
     } finally {
       if (agentLock.isLocked()) {
         agentLock.unlock();
@@ -223,19 +227,19 @@ public class AgentFacadeService {
       fluentBitFacadeService.uninstall(nsId, mciId, targetId, accessInfo, templateCount);
 
       results.add(ResultDTO.builder()
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .status(ResponseStatus.SUCCESS)
-              .build());
+          .nsId(nsId)
+          .mciId(mciId)
+          .targetId(targetId)
+          .status(ResponseStatus.SUCCESS)
+          .build());
     } catch (Exception e) {
       results.add(ResultDTO.builder()
-              .nsId(nsId)
-              .mciId(mciId)
-              .targetId(targetId)
-              .status(ResponseStatus.ERROR)
-              .errorMessage(e.getMessage())
-              .build());
+          .nsId(nsId)
+          .mciId(mciId)
+          .targetId(targetId)
+          .status(ResponseStatus.ERROR)
+          .errorMessage(e.getMessage())
+          .build());
 
     } finally {
       if (agentLock.isLocked()) {
@@ -245,7 +249,6 @@ public class AgentFacadeService {
 
     return results;
   }
-
 
 //  @Transactional
 //  @Base64Decode(ConfigDTO.class)
@@ -324,7 +327,6 @@ public class AgentFacadeService {
 //
 //    return results;
 //  }
-
 
 //  @Transactional
 //  @Base64Decode(ConfigDTO.class)

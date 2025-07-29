@@ -1,3 +1,12 @@
+- name: Debug all target_ variables
+  debug:
+    var: "{{ item }}"
+  loop:
+    - target_host
+    - target_port
+    - target_user
+    - target_sshkey_path
+
 - name: Copy file to remote
   become: true
   become_method: sudo

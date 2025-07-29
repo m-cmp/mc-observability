@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.entity;
 
+import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import jakarta.persistence.*;
@@ -55,9 +56,9 @@ public class TargetEntity {
 
   private String targetLogAgentTaskId;
 
-  private String monitoringServiceStatus;
+  private AgentServiceStatus monitoringServiceStatus;
 
-  private String logServiceStatus;
+  private AgentServiceStatus logServiceStatus;
 
   @CreatedDate
   @Column(updatable = false)
