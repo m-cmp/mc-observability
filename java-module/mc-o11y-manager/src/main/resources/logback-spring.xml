@@ -18,7 +18,7 @@
 
     <!-- File -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APPLICATION_NAME}.log</file>
+        <file>${LOG_PATH}/${APPLICATION_NAME}/${LOG_FILE_NAME}.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>
                 {
