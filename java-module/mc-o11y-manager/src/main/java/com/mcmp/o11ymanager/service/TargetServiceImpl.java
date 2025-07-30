@@ -56,7 +56,6 @@ public class TargetServiceImpl implements TargetService {
         .mciId(mciId)
         .targetId(targetId)
         .name(dto.getName())
-        .aliasName(dto.getAliasName())
         .description(dto.getDescription())
         .nsId(nsId)
         .mciId(mciId)
@@ -78,7 +77,6 @@ public class TargetServiceImpl implements TargetService {
 
 
     if (dto.getName() != null)        target.setName(dto.getName());
-    if (dto.getAliasName() != null)   target.setAliasName(dto.getAliasName());
     if (dto.getDescription() != null) target.setDescription(dto.getDescription());
 
 

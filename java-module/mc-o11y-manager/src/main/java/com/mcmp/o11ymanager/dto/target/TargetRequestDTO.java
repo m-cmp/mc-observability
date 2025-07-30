@@ -18,8 +18,5 @@ public class TargetRequestDTO {
     @NotBlank(message = "Target name은 필수입니다")
     private String name;
 
-    @JsonProperty("alias_name")
-    private String aliasName;
-
     private String description;
 }

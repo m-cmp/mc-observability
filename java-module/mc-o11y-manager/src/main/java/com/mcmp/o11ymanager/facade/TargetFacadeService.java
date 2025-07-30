@@ -8,6 +8,7 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.List;
@@ -26,6 +27,7 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
+  private final TargetJpaRepository targetJpaRepository;
 
 
   @Transactional
@@ -65,6 +67,8 @@ public class TargetFacadeService {
     TumblebugMCI.Vm vm;
     String userName;
 
+    TargetDTO savedTarget = targetService.get(nsId, mciId, targetId);
+
     try {
       vm = tumblebugService.getVm(nsId, mciId, targetId);
       userName = vm.getVmUserName();
@@ -79,15 +83,15 @@ public class TargetFacadeService {
     log.info(">>> start checking log agent status");
     AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.FLUENT_BIT);
 
-    return TargetDTO.builder()
+    return savedTarget.builder()
         .targetId(vm.getId())
-        .name(vm.getName())
-        .aliasName(vm.getAliasName())
+        .name(savedTarget.getName())
         .description(vm.getDescription())
         .nsId(nsId)
         .mciId(mciId)
         .monitoringServiceStatus(monitoringStatus)
         .logServiceStatus(logStatus)
+        .targetStatus(savedTarget.getTargetStatus())
         .build();
   }
 

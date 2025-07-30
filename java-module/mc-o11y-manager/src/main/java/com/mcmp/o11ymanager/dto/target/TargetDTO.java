@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.dto.target;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mcmp.o11ymanager.entity.TargetEntity;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
@@ -25,24 +26,25 @@ public class TargetDTO {
 
   private String name;
 
-  @JsonProperty("alias_name")
-  private String aliasName;
-
   private String description;
 
   @JsonProperty("target_status")
   private TargetStatus targetStatus;
 
   @JsonProperty("monitoring_agent_task_status")
+  @JsonIgnore
   private TargetAgentTaskStatus monitoringAgentTaskStatus;
 
   @JsonProperty("log_agent_task_status")
+  @JsonIgnore
   private TargetAgentTaskStatus logAgentTaskStatus;
 
   @JsonProperty("target_monitoring_agent_task_id")
+  @JsonIgnore
   private String targetMonitoringAgentTaskId;
 
   @JsonProperty("target_log_agent_task_id")
+  @JsonIgnore
   private String targetLogAgentTaskId;
 
   @JsonProperty("monitoring_service_status")
@@ -50,12 +52,6 @@ public class TargetDTO {
 
   @JsonProperty("log_service_status")
   private AgentServiceStatus logServiceStatus;
-
-  @JsonProperty("created_at")
-  private LocalDateTime createdAt;
-
-  @JsonProperty("updated_at")
-  private LocalDateTime updatedAt;
 
   @JsonProperty("ns_id")
   private String nsId;
@@ -69,14 +65,11 @@ public class TargetDTO {
         .targetId(entity.getTargetId())
         .name(entity.getName())
         .targetStatus(entity.getTargetStatus())
-        .aliasName(entity.getAliasName())
         .description(entity.getDescription())
         .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
         .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
         .monitoringServiceStatus(entity.getMonitoringServiceStatus())
         .logServiceStatus(entity.getLogServiceStatus())
-        .createdAt(entity.getCreatedAt())
-        .updatedAt(entity.getUpdatedAt())
         .nsId(entity.getNsId())
         .mciId(entity.getMciId())
         .build();
@@ -87,7 +80,6 @@ public class TargetDTO {
         .targetId(this.getTargetId())
         .name(this.name)
         .targetStatus(this.getTargetStatus())
-        .aliasName(this.aliasName)
         .description(this.description)
         .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
         .logAgentTaskStatus(this.logAgentTaskStatus)
@@ -95,8 +87,6 @@ public class TargetDTO {
         .targetLogAgentTaskId(this.targetLogAgentTaskId)
         .monitoringServiceStatus(this.monitoringServiceStatus)
         .logServiceStatus(this.logServiceStatus)
-        .createdAt(this.createdAt)
-        .updatedAt(this.updatedAt)
         .nsId(this.nsId)
         .mciId(this.mciId)
         .build();
