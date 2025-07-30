@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -109,14 +110,18 @@ public class TelegrafConfigService {
 
             if (inputMatcher.find()) {
                 if (currentPlugin != null) {
-                    currentPlugin.setConfig(configBuilder.toString().trim());
+                    String config = configBuilder.toString().trim();
+                    String encodedConfig = Base64.getEncoder().encodeToString(config.getBytes());
+                    currentPlugin.setConfig(encodedConfig);
                     plugins.add(currentPlugin);
                 }
                 currentPlugin = new TelegrafPlugin(inputMatcher.group(1), "INPUT");
-                configBuilder = new StringBuilder(line + "\n");
+                configBuilder = new StringBuilder();
             } else if (currentPlugin != null && !line.isEmpty()) {
                 if (line.startsWith("[[")) {
-                    currentPlugin.setConfig(configBuilder.toString().trim());
+                    String config = configBuilder.toString().trim();
+                    String encodedConfig = Base64.getEncoder().encodeToString(config.getBytes());
+                    currentPlugin.setConfig(encodedConfig);
                     plugins.add(currentPlugin);
                     currentPlugin = null;
                     configBuilder = new StringBuilder();
@@ -127,7 +132,9 @@ public class TelegrafConfigService {
         }
         
         if (currentPlugin != null) {
-            currentPlugin.setConfig(configBuilder.toString().trim());
+            String config = configBuilder.toString().trim();
+            String encodedConfig = Base64.getEncoder().encodeToString(config.getBytes());
+            currentPlugin.setConfig(encodedConfig);
             plugins.add(currentPlugin);
         }
         
