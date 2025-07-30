@@ -3,7 +3,9 @@ package com.mcmp.o11ymanager.service;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,8 +24,7 @@ public class TelegrafConfigService {
     private final TumblebugService tumblebugService;
     private final AgentPluginDefService agentPluginDefService;
     
-    private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)\\]\\]");
-    private static final Pattern OUTPUT_PATTERN = Pattern.compile("\\[\\[outputs\\.(\\w+)\\]\\]");
+    private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
     private static final String TELEGRAF_CONFIG_PATH = "/etc/telegraf/telegraf.conf";
 
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId, String userName) {
@@ -46,7 +47,7 @@ public class TelegrafConfigService {
             Map<String, AgentPluginDefEntity> pluginDefMap = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .collect(Collectors.toMap(
-                    entity -> entity.getName() + "_" + entity.getPluginType(),
+                        AgentPluginDefEntity::getName,
                     entity -> entity
                 ));
 
@@ -92,21 +93,13 @@ public class TelegrafConfigService {
             line = line.trim();
             
             Matcher inputMatcher = INPUT_PATTERN.matcher(line);
-            Matcher outputMatcher = OUTPUT_PATTERN.matcher(line);
-            
+
             if (inputMatcher.find()) {
                 if (currentPlugin != null) {
                     currentPlugin.setConfig(configBuilder.toString().trim());
                     plugins.add(currentPlugin);
                 }
                 currentPlugin = new TelegrafPlugin(inputMatcher.group(1), "INPUT");
-                configBuilder = new StringBuilder(line + "\n");
-            } else if (outputMatcher.find()) {
-                if (currentPlugin != null) {
-                    currentPlugin.setConfig(configBuilder.toString().trim());
-                    plugins.add(currentPlugin);
-                }
-                currentPlugin = new TelegrafPlugin(outputMatcher.group(1), "OUTPUT");
                 configBuilder = new StringBuilder(line + "\n");
             } else if (currentPlugin != null && !line.isEmpty()) {
                 if (line.startsWith("[[")) {
@@ -128,19 +121,16 @@ public class TelegrafConfigService {
         return plugins;
     }
 
+    @Getter
+    @Setter
     private static class TelegrafPlugin {
         private String name;
         private String type;
         private String config;
-        
+
         public TelegrafPlugin(String name, String type) {
             this.name = name;
             this.type = type;
         }
-        
-        public String getName() { return name; }
-        public String getType() { return type; }
-        public String getConfig() { return config; }
-        public void setConfig(String config) { this.config = config; }
     }
 }

@@ -15,7 +15,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/{nsId}/{mciId}/target/{targetId}/item")
+@RequestMapping("/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item")
 public class ItemController {
     private final TelegrafConfigService telegrafConfigService;
 

@@ -26,7 +26,6 @@ public class SystemController {
                         .seq(entity.getSeq())
                         .name(entity.getName())
                         .pluginId(entity.getPluginId())
-                        .pluginType(entity.getPluginType())
                         .build())
                 .toList();
         return new ResBody<>(plugins);
