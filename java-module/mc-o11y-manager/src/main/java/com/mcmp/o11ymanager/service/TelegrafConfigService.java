@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,12 +23,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class TelegrafConfigService {
+    @Value("${deploy.site-code}")
+    private String deploySiteCode;
 
     private final TumblebugService tumblebugService;
     private final AgentPluginDefService agentPluginDefService;
     
     private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
-    private static final String TELEGRAF_CONFIG_PATH = "/etc/telegraf/telegraf.conf";
+
+    private String getTelegrafConfigPath() {
+        return "/cmp-agent/sites/" + deploySiteCode + "/telegraf/etc/telegraf.conf";
+    }
 
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId, String userName) {
         try {
@@ -38,7 +44,7 @@ public class TelegrafConfigService {
             }
 
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, userName, 
-                "cat " + TELEGRAF_CONFIG_PATH);
+                "cat " + getTelegrafConfigPath());
             
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg = String.format("Telegraf config not found for target: %s/%s/%s", nsId, mciId, targetId);
