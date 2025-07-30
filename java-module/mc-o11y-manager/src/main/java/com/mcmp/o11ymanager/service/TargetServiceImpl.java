@@ -12,7 +12,6 @@ import com.mcmp.o11ymanager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.global.error.ResourceNotExistsException;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
-import com.mcmp.o11ymanager.repository.AccessInfoJpaRepository;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,6 @@ public class TargetServiceImpl implements TargetService {
   private final TargetJpaRepository targetJpaRepository;
   private final RequestInfo requestInfo;
   private final ApplicationEventPublisher event;
-  private final AccessInfoJpaRepository accessInfoJpaRepository;
 
   @Override
   public TargetDTO get(String nsId, String mciId, String targetId) {
