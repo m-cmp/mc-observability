@@ -2,6 +2,8 @@ package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
+import com.mcmp.o11ymanager.enums.ResponseCode;
+import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -30,16 +32,18 @@ public class TelegrafConfigService {
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId, String userName) {
         try {
             if (!tumblebugService.isConnectedVM(nsId, mciId, targetId, userName)) {
-                log.warn("VM not connected for target: {}/{}/{}", nsId, mciId, targetId);
-                return List.of();
+                String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
+                log.warn(errorMsg);
+                throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, userName, 
                 "cat " + TELEGRAF_CONFIG_PATH);
             
             if (configContent == null || configContent.isEmpty()) {
-                log.warn("Telegraf config not found or empty for target: {}/{}/{}", nsId, mciId, targetId);
-                return List.of();
+                String errorMsg = String.format("Telegraf config not found for target: %s/%s/%s", nsId, mciId, targetId);
+                log.warn(errorMsg);
+                throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
             
             List<TelegrafPlugin> activePlugins = parseTelegrafConfig(configContent);
@@ -76,9 +80,12 @@ public class TelegrafConfigService {
             
             return items;
             
+        } catch (TelegrafConfigException e) {
+            throw e; // Re-throw custom exceptions
         } catch (Exception e) {
-            log.error("Failed to read telegraf config for target: {}/{}/{}", nsId, mciId, targetId, e);
-            return List.of();
+            String errorMsg = String.format("Failed to read telegraf config for target: %s/%s/%s", nsId, mciId, targetId);
+            log.error(errorMsg, e);
+            throw new TelegrafConfigException(ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
         }
     }
 

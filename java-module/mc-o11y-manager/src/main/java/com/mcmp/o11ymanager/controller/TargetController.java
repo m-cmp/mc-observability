@@ -2,8 +2,14 @@ package com.mcmp.o11ymanager.controller;
 
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
+import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
+import com.mcmp.o11ymanager.dto.plugin.PluginDefDTO;
+import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.facade.TargetFacadeService;
+import com.mcmp.o11ymanager.service.AgentPluginDefService;
+import com.mcmp.o11ymanager.service.TelegrafConfigService;
 import com.mcmp.o11ymanager.global.target.ResBody;
+import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class TargetController {
 
   private final TargetFacadeService targetFacadeService;
+  private final AgentPluginDefService agentPluginDefService;
+  private final TelegrafConfigService telegrafConfigService;
 
   @GetMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> getTarget(
@@ -79,4 +87,5 @@ public class TargetController {
   public ResBody<List<TargetDTO>> getAllTargets() {
     return new ResBody<>(targetFacadeService.getTargets());
   }
+
 }

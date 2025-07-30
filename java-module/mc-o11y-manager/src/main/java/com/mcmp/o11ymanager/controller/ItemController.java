@@ -3,8 +3,10 @@ package com.mcmp.o11ymanager.controller;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemUpdateDTO;
+import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import com.mcmp.o11ymanager.service.TelegrafConfigService;
+import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,15 +22,18 @@ public class ItemController {
     private final TelegrafConfigService telegrafConfigService;
 
     @GetMapping
-    public ResBody<List<MonitoringItemDTO>> getItems(
+    public ResponseEntity<ResBody<List<MonitoringItemDTO>>> getItems(
             @PathVariable String nsId,
             @PathVariable String mciId,
             @PathVariable String targetId
     ) {
-        // TODO: userName 파라미터 필요 - 실제 구현시 TargetEntity에서 가져와야 함
-        String userName = "root"; // 임시값
-        List<MonitoringItemDTO> items = telegrafConfigService.getTelegrafItems(nsId, mciId, targetId, userName);
-        return new ResBody<>(items);
+        try {
+            List<MonitoringItemDTO> items = telegrafConfigService.getTelegrafItems(nsId, mciId, targetId, "root");
+            return ResponseEntity.ok(ResBody.success(items));
+        } catch (TelegrafConfigException e) {
+            ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+        }
     }
 
     @PostMapping
