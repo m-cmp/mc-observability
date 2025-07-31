@@ -12,6 +12,4 @@ public interface AgentPluginDefJpaRepository extends JpaRepository<AgentPluginDe
     @Modifying
     @Query("DELETE FROM AgentPluginDefEntity")
     void deleteAll();
-
-    boolean existsByNameAndPluginType(String name, String pluginType);
 }

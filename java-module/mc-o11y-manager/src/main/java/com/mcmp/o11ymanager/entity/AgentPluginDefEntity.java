@@ -23,7 +23,4 @@ public class AgentPluginDefEntity {
 
     @Column(name = "plugin_id", nullable = false)
     private String pluginId;
-
-    @Column(name = "plugin_type", nullable = false)
-    private String pluginType;
 }
