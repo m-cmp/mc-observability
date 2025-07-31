@@ -18,7 +18,9 @@ public enum ResponseCode {
 
     // Server Error Codes (5xx)
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다."),
-    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "서비스를 사용할 수 없습니다.");
+    SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "서비스를 사용할 수 없습니다."),
+    VM_CONNECTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "가상머신에 연결할 수 없습니다."),
+    TELEGRAF_CONFIG_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "Telegraf 설정을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

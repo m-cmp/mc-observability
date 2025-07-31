@@ -14,8 +14,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +26,7 @@ public class AgentPluginDefService {
 
     private final AgentPluginDefJpaRepository agentPluginDefRepository;
     
-    private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)\\]\\]");
-    private static final Pattern OUTPUT_PATTERN = Pattern.compile("\\[\\[outputs\\.(\\w+)\\]\\]");
+    private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
 
     public List<AgentPluginDefEntity> getAllPluginDefinitions() {
         return agentPluginDefRepository.findAll();
@@ -34,52 +35,87 @@ public class AgentPluginDefService {
     @Transactional
     public void initializePluginDefinitions() {
         log.info("Starting to initialize agent plugin definitions from telegraf config files");
-        
-        List<AgentPluginDefEntity> pluginDefs = new ArrayList<>();
-        
-        // Parse input plugins
-        pluginDefs.addAll(parsePluginsFromResources("telegraf_inputs_*", "INPUT"));
-        
-        // Parse output plugins  
-        pluginDefs.addAll(parsePluginsFromResources("telegraf_outputs_*", "OUTPUT"));
-        
-        // Clear existing data and save new definitions
-        agentPluginDefRepository.deleteAll();
-        agentPluginDefRepository.saveAll(pluginDefs);
-        
-        log.info("Successfully initialized {} plugin definitions", pluginDefs.size());
+
+        // Parse input plugins from resources
+        List<AgentPluginDefEntity> newPluginDefs = parsePluginsFromResources();
+
+        // Get existing definitions
+        List<AgentPluginDefEntity> existingDefs = agentPluginDefRepository.findAll();
+
+        // Create maps for easy comparison
+        Map<String, AgentPluginDefEntity> existingDefsMap = existingDefs.stream()
+            .collect(Collectors.toMap(
+                entity -> entity.getName() + "_" + entity.getPluginId(),
+                entity -> entity
+            ));
+
+        Map<String, AgentPluginDefEntity> newDefsMap = newPluginDefs.stream()
+            .collect(Collectors.toMap(
+                entity -> entity.getName() + "_" + entity.getPluginId(),
+                entity -> entity
+            ));
+
+        // Find definitions to add (exist in new but not in existing)
+        List<AgentPluginDefEntity> toAdd = new ArrayList<>();
+        for (AgentPluginDefEntity newDef : newPluginDefs) {
+            String key = newDef.getName() + "_" + newDef.getPluginId();
+            if (!existingDefsMap.containsKey(key)) {
+                toAdd.add(newDef);
+            }
+        }
+
+        // Find definitions to remove (exist in existing but not in new)
+        List<AgentPluginDefEntity> toRemove = new ArrayList<>();
+        for (AgentPluginDefEntity existingDef : existingDefs) {
+            String key = existingDef.getName() + "_" + existingDef.getPluginId();
+            if (!newDefsMap.containsKey(key)) {
+                toRemove.add(existingDef);
+            }
+        }
+
+        // Apply changes
+        if (!toRemove.isEmpty()) {
+            agentPluginDefRepository.deleteAll(toRemove);
+            log.info("Removed {} obsolete plugin definitions", toRemove.size());
+        }
+
+        if (!toAdd.isEmpty()) {
+            agentPluginDefRepository.saveAll(toAdd);
+            log.info("Added {} new plugin definitions", toAdd.size());
+        }
+
+        log.info("Successfully synchronized plugin definitions. Total: {}",
+            existingDefs.size() - toRemove.size() + toAdd.size());
     }
 
-    private List<AgentPluginDefEntity> parsePluginsFromResources(String pattern, String pluginType) {
+    private List<AgentPluginDefEntity> parsePluginsFromResources() {
         List<AgentPluginDefEntity> pluginDefs = new ArrayList<>();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        
-        try {
-            Resource[] resources = resolver.getResources("classpath*:" + pattern);
-            log.info("Found {} resources for pattern: classpath*:{}", resources.length, pattern);
 
+        try {
+            Resource[] resources = resolver.getResources("classpath*:" + "telegraf_inputs_*");
+            log.info("Found {} resources for pattern: classpath*:{}", resources.length, "telegraf_inputs_*");
 
             for (Resource resource : resources) {
                 String filename = resource.getFilename();
                 if (filename != null) {
                     String pluginName = extractPluginNameFromFilename(filename);
-                    String pluginId = parsePluginIdFromFile(resource, pluginType, pluginName);
-                    
+                    String pluginId = parsePluginIdFromFile(resource, pluginName);
+
                     if (pluginName != null && pluginId != null) {
                         AgentPluginDefEntity entity = AgentPluginDefEntity.builder()
                                 .name(pluginName)
                                 .pluginId(pluginId)
-                                .pluginType(pluginType)
                                 .build();
                         pluginDefs.add(entity);
-                        log.debug("Found {} plugin: {} -> {}", pluginType, pluginName, pluginId);
+                        log.debug("Found {} plugin: {} -> {}", "INPUT", pluginName, pluginId);
                     }
                 }
             }
         } catch (IOException e) {
-            log.error("Error reading telegraf config files with pattern: {}", pattern, e);
+            log.error("Error reading telegraf config files with pattern: {}", "telegraf_inputs_*", e);
         }
-        
+
         return pluginDefs;
     }
 
@@ -92,29 +128,22 @@ public class AgentPluginDefService {
         return null;
     }
 
-    private String parsePluginIdFromFile(Resource resource, String pluginType, String pluginName) {
+    private String parsePluginIdFromFile(Resource resource, String pluginName) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             String line;
-            
+
             while ((line = reader.readLine()) != null) {
                 String trimmedLine = line.trim();
-                
-                if ("INPUT".equals(pluginType)) {
-                    Matcher matcher = INPUT_PATTERN.matcher(trimmedLine);
-                    if (matcher.find()) {
-                        return "[[inputs." + pluginName + "]]";
-                    }
-                } else if ("OUTPUT".equals(pluginType)) {
-                    Matcher matcher = OUTPUT_PATTERN.matcher(trimmedLine);
-                    if (matcher.find()) {
-                        return "[[outputs." + pluginName + "]]";
-                    }
+
+                Matcher matcher = INPUT_PATTERN.matcher(trimmedLine);
+                if (matcher.find()) {
+                    return "[[inputs." + pluginName + "]]";
                 }
             }
         } catch (IOException e) {
             log.error("Error reading file: {}", resource.getFilename(), e);
         }
-        
+
         return null;
     }
 }

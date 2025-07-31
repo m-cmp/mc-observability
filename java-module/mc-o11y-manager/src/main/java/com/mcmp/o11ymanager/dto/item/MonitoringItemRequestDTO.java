@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MonitoringItemRequestDTO {
-    private String name;
     private Long pluginSeq;
     private String pluginConfig;
 }
