@@ -5,7 +5,7 @@ import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemUpdateDTO;
 import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.global.target.ResBody;
-import com.mcmp.o11ymanager.service.TelegrafConfigService;
+import com.mcmp.o11ymanager.facade.ItemFacadeService;
 import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item")
 public class ItemController {
-    private final TelegrafConfigService telegrafConfigService;
+    private final ItemFacadeService itemFacadeService;
 
     @GetMapping
     public ResponseEntity<ResBody<List<MonitoringItemDTO>>> getItems(
@@ -28,7 +28,7 @@ public class ItemController {
             @PathVariable String targetId
     ) {
         try {
-            List<MonitoringItemDTO> items = telegrafConfigService.getTelegrafItems(nsId, mciId, targetId, null);
+            List<MonitoringItemDTO> items = itemFacadeService.getTelegrafItems(nsId, mciId, targetId, null);
             return ResponseEntity.ok(ResBody.success(items));
         } catch (TelegrafConfigException e) {
             ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
@@ -44,7 +44,7 @@ public class ItemController {
             @RequestBody @Valid MonitoringItemRequestDTO dto
     ) {
         try {
-            telegrafConfigService.addTelegrafPlugin(nsId, mciId, targetId, dto);
+            itemFacadeService.addTelegrafPlugin(nsId, mciId, targetId, dto);
             return ResponseEntity.ok(ResBody.success(null));
         } catch (TelegrafConfigException e) {
             ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
@@ -60,7 +60,7 @@ public class ItemController {
             @RequestBody @Valid MonitoringItemUpdateDTO dto
     ) {
         try {
-            telegrafConfigService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
+            itemFacadeService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
             return ResponseEntity.ok(ResBody.success(null));
         } catch (TelegrafConfigException e) {
             ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
@@ -76,7 +76,7 @@ public class ItemController {
             @PathVariable Long itemSeq
     ) {
         try {
-            telegrafConfigService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
+            itemFacadeService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
             return ResponseEntity.ok(ResBody.success(null));
         } catch (TelegrafConfigException e) {
             ResBody<Void> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());

@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.service;
 
 import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
 import com.mcmp.o11ymanager.repository.AgentPluginDefJpaRepository;
+import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
@@ -22,16 +23,17 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AgentPluginDefService {
+public class AgentPluginDefServiceImpl implements AgentPluginDefService {
 
-    private final AgentPluginDefJpaRepository agentPluginDefRepository;
+    public final AgentPluginDefJpaRepository agentPluginDefRepository;
     
-    private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
+    public static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
 
     public List<AgentPluginDefEntity> getAllPluginDefinitions() {
         return agentPluginDefRepository.findAll();
     }
 
+    @Override
     @Transactional
     public void initializePluginDefinitions() {
         log.info("Starting to initialize agent plugin definitions from telegraf config files");
@@ -88,7 +90,8 @@ public class AgentPluginDefService {
             existingDefs.size() - toRemove.size() + toAdd.size());
     }
 
-    private List<AgentPluginDefEntity> parsePluginsFromResources() {
+    @Override
+    public List<AgentPluginDefEntity> parsePluginsFromResources() {
         List<AgentPluginDefEntity> pluginDefs = new ArrayList<>();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -119,7 +122,8 @@ public class AgentPluginDefService {
         return pluginDefs;
     }
 
-    private String extractPluginNameFromFilename(String filename) {
+    @Override
+    public String extractPluginNameFromFilename(String filename) {
         if (filename.startsWith("telegraf_inputs_")) {
             return filename.substring("telegraf_inputs_".length());
         } else if (filename.startsWith("telegraf_outputs_")) {
@@ -128,7 +132,8 @@ public class AgentPluginDefService {
         return null;
     }
 
-    private String parsePluginIdFromFile(Resource resource, String pluginName) {
+    @Override
+    public String parsePluginIdFromFile(Resource resource, String pluginName) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             String line;
 
