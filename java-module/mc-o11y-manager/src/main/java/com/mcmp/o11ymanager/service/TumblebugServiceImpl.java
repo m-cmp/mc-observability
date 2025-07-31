@@ -36,7 +36,7 @@ public class TumblebugServiceImpl implements TumblebugService {
     try {
       JsonNode root = objectMapper.valueToTree(response);
       JsonNode results = root.path("results");
-      if (results.isArray() && results.size() > 0) {
+      if (results.isArray() && !results.isEmpty()) {
         JsonNode stdout = results.get(0).path("stdout");
         return stdout.path("0").asText();
       }

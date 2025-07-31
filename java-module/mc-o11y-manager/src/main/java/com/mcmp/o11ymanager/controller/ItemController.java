@@ -28,7 +28,7 @@ public class ItemController {
             @PathVariable String targetId
     ) {
         try {
-            List<MonitoringItemDTO> items = telegrafConfigService.getTelegrafItems(nsId, mciId, targetId, "root");
+            List<MonitoringItemDTO> items = telegrafConfigService.getTelegrafItems(nsId, mciId, targetId, null);
             return ResponseEntity.ok(ResBody.success(items));
         } catch (TelegrafConfigException e) {
             ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
@@ -37,35 +37,50 @@ public class ItemController {
     }
 
     @PostMapping
-    public ResBody<Object> postItem(
+    public ResponseEntity<ResBody<Object>> postItem(
             @PathVariable String nsId,
             @PathVariable String mciId,
             @PathVariable String targetId,
             @RequestBody @Valid MonitoringItemRequestDTO dto
     ) {
-        // TODO: Implement monitoring item service
-        return new ResBody<>();
+        try {
+            telegrafConfigService.addTelegrafPlugin(nsId, mciId, targetId, dto);
+            return ResponseEntity.ok(ResBody.success(null));
+        } catch (TelegrafConfigException e) {
+            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+        }
     }
 
     @PutMapping
-    public ResBody<Object> putItem(
+    public ResponseEntity<ResBody<Object>> putItem(
             @PathVariable String nsId,
             @PathVariable String mciId,
             @PathVariable String targetId,
             @RequestBody @Valid MonitoringItemUpdateDTO dto
     ) {
-        // TODO: Implement monitoring item service
-        return new ResBody<>();
+        try {
+            telegrafConfigService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
+            return ResponseEntity.ok(ResBody.success(null));
+        } catch (TelegrafConfigException e) {
+            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+        }
     }
 
-    @DeleteMapping
-    public ResBody<Void> deleteItem(
+    @DeleteMapping("/{itemSeq}")
+    public ResponseEntity<ResBody<Void>> deleteItem(
             @PathVariable String nsId,
             @PathVariable String mciId,
             @PathVariable String targetId,
             @PathVariable Long itemSeq
     ) {
-        // TODO: Implement monitoring item service
-        return new ResBody<>();
+        try {
+            telegrafConfigService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
+            return ResponseEntity.ok(ResBody.success(null));
+        } catch (TelegrafConfigException e) {
+            ResBody<Void> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+        }
     }
 }
