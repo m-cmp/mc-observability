@@ -42,8 +42,6 @@ public class TumblebugMCI {
 
         private String sshKeyId;
 
-        private String aliasName;
-
         private String state;
 
     }

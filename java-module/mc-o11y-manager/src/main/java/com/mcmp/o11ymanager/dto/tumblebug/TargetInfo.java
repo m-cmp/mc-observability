@@ -25,11 +25,6 @@ public class TargetInfo {
 
   @Base64EncodeField
   @Base64DecodeField
-  @JsonProperty("alias_name")
-  private String aliasName;
-
-  @Base64EncodeField
-  @Base64DecodeField
   @JsonProperty("description")
   private String description;
 

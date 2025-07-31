@@ -39,8 +39,6 @@ public class TargetEntity {
   @Column(nullable = false)
   private String name;
 
-  private String aliasName;
-
   private String description;
 
   @Enumerated(EnumType.STRING)
@@ -59,13 +57,4 @@ public class TargetEntity {
   private AgentServiceStatus monitoringServiceStatus;
 
   private AgentServiceStatus logServiceStatus;
-
-  @CreatedDate
-  @Column(updatable = false)
-  private LocalDateTime createdAt;
-
-  @LastModifiedDate
-  private LocalDateTime updatedAt;
-
-  private String state;
 }

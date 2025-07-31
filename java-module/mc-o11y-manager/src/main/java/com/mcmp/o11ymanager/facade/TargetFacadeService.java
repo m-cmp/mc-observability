@@ -8,10 +8,17 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
+import com.mcmp.o11ymanager.tracing.ExecutorFactory;
+import java.util.ArrayList;
 import java.util.List;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.swing.text.html.HTML.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +33,7 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
+  private final TargetJpaRepository targetJpaRepository;
 
 
   @Transactional
@@ -65,6 +73,8 @@ public class TargetFacadeService {
     TumblebugMCI.Vm vm;
     String userName;
 
+    TargetDTO savedTarget = targetService.get(nsId, mciId, targetId);
+
     try {
       vm = tumblebugService.getVm(nsId, mciId, targetId);
       userName = vm.getVmUserName();
@@ -79,16 +89,15 @@ public class TargetFacadeService {
     log.info(">>> start checking log agent status");
     AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.FLUENT_BIT);
 
-    return TargetDTO.builder()
+    return savedTarget.builder()
         .targetId(vm.getId())
-        .name(vm.getName())
-        .aliasName(vm.getAliasName())
+        .name(savedTarget.getName())
         .description(vm.getDescription())
         .nsId(nsId)
         .mciId(mciId)
-        .state(vm.getState())
         .monitoringServiceStatus(monitoringStatus)
         .logServiceStatus(logStatus)
+        .targetStatus(savedTarget.getTargetStatus())
         .build();
   }
 
@@ -97,7 +106,54 @@ public class TargetFacadeService {
     return targetService.getByNsMci(nsId, mciId);
   }
 
+
+
   public List<TargetDTO> getTargets() {
+    List<TargetDTO> rawList = targetService.list();
+
+    int maxThreads = 10;
+    ExecutorService executor = ExecutorFactory.newFixedThreadPool(10);
+    List<Future<TargetDTO>> futures = new ArrayList<Future<TargetDTO>>();
+
+    for (TargetDTO baseDto : rawList) {
+      futures.add(executor.submit(new Callable<TargetDTO>() {
+        @Override
+        public TargetDTO call() {
+          try {
+            String nsId = baseDto.getNsId();
+            String mciId = baseDto.getMciId();
+            String targetId = baseDto.getTargetId();
+            return getTarget(nsId, mciId, targetId);
+          } catch (Exception e) {
+            log.error(">>> getTarget() failed for: nsId={}, mciId={}, targetId={}",
+                baseDto.getNsId(), baseDto.getMciId(), baseDto.getTargetId(), e);
+            return null;
+          }
+        }
+      }));
+    }
+
+    List<TargetDTO> result = new ArrayList<TargetDTO>();
+    for (Future<TargetDTO> future : futures) {
+      try {
+        TargetDTO dto = future.get();
+        if (dto != null) {
+          result.add(dto);
+        }
+      } catch (Exception e) {
+        log.error(">>> future.get() failed", e);
+      }
+    }
+
+    executor.shutdown();
+
+    return result;
+  }
+
+
+
+
+  public List<TargetDTO> getTargets2() {
     return targetService.list();
   }
 

@@ -19,7 +19,6 @@ public class TargetMapper {
         .targetStatus(dto.getTargetStatus())
         .mciId(dto.getMciId())
         .name(dto.getName())
-        .aliasName(dto.getAliasName())
         .description(dto.getDescription())
         .monitoringAgentTaskStatus(dto.getMonitoringAgentTaskStatus())
         .logAgentTaskStatus(dto.getLogAgentTaskStatus())
@@ -27,18 +26,14 @@ public class TargetMapper {
         .targetLogAgentTaskId(dto.getTargetLogAgentTaskId())
         .monitoringServiceStatus(dto.getMonitoringServiceStatus())
         .logServiceStatus(dto.getLogServiceStatus())
-        .createdAt(dto.getCreatedAt())
-        .updatedAt(dto.getUpdatedAt())
         .nsId(dto.getNsId())
         .mciId(dto.getMciId())
-        .state(dto.getState())
         .build();
   }
 
   public TargetEntity fromCreateDTO(TargetRequestDTO dto) {
     return TargetEntity.builder()
         .name(dto.getName())
-        .aliasName(dto.getAliasName())
         .description(dto.getDescription())
         .build();
   }
@@ -48,9 +43,6 @@ public class TargetMapper {
       target.setName(dto.getName());
     }
 
-    if (dto.getAliasName() != null) {
-      target.setAliasName(dto.getAliasName());
-    }
 
     if (dto.getDescription() != null) {
       target.setDescription(dto.getDescription());
