@@ -59,6 +59,16 @@ public class TargetFacadeService {
 
     agentFacadeService.install(nsId, mciId, targetId);
 
+
+    log.info(">>> start checking monitoring agent status");
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName() , Agent.TELEGRAF);
+    log.info(">>> start checking log agent status");
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName(), Agent.FLUENT_BIT);
+
+
+    savedTarget.setMonitoringServiceStatus(monitoringStatus);
+    savedTarget.setLogServiceStatus(logStatus);
+
     return savedTarget;
   }
 
@@ -100,30 +110,8 @@ public class TargetFacadeService {
 
 
 
-
-
-
-  public List<TargetDTO> getTargetsNsMci(String nsId, String mciId) {
-
-    List<TargetDTO> rawList = targetService.getByNsMci(nsId, mciId);
-
-
-    return fetchAgentStatus(rawList);
-
-  }
-
-
-
-  public List<TargetDTO> getTargets() {
-    List<TargetDTO> rawList = targetService.list();
-    return fetchAgentStatus(rawList);
-  }
-
-
-
-  private List<TargetDTO> fetchAgentStatus(List<TargetDTO> rawList) {
-    int maxThreads = 10;
-    ExecutorService executor = ExecutorFactory.newFixedThreadPool(maxThreads);
+  private List<TargetDTO> fetchTarget(List<TargetDTO> rawList) {
+    ExecutorService executor = ExecutorFactory.getSharedExecutor();
     List<Future<TargetDTO>> futures = new ArrayList<>();
 
     for (TargetDTO baseDto : rawList) {
@@ -150,9 +138,29 @@ public class TargetFacadeService {
       }
     }
 
-    executor.shutdown();
     return result;
   }
+
+
+
+  public List<TargetDTO> getTargetsNsMci(String nsId, String mciId) {
+
+    List<TargetDTO> rawList = targetService.getByNsMci(nsId, mciId);
+
+
+    return fetchTarget(rawList);
+
+  }
+
+
+
+  public List<TargetDTO> getTargets() {
+    List<TargetDTO> rawList = targetService.list();
+    return fetchTarget(rawList);
+  }
+
+
+
 
 
   public TargetDTO putTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
