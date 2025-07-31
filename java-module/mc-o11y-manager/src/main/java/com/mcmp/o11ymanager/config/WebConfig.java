@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.config;
 
 import com.mcmp.o11ymanager.global.resolver.AuthorizationHeaderArgumentResolver;
 //import com.mcmp.o11ymanager.logging.TraceMdcFilter;
+import com.mcmp.o11ymanager.logging.TraceMdcFilter;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -30,15 +31,15 @@ public class WebConfig implements WebMvcConfigurer {
 
     }
 
-//    @Bean
-//    public FilterRegistrationBean<TraceMdcFilter> traceMdcFilter() {
-//        FilterRegistrationBean<TraceMdcFilter> registrationBean = new FilterRegistrationBean<>();
-//        registrationBean.setFilter(new TraceMdcFilter());
-//        registrationBean.setOrder(1);
-//        registrationBean.addUrlPatterns("/*");
-//
-//        return registrationBean;
-//    }
+    @Bean
+    public FilterRegistrationBean<TraceMdcFilter> traceMdcFilter() {
+        FilterRegistrationBean<TraceMdcFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new TraceMdcFilter());
+        registrationBean.setOrder(1);
+        registrationBean.addUrlPatterns("/*");
+
+        return registrationBean;
+    }
 
 
     @Bean
