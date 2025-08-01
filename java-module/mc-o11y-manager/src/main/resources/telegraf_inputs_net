@@ -1,1 +1,7 @@
 [[inputs.net]]
+  interfaces = ["*"]
+  ignore_protocol_stats = true
+  fieldexclude = ["speed"]
+
+  [inputs.net.tagdrop]
+    interface = ["lo", "veth*", "br[0-9]*", "br-*", "virbr*", "tap*", "macvlan*", "*.[0-9]*", "bond*", "docker*", "genev_sys*", "octavia*", "ovs*"]

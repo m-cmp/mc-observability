@@ -1,1 +1,2 @@
 [[inputs.system]]
+  fieldexclude = ["uptime_format"]
