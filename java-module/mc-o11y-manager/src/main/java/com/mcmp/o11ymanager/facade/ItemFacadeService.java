@@ -192,6 +192,12 @@ public class ItemFacadeService {
         }
     }
 
+
+    private String toPluginId(String name, String type) {
+        return "[[inputs." + name + "]]";
+    }
+
+
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId, String userName) {
         try {
             if (userName == null) {
@@ -225,17 +231,22 @@ public class ItemFacadeService {
             Map<String, AgentPluginDefEntity> pluginDefMap = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .collect(Collectors.toMap(
-                        AgentPluginDefEntity::getName,
+                        AgentPluginDefEntity::getPluginId,
                     entity -> entity
                 ));
 
             List<MonitoringItemDTO> items = new ArrayList<>();
             int seq = 1;
-            
+
             for (TelegrafPlugin plugin : activePlugins) {
-                String key = plugin.getName() + "_" + plugin.getType();
+                String key =  toPluginId(plugin.getName(), plugin.getType());
                 AgentPluginDefEntity pluginDef = pluginDefMap.get(key);
-                
+                if (pluginDef == null) {
+                    log.info("❗ pluginDef NOT FOUND for pluginId: " + key);
+                }
+
+               pluginDef = pluginDefMap.get(key);
+
                 MonitoringItemDTO item = MonitoringItemDTO.builder()
                     .seq((long) seq++)
                     .nsId(nsId)
