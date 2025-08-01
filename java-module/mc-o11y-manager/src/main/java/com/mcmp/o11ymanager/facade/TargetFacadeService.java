@@ -30,19 +30,12 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
-  private final TargetJpaRepository targetJpaRepository;
-
 
   @Transactional
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
 
     TargetDTO savedTarget;
-    TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
-    if (vm == null) {
-      throw new RuntimeException("FAILED TO GET VM");
-    }
-
-    TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId, vm.getVmUserName())
+    TargetStatus status = tumblebugService.isConnectedVM(nsId, mciId, targetId)
         ? TargetStatus.RUNNING
         : TargetStatus.FAILED;
 
@@ -61,9 +54,9 @@ public class TargetFacadeService {
 
 
     log.info(">>> start checking monitoring agent status");
-    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName() , Agent.TELEGRAF);
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.TELEGRAF);
     log.info(">>> start checking log agent status");
-    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName(), Agent.FLUENT_BIT);
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.FLUENT_BIT);
 
 
     savedTarget.setMonitoringServiceStatus(monitoringStatus);
@@ -92,9 +85,9 @@ public class TargetFacadeService {
     }
 
     log.info(">>> start checking monitoring agent status");
-    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.TELEGRAF);
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.TELEGRAF);
     log.info(">>> start checking log agent status");
-    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, userName, Agent.FLUENT_BIT);
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId,  Agent.FLUENT_BIT);
 
     return savedTarget.builder()
         .targetId(vm.getId())
