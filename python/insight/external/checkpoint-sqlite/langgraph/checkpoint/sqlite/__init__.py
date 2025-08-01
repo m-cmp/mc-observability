@@ -264,9 +264,7 @@ class SqliteSaver(BaseCheckpointSaver[str]):
                     self.serde.loads_typed((type, checkpoint)),
                     cast(
                         CheckpointMetadata,
-                        self.jsonplus_serde.loads(metadata)
-                        if metadata is not None
-                        else {},
+                        self.jsonplus_serde.loads(metadata) if metadata is not None else {},
                     ),
                     (
                         {
@@ -279,10 +277,7 @@ class SqliteSaver(BaseCheckpointSaver[str]):
                         if parent_checkpoint_id
                         else None
                     ),
-                    [
-                        (task_id, channel, self.serde.loads_typed((type, value)))
-                        for task_id, channel, type, value in cur
-                    ],
+                    [(task_id, channel, self.serde.loads_typed((type, value))) for task_id, channel, type, value in cur],
                 )
 
     def list(
@@ -357,9 +352,7 @@ class SqliteSaver(BaseCheckpointSaver[str]):
                     self.serde.loads_typed((type, checkpoint)),
                     cast(
                         CheckpointMetadata,
-                        self.jsonplus_serde.loads(metadata)
-                        if metadata is not None
-                        else {},
+                        self.jsonplus_serde.loads(metadata) if metadata is not None else {},
                     ),
                     (
                         {
@@ -372,10 +365,7 @@ class SqliteSaver(BaseCheckpointSaver[str]):
                         if parent_checkpoint_id
                         else None
                     ),
-                    [
-                        (task_id, channel, self.serde.loads_typed((type, value)))
-                        for task_id, channel, type, value in wcur
-                    ],
+                    [(task_id, channel, self.serde.loads_typed((type, value))) for task_id, channel, type, value in wcur],
                 )
 
     def put(
@@ -412,9 +402,7 @@ class SqliteSaver(BaseCheckpointSaver[str]):
         thread_id = config["configurable"]["thread_id"]
         checkpoint_ns = config["configurable"]["checkpoint_ns"]
         type_, serialized_checkpoint = self.serde.dumps_typed(checkpoint)
-        serialized_metadata = self.jsonplus_serde.dumps(
-            get_checkpoint_metadata(config, metadata)
-        )
+        serialized_metadata = self.jsonplus_serde.dumps(get_checkpoint_metadata(config, metadata))
         with self.cursor() as cur:
             cur.execute(
                 "INSERT OR REPLACE INTO checkpoints (thread_id, checkpoint_ns, checkpoint_id, parent_checkpoint_id, type, checkpoint, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)",

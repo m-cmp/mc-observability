@@ -1,5 +1,6 @@
-from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey
 from sqlalchemy.orm import Session
+
+from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey
 
 
 class LogAnalysisRepository:
@@ -17,14 +18,10 @@ class LogAnalysisRepository:
         return new_session
 
     def get_session_by_id(self, session_id: str):
-        return self.db.query(LogAnalysisChatSession).filter_by(
-            SESSION_ID=session_id
-        ).first()
+        return self.db.query(LogAnalysisChatSession).filter_by(SESSION_ID=session_id).first()
 
     def delete_session_by_id(self, session_id: str):
-        session = self.db.query(LogAnalysisChatSession).filter_by(
-            SESSION_ID=session_id
-        ).first()
+        session = self.db.query(LogAnalysisChatSession).filter_by(SESSION_ID=session_id).first()
         if session:
             self.db.delete(session)
             self.db.commit()
@@ -51,4 +48,3 @@ class LogAnalysisRepository:
     def delete_openai_key(self) -> None:
         self.db.query(OpenAIAPIKey).delete()
         self.db.commit()
-    

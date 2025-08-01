@@ -1,12 +1,14 @@
-from app.api.anomaly.model.models import AnomalyDetectionSettings, AgentPlugin
-from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
-from config.ConfigManager import ConfigManager
-from influxdb import InfluxDBClient
+from datetime import datetime
+
 import pandas as pd
 import pytz
-from datetime import datetime
-from sqlalchemy.orm import Session
+from influxdb import InfluxDBClient
 from sqlalchemy import update
+from sqlalchemy.orm import Session
+
+from app.api.anomaly.model.models import AgentPlugin, AnomalyDetectionSettings
+from app.api.anomaly.request.req import GetAnomalyHistoryFilter, GetHistoryPathParams
+from config.ConfigManager import ConfigManager
 
 
 class AnomalySettingsRepository:
@@ -48,26 +50,23 @@ class AnomalySettingsRepository:
         return None
 
     def check_duplicate(self, setting_data: dict):
-        return self.db.query(AnomalyDetectionSettings).filter_by(
-            NAMESPACE_ID=setting_data['NAMESPACE_ID'],
-            TARGET_ID=setting_data['TARGET_ID'],
-            TARGET_TYPE=setting_data['TARGET_TYPE'],
-            MEASUREMENT=setting_data['MEASUREMENT']
-        ).first()
+        return (
+            self.db.query(AnomalyDetectionSettings)
+            .filter_by(
+                NAMESPACE_ID=setting_data["NAMESPACE_ID"], TARGET_ID=setting_data["TARGET_ID"], TARGET_TYPE=setting_data["TARGET_TYPE"], MEASUREMENT=setting_data["MEASUREMENT"]
+            )
+            .first()
+        )
 
 
 class InfluxDBRepository:
     def __init__(self):
         config = ConfigManager()
         db_info = config.get_influxdb_config()
-        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
-                                     password=db_info['password'], database=db_info['database'])
+        self.client = InfluxDBClient(host=db_info["host"], port=db_info["port"], username=db_info["username"], password=db_info["password"], database=db_info["database"])
 
     def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
-        tag = {
-            'namespace_id': setting.NAMESPACE_ID,
-            'target_id': setting.TARGET_ID,
-        }
+        tag = {"namespace_id": setting.NAMESPACE_ID, "target_id": setting.TARGET_ID}
 
         json_body = []
 
@@ -75,11 +74,8 @@ class InfluxDBRepository:
             data_point = {
                 "measurement": setting.MEASUREMENT.lower(),
                 "tags": tag,
-                "time": row['timestamp'],
-                "fields": {
-                    "anomaly_score": row['anomaly_score'],
-                    "isAnomaly": int(row['isAnomaly'])
-                }
+                "time": row["timestamp"],
+                "fields": {"anomaly_score": row["anomaly_score"], "isAnomaly": int(row["isAnomaly"])},
             }
             json_body.append(data_point)
 
@@ -108,11 +104,7 @@ class InfluxDBRepository:
 
         parsed_results = []
         for point in points:
-            parsed_results.append({
-                "timestamp": point['time'],
-                "anomaly_score": point['anomaly_score'],
-                "isAnomaly": point['isAnomaly'],
-            })
+            parsed_results.append({"timestamp": point["time"], "anomaly_score": point["anomaly_score"], "isAnomaly": point["isAnomaly"]})
 
         return parsed_results
 
@@ -127,12 +119,7 @@ class AnomalyServiceRepository:
     def update_last_exe_time(self, seq: int):
         current_time_utc = datetime.now(pytz.UTC)
 
-        stmt = (
-            update(AnomalyDetectionSettings)
-            .where(AnomalyDetectionSettings.SEQ == seq)
-            .values(LAST_EXECUTION=current_time_utc)
-        )
+        stmt = update(AnomalyDetectionSettings).where(AnomalyDetectionSettings.SEQ == seq).values(LAST_EXECUTION=current_time_utc)
 
         self.db.execute(stmt)
         self.db.commit()
-

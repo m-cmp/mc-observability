@@ -28,11 +28,7 @@ from langgraph.store.base import (
     tokenize_path,
 )
 
-_AIO_ERROR_MSG = (
-    "The SqliteStore does not support async methods. "
-    "Consider using AsyncSqliteStore instead.\n"
-    "from langgraph.store.sqlite.aio import AsyncSqliteStore\n"
-)
+_AIO_ERROR_MSG = "The SqliteStore does not support async methods. Consider using AsyncSqliteStore instead.\nfrom langgraph.store.sqlite.aio import AsyncSqliteStore\n"
 
 logger = logging.getLogger(__name__)
 
@@ -91,9 +87,7 @@ class SqliteIndexConfig(IndexConfig):
     pass
 
 
-def _namespace_to_text(
-    namespace: tuple[str, ...], handle_wildcards: bool = False
-) -> str:
+def _namespace_to_text(namespace: tuple[str, ...], handle_wildcards: bool = False) -> str:
     """Convert namespace tuple to text string."""
     if handle_wildcards:
         namespace = tuple("%" if val == "*" else val for val in namespace)
@@ -125,9 +119,7 @@ def _row_to_item(
     namespace: tuple[str, ...],
     row: dict[str, Any],
     *,
-    loader: Optional[
-        Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]
-    ] = None,
+    loader: Optional[Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]] = None,
 ) -> Item:
     """Convert a row from the database into an Item."""
     val = row["value"]
@@ -149,9 +141,7 @@ def _row_to_search_item(
     namespace: tuple[str, ...],
     row: dict[str, Any],
     *,
-    loader: Optional[
-        Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]
-    ] = None,
+    loader: Optional[Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]] = None,
 ) -> SearchItem:
     """Convert a row from the database into a SearchItem."""
     loader = loader or _json_loads
@@ -199,9 +189,7 @@ class BaseSqliteStore:
     index_config: Optional[SqliteIndexConfig] = None
     ttl_config: Optional[TTLConfig] = None
 
-    def _get_batch_GET_ops_queries(
-        self, get_ops: Sequence[tuple[int, GetOp]]
-    ) -> list[PreparedGetQuery]:
+    def _get_batch_GET_ops_queries(self, get_ops: Sequence[tuple[int, GetOp]]) -> list[PreparedGetQuery]:
         """
         Build queries to fetch (and optionally refresh the TTL of) multiple keys per namespace.
 
@@ -228,16 +216,10 @@ class BaseSqliteStore:
                 WHERE prefix = ? AND key IN ({",".join(["?"] * len(keys))})
             """
             select_params = (_namespace_to_text(namespace), *keys)
-            results.append(
-                PreparedGetQuery(select_query, select_params, namespace, items, "get")
-            )
+            results.append(PreparedGetQuery(select_query, select_params, namespace, items, "get"))
 
             # Add a TTL refresh query if needed
-            if (
-                refresh_ttl_any
-                and self.ttl_config
-                and self.ttl_config.get("refresh_on_read", False)
-            ):
+            if refresh_ttl_any and self.ttl_config and self.ttl_config.get("refresh_on_read", False):
                 placeholders = ",".join(["?"] * len(keys))
                 update_query = f"""
                     UPDATE store
@@ -247,11 +229,7 @@ class BaseSqliteStore:
                     AND ttl_minutes IS NOT NULL
                 """
                 update_params = (_namespace_to_text(namespace), *keys)
-                results.append(
-                    PreparedGetQuery(
-                        update_query, update_params, namespace, items, "refresh"
-                    )
-                )
+                results.append(PreparedGetQuery(update_query, update_params, namespace, items, "refresh"))
 
         return results
 
@@ -282,15 +260,11 @@ class BaseSqliteStore:
                 namespace_groups[op.namespace].append(op.key)
             for namespace, keys in namespace_groups.items():
                 placeholders = ",".join(["?" for _ in keys])
-                query = (
-                    f"DELETE FROM store WHERE prefix = ? AND key IN ({placeholders})"
-                )
+                query = f"DELETE FROM store WHERE prefix = ? AND key IN ({placeholders})"
                 params = (_namespace_to_text(namespace), *keys)
                 queries.append((query, params))
 
-        embedding_request: Optional[tuple[str, Sequence[tuple[str, str, str, str]]]] = (
-            None
-        )
+        embedding_request: Optional[tuple[str, Sequence[tuple[str, str, str, str]]]] = None
         if inserts:
             values = []
             insertion_params = []
@@ -333,9 +307,7 @@ class BaseSqliteStore:
                         texts = get_text_at_path(value, tokenized_path)
                         for i, text in enumerate(texts):
                             pathname = f"{path}.{i}" if len(texts) > 1 else path
-                            vector_values.append(
-                                "(?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-                            )
+                            vector_values.append("(?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)")
                             embedding_request_params.append((ns, k, pathname, text))
 
             values_str = ",".join(values)
@@ -378,42 +350,23 @@ class BaseSqliteStore:
                 for key, value in op.filter.items():
                     if isinstance(value, dict):
                         for op_name, val in value.items():
-                            condition, filter_params_ = self._get_filter_condition(
-                                key, op_name, val
-                            )
+                            condition, filter_params_ = self._get_filter_condition(key, op_name, val)
                             filter_conditions.append(condition)
                             filter_params.extend(filter_params_)
                     else:
                         # SQLite json_extract returns unquoted string values
                         if isinstance(value, str):
-                            filter_conditions.append(
-                                "json_extract(value, '$."
-                                + key
-                                + "') = '"
-                                + value.replace("'", "''")
-                                + "'"
-                            )
+                            filter_conditions.append("json_extract(value, '$." + key + "') = '" + value.replace("'", "''") + "'")
                         elif value is None:
-                            filter_conditions.append(
-                                "json_extract(value, '$." + key + "') IS NULL"
-                            )
+                            filter_conditions.append("json_extract(value, '$." + key + "') IS NULL")
                         elif isinstance(value, bool):
                             # SQLite JSON stores booleans as integers
-                            filter_conditions.append(
-                                "json_extract(value, '$."
-                                + key
-                                + "') = "
-                                + ("1" if value else "0")
-                            )
+                            filter_conditions.append("json_extract(value, '$." + key + "') = " + ("1" if value else "0"))
                         elif isinstance(value, (int, float)):
-                            filter_conditions.append(
-                                "json_extract(value, '$." + key + "') = " + str(value)
-                            )
+                            filter_conditions.append("json_extract(value, '$." + key + "') = " + str(value))
                         else:
                             # Complex objects (list, dict, …) – compare JSON text
-                            filter_conditions.append(
-                                "json_extract(value, '$." + key + "') = ?"
-                            )
+                            filter_conditions.append("json_extract(value, '$." + key + "') = ?")
                             # orjson.dumps returns bytes → decode to str so SQLite sees TEXT
                             filter_params.append(orjson.dumps(value).decode())
 
@@ -436,11 +389,7 @@ class BaseSqliteStore:
                     # Default to cosine similarity
                     score_expr = "1.0 - vec_distance_cosine(sv.embedding, ?)"
 
-                filter_str = (
-                    ""
-                    if not filter_conditions
-                    else " AND " + " AND ".join(filter_conditions)
-                )
+                filter_str = "" if not filter_conditions else " AND " + " AND ".join(filter_conditions)
                 if op.namespace_prefix:
                     prefix_filter_str = f"WHERE s.prefix LIKE ? {filter_str} "
                     ns_args: Sequence = (f"{_namespace_to_text(op.namespace_prefix)}%",)
@@ -504,11 +453,7 @@ class BaseSqliteStore:
                 logger.debug(f"Search params: {params}")
 
             # Handle TTL refresh if requested
-            if (
-                op.refresh_ttl
-                and self.ttl_config
-                and self.ttl_config.get("refresh_on_read", False)
-            ):
+            if op.refresh_ttl and self.ttl_config and self.ttl_config.get("refresh_on_read", False):
                 final_sql = f"""
                     WITH search_results AS (
                         {base_query}
@@ -544,18 +489,12 @@ class BaseSqliteStore:
                 for cond in op.match_conditions:
                     if cond.match_type == "prefix":
                         where_clauses.append("prefix LIKE ?")
-                        params.append(
-                            f"{_namespace_to_text(cond.path, handle_wildcards=True)}%"
-                        )
+                        params.append(f"{_namespace_to_text(cond.path, handle_wildcards=True)}%")
                     elif cond.match_type == "suffix":
                         where_clauses.append("prefix LIKE ?")
-                        params.append(
-                            f"%{_namespace_to_text(cond.path, handle_wildcards=True)}"
-                        )
+                        params.append(f"%{_namespace_to_text(cond.path, handle_wildcards=True)}")
                     else:
-                        logger.warning(
-                            "Unknown match_type in list_namespaces: %s", cond.match_type
-                        )
+                        logger.warning("Unknown match_type in list_namespaces: %s", cond.match_type)
 
             where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
 
@@ -631,9 +570,7 @@ class BaseSqliteStore:
             if isinstance(value, str):
                 # Direct string comparison with proper quoting for unquoted json_extract result
                 return (
-                    f"json_extract(value, '$.{key}') = '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') = '" + value.replace("'", "''") + "'",
                     [],
                 )
             elif value is None:
@@ -651,9 +588,7 @@ class BaseSqliteStore:
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) > {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') > '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') > '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -663,9 +598,7 @@ class BaseSqliteStore:
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) >= {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') >= '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') >= '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -675,9 +608,7 @@ class BaseSqliteStore:
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) < {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') < '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') < '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -687,9 +618,7 @@ class BaseSqliteStore:
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) <= {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') <= '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') <= '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -697,9 +626,7 @@ class BaseSqliteStore:
         elif op == "$ne":
             if isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') != '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') != '" + value.replace("'", "''") + "'",
                     [],
                 )
             elif value is None:
@@ -785,9 +712,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
         self,
         conn: sqlite3.Connection,
         *,
-        deserializer: Optional[
-            Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]
-        ] = None,
+        deserializer: Optional[Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]] = None,
         index: Optional[SqliteIndexConfig] = None,
         ttl: Optional[TTLConfig] = None,
     ):
@@ -805,9 +730,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
         self._ttl_sweeper_thread: Optional[threading.Thread] = None
         self._ttl_stop_event = threading.Event()
 
-    def _get_batch_GET_ops_queries(
-        self, get_ops: Sequence[tuple[int, GetOp]]
-    ) -> list[PreparedGetQuery]:
+    def _get_batch_GET_ops_queries(self, get_ops: Sequence[tuple[int, GetOp]]) -> list[PreparedGetQuery]:
         """
         Build queries to fetch (and optionally refresh the TTL of) multiple keys per namespace.
 
@@ -834,16 +757,10 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 WHERE prefix = ? AND key IN ({",".join(["?"] * len(keys))})
             """
             select_params = (_namespace_to_text(namespace), *keys)
-            results.append(
-                PreparedGetQuery(select_query, select_params, namespace, items, "get")
-            )
+            results.append(PreparedGetQuery(select_query, select_params, namespace, items, "get"))
 
             # Add a TTL refresh query if needed
-            if (
-                refresh_ttl_any
-                and self.ttl_config
-                and self.ttl_config.get("refresh_on_read", False)
-            ):
+            if refresh_ttl_any and self.ttl_config and self.ttl_config.get("refresh_on_read", False):
                 placeholders = ",".join(["?"] * len(keys))
                 update_query = f"""
                     UPDATE store
@@ -853,11 +770,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     AND ttl_minutes IS NOT NULL
                 """
                 update_params = (_namespace_to_text(namespace), *keys)
-                results.append(
-                    PreparedGetQuery(
-                        update_query, update_params, namespace, items, "refresh"
-                    )
-                )
+                results.append(PreparedGetQuery(update_query, update_params, namespace, items, "refresh"))
 
         return results
 
@@ -868,9 +781,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
             if isinstance(value, str):
                 # Direct string comparison with proper quoting for unquoted json_extract result
                 return (
-                    f"json_extract(value, '$.{key}') = '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') = '" + value.replace("'", "''") + "'",
                     [],
                 )
             elif value is None:
@@ -888,9 +799,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) > {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') > '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') > '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -900,9 +809,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) >= {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') >= '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') >= '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -912,9 +819,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) < {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') < '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') < '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -924,9 +829,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 return f"CAST(json_extract(value, '$.{key}') AS REAL) <= {value}", []
             elif isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') <= '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') <= '" + value.replace("'", "''") + "'",
                     [],
                 )
             else:
@@ -934,9 +837,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
         elif op == "$ne":
             if isinstance(value, str):
                 return (
-                    f"json_extract(value, '$.{key}') != '"
-                    + value.replace("'", "''")
-                    + "'",
+                    f"json_extract(value, '$.{key}') != '" + value.replace("'", "''") + "'",
                     [],
                 )
             elif value is None:
@@ -1021,9 +922,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
             )
 
             # Check current migration version
-            cur = self.conn.execute(
-                "SELECT v FROM store_migrations ORDER BY v DESC LIMIT 1"
-            )
+            cur = self.conn.execute("SELECT v FROM store_migrations ORDER BY v DESC LIMIT 1")
             row = cur.fetchone()
             if row is None:
                 version = -1
@@ -1050,9 +949,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 )
 
                 # Check current vector migration version
-                cur = self.conn.execute(
-                    "SELECT v FROM vector_migrations ORDER BY v DESC LIMIT 1"
-                )
+                cur = self.conn.execute("SELECT v FROM vector_migrations ORDER BY v DESC LIMIT 1")
                 row = cur.fetchone()
                 if row is None:
                     version = -1
@@ -1060,13 +957,9 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     version = row[0]
 
                 # Apply vector migrations
-                for v, sql in enumerate(
-                    self.VECTOR_MIGRATIONS[version + 1 :], start=version + 1
-                ):
+                for v, sql in enumerate(self.VECTOR_MIGRATIONS[version + 1 :], start=version + 1):
                     self.conn.executescript(sql)
-                    self.conn.execute(
-                        "INSERT INTO vector_migrations (v) VALUES (?)", (v,)
-                    )
+                    self.conn.execute("INSERT INTO vector_migrations (v) VALUES (?)", (v,))
 
             self.is_setup = True
 
@@ -1086,9 +979,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
             deleted_count = cur.rowcount
             return deleted_count
 
-    def start_ttl_sweeper(
-        self, sweep_interval_minutes: Optional[int] = None
-    ) -> concurrent.futures.Future[None]:
+    def start_ttl_sweeper(self, sweep_interval_minutes: Optional[int] = None) -> concurrent.futures.Future[None]:
         """Periodically delete expired store items based on TTL.
 
         Returns:
@@ -1103,16 +994,12 @@ class SqliteStore(BaseSqliteStore, BaseStore):
             logger.info("TTL sweeper thread is already running")
             # Return a future that can be used to cancel the existing thread
             future = concurrent.futures.Future()
-            future.add_done_callback(
-                lambda f: self._ttl_stop_event.set() if f.cancelled() else None
-            )
+            future.add_done_callback(lambda f: self._ttl_stop_event.set() if f.cancelled() else None)
             return future
 
         self._ttl_stop_event.clear()
 
-        interval = float(
-            sweep_interval_minutes or self.ttl_config.get("sweep_interval_minutes") or 5
-        )
+        interval = float(sweep_interval_minutes or self.ttl_config.get("sweep_interval_minutes") or 5)
         logger.info(f"Starting store TTL sweeper with interval {interval} minutes")
 
         future = concurrent.futures.Future()
@@ -1128,9 +1015,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                         if expired_items > 0:
                             logger.info(f"Store swept {expired_items} expired items")
                     except Exception as exc:
-                        logger.exception(
-                            "Store TTL sweep iteration failed", exc_info=exc
-                        )
+                        logger.exception("Store TTL sweep iteration failed", exc_info=exc)
                 future.set_result(None)
             except Exception as exc:
                 future.set_exception(exc)
@@ -1139,9 +1024,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
         self._ttl_sweeper_thread = thread
         thread.start()
 
-        future.add_done_callback(
-            lambda f: self._ttl_stop_event.set() if f.cancelled() else None
-        )
+        future.add_done_callback(lambda f: self._ttl_stop_event.set() if f.cancelled() else None)
         return future
 
     def stop_ttl_sweeper(self, timeout: Optional[float] = None) -> bool:
@@ -1191,9 +1074,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
 
         with self._cursor(transaction=True) as cur:
             if GetOp in grouped_ops:
-                self._batch_get_ops(
-                    cast(Sequence[tuple[int, GetOp]], grouped_ops[GetOp]), results, cur
-                )
+                self._batch_get_ops(cast(Sequence[tuple[int, GetOp]], grouped_ops[GetOp]), results, cur)
 
             if SearchOp in grouped_ops:
                 self._batch_search_ops(
@@ -1212,9 +1093,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     cur,
                 )
             if PutOp in grouped_ops:
-                self._batch_put_ops(
-                    cast(Sequence[tuple[int, PutOp]], grouped_ops[PutOp]), cur
-                )
+                self._batch_put_ops(cast(Sequence[tuple[int, PutOp]], grouped_ops[PutOp]), cur)
 
         return results
 
@@ -1237,9 +1116,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     try:
                         cur.execute(query.query, query.params)
                     except Exception as e:
-                        raise ValueError(
-                            f"Error executing TTL refresh: \n{query.query}\n{query.params}\n{e}"
-                        ) from e
+                        raise ValueError(f"Error executing TTL refresh: \n{query.query}\n{query.params}\n{e}") from e
 
             # Then execute GET queries and process results
             for query in queries:
@@ -1247,9 +1124,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     try:
                         cur.execute(query.query, query.params)
                     except Exception as e:
-                        raise ValueError(
-                            f"Error executing GET query: \n{query.query}\n{query.params}\n{e}"
-                        ) from e
+                        raise ValueError(f"Error executing GET query: \n{query.query}\n{query.params}\n{e}") from e
 
                     rows = cur.fetchall()
                     key_to_row = {
@@ -1268,9 +1143,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                     for idx, key in query.items:
                         row = key_to_row.get(key)
                         if row:
-                            results[idx] = _row_to_item(
-                                namespace, row, loader=self._deserializer
-                            )
+                            results[idx] = _row_to_item(namespace, row, loader=self._deserializer)
                         else:
                             results[idx] = None
 
@@ -1291,16 +1164,12 @@ class SqliteStore(BaseSqliteStore, BaseStore):
                 )
             query, txt_params = embedding_request
             # Update the params to replace the raw text with the vectors
-            vectors = self.embeddings.embed_documents(
-                [param[-1] for param in txt_params]
-            )
+            vectors = self.embeddings.embed_documents([param[-1] for param in txt_params])
 
             # Convert vectors to SQLite-friendly format
             vector_params = []
             for (ns, k, pathname, _), vector in zip(txt_params, vectors):
-                vector_params.extend(
-                    [ns, k, pathname, sqlite_vec.serialize_float32(vector)]
-                )
+                vector_params.extend([ns, k, pathname, sqlite_vec.serialize_float32(vector)])
 
             queries.append((query, vector_params))
 
@@ -1318,9 +1187,7 @@ class SqliteStore(BaseSqliteStore, BaseStore):
         # Setup similarity functions if they don't exist
         if embedding_requests and self.embeddings:
             # Generate embeddings for search queries
-            embeddings = self.embeddings.embed_documents(
-                [query for _, query in embedding_requests]
-            )
+            embeddings = self.embeddings.embed_documents([query for _, query in embedding_requests])
 
             # Replace placeholders with actual embeddings
             for (idx, _), embedding in zip(embedding_requests, embeddings):

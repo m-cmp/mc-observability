@@ -1,31 +1,19 @@
-from app.api.anomaly import anomaly
-from app.api.prediction import prediction
-from app.api.log_analysis import log_analysis
-from app.core.otel.trace import init_otel_trace
-from config.ConfigManager import ConfigManager
-
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-import uvicorn
-
+from app.api.anomaly import anomaly
+from app.api.log_analysis import log_analysis
+from app.api.prediction import prediction
+from config.ConfigManager import ConfigManager
 
 config = ConfigManager()
 
-app = FastAPI(
-    title='Insight Module DOCS',
-    description='mc-observability insight module'
-)
+app = FastAPI(title="Insight Module DOCS", description="mc-observability insight module")
 
-origins = ['*']
+origins = ["*"]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*']
-)
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 # init_otel_trace(app)
 
 api_prefix = config.get_prefix()

@@ -1,13 +1,9 @@
-from config.ConfigManager import ConfigManager
-from app.api.prediction.model.models import AgentPlugin
-
-import pytz
-from datetime import datetime
 import pandas as pd
 from influxdb import InfluxDBClient
-
 from sqlalchemy.orm import Session
 
+from app.api.prediction.model.models import AgentPlugin
+from config.ConfigManager import ConfigManager
 
 
 class PredictionRepository:
@@ -22,22 +18,16 @@ class InfluxDBRepository:
     def __init__(self):
         config = ConfigManager()
         db_info = config.get_influxdb_config()
-        self.client = InfluxDBClient(host=db_info['host'], port=db_info['port'], username=db_info['username'],
-                                     password=db_info['password'], database=db_info['database'])
+        self.client = InfluxDBClient(host=db_info["host"], port=db_info["port"], username=db_info["username"], password=db_info["password"], database=db_info["database"])
 
     def save_results(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
         points = []
         for _, row in df.iterrows():
             point = {
-                'measurement': measurement.lower(),
-                'tags': {
-                    'namespace_id': nsId,
-                    'target_id': targetId,
-                },
-                'time': row['timestamp'],
-                'fields': {
-                    'prediction_metric': row['value']
-                }
+                "measurement": measurement.lower(),
+                "tags": {"namespace_id": nsId, "target_id": targetId},
+                "time": row["timestamp"],
+                "fields": {"prediction_metric": row["value"]},
             }
             points.append(point)
 

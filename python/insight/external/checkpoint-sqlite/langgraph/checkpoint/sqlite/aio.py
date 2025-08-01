@@ -120,9 +120,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
 
     @classmethod
     @asynccontextmanager
-    async def from_conn_string(
-        cls, conn_string: str
-    ) -> AsyncIterator["AsyncSqliteSaver"]:
+    async def from_conn_string(cls, conn_string: str) -> AsyncIterator["AsyncSqliteSaver"]:
         """Create a new AsyncSqliteSaver instance from a connection string.
 
         Args:
@@ -160,9 +158,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                 )
         except RuntimeError:
             pass
-        return asyncio.run_coroutine_threadsafe(
-            self.aget_tuple(config), self.loop
-        ).result()
+        return asyncio.run_coroutine_threadsafe(self.aget_tuple(config), self.loop).result()
 
     def list(
         self,
@@ -229,9 +225,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
         Returns:
             RunnableConfig: Updated configuration after storing the checkpoint.
         """
-        return asyncio.run_coroutine_threadsafe(
-            self.aput(config, checkpoint, metadata, new_versions), self.loop
-        ).result()
+        return asyncio.run_coroutine_threadsafe(self.aput(config, checkpoint, metadata, new_versions), self.loop).result()
 
     def put_writes(
         self,
@@ -240,9 +234,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
         task_id: str,
         task_path: str = "",
     ) -> None:
-        return asyncio.run_coroutine_threadsafe(
-            self.aput_writes(config, writes, task_id, task_path), self.loop
-        ).result()
+        return asyncio.run_coroutine_threadsafe(self.aput_writes(config, writes, task_id, task_path), self.loop).result()
 
     def delete_thread(self, thread_id: str) -> None:
         """Delete all checkpoints and writes associated with a thread ID.
@@ -265,9 +257,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                 )
         except RuntimeError:
             pass
-        return asyncio.run_coroutine_threadsafe(
-            self.adelete_thread(thread_id), self.loop
-        ).result()
+        return asyncio.run_coroutine_threadsafe(self.adelete_thread(thread_id), self.loop).result()
 
     async def setup(self) -> None:
         """Set up the checkpoint database asynchronously.
@@ -376,9 +366,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                     self.serde.loads_typed((type, checkpoint)),
                     cast(
                         CheckpointMetadata,
-                        self.jsonplus_serde.loads(metadata)
-                        if metadata is not None
-                        else {},
+                        self.jsonplus_serde.loads(metadata) if metadata is not None else {},
                     ),
                     (
                         {
@@ -391,10 +379,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                         if parent_checkpoint_id
                         else None
                     ),
-                    [
-                        (task_id, channel, self.serde.loads_typed((type, value)))
-                        async for task_id, channel, type, value in cur
-                    ],
+                    [(task_id, channel, self.serde.loads_typed((type, value))) async for task_id, channel, type, value in cur],
                 )
 
     async def alist(
@@ -456,9 +441,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                     self.serde.loads_typed((type, checkpoint)),
                     cast(
                         CheckpointMetadata,
-                        self.jsonplus_serde.loads(metadata)
-                        if metadata is not None
-                        else {},
+                        self.jsonplus_serde.loads(metadata) if metadata is not None else {},
                     ),
                     (
                         {
@@ -471,10 +454,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
                         if parent_checkpoint_id
                         else None
                     ),
-                    [
-                        (task_id, channel, self.serde.loads_typed((type, value)))
-                        async for task_id, channel, type, value in wcur
-                    ],
+                    [(task_id, channel, self.serde.loads_typed((type, value))) async for task_id, channel, type, value in wcur],
                 )
 
     async def aput(
@@ -502,9 +482,7 @@ class AsyncSqliteSaver(BaseCheckpointSaver[str]):
         thread_id = config["configurable"]["thread_id"]
         checkpoint_ns = config["configurable"]["checkpoint_ns"]
         type_, serialized_checkpoint = self.serde.dumps_typed(checkpoint)
-        serialized_metadata = self.jsonplus_serde.dumps(
-            get_checkpoint_metadata(config, metadata)
-        )
+        serialized_metadata = self.jsonplus_serde.dumps(get_checkpoint_metadata(config, metadata))
         async with (
             self.lock,
             self.conn.execute(

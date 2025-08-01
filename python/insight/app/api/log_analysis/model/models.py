@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -13,6 +13,7 @@ class LogAnalysisChatSession(Base):
     PROVIDER = Column(String(100), nullable=False)
     MODEL_NAME = Column(String(100), nullable=False)
     REGDATE = Column(DateTime)
+
 
 class OpenAIAPIKey(Base):
     __tablename__ = "mc_o11y_insight_openai_api_key"

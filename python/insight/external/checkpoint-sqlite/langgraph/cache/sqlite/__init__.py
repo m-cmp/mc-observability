@@ -62,13 +62,9 @@ class SqliteCache(BaseCache[ValueT]):
             for ns, key, expiry, encoding, raw in rows:
                 if expiry is not None and now > expiry:
                     # purge expired entry
-                    self._conn.execute(
-                        "DELETE FROM cache WHERE (ns, key) = (?, ?)", (ns, key)
-                    )
+                    self._conn.execute("DELETE FROM cache WHERE (ns, key) = (?, ?)", (ns, key))
                     continue
-                values[(tuple(ns.split(",")), key)] = self.serde.loads_typed(
-                    (encoding, raw)
-                )
+                values[(tuple(ns.split(",")), key)] = self.serde.loads_typed((encoding, raw))
             return values
 
     async def aget(self, keys: Sequence[FullKey]) -> dict[FullKey, ValueT]:

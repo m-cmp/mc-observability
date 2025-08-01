@@ -1,8 +1,6 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
 from typing import Union
 
-
+from pydantic import BaseModel
 
 
 # GET /predictions/measurement
@@ -11,15 +9,17 @@ class PredictionMeasurement(BaseModel):
     measurement: str
     fields: list[dict[str, str]]
 
+
 class ResBodyPredictionMeasurement(BaseModel):
     data: list[PredictionMeasurement]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 class ResBodyPredictionSpecificMeasurement(BaseModel):
     data: PredictionMeasurement
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # GET /predictions/options
@@ -31,8 +31,8 @@ class PredictionOptions(BaseModel):
 
 class ResBodyPredictionOptions(BaseModel):
     data: PredictionOptions
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # POST /predictions/nsId/{nsId}/target/{targetId}
@@ -51,8 +51,8 @@ class PredictionResult(BaseModel):
 
 class ResBodyPredictionResult(BaseModel):
     data: PredictionResult
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # GET /predictions/nsId/{nsId}/target/{targetId}/history
@@ -70,5 +70,5 @@ class PredictionHistory(BaseModel):
 
 class ResBodyPredictionHistory(BaseModel):
     data: PredictionHistory
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"

@@ -88,9 +88,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
         self,
         conn: aiosqlite.Connection,
         *,
-        deserializer: Optional[
-            Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]
-        ] = None,
+        deserializer: Optional[Callable[[Union[bytes, str, orjson.Fragment]], dict[str, Any]]] = None,
         index: Optional[SqliteIndexConfig] = None,
         ttl: Optional[TTLConfig] = None,
     ):
@@ -159,9 +157,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
             )
 
             # Check current migration version
-            async with self.conn.execute(
-                "SELECT v FROM store_migrations ORDER BY v DESC LIMIT 1"
-            ) as cur:
+            async with self.conn.execute("SELECT v FROM store_migrations ORDER BY v DESC LIMIT 1") as cur:
                 row = await cur.fetchone()
                 if row is None:
                     version = -1
@@ -171,9 +167,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
             # Apply migrations
             for v, sql in enumerate(self.MIGRATIONS[version + 1 :], start=version + 1):
                 await self.conn.executescript(sql)
-                await self.conn.execute(
-                    "INSERT INTO store_migrations (v) VALUES (?)", (v,)
-                )
+                await self.conn.execute("INSERT INTO store_migrations (v) VALUES (?)", (v,))
 
             # Apply vector migrations if index config is provided
             if self.index_config:
@@ -190,9 +184,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                 )
 
                 # Check current vector migration version
-                async with self.conn.execute(
-                    "SELECT v FROM vector_migrations ORDER BY v DESC LIMIT 1"
-                ) as cur:
+                async with self.conn.execute("SELECT v FROM vector_migrations ORDER BY v DESC LIMIT 1") as cur:
                     row = await cur.fetchone()
                     if row is None:
                         version = -1
@@ -200,20 +192,14 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                         version = row[0]
 
                 # Apply vector migrations
-                for v, sql in enumerate(
-                    self.VECTOR_MIGRATIONS[version + 1 :], start=version + 1
-                ):
+                for v, sql in enumerate(self.VECTOR_MIGRATIONS[version + 1 :], start=version + 1):
                     await self.conn.executescript(sql)
-                    await self.conn.execute(
-                        "INSERT INTO vector_migrations (v) VALUES (?)", (v,)
-                    )
+                    await self.conn.execute("INSERT INTO vector_migrations (v) VALUES (?)", (v,))
 
             self.is_setup = True
 
     @asynccontextmanager
-    async def _cursor(
-        self, *, transaction: bool = True
-    ) -> AsyncIterator[aiosqlite.Cursor]:
+    async def _cursor(self, *, transaction: bool = True) -> AsyncIterator[aiosqlite.Cursor]:
         """Get a cursor for the SQLite database.
 
         Args:
@@ -252,9 +238,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
             deleted_count = cur.rowcount
             return deleted_count
 
-    async def start_ttl_sweeper(
-        self, sweep_interval_minutes: Optional[int] = None
-    ) -> asyncio.Task[None]:
+    async def start_ttl_sweeper(self, sweep_interval_minutes: Optional[int] = None) -> asyncio.Task[None]:
         """Periodically delete expired store items based on TTL.
 
         Returns:
@@ -268,9 +252,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
 
         self._ttl_stop_event.clear()
 
-        interval = float(
-            sweep_interval_minutes or self.ttl_config.get("sweep_interval_minutes") or 5
-        )
+        interval = float(sweep_interval_minutes or self.ttl_config.get("sweep_interval_minutes") or 5)
         logger.info(f"Starting store TTL sweeper with interval {interval} minutes")
 
         async def _sweep_loop() -> None:
@@ -363,9 +345,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
 
         async with self._cursor(transaction=True) as cur:
             if GetOp in grouped_ops:
-                await self._batch_get_ops(
-                    cast(Sequence[tuple[int, GetOp]], grouped_ops[GetOp]), results, cur
-                )
+                await self._batch_get_ops(cast(Sequence[tuple[int, GetOp]], grouped_ops[GetOp]), results, cur)
 
             if SearchOp in grouped_ops:
                 await self._batch_search_ops(
@@ -385,9 +365,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                 )
 
             if PutOp in grouped_ops:
-                await self._batch_put_ops(
-                    cast(Sequence[tuple[int, PutOp]], grouped_ops[PutOp]), cur
-                )
+                await self._batch_put_ops(cast(Sequence[tuple[int, PutOp]], grouped_ops[PutOp]), cur)
 
         return results
 
@@ -417,9 +395,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                     try:
                         await cur.execute(query.query, query.params)
                     except Exception as e:
-                        raise ValueError(
-                            f"Error executing TTL refresh: \n{query.query}\n{query.params}\n{e}"
-                        ) from e
+                        raise ValueError(f"Error executing TTL refresh: \n{query.query}\n{query.params}\n{e}") from e
 
             # Then execute GET queries and process results
             for query in queries:
@@ -427,9 +403,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                     try:
                         await cur.execute(query.query, query.params)
                     except Exception as e:
-                        raise ValueError(
-                            f"Error executing GET query: \n{query.query}\n{query.params}\n{e}"
-                        ) from e
+                        raise ValueError(f"Error executing GET query: \n{query.query}\n{query.params}\n{e}") from e
 
                     rows = await cur.fetchall()
                     key_to_row = {
@@ -448,9 +422,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
                     for idx, key in query.items:
                         row = key_to_row.get(key)
                         if row:
-                            results[idx] = _row_to_item(
-                                namespace, row, loader=self._deserializer
-                            )
+                            results[idx] = _row_to_item(namespace, row, loader=self._deserializer)
                         else:
                             results[idx] = None
 
@@ -478,16 +450,12 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
 
             query, txt_params = embedding_request
             # Update the params to replace the raw text with the vectors
-            vectors = await self.embeddings.aembed_documents(
-                [param[-1] for param in txt_params]
-            )
+            vectors = await self.embeddings.aembed_documents([param[-1] for param in txt_params])
 
             # Convert vectors to SQLite-friendly format
             vector_params = []
             for (ns, k, pathname, _), vector in zip(txt_params, vectors):
-                vector_params.extend(
-                    [ns, k, pathname, sqlite_vec.serialize_float32(vector)]
-                )
+                vector_params.extend([ns, k, pathname, sqlite_vec.serialize_float32(vector)])
 
             queries.append((query, vector_params))
 
@@ -511,9 +479,7 @@ class AsyncSqliteStore(AsyncBatchedBaseStore, BaseSqliteStore):
 
         # Setup dot_product function if it doesn't exist
         if embedding_requests and self.embeddings:
-            vectors = await self.embeddings.aembed_documents(
-                [query for _, query in embedding_requests]
-            )
+            vectors = await self.embeddings.aembed_documents([query for _, query in embedding_requests])
 
             for (idx, _), embedding in zip(embedding_requests, vectors):
                 _params_list: list = queries[idx][1]

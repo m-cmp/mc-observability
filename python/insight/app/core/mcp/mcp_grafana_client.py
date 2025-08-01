@@ -1,9 +1,6 @@
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 
-from datetime import datetime, UTC
-
-
 
 class MCPGrafanaClient:
     def __init__(self, mcp_url):
@@ -33,4 +30,3 @@ class MCPGrafanaClient:
         self.tools = await self.session.list_tools()
 
         return self.tools
-

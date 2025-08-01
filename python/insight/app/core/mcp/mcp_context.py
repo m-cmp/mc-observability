@@ -1,11 +1,13 @@
+# from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
+from datetime import UTC, datetime
+
+import aiosqlite
+from langchain_mcp_adapters.tools import load_mcp_tools
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
 from config.ConfigManager import ConfigManager
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-# from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
-from datetime import datetime, UTC
-import aiosqlite
 
 
 class MCPContext:
@@ -39,14 +41,13 @@ class MCPContext:
         await self.mcp_client.stop()
 
     async def get_agent(self, provider: str, model_name: str, provider_credential: str):
-        if provider == 'ollama':
+        if provider == "ollama":
             self.llm_client = OllamaClient(provider_credential)
-        elif provider == 'openai':
+        elif provider == "openai":
             self.llm_client = OpenAIClient(provider_credential)
 
         self.llm_client.setup(model=model_name)
         self.agent = self.llm_client.bind_tools(self.tools, self.memory)
-
 
     @staticmethod
     def _build_prompt(messages):
@@ -59,22 +60,18 @@ class MCPContext:
                 The current time is {current_time}.
                 """
 
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": messages}
-        ]
+        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": messages}]
 
     async def aquery(self, session_id, messages):
         config = self.create_config(session_id)
         prompt = self._build_prompt(messages)
-        response = await self.agent.ainvoke({'messages': prompt}, config=config)
+        response = await self.agent.ainvoke({"messages": prompt}, config=config)
 
         return response
 
-
     @staticmethod
     def create_config(session_id):
-        return {'configurable': {'thread_id': f'{session_id}'}}
+        return {"configurable": {"thread_id": f"{session_id}"}}
 
     async def get_chat_history(self, session_id):
         config = self.create_config(session_id)

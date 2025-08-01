@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from typing import List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class AnomalyDetectionMeasurement(BaseModel):
@@ -7,16 +8,18 @@ class AnomalyDetectionMeasurement(BaseModel):
     measurement: str
     fields: list[dict[str, str]]
 
+
 class ResBodyAnomalyDetectionMeasurement(BaseModel):
     data: list[AnomalyDetectionMeasurement]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 class ResBodyAnomalyDetectionSpecificMeasurement(BaseModel):
     data: AnomalyDetectionMeasurement
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 class AnomalyDetectionOptions(BaseModel):
     target_types: list[str]
@@ -37,14 +40,8 @@ class AnomalyDetectionSettings(BaseModel):
     target_type: str
     measurement: str
     execution_interval: str
-    last_execution: Optional[str] = Field(
-        None,
-        description="The timestamp for the anomaly detection last run.",
-        format="date-time",
-        example="2024-10-08T06:50:37Z"
-    )
-    create_at: str = Field(..., description="The timestamp for the registration for anomaly detection target.",
-                           format="date-time", example="2024-10-08T06:50:37Z")
+    last_execution: Optional[str] = Field(None, description="The timestamp for the anomaly detection last run.", format="date-time", example="2024-10-08T06:50:37Z")
+    create_at: str = Field(..., description="The timestamp for the registration for anomaly detection target.", format="date-time", example="2024-10-08T06:50:37Z")
 
 
 class ResBodyAnomalyDetectionSettings(BaseModel):
