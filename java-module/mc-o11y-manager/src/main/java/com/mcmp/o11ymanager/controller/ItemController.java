@@ -28,7 +28,7 @@ public class ItemController {
             @PathVariable String targetId
     ) {
         try {
-            List<MonitoringItemDTO> items = itemFacadeService.getTelegrafItems(nsId, mciId, targetId, null);
+            List<MonitoringItemDTO> items = itemFacadeService.getTelegrafItems(nsId, mciId, targetId);
             return ResponseEntity.ok(ResBody.success(items));
         } catch (TelegrafConfigException e) {
             ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());

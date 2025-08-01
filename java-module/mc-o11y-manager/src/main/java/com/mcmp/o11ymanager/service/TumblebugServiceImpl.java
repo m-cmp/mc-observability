@@ -26,10 +26,17 @@ public class TumblebugServiceImpl implements TumblebugService {
   private String sitecode;
 
   @Override
-  public String executeCommand(String nsId, String mciId, String targetId, String userName, String command) {
+  public String executeCommand(String nsId, String mciId, String targetId, String command) {
     TumblebugCmd cmd = new TumblebugCmd();
     cmd.setCommand(List.of(command));
-    cmd.setUserName(userName);
+
+    TumblebugMCI.Vm vm = getVm(nsId, mciId, targetId);
+    if (vm == null) {
+      throw new RuntimeException("FAILED TO GET VM");
+    }
+
+
+    cmd.setUserName(vm.getVmUserName());
 
     Object response = tumblebugPort.sendCommand(nsId, mciId, targetId, cmd);
 
@@ -42,17 +49,17 @@ public class TumblebugServiceImpl implements TumblebugService {
       }
     } catch (Exception e) {
       log.info("tumblebug cmd error: {}", e.getMessage());
-      throw new RuntimeException("Tumblebug 응답 파싱 실패: " + e.getMessage(), e);
+      throw new RuntimeException("Tumblebug response parsing failed: " + e.getMessage(), e);
     }
 
-    throw new RuntimeException("Tumblebug 응답이 유효하지 않습니다.");
+    throw new RuntimeException("Tumblebug response is invalid.");
   }
 
 
   @Override
-  public boolean isConnectedVM(String nsId, String mciId, String targetId, String userName) {
+  public boolean isConnectedVM(String nsId, String mciId, String targetId) {
     try {
-      String output = executeCommand(nsId, mciId, targetId, userName, "echo hello");
+      String output = executeCommand(nsId, mciId, targetId, "echo hello");
       return "hello".equalsIgnoreCase(output.trim());
     } catch (Exception e) {
       return false;
@@ -67,14 +74,14 @@ public class TumblebugServiceImpl implements TumblebugService {
 
 
   @Override
-    public boolean isServiceActive(String nsId, String mciId, String targetId, String userName, Agent agent) {
+    public boolean isServiceActive(String nsId, String mciId, String targetId, Agent agent) {
     log.info(">>> isServiceActive called with nsId: {}, mciId: {}, agent: {}", nsId, mciId, agent);
     String command = String.format("systemctl is-active cmp-%s-%s.service", agent.name().toLowerCase().replace("_", "-"), sitecode.toLowerCase());
 
     log.info("==================IS ACTIVE ? INACTIVE CMD : {}", command);
 
 
-    String result = executeCommand(nsId, mciId, targetId, userName, command);
+    String result = executeCommand(nsId, mciId, targetId, command);
     String trimmed = result.trim();
 
     log.info("===============================================Tumblebug Command Result : '{}'===============================================", trimmed);
@@ -87,5 +94,27 @@ public class TumblebugServiceImpl implements TumblebugService {
     return true;
   }
 
+
+  @Override
+  public String restart(String nsId, String mciId, String targetId, Agent agent) {
+
+    log.info("=================RESTART AGENT======================");
+
+    String command = String.format(
+        "systemctl restart cmp-%s-%s.service",
+        agent.name().toLowerCase().replace("_", "-"),
+        sitecode.toLowerCase()
+    );
+
+    String result = executeCommand(nsId, mciId, targetId, command).trim();
+
+    if (!result.isEmpty()) {
+      log.warn("❌ Agent Restart Failed - Agent: {}, Result: {}", agent, result);
+      throw new AgentStatusException("systemctl-check", "Agent Restart Failed", agent);
+    }
+
+    log.info("✅ Agent Restarted Successfully - Agent: {}", agent);
+    return result;
+  }
 
 }

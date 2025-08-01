@@ -72,8 +72,8 @@ public class AgentFacadeService {
   }
 
 
-  public AgentServiceStatus getAgentServiceStatus(String nsId, String mciId, String targetId, String userName, Agent agent) {
-    boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, userName, agent);
+  public AgentServiceStatus getAgentServiceStatus(String nsId, String mciId, String targetId, Agent agent) {
+    boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, agent);
     return isActive ? AgentServiceStatus.ACTIVE : AgentServiceStatus.INACTIVE;
   }
 
