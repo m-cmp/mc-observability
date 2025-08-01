@@ -1,2 +1,7 @@
 [[inputs.disk]]
-  ignore_fs = ["tmpfs", "devtmpfs", "squashfs", "overlay", "nsfs"]
+  ignore_fs = ["sysfs", "tmpfs", "devtmpfs", "configfs", "debugfs", "tracefs", "securityfs", "sockfs", "pipefs", "rpc_pipefs", "ramfs", "hugetlbfs", "devpts", "autofs", "efivarfs", "mqueue", "selinuxfs", "pstore", "fuseblk", "fuse", "fusectl", "nsfs", "squashfs", "ecryptfs", "overlay", "fuse.fuse-overlayfs", "nfs", "nfs4"]
+  ignore_mount_opts = ["bind"]
+  fieldexclude = ["inode*"]
+
+  [inputs.disk.tagdrop]
+    device = ["loop*"]

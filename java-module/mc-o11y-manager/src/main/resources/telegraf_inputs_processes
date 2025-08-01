@@ -1,1 +1,2 @@
 [[inputs.processes]]
+  fieldexclude = ["paging", "total_threads"]

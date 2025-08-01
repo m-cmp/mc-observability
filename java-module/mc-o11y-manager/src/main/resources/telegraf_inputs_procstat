@@ -1,6 +1,8 @@
 [[inputs.procstat]]
-  properties = ["cpu", "limits", "memory", "mmap"]
+  properties = ["cpu", "memory"]
   tag_with = ["user"]
+  fieldinclude = ["cpu_usage", "memory_usage"]
 
-[[inputs.procstat.filter]]
-  name = "@VM-ID"
+  [[inputs.procstat.filter]]
+    name = "exclude_empty_cmdline"
+    patterns = ['.+']

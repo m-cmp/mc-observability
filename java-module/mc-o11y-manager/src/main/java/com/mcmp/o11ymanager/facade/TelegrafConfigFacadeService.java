@@ -34,6 +34,8 @@ public class TelegrafConfigFacadeService {
 
   private final ClassPathResource telegrafConfigGlobal = new ClassPathResource("telegraf_global");
   private final ClassPathResource telegrafConfigAgent = new ClassPathResource("telegraf_agent");
+  private final ClassPathResource telegrafProcessorsRegex = new ClassPathResource(
+          "telegraf_processors_regex");
   private final ClassPathResource telegrafConfigInputsCPU = new ClassPathResource(
       "telegraf_inputs_cpu");
   private final ClassPathResource telegrafConfigInputsDisk = new ClassPathResource(
@@ -94,6 +96,12 @@ public class TelegrafConfigFacadeService {
 
     if (!telegrafConfigAgent.exists()) {
       errMsg = "Invalid filePath : telegrafConfigAgent";
+      log.error(errMsg);
+      throw new RuntimeException(errMsg);
+    }
+
+    if (!telegrafProcessorsRegex.exists()) {
+      errMsg = "Invalid filePath : telegrafProcessorsRegex";
       log.error(errMsg);
       throw new RuntimeException(errMsg);
     }
@@ -172,6 +180,8 @@ public class TelegrafConfigFacadeService {
     String[] metricsSplit = Arrays.stream(metrics.replace(" ", "").split(","))
         .distinct()
         .toArray(String[]::new);
+
+    fileService.appendConfig(telegrafProcessorsRegex, sb);
 
     for (String metric : metricsSplit) {
       switch (metric) {
