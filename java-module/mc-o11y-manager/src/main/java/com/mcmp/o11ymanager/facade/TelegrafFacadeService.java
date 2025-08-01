@@ -11,6 +11,7 @@ import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.semaphore.Task;
 import com.mcmp.o11ymanager.service.domain.SemaphoreDomainService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class TelegrafFacadeService {
   private final SemaphoreDomainService semaphoreDomainService;
   private final SchedulerFacadeService schedulerFacadeService;
   private final TelegrafConfigFacadeService telegrafConfigFacadeService;
+  private final TumblebugService tumblebugService;
 
   public void install(String nsId, String mciId, String targetId, AccessInfoDTO accessInfo,
       @NotBlank int templateCount) throws Exception {
@@ -140,11 +142,9 @@ public class TelegrafFacadeService {
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.RESTARTING);
 
       // TODO : Use Tumblebug CMD
-//      SshConnection connection = sshService.getConnection(
-//              target.getIp(), target.getPort(), target.getUser(), target.getPassword());
-//
-//      sshService.restartTelegraf(connection, target.getIp(), target.getPort(),
-//              target.getUser(), target.getPassword());
+      tumblebugService.restart(nsId, mciId, targetId, Agent.TELEGRAF);
+
+
 
       targetService.updateMonitoringAgentTaskStatus(nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
 

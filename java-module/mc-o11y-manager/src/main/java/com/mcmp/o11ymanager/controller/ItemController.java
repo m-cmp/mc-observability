@@ -21,66 +21,114 @@ import java.util.List;
 public class ItemController {
     private final ItemFacadeService itemFacadeService;
 
+
     @GetMapping
-    public ResponseEntity<ResBody<List<MonitoringItemDTO>>> getItems(
-            @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String targetId
+    public ResBody<List<MonitoringItemDTO>> getItems(
+        @PathVariable String nsId,
+        @PathVariable String mciId,
+        @PathVariable String targetId
     ) {
-        try {
-            List<MonitoringItemDTO> items = itemFacadeService.getTelegrafItems(nsId, mciId, targetId, null);
-            return ResponseEntity.ok(ResBody.success(items));
-        } catch (TelegrafConfigException e) {
-            ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
-            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
-        }
+        return new ResBody<>(itemFacadeService.getTelegrafItems(nsId, mciId, targetId));
     }
 
+
     @PostMapping
-    public ResponseEntity<ResBody<Object>> postItem(
-            @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String targetId,
-            @RequestBody @Valid MonitoringItemRequestDTO dto
+    public ResBody<Void> postItem(
+        @PathVariable String nsId,
+        @PathVariable String mciId,
+        @PathVariable String targetId,
+        @RequestBody @Valid MonitoringItemRequestDTO dto
     ) {
-        try {
-            itemFacadeService.addTelegrafPlugin(nsId, mciId, targetId, dto);
-            return ResponseEntity.ok(ResBody.success(null));
-        } catch (TelegrafConfigException e) {
-            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
-            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
-        }
+        itemFacadeService.addTelegrafPlugin(nsId, mciId, targetId, dto);
+        return ResBody.success(null);
     }
 
     @PutMapping
-    public ResponseEntity<ResBody<Object>> putItem(
-            @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String targetId,
-            @RequestBody @Valid MonitoringItemUpdateDTO dto
+    public ResBody<Void> putItem(
+        @PathVariable String nsId,
+        @PathVariable String mciId,
+        @PathVariable String targetId,
+        @RequestBody @Valid MonitoringItemUpdateDTO dto
     ) {
-        try {
-            itemFacadeService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
-            return ResponseEntity.ok(ResBody.success(null));
-        } catch (TelegrafConfigException e) {
-            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
-            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
-        }
+        itemFacadeService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
+        return ResBody.success(null);
     }
 
     @DeleteMapping("/{itemSeq}")
-    public ResponseEntity<ResBody<Void>> deleteItem(
-            @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String targetId,
-            @PathVariable Long itemSeq
+    public ResBody<Void> deleteItem(
+        @PathVariable String nsId,
+        @PathVariable String mciId,
+        @PathVariable String targetId,
+        @PathVariable Long itemSeq
     ) {
-        try {
-            itemFacadeService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
-            return ResponseEntity.ok(ResBody.success(null));
-        } catch (TelegrafConfigException e) {
-            ResBody<Void> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
-            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
-        }
+        itemFacadeService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
+        return ResBody.success(null);
     }
+
+
+//    @GetMapping
+//    public ResponseEntity<ResBody<List<MonitoringItemDTO>>> getItems2(
+//            @PathVariable String nsId,
+//            @PathVariable String mciId,
+//            @PathVariable String targetId
+//    ) {
+//        try {
+//            List<MonitoringItemDTO> items = itemFacadeService.getTelegrafItems(nsId, mciId, targetId);
+//            return ResponseEntity.ok(ResBody.success(items));
+//        } catch (TelegrafConfigException e) {
+//            ResBody<List<MonitoringItemDTO>> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+//            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+//        }
+//    }
+
+
+
+
+//    @PostMapping
+//    public ResponseEntity<ResBody<Object>> postItem(
+//            @PathVariable String nsId,
+//            @PathVariable String mciId,
+//            @PathVariable String targetId,
+//            @RequestBody @Valid MonitoringItemRequestDTO dto
+//    ) {
+//        try {
+//            itemFacadeService.addTelegrafPlugin(nsId, mciId, targetId, dto);
+//            return ResponseEntity.ok(ResBody.success(null));
+//        } catch (TelegrafConfigException e) {
+//            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+//            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+//        }
+//    }
+//
+//    @PutMapping
+//    public ResponseEntity<ResBody<Object>> putItem(
+//            @PathVariable String nsId,
+//            @PathVariable String mciId,
+//            @PathVariable String targetId,
+//            @RequestBody @Valid MonitoringItemUpdateDTO dto
+//    ) {
+//        try {
+//            itemFacadeService.updateTelegrafPlugin(nsId, mciId, targetId, dto);
+//            return ResponseEntity.ok(ResBody.success(null));
+//        } catch (TelegrafConfigException e) {
+//            ResBody<Object> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+//            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+//        }
+//    }
+//
+//    @DeleteMapping("/{itemSeq}")
+//    public ResponseEntity<ResBody<Void>> deleteItem(
+//            @PathVariable String nsId,
+//            @PathVariable String mciId,
+//            @PathVariable String targetId,
+//            @PathVariable Long itemSeq
+//    ) {
+//        try {
+//            itemFacadeService.deleteTelegrafPlugin(nsId, mciId, targetId, itemSeq);
+//            return ResponseEntity.ok(ResBody.success(null));
+//        } catch (TelegrafConfigException e) {
+//            ResBody<Void> errorResponse = ResBody.error(e.getResponseCode(), e.getMessage());
+//            return ResponseEntity.status(e.getResponseCode().getHttpStatus()).body(errorResponse);
+//        }
+//    }
 }

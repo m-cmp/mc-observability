@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemFacadeService {
+
+    private final TelegrafFacadeService telegrafFacadeService;
     @Value("${deploy.site-code}")
     private String deploySiteCode;
 
@@ -49,7 +51,7 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
             
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId, vm.getVmUserName())) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
                 String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
@@ -63,7 +65,7 @@ public class ItemFacadeService {
                 .orElseThrow(() -> new TelegrafConfigException(ResponseCode.NOT_FOUND, "Plugin definition not found"));
 
             // 기존 config 읽기
-            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), 
+            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
             if (configContent == null || configContent.isEmpty()) {
@@ -82,7 +84,9 @@ public class ItemFacadeService {
             // 파일 업데이트
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
+
+            telegrafFacadeService.restart(nsId, mciId, targetId);
             
         } catch (TelegrafConfigException e) {
             throw e;
@@ -102,14 +106,14 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId, vm.getVmUserName())) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
                 String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
             // 기존 config 읽기 및 파싱
-            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), 
+            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
             if (configContent == null || configContent.isEmpty()) {
@@ -119,7 +123,7 @@ public class ItemFacadeService {
             }
 
             // seq에 해당하는 plugin 찾아서 수정
-            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId, vm.getVmUserName());
+            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
             MonitoringItemDTO targetItem = currentItems.stream()
                 .filter(item -> item.getSeq().equals(dto.getSeq()))
                 .findFirst()
@@ -132,7 +136,7 @@ public class ItemFacadeService {
             // 파일 업데이트
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
             
         } catch (TelegrafConfigException e) {
             throw e;
@@ -152,14 +156,14 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId, vm.getVmUserName())) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
                 String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
             // 기존 config 읽기
-            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), 
+            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
             if (configContent == null || configContent.isEmpty()) {
@@ -169,7 +173,7 @@ public class ItemFacadeService {
             }
 
             // seq에 해당하는 plugin 찾기
-            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId, vm.getVmUserName());
+            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
             MonitoringItemDTO targetItem = currentItems.stream()
                 .filter(item -> item.getSeq().equals(itemSeq))
                 .findFirst()
@@ -181,7 +185,9 @@ public class ItemFacadeService {
             // 파일 업데이트
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, vm.getVmUserName(), updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
+
+            telegrafFacadeService.restart(nsId, mciId, targetId);
             
         } catch (TelegrafConfigException e) {
             throw e;
@@ -192,26 +198,32 @@ public class ItemFacadeService {
         }
     }
 
-    public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId, String userName) {
+
+    private String toPluginId(String name, String type) {
+        return "[[inputs." + name + "]]";
+    }
+
+
+    public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId) {
         try {
-            if (userName == null) {
-                TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
-                if (vm == null) {
-                    String errorMsg = String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
-                    log.error(errorMsg);
-                    throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
-                }
+//            if (userName == null) {
+//                TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+//                if (vm == null) {
+//                    String errorMsg = String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
+//                    log.error(errorMsg);
+//                    throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
+//                }
+//
+//                userName = vm.getVmUserName();
+//            }
 
-                userName = vm.getVmUserName();
-            }
-
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId, userName)) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
                 String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
-            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId, userName,
+            String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
             if (configContent == null || configContent.isEmpty()) {
@@ -225,17 +237,22 @@ public class ItemFacadeService {
             Map<String, AgentPluginDefEntity> pluginDefMap = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .collect(Collectors.toMap(
-                        AgentPluginDefEntity::getName,
+                        AgentPluginDefEntity::getPluginId,
                     entity -> entity
                 ));
 
             List<MonitoringItemDTO> items = new ArrayList<>();
             int seq = 1;
-            
+
             for (TelegrafPlugin plugin : activePlugins) {
-                String key = plugin.getName() + "_" + plugin.getType();
+                String key =  toPluginId(plugin.getName(), plugin.getType());
                 AgentPluginDefEntity pluginDef = pluginDefMap.get(key);
-                
+                if (pluginDef == null) {
+                    log.info("❗ pluginDef NOT FOUND for pluginId: " + key);
+                }
+
+               pluginDef = pluginDefMap.get(key);
+
                 MonitoringItemDTO item = MonitoringItemDTO.builder()
                     .seq((long) seq++)
                     .nsId(nsId)
