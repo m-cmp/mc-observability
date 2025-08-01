@@ -138,7 +138,7 @@ logging:
     path: /applog
     name: ${spring.application.name}
   logback:
-    rollingpolicy:
+    rollinpolicy:
       max-history: 14
       max-file-size: 200MB
 
