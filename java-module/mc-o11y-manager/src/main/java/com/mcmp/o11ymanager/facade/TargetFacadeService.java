@@ -15,11 +15,8 @@ import com.mcmp.o11ymanager.tracing.ExecutorFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.swing.text.html.HTML.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,6 +59,16 @@ public class TargetFacadeService {
 
     agentFacadeService.install(nsId, mciId, targetId);
 
+
+    log.info(">>> start checking monitoring agent status");
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName() , Agent.TELEGRAF);
+    log.info(">>> start checking log agent status");
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, vm.getVmUserName(), Agent.FLUENT_BIT);
+
+
+    savedTarget.setMonitoringServiceStatus(monitoringStatus);
+    savedTarget.setLogServiceStatus(logStatus);
+
     return savedTarget;
   }
 
@@ -102,38 +109,24 @@ public class TargetFacadeService {
   }
 
 
-  public List<TargetDTO> getTargetsNsMci(String nsId, String mciId) {
-    return targetService.getByNsMci(nsId, mciId);
-  }
 
-
-
-  public List<TargetDTO> getTargets() {
-    List<TargetDTO> rawList = targetService.list();
-
-    int maxThreads = 10;
-    ExecutorService executor = ExecutorFactory.newFixedThreadPool(10);
-    List<Future<TargetDTO>> futures = new ArrayList<Future<TargetDTO>>();
+  private List<TargetDTO> fetchTarget(List<TargetDTO> rawList) {
+    ExecutorService executor = ExecutorFactory.getSharedExecutor();
+    List<Future<TargetDTO>> futures = new ArrayList<>();
 
     for (TargetDTO baseDto : rawList) {
-      futures.add(executor.submit(new Callable<TargetDTO>() {
-        @Override
-        public TargetDTO call() {
-          try {
-            String nsId = baseDto.getNsId();
-            String mciId = baseDto.getMciId();
-            String targetId = baseDto.getTargetId();
-            return getTarget(nsId, mciId, targetId);
-          } catch (Exception e) {
-            log.error(">>> getTarget() failed for: nsId={}, mciId={}, targetId={}",
-                baseDto.getNsId(), baseDto.getMciId(), baseDto.getTargetId(), e);
-            return null;
-          }
+      futures.add(executor.submit(() -> {
+        try {
+          return getTarget(baseDto.getNsId(), baseDto.getMciId(), baseDto.getTargetId());
+        } catch (Exception e) {
+          log.error(">>> getTarget() failed for: nsId={}, mciId={}, targetId={}",
+              baseDto.getNsId(), baseDto.getMciId(), baseDto.getTargetId(), e);
+          return null;
         }
       }));
     }
 
-    List<TargetDTO> result = new ArrayList<TargetDTO>();
+    List<TargetDTO> result = new ArrayList<>();
     for (Future<TargetDTO> future : futures) {
       try {
         TargetDTO dto = future.get();
@@ -145,17 +138,30 @@ public class TargetFacadeService {
       }
     }
 
-    executor.shutdown();
-
     return result;
   }
 
 
 
+  public List<TargetDTO> getTargetsNsMci(String nsId, String mciId) {
 
-  public List<TargetDTO> getTargets2() {
-    return targetService.list();
+    List<TargetDTO> rawList = targetService.getByNsMci(nsId, mciId);
+
+
+    return fetchTarget(rawList);
+
   }
+
+
+
+  public List<TargetDTO> getTargets() {
+    List<TargetDTO> rawList = targetService.list();
+    return fetchTarget(rawList);
+  }
+
+
+
+
 
   public TargetDTO putTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
     return targetService.put(nsId, mciId, targetId, dto);

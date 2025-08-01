@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.controller;
 
 import com.mcmp.o11ymanager.dto.plugin.PluginDefDTO;
 import com.mcmp.o11ymanager.global.target.ResBody;
-import com.mcmp.o11ymanager.service.AgentPluginDefService;
+import com.mcmp.o11ymanager.service.AgentPluginDefServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,11 +16,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring")
 public class SystemController {
-    private final AgentPluginDefService agentPluginDefService;
+    private final AgentPluginDefServiceImpl agentPluginDefServiceImpl;
 
     @GetMapping("/plugins")
     public ResBody<List<PluginDefDTO>> getPlugins() {
-        List<PluginDefDTO> plugins = agentPluginDefService.getAllPluginDefinitions()
+        List<PluginDefDTO> plugins = agentPluginDefServiceImpl.getAllPluginDefinitions()
                 .stream()
                 .map(entity -> PluginDefDTO.builder()
                         .seq(entity.getSeq())

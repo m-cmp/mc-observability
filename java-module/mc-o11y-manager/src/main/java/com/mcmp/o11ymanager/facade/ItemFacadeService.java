@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.service;
+package com.mcmp.o11ymanager.facade;
 
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
@@ -7,6 +7,7 @@ import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
 import com.mcmp.o11ymanager.enums.ResponseCode;
 import com.mcmp.o11ymanager.exception.TelegrafConfigException;
+import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TelegrafConfigService {
+public class ItemFacadeService {
     @Value("${deploy.site-code}")
     private String deploySiteCode;
 

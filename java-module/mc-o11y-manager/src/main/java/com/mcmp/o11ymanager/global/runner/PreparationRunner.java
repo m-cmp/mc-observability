@@ -1,6 +1,6 @@
 package com.mcmp.o11ymanager.global.runner;
 
-import com.mcmp.o11ymanager.service.AgentPluginDefService;
+import com.mcmp.o11ymanager.service.AgentPluginDefServiceImpl;
 import com.mcmp.o11ymanager.service.SemaphoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
 public class PreparationRunner implements ApplicationContextAware {
 
   private final SemaphoreService semaphoreService;
-  private final AgentPluginDefService agentPluginDefService;
+  private final AgentPluginDefServiceImpl agentPluginDefServiceImpl;
 
   @Override
   public void setApplicationContext(@Nullable ApplicationContext applicationContext)
       throws BeansException {
     try {
-      agentPluginDefService.initializePluginDefinitions();
+      agentPluginDefServiceImpl.initializePluginDefinitions();
     } catch (Exception e) {
       log.error("Failed to initialize agent plugin definitions", e);
     }

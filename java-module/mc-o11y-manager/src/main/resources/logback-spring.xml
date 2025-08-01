@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="30 seconds">
 
-    <!-- Spring property  -->
-    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" />
-    <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name" />
-    <springProperty scope="context" name="MAX_FILE_SIZE" source="logging.logback.rollingpolicy.max-file-size" />
-    <springProperty scope="context" name="MAX_HISTORY" source="logging.logback.max-history" />
-    <springProperty scope="context" name="APPLICATION_NAME" source="spring.application.name" />
+
+
+    <springProperty scope="context" name="LOG_PATH"         source="logging.file.path"         defaultValue="/applog"/>
+    <springProperty scope="context" name="LOG_FILE_NAME"    source="logging.file.name"  defaultValue="application-log-file"/>
+    <springProperty scope="context" name="MAX_FILE_SIZE"    source="logging.logback.rollingpolicy.max-file-size"   defaultValue="200MB"/>
+    <springProperty scope="context" name="MAX_HISTORY"      source="logging.logback.rollingpolicy.max-history"      defaultValue="14"/>
+    <springProperty scope="context" name="APPLICATION_NAME"  source="spring.application.name"  defaultValue="test-application"/>
 
 
     <!-- Custom as desired by developers -->
