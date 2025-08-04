@@ -1,1 +1,5 @@
 [[inputs.diskio]]
+  fieldexclude = ["weighted_io_time", "merged*"]
+
+  [inputs.diskio.tagdrop]
+    name = ["loop*"]

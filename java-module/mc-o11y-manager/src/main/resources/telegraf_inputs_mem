@@ -1,1 +1,2 @@
 [[inputs.mem]]
+  fieldexclude = ["commit*", "dirty", "high*", "huge*", "laundry", "low*", "mapped", "page*", "slab", "*claim*", "swap*", "vmalloc*", "wired*", "write*"]
