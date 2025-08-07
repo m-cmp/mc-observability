@@ -3,8 +3,8 @@ package com.mcmp.o11ymanager.facade;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemUpdateDTO;
+import com.mcmp.o11ymanager.dto.plugin.PluginDefDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
-import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
 import com.mcmp.o11ymanager.enums.ResponseCode;
 import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
@@ -58,11 +58,12 @@ public class ItemFacadeService {
             }
 
             // Plugin definition에서 해당 plugin 찾기
-            AgentPluginDefEntity pluginDef = agentPluginDefService.getAllPluginDefinitions()
+            PluginDefDTO pluginDef = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .filter(def -> def.getSeq().equals(dto.getPluginSeq()))
                 .findFirst()
                 .orElseThrow(() -> new TelegrafConfigException(ResponseCode.NOT_FOUND, "Plugin definition not found"));
+
 
             // 기존 config 읽기
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
@@ -206,16 +207,6 @@ public class ItemFacadeService {
 
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId) {
         try {
-//            if (userName == null) {
-//                TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
-//                if (vm == null) {
-//                    String errorMsg = String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
-//                    log.error(errorMsg);
-//                    throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
-//                }
-//
-//                userName = vm.getVmUserName();
-//            }
 
             if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
                 String errorMsg = String.format("VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
@@ -233,11 +224,13 @@ public class ItemFacadeService {
             }
             
             List<TelegrafPlugin> activePlugins = parseTelegrafConfig(configContent);
-            
-            Map<String, AgentPluginDefEntity> pluginDefMap = agentPluginDefService.getAllPluginDefinitions()
+
+
+
+            Map<String, PluginDefDTO> pluginDefMap = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .collect(Collectors.toMap(
-                        AgentPluginDefEntity::getPluginId,
+                    PluginDefDTO::getPluginId,
                     entity -> entity
                 ));
 
@@ -246,10 +239,12 @@ public class ItemFacadeService {
 
             for (TelegrafPlugin plugin : activePlugins) {
                 String key =  toPluginId(plugin.getName(), plugin.getType());
-                AgentPluginDefEntity pluginDef = pluginDefMap.get(key);
+
+                PluginDefDTO pluginDef = pluginDefMap.get(key);
                 if (pluginDef == null) {
                     log.info("❗ pluginDef NOT FOUND for pluginId: " + key);
                 }
+
 
                pluginDef = pluginDefMap.get(key);
 
@@ -283,13 +278,13 @@ public class ItemFacadeService {
     private List<TelegrafPlugin> parseTelegrafConfig(String configContent) {
         List<TelegrafPlugin> plugins = new ArrayList<>();
         String[] lines = configContent.split("\n");
-        
+
         TelegrafPlugin currentPlugin = null;
         StringBuilder configBuilder = new StringBuilder();
-        
+
         for (String line : lines) {
             line = line.trim();
-            
+
             Matcher inputMatcher = INPUT_PATTERN.matcher(line);
 
             if (inputMatcher.find()) {
@@ -301,6 +296,7 @@ public class ItemFacadeService {
                 }
                 currentPlugin = new TelegrafPlugin(inputMatcher.group(1), "INPUT");
                 configBuilder = new StringBuilder();
+
             } else if (currentPlugin != null && !line.isEmpty()) {
                 if (line.startsWith("[[")) {
                     String config = configBuilder.toString().trim();
@@ -314,14 +310,14 @@ public class ItemFacadeService {
                 }
             }
         }
-        
+
         if (currentPlugin != null) {
             String config = configBuilder.toString().trim();
             String encodedConfig = Base64.getEncoder().encodeToString(config.getBytes());
             currentPlugin.setConfig(encodedConfig);
             plugins.add(currentPlugin);
         }
-        
+
         return plugins;
     }
 
