@@ -20,14 +20,6 @@ public class SystemController {
 
     @GetMapping("/plugins")
     public ResBody<List<PluginDefDTO>> getPlugins() {
-        List<PluginDefDTO> plugins = agentPluginDefServiceImpl.getAllPluginDefinitions()
-                .stream()
-                .map(entity -> PluginDefDTO.builder()
-                        .seq(entity.getSeq())
-                        .name(entity.getName())
-                        .pluginId(entity.getPluginId())
-                        .build())
-                .toList();
-        return new ResBody<>(plugins);
+        return new ResBody<>(agentPluginDefServiceImpl.getAllPluginDefinitions());
     }
 }

@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.service;
 
+import com.mcmp.o11ymanager.dto.plugin.PluginDefDTO;
 import com.mcmp.o11ymanager.entity.AgentPluginDefEntity;
 import com.mcmp.o11ymanager.repository.AgentPluginDefJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
@@ -29,8 +30,33 @@ public class AgentPluginDefServiceImpl implements AgentPluginDefService {
     
     public static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
 
-    public List<AgentPluginDefEntity> getAllPluginDefinitions() {
-        return agentPluginDefRepository.findAll();
+    public List<PluginDefDTO> getAllPluginDefinitions() {
+        return agentPluginDefRepository.findAll().stream()
+            .map(this::toDto)
+            .toList();
+    }
+
+
+    public String getPluginType(String pluginId) {
+        if (pluginId == null)
+            return "UNKNOWN";
+
+        Matcher matcher_input = INPUT_PATTERN.matcher(pluginId);
+        if (matcher_input.matches()) {
+            return "INPUT";
+        }
+
+        return "UNKNOWN";
+    }
+
+
+    private PluginDefDTO toDto(AgentPluginDefEntity entity) {
+        return PluginDefDTO.builder()
+            .seq(entity.getSeq())
+            .name(entity.getName())
+            .pluginId(entity.getPluginId())
+            .pluginType(getPluginType(entity.getPluginId()))
+            .build();
     }
 
     @Override
