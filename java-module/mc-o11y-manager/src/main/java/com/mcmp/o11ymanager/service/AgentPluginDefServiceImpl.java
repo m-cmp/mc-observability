@@ -29,8 +29,6 @@ public class AgentPluginDefServiceImpl implements AgentPluginDefService {
     public final AgentPluginDefJpaRepository agentPluginDefRepository;
     
     public static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
-    public static final Pattern OUTPUT_PATTERN = Pattern.compile("\\[\\[outputs\\.(\\w+)]]");
-
 
     public List<PluginDefDTO> getAllPluginDefinitions() {
         return agentPluginDefRepository.findAll().stream()
@@ -39,18 +37,13 @@ public class AgentPluginDefServiceImpl implements AgentPluginDefService {
     }
 
 
-    public static String getPluginType(String pluginId) {
-        if (pluginId == null) return "UNKNOWN";
+    public String getPluginType(String pluginId) {
+        if (pluginId == null)
+            return "UNKNOWN";
 
         Matcher matcher_input = INPUT_PATTERN.matcher(pluginId);
         if (matcher_input.matches()) {
             return "INPUT";
-        }
-
-
-        Matcher matcher_output = INPUT_PATTERN.matcher(pluginId);
-        if (matcher_output.matches()) {
-            return "OUTPUT";
         }
 
         return "UNKNOWN";
