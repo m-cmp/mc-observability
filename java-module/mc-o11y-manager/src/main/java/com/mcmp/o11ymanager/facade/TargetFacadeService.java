@@ -8,10 +8,9 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
-import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
-import com.mcmp.o11ymanager.tracing.ExecutorFactory;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +26,26 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TargetFacadeService {
 
+
+  private final ExecutorService executor;
+
+
+  @PostConstruct
+  void debugExecutorBean() {
+    log.info("==================================================[TargetFacadeService] injected executor bean={}, id={}==================================================",
+        executor.getClass().getName(),
+        System.identityHashCode(executor));
+
+    executor.submit(() ->
+        log.info("[TargetFacadeService] executor thread={}",
+            Thread.currentThread().getName()));
+  }
+
+
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
+
 
   @Transactional
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
@@ -52,12 +68,12 @@ public class TargetFacadeService {
 
     agentFacadeService.install(nsId, mciId, targetId);
 
-
     log.info(">>> start checking monitoring agent status");
-    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.TELEGRAF);
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId,
+        targetId, Agent.TELEGRAF);
     log.info(">>> start checking log agent status");
-    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.FLUENT_BIT);
-
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId,
+        Agent.FLUENT_BIT);
 
     savedTarget.setMonitoringServiceStatus(monitoringStatus);
     savedTarget.setLogServiceStatus(logStatus);
@@ -66,9 +82,9 @@ public class TargetFacadeService {
   }
 
 
-
   public TargetDTO getTarget(String nsId, String mciId, String targetId) {
-    log.info(">>> getTarget() called with nsId: {}, mciId: {}, targetId: {}", nsId, mciId, targetId);
+    log.info(">>> getTarget() called with nsId: {}, mciId: {}, targetId: {}", nsId, mciId,
+        targetId);
 
     TumblebugMCI.Vm vm;
     String userName;
@@ -85,9 +101,11 @@ public class TargetFacadeService {
     }
 
     log.info(">>> start checking monitoring agent status");
-    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId, Agent.TELEGRAF);
+    AgentServiceStatus monitoringStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId,
+        targetId, Agent.TELEGRAF);
     log.info(">>> start checking log agent status");
-    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId,  Agent.FLUENT_BIT);
+    AgentServiceStatus logStatus = agentFacadeService.getAgentServiceStatus(nsId, mciId, targetId,
+        Agent.FLUENT_BIT);
 
     return savedTarget.builder()
         .targetId(vm.getId())
@@ -102,9 +120,7 @@ public class TargetFacadeService {
   }
 
 
-
   private List<TargetDTO> fetchTarget(List<TargetDTO> rawList) {
-    ExecutorService executor = ExecutorFactory.getSharedExecutor();
     List<Future<TargetDTO>> futures = new ArrayList<>();
 
     for (TargetDTO baseDto : rawList) {
@@ -135,25 +151,19 @@ public class TargetFacadeService {
   }
 
 
-
   public List<TargetDTO> getTargetsNsMci(String nsId, String mciId) {
 
     List<TargetDTO> rawList = targetService.getByNsMci(nsId, mciId);
 
-
     return fetchTarget(rawList);
 
   }
-
 
 
   public List<TargetDTO> getTargets() {
     List<TargetDTO> rawList = targetService.list();
     return fetchTarget(rawList);
   }
-
-
-
 
 
   public TargetDTO putTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
