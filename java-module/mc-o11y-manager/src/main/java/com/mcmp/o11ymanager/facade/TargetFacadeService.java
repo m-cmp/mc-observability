@@ -10,7 +10,6 @@ import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,20 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TargetFacadeService {
 
 
-  private final ExecutorService executor;
-
-
-  @PostConstruct
-  void debugExecutorBean() {
-    log.info("==================================================[TargetFacadeService] injected executor bean={}, id={}==================================================",
-        executor.getClass().getName(),
-        System.identityHashCode(executor));
-
-    executor.submit(() ->
-        log.info("[TargetFacadeService] executor thread={}",
-            Thread.currentThread().getName()));
-  }
-
+  private ExecutorService executor;
 
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;

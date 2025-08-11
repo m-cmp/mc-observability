@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 import java.util.Objects;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -30,8 +30,7 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class SchedulerFacadeService {
 
-  private final ScheduledExecutorService scheduler;
-
+  private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
 
   @PostConstruct
   void debugSchedulerBean() {
