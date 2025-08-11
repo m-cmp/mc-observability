@@ -142,20 +142,4 @@ logging:
       max-history: 14
       max-file-size: 200MB
 
-otel:
-  exporter:
-    otlp:
-      endpoint: http://tempo:4317
-      compression: gzip
-      protocol: grpc
-  metrics:
-    exporter: none
-  logs:
-    exporter: none
-  resource:
-    attributes:
-      service.name: ${spring.application.name}
-  instrumentation:
-    micrometer:
-      enabled: false
 

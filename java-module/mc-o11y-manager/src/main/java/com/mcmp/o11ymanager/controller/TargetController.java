@@ -3,8 +3,6 @@ package com.mcmp.o11ymanager.controller;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.facade.TargetFacadeService;
-import com.mcmp.o11ymanager.service.AgentPluginDefServiceImpl;
-import com.mcmp.o11ymanager.facade.ItemFacadeService;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -26,8 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class TargetController {
 
   private final TargetFacadeService targetFacadeService;
-  private final AgentPluginDefServiceImpl agentPluginDefServiceImpl;
-  private final ItemFacadeService telegrafConfigService;
 
   @GetMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> getTarget(
@@ -50,7 +46,6 @@ public class TargetController {
   }
 
 
-
   @PutMapping("/{nsId}/{mciId}/target/{targetId}")
   public ResBody<TargetDTO> putTarget(
       @PathVariable String nsId,
@@ -67,7 +62,7 @@ public class TargetController {
       @PathVariable String mciId,
       @PathVariable String targetId
   ) {
-    targetFacadeService.deleteTarget(nsId, mciId,targetId);
+    targetFacadeService.deleteTarget(nsId, mciId, targetId);
     return new ResBody<>();
   }
 
@@ -75,7 +70,7 @@ public class TargetController {
   public ResBody<List<TargetDTO>> getTargetByNsMci(
       @PathVariable String nsId,
       @PathVariable String mciId
-      ) {
+  ) {
     return new ResBody<>(targetFacadeService.getTargetsNsMci(nsId, mciId));
   }
 

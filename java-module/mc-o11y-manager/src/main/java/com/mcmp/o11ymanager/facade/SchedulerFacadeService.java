@@ -8,6 +8,7 @@ import com.mcmp.o11ymanager.model.semaphore.Project;
 import com.mcmp.o11ymanager.model.semaphore.Task;
 import com.mcmp.o11ymanager.port.SemaphorePort;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 
 import java.util.Objects;
@@ -21,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,6 +31,19 @@ import org.springframework.stereotype.Service;
 public class SchedulerFacadeService {
 
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+
+  @PostConstruct
+  void debugSchedulerBean() {
+    log.info("==================================================[SchedulerFacadeService] injected scheduler bean={}, id={}==================================================",
+        scheduler.getClass().getName(),
+        System.identityHashCode(scheduler));
+
+    scheduler.schedule(() ->
+            log.info("==================================================[SchedulerFacadeService] scheduler thread={}==================================================",
+                Thread.currentThread().getName()),
+        0, TimeUnit.SECONDS);
+  }
+
   private final SemaphorePort semaphorePort;
   private final TargetService targetService;
 
@@ -53,7 +66,6 @@ public class SchedulerFacadeService {
         long currentTime = System.currentTimeMillis();
 
         AgentAction action;
-        boolean isSuccess;
         Project project = semaphorePort.getProjectByName(projectName);
         Task currentTask = semaphorePort.getTask(project.getId(), taskId);
 
@@ -87,11 +99,9 @@ public class SchedulerFacadeService {
         if ("success".equals(currentTask.getStatus())) {
           action = getAgentActionFinished(method, agent);
           log.debug(action.toString());
-          isSuccess = true;
           log.debug("Task successful");
         } else if ("error".equals(currentTask.getStatus())) {
           action = getAgentActionFailed(method, agent);
-          isSuccess = false;
           log.debug("Task failed");
         } else {
           return;

@@ -13,7 +13,9 @@
     <!-- Custom as desired by developers -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %-5level %logger{36} --- [%thread] : %msg%n</pattern>
+            <pattern>
+                {"timestamp": "%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}","trace_id": "%X{trace_id}","span_id": "%X{span_id}","trace_flags": "%X{trace_flags}","severity_text": "%level", "attributes": {"component": "%X{component}","code.function": "%C.%M","code.file": "%F", "code.lineno": "%L"},"body": "%message"} \n
+            </pattern>
         </encoder>
     </appender>
 
