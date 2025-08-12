@@ -94,3 +94,11 @@ class ConfigManager:
             "system_prompt_first": log_analysis.get('system_prompt_first', ''),
             "system_prompt_default": log_analysis.get('system_prompt_default', '')
         }
+
+    def get_chat_summarization_config(self):
+        chat_summarization = self.config.get('log_analysis', {}).get('chat_summarization', {})
+        return {
+            "max_tokens": chat_summarization.get('max_tokens', 1536),
+            "max_tokens_before_summary": chat_summarization.get('max_tokens_before_summary', 256),
+            "summary_prompt": chat_summarization.get('summary_prompt', '다음 대화를 한국어로 간결하게 요약해주세요.')
+        }
