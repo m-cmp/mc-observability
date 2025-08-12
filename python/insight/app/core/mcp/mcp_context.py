@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 import aiosqlite
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
+from app.core.graph import create_conversation_graph
 from app.core.prompts.prompt_factory import PromptFactory
 from config.ConfigManager import ConfigManager
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -24,9 +25,15 @@ class MCPContext:
         self.analysis_type = analysis_type
         self.prompt_service = PromptFactory.create_prompt_service(analysis_type, self.config)
         self.llm_client = None
+        self.llm_with_tools = None
         self.tools = None
         self.agent = None
         self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
+
+    # Todo
+    # def _build_db_uri(self):
+    #     db_info = self.config.get_db_config()
+    #     self.uri = f'mysql://{db_info['user']}:{db_info['pw']}@{db_info['url']}/{db_info['db']}'
 
     def reset_metadata(self):
         """Initialize metadata when starting a new query"""
@@ -69,23 +76,26 @@ class MCPContext:
                 msg = f"Unsupported provider: {provider}"
                 logger.error(msg)
                 raise ValueError(msg)
-
-            # Pass streaming parameter only to OpenAI-based clients
-            if hasattr(self.llm_client, 'setup'):
-                if provider in ["openai", "google", "anthropic"]:
-                    self.llm_client.setup(model=model_name, streaming=streaming)
-                else:
-                    self.llm_client.setup(model=model_name)
-
             self.tools = self.mcp_manager.get_all_tools() or []
             logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
 
-            self.agent = self.llm_client.bind_tools(self.tools, self.memory)
+            if self.analysis_type == "log":
+                self.llm_client.setup_graph_llm(model=model_name)
+                self.llm_with_tools = self.llm_client.llm.bind_tools(tools=self.tools)
+                self.agent = await create_conversation_graph(llm=self.llm_with_tools, tools=self.tools, config=self.config)
+            else:
+                # Pass streaming parameter only to OpenAI-based clients
+                if hasattr(self.llm_client, 'setup'):
+                    if provider in ["openai", "google", "anthropic"]:
+                        self.llm_client.setup(model=model_name, streaming=streaming)
+                    else:
+                        self.llm_client.setup(model=model_name)
+                self.agent = self.llm_client.bind_tools(self.tools, self.memory)
         except Exception as e:
             logger.error(f"Failed to initialize agent for provider={provider}, model={model_name}: {e}")
             raise
 
-    async def _build_prompt(self, session_id: str, messages: str):
+    async def _build_prompt(self, session_id: str, user_message: str):
         """Build prompt using the appropriate prompt service based on analysis type."""
         history = await self.get_chat_history(session_id)
         msg_count = 0
@@ -93,7 +103,7 @@ class MCPContext:
             channel_values = history.get("channel_values", {})
             msg_count = len(channel_values.get("messages", []))
 
-        return self.prompt_service.build_prompt(session_id, messages, msg_count)
+        return self.prompt_service.build_prompt(session_id, user_message, msg_count)
 
     async def aquery(self, session_id: str, messages: str):
         self.reset_metadata()
@@ -184,14 +194,14 @@ class MCPContext:
         """
         try:
             messages = response.get("messages", [])
-            logger.info(f"Extracting from {len(messages)} messages")
+            logger.debug(f"Extracting from {len(messages)} messages")
 
             for message in messages:
-                logger.info(f"Message type: {getattr(message, 'type', 'unknown')}")
+                logger.debug(f"Message type: {getattr(message, 'type', 'unknown')}")
 
                 if hasattr(message, "type") and message.type == "tool":
                     self.query_metadata["tool_calls_count"] += 1
-                    logger.info(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
+                    logger.debug(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
 
                 elif hasattr(message, "type") and message.type == "ai":
                     if hasattr(message, "tool_calls") and message.tool_calls:
@@ -201,7 +211,7 @@ class MCPContext:
                         except Exception:
                             tc_len = 0
                         self.query_metadata["tool_calls_count"] += tc_len
-                        logger.info(f"Found {tc_len} tool calls in AI message")
+                        logger.debug(f"Found {tc_len} tool calls in AI message")
 
                         for tool_call in tool_calls:
                             call_name = None
@@ -280,12 +290,12 @@ class MCPContext:
                                         if q and q not in self.query_metadata["queries_executed"]:
                                             self.query_metadata["queries_executed"].append(q)
                                             captured_any_query_for_call = True
-                                            logger.info(f"Captured query: {q[:160]}...")
+                                            logger.debug(f"Captured query: {q[:160]}...")
 
                                 if captured_any_query_for_call and inferred_db:
                                     self.query_metadata["databases_accessed"].add(inferred_db)
 
-            logger.info(f"Final metadata: {self.query_metadata}")
+            logger.debug(f"Final metadata: {self.query_metadata}")
 
         except Exception as e:
             logger.error(f"Error extracting tool calls: {e}")
@@ -295,7 +305,7 @@ class MCPContext:
 
     @staticmethod
     def create_config(session_id):
-        return {"configurable": {"thread_id": f"{session_id}"}}
+        return {"configurable": {"thread_id": f"{session_id}", "checkpoint_ns": ""}}
 
     async def get_chat_history(self, session_id):
         config = self.create_config(session_id)

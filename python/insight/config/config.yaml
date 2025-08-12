@@ -129,6 +129,23 @@ llm:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
     mcp_mariadb_url: http://mc-observability-mcp-mariadb:8001/sse
     mcp_influxdb_url: http://mc-observability-mcp-influxdb:8002/sse
+  chat_summarization:
+    max_tokens: 256
+    max_tokens_before_summary: 256
+    summary_prompt: |
+      The following is a conversation related to log analysis and system monitoring. 
+      Please summarize this conversation in Korean concisely and accurately.
+
+      Summary Instructions:
+      1. Include only key information: user's intention to ask questions, systems/services to be analyzed, issues or 
+      outcomes found
+      2. Maintain technical details: important technical information such as log patterns, error messages, 
+      metric figures, time ranges, etc
+      3. Preserve context: specify association if previous analysis results or setting changes
+      4. Remove unnecessary greetings, repeated explanations, and general advice
+      5. Briefly mention if there is any work in progress or next steps
+
+      Based on the conversation, write a summary that contains only the core of the log analysis session.
 
 log_analysis:
   system_prompt_first: |
