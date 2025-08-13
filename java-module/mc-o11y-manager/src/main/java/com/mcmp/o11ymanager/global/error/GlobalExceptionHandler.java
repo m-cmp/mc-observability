@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.enums.ResponseCode;
 import com.mcmp.o11ymanager.exception.agent.AgentStatusException;
 import com.mcmp.o11ymanager.exception.config.ConfigInitException;
 import com.mcmp.o11ymanager.exception.host.*;
+import com.mcmp.o11ymanager.exception.log.LokiTimeRangeExceededException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -124,6 +125,14 @@ public class GlobalExceptionHandler {
       HostAgentTaskProcessingException e) {
     String requestId = e.getRequestId();
     log.error("RequestID: {}, Host Agent Task Processing Exception: {}", requestId, e.getMessage());
+    return ErrorResponse.of(e.getRequestId(), ResponseCode.BAD_REQUEST, e.getMessage());
+  }
+
+  @ExceptionHandler(LokiTimeRangeExceededException.class)
+  protected ResponseEntity<ErrorResponse> handleLokiTimeRangeExceededException(
+      LokiTimeRangeExceededException e) {
+    String requestId = e.getRequestId();
+    log.error("RequestID: {}, Loki Time Range Exceeded Exception: {}", requestId, e.getMessage());
     return ErrorResponse.of(e.getRequestId(), ResponseCode.BAD_REQUEST, e.getMessage());
   }
 
