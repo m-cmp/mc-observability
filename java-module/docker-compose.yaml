@@ -24,6 +24,7 @@ services:
       mc-observability-infra:
         condition: service_healthy
     environment:
+      - JAVA_TOOL_OPTIONS=-javaagent:/config/otel/opentelemetry-javaagent.jar -XX:-UseContainerSupport
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
       - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
@@ -31,6 +32,38 @@ services:
       - SPIDER_ID=${SPIDER_ID:-}
       - SPIDER_PW=${SPIDER_PW:-}
       - INSIGHT_URL=http://mc-observability-insight:9001
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mc-observability-maria:3306/mc_observability
+      - SPRING_DATASOURCE_USERNAME=mc-agent
+      - SPRING_DATASOURCE_PASSWORD=mc-agent
+     # --- otel options ---
+      # ===== include/exclude span  =====
+      - OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED=false
+#      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
+#      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
+
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-o11y-manager}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_TRACES_EXPORTER=none
+#      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+#      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
+
+
+
+      # ===== disable auto otel instrumentation =====
+#      - OTEL_INSTRUMENTATION_KAFKA_ENABLED=false
+#      - OTEL_INSTRUMENTATION_RABBITMQ_ENABLED=false
+#      - OTEL_INSTRUMENTATION_LETTUCE_ENABLED=false
+#      - OTEL_INSTRUMENTATION_JEDIS_ENABLED=false
+#      - OTEL_INSTRUMENTATION_REDISSON_ENABLED=false
+#      - OTEL_INSTRUMENTATION_MONGO_ENABLED=false
+#      - OTEL_INSTRUMENTATION_GRPC_ENABLED=false
+#      - OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED=false
+#      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
+      - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
+#      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
+
+
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
@@ -446,6 +479,8 @@ services:
     networks:
       - internal_network
       - external_network
+    environment:
+      - INFLUXDB_URL=http://172.17.0.1:8086
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
