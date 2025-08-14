@@ -239,6 +239,27 @@ CREATE TABLE `mc_o11y_insight_chat_session` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 
+CREATE DATABASE IF NOT EXISTS o11y_alert CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE o11y_alert;
+
+CREATE TABLE IF NOT EXISTS trigger_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT "아이디",
+    starts_at        DATETIME(6)  NULL COMMENT "알림 평가 시작 시간",
+    aggregation_type VARCHAR(255) NULL COMMENT "집계 방식 (e.g. avg, max)",
+    alert_level      VARCHAR(255) NULL COMMENT "알림 심각도 (info | warning | critical)",
+    hold_duration    VARCHAR(255) NULL COMMENT "조건 유지 시간",
+    vm_id            VARCHAR(255) NULL COMMENT "VM 아이디",
+    mci_id           VARCHAR(255) NULL COMMENT "MCI 아이디",
+    namespace_id     VARCHAR(255) NULL COMMENT "NS 아이디",
+    repeat_interval  VARCHAR(255) NULL COMMENT "동일 조건 유지 시, 반복 발송 주기",
+    resource_type    VARCHAR(255) NULL COMMENT "자원 종류 (cpu | mem | disk)",
+    resource_usage   VARCHAR(255) NULL COMMENT "자원 사용량",
+    status           VARCHAR(255) NULL COMMENT "알림 상태 (firing, resolved)",
+    threshold        VARCHAR(255) NULL COMMENT "심각도에 대한 임계치 값",
+    trigger_title    VARCHAR(255) NULL COMMENT "알림 정책 제목"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
