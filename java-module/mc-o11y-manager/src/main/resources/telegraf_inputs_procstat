@@ -1,5 +1,5 @@
 [[inputs.procstat]]
-  properties = ["cpu", "memory"]
+  properties = ["cmp_top10cpumemory"]
   tag_with = ["pid", "user"]
   fieldinclude = ["cpu_usage", "memory_usage"]
 
