@@ -36,6 +36,8 @@ public class TargetEntity {
   @Id
   private String targetId;
 
+  private int influxSeq;
+
   @Column(nullable = false)
   private String name;
 
@@ -57,4 +59,5 @@ public class TargetEntity {
   private AgentServiceStatus monitoringServiceStatus;
 
   private AgentServiceStatus logServiceStatus;
+
 }

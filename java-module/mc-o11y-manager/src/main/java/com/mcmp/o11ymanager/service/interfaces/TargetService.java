@@ -19,7 +19,7 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq);
 
   TargetDTO put(String nsId, String mciId, String targetId, TargetRequestDTO dto);
 

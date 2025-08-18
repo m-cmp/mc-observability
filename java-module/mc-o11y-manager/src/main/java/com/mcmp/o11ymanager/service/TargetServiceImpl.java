@@ -50,7 +50,7 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto) {
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq) {
     TargetEntity target = TargetEntity.builder()
         .nsId(nsId)
         .mciId(mciId)
@@ -60,6 +60,7 @@ public class TargetServiceImpl implements TargetService {
         .nsId(nsId)
         .mciId(mciId)
         .targetStatus(targetStatus)
+        .influxSeq(influxSeq)
         .build();
 
     TargetEntity savedTarget = targetJpaRepository.save(target);
@@ -210,6 +211,7 @@ public class TargetServiceImpl implements TargetService {
 
     log.info("[TargetService] Log Service Status {}", target);
   }
+
 }
 
 

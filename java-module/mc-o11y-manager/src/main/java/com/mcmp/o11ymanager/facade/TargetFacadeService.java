@@ -8,6 +8,7 @@ import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.ArrayList;
@@ -31,9 +32,9 @@ public class TargetFacadeService {
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
+  private final InfluxDbService influxDbService;
 
 
-  @Transactional
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
 
     TargetDTO savedTarget;
@@ -41,11 +42,15 @@ public class TargetFacadeService {
         ? TargetStatus.RUNNING
         : TargetStatus.FAILED;
 
-    if (status == TargetStatus.RUNNING) {
-      savedTarget = targetService.post(nsId, mciId, targetId, status, dto);
-    } else {
+    if (status != TargetStatus.RUNNING) {
       throw new RuntimeException("FAILED TO CONNECT VM");
     }
+
+    int influxNo = influxDbService.resolveInfluxDb(nsId, mciId);
+
+    savedTarget = targetService.post(nsId, mciId, targetId, status, dto, influxNo);
+    log.info("===========================================Target {} posted=======================================", savedTarget);
+
 
     targetService.updateMonitoringAgentTaskStatusAndTaskId(savedTarget.getNsId(),
         savedTarget.getMciId(), savedTarget.getTargetId(), TargetAgentTaskStatus.IDLE, "");
