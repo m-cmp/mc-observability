@@ -1,6 +1,6 @@
 [[inputs.procstat]]
   properties = ["cpu", "memory"]
-  tag_with = ["user"]
+  tag_with = ["pid", "user"]
   fieldinclude = ["cpu_usage", "memory_usage"]
 
   [[inputs.procstat.filter]]
