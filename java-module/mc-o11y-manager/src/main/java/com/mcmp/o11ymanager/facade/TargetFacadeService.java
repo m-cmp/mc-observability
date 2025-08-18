@@ -46,7 +46,14 @@ public class TargetFacadeService {
       throw new RuntimeException("FAILED TO CONNECT VM");
     }
 
+    // select influx
     int influxNo = influxDbService.resolveInfluxDb(nsId, mciId);
+    try {
+      influxNo = influxDbService.getInflux(nsId, mciId);
+    } catch (IllegalArgumentException | IllegalStateException e) {
+      influxNo = influxDbService.resolveInfluxDb(nsId, mciId);
+    }
+
 
     savedTarget = targetService.post(nsId, mciId, targetId, status, dto, influxNo);
     log.info("===========================================Target {} posted=======================================", savedTarget);
