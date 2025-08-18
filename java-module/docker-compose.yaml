@@ -35,33 +35,33 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mc-observability-maria:3306/mc_observability
       - SPRING_DATASOURCE_USERNAME=mc-agent
       - SPRING_DATASOURCE_PASSWORD=mc-agent
-     # --- otel options ---
+      # --- otel options ---
       # ===== include/exclude span  =====
       - OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED=false
-#      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
-#      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
+      #      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
+      #      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
 
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-o11y-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=none
-#      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-#      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
+      #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+      #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
 
 
 
       # ===== disable auto otel instrumentation =====
-#      - OTEL_INSTRUMENTATION_KAFKA_ENABLED=false
-#      - OTEL_INSTRUMENTATION_RABBITMQ_ENABLED=false
-#      - OTEL_INSTRUMENTATION_LETTUCE_ENABLED=false
-#      - OTEL_INSTRUMENTATION_JEDIS_ENABLED=false
-#      - OTEL_INSTRUMENTATION_REDISSON_ENABLED=false
-#      - OTEL_INSTRUMENTATION_MONGO_ENABLED=false
-#      - OTEL_INSTRUMENTATION_GRPC_ENABLED=false
-#      - OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED=false
-#      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_KAFKA_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_RABBITMQ_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_LETTUCE_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_JEDIS_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_REDISSON_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_MONGO_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_GRPC_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED=false
+      #      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
       - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
-#      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
+    #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
 
 
     volumes:
@@ -122,7 +122,7 @@ services:
       - internal_network
       - external_network
     ports:
-      - 3307:3306
+      - 3306:3306
     volumes:
       - /docker/mariadb/etc/mysql/conf.d:/etc/mysql/conf.d:ro
       - /docker/mariadb/var/lib/mysql:/var/lib/mysql
@@ -316,93 +316,29 @@ services:
       retries: 3
       start_period: 10s
 
-
-  influxdb-meta-01:
-    image: chengshiwen/influxdb:1.8.11-c1.2.0-meta
-    container_name: influxdb-meta-01
-    hostname: influxdb-meta-01
-    restart: unless-stopped
-    networks:
-      - internal_network
-    volumes:
-      - /docker/influxdb-cluster/meta01:/var/lib/influxdb
-      - /docker/influxdb-cluster/meta01-conf:/etc/influxdb
-
-  influxdb-meta-02:
-    image: chengshiwen/influxdb:1.8.11-c1.2.0-meta
-    container_name: influxdb-meta-02
-    hostname: influxdb-meta-02
-    restart: unless-stopped
-    networks:
-      - internal_network
-    volumes:
-      - /docker/influxdb-cluster/meta02:/var/lib/influxdb
-      - /docker/influxdb-cluster/meta02-conf:/etc/influxdb
-
-  influxdb-meta-03:
-    image: chengshiwen/influxdb:1.8.11-c1.2.0-meta
-    container_name: influxdb-meta-03
-    hostname: influxdb-meta-03
-    restart: unless-stopped
-    networks:
-      - internal_network
-    volumes:
-      - /docker/influxdb-cluster/meta03:/var/lib/influxdb
-      - /docker/influxdb-cluster/meta03-conf:/etc/influxdb
-
-  influxdb-data-01:
-    image: chengshiwen/influxdb:1.8.11-c1.2.0-data
-    container_name: influxdb-data-01
-    hostname: influxdb-data-01
-    restart: unless-stopped
+  mc-observability-influx:
+    image: influxdb:1.11.8
+    container_name: mc-observability-influx
+    restart: always
     networks:
       - internal_network
       - external_network
     ports:
-      - 8186:8086
+      - 8086:8086
+    environment:
+      - INFLUXDB_USER=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DB=mc-observability
     volumes:
-      - /docker/influxdb-cluster/data01:/var/lib/influxdb
-      - /docker/influxdb-cluster/data01-conf:/etc/influxdb
-
-  influxdb-data-02:
-    image: chengshiwen/influxdb:1.8.11-c1.2.0-data
-    container_name: influxdb-data-02
-    hostname: influxdb-data-02
-    restart: unless-stopped
-    networks:
-      - internal_network
-      - external_network
-    ports:
-      - 8286:8086
-    volumes:
-      - /docker/influxdb-cluster/data02:/var/lib/influxdb
-      - /docker/influxdb-cluster/data02-conf:/etc/influxdb
-
-#  mc-observability-influx:
-#    image: influxdb:1.11.8
-#    container_name: mc-observability-influx
-#    restart: always
-#    networks:
-#      - internal_network
-#      - external_network
-#    ports:
-#      - 8086:8086
-#    environment:
-#      - INFLUXDB_USER=mc-agent
-#      - INFLUXDB_PASSWORD=mc-agent
-#      - INFLUXDB_DB=mc-observability
-#    volumes:
-#      - /docker/influxdb/config:/etc/influxdb
-#      - /docker/influxdb/var/lib/influxdb:/root/.influxdb
-#      - ./influxdb_init:/docker-entrypoint-initdb.d
-#    healthcheck:
-#      start_period: 30s
-#      test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
-#      interval: 10s
-#      timeout: 10s
-#      retries: 30
-
-
+      - /docker/influxdb/config:/etc/influxdb
+      - /docker/influxdb/var/lib/influxdb:/root/.influxdb
+      - ./influxdb_init:/docker-entrypoint-initdb.d
+    healthcheck:
+      start_period: 30s
+      test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-loki:
     image: grafana/loki:3.4.2
@@ -544,7 +480,7 @@ services:
       - internal_network
       - external_network
     environment:
-      - INFLUXDB_URL=http://influx-lb:8086
+      - INFLUXDB_URL=http://172.17.0.1:8086
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
@@ -597,8 +533,8 @@ services:
 
         airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type influxdb --conn-host influx-lb --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
-      
+        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
+
         # Reload & Run dags
         airflow dags reserialize
         airflow dags unpause anomaly_detection
@@ -635,21 +571,3 @@ services:
     networks:
       - internal_network
       - external_network
-
-
-  influx-lb:
-    image: haproxy:2.9
-    container_name: influx-lb
-    restart: unless-stopped
-    networks:
-      - internal_network
-      - external_network
-    ports:
-      - "18086:8086"
-    volumes:
-      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-    healthcheck:
-      test: [ "CMD-SHELL", "printf '' | nc -z 127.0.0.1 8086" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
