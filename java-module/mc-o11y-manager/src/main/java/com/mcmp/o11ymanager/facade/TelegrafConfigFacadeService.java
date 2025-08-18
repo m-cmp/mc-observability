@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.facade;
 
 import com.mcmp.o11ymanager.service.interfaces.FileService;
 
+import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,20 +18,10 @@ public class TelegrafConfigFacadeService {
 
   private final FileService fileService;
 
+  private final InfluxDbService influxDbService;
+
   @Value("${deploy.site-code}")
   private String deploySiteCode;
-
-  @Value("${influxdb.url}")
-  private String influxDBURL;
-
-  @Value("${influxdb.database}")
-  private String influxDBDatabase;
-
-  @Value("${influxdb.username}")
-  private String influxDBUsername;
-
-  @Value("${influxdb.password}")
-  private String influxDBPassword;
 
   private final ClassPathResource telegrafConfigGlobal = new ClassPathResource("telegraf_global");
   private final ClassPathResource telegrafConfigAgent = new ClassPathResource("telegraf_agent");
@@ -222,6 +213,8 @@ public class TelegrafConfigFacadeService {
 
     fileService.appendConfig(telegrafConfigOutputsInfluxDB, sb);
 
+    var out = influxDbService.resolveForTarget(nsId, mciId);
+
     String finalNsId = (nsId != null) ? nsId : "";
     log.debug(finalNsId);
 
@@ -231,19 +224,14 @@ public class TelegrafConfigFacadeService {
     String finalTargetId = (targetId != null) ? targetId : "";
     log.debug(finalTargetId);
 
-    String finalInfluxDBURL = (influxDBURL != null) ? influxDBURL : "";
-    String finalInfluxDBDatabase = (influxDBDatabase != null) ? influxDBDatabase : "";
-    String finalInfluxDBUsername = (influxDBUsername != null) ? influxDBUsername : "";
-    String finalInfluxDBPassword = (influxDBPassword != null) ? influxDBPassword : "";
-
     return sb.toString()
         .replace("@SITE_CODE", deploySiteCode)
         .replace("@NS_ID", finalNsId)
         .replace("@MCI_ID", finalMciId)
         .replace("@TARGET_ID", finalTargetId)
-        .replace("@URL", finalInfluxDBURL)
-        .replace("@DATABASE", finalInfluxDBDatabase)
-        .replace("@USERNAME", finalInfluxDBUsername)
-        .replace("@PASSWORD", finalInfluxDBPassword);
+        .replace("@URL", out.url())
+        .replace("@DATABASE", out.database())
+        .replace("@USERNAME", out.username())
+        .replace("@PASSWORD", out.password());
   }
 }
