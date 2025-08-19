@@ -18,7 +18,7 @@ public class TelegrafConfigFacadeService {
 
   private final FileService fileService;
 
-  private final InfluxDbService influxDbService;
+  private final InfluxDbFacadeService influxDbFacadeService;
 
   @Value("${deploy.site-code}")
   private String deploySiteCode;
@@ -213,7 +213,7 @@ public class TelegrafConfigFacadeService {
 
     fileService.appendConfig(telegrafConfigOutputsInfluxDB, sb);
 
-    var out = influxDbService.resolveForTarget(nsId, mciId);
+    var out = influxDbFacadeService.resolveForTarget(nsId, mciId);
 
     String finalNsId = (nsId != null) ? nsId : "";
     log.debug(finalNsId);

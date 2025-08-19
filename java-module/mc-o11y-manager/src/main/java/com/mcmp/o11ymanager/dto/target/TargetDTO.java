@@ -28,6 +28,9 @@ public class TargetDTO {
 
   private String description;
 
+  @JsonProperty("influx_seq")
+  private int influxSeq;
+
   @JsonProperty("target_status")
   private TargetStatus targetStatus;
 
@@ -60,10 +63,13 @@ public class TargetDTO {
   private String mciId;
 
 
+
   public static TargetDTO fromEntity(com.mcmp.o11ymanager.entity.TargetEntity entity) {
     return TargetDTO.builder()
         .targetId(entity.getTargetId())
         .name(entity.getName())
+        .description(entity.getDescription())
+        .influxSeq(entity.getInfluxSeq())
         .targetStatus(entity.getTargetStatus())
         .description(entity.getDescription())
         .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
@@ -79,6 +85,7 @@ public class TargetDTO {
     return TargetEntity.builder()
         .targetId(this.getTargetId())
         .name(this.name)
+        .influxSeq(this.getInfluxSeq())
         .targetStatus(this.getTargetStatus())
         .description(this.description)
         .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
