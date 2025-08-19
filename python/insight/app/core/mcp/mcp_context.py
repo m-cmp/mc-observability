@@ -1,15 +1,24 @@
 # from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
 from datetime import datetime, UTC
 import aiosqlite
+from typing import Any, Coroutine
 from langchain_core.messages.utils import count_tokens_approximately
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_mcp_adapters.tools import load_mcp_tools
-from langmem.short_term import SummarizationNode
+from langmem.short_term import SummarizationNode, RunningSummary
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
 from config.ConfigManager import ConfigManager
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.graph import MessagesState
+# 초기 요약용 프롬프트 템플릿 - 전체 대화 포괄적 요약
+from langchain_core.prompts import MessagesPlaceholder, HumanMessagePromptTemplate
+from langchain_core.prompts.prompt import PromptTemplate
+
+
+class State(MessagesState):
+    context: dict[str, RunningSummary]
 
 
 class MCPContext:
@@ -65,7 +74,7 @@ class MCPContext:
             # 기존 방식으로 Agent 바인딩 (요약 없음)
             self.agent = self.llm_client.bind_tools(self.tools, self.memory)
 
-    async def _build_prompt(self, session_id: str, messages: str):
+    async def _build_prompt(self, session_id: str, messages: str) -> list[dict[str, str]]:
         history = await self.get_chat_history(session_id)
         msg_count = 0
         if history:
@@ -85,14 +94,44 @@ class MCPContext:
             system_prompt = system_prompt_default.format(current_time=current_time)
 
         return [
-            {"role": "system", "content": system_prompt},
+            {"role": "system", "content": f"{system_prompt}"},
             {"role": "user", "content": messages}
         ]
 
     async def aquery(self, session_id, messages):
+        history_tokens = 0
+        # 대화 히스토리 확인
+        history = await self.get_chat_history(session_id)
+        if history:
+            channel_values = history.get('channel_values', {})
+            existing_messages = channel_values.get('messages', [])
+            print(f"📚 [CHAT HISTORY] 기존 메시지 수: {len(existing_messages)}")
+            
+            # 기존 메시지들의 토큰 수 계산
+            if existing_messages:
+                history_tokens = count_tokens_approximately(existing_messages)
+                print(f"🔢 [TOKEN COUNT] 기존 대화 토큰 수: {history_tokens}")
+        else:
+            print("📚 [CHAT HISTORY] 새로운 대화 시작")
+            
         config = self.create_config(session_id)
+        # prompt_sum = await self._get_summary_from_state(config=config)
+        # print(prompt_sum)
+        # prompt = await self._build_prompt(session_id, messages, prompt_sum)
         prompt = await self._build_prompt(session_id, messages)
+        
+        # 프롬프트 토큰 수 계산
+        prompt_tokens = count_tokens_approximately(prompt)
+        print(f"🔢 [TOKEN COUNT] 현재 프롬프트 토큰 수: {prompt_tokens}")
+        
+        # 설정된 임계값과 비교
+        summarization_config = self.config.get_chat_summarization_config()
+        max_tokens_before_summary = summarization_config.get('max_tokens_before_summary', 256)
+        print(f"⚠️  [THRESHOLD] 요약 임계값: {max_tokens_before_summary}")
+
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
+
+        
         return response
 
     @staticmethod
@@ -108,21 +147,26 @@ class MCPContext:
         """요약 노드 설정 (로그 분석 최적화)"""
         # config에서 요약 설정 가져오기
         summarization_config = self.config.get_chat_summarization_config()
-        
-        # 요약용 프롬프트 체인 생성
-        summary_prompt = ChatPromptTemplate.from_messages([
-            ("system", summarization_config["summary_prompt"]),
-            ("user", "대화 내용:\n{conversation}")
-        ])
-        
-        # 프롬프트 + LLM + 파서 체인
-        summarization_model = summary_prompt | self.llm_client.llm.bind(max_tokens=128)
 
+        # 테스트 파일과 동일한 방식으로 요약 모델 설정
+        summarization_model = self.llm_client.llm.bind(max_tokens=256)
+
+        # 테스트 파일의 커스텀 프롬프트 패턴 적용
+        custom_initial_prompt = ChatPromptTemplate.from_messages([
+            MessagesPlaceholder(variable_name="messages", optional=True),
+            HumanMessagePromptTemplate(prompt=PromptTemplate(
+                input_variables=[],
+                template="Please create a comprehensive summary of ALL the conversation messages above, including names, topics discussed, and key details. Don't omit any important information from the beginning of the conversation."
+            ))
+        ])
+
+        # SummarizationNode 설정 - llm_input_messages 키로 LLM 전용 메시지 전달 (원본 보존)
         self.summarization_node = SummarizationNode(
             token_counter=count_tokens_approximately,
             model=summarization_model,
-            max_tokens=summarization_config["max_tokens"],
-            max_tokens_before_summary=summarization_config["max_tokens_before_summary"],
-            max_summary_tokens=128,
-            output_messages_key="llm_input_messages",
+            max_tokens=summarization_config.get("max_tokens"),
+            max_tokens_before_summary=summarization_config.get("max_tokens_before_summary"),
+            max_summary_tokens=256,
+            initial_summary_prompt=custom_initial_prompt,
+            output_messages_key="llm_input_messages"
         )
