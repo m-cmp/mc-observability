@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_slack` (
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_alert_slack:~0 rows (대략적) 내보내기
 
 -- 테이블 mc_observability.mc_o11y_trigger_history 구조 내보내기
-CREATE TABLE CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_history` (
+CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_history` (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT "아이디",
     starts_at        DATETIME(6)  NULL COMMENT "알림 평가 시작 시간",
     aggregation_type VARCHAR(255) NULL COMMENT "집계 방식 (e.g. avg, max)",
