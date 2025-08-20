@@ -27,12 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class TargetFacadeService {
 
 
+  private final InfluxDbService influxDbService;
   private ExecutorService executor;
 
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
-  private final InfluxDbService influxDbService;
+  private final InfluxDbFacadeService influxDbFacadeService;
 
 
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
@@ -47,15 +48,9 @@ public class TargetFacadeService {
     }
 
     // select influx
-    int influxNo = influxDbService.resolveInfluxDb(nsId, mciId);
-    try {
-      influxNo = influxDbService.getInflux(nsId, mciId);
-    } catch (IllegalArgumentException | IllegalStateException e) {
-      influxNo = influxDbService.resolveInfluxDb(nsId, mciId);
-    }
+    int influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
 
-
-    savedTarget = targetService.post(nsId, mciId, targetId, status, dto, influxNo);
+    savedTarget = targetService.post(nsId, mciId, targetId, status, dto, influxSeq);
     log.info("===========================================Target {} posted=======================================", savedTarget);
 
 

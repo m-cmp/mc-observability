@@ -5,7 +5,7 @@ FLUSH PRIVILEGES;
 
 CREATE DATABASE IF NOT EXISTS mc_airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 GRANT ALL PRIVILEGES ON mc_airflow.* TO 'mc-agent'@'%';
-FLUSH PRIVILEGES;
+FLUSH PRIVILEGES;ㅋ``
 
 USE mc_observability;
 
