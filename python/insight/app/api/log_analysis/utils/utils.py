@@ -62,6 +62,13 @@ class LogAnalysisService:
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session Not Found")
 
+    def delete_all_chat_sessions(self):
+        sessions = self.repo.delete_all_sessions()
+        if sessions:
+            return [self.map_session_to_res(session) for session in sessions]
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No Sessions Found")
+
     async def get_chat_session_history(self, path: SessionIdPath):
         session_id = path.sessionId
         session_info = self.repo.get_session_by_id(session_id)
