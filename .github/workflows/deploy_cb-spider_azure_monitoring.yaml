@@ -14,7 +14,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - feat/refactor
     tags:
       - "v*.*.*"
     paths-ignore:
