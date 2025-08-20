@@ -229,9 +229,9 @@ public class TelegrafConfigFacadeService {
         .replace("@NS_ID", finalNsId)
         .replace("@MCI_ID", finalMciId)
         .replace("@TARGET_ID", finalTargetId)
-        .replace("@URL", out.url())
-        .replace("@DATABASE", out.database())
-        .replace("@USERNAME", out.username())
-        .replace("@PASSWORD", out.password());
+        .replace("@URL", out.getUrl())
+        .replace("@DATABASE", out.getDatabase())
+        .replace("@USERNAME", out.getUsername())
+        .replace("@PASSWORD", out.getPassword());
   }
 }

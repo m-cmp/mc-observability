@@ -25,11 +25,11 @@ public class FieldDTO {
   @Getter
   @Setter
   public static class FieldInfo {
-    @JsonProperty("field_key")
-    private String fieldKey;
+    @JsonProperty("key")
+    private String key;
 
-    @JsonProperty("field_type")
-    private String fieldType;
+    @JsonProperty("type")
+    private String type;
   }
 
 }

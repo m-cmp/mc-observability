@@ -27,13 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class TargetFacadeService {
 
 
-  private final InfluxDbService influxDbService;
+
   private ExecutorService executor;
 
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
-  private final InfluxDbFacadeService influxDbFacadeService;
+  private final InfluxDbService influxDbService;
 
 
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {

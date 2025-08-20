@@ -14,6 +14,7 @@ import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -211,6 +212,15 @@ public class TargetServiceImpl implements TargetService {
 
     log.info("[TargetService] Log Service Status {}", target);
   }
+
+  @Override
+  @Transactional(readOnly = true)
+  public int findInfluxSeqByNsMci(String nsId, String mciId) {
+    return targetJpaRepository.findInfluxSeqByNsIdAndMciId(nsId, mciId)
+        .orElseThrow(() ->
+            new IllegalStateException("influxSeq not assigned: ns=" + nsId + ", mci=" + mciId));
+  }
+
 
 }
 
