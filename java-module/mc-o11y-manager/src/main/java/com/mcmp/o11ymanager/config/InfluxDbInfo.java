@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.entity;
+package com.mcmp.o11ymanager.config;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

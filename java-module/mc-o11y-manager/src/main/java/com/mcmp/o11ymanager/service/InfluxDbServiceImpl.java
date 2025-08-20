@@ -1,10 +1,22 @@
 package com.mcmp.o11ymanager.service;
 
-import com.mcmp.o11ymanager.entity.InfluxDbInfo;
+import com.mcmp.o11ymanager.config.InfluxDbInfo;
+import com.mcmp.o11ymanager.dto.influx.FieldDTO;
+import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
+import com.mcmp.o11ymanager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.global.annotation.Base64Encode;
+import com.mcmp.o11ymanager.global.target.ResBody;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.influxdb.InfluxDB;
+import org.influxdb.InfluxDBFactory;
+import org.influxdb.dto.Query;
+import org.influxdb.dto.QueryResult;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,10 +26,265 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
 
   private final InfluxDbInfo influxDbInfo;
-  private final TargetJpaRepository targetJpaRepository;
 
   private static final String NS_ID = "ns_id";
   private static final String MCI_ID = "mci_id";
+
+
+  private List<InfluxDbInfo.Server> rawServers() {
+    var servers = rawServers();
+    if (servers == null) return List.of();
+
+    return servers.stream()
+        .map(s -> new InfluxDbInfo.Server(
+            s.url(),
+            s.database(),
+            s.username(),
+            s.password()
+        ))
+        .toList();
+  }
+
+
+
+  @Override
+  public ResBody<List<TagDTO>> getTags() {
+    var servers = rawServers();
+    ResBody<List<TagDTO>> res = new ResBody<>();
+    if (servers == null || servers.isEmpty()) {
+      res.setData(List.of());
+      return res;
+    }
+
+
+    Map<String, Set<String>> tagsByMeasurement = new java.util.LinkedHashMap<>();
+
+    for (var s : servers) {
+      try (var influx = org.influxdb.InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
+        var qr = influx.query(new org.influxdb.dto.Query("SHOW TAG KEYS", s.database()));
+        if (qr == null || hasError(qr)) continue;
+
+        var results = qr.getResults();
+        if (results == null || results.isEmpty()) continue;
+
+        var seriesList = results.get(0).getSeries();
+        if (seriesList == null || seriesList.isEmpty()) continue;
+
+        for (var series : seriesList) {
+          String measurement = series.getName(); // measurement 이름
+          var cols = series.getColumns();
+          int iKey = cols.indexOf("tagKey");
+          if (iKey < 0) continue;
+
+          var set = tagsByMeasurement.computeIfAbsent(measurement, k -> new java.util.LinkedHashSet<>());
+          for (var row : series.getValues()) {
+            Object v = (iKey < row.size()) ? row.get(iKey) : null;
+            if (v != null) set.add(String.valueOf(v));
+          }
+        }
+      } catch (Exception e) {
+        log.warn("[getTags] query failed url={}, db={}, err={}", s.url(), s.database(), e.toString());
+      }
+    }
+
+
+    List<TagDTO> out = new java.util.ArrayList<>(tagsByMeasurement.size());
+    for (var e : tagsByMeasurement.entrySet()) {
+      TagDTO dto = new TagDTO();
+      dto.setMeasurement(e.getKey());
+      dto.setTags(new java.util.ArrayList<>(e.getValue()));
+      out.add(dto);
+    }
+    res.setData(out);
+    return res;
+  }
+
+
+
+  @Override
+  public ResBody<List<FieldDTO>> getFields() {
+    var servers = influxDbInfo.servers();
+    ResBody<List<FieldDTO>> res = new ResBody<>();
+    if (servers == null || servers.isEmpty()) {
+      res.setData(List.of());
+      return res;
+    }
+
+    Map<String, java.util.Map<String, String>> fieldsByMeasurement = new java.util.LinkedHashMap<>();
+
+    for (var s : servers) {
+      try (var influx = org.influxdb.InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
+        var qr = influx.query(new org.influxdb.dto.Query("SHOW FIELD KEYS", s.database()));
+        if (qr == null || hasError(qr)) continue;
+
+        var results = qr.getResults();
+        if (results == null || results.isEmpty()) continue;
+
+        var seriesList = results.get(0).getSeries();
+        if (seriesList == null || seriesList.isEmpty()) continue;
+
+        for (var series : seriesList) {
+          String measurement = series.getName();
+          var cols = series.getColumns();
+          int iKey = cols.indexOf("fieldKey");
+          int iTyp = cols.indexOf("fieldType");
+          if (iKey < 0 || iTyp < 0) continue;
+
+          var map = fieldsByMeasurement.computeIfAbsent(measurement, k -> new java.util.LinkedHashMap<>());
+          for (var row : series.getValues()) {
+            Object k = (iKey < row.size()) ? row.get(iKey) : null;
+            Object t = (iTyp < row.size()) ? row.get(iTyp) : null;
+            if (k != null && t != null) {
+              map.putIfAbsent(String.valueOf(k), String.valueOf(t));
+            }
+          }
+        }
+      } catch (Exception e) {
+        log.warn("[getFields] query failed url={}, db={}, err={}", s.url(), s.database(), e.toString());
+      }
+    }
+
+    List<FieldDTO> out = new java.util.ArrayList<>(fieldsByMeasurement.size());
+    for (var e : fieldsByMeasurement.entrySet()) {
+      FieldDTO dto = new FieldDTO();
+      dto.setMeasurement(e.getKey());
+
+      List<FieldDTO.FieldInfo> fields = new java.util.ArrayList<>();
+      for (var fe : e.getValue().entrySet()) {
+        FieldDTO.FieldInfo fi = new FieldDTO.FieldInfo();
+        fi.setFieldKey(fe.getKey());
+        fi.setFieldType(fe.getValue()); // float|integer|string|boolean
+        fields.add(fi);
+      }
+      dto.setFields(fields);
+      out.add(dto);
+    }
+    res.setData(out);
+    return res;
+  }
+
+
+
+
+
+  @Override
+  public int resolveInfluxDb(String nsId, String mciId) {
+    var servers = rawServers();
+    if (servers == null || servers.isEmpty()) {
+      throw new IllegalStateException("influxdb.servers must contain at least 1 server");
+    }
+
+    log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, mciId, servers.size());
+
+    for (int i = 0; i < Math.min(2, servers.size()); i++) {
+      var s = servers.get(i);
+      if (!isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] idx={}, url={} PING FAIL -> skip", i, s.url());
+        continue;
+      }
+      if (existsTagCombination(s, nsId, mciId)) {
+        log.info("[INF-RESOLVE] found target combination at idx={}, url={}", i, s.url());
+        return i; // 0-based
+      }
+    }
+
+    for (int i = 0; i < Math.min(2, servers.size()); i++) {
+      var s = servers.get(i);
+      if (!isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] idx={}, url={} PING FAIL -> skip ns-only", i, s.url());
+        continue;
+      }
+      if (existsNsId(s, nsId)) {
+        log.info("[INF-RESOLVE] found nsId at idx={}, url={}", i, s.url());
+        return i; // 0-based
+      }
+    }
+
+    for (int i = 0; i < Math.min(2, servers.size()); i++){
+      var s = servers.get(i);
+      if (isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] fallback to first reachable idx={}, url={}", i, s.url());
+        return i; // 0-based
+      } else {
+        log.info("[INF-RESOLVE] idx={}, url={} PING FAIL -> skip fallback", i, s.url());
+      }
+    }
+
+    throw new IllegalStateException("no reachable influxdb candidates (ns=" + nsId + ", mci=" + mciId + ")");
+  }
+
+
+  @Override
+  @Base64Encode
+  public ResBody<List<InfluxDTO>> getList() {
+
+    var servers = rawServers();
+    List<InfluxDTO> list = new java.util.ArrayList<>();
+
+
+    if (servers != null) {
+      for (int i = 0; i < servers.size(); i++) {
+        var s = servers.get(i);
+
+        InfluxDTO dto = new InfluxDTO();
+        dto.setSeq(i);
+        dto.setUrl(s.url());
+        dto.setDatabase(s.database());
+        dto.setUsername(s.username());
+        dto.setPassword(s.password());
+        dto.setRetention_policy(fetchDefaultRp(s));
+
+        list.add(dto);
+      }
+    }
+
+
+    ResBody<List<InfluxDTO>> res = new ResBody<>();
+    res.setData(list);
+
+    return res;
+  }
+
+  @Override
+  public String fetchDefaultRp(InfluxDbInfo.Server s) {
+    String q = "SHOW RETENTION POLICIES ON \"" + s.database() + "\"";
+    try (var influx = org.influxdb.InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
+      var qr = influx.query(new org.influxdb.dto.Query(q, s.database()));
+      if (qr == null || hasError(qr)) return null;
+
+      var results = qr.getResults();
+      if (results == null || results.isEmpty()) return null;
+
+      var series = results.get(0).getSeries();
+      if (series == null || series.isEmpty()) return null;
+
+      var s0   = series.get(0);
+      var cols = s0.getColumns();
+      int iName = cols.indexOf("name");
+      int iDef  = cols.indexOf("default");
+
+      String rpName = null;
+      for (var row : s0.getValues()) {
+        Object defObj = (iDef >= 0 && iDef < row.size()) ? row.get(iDef) : null;
+        boolean isDefault = (defObj instanceof Boolean b) ? b
+            : defObj != null && Boolean.parseBoolean(String.valueOf(defObj));
+        if (isDefault) {
+          rpName = String.valueOf(row.get(iName));
+          break;
+        }
+      }
+
+      if (rpName == null && !s0.getValues().isEmpty()) {
+        rpName = String.valueOf(s0.getValues().get(0).get(iName));
+      }
+      return rpName;
+    } catch (Exception e) {
+      log.warn("[fetchDefaultRp] query failed url={}, db={}, err={}", s.url(), s.database(), e.toString());
+      return null;
+    }
+  }
+
+
 
   @Override
   public boolean isConnectedDb(InfluxDbInfo.Server s) {
@@ -33,183 +300,74 @@ public class InfluxDbServiceImpl implements InfluxDbService {
   }
 
 
-
-  /**
-   * 설계:
-   * 1) 모든 연결 가능한 서버에서 (nsId,mciId) 존재 여부 탐색 → 발견 시 그 인덱스 반환
-   * 2) 없으면 nsId 기준 cardinality(작을수록 선택) → 그 인덱스 반환
-   */
-  @Override
-  public int resolveInfluxDb(String nsId, String mciId) {
-    var servers = influxDbInfo.servers();
-    if (servers == null || servers.isEmpty()) {
-      throw new IllegalStateException("influxdb.servers must contain at least 1 server");
-    }
-
-    log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, mciId, servers.size());
-
-    // 1) 존재 여부 우선 탐색 (연결 가능한 서버만)
-    for (int i = 0; i < servers.size(); i++) {
-      var s = servers.get(i);
-      if (!isConnectedDb(s)) {
-        log.info("[INF-RESOLVE] idx={}, url={} PING FAIL -> skip", i, s.url());
-        continue;
-      }
-      if (existsTargetSeries(s, nsId, mciId)) {
-        log.info("[INF-RESOLVE] found existing series at idx={}, url={}", i, s.url());
-        return i; // 0-based
-      }
-    }
-
-    // 2) 없다면 nsId 기준 cardinality 최소 서버 선택
-    int bestIdx = -1;
-    long bestCard = Long.MAX_VALUE;
-
-    for (int i = 0; i < servers.size(); i++) {
-      var s = servers.get(i);
-      if (!isConnectedDb(s)) {
-        log.info("[INF-RESOLVE] idx={}, url={} PING FAIL -> skip for cardinality", i, s.url());
-        continue;
-      }
-      long card = countNsCardinality(s, nsId);
-      log.info("[INF-RESOLVE] idx={}, url={} nsCardinality={}", i, s.url(), card);
-      if (card < bestCard) {
-        bestCard = card;
-        bestIdx = i;
-      }
-    }
-
-    if (bestIdx < 0) {
-      throw new IllegalStateException("no reachable influxdb candidates (ns=" + nsId + ", mci=" + mciId + ")");
-    }
-
-    log.info("[INF-RESOLVE] final choice idx={}, url={}, nsCardinality={}", bestIdx, servers.get(bestIdx).url(), bestCard);
-    return bestIdx; // 0-based
-  }
-
-  @Override
-  public int getInflux(String nsId, String mciId) {
-    var t = targetJpaRepository.findByNsIdAndMciId(nsId, mciId)
-        .stream()
-        .findFirst()
-        .orElseThrow(() -> new IllegalArgumentException("Target not found: ns=" + nsId + ", mci=" + mciId));
-
-    Integer seq = t.getInfluxSeq();
-    if (seq == null) {
-      throw new IllegalStateException("influxSeq not assigned: ns=" + nsId + ", mci=" + mciId);
-    }
-    return seq; // 0-based
-  }
-
   @Override
   public InfluxDbInfo.Server resolveByNo(int influxNo) {
-    var servers = influxDbInfo.servers();
+    var servers = rawServers();
     if (servers == null) {
       throw new IllegalStateException("influxdb.servers not configured");
     }
-    // 0-based 인덱스 사용 (일관성)
+
     if (influxNo < 0 || influxNo >= servers.size()) {
       throw new IllegalStateException("invalid influx seq (0-based): " + influxNo);
     }
-    var s = servers.get(influxNo);
-    return new InfluxDbInfo.Server(
-        trimSlash(s.url()),
-        s.database(),
-        s.username(),
-        s.password()
-    );
+    return servers.get(influxNo);
   }
 
-  @Override
-  public InfluxDbInfo.Server resolveForTarget(String nsId, String mciId) {
-    int seq = getInflux(nsId, mciId);    // 0-based seq
-    return resolveByNo(seq);
-  }
 
-  // ======================== Influx 도우미 ========================
 
-  /**
-   * (nsId, mciId) 태그 조합을 가진 시리즈가 존재하는지 빠르게 확인.
-   * SHOW SERIES ... LIMIT 1
-   */
-  private boolean existsTargetSeries(InfluxDbInfo.Server s, String nsId, String mciId) {
-    String escNs = esc(nsId);
-    String escMci = esc(mciId);
 
-    String q = "SHOW SERIES ON \"" + s.database() + "\" "
-        + "WHERE \"" + NS_ID + "\"='" + escNs + "' AND \"" + MCI_ID + "\"='" + escMci + "' "
+  private boolean existsTagCombination(InfluxDbInfo.Server s, String nsId, String mciId) {
+    String q = "SHOW TAG VALUES ON \"" + s.database() + "\" "
+        + "WITH KEY=\"" + NS_ID + "\" "
+        + "WHERE \"" + NS_ID + "\"='" + esc(nsId) + "' AND \"" + MCI_ID + "\"='" + esc(mciId) + "' "
         + "LIMIT 1";
+    return hasResult(s, q);
+  }
 
-    try (var influx = org.influxdb.InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
-      var qr = influx.query(new org.influxdb.dto.Query(q, s.database()));
+
+  private boolean existsNsId(InfluxDbInfo.Server s, String nsId) {
+    String q = "SHOW TAG VALUES ON \"" + s.database() + "\" "
+        + "WITH KEY=\"" + NS_ID + "\" "
+        + "WHERE \"" + NS_ID + "\"='" + esc(nsId) + "' "
+        + "LIMIT 1";
+    return hasResult(s, q);
+  }
+
+
+
+  private boolean hasResult(InfluxDbInfo.Server s, String query) {
+    try (var influx = InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
+      var qr = influx.query(new Query(query, s.database()));
       if (qr == null || hasError(qr)) return false;
 
       var results = qr.getResults();
       if (results == null || results.isEmpty()) return false;
+
       var r0 = results.get(0);
       if (r0 == null || r0.getSeries() == null || r0.getSeries().isEmpty()) return false;
+
       var values = r0.getSeries().get(0).getValues();
-      return values != null && !values.isEmpty(); // 하나라도 있으면 존재
+      return values != null && !values.isEmpty(); // 여기만 true/false 판별
     } catch (Exception e) {
-      log.warn("[existsTargetSeries] query failed url={}, db={}, ns={}, mci={}, err={}",
-          s.url(), s.database(), nsId, mciId, e.toString());
+      log.warn("[hasResult] query failed url={}, db={}, q={}, err={}",
+          s.url(), s.database(), query, e.toString());
       return false;
     }
   }
 
-  /**
-   * 같은 nsId를 가진 전체 시리즈 카디널리티.
-   * 없거나 에러면 큰 값으로 보지 말고 0으로 처리할 수도 있는데,
-   * 운영 안전을 위해 여기선 에러 시 Long.MAX_VALUE 반환하여 선택에서 배제.
-   */
-  private long countNsCardinality(InfluxDbInfo.Server s, String nsId) {
-    String escNs = esc(nsId);
-    String q = "SHOW SERIES CARDINALITY ON \"" + s.database() + "\" "
-        + "WHERE \"" + NS_ID + "\"='" + escNs + "'";
 
-    try (var influx = org.influxdb.InfluxDBFactory.connect(s.url(), s.username(), s.password())) {
-      var qr = influx.query(new org.influxdb.dto.Query(q, s.database()));
-      if (qr == null || hasError(qr)) return Long.MAX_VALUE;
 
-      var results = qr.getResults();
-      if (results == null || results.isEmpty() || results.get(0) == null) return 0L;
-      var seriesList = results.get(0).getSeries();
-      if (seriesList == null || seriesList.isEmpty()) return 0L;
-
-      var values = seriesList.get(0).getValues();
-      if (values == null || values.isEmpty() || values.get(0) == null) return 0L;
-
-      var row = values.get(0);
-      Object val = row.get(row.size() - 1);
-      if (val == null) return 0L;
-
-      if (val instanceof Number num) return num.longValue();
-      try { return Long.parseLong(val.toString()); }
-      catch (NumberFormatException e) { return Long.MAX_VALUE; }
-    } catch (Exception e) {
-      log.warn("[countNsCardinality] query failed url={}, db={}, ns={}, err={}",
-          s.url(), s.database(), nsId, e.toString());
-      return Long.MAX_VALUE;
-    }
-  }
-
-  private boolean hasError(org.influxdb.dto.QueryResult qr) {
+  private boolean hasError(QueryResult qr) {
     if (qr.getError() != null) return true;
-    var results = qr.getResults();
-    if (results == null) return false;
-    for (var r : results) {
-      if (r != null && r.getError() != null) return true;
-    }
-    return false;
+    if (qr.getResults() == null) return false;
+    return qr.getResults().stream().anyMatch(r -> r != null && r.getError() != null);
   }
+
 
   private String esc(String s) {
     return s == null ? "" : s.replace("'", "\\'");
   }
 
-  private String trimSlash(String url) {
-    return (url != null && url.endsWith("/")) ? url.substring(0, url.length() - 1) : url;
-  }
 
 
 }
