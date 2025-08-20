@@ -20,7 +20,7 @@ public class FieldDTO {
   private String measurement;
 
   @JsonProperty("fields")
-  private List<FieldInfo> fields = new ArrayList<>();
+  private List<FieldInfo> fields;
 
   @Getter
   @Setter
