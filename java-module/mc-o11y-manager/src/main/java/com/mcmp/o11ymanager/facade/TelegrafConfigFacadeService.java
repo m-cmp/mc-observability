@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.facade;
 
+import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
+import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.service.interfaces.FileService;
 
 import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;

@@ -10,6 +10,7 @@ import com.mcmp.o11ymanager.global.target.ResBody;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,12 +24,11 @@ public class InfluxDBController {
   private final InfluxDbFacadeService influxDbFacadeService;
 
 
-  @PostMapping("/storage")
+  @PostMapping
   public ResBody<InfluxDTO> postInfluxDB(@RequestBody InfluxDTO req)
   {
     return new ResBody<>(influxDbFacadeService.postInflux(req));
   }
-
 
   @GetMapping
   public ResBody<List<InfluxDTO>> getAllInfluxDB()
@@ -47,9 +47,10 @@ public class InfluxDBController {
   }
 
 
-  @PostMapping("/metric")
-  public ResBody<List<MetricDTO>> query(@RequestBody MetricRequestDTO req) {
-    return new ResBody<>(influxDbFacadeService.getMetrics(req));
+  @PostMapping("/metric/{nsId}/{mciId}")
+  public ResBody<List<MetricDTO>> query( @PathVariable String nsId,
+      @PathVariable String mciId, @RequestBody MetricRequestDTO req) {
+    return new ResBody<>(influxDbFacadeService.getMetrics(nsId, mciId, req));
   }
 
 

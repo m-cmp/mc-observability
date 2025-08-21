@@ -20,7 +20,7 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, Long influxSeq);
 
   TargetDTO put(String nsId, String mciId, String targetId, TargetRequestDTO dto);
 
@@ -40,4 +40,10 @@ public interface TargetService {
   void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
 
   int findInfluxSeqByNsMci(String nsId, String mciId);
+
+  int rebindTargetsToInflux(String nsId, String mciId, Long influxDbId);
+  List<String> getTargetIds(String nsId, String mciId);
+  Long getInfluxIdOfTarget(String nsId, String mciId, String targetId);
+  List<Long> getDistinctInfluxIds(String nsId, String mciId);
+
 }

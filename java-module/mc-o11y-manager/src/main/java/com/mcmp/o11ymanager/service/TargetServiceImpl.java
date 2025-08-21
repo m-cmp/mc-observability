@@ -51,7 +51,7 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq) {
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, Long influxSeq) {
     TargetEntity target = TargetEntity.builder()
         .nsId(nsId)
         .mciId(mciId)
@@ -221,6 +221,35 @@ public class TargetServiceImpl implements TargetService {
             new IllegalStateException("influxSeq not assigned: ns=" + nsId + ", mci=" + mciId));
   }
 
+
+
+  @Override
+  public int rebindTargetsToInflux(String nsId, String mciId, Long influxDbId) {
+      return targetJpaRepository.rebindAllToInfluxNative(nsId, mciId, influxDbId);
+  }
+
+
+  @Override
+  public List<String> getTargetIds(String nsId, String mciId) {
+    return targetJpaRepository.findByNsIdAndMciId(nsId, mciId)
+        .stream().map(TargetEntity::getTargetId).toList();
+  }
+
+  @Override
+  public List<Long> getDistinctInfluxIds(String nsId, String mciId) {
+    return targetJpaRepository.findDistinctInfluxIds(nsId, mciId);
+  }
+
+
+
+  @Override
+  public Long getInfluxIdOfTarget(String nsId, String mciId, String targetId) {
+    var t = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
+        .orElseThrow(() -> new IllegalStateException("target not found"));
+    if (t.getInfluxDb() != null) return t.getInfluxDb().getId();
+    if (t.getInfluxSeq() != null) return t.getInfluxSeq();
+    throw new IllegalStateException("target has no influx binding");
+  }
 
 }
 

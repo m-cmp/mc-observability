@@ -5,8 +5,10 @@ import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.enums.Agent;
 import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class InfluxDbFacadeService {
 
   private final InfluxDbService influxDbService;
+  private final TumblebugService tumblebugService;
 
   @Transactional(readOnly = true)
   public InfluxDTO resolveForTarget(String nsId, String mciId) {
-    int serverIndex = influxDbService.resolveInfluxDb(nsId, mciId);
-    List<InfluxDTO> servers = influxDbService.rawServers();
-    return servers.get(serverIndex);
+    return influxDbService.resolveInfluxDto(nsId, mciId);
   }
 
 
@@ -49,15 +50,14 @@ public class InfluxDbFacadeService {
 
 
 
-  public List<MetricDTO> getMetrics(MetricRequestDTO req) {
-    return influxDbService.getMetrics(req);
+  public List<MetricDTO> getMetrics(String nsId, String mciId, MetricRequestDTO req) {
+    return influxDbService.getMetrics(nsId, mciId, req);
   }
 
 
   public List<InfluxDTO> getInfluxDbs() {
     return influxDbService.rawServers();
   }
-
 
 
 

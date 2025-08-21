@@ -40,7 +40,7 @@ public class TargetEntity {
   @JoinColumn(name = "influxdb_id")
   private InfluxEntity influxDb;
 
-  private int influxSeq;
+  private Long influxSeq;
 
   @Column(nullable = false)
   private String name;

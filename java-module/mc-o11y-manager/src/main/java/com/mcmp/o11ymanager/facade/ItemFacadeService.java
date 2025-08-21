@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.facade;
 
+import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemUpdateDTO;
@@ -8,6 +9,8 @@ import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.enums.ResponseCode;
 import com.mcmp.o11ymanager.exception.TelegrafConfigException;
 import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
+import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
+import com.mcmp.o11ymanager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.service.interfaces.TumblebugService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +39,127 @@ public class ItemFacadeService {
 
     private final TumblebugService tumblebugService;
     private final AgentPluginDefService agentPluginDefService;
+    private final InfluxDbService influxDbService;
+    private final TargetService targetService;
     
     private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
+
+    private static final Pattern OUTPUT_PATTERN = Pattern.compile("\\[\\[outputs\\.(\\w+)]]");
+
+    // ------------------------------------update output--------------------------------------------------//
+
+
+    @Transactional
+    public void updateInfluxOutputForAllTargets(String nsId, String mciId, InfluxDTO req) {
+        // 0) 연결성 사전 검증
+        if (!influxDbService.isConnectedDb(req)) {
+            throw new TelegrafConfigException(ResponseCode.BAD_REQUEST,
+                "Invalid Influx connection: " + req.getUrl());
+        }
+
+        // 1) 대상 타깃 수집
+        var targetIds = targetService.getTargetIds(nsId, mciId);
+        if (targetIds.isEmpty()) {
+            log.warn("[influx-output] no targets for ns={}, mci={}", nsId, mciId);
+            return;
+        }
+
+        // 2) 대표 influxDbId 결정: 현 ns/mci에서 사용 중인 id 집합을 보고 1개 선택
+        var ids = targetService.getDistinctInfluxIds(nsId, mciId);
+        if (ids.isEmpty()) {
+            throw new TelegrafConfigException(ResponseCode.NOT_FOUND,
+                "No influx mapping under ns/mci: " + nsId + "/" + mciId);
+        }
+        Long influxDbId = ids.get(0);           // 정책: 여러 개면 첫 번째 사용(필요 시 검증/선택 로직 추가)
+        // if (ids.size() > 1) log.warn("multiple influx ids found {}, picking {}", ids, influxDbId);
+
+        // 3) InfluxEntity를 요청 DTO대로 업데이트(영속화)
+        influxDbService.updateInflux(influxDbId, req);
+
+        // 4) ns/mci 하위 모든 Target을 동일 influx로 일괄 재바인딩(FK + seq= id)
+        targetService.rebindTargetsToInflux(nsId, mciId, influxDbId);
+
+        // 5) telegraf.conf의 [[outputs.influxdb]] 바디 교체 + 재시작
+        String path = getTelegrafConfigPath();
+        String newBody = buildInfluxV1OutputBody(req);
+
+        for (String targetId : targetIds) {
+            try {
+                if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
+                    log.warn("[influx-output] VM not connected {}/{}/{}", nsId, mciId, targetId);
+                    continue;
+                }
+
+                String content = tumblebugService.executeCommand(nsId, mciId, targetId, "sudo cat " + path);
+                if (content == null || content.isEmpty()) {
+                    log.warn("[influx-output] telegraf.conf not found {}/{}/{}", nsId, mciId, targetId);
+                    continue;
+                }
+
+                if (!hasOutputsInflux(content)) {
+                    log.warn("[influx-output] [[outputs.influxdb]] not found {}/{}/{}", nsId, mciId, targetId);
+                    continue;
+                }
+
+                String updated = replaceOutputInConfig(content, "influxdb", newBody);
+                String cmd = String.format("echo '%s' | sudo tee %s > /dev/null",
+                    updated.replace("'", "'\"'\"'"), path);
+                tumblebugService.executeCommand(nsId, mciId, targetId, cmd);
+
+                telegrafFacadeService.restart(nsId, mciId, targetId);
+                log.info("[influx-output] applied & restarted: {}/{}/{}", nsId, mciId, targetId);
+
+            } catch (Exception e) {
+                log.warn("[influx-output] apply failed {}/{}/{} err={}",
+                    nsId, mciId, targetId, e.toString());
+            }
+        }
+    }
+
+    // === helpers ===
+    private boolean hasOutputsInflux(String content) {
+        var m = OUTPUT_PATTERN.matcher(content);
+        while (m.find()) if ("influxdb".equals(m.group(1))) return true;
+        return false;
+    }
+
+    private String buildInfluxV1OutputBody(InfluxDTO inf) {
+        return """
+    urls = ["%s"]
+    database = "%s"
+    username = "%s"
+    password = "%s"
+    """.formatted(inf.getUrl(), inf.getDatabase(), inf.getUsername(), inf.getPassword());
+    }
+
+    private String replaceOutputInConfig(String configContent, String pluginName, String newConfig) {
+        String[] lines = configContent.split("\n");
+        StringBuilder result = new StringBuilder();
+        boolean inTarget = false;
+
+        for (String line : lines) {
+            String t = line.trim();
+
+            if (t.matches("\\[\\[outputs\\." + pluginName + "]]")) {
+                inTarget = true;
+                result.append("[[outputs.").append(pluginName).append("]]\n");
+                result.append(newConfig).append("\n");
+            } else if (inTarget && t.startsWith("[[")) {
+                inTarget = false;
+                result.append(line).append("\n");
+            } else if (!inTarget) {
+                result.append(line).append("\n");
+            }
+        }
+        return result.toString();
+    }
+
+
+    // ------------------------------------finish influx--------------------------------------------------//
+
+
+
+
 
     private String getTelegrafConfigPath() {
         return "/cmp-agent/sites/" + deploySiteCode + "/telegraf/etc/telegraf.conf";

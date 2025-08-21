@@ -12,8 +12,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class MetricRequestDTO {
 
-  private int influxSeq;
-
   @Schema(description = "측정 항목 이름", example = "cpu", required = true)
   private String measurement;
 

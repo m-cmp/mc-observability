@@ -29,7 +29,7 @@ public class TargetDTO {
   private String description;
 
   @JsonProperty("influx_seq")
-  private int influxSeq;
+  private Long influxSeq;
 
   @JsonProperty("target_status")
   private TargetStatus targetStatus;

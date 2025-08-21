@@ -25,6 +25,7 @@ import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,6 +39,31 @@ public class InfluxDbServiceImpl implements InfluxDbService {
   private static final String MCI_ID = "mci_id";
 
 
+  private List<InfluxEntity> rawEntities() {
+    return influxJpaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+  }
+
+  private InfluxDTO toDTO(InfluxEntity e) {
+    return InfluxDTO.builder()
+        .url(e.getUrl())
+        .database(e.getDatabase())
+        .username(e.getUsername())
+        .password(e.getPassword())
+        .build();
+  }
+
+
+  @Override
+  public InfluxDTO resolveInfluxDto(String nsId, String mciId) {
+    Long influxId = resolveInfluxDb(nsId, mciId);
+    InfluxEntity e = influxJpaRepository.findById(influxId)
+        .orElseThrow(() -> new IllegalStateException("influx not found: " + influxId));
+    return toDTO(e);
+  }
+
+
+
+  @Override
   public boolean isConnectedDb(InfluxDTO influxDTO) {
     try (var influx = InfluxDBFactory.connect(
         influxDTO.getUrl(),
@@ -47,12 +73,11 @@ public class InfluxDbServiceImpl implements InfluxDbService {
       Pong pong = influx.ping();
       return pong != null && !"unknown".equalsIgnoreCase(pong.getVersion());
     } catch (Exception e) {
-      log.info(
-          "==========================[INFLUX CONNECTION TEST] failed url={}, err={}==========================",
-          influxDTO.getUrl(), e.toString());
+      log.info("[INFLUX CONNECTION TEST] failed url={}, err={}", influxDTO.getUrl(), e.toString());
       return false;
     }
   }
+
 
 
 
@@ -80,18 +105,36 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         .build();
   }
 
+  // ------------------------------------update influx--------------------------------------------------//
+
+  @Override
+  public  InfluxDTO updateInflux(Long influxId, InfluxDTO req){
+    var e = influxJpaRepository.findById(influxId)
+        .orElseThrow(() -> new IllegalArgumentException("influx not found: " + influxId));
+
+    if (req.getUrl() != null) e.setUrl(req.getUrl());
+    if (req.getDatabase() != null) e.setDatabase(req.getDatabase());
+    if (req.getUsername() != null) e.setUsername(req.getUsername());
+    if (req.getPassword() != null) e.setPassword(req.getPassword());
+
+    var saved = influxJpaRepository.save(e);
+    var probe = toDTO(saved);
+    if (!isConnectedDb(probe)) {
+      throw new IllegalArgumentException("Failed to connect after update: " + saved.getUrl());
+    }
+
+    return InfluxDTO.builder()
+        .url(saved.getUrl())
+        .database(saved.getDatabase())
+        .username(saved.getUsername())
+        .build();
+  }
+
   // ------------------------------------db list--------------------------------------------------//
 
   @Override
   public List<InfluxDTO> rawServers() {
-    return influxJpaRepository.findAll().stream()
-        .map(entity -> InfluxDTO.builder()
-            .url(entity.getUrl())
-            .database(entity.getDatabase())
-            .username(entity.getUsername())
-            .password(entity.getPassword())
-            .build())
-        .collect(Collectors.toList());
+    return rawEntities().stream().map(this::toDTO).collect(Collectors.toList());
   }
 
   // ------------------------------------queryExecutor--------------------------------------------------//
@@ -116,25 +159,26 @@ public class InfluxDbServiceImpl implements InfluxDbService {
   // ------------------------------------getMetric--------------------------------------------------//
 
   @Override
-  public List<MetricDTO> getMetrics(MetricRequestDTO req) {
-    var servers = rawServers();
-    if (servers.isEmpty()) {
-      throw new IllegalStateException("influxdb.servers not configured");
-    }
-    int idx = req.getInfluxSeq();
-    if (idx < 0 || idx >= servers.size()) {
-      throw new IllegalArgumentException("invalid influxSeq: " + idx);
-    }
-    var s = servers.get(idx);
+  public List<MetricDTO> getMetrics(String nsId, String mciId, MetricRequestDTO req) {
+    Long influxId = resolveInfluxDb(nsId, mciId);
+    InfluxEntity entity = influxJpaRepository.findById(influxId)
+        .orElseThrow(() -> new IllegalStateException("resolved influx not found: " + influxId));
+
+    InfluxDTO s = InfluxDTO.builder()
+        .url(entity.getUrl())
+        .database(entity.getDatabase())
+        .username(entity.getUsername())
+        .password(entity.getPassword())
+        .build();
 
     String rp = fetchDefaultRp(s);
+    String q  = InfluxQl.buildQuery(req, rp);
 
-    String q = InfluxQl.buildQuery(req, rp);
 
-    return exec(s, q)
-        .map(QueryMapper::toMetricDTOs)
-        .orElse(List.of());
+    return exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
   }
+
+
 
 
   // ------------------------------------getTag--------------------------------------------------//
@@ -221,11 +265,58 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
   // ------------------------------------resolveInfluxdb--------------------------------------------------//
 
+  @Override
+  public Long resolveInfluxDb(String nsId, String mciId) {
+    var entities = rawEntities();
+    if (entities.isEmpty()) {
+      throw new IllegalStateException("influxdb.servers must contain at least 1 server");
+    }
+
+    log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, mciId, entities.size());
+
+    for (var e : entities) {
+      var s = toDTO(e);
+      if (!isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] id={}, url={} PING FAIL -> skip ns&mci", e.getId(), s.getUrl());
+        continue;
+      }
+      if (existsTagCombination(s, nsId, mciId)) {
+        log.info("[INF-RESOLVE] found target combination at id={}, url={}", e.getId(), s.getUrl());
+        return e.getId();
+      }
+    }
+
+
+    for (var e : entities) {
+      var s = toDTO(e);
+      if (!isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] id={}, url={} PING FAIL -> skip ns-only", e.getId(), s.getUrl());
+        continue;
+      }
+      if (existsNsId(s, nsId)) {
+        log.info("[INF-RESOLVE] found nsId at id={}, url={}", e.getId(), s.getUrl());
+        return e.getId();
+      }
+    }
+
+
+    for (var e : entities) {
+      var s = toDTO(e);
+      if (isConnectedDb(s)) {
+        log.info("[INF-RESOLVE] fallback to reachable id={}, url={}", e.getId(), s.getUrl());
+        return e.getId();
+      } else {
+        log.info("[INF-RESOLVE] id={}, url={} PING FAIL -> skip fallback", e.getId(), s.getUrl());
+      }
+    }
+
+    throw new IllegalStateException("no reachable influxdb candidates (ns=" + nsId + ", mci=" + mciId + ")");
+  }
 
 
 
   @Override
-  public int resolveInfluxDb(String nsId, String mciId) {
+  public int resolveInfluxDb2(String nsId, String mciId) {
     var servers = rawServers();
     if (servers.isEmpty()) {
       throw new IllegalStateException("influxdb.servers must contain at least 1 server");
