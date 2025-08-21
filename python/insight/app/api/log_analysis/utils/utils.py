@@ -2,6 +2,7 @@ from app.api.log_analysis.response.res import LogAnalysisModel, LogAnalysisSessi
 from app.api.log_analysis.repo.repo import LogAnalysisRepository
 from app.api.log_analysis.request.req import PostSessionBody, SessionIdPath, PostQueryBody
 from app.core.mcp.mcp_context import MCPContext
+from app.core.mcp.multi_mcp_manager import MCPManager
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from typing import Callable
@@ -12,9 +13,14 @@ import uuid
 class LogAnalysisService:
     PROVIDER_ENV_MAP = {"ollama": "OLLAMA_BASE_URL", "openai": "OPENAI_API_KEY"}
 
-    def __init__(self, db: Session = None, mcp_context: MCPContext = None):
+    def __init__(self, db: Session = None, mcp_context=None):
         self.repo = LogAnalysisRepository(db=db)
-        self.mcp_context = mcp_context
+        # mcp_context는 이제 MCPManager 인스턴스를 받음
+        if isinstance(mcp_context, MCPManager):
+            # MCPManager를 MCPContext로 래핑
+            self.mcp_context = MCPContext(mcp_context)
+        else:
+            self.mcp_context = mcp_context
 
     def get_model_list(self, model_info_config):
         result = []

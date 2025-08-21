@@ -140,19 +140,21 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_slack` (
 
 -- 테이블 mc_observability.mc_o11y_trigger_history 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_history` (
-    `SEQ` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '고유번호',
-    `POLICY_SEQ` int(10) unsigned NOT NULL COMMENT '트리거 정책 고유번호',
-    `TARGET_SEQ` int(10) unsigned NOT NULL COMMENT '트리거 대상 고유번호',
-    `NAME` varchar(50) DEFAULT '' COMMENT '트리거 대상 호스트명',
-    `NS_ID` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '추가정보(cmp agent에서는 처리 없음)',
-    `TARGET_ID` varchar(50) NOT NULL COMMENT '호스트 고유 ID Agent 실행시 Host 구분값으로 사용 Agent 등록시 자체 발행 및 파일 기록',
-    `METRIC` varchar(50) NOT NULL DEFAULT '' COMMENT '메트릭 이름',
-    `DATA` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '' COMMENT '트리거 상세 내용',
-    `LEVEL` varchar(50) NOT NULL DEFAULT '' COMMENT '트리거 레벨',
-    `CREATE_AT` timestamp NOT NULL DEFAULT current_timestamp() COMMENT '등록일시',
-    `OCCUR_TIME` timestamp NULL DEFAULT NULL COMMENT '발생일시',
-    PRIMARY KEY (`SEQ`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='트리거  히스토리';
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT "아이디",
+    starts_at        DATETIME(6)  NULL COMMENT "알림 평가 시작 시간",
+    aggregation_type VARCHAR(255) NULL COMMENT "집계 방식 (e.g. avg, max)",
+    alert_level      VARCHAR(255) NULL COMMENT "알림 심각도 (info | warning | critical)",
+    hold_duration    VARCHAR(255) NULL COMMENT "조건 유지 시간",
+    vm_id            VARCHAR(255) NULL COMMENT "VM 아이디",
+    mci_id           VARCHAR(255) NULL COMMENT "MCI 아이디",
+    namespace_id     VARCHAR(255) NULL COMMENT "NS 아이디",
+    repeat_interval  VARCHAR(255) NULL COMMENT "동일 조건 유지 시, 반복 발송 주기",
+    resource_type    VARCHAR(255) NULL COMMENT "자원 종류 (cpu | mem | disk)",
+    resource_usage   VARCHAR(255) NULL COMMENT "자원 사용량",
+    status           VARCHAR(255) NULL COMMENT "알림 상태 (firing, resolved)",
+    threshold        VARCHAR(255) NULL COMMENT "심각도에 대한 임계치 값",
+    trigger_title    VARCHAR(255) NULL COMMENT "알림 정책 제목"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 테이블 데이터 mc_observability.mc_o11y_trigger_history:~0 rows (대략적) 내보내기
 

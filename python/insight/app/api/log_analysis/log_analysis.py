@@ -10,7 +10,6 @@ from app.api.log_analysis.response.res import (
 )
 from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
-from app.core.mcp.mcp_context import MCPContext
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 from config.ConfigManager import ConfigManager
@@ -98,7 +97,7 @@ async def delete_all_log_analysis_session(db: Session = Depends(get_db)):
     response_model=ResBodySessionHistory,
     operation_id="GetLogAnalysisSessionHistory",
 )
-async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db), mcp_context: MCPContext = Depends(get_mcp_context)):
+async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
     log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
     result = await log_analysis_service.get_chat_session_history(path=path_params)
     return ResBodySessionHistory(data=result)
@@ -111,7 +110,7 @@ async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery",
 )
-async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context: MCPContext = Depends(get_mcp_context)):
+async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
     # session_id = '921f5fc9-dbd8-4979-96a8-783b4c2fd3cd'
     log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
     result = await log_analysis_service.query(body=body_params)
