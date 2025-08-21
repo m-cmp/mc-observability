@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath, PostAPIKeyBody
 from app.api.log_analysis.response.res import (
     ResBodyLogAnalysisModel,
@@ -13,6 +14,8 @@ from app.core.dependencies.mcp import get_mcp_context
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 from config.ConfigManager import ConfigManager
+import json
+import asyncio
 
 
 router = APIRouter()
@@ -116,6 +119,56 @@ async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(g
     result = await log_analysis_service.query(body=body_params)
 
     return ResBodyQuery(data=result)
+
+
+@router.post(
+    path="/log-analysis/query/stream",
+    description="스트리밍 방식으로 로그 분석 응답을 받습니다",
+    operation_id="PostLogAnalysisQueryStream",
+)
+async def stream_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
+    """
+    스트리밍 방식으로 로그 분석 응답을 실시간으로 받을 수 있는 엔드포인트입니다.
+    Server-Sent Events (SSE) 형식으로 응답을 스트리밍합니다.
+    """
+
+    async def generate_stream():
+        try:
+            # 스트리밍 응답 시작
+            yield f"data: {json.dumps({'type': 'start', 'message': '분석을 시작합니다...'}, ensure_ascii=False)}\n\n"
+            await asyncio.sleep(0.1)  # 잠시 대기
+
+            # 실제 분석 수행
+            log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
+            result = await log_analysis_service.query(body=body_params)
+
+            # 결과를 청크로 나누어 스트리밍
+            message = result.message
+            chunk_size = 30  # 30자씩 나누어 전송
+
+            for i in range(0, len(message), chunk_size):
+                chunk = message[i : i + chunk_size]
+                yield f"data: {json.dumps({'type': 'chunk', 'message': chunk}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.05)  # 스트리밍 효과를 위한 지연
+
+            # 스트리밍 완료
+            yield f"data: {json.dumps({'type': 'done', 'message': ''}, ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            # 오류 발생 시
+            yield f"data: {json.dumps({'type': 'error', 'message': f'오류가 발생했습니다: {str(e)}'}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": "*",
+        },
+    )
 
 
 @router.get(

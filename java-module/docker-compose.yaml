@@ -312,6 +312,9 @@ services:
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
+    # build:
+    #   context: ../python/insight
+    #   dockerfile: Dockerfile
     container_name: mc-observability-insight
     restart: always
     ports:

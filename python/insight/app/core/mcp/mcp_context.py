@@ -70,6 +70,19 @@ class MCPContext:
         response = await self.agent.ainvoke({"messages": prompt}, config=config)
         return response
 
+    async def aquery_stream(self, session_id, messages):
+        """스트리밍 방식으로 쿼리 응답을 생성합니다."""
+        config = self.create_config(session_id)
+        prompt = await self._build_prompt(session_id, messages)
+
+        # LangGraph 에이전트의 스트리밍 응답
+        async for chunk in self.agent.astream({"messages": prompt}, config=config):
+            # 에이전트 스트림에서 메시지 내용 추출
+            if "messages" in chunk and chunk["messages"]:
+                last_message = chunk["messages"][-1]
+                if hasattr(last_message, "content") and last_message.content:
+                    yield last_message.content
+
     @staticmethod
     def create_config(session_id):
         return {"configurable": {"thread_id": f"{session_id}"}}
