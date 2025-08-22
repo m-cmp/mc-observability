@@ -214,41 +214,19 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public int findInfluxSeqByNsMci(String nsId, String mciId) {
-    return targetJpaRepository.findInfluxSeqByNsIdAndMciId(nsId, mciId)
-        .orElseThrow(() ->
-            new IllegalStateException("influxSeq not assigned: ns=" + nsId + ", mci=" + mciId));
-  }
-
-
-
-  @Override
-  public int rebindTargetsToInflux(String nsId, String mciId, Long influxDbId) {
-      return targetJpaRepository.rebindAllToInfluxNative(nsId, mciId, influxDbId);
-  }
-
-
-  @Override
   public List<String> getTargetIds(String nsId, String mciId) {
     return targetJpaRepository.findByNsIdAndMciId(nsId, mciId)
         .stream().map(TargetEntity::getTargetId).toList();
   }
 
-  @Override
-  public List<Long> getDistinctInfluxIds(String nsId, String mciId) {
-    return targetJpaRepository.findDistinctInfluxIds(nsId, mciId);
-  }
-
 
 
   @Override
-  public Long getInfluxIdOfTarget(String nsId, String mciId, String targetId) {
-    var t = targetJpaRepository.findByNsIdAndMciIdAndTargetId(nsId, mciId, targetId)
-        .orElseThrow(() -> new IllegalStateException("target not found"));
-    if (t.getInfluxDb() != null) return t.getInfluxDb().getId();
-    if (t.getInfluxSeq() != null) return t.getInfluxSeq();
-    throw new IllegalStateException("target has no influx binding");
+  public Long getInfluxId(String nsId, String mciId) {
+    TargetEntity t = targetJpaRepository.findTop1ByNsIdAndMciIdOrderByTargetIdAsc(nsId, mciId)
+        .orElseThrow(() -> new IllegalStateException("no targets under ns/mci"));
+
+    return t.getInfluxSeq();
   }
 
 }

@@ -51,55 +51,34 @@ public class ItemFacadeService {
 
     @Transactional
     public void updateInfluxOutputForAllTargets(String nsId, String mciId, InfluxDTO req) {
-        // 0) 연결성 사전 검증
+        // 0) Influx connectivity verification
         if (!influxDbService.isConnectedDb(req)) {
             throw new TelegrafConfigException(ResponseCode.BAD_REQUEST,
                 "Invalid Influx connection: " + req.getUrl());
         }
 
-        // 1) 대상 타깃 수집
+        // 1) targetList
         var targetIds = targetService.getTargetIds(nsId, mciId);
-        if (targetIds.isEmpty()) {
-            log.warn("[influx-output] no targets for ns={}, mci={}", nsId, mciId);
-            return;
-        }
+        if (targetIds.isEmpty()) return;
 
-        // 2) 대표 influxDbId 결정: 현 ns/mci에서 사용 중인 id 집합을 보고 1개 선택
-        var ids = targetService.getDistinctInfluxIds(nsId, mciId);
-        if (ids.isEmpty()) {
-            throw new TelegrafConfigException(ResponseCode.NOT_FOUND,
-                "No influx mapping under ns/mci: " + nsId + "/" + mciId);
-        }
-        Long influxDbId = ids.get(0);           // 정책: 여러 개면 첫 번째 사용(필요 시 검증/선택 로직 추가)
-        // if (ids.size() > 1) log.warn("multiple influx ids found {}, picking {}", ids, influxDbId);
+        // 2) get influxId
+        Long influxDbId = targetService.getInfluxId(nsId, mciId);
 
-        // 3) InfluxEntity를 요청 DTO대로 업데이트(영속화)
+        // 3) update influxEntity
         influxDbService.updateInflux(influxDbId, req);
 
-        // 4) ns/mci 하위 모든 Target을 동일 influx로 일괄 재바인딩(FK + seq= id)
-        targetService.rebindTargetsToInflux(nsId, mciId, influxDbId);
-
-        // 5) telegraf.conf의 [[outputs.influxdb]] 바디 교체 + 재시작
+        // 4) apply telegraf.conf [[outputs.influxdb]] + restart telegraf
         String path = getTelegrafConfigPath();
         String newBody = buildInfluxV1OutputBody(req);
 
         for (String targetId : targetIds) {
             try {
-                if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
-                    log.warn("[influx-output] VM not connected {}/{}/{}", nsId, mciId, targetId);
-                    continue;
-                }
+                if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) continue;
 
                 String content = tumblebugService.executeCommand(nsId, mciId, targetId, "sudo cat " + path);
-                if (content == null || content.isEmpty()) {
-                    log.warn("[influx-output] telegraf.conf not found {}/{}/{}", nsId, mciId, targetId);
-                    continue;
-                }
+                if (content == null || content.isEmpty()) continue;
 
-                if (!hasOutputsInflux(content)) {
-                    log.warn("[influx-output] [[outputs.influxdb]] not found {}/{}/{}", nsId, mciId, targetId);
-                    continue;
-                }
+                if (!hasOutputsInflux(content)) continue;
 
                 String updated = replaceOutputInConfig(content, "influxdb", newBody);
                 String cmd = String.format("echo '%s' | sudo tee %s > /dev/null",
@@ -107,14 +86,13 @@ public class ItemFacadeService {
                 tumblebugService.executeCommand(nsId, mciId, targetId, cmd);
 
                 telegrafFacadeService.restart(nsId, mciId, targetId);
-                log.info("[influx-output] applied & restarted: {}/{}/{}", nsId, mciId, targetId);
-
             } catch (Exception e) {
                 log.warn("[influx-output] apply failed {}/{}/{} err={}",
                     nsId, mciId, targetId, e.toString());
             }
         }
     }
+
 
     // === helpers ===
     private boolean hasOutputsInflux(String content) {
@@ -180,7 +158,7 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
-            // Plugin definition에서 해당 plugin 찾기
+            // Find plugin
             PluginDefDTO pluginDef = agentPluginDefService.getAllPluginDefinitions()
                 .stream()
                 .filter(def -> def.getSeq().equals(dto.getPluginSeq()))
@@ -188,7 +166,7 @@ public class ItemFacadeService {
                 .orElseThrow(() -> new TelegrafConfigException(ResponseCode.NOT_FOUND, "Plugin definition not found"));
 
 
-            // 기존 config 읽기
+            // read config
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
@@ -198,14 +176,14 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
 
-            // 새로운 plugin 설정 추가
+            // add plugin
             String decodedConfig = new String(Base64.getDecoder().decode(dto.getPluginConfig()));
             String newPluginSection = pluginDef.getPluginId() + "\n" + decodedConfig + "\n\n";
             
-            // config 파일에 추가
+            // add config section
             String updatedConfig = configContent + "\n" + newPluginSection;
             
-            // 파일 업데이트
+            // update File
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
             tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
@@ -236,7 +214,7 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
-            // 기존 config 읽기 및 파싱
+            // read config and parsing
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
@@ -246,18 +224,18 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
 
-            // seq에 해당하는 plugin 찾아서 수정
+            // update plugin
             List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
             MonitoringItemDTO targetItem = currentItems.stream()
                 .filter(item -> item.getSeq().equals(dto.getSeq()))
                 .findFirst()
                 .orElseThrow(() -> new TelegrafConfigException(ResponseCode.NOT_FOUND, "Plugin not found in current config"));
 
-            // config 파일에서 해당 plugin section 교체
+            // update plugin section
             String decodedNewConfig = new String(Base64.getDecoder().decode(dto.getPluginConfig()));
             String updatedConfig = replacePluginInConfig(configContent, targetItem.getName(), decodedNewConfig);
             
-            // 파일 업데이트
+            // update file
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
             tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
@@ -286,7 +264,6 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
-            // 기존 config 읽기
             String configContent = tumblebugService.executeCommand(nsId, mciId, targetId,
                 "sudo cat " + getTelegrafConfigPath());
             
@@ -296,17 +273,15 @@ public class ItemFacadeService {
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
 
-            // seq에 해당하는 plugin 찾기
+
             List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
             MonitoringItemDTO targetItem = currentItems.stream()
                 .filter(item -> item.getSeq().equals(itemSeq))
                 .findFirst()
                 .orElseThrow(() -> new TelegrafConfigException(ResponseCode.NOT_FOUND, "Plugin not found in current config"));
 
-            // config 파일에서 해당 plugin section 제거
             String updatedConfig = removePluginFromConfig(configContent, targetItem.getName());
-            
-            // 파일 업데이트
+
             String updateCommand = String.format("echo '%s' | sudo tee %s > /dev/null",
                 updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
             tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
@@ -453,19 +428,15 @@ public class ItemFacadeService {
             String trimmedLine = line.trim();
             
             if (trimmedLine.matches("\\[\\[inputs\\." + pluginName + "]]")) {
-                // 대상 plugin 시작
                 inTargetPlugin = true;
                 result.append("[[inputs.").append(pluginName).append("]]\n");
                 result.append(newConfig).append("\n");
             } else if (inTargetPlugin && trimmedLine.startsWith("[[")) {
-                // 다른 plugin 시작, 현재 plugin 끝
                 inTargetPlugin = false;
                 result.append(line).append("\n");
             } else if (!inTargetPlugin) {
-                // 대상이 아닌 라인들은 그대로 유지
                 result.append(line).append("\n");
             }
-            // inTargetPlugin이면서 다른 [[로 시작하지 않는 라인들은 건너뜀 (기존 설정 제거)
         }
         
         return result.toString();
@@ -480,17 +451,13 @@ public class ItemFacadeService {
             String trimmedLine = line.trim();
             
             if (trimmedLine.matches("\\[\\[inputs\\." + pluginName + "]]")) {
-                // 대상 plugin 시작, 이 섹션 전체를 건너뜀
                 inTargetPlugin = true;
             } else if (inTargetPlugin && trimmedLine.startsWith("[[")) {
-                // 다른 plugin 시작, 현재 plugin 끝
                 inTargetPlugin = false;
                 result.append(line).append("\n");
             } else if (!inTargetPlugin) {
-                // 대상이 아닌 라인들은 그대로 유지
                 result.append(line).append("\n");
             }
-            // inTargetPlugin이면서 다른 [[로 시작하지 않는 라인들은 건너뜀 (해당 plugin 제거)
         }
         
         return result.toString();

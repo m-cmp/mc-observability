@@ -39,11 +39,7 @@ public interface TargetService {
 
   void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
 
-  int findInfluxSeqByNsMci(String nsId, String mciId);
-
-  int rebindTargetsToInflux(String nsId, String mciId, Long influxDbId);
   List<String> getTargetIds(String nsId, String mciId);
-  Long getInfluxIdOfTarget(String nsId, String mciId, String targetId);
-  List<Long> getDistinctInfluxIds(String nsId, String mciId);
+  Long getInfluxId(String nsId, String mciId);
 
 }

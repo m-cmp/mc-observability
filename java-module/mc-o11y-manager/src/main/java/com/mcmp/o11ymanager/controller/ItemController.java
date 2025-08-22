@@ -42,18 +42,6 @@ public class ItemController {
     }
 
 
-    @PutMapping("/output")
-    public ResBody<Void> updateOutput(
-        @RequestBody InfluxDTO dto,
-        @PathVariable String nsId,
-        @PathVariable String mciId
-    ){
-        itemFacadeService.updateInfluxOutputForAllTargets(nsId, mciId, dto);
-        return ResBody.success(null);
-    }
-
-
-
     @PutMapping
     public ResBody<Void> putItem(
         @PathVariable String nsId,

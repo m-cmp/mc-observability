@@ -36,10 +36,7 @@ public class TargetEntity {
   @Id
   private String targetId;
 
-  @ManyToOne
-  @JoinColumn(name = "influxdb_id")
-  private InfluxEntity influxDb;
-
+  @Column(name = "influx_id", nullable = false)
   private Long influxSeq;
 
   @Column(nullable = false)
