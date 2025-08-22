@@ -1,5 +1,9 @@
+import logging
+
 from mcp import ClientSession
 from mcp.client.sse import sse_client
+
+logger = logging.getLogger(__name__)
 
 
 class InfluxDBMCPContext:
@@ -12,26 +16,26 @@ class InfluxDBMCPContext:
         self._write = None
 
     async def astart(self):
-        print(f"[DEBUG] Starting InfluxDB MCP connection to: {self.mcp_url}")
+        logger.info(f"Starting InfluxDB MCP connection to: {self.mcp_url}")
         try:
             self._sse = sse_client(self.mcp_url)
             self._read, self._write = await self._sse.__aenter__()
-            print("[DEBUG] InfluxDB SSE connection established")
+            logger.info("InfluxDB SSE connection established")
 
             self.session = ClientSession(self._read, self._write)
             await self.session.__aenter__()
-            print("[DEBUG] InfluxDB MCP session created")
+            logger.info("InfluxDB MCP session created")
 
             await self.session.initialize()
-            print("[DEBUG] InfluxDB MCP session initialized")
+            logger.info("InfluxDB MCP session initialized")
 
             # 도구 목록 로드
             self.tools = await self.session.list_tools()
-            print(f"Successfully loaded {len(self.tools.tools)} InfluxDB MCP tools")
+            logger.info(f"Successfully loaded {len(self.tools.tools)} InfluxDB MCP tools")
             return self.session
 
         except Exception as e:
-            print(f"Failed to start InfluxDB MCP context: {e}")
+            logger.error(f"Failed to start InfluxDB MCP context: {e}")
             import traceback
 
             traceback.print_exc()
@@ -43,13 +47,13 @@ class InfluxDBMCPContext:
             if self.session:
                 await self.session.__aexit__(None, None, None)
         except Exception as e:
-            print(f"Error closing InfluxDB MCP session: {e}")
+            logger.error(f"Error closing InfluxDB MCP session: {e}")
 
         try:
             if self._sse:
                 await self._sse.__aexit__(None, None, None)
         except Exception as e:
-            print(f"Error closing InfluxDB MCP SSE: {e}")
+            logger.error(f"Error closing InfluxDB MCP SSE: {e}")
 
     async def get_tools(self):
         if self.tools is None:

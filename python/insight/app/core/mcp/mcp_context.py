@@ -1,13 +1,17 @@
+import logging
+import re
+import time
+
+# from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
+from datetime import UTC, datetime
+
+import aiosqlite
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
 from config.ConfigManager import ConfigManager
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-# from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
-from datetime import datetime, UTC
-import aiosqlite
-import time
-import re
+logger = logging.getLogger(__name__)
 
 
 class MCPContext:
@@ -66,7 +70,7 @@ class MCPContext:
 
         # 다중 MCP 환경에서 모든 도구를 가져옴
         self.tools = self.mcp_manager.get_all_tools()
-        print(f"[DEBUG] Using {len(self.tools)} tools from multi-MCP environment")
+        logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
 
         self.agent = self.llm_client.bind_tools(self.tools, self.memory)
 
@@ -115,15 +119,15 @@ class MCPContext:
         """LangGraph 응답에서 도구 호출 정보를 추출"""
         try:
             messages = response.get("messages", [])
-            print(f"[DEBUG] Extracting from {len(messages)} messages")
+            logger.info(f"Extracting from {len(messages)} messages")
 
             for message in messages:
-                print(f"[DEBUG] Message type: {getattr(message, 'type', 'unknown')}")
+                logger.info(f"Message type: {getattr(message, 'type', 'unknown')}")
 
                 # tool 타입 메시지 처리
                 if hasattr(message, "type") and message.type == "tool":
                     self.query_metadata["tool_calls_count"] += 1
-                    print(f"[DEBUG] Found tool call, count: {self.query_metadata['tool_calls_count']}")
+                    logger.info(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
 
                     # 도구 호출 결과에서 쿼리 추출
                     if hasattr(message, "content"):
@@ -139,7 +143,7 @@ class MCPContext:
                     # tool_calls 속성이 있는 경우
                     if hasattr(message, "tool_calls") and message.tool_calls:
                         self.query_metadata["tool_calls_count"] += len(message.tool_calls)
-                        print(f"[DEBUG] Found {len(message.tool_calls)} tool calls in AI message")
+                        logger.info(f"Found {len(message.tool_calls)} tool calls in AI message")
 
                         for tool_call in message.tool_calls:
                             # 도구 이름 기반으로 데이터베이스 추적
@@ -154,12 +158,12 @@ class MCPContext:
                                 for key, value in tool_call.args.items():
                                     if key.lower() in ["query", "influxql_query", "sql_query"] and isinstance(value, str):
                                         self.query_metadata["queries_executed"].append(value.strip())
-                                        print(f"[DEBUG] Extracted query from args: {value[:100]}...")
+                                        logger.info(f"Extracted query from args: {value[:100]}...")
 
-            print(f"[DEBUG] Final metadata: {self.query_metadata}")
+            logger.info(f"Final metadata: {self.query_metadata}")
 
         except Exception as e:
-            print(f"[DEBUG] Error extracting tool calls: {e}")
+            logger.error(f"Error extracting tool calls: {e}")
             import traceback
 
             traceback.print_exc()
@@ -183,7 +187,7 @@ class MCPContext:
                     if cleaned_query and cleaned_query not in self.query_metadata["queries_executed"]:
                         self.query_metadata["queries_executed"].append(cleaned_query)
                         self.query_metadata["databases_accessed"].add("InfluxDB")
-                        print(f"[DEBUG] Found InfluxQL query: {cleaned_query[:100]}...")
+                        logger.info(f"Found InfluxQL query: {cleaned_query[:100]}...")
 
             # MariaDB/MySQL 쿼리 패턴
             maria_patterns = [r"(?:SELECT|INSERT|UPDATE|DELETE|SHOW).*?(?:FROM|INTO|TABLE).*?(?:;|$)", r"DESCRIBE\s+\w+", r"SHOW\s+TABLES"]
@@ -196,10 +200,10 @@ class MCPContext:
                         if cleaned_query and cleaned_query not in self.query_metadata["queries_executed"]:
                             self.query_metadata["queries_executed"].append(cleaned_query)
                             self.query_metadata["databases_accessed"].add("MariaDB")
-                            print(f"[DEBUG] Found MariaDB query: {cleaned_query[:100]}...")
+                            logger.info(f"Found MariaDB query: {cleaned_query[:100]}...")
 
         except Exception as e:
-            print(f"[DEBUG] Error extracting queries from content: {e}")
+            logger.error(f"Error extracting queries from content: {e}")
 
     async def aquery_stream(self, session_id, messages):
         """스트리밍 방식으로 쿼리 응답을 생성합니다."""

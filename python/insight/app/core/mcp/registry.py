@@ -1,4 +1,8 @@
+import logging
+
 from app.core.mcp.multi_mcp_manager import MCPManager
+
+logger = logging.getLogger(__name__)
 
 # Global MCP manager instance
 _global_mcp_manager = None
@@ -22,7 +26,7 @@ async def init_global_mcp():
     # 모든 MCP 클라이언트 시작
     await _global_mcp_manager.start_all()
 
-    print("Multi-MCP environment initialized successfully")
+    logger.info("Multi-MCP environment initialized successfully")
     return _global_mcp_manager
 
 
@@ -37,4 +41,4 @@ async def stop_global_mcp():
     if _global_mcp_manager:
         await _global_mcp_manager.stop_all()
         _global_mcp_manager = None
-        print("Multi-MCP environment stopped")
+        logger.info("Multi-MCP environment stopped")

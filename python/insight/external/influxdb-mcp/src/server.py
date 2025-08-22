@@ -1,9 +1,13 @@
 # main.py
-import os
-import importlib
 import argparse
-from mcp.server.fastmcp import FastMCP
+import importlib
+import logging
+import os
+
 from influx_client import InfluxDBClient
+from mcp.server.fastmcp import FastMCP
+
+logger = logging.getLogger(__name__)
 
 # --- 서버 및 클라이언트 초기화 ---
 mcp = FastMCP(
@@ -23,8 +27,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 tools_dir = os.path.join(script_dir, "tools")
 
 # --- 2. 'tools' 디렉토리에서 모든 도구를 자동으로 찾아 등록하는 로직 ---
-print("--- 도구 자동 탐색 시작 ---")
-print(f"탐색 대상 디렉토리: {tools_dir}")
+logger.info("--- 도구 자동 탐색 시작 ---")
+logger.info(f"탐색 대상 디렉토리: {tools_dir}")
 
 try:
     for filename in os.listdir(tools_dir):
@@ -41,20 +45,20 @@ try:
                 if hasattr(module, "register_tool"):
                     register_function = getattr(module, "register_tool")
                     register_function(mcp, client)
-                    print(f"✅ '{module_name}' 도구를 성공적으로 등록했습니다.")
+                    logger.info(f"✅ '{module_name}' 도구를 성공적으로 등록했습니다.")
                 else:
-                    print(f"⚠️ '{module_name}' 모듈에 'register_tool' 함수가 없어 건너뜁니다.")
+                    logger.warning(f"⚠️ '{module_name}' 모듈에 'register_tool' 함수가 없어 건너뜁니다.")
 
             except Exception as e:
-                print(f"❌ '{module_name}' 도구를 등록하는 중 오류가 발생했습니다: {e}")
+                logger.error(f"❌ '{module_name}' 도구를 등록하는 중 오류가 발생했습니다: {e}")
 
 except FileNotFoundError:
-    print(f"❌ 치명적 오류: '{tools_dir}' 디렉토리를 찾을 수 없습니다. 파일 구조를 확인해주세요.")
+    logger.error(f"❌ 치명적 오류: '{tools_dir}' 디렉토리를 찾을 수 없습니다. 파일 구조를 확인해주세요.")
 except Exception as e:
-    print(f"❌ 도구 로딩 중 예상치 못한 오류 발생: {e}")
+    logger.error(f"❌ 도구 로딩 중 예상치 못한 오류 발생: {e}")
 
 
-print("--- 모든 도구 등록 완료 ---")
+logger.info("--- 모든 도구 등록 완료 ---")
 
 # --- 서버 실행 ---
 if __name__ == "__main__":

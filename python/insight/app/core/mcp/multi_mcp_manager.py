@@ -1,8 +1,13 @@
-from app.core.mcp.mcp_context import MCPContext
-from app.core.mcp.mariadb_mcp_context import MariaDBMCPContext
-from app.core.mcp.influxdb_mcp_context import InfluxDBMCPContext
+import logging
 from typing import Dict, List
+
+from app.core.mcp.influxdb_mcp_context import InfluxDBMCPContext
+from app.core.mcp.mariadb_mcp_context import MariaDBMCPContext
+from app.core.mcp.mcp_context import MCPContext
 from langchain_mcp_adapters.tools import load_mcp_tools
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class MCPManager:
@@ -30,17 +35,17 @@ class MCPManager:
 
         for name, client in self.mcp_clients.items():
             try:
-                print(f"[DEBUG] Starting {name} MCP client...")
+                logger.info(f"Starting {name} MCP client...")
                 session = await client.astart()
                 sessions[name] = session
 
                 # 각 MCP의 도구들을 로드
                 tools = await load_mcp_tools(session)
                 tools_list.extend(tools)
-                print(f"[DEBUG] {name} MCP client started successfully with {len(tools)} tools")
+                logger.info(f"{name} MCP client started successfully with {len(tools)} tools")
 
             except Exception as e:
-                print(f"Failed to start {name} MCP client: {e}")
+                logger.error(f"Failed to start {name} MCP client: {e}")
                 import traceback
 
                 traceback.print_exc()
@@ -48,7 +53,7 @@ class MCPManager:
                 continue
 
         self.all_tools = tools_list
-        print(f"[DEBUG] Total MCP tools loaded: {len(self.all_tools)}")
+        logger.info(f"Total MCP tools loaded: {len(self.all_tools)}")
         return sessions
 
     async def stop_all(self):
@@ -56,9 +61,9 @@ class MCPManager:
         for name, client in self.mcp_clients.items():
             try:
                 await client.astop()
-                print(f"{name} MCP client stopped successfully")
+                logger.info(f"{name} MCP client stopped successfully")
             except Exception as e:
-                print(f"Failed to stop {name} MCP client: {e}")
+                logger.error(f"Failed to stop {name} MCP client: {e}")
                 # 오류가 발생해도 다른 클라이언트들은 계속 처리
 
     def get_all_tools(self):
