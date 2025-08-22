@@ -24,11 +24,11 @@ public class InfluxDBController {
   private final InfluxDbFacadeService influxDbFacadeService;
 
 
-  @PostMapping
-  public ResBody<InfluxDTO> postInfluxDB(@RequestBody InfluxDTO req)
-  {
-    return new ResBody<>(influxDbFacadeService.postInflux(req));
-  }
+//  @PostMapping
+//  public ResBody<InfluxDTO> postInfluxDB(@RequestBody InfluxDTO req)
+//  {
+//    return new ResBody<>(influxDbFacadeService.postInflux(req));
+//  }
 
   @GetMapping
   public ResBody<List<InfluxDTO>> getAllInfluxDB()

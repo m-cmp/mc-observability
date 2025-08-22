@@ -5,12 +5,15 @@ import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.entity.InfluxDbInfo;
 import com.mcmp.o11ymanager.entity.InfluxEntity;
 import com.mcmp.o11ymanager.global.target.ResBody;
+import com.mcmp.o11ymanager.mapper.Influx.InfluxMapper;
 import com.mcmp.o11ymanager.mapper.Influx.QueryMapper;
 import com.mcmp.o11ymanager.model.influx.InfluxQl;
 import com.mcmp.o11ymanager.repository.InfluxJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -34,14 +37,46 @@ import org.springframework.stereotype.Service;
 public class InfluxDbServiceImpl implements InfluxDbService {
 
   private final InfluxJpaRepository influxJpaRepository;
+  private final InfluxDbInfo influxDbInfo;
+  private final InfluxMapper influxMapper;
 
   private static final String NS_ID = "ns_id";
   private static final String MCI_ID = "mci_id";
 
 
-  private List<InfluxEntity> rawEntities() {
-    return influxJpaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+  @PostConstruct
+  void getInfluxFromYaml() {
+    try {
+      rawEntities();
+    } catch (Exception e) {
+      log.error("[INF-BOOTSTRAP] seeding failed", e);
+    }
   }
+
+  private List<InfluxEntity> rawEntities() {
+    var list = influxJpaRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+    if (!list.isEmpty()) return list;
+
+    var servers = influxDbInfo.servers();
+    if (servers == null || servers.isEmpty()) return List.of();
+
+
+    final String defaultUid = "default";
+
+    var entities = servers.stream()
+        .map(s -> influxMapper.toEntity(s, defaultUid))
+        .toList();
+
+
+    list = influxJpaRepository.saveAll(entities);
+    log.info("[INF-BOOTSTRAP] seeded {} rows from YAML", list.size());
+    return list;
+  }
+
+
+
+
+
 
   private InfluxDTO toDTO(InfluxEntity e) {
     return InfluxDTO.builder()
@@ -80,55 +115,6 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
 
 
-
-  @Override
-  public InfluxDTO postDb(InfluxDTO influxDTO) {
-
-    if (!isConnectedDb(influxDTO)) {
-      throw new IllegalArgumentException("Failed to connect to InfluxDB at URL: " + influxDTO.getUrl());
-    }
-
-    InfluxEntity influxEntity = InfluxEntity.builder()
-        .url(influxDTO.getUrl())
-        .database(influxDTO.getDatabase())
-        .username(influxDTO.getUsername())
-        .password(influxDTO.getPassword())
-        .build();
-
-
-    InfluxEntity savedEntity = influxJpaRepository.save(influxEntity);
-
-    return InfluxDTO.builder()
-        .url(savedEntity.getUrl())
-        .database(savedEntity.getDatabase())
-        .username(savedEntity.getUsername())
-        .build();
-  }
-
-  // ------------------------------------update influx--------------------------------------------------//
-
-  @Override
-  public  InfluxDTO updateInflux(Long influxId, InfluxDTO req){
-    var e = influxJpaRepository.findById(influxId)
-        .orElseThrow(() -> new IllegalArgumentException("influx not found: " + influxId));
-
-    if (req.getUrl() != null) e.setUrl(req.getUrl());
-    if (req.getDatabase() != null) e.setDatabase(req.getDatabase());
-    if (req.getUsername() != null) e.setUsername(req.getUsername());
-    if (req.getPassword() != null) e.setPassword(req.getPassword());
-
-    var saved = influxJpaRepository.save(e);
-    var probe = toDTO(saved);
-    if (!isConnectedDb(probe)) {
-      throw new IllegalArgumentException("Failed to connect after update: " + saved.getUrl());
-    }
-
-    return InfluxDTO.builder()
-        .url(saved.getUrl())
-        .database(saved.getDatabase())
-        .username(saved.getUsername())
-        .build();
-  }
 
   // ------------------------------------db list--------------------------------------------------//
 
@@ -451,7 +437,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
       }
 
       var values = r0.getSeries().get(0).getValues();
-      return values != null && !values.isEmpty(); // 여기만 true/false 판별
+      return values != null && !values.isEmpty();
     } catch (Exception e) {
       log.warn("[hasResult] query failed url={}, db={}, q={}, err={}",
           influxDTO.getUrl(), influxDTO.getDatabase(), query, e.toString());

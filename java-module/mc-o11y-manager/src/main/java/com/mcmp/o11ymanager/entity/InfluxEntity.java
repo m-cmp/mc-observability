@@ -25,6 +25,7 @@ public class InfluxEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  private String uid;
   private String url;
   private String database;
   private String retentionPolicy;

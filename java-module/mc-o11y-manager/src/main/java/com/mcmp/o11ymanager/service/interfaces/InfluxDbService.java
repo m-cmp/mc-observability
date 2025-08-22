@@ -12,7 +12,6 @@ public interface InfluxDbService {
 
   boolean isConnectedDb(InfluxDTO influxDTO);
 
-  InfluxDTO postDb(InfluxDTO influxDTO);
 
   Long resolveInfluxDb(String nsId, String mciId);
 
@@ -29,5 +28,4 @@ public interface InfluxDbService {
   List<InfluxDTO> rawServers();
   InfluxDTO resolveInfluxDto(String nsId, String mciId);
 
-  InfluxDTO updateInflux(Long influxId, InfluxDTO req);
 }

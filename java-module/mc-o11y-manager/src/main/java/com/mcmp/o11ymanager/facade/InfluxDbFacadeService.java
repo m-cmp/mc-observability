@@ -21,22 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class InfluxDbFacadeService {
 
   private final InfluxDbService influxDbService;
-  private final TumblebugService tumblebugService;
 
   @Transactional(readOnly = true)
   public InfluxDTO resolveForTarget(String nsId, String mciId) {
     return influxDbService.resolveInfluxDto(nsId, mciId);
-  }
-
-
-  @Transactional
-  public InfluxDTO postInflux(InfluxDTO influxDTO){
-
-    InfluxDTO savedInflux;
-
-    savedInflux = influxDbService.postDb(influxDTO);
-
-    return savedInflux;
   }
 
 
