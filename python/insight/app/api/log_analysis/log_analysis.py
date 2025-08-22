@@ -135,32 +135,48 @@ async def stream_log_analysis(body_params: PostQueryBody, db: Session = Depends(
     async def generate_stream():
         try:
             # 스트리밍 응답 시작
-            yield f"data: {json.dumps({'type': 'start', 'message': '분석을 시작합니다...'}, ensure_ascii=False)}\n\n"
+            yield "event: start\n"
+            yield f"data: {json.dumps({'message': '분석을 시작합니다...'}, ensure_ascii=False)}\n\n"
             await asyncio.sleep(0.1)  # 잠시 대기
 
             # 실제 분석 수행
             log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
             result = await log_analysis_service.query(body=body_params)
 
-            # 결과를 청크로 나누어 스트리밍
-            message = result.message
-            chunk_size = 30  # 30자씩 나누어 전송
+            # 결과에서 메시지 및 메타데이터 추출
+            if isinstance(result, dict):
+                message_text = result.get("message", "")
+                metadata = result.get("metadata")
+            else:
+                message_text = getattr(result, "message", str(result))
+                metadata = getattr(result, "metadata", None)
 
-            for i in range(0, len(message), chunk_size):
-                chunk = message[i : i + chunk_size]
-                yield f"data: {json.dumps({'type': 'chunk', 'message': chunk}, ensure_ascii=False)}\n\n"
-                await asyncio.sleep(0.05)  # 스트리밍 효과를 위한 지연
+            # 결과를 청크로 나누어 스트리밍
+            chunk_size = 30
+            for i in range(0, len(message_text), chunk_size):
+                chunk = message_text[i : i + chunk_size]
+                yield "event: chunk\n"
+                yield f"data: {json.dumps({'message': chunk}, ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.05)
+
+            # 메타데이터 전송 (있을 때만)
+            if metadata:
+                yield "event: metadata\n"
+                yield f"data: {json.dumps(metadata if isinstance(metadata, dict) else metadata.model_dump(), ensure_ascii=False)}\n\n"
+                await asyncio.sleep(0.05)
 
             # 스트리밍 완료
-            yield f"data: {json.dumps({'type': 'done', 'message': ''}, ensure_ascii=False)}\n\n"
+            yield "event: done\n"
+            yield "data: {}\n\n"
 
         except Exception as e:
             # 오류 발생 시
-            yield f"data: {json.dumps({'type': 'error', 'message': f'오류가 발생했습니다: {str(e)}'}, ensure_ascii=False)}\n\n"
+            yield "event: error\n"
+            yield f"data: {json.dumps({'message': f'오류가 발생했습니다: {str(e)}'}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(
         generate_stream(),
-        media_type="text/plain; charset=utf-8",
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
