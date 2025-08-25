@@ -25,7 +25,7 @@ def register_tool(mcp, client: InfluxDBClient):
         - Answer detailed questions that require custom queries beyond the scope of other tools.
 
         Before using this, you should know the `database_name`, `measurement`, and schema (fields and tags),
-        which can be discovered using `list_databases`, `list_measurements`, and `get_measurement_schema`.
+        which can be discovered using `list_influxdb_databases`, `list_measurements`, and `get_measurement_schema`.
 
         Args:
             influxql_query (str): The InfluxQL query to execute. Must start with "SELECT" or "SHOW".

@@ -13,12 +13,12 @@ def register_tool(mcp, client: InfluxDBClient):
         To query data from a measurement, you must first know its name.
 
         This tool is essential for exploring the structure of a database. After identifying a database with
-        `list_databases`, use this tool to see what kinds of time-series data it contains. The output of this
+        `list_influxdb_databases`, use this tool to see what kinds of time-series data it contains. The output of this
         tool is a prerequisite for more specific queries, such as retrieving data points or examining the schema
         of a particular measurement.
 
         Args:
-            database_name (str): The name of the database to query for measurements. This name can be obtained by using the `list_databases` tool.
+            database_name (str): The name of the database to query for measurements. This name can be obtained by using the `list_influxdb_databases` tool.
         """
 
         logger.info(f"TOOL START: list_measurements for database '{database_name}'")
