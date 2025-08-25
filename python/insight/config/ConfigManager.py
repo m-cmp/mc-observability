@@ -76,7 +76,7 @@ class ConfigManager:
 
     def get_mcp_config(self):
         mcp = self.config.get("log_analysis", {}).get("mcp", {})
-        return {"mcp_grafana_url": mcp.get("mcp_grafana_url", ""), "mcp_mariadb_url": mcp.get("mcp_mariadb_url", "")}
+        return {"mcp_grafana_url": mcp.get("mcp_grafana_url", ""), "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""), "mcp_influxdb_url": mcp.get("mcp_influxdb_url", "")}
 
     def get_system_prompt_config(self):
         log_analysis = self.config.get("log_analysis", {})

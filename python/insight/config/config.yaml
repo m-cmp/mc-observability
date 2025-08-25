@@ -1,6 +1,5 @@
 common:
-  prefix:
-    /api/o11y/insight
+  prefix: /api/o11y/insight
   DB:
     URL: mc-observability-maria
     USERNAME: mc-agent
@@ -118,6 +117,8 @@ log_analysis:
 
   mcp:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
+    mcp_mariadb_url: http://mc-observability-mcp-mariadb:8001/sse
+    mcp_influxdb_url: http://mc-observability-mcp-influxdb:8002/sse
     system_prompt_first: |
       <system_prompt>
       You are an agent - System Log Investigator.

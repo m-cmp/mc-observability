@@ -39,7 +39,6 @@ class MCPManager:
                 session = await client.astart()
                 sessions[name] = session
 
-                # 각 MCP의 도구들을 로드
                 tools = await load_mcp_tools(session)
                 tools_list.extend(tools)
                 logger.info(f"{name} MCP client started successfully with {len(tools)} tools")
