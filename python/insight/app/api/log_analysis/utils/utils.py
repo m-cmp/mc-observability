@@ -111,6 +111,8 @@ class LogAnalysisService:
     async def query(self, body: PostQueryBody):
         session_id, message = body.session_id, body.message
         session = self.repo.get_session_by_id(session_id)
+        if not session:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session Not Found")
         provider_credential = CredentialService(repo=self.repo).get_provider_credential(provider=session.PROVIDER)
         await self.mcp_context.get_agent(session.PROVIDER, session.MODEL_NAME, provider_credential)
 
@@ -141,6 +143,8 @@ class LogAnalysisService:
             metadata_model = QueryMetadata(**metadata_summary)
 
         return Message(message_type="ai", message=result, metadata=metadata_model)
+
+    # 스트리밍 제거됨: 메타데이터는 호출자가 self.mcp_context.get_metadata_summary()로 조회합니다.
 
 
 class CredentialService:
