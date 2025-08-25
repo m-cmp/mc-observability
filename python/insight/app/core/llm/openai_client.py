@@ -9,7 +9,7 @@ class OpenAIClient:
         self.llm = None
         self.agent = None
 
-    def setup(self, model="gpt-4o"):
+    def setup(self, model="gpt-5-mini"):
         self.model = model
         self.llm = ChatOpenAI(model=self.model, api_key=self.api_key)
 
