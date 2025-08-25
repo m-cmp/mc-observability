@@ -116,7 +116,12 @@ class MCPContext:
         return response
 
     def _extract_tool_calls_from_response(self, response):
-        """LangGraph 응답에서 도구 호출 정보를 추출"""
+        """LangGraph 응답에서 도구 호출 정보를 추출.
+        정책 변경: queries_executed에는 순수 쿼리 문자열만 포함.
+        - message.content에서의 정규식 추출은 비활성화
+        - tool_calls.args 내 query/influxql_query/sql_query 키에서만 수집
+        - 좌우 공백 제거 및 중복 제거
+        """
         try:
             messages = response.get("messages", [])
             logger.info(f"Extracting from {len(messages)} messages")
@@ -124,41 +129,99 @@ class MCPContext:
             for message in messages:
                 logger.info(f"Message type: {getattr(message, 'type', 'unknown')}")
 
-                # tool 타입 메시지 처리
+                # tool 타입 메시지 처리: 카운트만 증가 (내용 스캔하지 않음)
                 if hasattr(message, "type") and message.type == "tool":
                     self.query_metadata["tool_calls_count"] += 1
                     logger.info(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
 
-                    # 도구 호출 결과에서 쿼리 추출
-                    if hasattr(message, "content"):
-                        content = str(message.content)
-                        self._extract_queries_from_content(content)
-
-                # ai 타입 메시지에서도 쿼리 패턴 찾기
+                # ai 타입 메시지: tool_calls만 살펴보고 args에서만 추출
                 elif hasattr(message, "type") and message.type == "ai":
-                    if hasattr(message, "content"):
-                        content = str(message.content)
-                        self._extract_queries_from_content(content)
-
-                    # tool_calls 속성이 있는 경우
                     if hasattr(message, "tool_calls") and message.tool_calls:
-                        self.query_metadata["tool_calls_count"] += len(message.tool_calls)
-                        logger.info(f"Found {len(message.tool_calls)} tool calls in AI message")
+                        # Normalize tool_calls to a list
+                        tool_calls = message.tool_calls
+                        try:
+                            tc_len = len(tool_calls)
+                        except Exception:
+                            tc_len = 0
+                        self.query_metadata["tool_calls_count"] += tc_len
+                        logger.info(f"Found {tc_len} tool calls in AI message")
 
-                        for tool_call in message.tool_calls:
-                            # 도구 이름 기반으로 데이터베이스 추적
-                            if hasattr(tool_call, "name"):
-                                if "influx" in tool_call.name.lower():
-                                    self.query_metadata["databases_accessed"].add("InfluxDB")
-                                elif "maria" in tool_call.name.lower() or "mysql" in tool_call.name.lower():
-                                    self.query_metadata["databases_accessed"].add("MariaDB")
+                        for tool_call in tool_calls:
+                            # 도구 이름 확인 (DB 식별에 사용, 쿼리 포착 시에만 기록)
+                            call_name = None
+                            if isinstance(tool_call, dict):
+                                call_name = tool_call.get("name")
+                                # LangChain/OpenAI may nest under function.name
+                                if not call_name:
+                                    fn = tool_call.get("function")
+                                    if isinstance(fn, dict):
+                                        call_name = fn.get("name")
+                            elif hasattr(tool_call, "name"):
+                                call_name = tool_call.name
 
-                            # 도구 호출 인자에서 쿼리 추출
-                            if hasattr(tool_call, "args") and isinstance(tool_call.args, dict):
-                                for key, value in tool_call.args.items():
-                                    if key.lower() in ["query", "influxql_query", "sql_query"] and isinstance(value, str):
-                                        self.query_metadata["queries_executed"].append(value.strip())
-                                        logger.info(f"Extracted query from args: {value[:100]}...")
+                            inferred_db = None
+                            if isinstance(call_name, str):
+                                name_lower = call_name.lower()
+                                # Known InfluxDB tool names from our MCP
+                                influx_tools = {
+                                    "execute_influxql",
+                                    "get_time_window_summary",
+                                    "get_last_data_point_timestamp",
+                                    "get_measurement_schema",
+                                    "get_tag_values",
+                                    "list_measurements",
+                                    "list_influxdb_databases",
+                                }
+                                maria_tools = {
+                                    "execute_sql",
+                                    "query_sql",
+                                    "list_databases",
+                                    "list_tables",
+                                }
+                                if ("influx" in name_lower) or (call_name in influx_tools):
+                                    inferred_db = "InfluxDB"
+                                elif ("maria" in name_lower) or ("mysql" in name_lower) or (call_name in maria_tools):
+                                    inferred_db = "MariaDB"
+
+                            # 도구 호출 인자에서 순수 쿼리만 수집
+                            args_dict = None
+                            # Handle both object and dict tool_call shapes
+                            if isinstance(tool_call, dict):
+                                args_dict = tool_call.get("args") or tool_call.get("arguments")
+                                # Some providers place arguments under function.arguments
+                                if args_dict is None:
+                                    fn = tool_call.get("function")
+                                    if isinstance(fn, dict):
+                                        args_dict = fn.get("arguments")
+                            elif hasattr(tool_call, "args"):
+                                args_val = getattr(tool_call, "args")
+                                if args_val is not None:
+                                    args_dict = args_val
+                            # If args is a JSON string, try parsing
+                            if isinstance(args_dict, str):
+                                try:
+                                    import json as _json
+
+                                    parsed = _json.loads(args_dict)
+                                    if isinstance(parsed, dict):
+                                        args_dict = parsed
+                                except Exception:
+                                    args_dict = None
+                            # Extract from recognized keys only
+                            if isinstance(args_dict, dict):
+                                captured_any_query_for_call = False
+                                for key, value in args_dict.items():
+                                    if key and isinstance(key, str) and key.lower() in ("query", "influxql_query", "sql_query") and isinstance(value, str):
+                                        q = value.strip()
+                                        q = re.sub(r"\s+", " ", q)
+                                        if q and q not in self.query_metadata["queries_executed"]:
+                                            self.query_metadata["queries_executed"].append(q)
+                                            captured_any_query_for_call = True
+                                            logger.info(f"Captured query: {q[:160]}...")
+
+                                # 쿼리를 실제로 포착한 경우에만 해당 DB를 accessed로 기록
+                                if captured_any_query_for_call and inferred_db:
+                                    self.query_metadata["databases_accessed"].add(inferred_db)
 
             logger.info(f"Final metadata: {self.query_metadata}")
 
@@ -168,55 +231,9 @@ class MCPContext:
 
             traceback.print_exc()
 
-    def _extract_queries_from_content(self, content: str):
-        """컨텐츠에서 SQL/InfluxQL 쿼리를 추출"""
-        try:
-            # InfluxQL 쿼리 패턴
-            influx_patterns = [
-                r"SHOW\s+DATABASES",
-                r"SHOW\s+MEASUREMENTS",
-                r"SELECT.*?FROM.*?(?:WHERE.*?)?(?:GROUP BY.*?)?(?:LIMIT.*?)?(?:;|$)",
-                r"SHOW\s+TAG\s+VALUES.*?FROM",
-                r"SHOW\s+FIELD\s+KEYS.*?FROM",
-            ]
+    # 비활성화된 free-text 추출 로직은 제거하여 설명이 queries_executed에 섞이지 않도록 함
 
-            for pattern in influx_patterns:
-                matches = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
-                for match in matches:
-                    cleaned_query = re.sub(r"\s+", " ", match.strip())
-                    if cleaned_query and cleaned_query not in self.query_metadata["queries_executed"]:
-                        self.query_metadata["queries_executed"].append(cleaned_query)
-                        self.query_metadata["databases_accessed"].add("InfluxDB")
-                        logger.info(f"Found InfluxQL query: {cleaned_query[:100]}...")
-
-            # MariaDB/MySQL 쿼리 패턴
-            maria_patterns = [r"(?:SELECT|INSERT|UPDATE|DELETE|SHOW).*?(?:FROM|INTO|TABLE).*?(?:;|$)", r"DESCRIBE\s+\w+", r"SHOW\s+TABLES"]
-
-            for pattern in maria_patterns:
-                matches = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
-                for match in matches:
-                    if "FROM" in match.upper() or "INTO" in match.upper() or "SHOW" in match.upper():
-                        cleaned_query = re.sub(r"\s+", " ", match.strip())
-                        if cleaned_query and cleaned_query not in self.query_metadata["queries_executed"]:
-                            self.query_metadata["queries_executed"].append(cleaned_query)
-                            self.query_metadata["databases_accessed"].add("MariaDB")
-                            logger.info(f"Found MariaDB query: {cleaned_query[:100]}...")
-
-        except Exception as e:
-            logger.error(f"Error extracting queries from content: {e}")
-
-    async def aquery_stream(self, session_id, messages):
-        """스트리밍 방식으로 쿼리 응답을 생성합니다."""
-        config = self.create_config(session_id)
-        prompt = await self._build_prompt(session_id, messages)
-
-        # LangGraph 에이전트의 스트리밍 응답
-        async for chunk in self.agent.astream({"messages": prompt}, config=config):
-            # 에이전트 스트림에서 메시지 내용 추출
-            if "messages" in chunk and chunk["messages"]:
-                last_message = chunk["messages"][-1]
-                if hasattr(last_message, "content") and last_message.content:
-                    yield last_message.content
+    # 스트리밍 제거됨: aquery_stream 삭제
 
     @staticmethod
     def create_config(session_id):
