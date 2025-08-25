@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.exception;
+package com.mcmp.o11ymanager.exception.config;
 
 import com.mcmp.o11ymanager.enums.ResponseCode;
 import lombok.Getter;

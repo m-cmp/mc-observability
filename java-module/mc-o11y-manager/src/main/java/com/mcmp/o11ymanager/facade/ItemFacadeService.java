@@ -1,13 +1,12 @@
 package com.mcmp.o11ymanager.facade;
 
-import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.dto.item.MonitoringItemUpdateDTO;
 import com.mcmp.o11ymanager.dto.plugin.PluginDefDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.enums.ResponseCode;
-import com.mcmp.o11ymanager.exception.TelegrafConfigException;
+import com.mcmp.o11ymanager.exception.config.TelegrafConfigException;
 import com.mcmp.o11ymanager.service.interfaces.AgentPluginDefService;
 import com.mcmp.o11ymanager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
@@ -26,7 +25,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
