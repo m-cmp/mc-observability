@@ -36,7 +36,8 @@ public class TargetEntity {
   @Id
   private String targetId;
 
-  private int influxSeq;
+  @Column(name = "influx_id", nullable = false)
+  private Long influxSeq;
 
   @Column(nullable = false)
   private String name;

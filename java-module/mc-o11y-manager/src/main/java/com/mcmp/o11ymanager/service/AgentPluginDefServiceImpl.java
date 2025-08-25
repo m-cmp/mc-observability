@@ -30,6 +30,7 @@ public class AgentPluginDefServiceImpl implements AgentPluginDefService {
     
     public static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
 
+
     public List<PluginDefDTO> getAllPluginDefinitions() {
         return agentPluginDefRepository.findAll().stream()
             .map(this::toDto)

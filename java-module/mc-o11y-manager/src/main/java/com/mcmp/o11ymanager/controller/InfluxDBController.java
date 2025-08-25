@@ -2,14 +2,17 @@ package com.mcmp.o11ymanager.controller;
 
 import com.mcmp.o11ymanager.dto.influx.FieldDTO;
 import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
+import com.mcmp.o11ymanager.dto.influx.MetricDTO;
+import com.mcmp.o11ymanager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.dto.influx.TagDTO;
-import com.mcmp.o11ymanager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.facade.FileFacadeService;
 import com.mcmp.o11ymanager.facade.InfluxDbFacadeService;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,20 +24,34 @@ public class InfluxDBController {
   private final InfluxDbFacadeService influxDbFacadeService;
 
 
+//  @PostMapping
+//  public ResBody<InfluxDTO> postInfluxDB(@RequestBody InfluxDTO req)
+//  {
+//    return new ResBody<>(influxDbFacadeService.postInflux(req));
+//  }
+
   @GetMapping
   public ResBody<List<InfluxDTO>> getAllInfluxDB()
   {
-      return influxDbFacadeService.getInfluxDbs();
+      return new ResBody<>(influxDbFacadeService.getInfluxDbs());
   }
 
   @GetMapping("/measurement")
   public ResBody<List<FieldDTO>> measurement() {
-     return influxDbFacadeService.getFields();
+    return new ResBody<>(influxDbFacadeService.getFields());
   }
 
   @GetMapping("/tag")
   public ResBody<List<TagDTO>> tag() {
-    return influxDbFacadeService.getTags();
+    return new ResBody<>(influxDbFacadeService.getTags());
   }
+
+
+  @PostMapping("/metric/{nsId}/{mciId}")
+  public ResBody<List<MetricDTO>> query( @PathVariable String nsId,
+      @PathVariable String mciId, @RequestBody MetricRequestDTO req) {
+    return new ResBody<>(influxDbFacadeService.getMetrics(nsId, mciId, req));
+  }
+
 
 }

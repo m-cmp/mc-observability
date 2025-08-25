@@ -11,16 +11,8 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InfluxDTO {
+public class UidDTO {
 
-  private String url;
-
-  private String database;
-
-  private String username;
-
-  private String retention_policy;
-
-  private String password;
+  private String uid;
 
 }

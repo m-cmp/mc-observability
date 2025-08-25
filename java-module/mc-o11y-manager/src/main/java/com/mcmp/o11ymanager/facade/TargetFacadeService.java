@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.facade;
 
 
+import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.dto.target.TargetDTO;
 import com.mcmp.o11ymanager.dto.target.TargetRequestDTO;
 import com.mcmp.o11ymanager.dto.tumblebug.TumblebugMCI;
@@ -27,13 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class TargetFacadeService {
 
 
-  private final InfluxDbService influxDbService;
+
   private ExecutorService executor;
 
   private final TargetService targetService;
   private final AgentFacadeService agentFacadeService;
   private final TumblebugService tumblebugService;
-  private final InfluxDbFacadeService influxDbFacadeService;
+  private final InfluxDbService influxDbService;
 
 
   public TargetDTO postTarget(String nsId, String mciId, String targetId, TargetRequestDTO dto) {
@@ -48,7 +49,7 @@ public class TargetFacadeService {
     }
 
     // select influx
-    int influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
+    Long influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
 
     savedTarget = targetService.post(nsId, mciId, targetId, status, dto, influxSeq);
     log.info("===========================================Target {} posted=======================================", savedTarget);
@@ -73,6 +74,21 @@ public class TargetFacadeService {
 
     return savedTarget;
   }
+
+
+
+//  public InfluxDTO  updateInflux(InfluxDTO influxDTO, String nsId, String mciId, String targetId) {
+//
+//    Long influxId = targetService.getInfluxIdOfTarget(nsId, mciId, targetId);
+//
+//    influxDbService.updateInflux(influxId, influxDTO);
+//
+//    ??telegraf output 수정해야함 ..
+//
+//    tumblebugService.restart(nsId, mciId, targetId, Agent.TELEGRAF);
+//
+//  }
+
 
 
   public TargetDTO getTarget(String nsId, String mciId, String targetId) {

@@ -1,25 +1,31 @@
 package com.mcmp.o11ymanager.service.interfaces;
 
-import com.mcmp.o11ymanager.config.InfluxDbInfo;
 import com.mcmp.o11ymanager.dto.influx.FieldDTO;
 import com.mcmp.o11ymanager.dto.influx.InfluxDTO;
+import com.mcmp.o11ymanager.dto.influx.MetricDTO;
+import com.mcmp.o11ymanager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.dto.influx.TagDTO;
 import com.mcmp.o11ymanager.global.target.ResBody;
 import java.util.List;
 
 public interface InfluxDbService {
 
-  ResBody<List<InfluxDTO>> getList();
+  boolean isConnectedDb(InfluxDTO influxDTO);
 
-  ResBody<List<TagDTO>> getTags();
+
+  Long resolveInfluxDb(String nsId, String mciId);
+
+  int resolveInfluxDb2(String nsId, String mciId);
 
   ResBody<List<FieldDTO>> getFields();
 
-  boolean isConnectedDb(InfluxDbInfo.Server s);
+  ResBody<List<TagDTO>> getTags();
 
-  int resolveInfluxDb(String nsId, String mciId);
+  String fetchDefaultRp(InfluxDTO influxDTO);
 
-  String fetchDefaultRp(InfluxDbInfo.Server s);
+  List<MetricDTO> getMetrics(String nsId, String mciId, MetricRequestDTO req);
 
-  InfluxDbInfo.Server resolveByNo(int influxNo);
+  List<InfluxDTO> rawServers();
+  InfluxDTO resolveInfluxDto(String nsId, String mciId);
+
 }

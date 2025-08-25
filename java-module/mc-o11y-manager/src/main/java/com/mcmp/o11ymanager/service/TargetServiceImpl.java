@@ -14,6 +14,7 @@ import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import com.mcmp.o11ymanager.repository.TargetJpaRepository;
 import com.mcmp.o11ymanager.service.interfaces.TargetService;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,7 +51,7 @@ public class TargetServiceImpl implements TargetService {
   }
 
   @Override
-  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq) {
+  public TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, Long influxSeq) {
     TargetEntity target = TargetEntity.builder()
         .nsId(nsId)
         .mciId(mciId)
@@ -210,6 +211,22 @@ public class TargetServiceImpl implements TargetService {
     targetJpaRepository.save(target);
 
     log.info("[TargetService] Log Service Status {}", target);
+  }
+
+  @Override
+  public List<String> getTargetIds(String nsId, String mciId) {
+    return targetJpaRepository.findByNsIdAndMciId(nsId, mciId)
+        .stream().map(TargetEntity::getTargetId).toList();
+  }
+
+
+
+  @Override
+  public Long getInfluxId(String nsId, String mciId) {
+    TargetEntity t = targetJpaRepository.findTop1ByNsIdAndMciIdOrderByTargetIdAsc(nsId, mciId)
+        .orElseThrow(() -> new IllegalStateException("no targets under ns/mci"));
+
+    return t.getInfluxSeq();
   }
 
 }

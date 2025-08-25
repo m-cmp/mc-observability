@@ -10,6 +10,7 @@ import com.mcmp.o11ymanager.model.host.TargetAgentTaskStatus;
 
 import com.mcmp.o11ymanager.model.host.TargetStatus;
 import java.util.List;
+import java.util.Optional;
 
 public interface TargetService {
 
@@ -19,7 +20,7 @@ public interface TargetService {
 
   List<TargetDTO> list();
 
-  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, int influxSeq);
+  TargetDTO post(String nsId, String mciId, String targetId, TargetStatus targetStatus, TargetRequestDTO dto, Long influxSeq);
 
   TargetDTO put(String nsId, String mciId, String targetId, TargetRequestDTO dto);
 
@@ -37,4 +38,8 @@ public interface TargetService {
   void updateMonitoringAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
 
   void updateLogAgentTaskStatusAndTaskId(String nsId, String mciId, String targetId, TargetAgentTaskStatus status, String taskId);
+
+  List<String> getTargetIds(String nsId, String mciId);
+  Long getInfluxId(String nsId, String mciId);
+
 }
