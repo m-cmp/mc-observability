@@ -16,4 +16,4 @@ class PostQueryBody(BaseModel):
 
 
 class PostAPIKeyBody(BaseModel):
-    api_key: str = Field(..., min_length=20, description="OpenAI API key")
+    api_key: str = Field(..., min_length=20, description="API key")

@@ -114,6 +114,10 @@ log_analysis:
         - gpt-5
         - gpt-5-mini
         - gpt-5-nano
+    - provider: google
+      model_name:
+        - gemini-2.5-flash
+        - gemini-2.5-pro
 
   mcp:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse

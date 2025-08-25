@@ -9,7 +9,7 @@ class BaseResponse(BaseModel):
 
 
 class LogAnalysisModel(BaseModel):
-    provider: Literal["ollama", "openai"]
+    provider: Literal["ollama", "openai", "google"]
     model_name: list[str]
 
 
@@ -78,3 +78,12 @@ class OpenAIAPIKey(BaseModel):
 
 class ResBodyOpenAIAPIKey(BaseResponse):
     data: OpenAIAPIKey
+
+
+class GoogleAPIKey(BaseModel):
+    seq: int
+    api_key: str
+
+
+class ResBodyGoogleAPIKey(BaseResponse):
+    data: GoogleAPIKey

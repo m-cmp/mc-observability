@@ -61,17 +61,33 @@ class MCPContext:
     #     self.uri = f'mysql://{db_info['user']}:{db_info['pw']}@{db_info['url']}/{db_info['db']}'
 
     async def get_agent(self, provider: str, model_name: str, provider_credential: str):
-        if provider == "ollama":
-            self.llm_client = OllamaClient(provider_credential)
-        elif provider == "openai":
-            self.llm_client = OpenAIClient(provider_credential)
+        try:
+            if not provider_credential:
+                msg = f"Missing credential for provider '{provider}'."
+                logger.error(msg)
+                raise ValueError(msg)
 
-        self.llm_client.setup(model=model_name)
+            if provider == "ollama":
+                self.llm_client = OllamaClient(provider_credential)
+            elif provider == "openai":
+                self.llm_client = OpenAIClient(provider_credential)
+            elif provider == "google":
+                google_base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
+                self.llm_client = OpenAIClient(provider_credential, base_url=google_base_url)
+            else:
+                msg = f"Unsupported provider: {provider}"
+                logger.error(msg)
+                raise ValueError(msg)
 
-        self.tools = self.mcp_manager.get_all_tools()
-        logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
+            self.llm_client.setup(model=model_name)
 
-        self.agent = self.llm_client.bind_tools(self.tools, self.memory)
+            self.tools = self.mcp_manager.get_all_tools() or []
+            logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
+
+            self.agent = self.llm_client.bind_tools(self.tools, self.memory)
+        except Exception as e:
+            logger.error(f"Failed to initialize agent for provider={provider}, model={model_name}: {e}")
+            raise
 
     async def _build_prompt(self, session_id: str, messages: str):
         history = await self.get_chat_history(session_id)

@@ -80,4 +80,7 @@ class ConfigManager:
 
     def get_system_prompt_config(self):
         log_analysis = self.config.get("log_analysis", {})
-        return {"system_prompt_first": log_analysis.get("system_prompt_first", ""), "system_prompt_default": log_analysis.get("system_prompt_default", "")}
+        system_prompt_first = log_analysis.get("system_prompt_first")
+        if not system_prompt_first:
+            system_prompt_first = log_analysis.get("mcp", {}).get("system_prompt_first", "")
+        return {"system_prompt_first": system_prompt_first, "system_prompt_default": log_analysis.get("system_prompt_default", "")}
