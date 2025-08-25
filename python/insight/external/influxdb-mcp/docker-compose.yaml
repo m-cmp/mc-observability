@@ -1,0 +1,19 @@
+services:
+  # influxdb-server:
+  #   image: influxdb:1.11.8
+  #   container_name: influxdb
+  #   ports:
+  #     - "8086:8086"
+  #   environment:
+  #     - INFLUXDB_DB=mc-observability
+  #     - INFLUXDB_USER=mc-agent
+  #     - INFLUXDB_PASSWORD=mc-agent
+
+  influxdb-v1-mcp:
+    build: .
+    container_name: influxdb-v1-mcp
+    env_file: .env
+    ports:
+      - "9003:9003"
+    # depends_on:
+    #   - influxdb-server

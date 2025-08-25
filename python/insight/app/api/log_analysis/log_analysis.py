@@ -4,13 +4,13 @@ from app.api.log_analysis.response.res import (
     ResBodyLogAnalysisModel,
     ResBodyLogAnalysisSession,
     ResBodyOpenAIAPIKey,
+    ResBodyGoogleAPIKey,
     ResBodyLogAnalysisSessions,
     ResBodySessionHistory,
     ResBodyQuery,
 )
-from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService
+from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService, GoogleAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
-from app.core.mcp.mcp_context import MCPContext
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 from config.ConfigManager import ConfigManager
@@ -98,7 +98,7 @@ async def delete_all_log_analysis_session(db: Session = Depends(get_db)):
     response_model=ResBodySessionHistory,
     operation_id="GetLogAnalysisSessionHistory",
 )
-async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db), mcp_context: MCPContext = Depends(get_mcp_context)):
+async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
     log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
     result = await log_analysis_service.get_chat_session_history(path=path_params)
     return ResBodySessionHistory(data=result)
@@ -111,7 +111,7 @@ async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery",
 )
-async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context: MCPContext = Depends(get_mcp_context)):
+async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
     # session_id = '921f5fc9-dbd8-4979-96a8-783b4c2fd3cd'
     log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
     result = await log_analysis_service.query(body=body_params)
@@ -159,3 +159,45 @@ async def delete_openai_api_key(db: Session = Depends(get_db)):
     service = OpenAIAPIKeyService(db=db)
     result = service.delete_key()
     return ResBodyOpenAIAPIKey(data=result)
+
+
+@router.get(
+    path="/log-analysis/google/api_keys",
+    # description="",
+    # responses="",
+    summary="Get Google API Key",
+    response_model=ResBodyGoogleAPIKey,
+    operation_id="GetGoogleAPIKey",
+)
+async def get_google_api_key(db: Session = Depends(get_db)):
+    service = GoogleAPIKeyService(db=db)
+    result = service.get_key()
+    return ResBodyGoogleAPIKey(data=result)
+
+
+@router.post(
+    path="/log-analysis/google/api_keys",
+    # description="",
+    # responses="",
+    summary="Post Google API Key",
+    response_model=ResBodyGoogleAPIKey,
+    operation_id="PostGoogleAPIKey",
+)
+async def post_google_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
+    service = GoogleAPIKeyService(db=db)
+    result = service.post_key(body_params.api_key)
+    return ResBodyGoogleAPIKey(data=result)
+
+
+@router.delete(
+    path="/log-analysis/google/api_keys",
+    # description="",
+    # responses="",
+    summary="Delete Google API Key",
+    response_model=ResBodyGoogleAPIKey,
+    operation_id="DeleteGoogleAPIKey",
+)
+async def delete_google_api_key(db: Session = Depends(get_db)):
+    service = GoogleAPIKeyService(db=db)
+    result = service.delete_key()
+    return ResBodyGoogleAPIKey(data=result)
