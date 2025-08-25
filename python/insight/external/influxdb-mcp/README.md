@@ -53,13 +53,13 @@ The InfluxDB MCP Server exposes a set of tools for interacting with InfluxDB tim
 
 ### Standard Database Tools
 
-- **list_databases**
+- **list_influxdb_databases**
   - Lists all accessible databases.
   - Parameters: _None_
   - ##### Example
     ```json
     {
-      "tool_name": "list_databases"
+      "tool_name": "list_influxdb_databases"
     }
     ```
 

@@ -42,7 +42,7 @@ The MCP MariaDB Server exposes a set of tools for interacting with MariaDB datab
 
 ### Standard Database Tools
 
-- **list_databases**
+- **list_mariadb_databases**
   - Lists all accessible databases.
   - Parameters: _None_
 

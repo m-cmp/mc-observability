@@ -34,7 +34,7 @@ try:
     for filename in os.listdir(tools_dir):
         # 파이썬 파일만 대상으로 하고, __init__.py 같은 특수 파일은 제외합니다.
         if filename.endswith(".py") and not filename.startswith("__"):
-            # 이제 모듈 경로는 'tools.list_databases'와 같은 상대 경로가 아닌,
+            # 이제 모듈 경로는 'tools.list_influxdb_databases'와 같은 상대 경로가 아닌,
             # 파일 시스템의 절대 경로를 기반으로 로드해야 할 수도 있으므로,
             # 더 안정적인 방식을 위해 모듈 로더를 직접 사용합니다. (아래 로직은 더 견고함)
             module_name = f"tools.{filename[:-3]}"

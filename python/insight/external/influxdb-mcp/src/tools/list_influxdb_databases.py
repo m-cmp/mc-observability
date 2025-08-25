@@ -4,7 +4,7 @@ from influx_client import InfluxDBClient
 
 def register_tool(mcp, client: InfluxDBClient):
     @mcp.tool()
-    def list_databases() -> str:
+    def list_influxdb_databases() -> str:
         """
         Lists all available InfluxDB databases that the current user has permission to access.
 
@@ -19,7 +19,7 @@ def register_tool(mcp, client: InfluxDBClient):
         The output is a string representation of a list of database names.
         """
 
-        logger.info("TOOL START: list_databases")
+        logger.info("TOOL START: list_influxdb_databases")
         result = client.execute_query("SHOW DATABASES")
-        logger.info("TOOL END: list_databases completed.")
+        logger.info("TOOL END: list_influxdb_databases completed.")
         return result

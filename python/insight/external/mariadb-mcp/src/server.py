@@ -225,17 +225,17 @@ class MariaDBServer:
 
     # --- MCP Tool Definitions ---
 
-    async def list_databases(self) -> List[str]:
+    async def list_mariadb_databases(self) -> List[str]:
         """Lists all accessible databases on the connected MariaDB server."""
-        logger.info("TOOL START: list_databases called.")
+        logger.info("TOOL START: list_mariadb_databases called.")
         sql = "SHOW DATABASES"
         try:
             results = await self._execute_query(sql)
             db_list = [row["Database"] for row in results if "Database" in row]
-            logger.info(f"TOOL END: list_databases completed. Databases found: {len(db_list)}.")
+            logger.info(f"TOOL END: list_mariadb_databases completed. Databases found: {len(db_list)}.")
             return db_list
         except Exception as e:
-            logger.error(f"TOOL ERROR: list_databases failed: {e}", exc_info=True)
+            logger.error(f"TOOL ERROR: list_mariadb_databases failed: {e}", exc_info=True)
             raise
 
     async def list_tables(self, database_name: str) -> List[str]:
@@ -730,7 +730,7 @@ class MariaDBServer:
             logger.error("Cannot register tools: Database pool is not initialized.")
             raise RuntimeError("Database pool must be initialized before registering tools.")
 
-        self.mcp.add_tool(self.list_databases)
+        self.mcp.add_tool(self.list_mariadb_databases)
         self.mcp.add_tool(self.list_tables)
         self.mcp.add_tool(self.get_table_schema)
         self.mcp.add_tool(self.get_table_schema_with_relations)
