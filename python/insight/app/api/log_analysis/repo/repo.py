@@ -1,4 +1,4 @@
-from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey, GoogleAPIKey
+from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey, GoogleAPIKey, AnthropicAPIKey
 from sqlalchemy.orm import Session
 
 
@@ -67,5 +67,22 @@ class LogAnalysisRepository:
 
     def delete_google_key(self) -> None:
         self.db.query(GoogleAPIKey).delete()
+        self.db.commit()
+
+    def get_anthropic_key(self):
+        return self.db.query(AnthropicAPIKey).first()
+
+    def create_anthropic_key(self, key: str) -> AnthropicAPIKey:
+        record = self.db.query(AnthropicAPIKey).first()
+        if record:
+            record.API_KEY = key
+        else:
+            record = AnthropicAPIKey(API_KEY=key)
+            self.db.add(record)
+        self.db.commit()
+        return record
+
+    def delete_anthropic_key(self) -> None:
+        self.db.query(AnthropicAPIKey).delete()
         self.db.commit()
     

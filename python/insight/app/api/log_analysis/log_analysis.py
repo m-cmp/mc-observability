@@ -6,11 +6,12 @@ from app.api.log_analysis.response.res import (
     ResBodyLogAnalysisSession,
     ResBodyOpenAIAPIKey,
     ResBodyGoogleAPIKey,
+    ResBodyAnthropicAPIKey,
     ResBodyLogAnalysisSessions,
     ResBodySessionHistory,
     ResBodyQuery,
 )
-from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService, GoogleAPIKeyService
+from app.api.log_analysis.utils.utils import LogAnalysisService, OpenAIAPIKeyService, GoogleAPIKeyService, AnthropicAPIKeyService
 from app.core.dependencies.mcp import get_mcp_context
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
@@ -257,3 +258,54 @@ async def delete_google_api_key(db: Session = Depends(get_db)):
     service = GoogleAPIKeyService(db=db)
     result = service.delete_key()
     return ResBodyGoogleAPIKey(data=result)
+
+
+@router.get(
+    path="/log-analysis/anthropic/api_keys",
+    # description="",
+    # responses="",
+    summary="Get Anthropic API Key",
+    response_model=ResBodyAnthropicAPIKey,
+    operation_id="GetAnthropicAPIKey",
+)
+async def get_anthropic_api_key(db: Session = Depends(get_db)):
+    """
+    Anthropic API 키를 조회합니다.
+    """
+    service = AnthropicAPIKeyService(db=db)
+    result = service.get_key()
+    return ResBodyAnthropicAPIKey(data=result)
+
+
+@router.post(
+    path="/log-analysis/anthropic/api_keys",
+    # description="",
+    # responses="",
+    summary="Post Anthropic API Key",
+    response_model=ResBodyAnthropicAPIKey,
+    operation_id="PostAnthropicAPIKey",
+)
+async def post_anthropic_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
+    """
+    Anthropic API 키를 저장합니다.
+    """
+    service = AnthropicAPIKeyService(db=db)
+    result = service.post_key(body_params.api_key)
+    return ResBodyAnthropicAPIKey(data=result)
+
+
+@router.delete(
+    path="/log-analysis/anthropic/api_keys",
+    # description="",
+    # responses="",
+    summary="Delete Anthropic API Key",
+    response_model=ResBodyAnthropicAPIKey,
+    operation_id="DeleteAnthropicAPIKey",
+)
+async def delete_anthropic_api_key(db: Session = Depends(get_db)):
+    """
+    Anthropic API 키를 삭제합니다.
+    """
+    service = AnthropicAPIKeyService(db=db)
+    result = service.delete_key()
+    return ResBodyAnthropicAPIKey(data=result)

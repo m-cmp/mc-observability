@@ -75,6 +75,9 @@ class MCPContext:
             elif provider == "google":
                 google_base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
                 self.llm_client = OpenAIClient(provider_credential, base_url=google_base_url)
+            elif provider == "anthropic":
+                anthropic_base_url = "https://api.anthropic.com/v1/"
+                self.llm_client = OpenAIClient(provider_credential, base_url=anthropic_base_url)
             else:
                 msg = f"Unsupported provider: {provider}"
                 logger.error(msg)
