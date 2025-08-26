@@ -18,20 +18,11 @@ logger = logging.getLogger(__name__)
 class MCPContext:
     def __init__(self, mcp_manager):
         self.config = ConfigManager()
-
         self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
-
-        # Todo
-        # checkpointer MariaDB 사용 가능 여부 검증 필요
-        # self._build_db_uri()
-        # self.memory = AIOMySQLSaver.from_conn_string(self.uri)
-
         self.mcp_manager = mcp_manager
         self.llm_client = None
         self.tools = None
         self.agent = None
-
-        # 쿼리 메타데이터 추적을 위한 변수들
         self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
 
     def reset_metadata(self):
@@ -56,11 +47,6 @@ class MCPContext:
             "databases_accessed": list(self.query_metadata["databases_accessed"]),
         }
 
-    # Todo
-    # def _build_db_uri(self):
-    #     db_info = self.config.get_db_config()
-    #     self.uri = f'mysql://{db_info['user']}:{db_info['pw']}@{db_info['url']}/{db_info['db']}'
-
     async def get_agent(self, provider: str, model_name: str, provider_credential: str):
         try:
             if not provider_credential:
@@ -73,11 +59,9 @@ class MCPContext:
             elif provider == "openai":
                 self.llm_client = OpenAIClient(provider_credential)
             elif provider == "google":
-                google_base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
-                self.llm_client = OpenAIClient(provider_credential, base_url=google_base_url)
+                self.llm_client = OpenAIClient(provider_credential, base_url="https://generativelanguage.googleapis.com/v1beta/openai")
             elif provider == "anthropic":
-                anthropic_base_url = "https://api.anthropic.com/v1/"
-                self.llm_client = OpenAIClient(provider_credential, base_url=anthropic_base_url)
+                self.llm_client = OpenAIClient(provider_credential, base_url="https://api.anthropic.com/v1/")
             else:
                 msg = f"Unsupported provider: {provider}"
                 logger.error(msg)
@@ -102,7 +86,6 @@ class MCPContext:
 
         current_time = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # TODO 기능, 상황별 Prompt 관리 기능 추가
         system_prompt_config = self.config.get_system_prompt_config()
 
         if msg_count == 0:
@@ -142,7 +125,6 @@ class MCPContext:
         config = self.create_config(session_id)
         prompt = await self._build_prompt(session_id, messages)
 
-        # Optional: send a start event
         yield b":ok\n\n"
 
         try:
@@ -150,21 +132,17 @@ class MCPContext:
                 et = event.get("event", "")
                 data = event.get("data", {})
 
-                # Stream token chunks from LLM
                 if et in ("on_chat_model_stream", "on_llm_stream"):
                     chunk = data.get("chunk")
                     text = None
                     try:
-                        # LangChain chunks often expose .content or .text
                         if hasattr(chunk, "content"):
                             c = getattr(chunk, "content")
                             if isinstance(c, str):
                                 text = c
                             elif isinstance(c, list):
-                                # concatenate text parts if present
                                 parts = []
                                 for p in c:
-                                    # p may be dict-like or object with .text
                                     if isinstance(p, dict) and isinstance(p.get("text"), str):
                                         parts.append(p["text"])
                                     elif hasattr(p, "text") and isinstance(getattr(p, "text"), str):
@@ -180,7 +158,6 @@ class MCPContext:
                         payload = json.dumps({"delta": text}, ensure_ascii=False)
                         yield (f"data: {payload}\n\n").encode("utf-8")
 
-                # Capture final output for metadata extraction
                 elif et == "on_chain_end":
                     try:
                         output = data.get("output")
@@ -192,7 +169,6 @@ class MCPContext:
             total_time = time.time() - start_time
             self.query_metadata["total_execution_time"] = round(total_time, 3)
 
-            # Send final metadata
             meta = self.get_metadata_summary()
             yield (f"event: end\ndata: {json.dumps({'metadata': meta}, ensure_ascii=False)}\n\n").encode("utf-8")
 
