@@ -1,4 +1,5 @@
 import logging
+import json
 import re
 import time
 
@@ -125,6 +126,77 @@ class MCPContext:
         self._extract_tool_calls_from_response(response)
 
         return response
+
+    async def astream_query(self, session_id, messages):
+        """Stream tokens as SSE while tracking metadata.
+        Yields bytes formatted as Server-Sent Events (text/event-stream):
+        - token events:  data: {"delta": "..."}\n\n
+        - end event:    event: end\n data: {"metadata": {...}}\n\n
+        """
+        self.reset_metadata()
+        start_time = time.time()
+
+        config = self.create_config(session_id)
+        prompt = await self._build_prompt(session_id, messages)
+
+        # Optional: send a start event
+        yield b":ok\n\n"
+
+        try:
+            async for event in self.agent.astream_events({"messages": prompt}, config=config, version="v1"):
+                et = event.get("event", "")
+                data = event.get("data", {})
+
+                # Stream token chunks from LLM
+                if et in ("on_chat_model_stream", "on_llm_stream"):
+                    chunk = data.get("chunk")
+                    text = None
+                    try:
+                        # LangChain chunks often expose .content or .text
+                        if hasattr(chunk, "content"):
+                            c = getattr(chunk, "content")
+                            if isinstance(c, str):
+                                text = c
+                            elif isinstance(c, list):
+                                # concatenate text parts if present
+                                parts = []
+                                for p in c:
+                                    # p may be dict-like or object with .text
+                                    if isinstance(p, dict) and isinstance(p.get("text"), str):
+                                        parts.append(p["text"])
+                                    elif hasattr(p, "text") and isinstance(getattr(p, "text"), str):
+                                        parts.append(getattr(p, "text"))
+                                if parts:
+                                    text = "".join(parts)
+                        elif hasattr(chunk, "text") and isinstance(getattr(chunk, "text"), str):
+                            text = getattr(chunk, "text")
+                    except Exception:
+                        text = None
+
+                    if text:
+                        payload = json.dumps({"delta": text}, ensure_ascii=False)
+                        yield (f"data: {payload}\n\n").encode("utf-8")
+
+                # Capture final output for metadata extraction
+                elif et == "on_chain_end":
+                    try:
+                        output = data.get("output")
+                        if output:
+                            self._extract_tool_calls_from_response(output)
+                    except Exception:
+                        pass
+
+            total_time = time.time() - start_time
+            self.query_metadata["total_execution_time"] = round(total_time, 3)
+
+            # Send final metadata
+            meta = self.get_metadata_summary()
+            yield (f"event: end\ndata: {json.dumps({'metadata': meta}, ensure_ascii=False)}\n\n").encode("utf-8")
+
+        except Exception as e:
+            logger.error(f"Streaming error: {e}")
+            err = json.dumps({"error": str(e)})
+            yield (f"event: error\ndata: {err}\n\n").encode("utf-8")
 
     def _extract_tool_calls_from_response(self, response):
         """LangGraph 응답에서 도구 호출 정보를 추출.

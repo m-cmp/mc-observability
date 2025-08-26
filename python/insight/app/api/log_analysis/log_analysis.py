@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from app.api.log_analysis.request.req import PostQueryBody, PostSessionBody, SessionIdPath, PostAPIKeyBody
 from app.api.log_analysis.response.res import (
     ResBodyLogAnalysisModel,
@@ -117,6 +118,20 @@ async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(g
     result = await log_analysis_service.query(body=body_params)
 
     return ResBodyQuery(data=result)
+
+
+@router.post(
+    path="/log-analysis/query/stream",
+    # description="Streaming query via SSE",
+    # responses="",
+    summary="Stream Log Analysis Query",
+    operation_id="PostLogAnalysisQueryStream",
+)
+async def query_log_analysis_stream(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context=Depends(get_mcp_context)):
+    """SSE 기반 스트리밍 응답을 반환합니다."""
+    service = LogAnalysisService(db=db, mcp_context=mcp_context)
+    generator = await service.query_stream(body=body_params)
+    return StreamingResponse(generator, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive"})
 
 
 @router.get(
