@@ -101,6 +101,6 @@ class ConfigManager:
     def get_chat_summarization_config(self):
         chat_summarization = self.config.get('llm', {}).get('chat_summarization', {})
         return {
-            "max_tokens_before_summary": chat_summarization.get('max_tokens_before_summary', 256),
-            "summary_prompt": chat_summarization.get('summary_prompt', '다음 대화를 한국어로 간결하게 요약해주세요.')
+            "max_tokens_before_summary": chat_summarization.get('max_tokens_before_summary', 1024),
+            "summary_prompt": chat_summarization.get('summary_prompt', '')
         }
