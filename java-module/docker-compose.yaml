@@ -317,7 +317,10 @@ services:
       start_period: 10s
 
   mc-observability-influx:
-    image: influxdb:1.11.8
+    # image: cloudbaristaorg/mc-observability-influx:1.11.8
+    build:
+      context: .
+      dockerfile: Dockerfile.influx
     container_name: mc-observability-influx
     restart: always
     networks:
@@ -325,20 +328,35 @@ services:
       - external_network
     ports:
       - 8086:8086
+    depends_on:
+      mc-observability-influx-init-volumes:
+        condition: service_completed_successfully
     environment:
-      - INFLUXDB_USER=mc-agent
-      - INFLUXDB_PASSWORD=mc-agent
-      - INFLUXDB_DB=mc-observability
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=mc-agent
+      - INFLUXDB_ADMIN_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability"
     volumes:
-      - /docker/influxdb/config:/etc/influxdb
-      - /docker/influxdb/var/lib/influxdb:/root/.influxdb
-      - ./influxdb_init:/docker-entrypoint-initdb.d
+      - /docker/influxdb_data:/var/lib/influxdb
+      - ./influxdb-init:/docker-entrypoint-initdb.d
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
       retries: 30
+
+  mc-observability-influx-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-influx-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    volumes:
+      - /docker/influxdb_data:/var/lib/influxdb
+    user: root
+    init: true
+    networks:
+      - internal_network
 
   mc-observability-loki:
     image: grafana/loki:3.4.2
@@ -480,7 +498,9 @@ services:
       - internal_network
       - external_network
     environment:
-      - INFLUXDB_URL=http://172.17.0.1:8086
+      - INFLUXDB_URL=http://mc-observability-influx:8086
+      - INFLUXDB_USERNAME=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
