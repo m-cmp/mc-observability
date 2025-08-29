@@ -15,30 +15,16 @@ def should_continue(state: State) -> str:
         messages = state["llm_input_messages"]
     else:
         messages = state["messages"]
-    
+
     if not messages:
         return "end"
-    
+
     last_message = messages[-1]
-    
+
     if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
         return "continue"
     else:
         return "end"
-
-
-def should_clean(state: State) -> str:
-    """
-    Determines whether to run cleanup after summarization.
-    
-    Args:
-        state: Current graph state containing messages and context
-        
-    Returns:
-        str: 'clean' to run cleanup, 'skip' to proceed directly
-    """
-    # TODO: Implement cleanup decision logic
-    return "skip"
 
 
 def should_summarize(state: State) -> str:

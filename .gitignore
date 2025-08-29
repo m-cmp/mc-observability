@@ -5,6 +5,7 @@ venv/
 .conda/
 *.log
 .env
+tests/
 .vscode/
 
 python/scheduler/airflow-home/logs/

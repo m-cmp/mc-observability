@@ -1,4 +1,5 @@
 import logging
+from langchain_core.messages import SystemMessage
 from .state import State
 from .utils.summarization import ConversationSummarizer
 
@@ -19,78 +20,83 @@ async def call_model(state: State, llm=None) -> dict:
     """
     messages = (state["llm_input_messages"] if state.get("is_summarized", False) else state["messages"])
 
-    # LLM 호출
+    # LLM call
     response = await llm.ainvoke(messages)
 
-    # 응답을 messages와 llm_input_messages 모두에 추가
+    # Add response to both messages and llm_input_messages
     result = {"messages": [response]}
 
     if state.get("is_summarized", False):
-        # 요약 모드일 때만 기존 요약 메시지에 response 추가
+        # Only add response to existing summary messages in summarized mode
         updated_llm_input_messages = state["llm_input_messages"] + [response]
         result["llm_input_messages"] = updated_llm_input_messages
 
     return result
 
 
-async def summary_node(state: State, llm=None, config_manager=None, context_key: str = "default") -> dict:
+async def summary_node(state: State, llm=None, config_manager=None) -> dict:
     """
     Summarization node that processes conversation history using RunningSummary.
     
     Args:
         state: Current graph state containing messages and context
-        llm_client: LLM client for generating summaries
+        llm: LLM client for generating summaries
         config_manager: Configuration manager instance
-        context_key: Key for storing/retrieving RunningSummary in state context
         
     Returns:
         dict: Updated state with summarized messages
     """
-    if not llm or not config_manager:
-        logger.warning("Required parameters missing for summary node")
-        return {}
-
-    # ConversationSummarizer 인스턴스 생성
-    summarizer = ConversationSummarizer(config_manager)
-
-    # 현재 메시지들과 기존 요약 정보 가져오기
+    # Initialize required information
+    # Get current messages and existing summary information
+    is_summarized = state.get("is_summarized", False)
     messages = state.get("messages", [])
     context = state.get("context", {})
-    current_summary = context.get(context_key)
+    current_summary = context.get("default")
+
+    # Get config
+    summarization_config = config_manager.get_chat_summarization_config()
+    max_tokens = summarization_config.get("max_tokens_before_summary", 1024)
+    summary_prompt = summarization_config.get("summary_prompt", "")
+
+    # Initialize
+    summarizer = ConversationSummarizer(max_tokens=max_tokens, summary_prompt=summary_prompt)
 
     try:
-        # 요약 처리 실행
-        updated_summary = await summarizer.process(messages, llm, current_summary)
+        # Execute summarization process
+        updated_summary = await summarizer.process(messages, llm, is_summarized, current_summary)
 
         if updated_summary and updated_summary != current_summary:
-            # 요약이 업데이트된 경우
             logger.info("Summary updated")
 
-            # 시스템 프롬프트 기본값
-            system_prompt = "You are a helpful AI assistant."
-
-            # 요약을 고려한 프롬프트 구성 (사용자 메시지 없이)
-            summarized_messages = summarizer.build_prompt_with_summary(
-                messages, "", updated_summary, system_prompt
+            # Convert summary to SystemMessage object with unique ID
+            summary_system_message = SystemMessage(
+                content=f"Previous conversation summary:\n{updated_summary.summary}",
+                id=f"summary_{updated_summary.last_summarized_message_id}"
             )
 
-            # 마지막 빈 사용자 메시지 제거
-            if summarized_messages and summarized_messages[-1].get("content") == "":
-                summarized_messages.pop()
+            # Configure LLM input messages: SystemMessage + last 2 messages
+            llm_input_messages = [summary_system_message] + messages[-2:]
 
-            # context 업데이트
             updated_context = context.copy()
-            updated_context[context_key] = updated_summary
+            updated_context["default"] = updated_summary
 
             return {
-                "llm_input_messages": summarized_messages,
+                "messages": [summary_system_message],
+                "llm_input_messages": llm_input_messages,
                 "is_summarized": True,
                 "context": updated_context
+            }
+        elif updated_summary and updated_summary == current_summary:
+            logger.info("llm_input_messages updated")
+            llm_input_messages = state.get("llm_input_messages", []) + messages[-2:]
+
+            return {
+                "llm_input_messages": llm_input_messages,
             }
         else:
             logger.debug("No summarization needed")
             return {
-                "is_summarized": False
+                "is_summarized": is_summarized
             }
 
     except Exception as e:
@@ -111,18 +117,4 @@ async def tool_node(state: State) -> dict:
         dict: Updated state with tool results
     """
     # TODO: Implement tool execution logic
-    return {}
-
-
-async def clean_node(state: State) -> dict:
-    """
-    Cleanup node that removes unnecessary AI messages from history.
-    
-    Args:
-        state: Current graph state containing messages and context
-        
-    Returns:
-        dict: Updated state with cleaned message history
-    """
-    # TODO: Implement cleanup logic
     return {}
