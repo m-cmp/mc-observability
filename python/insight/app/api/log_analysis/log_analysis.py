@@ -111,8 +111,8 @@ async def get_log_analysis_session_history(path_params: SessionIdPath = Depends(
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery",
 )
-async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context: MCPContext = Depends(get_mcp_context)):
-    # session_id = '921f5fc9-dbd8-4979-96a8-783b4c2fd3cd'
+async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db),
+                             mcp_context: MCPContext = Depends(get_mcp_context)):
     log_analysis_service = LogAnalysisService(db=db, mcp_context=mcp_context)
     result = await log_analysis_service.query(body=body_params)
 

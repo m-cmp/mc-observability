@@ -1,28 +1,27 @@
-from app.core.llm.ollama_client import OllamaClient
-from app.core.llm.openai_client import OpenAIClient
-from config.ConfigManager import ConfigManager
-from langchain_mcp_adapters.tools import load_mcp_tools
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 # from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
 from datetime import datetime, UTC
 import aiosqlite
+from langchain_mcp_adapters.tools import load_mcp_tools
+from app.core.graph import create_conversation_graph
+from app.core.llm.ollama_client import OllamaClient
+from app.core.llm.openai_client import OpenAIClient
+from config.ConfigManager import ConfigManager
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 
 class MCPContext:
     def __init__(self, mcp_client):
         self.config = ConfigManager()
-
-        self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
-
+        self.memory = AsyncSqliteSaver(aiosqlite.connect(database="checkpoints/checkpoints.sqlite",
+                                                         check_same_thread=False))
         # Todo
         # checkpointer MariaDB 사용 가능 여부 검증 필요
         # self._build_db_uri()
         # self.memory = AIOMySQLSaver.from_conn_string(self.uri)
-
         self.mcp_client = mcp_client
         self.mcp_session = None
         self.llm_client = None
-
+        self.llm_with_tools = None
         self.tools = None
         self.agent = None
 
@@ -45,9 +44,10 @@ class MCPContext:
             self.llm_client = OpenAIClient(provider_credential)
 
         self.llm_client.setup(model=model_name)
-        self.agent = self.llm_client.bind_tools(self.tools, self.memory)
+        self.llm_with_tools = self.llm_client.llm.bind_tools(tools=self.tools)
+        self.agent = await create_conversation_graph(llm=self.llm_with_tools, tools=self.tools, config=self.config)
 
-    async def _build_prompt(self, session_id: str, messages: str):
+    async def _build_prompt(self, session_id: str, user_message: str) -> list[dict[str, str]]:
         history = await self.get_chat_history(session_id)
         msg_count = 0
         if history:
@@ -68,18 +68,19 @@ class MCPContext:
 
         return [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": messages}
+            {"role": "user", "content": user_message}
         ]
 
-    async def aquery(self, session_id, messages):
+    async def aquery(self, session_id: str, message: str):
+        prompt = await self._build_prompt(session_id, message)
         config = self.create_config(session_id)
-        prompt = await self._build_prompt(session_id, messages)
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
+
         return response
 
     @staticmethod
     def create_config(session_id):
-        return {'configurable': {'thread_id': f'{session_id}'}}
+        return {'configurable': {'thread_id': f'{session_id}', 'checkpoint_ns': ''}}
 
     async def get_chat_history(self, session_id):
         config = self.create_config(session_id)

@@ -1,13 +1,10 @@
-from app.api.anomaly import anomaly
-from app.api.prediction import prediction
-from app.api.log_analysis import log_analysis
-from app.core.otel.trace import init_otel_trace
-from config.ConfigManager import ConfigManager
-
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-import uvicorn
+from app.api.anomaly import anomaly
+from app.api.log_analysis import log_analysis
+from app.api.prediction import prediction
+from config.ConfigManager import ConfigManager
 
 
 config = ConfigManager()

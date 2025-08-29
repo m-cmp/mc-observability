@@ -5,6 +5,7 @@ venv/
 .conda/
 *.log
 .env
+tests/
 
 python/scheduler/airflow-home/logs/
 python/scheduler/airflow-home/airflow-webserver.pid
