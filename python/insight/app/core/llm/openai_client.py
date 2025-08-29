@@ -10,7 +10,8 @@ class OpenAIClient:
 
     def setup(self, model='gpt-4o'):
         self.model = model
-        self.llm = ChatOpenAI(model=self.model, temperature=0, api_key=self.api_key)
+        # self.llm = ChatOpenAI(model=self.model, temperature=0, api_key=self.api_key)
+        self.llm = ChatOpenAI(model=self.model, api_key=self.api_key)
 
     # def bind_tools(self, tools, memory):
     #     self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)

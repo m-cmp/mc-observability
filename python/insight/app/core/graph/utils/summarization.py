@@ -3,53 +3,59 @@ from typing import List, Dict, Optional
 from langchain_core.messages.utils import count_tokens_approximately
 from langmem.short_term import RunningSummary
 
-
 logger = logging.getLogger(__name__)
 
 
 class ConversationSummarizer:
-    """대화 요약 관리 클래스"""
-    
-    def __init__(self, config_manager):
-        self.config = config_manager
-    
-    def should_summarize(self, messages: List, running_summary: Optional[RunningSummary] = None) -> bool:
-        """토큰 수 기반으로 요약 필요 여부 판단"""
-        summarization_config = self.config.get_chat_summarization_config()
-        max_tokens = summarization_config.get('max_tokens_before_summary', 256)
+    """Conversation summarization management class"""
 
-        history_tokens = 0
-        if messages:
+    def __init__(self, max_tokens: int, summary_prompt: str):
+        self.max_tokens = max_tokens
+        self.summary_prompt = summary_prompt
+
+    def should_summarize(self, messages: List, running_summary: Optional[RunningSummary] = None,
+                         is_summarized: bool = False) -> bool:
+        """Determine if summarization is needed based on token count"""
+        # First conversation pass: skip summarization for 2 messages
+        if len(messages) == 2:
+            logger.debug("First conversation pass: skipping summarization for 2 messages")
+            return False
+
+        if is_summarized:
+            # When is_summarized is True, calculate tokens only for messages after summarization point
+            messages_to_count = []
+            for msg in messages:
+                msg_id = None
+                if hasattr(msg, 'id') and msg.id:
+                    msg_id = str(msg.id)
+                elif hasattr(msg, 'additional_kwargs') and 'id' in msg.additional_kwargs:
+                    msg_id = str(msg.additional_kwargs['id'])
+
+                # Include only unsummarized messages
+                if msg_id and msg_id not in running_summary.summarized_message_ids:
+                    messages_to_count.append(msg)
+                elif not msg_id:  # Messages without ID are considered new messages
+                    messages_to_count.append(msg)
+
+            history_tokens = count_tokens_approximately(messages_to_count)
+            logger.debug(
+                f"Token count after summary: {history_tokens} (from {len(messages_to_count)} unsummarized messages)")
+        else:
+            # When is_summarized is False, calculate tokens for all messages
             history_tokens = count_tokens_approximately(messages)
+            logger.debug(f"Token count (not summarized): {history_tokens} (from {len(messages)} total messages)")
 
-        should_summarize = history_tokens > max_tokens
-        
-        logger.debug(f"Token count: {history_tokens}, threshold: {max_tokens}, should_summarize: {should_summarize}")
-        
-        # 첫 대화는 요약하지 않음
-        if not running_summary or not running_summary.summary:
-            if history_tokens == 0:
-                logger.debug("First conversation, skipping summarization")
-                return False
-        
+        should_summarize = history_tokens > self.max_tokens
+        logger.debug(f"Token threshold: {self.max_tokens}, should_summarize: {should_summarize}")
+
         return should_summarize
-    
+
     async def create_summary(self, messages_to_summarize: List, llm) -> str:
-        """지정된 메시지들을 요약"""
+        """Summarize specified messages"""
         logger.info(f"Starting to summarize {len(messages_to_summarize)} messages")
-        
-        # 요약할 메시지가 없으면 빈 문자열 반환
-        if not messages_to_summarize:
-            return ""
-        
-        # 요약용 프롬프트 구성
-        summary_prompt = """
-        다음 대화 메시지들을 간결하게 요약해주세요. 주요 주제, 사용자 요청, AI 응답의 핵심 내용을 포함해주세요:
-        {messages}
-        요약:
-        """
-        
-        # 메시지들을 텍스트로 변환
+
+        # TODO Refactor this
+        # Convert messages to text
         messages_text = ""
         for i, msg in enumerate(messages_to_summarize):
             if hasattr(msg, 'content'):
@@ -58,176 +64,202 @@ class ConversationSummarizer:
                 content = msg.get('content', str(msg))
             else:
                 content = str(msg)
-            messages_text += f"[{i+1}] {content}\n"
-        
-        formatted_prompt = summary_prompt.format(messages=messages_text)
-        
+            messages_text += f"[{i + 1}] {content}\n"
+
+        formatted_prompt = self.summary_prompt.format(messages=messages_text)
+
         try:
-            # LLM을 직접 사용해서 요약 생성
+            # Generate summary using LLM directly
             summary_response = await llm.ainvoke([{"role": "user", "content": formatted_prompt}])
             summary = summary_response.content.strip()
-            
+
             logger.info(f"Summary created successfully (length: {len(summary)} characters)")
             logger.debug(f"Summary preview: {summary[:100]}...")
-            
+
             return summary
-            
+
         except Exception as e:
             logger.error(f"Summary creation failed: {type(e).__name__}: {e}")
             return ""
-    
+
     @staticmethod
-    def update_running_summary(current_summary: Optional[RunningSummary], new_summary: str, messages_to_summarize: List) -> RunningSummary:
-        """RunningSummary 객체 업데이트"""
-        # 메시지 ID 추출
-        summarized_ids = set()
-        last_message_id = None
-        
-        for msg in messages_to_summarize:
-            if hasattr(msg, 'id') and msg.id:
-                msg_id = str(msg.id)
-                summarized_ids.add(msg_id)
-                last_message_id = msg_id
-            elif hasattr(msg, 'additional_kwargs') and 'id' in msg.additional_kwargs:
-                msg_id = str(msg.additional_kwargs['id'])
-                summarized_ids.add(msg_id)
-                last_message_id = msg_id
-        
+    def update_running_summary(current_summary: Optional[RunningSummary], new_summary: str,
+                               messages_to_summarize: List, processed_message_ids: List[str]) -> RunningSummary:
+        """Update RunningSummary object"""
+        # Use all processed message IDs (including tool/system)
+        processed_ids = set(processed_message_ids)
+        last_message_id = processed_message_ids[-1] if processed_message_ids else None
+
         if current_summary and current_summary.summary:
-            # 기존 요약과 합치기
-            combined_summary = f"{current_summary.summary}\n\n[이전 대화 계속]\n{new_summary}"
-            combined_ids = current_summary.summarized_message_ids.union(summarized_ids)
+            # If existing summary exists - accumulate all processed IDs
+            combined_ids = current_summary.summarized_message_ids.union(processed_ids)
         else:
-            # 첫 요약
-            combined_summary = new_summary
-            combined_ids = summarized_ids
-        
+            # First summary - save all processed IDs
+            combined_ids = processed_ids
+
         logger.debug("Updating running summary state")
-        logger.debug(f"Summary length: {len(combined_summary)} characters")
+        logger.debug(f"Summary length: {len(new_summary)} characters")
         logger.debug(f"Summarized message ID count: {len(combined_ids)}")
         logger.debug(f"Last summarized message ID: {last_message_id}")
-        
+
         return RunningSummary(
-            summary=combined_summary,
+            summary=new_summary,
             summarized_message_ids=combined_ids,
             last_summarized_message_id=last_message_id
         )
-    
-    async def process(self, messages: List, llm, running_summary: Optional[RunningSummary] = None) -> Optional[RunningSummary]:
-        """요약 처리 실행 - RunningSummary 객체 반환"""
-        logger.debug(f"Message count: {len(messages)}")
-        
-        # 요약 필요성 판단 및 실행
-        if self.should_summarize(messages, running_summary):
+
+    async def process(self, messages: List, llm, is_summarized: bool,
+                      running_summary: Optional[RunningSummary] = None) -> Optional[RunningSummary]:
+        """Execute summarization process - returns RunningSummary object"""
+        # Exclude current input message processing
+        messages_for_summarization = messages[:-2]
+        logger.debug(
+            f"Excluding current input message. Processing {len(messages_for_summarization)} historical messages")
+
+        # Determine summarization necessity and execute
+        if self.should_summarize(messages_for_summarization, running_summary, is_summarized):
             logger.info("Starting summarization process")
-            
-            # 요약할 메시지 범위 결정
-            messages_to_summarize = self._get_messages_to_summarize(messages, running_summary)
-            
-            if messages_to_summarize:
-                summary = await self.create_summary(messages_to_summarize=messages_to_summarize, llm=llm)
-                if summary:
-                    updated_summary = self.update_running_summary(running_summary, summary, messages_to_summarize)
-                    logger.info("Summarization completed")
-                    return updated_summary
-                else:
-                    logger.error("Summarization failed")
-                    return running_summary
-            else:
-                logger.debug("No messages to summarize")
-                return running_summary
+
+            messages_to_summarize, processed_message_ids = self._get_messages_to_summarize(messages_for_summarization,
+                                                                                           running_summary)
+
+            summary = await self.create_summary(messages_to_summarize=messages_to_summarize, llm=llm)
+            updated_summary = self.update_running_summary(running_summary, summary, messages_to_summarize,
+                                                          processed_message_ids)
+            logger.info("Summarization completed")
+            return updated_summary
         else:
             logger.debug("No summarization needed")
             return running_summary
-    
-    def build_prompt_with_summary(self, messages: List, user_message: str, running_summary: Optional[RunningSummary], system_prompt: str) -> List[Dict[str, str]]:
-        """요약을 고려한 프롬프트 구성"""
+
+    def build_prompt_with_summary(self, messages: List, user_message: str, running_summary: Optional[RunningSummary],
+                                  system_prompt: str, exclude_current_input: bool = False) -> List[Dict[str, str]]:
+        """Configure prompt considering summary"""
         prompt_messages = [{"role": "system", "content": system_prompt}]
-        msg_count = len(messages) if messages else 0
-        
-        # 요약이 있는 경우 요약 + 최근 대화 구성
+
+        # Handle exclude current input message option
+        messages_for_prompt = messages
+        if exclude_current_input and messages:
+            # Use only existing messages excluding last message (current user input) for prompt
+            messages_for_prompt = messages[:-1]
+            logger.debug(
+                f"Excluding current input from prompt history. Using {len(messages_for_prompt)} historical messages")
+
+        msg_count = len(messages_for_prompt) if messages_for_prompt else 0
+
+        # If summary exists, configure summary + recent conversation
         if running_summary and running_summary.summary:
             summary_text = running_summary.summary
             summarized_ids = running_summary.summarized_message_ids
-            
+
             logger.debug(f"Using summary with {len(summarized_ids)} summarized message IDs")
-            
-            # 요약 추가
+
+            # Add summary
             prompt_messages.append({
-                "role": "system", 
-                "content": f"이전 대화 요약:\n{summary_text}"
+                "role": "system",
+                "content": f"Previous conversation summary:\n{summary_text}"
             })
-            
-            # 요약되지 않은 최근 메시지들 추가 (tool messages 제외)
+
+            # Add recent messages that are not summarized (excluding tool messages)
             recent_messages = []
-            for msg in messages:
+            for msg in messages_for_prompt:
                 msg_id = None
                 if hasattr(msg, 'id') and msg.id:
                     msg_id = str(msg.id)
                 elif hasattr(msg, 'additional_kwargs') and 'id' in msg.additional_kwargs:
                     msg_id = str(msg.additional_kwargs['id'])
-                
-                # 요약되지 않은 메시지만 추가
+
+                # Add only unsummarized messages
                 if msg_id and msg_id not in summarized_ids:
                     recent_messages.append(msg)
-                elif not msg_id:  # ID가 없는 메시지는 최근 메시지로 간주
+                elif not msg_id:  # Messages without ID are considered recent messages
                     recent_messages.append(msg)
-            
+
             logger.debug(f"Adding {len(recent_messages)} recent messages")
-            
+
             for msg in recent_messages:
-                # ToolMessage는 제외하고 HumanMessage와 AIMessage만 추가
+                # Exclude ToolMessage and add only HumanMessage and AIMessage
                 if hasattr(msg, 'type') and msg.type in ['human', 'ai']:
                     role = "user" if msg.type == "human" else "assistant"
                     prompt_messages.append({"role": role, "content": msg.content})
-        
+
         else:
-            # 요약이 없는 경우 전체 대화 이력 추가 (tool messages 제외)
+            # If no summary exists, add entire conversation history (excluding tool messages)
             logger.debug(f"No summary available - using all {msg_count} messages")
-            
-            if messages:
-                for msg in messages:
-                    # ToolMessage는 제외하고 HumanMessage와 AIMessage만 추가
+
+            if messages_for_prompt:
+                for msg in messages_for_prompt:
+                    # Exclude ToolMessage and add only HumanMessage and AIMessage
                     if hasattr(msg, 'type') and msg.type in ['human', 'ai']:
                         role = "user" if msg.type == "human" else "assistant"
                         prompt_messages.append({"role": role, "content": msg.content})
-        
-        # 현재 사용자 메시지 추가
+
+        # Add current user message
         if user_message:
             prompt_messages.append({"role": "user", "content": user_message})
-        
+
         logger.debug(f"Final prompt configuration: {len(prompt_messages)} messages")
         for i, msg in enumerate(prompt_messages):
             role = msg["role"]
             content_preview = str(msg["content"])[:50] + "..." if len(str(msg["content"])) > 50 else str(msg["content"])
             logger.debug(f"   [{i}] {role}: {content_preview}")
-        
+
         return prompt_messages
 
-    def _get_messages_to_summarize(self, messages: List, running_summary: Optional[RunningSummary]) -> List:
-        """요약할 메시지 범위 결정"""
-        if not messages:
-            return []
-        
+    @staticmethod
+    def _get_messages_to_summarize(messages: List, running_summary: Optional[RunningSummary]) -> tuple[List, List[str]]:
+        """Return messages to summarize and processed message ID list"""
         if running_summary and running_summary.summarized_message_ids:
-            # 이전 요약이 있는 경우, 요약되지 않은 메시지들만 요약
+            # If previous summary exists, summarize only unsummarized messages
             messages_to_summarize = []
+            processed_message_ids = []
+
             for msg in messages:
                 msg_id = None
                 if hasattr(msg, 'id') and msg.id:
                     msg_id = str(msg.id)
                 elif hasattr(msg, 'additional_kwargs') and 'id' in msg.additional_kwargs:
                     msg_id = str(msg.additional_kwargs['id'])
-                
-                # 요약되지 않은 메시지만 추가
+
+                # Check if message is a processing target (unsummarized message)
                 if msg_id and msg_id not in running_summary.summarized_message_ids:
-                    messages_to_summarize.append(msg)
-                elif not msg_id:  # ID가 없는 메시지는 새 메시지로 간주
-                    messages_to_summarize.append(msg)
-            
-            logger.debug(f"Found {len(messages_to_summarize)} unsummarized messages")
-            return messages_to_summarize
+                    processed_message_ids.append(msg_id)  # Add all processed message IDs
+
+                    # Additional check if it's a summarization target (exclude tool/system)
+                    if not (hasattr(msg, 'type') and msg.type in ['tool', 'system']):
+                        messages_to_summarize.append(msg)
+                    else:
+                        logger.debug(f"Excluding {msg.type} message from summarization but tracking ID")
+                elif not msg_id:  # Messages without ID are considered new messages
+                    if not (hasattr(msg, 'type') and msg.type in ['tool', 'system']):
+                        messages_to_summarize.append(msg)
+
+            logger.debug(
+                f"Found {len(messages_to_summarize)} messages to summarize, {len(processed_message_ids)} total processed IDs")
+            return messages_to_summarize, processed_message_ids
         else:
-            # 첫 요약인 경우, 모든 메시지 요약
-            logger.debug(f"First summarization - processing all {len(messages)} messages")
-            return messages
+            # For first summarization, process all messages and extract IDs
+            messages_to_summarize = []
+            processed_message_ids = []
+
+            for msg in messages:
+                # Extract message ID
+                msg_id = None
+                if hasattr(msg, 'id') and msg.id:
+                    msg_id = str(msg.id)
+                elif hasattr(msg, 'additional_kwargs') and 'id' in msg.additional_kwargs:
+                    msg_id = str(msg.additional_kwargs['id'])
+
+                # Add messages with ID to processed ID list
+                if msg_id:
+                    processed_message_ids.append(msg_id)
+
+                # Check if it's a summarization target (exclude tool/system)
+                if not (hasattr(msg, 'type') and msg.type in ['tool', 'system']):
+                    messages_to_summarize.append(msg)
+                else:
+                    logger.debug(f"Excluding {msg.type} message from summarization but tracking ID")
+
+            logger.debug(
+                f"First summarization - processing {len(messages_to_summarize)} out of {len(messages)} messages, {len(processed_message_ids)} total processed IDs")
+            return messages_to_summarize, processed_message_ids
