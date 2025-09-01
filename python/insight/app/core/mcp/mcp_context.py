@@ -47,17 +47,24 @@ class MCPContext:
         self.llm_client.setup(model=model_name)
         self.agent = self.llm_client.bind_tools(self.tools, self.memory)
 
+    async def _build_prompt(self, session_id: str, messages: str):
+        history = await self.get_chat_history(session_id)
+        msg_count = 0
+        if history:
+            channel_values = history.get('channel_values', {})
+            msg_count = len(channel_values.get('messages', []))
 
-    @staticmethod
-    def _build_prompt(messages):
         current_time = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        system_prompt = f"""
-                You are an assistant specialized in log retrieval and log exploration.
-                To respond to user questions, select the appropriate tools and provide thoughtful and sincere answers. 
-                If the question is in English, respond in English; if it's in Korean, respond in Korean.
-                The current time is {current_time}.
-                """
+        # TODO 기능, 상황별 Prompt 관리 기능 추가
+        system_prompt_config = self.config.get_system_prompt_config()
+
+        if msg_count == 0:
+            system_prompt_first = system_prompt_config.get("system_prompt_first")
+            system_prompt = system_prompt_first.format(current_time=current_time)
+        else:
+            system_prompt_default = system_prompt_config.get("system_prompt_default")
+            system_prompt = system_prompt_default.format(current_time=current_time)
 
         return [
             {"role": "system", "content": system_prompt},
@@ -66,11 +73,9 @@ class MCPContext:
 
     async def aquery(self, session_id, messages):
         config = self.create_config(session_id)
-        prompt = self._build_prompt(messages)
+        prompt = await self._build_prompt(session_id, messages)
         response = await self.agent.ainvoke({'messages': prompt}, config=config)
-
         return response
-
 
     @staticmethod
     def create_config(session_id):

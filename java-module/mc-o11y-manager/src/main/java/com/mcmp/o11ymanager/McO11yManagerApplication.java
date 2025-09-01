@@ -3,7 +3,6 @@ package com.mcmp.o11ymanager;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;

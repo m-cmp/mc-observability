@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .alert-section { 
+            margin-bottom: 30px; 
+            border: 2px solid #e9ecef; 
+            border-radius: 8px; 
+            padding: 15px; 
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert-level { font-weight: bold; font-size: 18px; margin-bottom: 15px; }
+        .info { color: #17a2b8; }
+        .warning { color: #fd7e14; }
+        .critical { color: #dc3545; }
+        .alert-detail { background-color: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 4px; }
+        .metric { font-weight: bold; }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px;
+            border: 2px solid #495057;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        th, td { 
+            padding: 12px 8px; 
+            text-align: left; 
+            border: 1px solid #495057;
+        }
+        th { 
+            background-color: #495057; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 14px;
+        }
+        td {
+            background-color: #ffffff;
+        }
+        tr:nth-child(even) td {
+            background-color: #f8f9fa;
+        }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h2>M-CMP Observability Alert Notification</h2>
+            <p><strong>Title:</strong> <span th:text="${event.title}">Alert Title</span></p>
+            <p><strong>Total Alerts:</strong> <span th:text="${event.alertsCount}">0</span></p>
+        </div>
+        
+        <!-- Info Alerts -->
+        <div th:if="${!event.infoAlerts.isEmpty()}" class="alert-section">
+            <div class="alert-level info">
+                ℹ️ Info Alerts [≥ <span th:text="${event.infoAlerts[0].threshold}">0</span>%]
+            </div>
+            <div th:replace="~{mail/alert-table :: alertTable(alerts=${event.infoAlerts})}"></div>
+        </div>
+        
+        <!-- Warning Alerts -->
+        <div th:if="${!event.warningAlerts.isEmpty()}" class="alert-section">
+            <div class="alert-level warning">
+                ⚠️ Warning Alerts [≥ <span th:text="${event.warningAlerts[0].threshold}">0</span>%]
+            </div>
+            <div th:replace="~{mail/alert-table :: alertTable(alerts=${event.warningAlerts})}"></div>
+        </div>
+        
+        <!-- Critical Alerts -->
+        <div th:if="${!event.criticalAlerts.isEmpty()}" class="alert-section">
+            <div class="alert-level critical">
+                🚨 Critical Alerts [≥ <span th:text="${event.criticalAlerts[0].threshold}">0</span>%]
+            </div>
+            <div th:replace="~{mail/alert-table :: alertTable(alerts=${event.criticalAlerts})}"></div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is an automated notification from M-CMP Observability System.</p>
+            <p>Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

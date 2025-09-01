@@ -1,6 +1,6 @@
 [[inputs.procstat]]
-  properties = ["cpu", "memory"]
-  tag_with = ["user"]
+  properties = ["cmp_top10cpumemory"]
+  tag_with = ["pid", "user"]
   fieldinclude = ["cpu_usage", "memory_usage"]
 
   [[inputs.procstat.filter]]

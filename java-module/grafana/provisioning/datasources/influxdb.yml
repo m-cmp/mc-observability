@@ -4,12 +4,18 @@ datasources:
   - name: InfluxDB
     type: influxdb
     access: proxy
-    url: http://mc-o11y-influxdb:8086
+    url: http://mc-observability-influx:8086
     version: 1
     editable: false
-    database: mc-observability
+    basicAuth: true
+    basicAuthUser: mc-agent
     user: mc-agent
     secureJsonData:
+      basicAuthPassword: mc-agent
       password: mc-agent
     jsonData:
-      httpMode: GET
+      dbName: mc-observability
+      defaultBucket: mc-observability/autogen
+      httpMode: POST
+      organization: mc-agent
+      version: Flux

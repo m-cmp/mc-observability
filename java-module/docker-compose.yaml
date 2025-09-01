@@ -69,7 +69,7 @@ services:
       - ./mc-o11y-manager/applog:/applog
       # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'curl -s http://127.0.0.1:18080/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
@@ -108,7 +108,7 @@ services:
     volumes:
       - ./ansible:/ansible
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'curl -s http://127.0.0.1:3000/api/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
@@ -137,7 +137,7 @@ services:
       - MARIADB_DATABASE=mc_observability
       - MARIADB_PASSWORD=mc-agent
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'mysql -uroot -p"$$MARIADB_ROOT_PASSWORD" -e"SELECT 1;" || exit 1'
       interval: 10s
       timeout: 10s
@@ -145,7 +145,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.0
+    image: cloudbaristaorg/cb-tumblebug:0.11.3
     container_name: cb-tumblebug
     build:
       context: .
@@ -285,7 +285,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.10.8
+    image: cloudbaristaorg/cb-spider_azure_monitoring:feat-refactor
     container_name: cb-spider
     # build:
     #   context: ../cb-spider
@@ -317,7 +317,10 @@ services:
       start_period: 10s
 
   mc-observability-influx:
-    image: influxdb:1.11.8
+    # image: cloudbaristaorg/mc-observability-influx:1.11.8
+    build:
+      context: .
+      dockerfile: Dockerfile.influx
     container_name: mc-observability-influx
     restart: always
     networks:
@@ -325,20 +328,35 @@ services:
       - external_network
     ports:
       - 8086:8086
+    depends_on:
+      mc-observability-influx-init-volumes:
+        condition: service_completed_successfully
     environment:
-      - INFLUXDB_USER=mc-agent
-      - INFLUXDB_PASSWORD=mc-agent
-      - INFLUXDB_DB=mc-observability
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=mc-agent
+      - INFLUXDB_ADMIN_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability"
     volumes:
-      - /docker/influxdb/config:/etc/influxdb
-      - /docker/influxdb/var/lib/influxdb:/root/.influxdb
-      - ./influxdb_init:/docker-entrypoint-initdb.d
+      - /docker/influxdb_data:/var/lib/influxdb
+      - ./influxdb-init:/docker-entrypoint-initdb.d
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
       retries: 30
+
+  mc-observability-influx-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-influx-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    volumes:
+      - /docker/influxdb_data:/var/lib/influxdb
+    user: root
+    init: true
+    networks:
+      - internal_network
 
   mc-observability-loki:
     image: grafana/loki:3.4.2
@@ -362,7 +380,7 @@ services:
       - /docker/loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'wget --quiet --spider http://127.0.0.1:3100/metrics || exit 1'
       interval: 10s
       timeout: 10s
@@ -396,7 +414,7 @@ services:
     volumes:
       - /docker/minio_data:/minio/data
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
       interval: 10s
       timeout: 10s
@@ -439,7 +457,7 @@ services:
       - /docker/grafana_data/data:/var/lib/grafana
       - /docker/grafana_data/log:/var/log/grafana
     healthcheck:
-      start_period: 30s
+      start_period: 120s
       test: |
         curl -s http://127.0.0.1:3000
         STATUS=`echo $$?`
@@ -480,7 +498,9 @@ services:
       - internal_network
       - external_network
     environment:
-      - INFLUXDB_URL=http://172.17.0.1:8086
+      - INFLUXDB_URL=http://mc-observability-influx:8086
+      - INFLUXDB_USERNAME=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
@@ -531,27 +551,7 @@ services:
         # Import variables & Make connections
         airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
-        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
-        # Reload & Run dags
-        airflow dags reserialize
-        airflow dags unpause anomaly_detection
-        airflow dags unpause down_sampling
-
-        # Start airflow
-        airflow scheduler & airflow webserver -p 9002
-
-        # Keep the server on no matter what
-        sleep infinity
-            "
-    healthcheck:
-      start_period: 30s
-      test: 'curl -s http://127.0.0.1:9002 ; STATUS=`echo $?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
-      interval: 10s
-      timeout: 10s
-      retries: 30
 
   mc-observability-mcp-grafana:
     image: mcp/grafana:latest
@@ -571,3 +571,57 @@ services:
     networks:
       - internal_network
       - external_network
+
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq/etc:/etc/rabbitmq
+      - ./rabbitmq/data:/var/lib/rabbitmq
+#      - ./rabbitmq/logs:/var/log/rabbitmq
+    depends_on:
+      mc-observability-rabbitmq-init-volumes:
+        condition: service_completed_successfully
+    ports:
+      - "5672:5672"    # AMQP
+      - "1883:1883"    # MQTT
+      - "15672:15672"  # Dashboard
+      # - "8883:8883"    # MQTT/TLS (optional)
+      # - "15675:15675"  # MQTT WebSocket (optional)
+    environment:
+      RABBITMQ_ENABLED_PLUGINS_FILE: "/etc/rabbitmq/enabled_plugins"
+      RABBITMQ_LOAD_DEFINITIONS: "/etc/rabbitmq/definitions.json"
+      # RABBITMQ_DEFAULT_USER: "admin"
+      # RABBITMQ_DEFAULT_PASS: "admin"
+    restart: unless-stopped
+    networks:
+      - internal_network
+      - external_network
+
+  mc-observability-rabbitmq-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-rabbitmq-init-volumes
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -eux && \
+        mkdir -p /var/lib/rabbitmq /var/log/rabbitmq && \
+        if [ ! -s /var/lib/rabbitmq/.erlang.cookie ] || \
+           [ "$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
+          umask 177
+          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
+        fi && \
+        chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
+        chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+    user: root
+    init: true
+    networks:
+      - internal_network
+
+
+
