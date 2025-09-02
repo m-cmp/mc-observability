@@ -517,6 +517,7 @@ services:
       - internal_network
       - external_network
 
+
   mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
     container_name: mc-observability-insight-scheduler
@@ -551,7 +552,27 @@ services:
         # Import variables & Make connections
         airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
+        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
+        # Reload & Run dags
+        airflow dags reserialize
+        airflow dags unpause anomaly_detection
+        airflow dags unpause down_sampling
+
+        # Start airflow
+        airflow scheduler & airflow webserver -p 9002
+
+        # Keep the server on no matter what
+        sleep infinity
+            "
+    healthcheck:
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:9002 ; STATUS=`echo $?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-mcp-grafana:
     image: mcp/grafana:latest
