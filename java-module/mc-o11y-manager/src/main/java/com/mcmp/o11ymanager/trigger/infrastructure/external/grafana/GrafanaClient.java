@@ -100,8 +100,8 @@ public interface GrafanaClient {
     @GetExchange("/api/datasources/uid/{uid}/health")
     ResponseEntity<Object> getDatasourceHealthBy(@PathVariable String uid);
 
-  @GetExchange("/api/datasources")
-  ResponseEntity<List<Map<String, Object>>> getAllDatasources();
+    @GetExchange("/api/datasources")
+    ResponseEntity<List<Map<String, Object>>> getAllDatasources();
 
     /**
      * Retrieves folder information by its unique identifier.

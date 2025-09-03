@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack;
 
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory.NotiProperty;

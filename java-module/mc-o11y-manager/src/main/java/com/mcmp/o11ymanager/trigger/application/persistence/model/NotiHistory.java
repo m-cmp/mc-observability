@@ -1,10 +1,9 @@
 package com.mcmp.o11ymanager.trigger.application.persistence.model;
 
-
 import com.mcmp.o11ymanager.trigger.application.service.dto.NotiHistoryDetailDto;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiResult;
-import java.util.*;
 import jakarta.persistence.*;
+import java.util.*;
 import lombok.Getter;
 
 @Getter

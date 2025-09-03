@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.grafana;
 
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.GrafanaCondition.*;
 
 import com.mcmp.o11ymanager.trigger.application.common.dto.ThresholdCondition;
@@ -222,17 +221,18 @@ public class GrafanaAlertRuleFactory {
      */
     private String grafanaExpression(String thresholdExpression) {
         ThresholdCondition condition = ThresholdCondition.from(thresholdExpression);
-      String sb = "($B > "
-          + condition.critical()
-          + ") * 1"
-          + " + "
-          + "($B > "
-          + condition.warning()
-          + ") * 1"
-          + " + "
-          + "($B > "
-          + condition.info()
-          + ") * 1";
+        String sb =
+                "($B > "
+                        + condition.critical()
+                        + ") * 1"
+                        + " + "
+                        + "($B > "
+                        + condition.warning()
+                        + ") * 1"
+                        + " + "
+                        + "($B > "
+                        + condition.info()
+                        + ") * 1";
         return sb;
     }
 }

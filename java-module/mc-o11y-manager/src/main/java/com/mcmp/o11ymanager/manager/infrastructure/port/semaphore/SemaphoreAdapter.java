@@ -9,7 +9,6 @@ import com.mcmp.o11ymanager.manager.model.semaphore.Template;
 import com.mcmp.o11ymanager.manager.port.SemaphorePort;
 import java.util.List;
 import java.util.NoSuchElementException;
-
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +59,9 @@ public class SemaphoreAdapter implements SemaphorePort {
 
     @Override
     public Project getProjectByName(String name) {
-        return getProjects().stream().filter(i -> i.getName().equals(name)).findFirst()
+        return getProjects().stream()
+                .filter(i -> i.getName().equals(name))
+                .findFirst()
                 .orElseThrow(NoSuchElementException::new);
     }
 
@@ -98,5 +99,4 @@ public class SemaphoreAdapter implements SemaphorePort {
     public Template createTemplate(Integer projectId, Template template) {
         return semaphoreClient.createTemplate(projectId, template);
     }
-
-} 
+}

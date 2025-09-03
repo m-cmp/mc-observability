@@ -91,8 +91,7 @@ public class TriggerHistory extends BaseEntity {
     }
 
     public TriggerHistoryDetailDto toDto() {
-        return TriggerHistoryDetailDto
-                .builder()
+        return TriggerHistoryDetailDto.builder()
                 .id(id)
                 .triggerTitle(triggerTitle)
                 .aggregationType(aggregationType)

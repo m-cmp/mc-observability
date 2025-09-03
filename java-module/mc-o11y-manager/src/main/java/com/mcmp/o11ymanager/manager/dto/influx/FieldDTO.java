@@ -23,11 +23,19 @@ public class FieldDTO {
 
     @Getter
     @Setter
+    @Builder
     public static class FieldInfo {
         @JsonProperty("key")
         private String key;
 
         @JsonProperty("type")
         private String type;
+
+        public FieldInfo() {}
+
+        public FieldInfo(String key, String type) {
+            this.key = key;
+            this.type = type;
+        }
     }
 }

@@ -14,43 +14,41 @@ import lombok.Setter;
 @AllArgsConstructor
 public class InfluxDTO {
 
-  private Long id;
+    private Long id;
 
-  private String url;
+    private String url;
 
-  private String database;
+    private String database;
 
-  private String username;
+    private String username;
 
-  private String retention_policy;
+    private String retention_policy;
 
-  private String password;
+    private String password;
 
-  private String uid;
+    private String uid;
 
+    public static InfluxDTO fromEntity(InfluxEntity entity) {
+        return InfluxDTO.builder()
+                .id(entity.getId())
+                .url(entity.getUrl())
+                .database(entity.getDatabase())
+                .username(entity.getUsername())
+                .retention_policy(entity.getRetentionPolicy())
+                .password(entity.getPassword())
+                .uid(entity.getUid())
+                .build();
+    }
 
-  public static InfluxDTO fromEntity(InfluxEntity entity) {
-    return InfluxDTO.builder()
-        .id(entity.getId())
-        .url(entity.getUrl())
-        .database(entity.getDatabase())
-        .username(entity.getUsername())
-        .retention_policy(entity.getRetentionPolicy())
-        .password(entity.getPassword())
-        .uid(entity.getUid())
-        .build();
-  }
-
-  public InfluxEntity toEntity() {
-    return InfluxEntity.builder()
-        .id(this.id)
-        .url(this.url)
-        .database(this.database)
-        .username(this.username)
-        .password(this.password)
-        .uid(this.uid)
-        .retentionPolicy(this.retention_policy)
-        .build();
-  }
-
+    public InfluxEntity toEntity() {
+        return InfluxEntity.builder()
+                .id(this.id)
+                .url(this.url)
+                .database(this.database)
+                .username(this.username)
+                .password(this.password)
+                .uid(this.uid)
+                .retentionPolicy(this.retention_policy)
+                .build();
+    }
 }

@@ -2,19 +2,17 @@ package com.mcmp.o11ymanager.manager.mapper.log;
 
 import com.mcmp.o11ymanager.manager.dto.log.RangeQueryLogResponseDto;
 import com.mcmp.o11ymanager.manager.model.log.RangeQueryLog;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 쿼리 범위 로그 도메인 모델을 응용 계층 DTO로 변환하는 매퍼
- */
+/** 쿼리 범위 로그 도메인 모델을 응용 계층 DTO로 변환하는 매퍼 */
 public class RangeQueryLogResponseMapper {
 
     /**
      * 도메인 모델을 DTO로 변환
+     *
      * @param rangeQueryLog 쿼리 범위 로그 도메인 모델
      * @return 응용 계층 DTO
      */
@@ -27,16 +25,18 @@ public class RangeQueryLogResponseMapper {
         if (rangeQueryLog.getData() != null) {
             List<RangeQueryLogResponseDto.MetricResultDto> resultDtos = new ArrayList<>();
             if (rangeQueryLog.getData().getResults() != null) {
-                resultDtos = rangeQueryLog.getData().getResults().stream()
-                        .map(RangeQueryLogResponseMapper::mapToMetricResultDto)
-                        .collect(Collectors.toList());
+                resultDtos =
+                        rangeQueryLog.getData().getResults().stream()
+                                .map(RangeQueryLogResponseMapper::mapToMetricResultDto)
+                                .collect(Collectors.toList());
             }
 
-            dataDto = RangeQueryLogResponseDto.RangeQueryDataDto.builder()
-                    .resultType(rangeQueryLog.getData().getResultType())
-                    .result(resultDtos)
-                    .stats(mapToStatsDataDto(rangeQueryLog.getData().getStats()))
-                    .build();
+            dataDto =
+                    RangeQueryLogResponseDto.RangeQueryDataDto.builder()
+                            .resultType(rangeQueryLog.getData().getResultType())
+                            .result(resultDtos)
+                            .stats(mapToStatsDataDto(rangeQueryLog.getData().getStats()))
+                            .build();
         }
 
         return RangeQueryLogResponseDto.builder()
@@ -45,7 +45,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.MetricResultDto mapToMetricResultDto(RangeQueryLog.MetricResult result) {
+    private static RangeQueryLogResponseDto.MetricResultDto mapToMetricResultDto(
+            RangeQueryLog.MetricResult result) {
         if (result == null) {
             return RangeQueryLogResponseDto.MetricResultDto.builder()
                     .metric(Collections.emptyMap())
@@ -55,9 +56,10 @@ public class RangeQueryLogResponseMapper {
 
         List<RangeQueryLogResponseDto.TimeSeriesValueDto> valueDtos = new ArrayList<>();
         if (result.getValues() != null) {
-            valueDtos = result.getValues().stream()
-                    .map(RangeQueryLogResponseMapper::mapToTimeSeriesValueDto)
-                    .collect(Collectors.toList());
+            valueDtos =
+                    result.getValues().stream()
+                            .map(RangeQueryLogResponseMapper::mapToTimeSeriesValueDto)
+                            .collect(Collectors.toList());
         }
 
         return RangeQueryLogResponseDto.MetricResultDto.builder()
@@ -66,7 +68,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.TimeSeriesValueDto mapToTimeSeriesValueDto(RangeQueryLog.TimeSeriesValue value) {
+    private static RangeQueryLogResponseDto.TimeSeriesValueDto mapToTimeSeriesValueDto(
+            RangeQueryLog.TimeSeriesValue value) {
         if (value == null) {
             return RangeQueryLogResponseDto.TimeSeriesValueDto.builder()
                     .timestamp(0L)
@@ -80,7 +83,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsDataDto mapToStatsDataDto(RangeQueryLog.StatsData stats) {
+    private static RangeQueryLogResponseDto.StatsDataDto mapToStatsDataDto(
+            RangeQueryLog.StatsData stats) {
         if (stats == null) {
             return null;
         }
@@ -94,7 +98,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsSummaryDto mapToStatsSummaryDto(RangeQueryLog.StatsSummary summary) {
+    private static RangeQueryLogResponseDto.StatsSummaryDto mapToStatsSummaryDto(
+            RangeQueryLog.StatsSummary summary) {
         if (summary == null) {
             return null;
         }
@@ -111,11 +116,13 @@ public class RangeQueryLogResponseMapper {
                 .splits(summary.getSplits())
                 .shards(summary.getShards())
                 .totalPostFilterLines(summary.getTotalPostFilterLines())
-                .totalStructuredMetadataBytesProcessed(summary.getTotalStructuredMetadataBytesProcessed())
+                .totalStructuredMetadataBytesProcessed(
+                        summary.getTotalStructuredMetadataBytesProcessed())
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsQuerierDto mapToStatsQuerierDto(RangeQueryLog.StatsQuerier querier) {
+    private static RangeQueryLogResponseDto.StatsQuerierDto mapToStatsQuerierDto(
+            RangeQueryLog.StatsQuerier querier) {
         if (querier == null) {
             return null;
         }
@@ -125,7 +132,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsIngesterDto mapToStatsIngesterDto(RangeQueryLog.StatsIngester ingester) {
+    private static RangeQueryLogResponseDto.StatsIngesterDto mapToStatsIngesterDto(
+            RangeQueryLog.StatsIngester ingester) {
         if (ingester == null) {
             return null;
         }
@@ -139,7 +147,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsStoreDto mapToStatsStoreDto(RangeQueryLog.StatsStore store) {
+    private static RangeQueryLogResponseDto.StatsStoreDto mapToStatsStoreDto(
+            RangeQueryLog.StatsStore store) {
         if (store == null) {
             return null;
         }
@@ -156,7 +165,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsChunkDto mapToStatsChunkDto(RangeQueryLog.StatsChunk chunk) {
+    private static RangeQueryLogResponseDto.StatsChunkDto mapToStatsChunkDto(
+            RangeQueryLog.StatsChunk chunk) {
         if (chunk == null) {
             return null;
         }
@@ -174,7 +184,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsCacheDto mapToStatsCacheDto(RangeQueryLog.StatsCache cache) {
+    private static RangeQueryLogResponseDto.StatsCacheDto mapToStatsCacheDto(
+            RangeQueryLog.StatsCache cache) {
         if (cache == null) {
             return null;
         }
@@ -191,7 +202,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsCacheEntryDto mapToStatsCacheEntryDto(RangeQueryLog.StatsCacheEntry entry) {
+    private static RangeQueryLogResponseDto.StatsCacheEntryDto mapToStatsCacheEntryDto(
+            RangeQueryLog.StatsCacheEntry entry) {
         if (entry == null) {
             return null;
         }
@@ -208,7 +220,8 @@ public class RangeQueryLogResponseMapper {
                 .build();
     }
 
-    private static RangeQueryLogResponseDto.StatsIndexDto mapToStatsIndexDto(RangeQueryLog.StatsIndex index) {
+    private static RangeQueryLogResponseDto.StatsIndexDto mapToStatsIndexDto(
+            RangeQueryLog.StatsIndex index) {
         if (index == null) {
             return null;
         }
@@ -220,4 +233,4 @@ public class RangeQueryLogResponseMapper {
                 .usedBloomFilters(index.getUsedBloomFilters())
                 .build();
     }
-} 
+}

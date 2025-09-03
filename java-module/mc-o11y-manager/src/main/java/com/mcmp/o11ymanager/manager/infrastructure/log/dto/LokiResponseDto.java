@@ -1,16 +1,13 @@
 package com.mcmp.o11ymanager.manager.infrastructure.log.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * Loki API 응답을 매핑하는 DTO
- */
+/** Loki API 응답을 매핑하는 DTO */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,4 +40,4 @@ public class LokiResponseDto {
         private Map<String, String> stream;
         private List<List<String>> values;
     }
-} 
+}

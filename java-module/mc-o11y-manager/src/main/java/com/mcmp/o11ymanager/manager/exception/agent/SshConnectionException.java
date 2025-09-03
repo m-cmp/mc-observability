@@ -10,7 +10,6 @@ public class SshConnectionException extends BaseException {
         super(
                 requestId,
                 ErrorCode.SSH_CONNECTION_FAILED,
-                String.format("Host(IP: %s) 접속 정보 실패.", ip)
-        );
+                String.format("Host(IP: %s) 접속 정보 실패.", ip));
     }
 }

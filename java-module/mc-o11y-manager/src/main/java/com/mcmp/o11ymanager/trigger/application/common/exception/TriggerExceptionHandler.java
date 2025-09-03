@@ -20,17 +20,27 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class TriggerExceptionHandler {
 
     @ExceptionHandler(TriggerPolicyNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleTriggerPolicyNotFound(TriggerPolicyNotFoundException e) {
+    public ResponseEntity<ErrorResponse> handleTriggerPolicyNotFound(
+            TriggerPolicyNotFoundException e) {
         log.error("TriggerPolicy not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse.builder().errorCode(e.getErrorCode()).message(e.getMessage()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode(e.getErrorCode())
+                                .message(e.getMessage())
+                                .build());
     }
 
     @ExceptionHandler(TriggerHistoryNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleTriggerHistoryNotFound(TriggerHistoryNotFoundException e) {
+    public ResponseEntity<ErrorResponse> handleTriggerHistoryNotFound(
+            TriggerHistoryNotFoundException e) {
         log.error("TriggerHistory not found: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse.builder().errorCode(e.getErrorCode()).message(e.getMessage()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode(e.getErrorCode())
+                                .message(e.getMessage())
+                                .build());
     }
 
     @ExceptionHandler({
@@ -41,7 +51,11 @@ public class TriggerExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBadRequest(RuntimeException e) {
         log.error("Trigger bad request: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse.builder().errorCode("BAD_REQUEST").message(e.getMessage()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode("BAD_REQUEST")
+                                .message(e.getMessage())
+                                .build());
     }
 
     @ExceptionHandler({
@@ -52,31 +66,50 @@ public class TriggerExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTriggerServerError(RuntimeException e) {
         log.error("Trigger internal error: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse.builder().errorCode("TRIGGER_INTERNAL_ERROR").message(e.getMessage()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode("TRIGGER_INTERNAL_ERROR")
+                                .message(e.getMessage())
+                                .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
-        e.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+        e.getBindingResult()
+                .getAllErrors()
+                .forEach(
+                        error -> {
+                            String fieldName = ((FieldError) error).getField();
+                            String errorMessage = error.getDefaultMessage();
+                            errors.put(fieldName, errorMessage);
+                        });
         return ResponseEntity.badRequest()
-            .body(ErrorResponse.builder().errorCode("VALIDATION_FAILED").message(errors.toString()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode("VALIDATION_FAILED")
+                                .message(errors.toString())
+                                .build());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
         return ResponseEntity.badRequest()
-            .body(ErrorResponse.builder().errorCode("CONSTRAINT_VIOLATION").message(e.getMessage()).build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode("CONSTRAINT_VIOLATION")
+                                .message(e.getMessage())
+                                .build());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception e) {
         log.error("Unexpected trigger error: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse.builder().errorCode("INTERNAL_SERVER_ERROR").message("Unexpected error").build());
+                .body(
+                        ErrorResponse.builder()
+                                .errorCode("INTERNAL_SERVER_ERROR")
+                                .message("Unexpected error")
+                                .build());
     }
 }

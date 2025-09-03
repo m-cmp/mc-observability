@@ -3,24 +3,17 @@ package com.mcmp.o11ymanager.manager.infrastructure.log.client;
 import com.mcmp.o11ymanager.manager.infrastructure.log.dto.LokiLabelsResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.log.dto.LokiResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.log.dto.LokiVolumeResponseDto;
+import java.util.Optional;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Optional;
-
-@FeignClient(
-        name = "LokiFeignClient",
-        url = "${loki.url}",
-        configuration = FeignLogConfig.class
-)
+@FeignClient(name = "LokiFeignClient", url = "${loki.url}", configuration = FeignLogConfig.class)
 public interface LokiFeignClient {
 
     @GetMapping(value = "${loki.endpoints.query}")
-    Optional<LokiResponseDto> fetchLogs(
-            @RequestParam String query,
-            @RequestParam int limit);
+    Optional<LokiResponseDto> fetchLogs(@RequestParam String query, @RequestParam int limit);
 
     @GetMapping(value = "${loki.endpoints.range}")
     Optional<LokiResponseDto> fetchLogsWithRange(

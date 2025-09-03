@@ -1,8 +1,7 @@
 package com.mcmp.o11ymanager.manager.entity;
 
-import lombok.*;
-
 import java.io.Serializable;
+import lombok.*;
 
 @Getter
 @Setter
@@ -10,7 +9,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @EqualsAndHashCode
 public class TargetId implements Serializable {
-  private String nsId;
-  private String mciId;
-  private String targetId;
+    private String nsId;
+    private String mciId;
+    private String targetId;
 }

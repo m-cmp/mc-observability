@@ -11,10 +11,11 @@ import lombok.Getter;
 @Schema(description = "API 응답 객체")
 public class ResultDTO {
 
-  private String nsId;
-  private String mciId;
-  private String targetId;
-  private ResponseStatus status;
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  private String errorMessage;
+    private String nsId;
+    private String mciId;
+    private String targetId;
+    private ResponseStatus status;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String errorMessage;
 }

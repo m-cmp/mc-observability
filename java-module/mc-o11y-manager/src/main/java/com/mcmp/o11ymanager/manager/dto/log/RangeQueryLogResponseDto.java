@@ -1,16 +1,13 @@
 package com.mcmp.o11ymanager.manager.dto.log;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * 응용 계층에서 사용하는 쿼리 범위 로그 응답 DTO
- */
+/** 응용 계층에서 사용하는 쿼리 범위 로그 응답 DTO */
 @Data
 @Builder
 @NoArgsConstructor
@@ -169,4 +166,4 @@ public class RangeQueryLogResponseDto {
         private Long shardsDuration;
         private Boolean usedBloomFilters;
     }
-} 
+}

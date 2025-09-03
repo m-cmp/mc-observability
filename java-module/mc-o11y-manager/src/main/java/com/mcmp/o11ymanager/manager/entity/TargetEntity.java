@@ -6,7 +6,6 @@ import com.mcmp.o11ymanager.manager.model.host.TargetStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
-
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -20,41 +19,37 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @IdClass(TargetId.class)
 @EntityListeners(AuditingEntityListener.class)
 public class TargetEntity {
-  public static final String HOST_TYPE_HOST = "target";
-  public static final String HOST_TYPE_VM = "vm";
+    public static final String HOST_TYPE_HOST = "target";
+    public static final String HOST_TYPE_VM = "vm";
 
-  @Id
-  private String nsId;
+    @Id private String nsId;
 
-  @Id
-  private String mciId;
+    @Id private String mciId;
 
-  @Id
-  private String targetId;
+    @Id private String targetId;
 
-  @Column(name = "influx_id", nullable = false)
-  private Long influxSeq;
+    @Column(name = "influx_id", nullable = false)
+    private Long influxSeq;
 
-  @Column(nullable = false)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  private String description;
+    private String description;
 
-  @Enumerated(EnumType.STRING)
-  private TargetStatus targetStatus;
+    @Enumerated(EnumType.STRING)
+    private TargetStatus targetStatus;
 
-  @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus monitoringAgentTaskStatus;
-  
-  @Enumerated(EnumType.STRING)
-  private TargetAgentTaskStatus logAgentTaskStatus;
+    @Enumerated(EnumType.STRING)
+    private TargetAgentTaskStatus monitoringAgentTaskStatus;
 
-  private String targetMonitoringAgentTaskId;
+    @Enumerated(EnumType.STRING)
+    private TargetAgentTaskStatus logAgentTaskStatus;
 
-  private String targetLogAgentTaskId;
+    private String targetMonitoringAgentTaskId;
 
-  private AgentServiceStatus monitoringServiceStatus;
+    private String targetLogAgentTaskId;
 
-  private AgentServiceStatus logServiceStatus;
+    private AgentServiceStatus monitoringServiceStatus;
 
+    private AgentServiceStatus logServiceStatus;
 }

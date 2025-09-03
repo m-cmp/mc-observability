@@ -3,14 +3,12 @@ package com.mcmp.o11ymanager.manager.service.interfaces;
 import com.mcmp.o11ymanager.manager.exception.config.FailedDeleteFileException;
 import com.mcmp.o11ymanager.manager.exception.config.FileReadingException;
 import com.mcmp.o11ymanager.manager.model.config.ConfigFileNode;
-import org.springframework.core.io.ClassPathResource;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import org.springframework.core.io.ClassPathResource;
 
 public interface FileService {
-
 
     String singleFileReader(File configFile) throws FileReadingException;
 
@@ -22,7 +20,8 @@ public interface FileService {
 
     String getClassResourceContent(ClassPathResource classPathResource);
 
-    void writeFile(File agentConfigDir, String configFilename, String configContent) throws FileReadingException;
+    void writeFile(File agentConfigDir, String configFilename, String configContent)
+            throws FileReadingException;
 
     void deleteDirectoryByHostId(String uuid);
 
@@ -35,5 +34,4 @@ public interface FileService {
     Path createDirectory(Path path);
 
     void generateFile(File file, String content) throws FileReadingException;
-
 }

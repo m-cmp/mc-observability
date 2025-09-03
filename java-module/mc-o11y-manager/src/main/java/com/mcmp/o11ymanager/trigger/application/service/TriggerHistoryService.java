@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.application.service;
 
-
 import com.mcmp.o11ymanager.trigger.application.common.exception.TriggerHistoryNotFoundException;
 import com.mcmp.o11ymanager.trigger.application.persistence.model.TriggerHistory;
 import com.mcmp.o11ymanager.trigger.application.persistence.repository.TriggerHistoryRepository;
@@ -11,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service class for trigger history management.
- * Handles business logic for retrieving and updating trigger history records.
+ * Service class for trigger history management. Handles business logic for retrieving and updating
+ * trigger history records.
  */
 @Service
 @Transactional(readOnly = true)

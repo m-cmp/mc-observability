@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.application.service;
 
-
 import com.mcmp.o11ymanager.trigger.adapter.internal.trigger.AlertServiceInternal;
 import com.mcmp.o11ymanager.trigger.application.persistence.model.AlertTestHistory;
 import com.mcmp.o11ymanager.trigger.application.persistence.repository.AlertTestHistoryRepository;
@@ -11,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service class for alert test management.
- * Handles business logic for alert test history and validation.
+ * Service class for alert test management. Handles business logic for alert test history and
+ * validation.
  */
 @Transactional
 @Service

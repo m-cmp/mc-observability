@@ -6,28 +6,27 @@ import com.mcmp.o11ymanager.manager.global.annotation.Base64EncodeField;
 import lombok.Getter;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 public class TargetInfo {
 
-  @JsonProperty("ns_id")
-  private String nsId;
+    @JsonProperty("ns_id")
+    private String nsId;
 
-  @JsonProperty("mci_id")
-  private String mciId;
+    @JsonProperty("mci_id")
+    private String mciId;
 
-  @JsonProperty("id")
-  private String id;
+    @JsonProperty("id")
+    private String id;
 
-  @JsonProperty("name")
-  private String name;
+    @JsonProperty("name")
+    private String name;
 
-  @Base64EncodeField
-  @Base64DecodeField
-  @JsonProperty("description")
-  private String description;
+    @Base64EncodeField
+    @Base64DecodeField
+    @JsonProperty("description")
+    private String description;
 
-  @JsonProperty("state")
-  private String state;
+    @JsonProperty("state")
+    private String state;
 }

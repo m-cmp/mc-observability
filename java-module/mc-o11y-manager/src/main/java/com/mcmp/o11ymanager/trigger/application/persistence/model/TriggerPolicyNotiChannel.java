@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+
 @Getter
 @Table(name = "trigger_policy_noti_channel")
 @Entity

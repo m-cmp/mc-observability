@@ -1,7 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp;
 
-
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.KAKAO;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;

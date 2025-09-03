@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class GitCommit {
-  private String commitHash;
-  private String message;
-  private Timestamp timestamp;
+    private String commitHash;
+    private String message;
+    private Timestamp timestamp;
 }

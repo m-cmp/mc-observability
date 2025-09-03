@@ -14,8 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TagDTO {
 
-  private String measurement;
+    private String measurement;
 
-  private List<String> tags;
-
+    private List<String> tags;
 }

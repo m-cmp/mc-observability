@@ -1,7 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack;
 
-
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;
@@ -76,7 +74,7 @@ public class SlackNoti implements Noti {
     }
 
     private static String buildText(AlertEvent event) {
-      return "> title: " + event.getTitle() + "\n";
+        return "> title: " + event.getTitle() + "\n";
     }
 
     private static List<Field> buildFields(AlertEvent event) {

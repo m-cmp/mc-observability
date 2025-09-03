@@ -9,8 +9,8 @@ public enum OS {
     ;
 
     public static OS parse(String name) {
-        for( OS t : OS.values() ) {
-            if( t.name().equalsIgnoreCase(name) ) return t;
+        for (OS t : OS.values()) {
+            if (t.name().equalsIgnoreCase(name)) return t;
         }
         return null;
     }

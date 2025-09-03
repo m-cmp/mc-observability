@@ -1,14 +1,11 @@
 package com.mcmp.o11ymanager.manager.model.log;
 
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * Loki 쿼리 범위 로그 도메인 모델
- */
+/** Loki 쿼리 범위 로그 도메인 모델 */
 @Getter
 @Builder
 public class RangeQueryLog {
@@ -141,4 +138,4 @@ public class RangeQueryLog {
         private final Long shardsDuration;
         private final Boolean usedBloomFilters;
     }
-} 
+}

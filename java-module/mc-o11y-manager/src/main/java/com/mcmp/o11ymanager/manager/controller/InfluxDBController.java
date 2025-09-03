@@ -21,37 +21,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/o11y/monitoring/influxdb")
 public class InfluxDBController {
 
-  private final InfluxDbFacadeService influxDbFacadeService;
+    private final InfluxDbFacadeService influxDbFacadeService;
 
+    @GetMapping
+    public ResBody<List<InfluxDTO>> getAllInfluxDB() {
+        return new ResBody<>(influxDbFacadeService.getInfluxDbs());
+    }
 
-//  @PostMapping
-//  public ResBody<InfluxDTO> postInfluxDB(@RequestBody InfluxDTO req)
-//  {
-//    return new ResBody<>(influxDbFacadeService.postInflux(req));
-//  }
+    @GetMapping("/measurement")
+    public ResBody<List<FieldDTO>> measurement() {
+        return new ResBody<>(influxDbFacadeService.getFields());
+    }
 
-  @GetMapping
-  public ResBody<List<InfluxDTO>> getAllInfluxDB()
-  {
-      return new ResBody<>(influxDbFacadeService.getInfluxDbs());
-  }
+    @GetMapping("/tag")
+    public ResBody<List<TagDTO>> tag() {
+        return new ResBody<>(influxDbFacadeService.getTags());
+    }
 
-  @GetMapping("/measurement")
-  public ResBody<List<FieldDTO>> measurement() {
-    return new ResBody<>(influxDbFacadeService.getFields());
-  }
-
-  @GetMapping("/tag")
-  public ResBody<List<TagDTO>> tag() {
-    return new ResBody<>(influxDbFacadeService.getTags());
-  }
-
-
-  @PostMapping("/metric/{nsId}/{mciId}")
-  public ResBody<List<MetricDTO>> query( @PathVariable String nsId,
-      @PathVariable String mciId, @RequestBody MetricRequestDTO req) {
-    return new ResBody<>(influxDbFacadeService.getMetrics(nsId, mciId, req));
-  }
-
-
+    @PostMapping("/metric/{nsId}/{mciId}")
+    public ResBody<List<MetricDTO>> query(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @RequestBody MetricRequestDTO req) {
+        return new ResBody<>(influxDbFacadeService.getMetrics(nsId, mciId, req));
+    }
 }

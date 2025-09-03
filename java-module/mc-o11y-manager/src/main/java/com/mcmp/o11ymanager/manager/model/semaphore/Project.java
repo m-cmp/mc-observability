@@ -13,13 +13,16 @@ import lombok.*;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project {
-  private Integer id;
-  private String name;
-  private String created;
-  private boolean alert;
-  @JsonProperty("alert_chat")
-  private String alertChat;
-  @JsonProperty("max_parallel_tasks")
-  private Integer maxParallelTasks;
-  private String type;
+    private Integer id;
+    private String name;
+    private String created;
+    private boolean alert;
+
+    @JsonProperty("alert_chat")
+    private String alertChat;
+
+    @JsonProperty("max_parallel_tasks")
+    private Integer maxParallelTasks;
+
+    private String type;
 }

@@ -1,7 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail;
 
-
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.EMAIL;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;

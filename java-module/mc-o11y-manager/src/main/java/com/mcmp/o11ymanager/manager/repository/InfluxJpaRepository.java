@@ -5,7 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface InfluxJpaRepository extends JpaRepository<InfluxEntity, Long> {
-
-}
-
+public interface InfluxJpaRepository extends JpaRepository<InfluxEntity, Long> {}

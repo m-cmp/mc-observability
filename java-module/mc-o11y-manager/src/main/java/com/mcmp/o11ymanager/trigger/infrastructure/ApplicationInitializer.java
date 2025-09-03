@@ -24,7 +24,6 @@ public class ApplicationInitializer {
     private final NotiServiceInternal notificationService;
     private final ApplicationContext ctx;
 
-
     @EventListener(ApplicationReadyEvent.class)
     public void initNotification() {
         // DevTools/Cloud NamedContext 등으로 두 번 이상 실행되는 것 방지
@@ -38,26 +37,23 @@ public class ApplicationInitializer {
             return;
         }
 
-        var dtos = notiFactory.getNotiChannelProps().stream()
-            .map(NotiChannelCreateDto::from)
-            .toList();
+        var dtos =
+                notiFactory.getNotiChannelProps().stream().map(NotiChannelCreateDto::from).toList();
 
         notificationService.initializeNotificationChannels(dtos);
         log.info("[NOTI-INIT] initialized {} channels", dtos.size());
     }
-
-
 
     /**
      * Initializes notification channels when the application is ready. This method is triggered
      * after the application has fully started and is ready to serve requests. It retrieves
      * notification channel properties from the factory and initializes them in the service.
      */
-//    @EventListener(ApplicationReadyEvent.class)
-//    public void initNotification() {
-//        notificationService.initializeNotificationChannels(
-//                notiFactory.getNotiChannelProps().stream()
-//                        .map(NotiChannelCreateDto::from)
-//                        .toList());
-//    }
+    //    @EventListener(ApplicationReadyEvent.class)
+    //    public void initNotification() {
+    //        notificationService.initializeNotificationChannels(
+    //                notiFactory.getNotiChannelProps().stream()
+    //                        .map(NotiChannelCreateDto::from)
+    //                        .toList());
+    //    }
 }

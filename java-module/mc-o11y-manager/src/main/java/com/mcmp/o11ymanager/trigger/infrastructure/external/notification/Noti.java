@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification;
 
-
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 
 /**
@@ -14,5 +13,5 @@ public interface Noti {
      *
      * @return the notification type
      */
-     NotificationType getNotificationType();
+    NotificationType getNotificationType();
 }

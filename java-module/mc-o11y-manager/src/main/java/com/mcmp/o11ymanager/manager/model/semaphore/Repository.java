@@ -15,12 +15,16 @@ import lombok.*;
 public class Repository {
     private Integer id;
     private String name;
+
     @JsonProperty("project_id")
     private Integer projectId;
+
     @JsonProperty("git_url")
     private String gitUrl;
+
     @JsonProperty("git_branch")
     private String gitBranch;
+
     @JsonProperty("ssh_key_id")
     private Integer sshKeyId;
 }

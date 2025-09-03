@@ -1,15 +1,12 @@
 package com.mcmp.o11ymanager.manager.infrastructure.log.dto;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * Loki 로그 볼륨 API 응답을 매핑하는 DTO
- */
+/** Loki 로그 볼륨 API 응답을 매핑하는 DTO */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -147,4 +144,4 @@ public class LokiVolumeResponseDto {
         private Long shardsDuration;
         private Boolean usedBloomFilters;
     }
-} 
+}

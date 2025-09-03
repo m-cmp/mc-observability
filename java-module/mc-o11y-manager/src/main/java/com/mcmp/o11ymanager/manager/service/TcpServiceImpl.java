@@ -15,23 +15,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TcpServiceImpl implements TcpService {
 
-  @Value("${health.host-connection-check-timeout:5000}")
-  private int hostConnectionCheckTimeout;
+    @Value("${health.host-connection-check-timeout:5000}")
+    private int hostConnectionCheckTimeout;
 
-  public boolean isConnect(String ip, int port) {
-    try (Socket socket = new Socket()) {
-      socket.connect(new InetSocketAddress(ip, port), hostConnectionCheckTimeout);
-      return true;
-    } catch (IOException e) {
-      return false;
+    public boolean isConnect(String ip, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(ip, port), hostConnectionCheckTimeout);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
-  }
 
-
-  public HostStatus checkServerStatus(String ip, int port) {
-    if(isConnect(ip, port))
-      return HostStatus.RUNNING;
-    else
-      return HostStatus.FAILED;
-  }
+    public HostStatus checkServerStatus(String ip, int port) {
+        if (isConnect(ip, port)) return HostStatus.RUNNING;
+        else return HostStatus.FAILED;
+    }
 }

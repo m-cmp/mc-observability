@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public enum AgentAction {
-
     HOST_CREATED("Host created"),
     HOST_UPDATED("Host updated"),
     HOST_DELETED("Host deleted"),

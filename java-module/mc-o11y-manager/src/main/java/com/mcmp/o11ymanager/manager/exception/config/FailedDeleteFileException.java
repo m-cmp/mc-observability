@@ -7,9 +7,6 @@ import lombok.Getter;
 @Getter
 public class FailedDeleteFileException extends BaseException {
     public FailedDeleteFileException(String message) {
-        super(
-                ErrorCode.FILE_READING.getCode(),
-                message
-        );
+        super(ErrorCode.FILE_READING.getCode(), message);
     }
 }

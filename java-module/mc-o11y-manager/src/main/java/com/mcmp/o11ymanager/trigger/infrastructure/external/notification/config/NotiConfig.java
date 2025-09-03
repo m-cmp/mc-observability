@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.config;
 
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.EMAIL;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.KAKAO;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;

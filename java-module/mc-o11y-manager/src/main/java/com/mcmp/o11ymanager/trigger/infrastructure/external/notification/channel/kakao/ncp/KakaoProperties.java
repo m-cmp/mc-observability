@@ -2,9 +2,9 @@ package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channe
 
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.KAKAO;
 
+import com.mcmp.o11ymanager.trigger.application.common.exception.NotificationConfigurationException;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory.NotiProperty;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
-import com.mcmp.o11ymanager.trigger.application.common.exception.NotificationConfigurationException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import javax.crypto.Mac;
@@ -42,14 +42,7 @@ public class KakaoProperties implements NotiProperty {
             String method = "POST";
             String url = "/friendtalk/v2/services/" + serviceId + "/messages";
 
-            String message =
-                method
-                    + space
-                    + url
-                    + newLine
-                    + timestamp
-                    + newLine
-                    + accessKey;
+            String message = method + space + url + newLine + timestamp + newLine + accessKey;
 
             SecretKeySpec signingKey =
                     new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");

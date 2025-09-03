@@ -37,7 +37,8 @@ public class ResBody<T> {
     }
 
     public static <T> ResBody<T> error(ResponseCode responseCode, String errorMessage) {
-        return new ResBody<>(String.valueOf(responseCode.getCode()), responseCode.getMessage(), errorMessage);
+        return new ResBody<>(
+                String.valueOf(responseCode.getCode()), responseCode.getMessage(), errorMessage);
     }
 
     public static <T> ResBody<T> success(T data) {

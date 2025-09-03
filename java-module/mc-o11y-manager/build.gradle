@@ -3,8 +3,7 @@ plugins {
 
 def snippetsDir = layout.buildDirectory.dir("generated-snippets")
 
-configurations {
-    compileOnly {extendsFrom annotationProcessor
+configurations {compileOnly {extendsFrom annotationProcessor
     }
 }
 
@@ -42,6 +41,7 @@ dependencies {
     implementation 'com.influxdb:flux-dsl:7.3.0'
     implementation 'org.jooq:jooq:3.18.7'
     testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework:spring-test:6.1.3'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
     testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.18.2'
@@ -96,19 +96,20 @@ bootJar {
 // TODO : separate manager , trigger
 openapi {
     setHost('localhost:8080')
-    title = 'MC-O11Y Trigger API'
+    title = 'MC-O11Y Manager API'
     version = '1.0.0'
-    description = 'Multi-Cloud Observability Trigger API for managing alert policies, notification channels, and alert history'
+    description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
     format = 'yaml'
+    outputFileNamePrefix = 'mc-o11y-manager-api'
 }
 
 openapi3 {
     setServer('localhost:8080')
-    title = 'MC-O11Y Trigger API'
-    description = 'Multi-Cloud Observability Trigger API for managing alert policies, notification channels, and alert history'
+    title = 'MC-O11Y Manager API'
+    description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
     version = '1.0.0'
     format = 'yaml'
-    outputFileNamePrefix = 'mc-o11y-trigger-api'
+    outputFileNamePrefix = 'mc-o11y-manager-api'
 }
 
 tasks.register('runSpringBootInBackground') {

@@ -1,11 +1,10 @@
 package com.mcmp.o11ymanager.manager.model.agentHealth;
 
+import java.io.IOException;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.session.ClientSession;
-
-import java.io.IOException;
 
 @Getter
 @Setter
@@ -17,7 +16,8 @@ public class SshConnection implements AutoCloseable {
     private final String ip;
     private long lastUsedTime;
 
-    public SshConnection(SshClient client, ClientSession session, String sessionId, int port, String ip) {
+    public SshConnection(
+            SshClient client, ClientSession session, String sessionId, int port, String ip) {
         this.client = client;
         this.session = session;
         this.sessionId = sessionId;

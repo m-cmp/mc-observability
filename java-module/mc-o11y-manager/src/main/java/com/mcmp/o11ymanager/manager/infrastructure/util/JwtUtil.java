@@ -1,23 +1,23 @@
 package com.mcmp.o11ymanager.manager.infrastructure.util;
 
-import java.util.Base64;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Base64;
 import java.util.Map;
 
 public class JwtUtil {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static String getRequestUserId(String token) {
-        if(token == null || token.isEmpty()) {
+        if (token == null || token.isEmpty()) {
             throw new IllegalArgumentException("토큰이 필요합니다.");
         }
 
-        if(token.startsWith("Bearer ")) {
+        if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
 
         String[] parts = token.split("\\.");
-        if(parts.length < 2) {
+        if (parts.length < 2) {
             throw new IllegalArgumentException("유효하지 않은 토큰 형식입니다.");
         }
 

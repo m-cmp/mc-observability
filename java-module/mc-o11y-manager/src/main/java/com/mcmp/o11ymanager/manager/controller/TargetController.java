@@ -23,61 +23,47 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/o11y/monitoring")
 public class TargetController {
 
-  private final TargetFacadeService targetFacadeService;
+    private final TargetFacadeService targetFacadeService;
 
-  @GetMapping("/{nsId}/{mciId}/target/{targetId}")
-  public ResBody<TargetDTO> getTarget(
-      @PathVariable String nsId,
-      @PathVariable String mciId,
-      @PathVariable String targetId
-  ) {
-    return new ResBody<>(targetFacadeService.getTarget(nsId, mciId, targetId));
-  }
+    @GetMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody<TargetDTO> getTarget(
+            @PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        return new ResBody<>(targetFacadeService.getTarget(nsId, mciId, targetId));
+    }
 
+    @PostMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody<TargetDTO> postTarget(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @PathVariable String targetId,
+            @RequestBody @Valid TargetRequestDTO dto) {
+        return new ResBody<>(targetFacadeService.postTarget(nsId, mciId, targetId, dto));
+    }
 
-  @PostMapping("/{nsId}/{mciId}/target/{targetId}")
-  public ResBody<TargetDTO> postTarget(
-      @PathVariable String nsId,
-      @PathVariable String mciId,
-      @PathVariable String targetId,
-      @RequestBody @Valid TargetRequestDTO dto
-  ) {
-    return new ResBody<>(targetFacadeService.postTarget(nsId, mciId, targetId, dto));
-  }
+    @PutMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody<TargetDTO> putTarget(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @PathVariable String targetId,
+            @RequestBody TargetRequestDTO dto) {
+        return new ResBody<>(targetFacadeService.putTarget(nsId, mciId, targetId, dto));
+    }
 
+    @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
+    public ResBody<Void> deleteTarget(
+            @PathVariable String nsId, @PathVariable String mciId, @PathVariable String targetId) {
+        targetFacadeService.deleteTarget(nsId, mciId, targetId);
+        return new ResBody<>();
+    }
 
-  @PutMapping("/{nsId}/{mciId}/target/{targetId}")
-  public ResBody<TargetDTO> putTarget(
-      @PathVariable String nsId,
-      @PathVariable String mciId,
-      @PathVariable String targetId,
-      @RequestBody TargetRequestDTO dto
-  ) {
-    return new ResBody<>(targetFacadeService.putTarget(nsId, mciId, targetId, dto));
-  }
+    @GetMapping("/{nsId}/{mciId}/target")
+    public ResBody<List<TargetDTO>> getTargetByNsMci(
+            @PathVariable String nsId, @PathVariable String mciId) {
+        return new ResBody<>(targetFacadeService.getTargetsNsMci(nsId, mciId));
+    }
 
-  @DeleteMapping("/{nsId}/{mciId}/target/{targetId}")
-  public ResBody<Void> deleteTarget(
-      @PathVariable String nsId,
-      @PathVariable String mciId,
-      @PathVariable String targetId
-  ) {
-    targetFacadeService.deleteTarget(nsId, mciId, targetId);
-    return new ResBody<>();
-  }
-
-  @GetMapping("/{nsId}/{mciId}/target")
-  public ResBody<List<TargetDTO>> getTargetByNsMci(
-      @PathVariable String nsId,
-      @PathVariable String mciId
-  ) {
-    return new ResBody<>(targetFacadeService.getTargetsNsMci(nsId, mciId));
-  }
-
-  @GetMapping("/target")
-  public ResBody<List<TargetDTO>> getAllTargets() {
-    return new ResBody<>(targetFacadeService.getTargets());
-  }
-
-
+    @GetMapping("/target")
+    public ResBody<List<TargetDTO>> getAllTargets() {
+        return new ResBody<>(targetFacadeService.getTargets());
+    }
 }

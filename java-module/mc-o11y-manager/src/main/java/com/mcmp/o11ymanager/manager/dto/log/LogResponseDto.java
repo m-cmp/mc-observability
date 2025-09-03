@@ -7,9 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 로그 API 응답을 위한 DTO 클래스
- */
+/** 로그 API 응답을 위한 DTO 클래스 */
 @Getter
 @Builder
 @NoArgsConstructor
@@ -59,4 +57,4 @@ public class LogResponseDto {
             private String logLine;
         }
     }
-} 
+}

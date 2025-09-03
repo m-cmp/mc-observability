@@ -14,13 +14,16 @@ public class AuthorizationHeaderArgumentResolver implements HandlerMethodArgumen
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
-        return parameter.getParameterType().equals(String.class) &&
-                parameter.hasParameterAnnotation(AuthorizationHeader.class);
+        return parameter.getParameterType().equals(String.class)
+                && parameter.hasParameterAnnotation(AuthorizationHeader.class);
     }
 
     @Override
-    public Object resolveArgument(@NonNull MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+    public Object resolveArgument(
+            @NonNull MethodParameter parameter,
+            ModelAndViewContainer mavContainer,
+            NativeWebRequest webRequest,
+            WebDataBinderFactory binderFactory) {
         return webRequest.getHeader("Authorization");
     }
 }

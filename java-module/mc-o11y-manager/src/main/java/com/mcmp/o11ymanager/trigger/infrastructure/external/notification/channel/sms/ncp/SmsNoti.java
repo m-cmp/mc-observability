@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp;
 
-
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SMS;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;

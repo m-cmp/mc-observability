@@ -5,8 +5,8 @@ import java.util.Arrays;
 import lombok.Getter;
 
 /**
- * Enumeration for alert severity levels.
- * Defines the available alert levels with their corresponding numeric values.
+ * Enumeration for alert severity levels. Defines the available alert levels with their
+ * corresponding numeric values.
  */
 @Getter
 public enum AlertLevel {

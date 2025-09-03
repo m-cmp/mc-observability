@@ -11,7 +11,6 @@ import jakarta.persistence.Table;
 import java.util.List;
 import lombok.Getter;
 
-
 @Getter
 @Table(name = "noti_channel")
 @Entity

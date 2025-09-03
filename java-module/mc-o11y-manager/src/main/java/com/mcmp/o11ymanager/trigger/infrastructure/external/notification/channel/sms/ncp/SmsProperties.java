@@ -41,14 +41,7 @@ public class SmsProperties implements NotiProperty {
             String method = "POST";
             String url = "/sms/v2/services/" + serviceId + "/messages";
 
-            String message =
-                method
-                    + space
-                    + url
-                    + newLine
-                    + timestamp
-                    + newLine
-                    + accessKey;
+            String message = method + space + url + newLine + timestamp + newLine + accessKey;
 
             SecretKeySpec signingKey =
                     new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");

@@ -7,14 +7,13 @@ import org.springframework.core.io.Resource;
 
 public interface AgentPluginDefService {
 
-  List<PluginDefDTO> getAllPluginDefinitions();
+    List<PluginDefDTO> getAllPluginDefinitions();
 
-  void initializePluginDefinitions();
+    void initializePluginDefinitions();
 
-  List<AgentPluginDefEntity> parsePluginsFromResources();
+    List<AgentPluginDefEntity> parsePluginsFromResources();
 
-  String extractPluginNameFromFilename(String filename);
+    String extractPluginNameFromFilename(String filename);
 
-  String parsePluginIdFromFile(Resource resource, String pluginName);
-
+    String parsePluginIdFromFile(Resource resource, String pluginName);
 }

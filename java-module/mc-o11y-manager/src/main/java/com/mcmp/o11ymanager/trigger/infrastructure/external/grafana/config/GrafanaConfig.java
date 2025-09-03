@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.config;
 
-
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.GrafanaClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

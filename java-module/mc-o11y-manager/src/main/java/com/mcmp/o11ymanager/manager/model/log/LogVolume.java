@@ -1,14 +1,11 @@
 package com.mcmp.o11ymanager.manager.model.log;
 
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * Loki 로그 볼륨 도메인 모델
- */
+/** Loki 로그 볼륨 도메인 모델 */
 @Getter
 @Builder
 public class LogVolume {
@@ -35,6 +32,4 @@ public class LogVolume {
         private final Long timestamp;
         private final String value;
     }
-
-
 }

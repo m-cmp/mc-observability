@@ -5,7 +5,6 @@ import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyDetailD
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerTargetDetailDto;
 import lombok.Builder;
 
-
 @Builder
 public record AlertRuleCreateDto(
         String uuid,

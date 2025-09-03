@@ -10,10 +10,15 @@ import java.util.List;
 
 public interface SemaphorePort {
     void login(LoginRequest loginRequest);
+
     Task createTask(Integer projectId, Task task);
+
     Task getTask(Integer projectId, Integer taskId);
+
     List<Project> getProjects();
+
     Project getProjectByName(String name);
+
     List<Template> getTemplates(Integer projectId);
 
     Project createProject(Project project);

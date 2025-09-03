@@ -1,17 +1,13 @@
 package com.mcmp.o11ymanager.manager.dto.log;
 
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
-/**
- * 로그 볼륨 응답 DTO
- * LogVolume 도메인 모델을 위한 응답 객체
- */
+/** 로그 볼륨 응답 DTO LogVolume 도메인 모델을 위한 응답 객체 */
 @Data
 @Builder
 @NoArgsConstructor

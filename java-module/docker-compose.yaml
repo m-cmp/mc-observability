@@ -594,7 +594,7 @@ services:
       - external_network
 
 
-  rabbitmq:
+  mc-observability-rabbitmq:
     image: rabbitmq:4-management-alpine
     container_name: rabbitmq
     volumes:
@@ -613,8 +613,6 @@ services:
     environment:
       RABBITMQ_ENABLED_PLUGINS_FILE: "/etc/rabbitmq/enabled_plugins"
       RABBITMQ_LOAD_DEFINITIONS: "/etc/rabbitmq/definitions.json"
-      # RABBITMQ_DEFAULT_USER: "admin"
-      # RABBITMQ_DEFAULT_PASS: "admin"
     restart: unless-stopped
     networks:
       - internal_network

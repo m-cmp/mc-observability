@@ -1,20 +1,17 @@
 package com.mcmp.o11ymanager.manager.controller;
 
-import com.mcmp.o11ymanager.manager.dto.log.LogVolumeResponseDto;
-import com.mcmp.o11ymanager.manager.facade.LogFacadeService;
-import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.manager.dto.common.SuccessResponse;
-import com.mcmp.o11ymanager.manager.enums.ResponseCode;
 import com.mcmp.o11ymanager.manager.dto.log.LabelResultDto;
 import com.mcmp.o11ymanager.manager.dto.log.LogSummaryDto;
+import com.mcmp.o11ymanager.manager.dto.log.LogVolumeResponseDto;
+import com.mcmp.o11ymanager.manager.enums.ResponseCode;
+import com.mcmp.o11ymanager.manager.facade.LogFacadeService;
+import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Loki 로그 컨트롤러
- * 프레젠테이션 계층에서 API 요청을 처리
- */
+/** Loki 로그 컨트롤러 프레젠테이션 계층에서 API 요청을 처리 */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/log")
@@ -34,15 +31,12 @@ public class LogController {
             @RequestParam(required = false) String step,
             @RequestParam(required = false) String since) {
 
-        LogSummaryDto.ResultDto logs = logFacadeService.getRangeLogs(query, start, end, limit, direction,
-                interval, step, since);
+        LogSummaryDto.ResultDto logs =
+                logFacadeService.getRangeLogs(
+                        query, start, end, limit, direction, interval, step, since);
 
         return SuccessResponse.of(
-                requestInfo.getRequestId(),
-                logs,
-                ResponseCode.OK,
-                "로그 기간 데이터 읽기 성공하였습니다."
-        );
+                requestInfo.getRequestId(), logs, ResponseCode.OK, "로그 기간 데이터 읽기 성공하였습니다.");
     }
 
     @GetMapping("/labels")
@@ -57,8 +51,7 @@ public class LogController {
                 requestInfo.getRequestId(),
                 labels.getResult(),
                 ResponseCode.OK,
-                "레이블 목록 조회 성공하였습니다."
-        );
+                "레이블 목록 조회 성공하였습니다.");
     }
 
     @GetMapping("/labels/{label}/values")
@@ -69,14 +62,14 @@ public class LogController {
             @RequestParam(required = false) String since,
             @RequestParam(required = false) String query) {
 
-        LabelResultDto.LabelValuesResultDto labelValues = logFacadeService.getLabelValuesResult(label, start, end, since, query);
+        LabelResultDto.LabelValuesResultDto labelValues =
+                logFacadeService.getLabelValuesResult(label, start, end, since, query);
 
         return SuccessResponse.of(
                 requestInfo.getRequestId(),
                 labelValues.getResult(),
                 ResponseCode.OK,
-                "레이블 값 목록 조회 성공하였습니다."
-        );
+                "레이블 값 목록 조회 성공하였습니다.");
     }
 
     @GetMapping("/log_volumes")
@@ -89,10 +82,6 @@ public class LogController {
         LogVolumeResponseDto volumes = logFacadeService.getLogVolumes(query, start, end, limit);
 
         return SuccessResponse.of(
-                requestInfo.getRequestId(),
-                volumes,
-                ResponseCode.OK,
-                "로그 볼륨 데이터 조회 성공하였습니다."
-        );
+                requestInfo.getRequestId(), volumes, ResponseCode.OK, "로그 볼륨 데이터 조회 성공하였습니다.");
     }
 }

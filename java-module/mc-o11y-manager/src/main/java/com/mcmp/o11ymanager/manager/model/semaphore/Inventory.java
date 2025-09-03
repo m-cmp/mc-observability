@@ -17,14 +17,19 @@ import lombok.Setter;
 public class Inventory {
     private Integer id;
     private String name;
+
     @JsonProperty("ssh_key_id")
     private Integer sshKeyId;
+
     @JsonProperty("become_key_id")
     private Integer becomeKeyId;
+
     @JsonProperty("repository_id")
     private Integer repositoryId;
+
     private String type;
     private String inventory;
+
     @JsonProperty("project_id")
     private Integer projectId;
 }

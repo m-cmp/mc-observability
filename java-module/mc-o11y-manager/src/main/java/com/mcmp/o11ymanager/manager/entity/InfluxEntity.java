@@ -20,15 +20,14 @@ import lombok.Setter;
 @Setter
 public class InfluxEntity {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  private String uid;
-  private String url;
-  private String database;
-  private String retentionPolicy;
-  private String username;
-  private String password;
+    private String uid;
+    private String url;
+    private String database;
+    private String retentionPolicy;
+    private String username;
+    private String password;
 }

@@ -13,21 +13,18 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertE
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service class for trigger policy management.
- * Handles business logic for creating, deleting, and managing trigger policies
- * and their associated targets and notification channels.
+ * Service class for trigger policy management. Handles business logic for creating, deleting, and
+ * managing trigger policies and their associated targets and notification channels.
  */
 @Transactional
 @Service
-public class TriggerService implements TriggerServiceInternal{
+public class TriggerService implements TriggerServiceInternal {
 
     private final TriggerHistoryRepository triggerHistoryRepository;
     private final TriggerPolicyRepository triggerPolicyRepository;
@@ -36,26 +33,28 @@ public class TriggerService implements TriggerServiceInternal{
     private final AlertManager alertManager;
     private final ManagerPort managerPort;
 
-
     public void addTriggerTarget(long id, TriggerTargetDto triggerTargetDto) {
 
         TriggerPolicy triggerPolicy =
-            triggerPolicyRepository
-                .findById(id)
-                .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
+                triggerPolicyRepository
+                        .findById(id)
+                        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
 
-        String datasourceUid = managerPort.getInfluxUid(triggerTargetDto.namespaceId(), triggerTargetDto.targetScope(), triggerTargetDto.targetId());
+        String datasourceUid =
+                managerPort.getInfluxUid(
+                        triggerTargetDto.namespaceId(),
+                        triggerTargetDto.targetScope(),
+                        triggerTargetDto.targetId());
 
         TriggerTarget triggerTarget = TriggerTarget.create(triggerTargetDto);
         boolean isAdded = triggerPolicy.addIfNotContains(triggerTarget);
         if (isAdded) {
             triggerPolicyRepository.save(triggerPolicy);
             alertManager.createAlertRule(
-                AlertRuleCreateDto.from(triggerPolicy.toDto(), triggerTarget.toDto()),
-                datasourceUid);
+                    AlertRuleCreateDto.from(triggerPolicy.toDto(), triggerTarget.toDto()),
+                    datasourceUid);
         }
     }
-
 
     public TriggerService(
             TriggerHistoryRepository triggerHistoryRepository,
@@ -71,7 +70,6 @@ public class TriggerService implements TriggerServiceInternal{
         this.managerPort = managerPort;
         this.alertManager = alertManager;
     }
-
 
     public long createTriggerPolicy(TriggerPolicyCreateDto triggerPolicyCreateDto) {
         TriggerPolicy triggerPolicy = TriggerPolicy.create(triggerPolicyCreateDto);
@@ -124,8 +122,6 @@ public class TriggerService implements TriggerServiceInternal{
 
         triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
     }
-
-
 
     public void removeTriggerTarget(long id, TriggerTargetDto triggerTargetDto) {
         TriggerPolicy triggerPolicy =

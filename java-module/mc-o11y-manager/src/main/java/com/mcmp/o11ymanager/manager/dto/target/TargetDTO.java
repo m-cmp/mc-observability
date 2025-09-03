@@ -19,81 +19,79 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TargetDTO {
 
-  @JsonProperty("target_id")
-  private String targetId;
+    @JsonProperty("target_id")
+    private String targetId;
 
-  private String name;
+    private String name;
 
-  private String description;
+    private String description;
 
-  @JsonProperty("influx_seq")
-  private Long influxSeq;
+    @JsonProperty("influx_seq")
+    private Long influxSeq;
 
-  @JsonProperty("target_status")
-  private TargetStatus targetStatus;
+    @JsonProperty("target_status")
+    private TargetStatus targetStatus;
 
-  @JsonProperty("monitoring_agent_task_status")
-  @JsonIgnore
-  private TargetAgentTaskStatus monitoringAgentTaskStatus;
+    @JsonProperty("monitoring_agent_task_status")
+    @JsonIgnore
+    private TargetAgentTaskStatus monitoringAgentTaskStatus;
 
-  @JsonProperty("log_agent_task_status")
-  @JsonIgnore
-  private TargetAgentTaskStatus logAgentTaskStatus;
+    @JsonProperty("log_agent_task_status")
+    @JsonIgnore
+    private TargetAgentTaskStatus logAgentTaskStatus;
 
-  @JsonProperty("target_monitoring_agent_task_id")
-  @JsonIgnore
-  private String targetMonitoringAgentTaskId;
+    @JsonProperty("target_monitoring_agent_task_id")
+    @JsonIgnore
+    private String targetMonitoringAgentTaskId;
 
-  @JsonProperty("target_log_agent_task_id")
-  @JsonIgnore
-  private String targetLogAgentTaskId;
+    @JsonProperty("target_log_agent_task_id")
+    @JsonIgnore
+    private String targetLogAgentTaskId;
 
-  @JsonProperty("monitoring_service_status")
-  private AgentServiceStatus monitoringServiceStatus;
+    @JsonProperty("monitoring_service_status")
+    private AgentServiceStatus monitoringServiceStatus;
 
-  @JsonProperty("log_service_status")
-  private AgentServiceStatus logServiceStatus;
+    @JsonProperty("log_service_status")
+    private AgentServiceStatus logServiceStatus;
 
-  @JsonProperty("ns_id")
-  private String nsId;
+    @JsonProperty("ns_id")
+    private String nsId;
 
-  @JsonProperty("mci_id")
-  private String mciId;
+    @JsonProperty("mci_id")
+    private String mciId;
 
+    public static TargetDTO fromEntity(TargetEntity entity) {
+        return TargetDTO.builder()
+                .targetId(entity.getTargetId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .influxSeq(entity.getInfluxSeq())
+                .targetStatus(entity.getTargetStatus())
+                .description(entity.getDescription())
+                .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
+                .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
+                .monitoringServiceStatus(entity.getMonitoringServiceStatus())
+                .logServiceStatus(entity.getLogServiceStatus())
+                .nsId(entity.getNsId())
+                .mciId(entity.getMciId())
+                .build();
+    }
 
-
-  public static TargetDTO fromEntity(TargetEntity entity) {
-    return TargetDTO.builder()
-        .targetId(entity.getTargetId())
-        .name(entity.getName())
-        .description(entity.getDescription())
-        .influxSeq(entity.getInfluxSeq())
-        .targetStatus(entity.getTargetStatus())
-        .description(entity.getDescription())
-        .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
-        .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
-        .monitoringServiceStatus(entity.getMonitoringServiceStatus())
-        .logServiceStatus(entity.getLogServiceStatus())
-        .nsId(entity.getNsId())
-        .mciId(entity.getMciId())
-        .build();
-  }
-
-  public TargetEntity toEntity() {
-    return TargetEntity.builder()
-        .targetId(this.getTargetId())
-        .name(this.name)
-        .influxSeq(this.getInfluxSeq())
-        .targetStatus(this.getTargetStatus())
-        .description(this.description)
-        .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
-        .logAgentTaskStatus(this.logAgentTaskStatus)
-        .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
-        .targetLogAgentTaskId(this.targetLogAgentTaskId)
-        .monitoringServiceStatus(this.monitoringServiceStatus)
-        .logServiceStatus(this.logServiceStatus)
-        .nsId(this.nsId)
-        .mciId(this.mciId)
-        .build();
-  }
+    public TargetEntity toEntity() {
+        return TargetEntity.builder()
+                .targetId(this.getTargetId())
+                .name(this.name)
+                .influxSeq(this.getInfluxSeq())
+                .targetStatus(this.getTargetStatus())
+                .description(this.description)
+                .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
+                .logAgentTaskStatus(this.logAgentTaskStatus)
+                .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
+                .targetLogAgentTaskId(this.targetLogAgentTaskId)
+                .monitoringServiceStatus(this.monitoringServiceStatus)
+                .logServiceStatus(this.logServiceStatus)
+                .nsId(this.nsId)
+                .mciId(this.mciId)
+                .build();
+    }
 }

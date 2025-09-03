@@ -7,8 +7,6 @@ import lombok.Getter;
 @Getter
 public class DirectoryNotFoundException extends BaseException {
     public DirectoryNotFoundException(String message) {
-        super(
-                ErrorCode.DIRECTORY_NOT_FOUND.getCode(), message
-        );
+        super(ErrorCode.DIRECTORY_NOT_FOUND.getCode(), message);
     }
 }

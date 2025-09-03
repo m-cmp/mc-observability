@@ -1,9 +1,9 @@
 package com.mcmp.o11ymanager.trigger.application.service.dto;
 
+import com.mcmp.o11ymanager.trigger.application.common.dto.*;
 import com.mcmp.o11ymanager.trigger.application.common.type.AggregationType;
 import com.mcmp.o11ymanager.trigger.application.common.type.ResourceType;
 import lombok.Builder;
-import com.mcmp.o11ymanager.trigger.application.common.dto.*;
 
 @Builder
 public record TriggerPolicyCreateDto(

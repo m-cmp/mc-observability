@@ -12,6 +12,7 @@ public class AccessInfoDTO {
     private String ip;
     private Integer port;
     private String user;
+
     @JsonProperty("ssh_key")
     private String sshKey;
 }

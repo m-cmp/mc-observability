@@ -1,10 +1,9 @@
 package com.mcmp.o11ymanager.manager.dto.tumblebug;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter

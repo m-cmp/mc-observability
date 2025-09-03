@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service class for notification management.
- * Handles business logic for notification channels, history, and message delivery.
+ * Service class for notification management. Handles business logic for notification channels,
+ * history, and message delivery.
  */
 @Transactional
 @Service
@@ -46,33 +46,40 @@ public class NotiService implements NotiServiceInternal {
         return notiChannelRepository.count() > 0;
     }
 
-
     @Override
     @Transactional
     public void initializeNotificationChannels(List<NotiChannelCreateDto> dtos) {
         if (dtos == null || dtos.isEmpty()) return;
 
         List<String> names = dtos.stream().map(NotiChannelCreateDto::name).toList();
-        Set<String> existing = notiChannelRepository.findByNameIn(names).stream()
-            .map(NotiChannel::getName)
-            .collect(Collectors.toSet());
+        Set<String> existing =
+                notiChannelRepository.findByNameIn(names).stream()
+                        .map(NotiChannel::getName)
+                        .collect(Collectors.toSet());
 
-        List<NotiChannel> toInsert = dtos.stream()
-            .filter(d -> !existing.contains(d.name()))
-            .map(d -> NotiChannel.create(d.name(), d.type(), d.provider(), d.baseUrl(), d.isActive()))
-            .toList();
+        List<NotiChannel> toInsert =
+                dtos.stream()
+                        .filter(d -> !existing.contains(d.name()))
+                        .map(
+                                d ->
+                                        NotiChannel.create(
+                                                d.name(),
+                                                d.type(),
+                                                d.provider(),
+                                                d.baseUrl(),
+                                                d.isActive()))
+                        .toList();
 
         if (!toInsert.isEmpty()) {
             notiChannelRepository.saveAll(toInsert);
         }
     }
 
-
-//    @Override
-//    public void initializeNotificationChannels(List<NotiChannelCreateDto> dtos) {
-//        List<NotiChannel> notificationChannels = NotiChannel.create(dtos);
-//        notiChannelRepository.saveAll(notificationChannels);
-//    }
+    //    @Override
+    //    public void initializeNotificationChannels(List<NotiChannelCreateDto> dtos) {
+    //        List<NotiChannel> notificationChannels = NotiChannel.create(dtos);
+    //        notiChannelRepository.saveAll(notificationChannels);
+    //    }
 
     @Transactional(readOnly = true)
     @Override

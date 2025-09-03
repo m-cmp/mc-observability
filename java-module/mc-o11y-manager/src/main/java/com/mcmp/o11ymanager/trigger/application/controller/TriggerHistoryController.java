@@ -68,6 +68,7 @@ public class TriggerHistoryController {
      * @param request Comment update information
      * @return 200 OK response
      */
+    // comment of deal with alert
     @PutMapping("/{id}/comment")
     public ResponseEntity<Void> updateComment(
             @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {

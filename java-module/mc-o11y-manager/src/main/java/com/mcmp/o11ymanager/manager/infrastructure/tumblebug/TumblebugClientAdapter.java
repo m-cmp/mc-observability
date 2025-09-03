@@ -14,30 +14,30 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TumblebugClientAdapter implements TumblebugPort {
 
-  private final TumblebugClient tumblebugClient;
+    private final TumblebugClient tumblebugClient;
 
-  @Override
-  public TumblebugMCI.Vm getVM(String nsId, String mciId, String vmId) {
-    return tumblebugClient.getVM(nsId, mciId, vmId);
-  }
+    @Override
+    public TumblebugMCI.Vm getVM(String nsId, String mciId, String vmId) {
+        return tumblebugClient.getVM(nsId, mciId, vmId);
+    }
 
-  @Override
-  public TumblebugSshKey getSshKey(String nsId, String sshKeyId) {
-    return tumblebugClient.getSshKey(nsId, sshKeyId);
-  }
+    @Override
+    public TumblebugSshKey getSshKey(String nsId, String sshKeyId) {
+        return tumblebugClient.getSshKey(nsId, sshKeyId);
+    }
 
-  @Override
-  public TumblebugNS getNSList() {
-    return tumblebugClient.getNSList();
-  }
+    @Override
+    public TumblebugNS getNSList() {
+        return tumblebugClient.getNSList();
+    }
 
-  @Override
-  public TumblebugMCI getMCIList(String nsId, String mciId) {
-    return tumblebugClient.getMCIList(nsId, mciId);
-  }
+    @Override
+    public TumblebugMCI getMCIList(String nsId, String mciId) {
+        return tumblebugClient.getMCIList(nsId, mciId);
+    }
 
-  @Override
-  public Object sendCommand(String nsId, String mciId, String targetId, TumblebugCmd command) {
-    return tumblebugClient.sendCommand(nsId, mciId, targetId, command);
-  }
+    @Override
+    public Object sendCommand(String nsId, String mciId, String targetId, TumblebugCmd command) {
+        return tumblebugClient.sendCommand(nsId, mciId, targetId, command);
+    }
 }
