@@ -11,6 +11,7 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.Grafan
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.contact.AlertConfig;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.contact.AlertConfig.GrafanaManagedReceiverConfig;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.query.QueryFactory;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -44,6 +45,12 @@ public class GrafanaAlertManager implements AlertManager {
   @Value("${grafana.alert.receiver}")
   private String receiver;
 
+  @Value("${influxdb.servers[0].uid}")
+  private String datasourceUid1;
+
+  @Value("${influxdb.servers[1].uid}")
+  private String datasourceUid2;
+
   /**
    * Constructor for GrafanaAlertManager.
    *
@@ -53,7 +60,8 @@ public class GrafanaAlertManager implements AlertManager {
   public GrafanaAlertManager(
       GrafanaClient grafanaClient,
       GrafanaAlertRuleFactory alertRuleFactory,
-      ObjectMapper objectMapper, ManagerPort managerPort) {
+      ObjectMapper objectMapper,
+      ManagerPort managerPort) {
     this.grafanaClient = grafanaClient;
     this.alertRuleFactory = alertRuleFactory;
     this.objectMapper = objectMapper;
@@ -212,7 +220,6 @@ public class GrafanaAlertManager implements AlertManager {
     return GrafanaClientWrapper.call(() -> grafanaClient.getAllDatasources().getBody());
   }
 
-
   /**
    * Checks if the configured contact point/receiver exists in Grafana.
    *
@@ -226,17 +233,15 @@ public class GrafanaAlertManager implements AlertManager {
                 .anyMatch(config -> config.getName().equals(receiver)));
   }
 
-
   private HealthStatus checkDatasource() {
     return healthStatus(() -> {
-      List<Map<String, Object>> datasources = getAllDatasources();
-      for (Map<String, Object> ds : datasources) {
-        String uid = (String) ds.get("uid");
-        getDatasourceHealthBy(uid);
-      }
+      Map<String, String> result1 = (HashMap<String, String>) getDatasourceHealthBy(
+          datasourceUid1);
+      Map<String, String> result2 = (HashMap<String, String>) getDatasourceHealthBy(
+          datasourceUid2);
+      return result1.get("status").equals("OK") && result2.get("status").equals("OK");
     });
   }
-
 
   private HealthStatus checkFolder() {
     return healthStatus(() -> getFolder(folderUid));
