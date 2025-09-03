@@ -1,0 +1,153 @@
+server:
+  port: ${SERVER_PORT:18080}
+  error:
+    include-stacktrace: never
+
+spring:
+  mvc:
+    dispatch-trace-request: false
+  application:
+    name: ${SPRING_APP_NAME:o11y-manager}
+  datasource:
+    url: jdbc:mariadb://${DATABASE_HOST:127.0.0.1}:${DATABASE_PORT:3306}/${DATABASE_NAME:testdb}
+    username: ${DATABASE_ID:test}
+    password: ${DATABASE_PW:test}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:test}
+    password: ${RABBITMQ_PASSWORD:test}
+    alert:
+      queueName: ${RABBIT_ALERT_QUEUE:test.queue}
+      exchangeName: ${RABBIT_ALERT_EXCHANGE:test.exchange}
+      routingKey: ${RABBIT_ALERT_ROUTING_KEY:test}
+      deadLetterQueueName: ${RABBIT_DLQ:test.dlq}
+      deadLetterExchangeName: ${RABBIT_DLX:test.dlx}
+      deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY:test.dlq}
+      mqttExchangeName: ${RABBIT_MQTT_EXCHANGE:test.topic}
+    virtual-host: ${RABBIT_VHOST:/}
+
+influxdb:
+  servers:
+    - url: ${INFLUX_URL:http://127.0.0.1:8086}
+      database: ${INFLUX_DB:testdb}
+      retention-policy: ${INFLUX_RP:autogen}
+      username: ${INFLUX_USER:test}
+      password: ${INFLUX_PASS:test}
+      uid: ${INFLUX_UID:test-uid}
+
+health:
+  check-interval: ${HEALTH_INTERVAL:10000}
+  host-connection-check-timeout: ${HEALTH_TIMEOUT:5000}
+
+feign:
+  okhttp:
+    enabled: ${FEIGN_OKHTTP:true}
+  client:
+    config:
+      default:
+        connect-timeout: ${FEIGN_CONNECT_TIMEOUT:5000}
+        read-timeout: ${FEIGN_READ_TIMEOUT:30000}
+        loggerLevel: ${FEIGN_LOGGER_LEVEL:full}
+      LokiFeignClient:
+        loggerLevel: ${FEIGN_LOKI_LOGGER_LEVEL:full}
+  semaphore:
+    url: ${SEMAPHORE_URL:http://localhost:33000}
+    username: ${SEMAPHORE_USER:test}
+    password: ${SEMAPHORE_PASS:test}
+    project-name: ${SEMAPHORE_PROJECT:test}
+    init-max-parallel-tasks: ${SEMAPHORE_MAX_TASKS:10}
+    template-names:
+      agent-install: ${SEMAPHORE_TEMPLATE_INSTALL:test-install}
+      agent-config-update: ${SEMAPHORE_TEMPLATE_CONFIG:test-config-update}
+    task-check-scheduler:
+      check-interval-sec: ${SEMAPHORE_CHECK_INTERVAL:5}
+      max-wait-minutes: ${SEMAPHORE_MAX_WAIT:10}
+  agent-manager:
+    url: ${AGENT_MANAGER_URL:http://localhost:18081}
+  cb-tumblebug:
+    connect-timeout: ${TUMBLEBUG_CONN_TIMEOUT:5000}
+    read-timeout: ${TUMBLEBUG_READ_TIMEOUT:100000}
+    url: ${TUMBLEBUG_URL:http://localhost:1323}
+    id: ${TUMBLEBUG_ID:test}
+    pw: ${TUMBLEBUG_PW:test}
+  cb-spider:
+    url: ${SPIDER_URL:http://localhost:1024}
+    id: ${SPIDER_ID:test}
+    pw: ${SPIDER_PW:test}
+  insight:
+    url: ${INSIGHT_URL:http://localhost:9001}
+
+logging:
+  level:
+    org.apache.sshd.client: ${LOG_SSH_CLIENT:ERROR}
+    org.apache.sshd.common: ${LOG_SSH_COMMON:ERROR}
+    feign: ${LOG_FEIGN:DEBUG}
+    feign.Logger: ${LOG_FEIGN_LOGGER:DEBUG}
+    feign.template: ${LOG_FEIGN_TEMPLATE:WARN}
+    org.hibernate.SQL: ${LOG_HIBERNATE_SQL:DEBUG}
+  file:
+    path: ${LOG_PATH:./logs}
+    name: ${LOG_NAME:o11y-manager}
+  logback:
+    rollingpolicy:
+      max-file-size: ${LOG_MAX_SIZE:50MB}
+      max-history: ${LOG_HISTORY:7}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: ${TRACE_PROB:1.0}
+
+notification:
+  mail:
+    host: ${SMTP_HOST:smtp.test.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:test@test.com}
+    password: ${SMTP_PASSWORD:test}
+    smtpAuth: ${SMTP_AUTH:true}
+    tlsRequired: ${SMTP_TLS_REQUIRED:true}
+    tlsEnable: ${SMTP_TLS_ENABLE:true}
+  sms:
+    from: ${SMS_FROM:01000000000}
+    serviceId: ${SMS_SERVICE_ID:test}
+    accessKey: ${SMS_ACCESS_KEY:test}
+    secretKey: ${SMS_SECRET_KEY:test}
+    provider: ${SMS_PROVIDER:test}
+    baseUrl: ${SMS_BASEURL:https://sms.test.com}
+  kakao:
+    channelId: ${KAKAO_CHANNEL_ID:test}
+    templateCode: ${KAKAO_TEMPLATE_CODE:test}
+    serviceId: ${KAKAO_SERVICE_ID:test}
+    accessKey: ${KAKAO_ACCESS_KEY:test}
+    secretKey: ${KAKAO_SECRET_KEY:test}
+    provider: ${KAKAO_PROVIDER:test}
+    baseUrl: ${KAKAO_BASEURL:https://kakao.test.com}
+  slack:
+    token: ${SLACK_OAUTH_TOKEN:test}
+    baseUrl: ${SLACK_BASEURL:https://slack.com}
+    apiPath: ${SLACK_API_PATH:/api/chat.postMessage}
+
+grafana:
+  alert:
+    protocol: ${GRAFANA_SERVER_PROTOCOL:http}
+    ip: ${GRAFANA_SERVER_IP:localhost}
+    port: ${GRAFANA_SERVER_PORT:3000}
+    apiKey: ${GRAFANA_API_KEY:test}
+    orgId: ${GRAFANA_ORG_ID:1}
+    folder:
+      name: ${GRAFANA_FOLDER_NAME:test-folder}
+      uid: ${GRAFANA_FOLDER_UID:test-uid}
+    ruleGroup:
+      metric: ${GRAFANA_RULE_GROUP:metric}
+    receiver: ${GRAFANA_RECEIVER:test}
+    noDataState: ${GRAFANA_NO_DATA_STATE:NoData}
+    execErrState: ${GRAFANA_EXEC_ERR_STATE:Error}
