@@ -517,6 +517,7 @@ services:
       - internal_network
       - external_network
 
+
   mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
     container_name: mc-observability-insight-scheduler
@@ -591,3 +592,55 @@ services:
     networks:
       - internal_network
       - external_network
+
+
+  mc-observability-rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq/etc:/etc/rabbitmq
+      - ./rabbitmq/data:/var/lib/rabbitmq
+#      - ./rabbitmq/logs:/var/log/rabbitmq
+    depends_on:
+      mc-observability-rabbitmq-init-volumes:
+        condition: service_completed_successfully
+    ports:
+      - "5672:5672"    # AMQP
+      - "1883:1883"    # MQTT
+      - "15672:15672"  # Dashboard
+      # - "8883:8883"    # MQTT/TLS (optional)
+      # - "15675:15675"  # MQTT WebSocket (optional)
+    environment:
+      RABBITMQ_ENABLED_PLUGINS_FILE: "/etc/rabbitmq/enabled_plugins"
+      RABBITMQ_LOAD_DEFINITIONS: "/etc/rabbitmq/definitions.json"
+    restart: unless-stopped
+    networks:
+      - internal_network
+      - external_network
+
+  mc-observability-rabbitmq-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-rabbitmq-init-volumes
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -eux && \
+        mkdir -p /var/lib/rabbitmq /var/log/rabbitmq && \
+        if [ ! -s /var/lib/rabbitmq/.erlang.cookie ] || \
+           [ "$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
+          umask 177
+          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
+        fi && \
+        chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
+        chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+    user: root
+    init: true
+    networks:
+      - internal_network
+
+
+

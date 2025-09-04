@@ -1,16 +1,18 @@
 server:
-  port: 18080
+  port: ${SERVER_PORT:18080}
+  error:
+    include-stacktrace: never
 
 deploy:
-  site-code: m-cmp
+  site-code: ${SITE_CODE:m-cmp}
 
 spring:
   application:
-    name: mc-o11y-manager
+    name: ${SPRING_APP_NAME:mc-o11y-manager}
   datasource:
-    url: jdbc:mariadb://${DATABASE_HOST:mc-observability-maria}:${DATABASE_PORT:3306}/${DATABASE_NAME:mc_observability}
-    username: ${DATABASE_ID:mc-agent}
-    password: ${DATABASE_PW:mc-agent}
+    url: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT:3306}/${DATABASE_NAME}
+    username: ${DATABASE_ID}
+    password: ${DATABASE_PW}
     hikari:
       max-lifetime: 150000
   jpa:
@@ -25,17 +27,6 @@ spring:
     show-sql: false
   banner:
     location: classpath:banner.txt
-  mail:
-    host: ${SMTP_HOST:}
-    port: ${SMTP_PORT:}
-    username: ${SMTP_USERNAME:}
-    password: ${SMTP_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: ${SMTP_AUTH:true}
-          starttls:
-            enable: ${SMTP_ENABLE_TLS:true}
 
 springdoc:
   packages-to-scan: com.mcmp.o11ymanager.controller
@@ -48,36 +39,30 @@ springdoc:
     path: /api/docs
   default-produces-media-type: application/json
 
-  mvc:
-    converters:
-      preferred-json-mapper: jackson
-    jackson:
-      default-property-inclusion: non_null
-      serialization:
-        fail-on-empty-beans: false
-    http:
-      encoding:
-        charset: UTF-8
-        enabled: true
-        force: true
-    messages:
-      encoding: UTF-8
-
 loki:
-  url: http://mc-observability-loki:3100
+  url: ${LOKI_URL:http://mc-observability-loki:3100}
   endpoints:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
 
 influxdb:
-  url: http://mc-o11y-influxdb:8086
-  database: ${INFLUXDB_DB:mc-observability}
-  username: ${INFLUX_USER:mc-agent}
-  password: ${INFLUX_PASS:mc-agent}
+  servers:
+    - url: ${INFLUX1_URL}
+      database: ${INFLUX1_DATABASE}
+      retention-policy: ${INFLUX1_RETENTION_POLICY}
+      username: ${INFLUX1_USERNAME}
+      password: ${INFLUX1_PASSWORD}
+      uid: ${INFLUX1_UID}
+    - url: ${INFLUX2_URL}
+      database: ${INFLUX2_DATABASE}
+      retention-policy: ${INFLUX2_RETENTION_POLICY}
+      username: ${INFLUX2_USERNAME}
+      password: ${INFLUX2_PASSWORD}
+      uid: ${INFLUX2_UID}
 
 health:
-  check-interval: 10000
-  host-connection-check-timeout: 5000
+  check-interval: ${HEALTH_INTERVAL:10000}
+  host-connection-check-timeout: ${HEALTH_TIMEOUT:5000}
 
 ssh:
   connection-timeout: 10000
@@ -89,57 +74,101 @@ feign:
   client:
     config:
       default:
-        connect-timeout: 5000
-        read-timeout: 30000
+        connect-timeout: ${FEIGN_CONNECT_TIMEOUT:5000}
+        read-timeout: ${FEIGN_READ_TIMEOUT:30000}
         loggerLevel: full
       LokiFeignClient:
         loggerLevel: full
   semaphore:
-    url: http://mc-observability-infra:3000
-    username: ${SEMAPHORE_USER:admin}
-    password: ${SEMAPHORE_PASS:semaphorepass}
-    project-name: ansible
-    init-max-parallel-tasks: 10
+    url: ${SEMAPHORE_URL}
+    username: ${SEMAPHORE_USER}
+    password: ${SEMAPHORE_PASS}
+    project-name: ${SEMAPHORE_PROJECT}
+    init-max-parallel-tasks: ${SEMAPHORE_MAX_TASKS:10}
     template-names:
-      agent-install: install-agent
-      agent-config-update: config-update
+      agent-install: ${SEMAPHORE_TEMPLATE_INSTALL}
+      agent-config-update: ${SEMAPHORE_TEMPLATE_CONFIG}
     task-check-scheduler:
-      check-interval-sec: 5
-      max-wait-minutes: 10
+      check-interval-sec: ${SEMAPHORE_CHECK_INTERVAL:5}
+      max-wait-minutes: ${SEMAPHORE_MAX_WAIT:10}
   cb-tumblebug:
     connect-timeout: 5000
     read-timeout: 600000
-    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
-    id: ${TUMBLEBUG_ID:default}
-    pw: ${TUMBLEBUG_PW:default}
+    url: ${TUMBLEBUG_URL}
+    id: ${TUMBLEBUG_ID}
+    pw: ${TUMBLEBUG_PW}
   cb-spider:
-    url: ${SPIDER_URL:http://cb-spider:1024}
-    id: ${SPIDER_ID:}
-    pw: ${SPIDER_PW:}
+    url: ${SPIDER_URL}
+    id: ${SPIDER_ID}
+    pw: ${SPIDER_PW}
   insight:
-    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
+    url: ${INSIGHT_URL}
 
 grafana:
-  url: ${GRAFANA_URL:https://mc-observability-grafana:8443}
-  api-key: ${GRAFANA_API_KEY:}
+  url: ${GRAFANA_URL}
+  api-key: ${GRAFANA_API_KEY}
 
 ollama:
-  base-url: ${OLLAMA_BASE_URL:}
+  base-url: ${OLLAMA_BASE_URL}
 
 logging:
-  level:
-    org.apache.sshd.client: ERROR
-    org.apache.sshd.common: ERROR
-    com.mcmp.o11ymanager.infrastructure.log.client.LokiFeignClient: DEBUG
-    feign: DEBUG
-    feign.Logger: DEBUG
-    feign.template: WARN
   file:
-    path: /applog
-    name: ${spring.application.name}
+    path: ${FILE_PATH:/applog}
+    name: ${FILE_NAME:${spring.application.name}}
   logback:
-    rollinpolicy:
-      max-history: 14
-      max-file-size: 200MB
+    rollingpolicy:
+      max-file-size: ${MAX_FILE_SIZE:200MB}
+      max-history: ${MAX_HISTORY:14}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  tracing:
+    sampling:
+      probability: ${TRACE_PROB:1.0}
 
+notification:
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    smtpAuth: ${SMTP_AUTH:true}
+    tlsRequired: ${SMTP_TLS_REQUIRED:true}
+    tlsEnable: ${SMTP_TLS_ENABLE:true}
+  sms:
+    from: ${SMS_FROM}
+    serviceId: ${SMS_SERVICE_ID}
+    accessKey: ${SMS_ACCESS_KEY}
+    secretKey: ${SMS_SECRET_KEY}
+    provider: ${SMS_PROVIDER}
+    baseUrl: ${SMS_BASEURL}
+  kakao:
+    channelId: ${KAKAO_CHANNEL_ID}
+    templateCode: ${KAKAO_TEMPLATE_CODE}
+    serviceId: ${KAKAO_SERVICE_ID}
+    accessKey: ${KAKAO_ACCESS_KEY}
+    secretKey: ${KAKAO_SECRET_KEY}
+    provider: ${KAKAO_PROVIDER}
+    baseUrl: ${KAKAO_BASEURL}
+  slack:
+    token: ${SLACK_OAUTH_TOKEN}
+    baseUrl: ${SLACK_BASEURL}
+    apiPath: ${SLACK_API_PATH}
+
+rabbitmq:
+  host: ${RABBITMQ_HOST}
+  port: ${RABBITMQ_PORT}
+  username: ${RABBITMQ_USERNAME}
+  password: ${RABBITMQ_PASSWORD}
+  virtual-host: ${RABBITMQ_VHOST:/}
+  alert:
+    queueName: ${RABBIT_ALERT_QUEUE}
+    exchangeName: ${RABBIT_ALERT_EXCHANGE}
+    routingKey: ${RABBIT_ALERT_ROUTING_KEY}
+    deadLetterQueueName: ${RABBIT_DLQ}
+    deadLetterExchangeName: ${RABBIT_DLX}
+    deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY}
+    mqttExchangeName: ${RABBIT_MQTT_EXCHANGE}

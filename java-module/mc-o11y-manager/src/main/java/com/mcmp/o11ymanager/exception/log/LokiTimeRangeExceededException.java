@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.exception.log;
 
-import com.mcmp.o11ymanager.exception.host.BaseException;
-import com.mcmp.o11ymanager.global.error.ErrorCode;
+
+import com.mcmp.o11ymanager.manager.global.error.BaseException;
 import lombok.Getter;
 
 /**
@@ -13,8 +13,7 @@ public class LokiTimeRangeExceededException extends BaseException {
     private final String limit;
 
     public LokiTimeRangeExceededException(String requestId, String queryLength, String limit) {
-        super(requestId, ErrorCode.LOKI_TIME_RANGE_EXCEEDED,
-                "조회 시간 범위가 Loki 서버의 제한을 초과했습니다.  더 짧은 시간 범위로 다시 시도해주세요.");
+        super(requestId, "조회 시간 범위가 Loki 서버의 제한을 초과했습니다.  더 짧은 시간 범위로 다시 시도해주세요.");
         this.queryLength = queryLength;
         this.limit = limit;
     }

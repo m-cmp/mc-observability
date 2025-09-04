@@ -27,6 +27,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+/src/test/resources/
 
 ### NetBeans ###
 /nbproject/private/
@@ -46,3 +47,6 @@ out/
 
 *.key
 *.pid
+
+
+
