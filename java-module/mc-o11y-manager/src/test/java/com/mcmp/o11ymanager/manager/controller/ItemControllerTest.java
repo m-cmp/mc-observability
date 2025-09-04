@@ -67,18 +67,18 @@ class ItemControllerTest {
                                 .description("모니터링 아이템 목록 조회")
                                 .summary("GetMonitoringItems")
                                 .pathParameters(
-                                        paramString("nsId", "NS스 ID"),
+                                        paramString("nsId", "NSID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("targetId", "TARGET ID"))
                                 .responseSchema("MonitoringItemDTO")
                                 .responseFields(
                                         fieldString("rs_code", "응답 코드"),
                                         fieldString("rs_msg", "응답 메시지"),
                                         fieldArray("data", "모니터링 아이템 목록"),
                                         fieldNumber("data[].seq", "아이템 시퀀스"),
-                                        fieldString("data[].nsId", "NS스 ID"),
+                                        fieldString("data[].nsId", "NSID"),
                                         fieldString("data[].mciId", "MCI ID"),
-                                        fieldString("data[].targetId", "타겟 ID"),
+                                        fieldString("data[].targetId", "TARGET ID"),
                                         fieldString("data[].name", "아이템 이름"),
                                         fieldString("data[].state", "상태"),
                                         fieldNumber("data[].pluginSeq", "플러그인 시퀀스"),
@@ -110,9 +110,9 @@ class ItemControllerTest {
                                 .description("모니터링 아이템 추가")
                                 .summary("AddMonitoringItem")
                                 .pathParameters(
-                                        paramString("nsId", "NS스 ID"),
+                                        paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("targetId", "TARGET ID"))
                                 .requestSchema("MonitoringItemRequestDTO")
                                 .requestFields(
                                         fieldNumber("pluginSeq", "플러그인 시퀀스"),
@@ -148,9 +148,9 @@ class ItemControllerTest {
                                 .description("모니터링 아이템 수정")
                                 .summary("UpdateMonitoringItem")
                                 .pathParameters(
-                                        paramString("nsId", "NS스 ID"),
+                                        paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("targetId", "TARGET ID"))
                                 .requestSchema("MonitoringItemUpdateDTO")
                                 .requestFields(
                                         fieldNumber("seq", "아이템 시퀀스"),

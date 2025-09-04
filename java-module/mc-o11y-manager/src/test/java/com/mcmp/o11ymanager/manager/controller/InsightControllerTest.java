@@ -118,8 +118,8 @@ class InsightControllerTest {
                                 .description("예측 이력 조회")
                                 .summary("GetPredictionHistory")
                                 .pathParameters(
-                                        paramString("nsId", "네임스페이스 ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("nsId", "NSID"),
+                                        paramString("targetId", "TARGET ID"))
                                 .queryParameters(
                                         paramString("measurement", "측정값 이름"),
                                         paramString("start_time", "시작 시간"),
@@ -151,8 +151,8 @@ class InsightControllerTest {
                                 .description("예측 실행")
                                 .summary("PredictMetric")
                                 .pathParameters(
-                                        paramString("nsId", "네임스페이스 ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("nsId", "NSID"),
+                                        paramString("targetId", "TARGET ID"))
                                 .requestSchema("Object")
                                 .requestFields(fieldString("option", "옵션 값"))
                                 .responseSchema("Object")
@@ -342,8 +342,8 @@ class InsightControllerTest {
                                 .description("이상탐지 결과 조회")
                                 .summary("GetAnomalyDetection")
                                 .pathParameters(
-                                        paramString("nsId", "네임스페이스 ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("nsId", "NSID"),
+                                        paramString("targetId", "TARGET ID"))
                                 .responseSchema("Object")
                                 .responseFields(fieldString("detection", "이상탐지 결과"))
                                 .build());
@@ -372,8 +372,8 @@ class InsightControllerTest {
                                 .description("이상탐지 이력 조회")
                                 .summary("GetAnomalyDetectionHistory")
                                 .pathParameters(
-                                        paramString("nsId", "네임스페이스 ID"),
-                                        paramString("targetId", "타겟 ID"))
+                                        paramString("nsId", "NSID"),
+                                        paramString("targetId", "TARGET ID"))
                                 .queryParameters(
                                         paramString("measurement", "측정값 이름"),
                                         paramString("start_time", "시작 시간"),
