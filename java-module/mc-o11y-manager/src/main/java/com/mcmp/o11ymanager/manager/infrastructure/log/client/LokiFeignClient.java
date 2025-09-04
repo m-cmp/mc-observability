@@ -31,6 +31,7 @@ public interface LokiFeignClient {
             @RequestParam String query,
             @RequestParam String start,
             @RequestParam String end,
+            @RequestParam Integer step,
             @RequestParam(required = false) Integer limit);
 
     @GetMapping(value = "/loki/api/v1/labels")

@@ -45,6 +45,9 @@ public enum ErrorCode {
     GIT_COMMIT_CONTENT_NOT_FOUND("6008", "Git Commit Content를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     GIT_HISTORY_NOT_FOUND("6009", "Git History를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     GIT_COMMIT_FAILURE("6010", "Git Commit에 실패했습니다.", HttpStatus.BAD_REQUEST),
+    
+    //Loki Error
+    LOKI_TIME_RANGE_EXCEEDED("7001", "조회 시간 범위가 Loki 서버의 제한을 초과했습니다.", HttpStatus.BAD_REQUEST),
     ;
 
     private final String code;
