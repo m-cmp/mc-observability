@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.manager.global.target;
+package com.mcmp.o11ymanager.manager.global.vm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

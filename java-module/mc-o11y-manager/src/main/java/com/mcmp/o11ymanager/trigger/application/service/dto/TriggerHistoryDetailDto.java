@@ -13,7 +13,7 @@ public record TriggerHistoryDetailDto(
         String resourceType,
         String namespaceId,
         String mciId,
-        String targetId,
+        String vmId,
         String threshold,
         String resourceUsage,
         String alertLevel,

@@ -1,6 +1,6 @@
 package com.mcmp.o11ymanager.manager.service;
 
-import com.mcmp.o11ymanager.manager.model.host.HostStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.manager.service.interfaces.TcpService;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -27,8 +27,8 @@ public class TcpServiceImpl implements TcpService {
         }
     }
 
-    public HostStatus checkServerStatus(String ip, int port) {
-        if (isConnect(ip, port)) return HostStatus.RUNNING;
-        else return HostStatus.FAILED;
+    public VMStatus checkServerStatus(String ip, int port) {
+        if (isConnect(ip, port)) return VMStatus.RUNNING;
+        else return VMStatus.FAILED;
     }
 }

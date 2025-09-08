@@ -1,15 +1,15 @@
 package com.mcmp.o11ymanager.manager.facade;
 
-import com.mcmp.o11ymanager.manager.dto.target.AccessInfoDTO;
-import com.mcmp.o11ymanager.manager.dto.target.ResultDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.AccessInfoDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.manager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.semaphore.Task;
 import com.mcmp.o11ymanager.manager.service.domain.SemaphoreDomainService;
-import com.mcmp.o11ymanager.manager.service.interfaces.TargetService;
+import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FluentBitFacadeService {
 
-    private final TargetService targetService;
+    private final VMService vmService;
     private static final Lock agentTaskStatusLock = new ReentrantLock();
     private final RequestInfo requestInfo;
     private final SemaphoreDomainService semaphoreDomainService;
@@ -35,20 +35,18 @@ public class FluentBitFacadeService {
     public void install(
             String nsId,
             String mciId,
-            String targetId,
+            String vmId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
         // 1. host IDLE 상태 확인
-        targetService.isIdleLogAgent(nsId, mciId, targetId);
+        vmService.isIdleLogAgent(nsId, mciId, vmId);
 
         // 2. host 상태 업데이트
-        targetService.updateLogAgentTaskStatus(
-                nsId, mciId, targetId, TargetAgentTaskStatus.INSTALLING);
+        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
 
-        String configContent =
-                fluentBitConfigFacadeService.initFluentbitConfig(nsId, mciId, targetId);
+        String configContent = fluentBitConfigFacadeService.initFluentbitConfig(nsId, mciId, vmId);
 
         log.info(String.format("Fluent-Bit config: %s", configContent));
 
@@ -62,12 +60,8 @@ public class FluentBitFacadeService {
                         templateCount);
 
         // 5. task ID, task status 업데이트
-        targetService.updateLogAgentTaskStatusAndTaskId(
-                nsId,
-                mciId,
-                targetId,
-                TargetAgentTaskStatus.INSTALLING,
-                String.valueOf(task.getId()));
+        vmService.updateLogAgentTaskStatusAndTaskId(
+                nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
         // 7. 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
@@ -75,7 +69,7 @@ public class FluentBitFacadeService {
                 task.getId(),
                 nsId,
                 mciId,
-                targetId,
+                vmId,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.FLUENT_BIT);
     }
@@ -83,17 +77,16 @@ public class FluentBitFacadeService {
     public void update(
             String nsId,
             String mciId,
-            String targetId,
+            String vmId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
         // 1. host IDLE 상태 확인
-        targetService.isIdleLogAgent(nsId, mciId, targetId);
+        vmService.isIdleLogAgent(nsId, mciId, vmId);
 
         // 2. host 상태 업데이트
-        targetService.updateLogAgentTaskStatus(
-                nsId, mciId, targetId, TargetAgentTaskStatus.UPDATING);
+        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
 
         // 3. 전송(semaphore) - 업데이트 요청
         Task task =
@@ -105,12 +98,8 @@ public class FluentBitFacadeService {
                         templateCount);
 
         // 4. task ID, task status 업데이트
-        targetService.updateLogAgentTaskStatusAndTaskId(
-                nsId,
-                mciId,
-                targetId,
-                TargetAgentTaskStatus.UPDATING,
-                String.valueOf(task.getId()));
+        vmService.updateLogAgentTaskStatusAndTaskId(
+                nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
         // 6. 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
@@ -118,24 +107,19 @@ public class FluentBitFacadeService {
                 task.getId(),
                 nsId,
                 mciId,
-                targetId,
+                vmId,
                 SemaphoreInstallMethod.UPDATE,
                 Agent.FLUENT_BIT);
     }
 
     public void uninstall(
-            String nsId,
-            String mciId,
-            String targetId,
-            AccessInfoDTO accessInfo,
-            int templateCount) {
+            String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
 
         // 1) 상태 확인
-        targetService.isIdleLogAgent(nsId, mciId, targetId);
+        vmService.isIdleLogAgent(nsId, mciId, vmId);
 
         // 2) 상태 변경
-        targetService.updateLogAgentTaskStatus(
-                nsId, mciId, targetId, TargetAgentTaskStatus.PREPARING);
+        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
 
         // 3. 전송(semaphore) - 삭제 요청
         Task task =
@@ -147,12 +131,8 @@ public class FluentBitFacadeService {
                         templateCount);
 
         // 5. task ID, task status 업데이트
-        targetService.updateLogAgentTaskStatusAndTaskId(
-                nsId,
-                mciId,
-                targetId,
-                TargetAgentTaskStatus.UNINSTALLING,
-                String.valueOf(task.getId()));
+        vmService.updateLogAgentTaskStatusAndTaskId(
+                nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
 
         // 6) 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
@@ -160,49 +140,46 @@ public class FluentBitFacadeService {
                 task.getId(),
                 nsId,
                 mciId,
-                targetId,
+                vmId,
                 SemaphoreInstallMethod.UNINSTALL,
                 Agent.FLUENT_BIT);
     }
 
     @Transactional
-    public List<ResultDTO> restart(String nsId, String mciId, String targetId) {
+    public List<ResultDTO> restart(String nsId, String mciId, String vmId) {
         List<ResultDTO> results = new ArrayList<>();
 
         try {
             agentTaskStatusLock.lock();
 
             // 1. 싫행 상태 확인
-            targetService.isIdleLogAgent(nsId, mciId, targetId);
+            vmService.isIdleLogAgent(nsId, mciId, vmId);
 
             // 2. RESTARTING 상태로 변경
-            targetService.updateLogAgentTaskStatus(
-                    nsId, mciId, targetId, TargetAgentTaskStatus.RESTARTING);
+            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
 
             // TODO : Use Tumblebug CMD - 3. restart 실행
 
-            targetService.updateLogAgentTaskStatus(
-                    nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
             agentTaskStatusLock.unlock();
         } catch (Exception e) {
             agentTaskStatusLock.unlock();
 
-            targetService.updateLogAgentTaskStatus(
-                    nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());

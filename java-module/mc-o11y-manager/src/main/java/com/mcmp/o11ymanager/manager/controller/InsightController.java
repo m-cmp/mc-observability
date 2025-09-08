@@ -27,21 +27,20 @@ public class InsightController {
         return insightClient.getPredictionOptions();
     }
 
-    @PostMapping("/insight/predictions" + "/nsId/{nsId}/target/{targetId}")
+    @PostMapping("/insight/predictions" + "/nsId/{nsId}/vm/{vmId}")
     public Object predictMetric(
-            @PathVariable String nsId, @PathVariable String targetId, @RequestBody Object body) {
-        return insightClient.predictMetric(nsId, targetId, body);
+            @PathVariable String nsId, @PathVariable String vmId, @RequestBody Object body) {
+        return insightClient.predictMetric(nsId, vmId, body);
     }
 
-    @GetMapping("/insight/predictions" + "/nsId/{nsId}/target/{targetId}/history")
+    @GetMapping("/insight/predictions" + "/nsId/{nsId}/vm/{vmId}/history")
     public Object getPredictionHistory(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String vmId,
             @RequestParam String measurement,
             @RequestParam(required = false) String start_time,
             @RequestParam(required = false) String end_time) {
-        return insightClient.getPredictionHistory(
-                nsId, targetId, measurement, start_time, end_time);
+        return insightClient.getPredictionHistory(nsId, vmId, measurement, start_time, end_time);
     }
 
     // insight anomaly detection
@@ -81,19 +80,19 @@ public class InsightController {
         return insightClient.deleteAnomalyDetectionSetting(settingSeq);
     }
 
-    @GetMapping("/insight/anomaly-detection" + "/settings/nsId/{nsId}/target/{targetId}")
-    public Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String targetId) {
-        return insightClient.getAnomalyDetection(nsId, targetId);
+    @GetMapping("/insight/anomaly-detection" + "/settings/nsId/{nsId}/vm/{vmId}")
+    public Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String vmId) {
+        return insightClient.getAnomalyDetection(nsId, vmId);
     }
 
-    @GetMapping("/insight/anomaly-detection" + "/nsId/{nsId}/target/{targetId}/history")
+    @GetMapping("/insight/anomaly-detection" + "/nsId/{nsId}/vm/{vmId}/history")
     public Object getAnomalyDetectionHistory(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String vmId,
             @RequestParam String measurement,
             @RequestParam(required = false) String start_time,
             @RequestParam(required = false) String end_time) {
         return insightClient.getAnomalyDetectionHistory(
-                nsId, targetId, measurement, start_time, end_time);
+                nsId, vmId, measurement, start_time, end_time);
     }
 }

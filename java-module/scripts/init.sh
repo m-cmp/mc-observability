@@ -43,7 +43,7 @@ cd mc-observability/java-module/mc-o11y-agent/
 cat <<EOF > .env
 NS_ID=$2
 MCI_ID=$3
-TARGET_ID=$4
+VM_ID=$4
 TUMBLEBUG_URL=$5
 TUMBLEBUG_ID=$6
 TUMBLEBUG_PW=$7

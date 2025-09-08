@@ -77,12 +77,11 @@ public class TelegrafConfigFacadeService {
                     + ","
                     + CONFIG_METRIC_SYSTEM;
 
-    public String initTelegrafConfig(String nsId, String mciId, String targetId) {
-        return generateTelegrafConfig(nsId, mciId, targetId, CONFIG_DEFAULT_METRICS);
+    public String initTelegrafConfig(String nsId, String mciId, String vmId) {
+        return generateTelegrafConfig(nsId, mciId, vmId, CONFIG_DEFAULT_METRICS);
     }
 
-    public String generateTelegrafConfig(
-            String nsId, String mciId, String targetId, String metrics) {
+    public String generateTelegrafConfig(String nsId, String mciId, String vmId, String metrics) {
         String errMsg;
 
         if (!telegrafConfigGlobal.exists()) {
@@ -220,7 +219,7 @@ public class TelegrafConfigFacadeService {
 
         fileService.appendConfig(telegrafConfigOutputsInfluxDB, sb);
 
-        var out = influxDbFacadeService.resolveForTarget(nsId, mciId);
+        var out = influxDbFacadeService.resolveForVM(nsId, mciId);
 
         String finalNsId = (nsId != null) ? nsId : "";
         log.debug(finalNsId);
@@ -228,14 +227,14 @@ public class TelegrafConfigFacadeService {
         String finalMciId = (mciId != null) ? mciId : "";
         log.debug(finalMciId);
 
-        String finalTargetId = (targetId != null) ? targetId : "";
-        log.debug(finalTargetId);
+        String finalVmId = (vmId != null) ? vmId : "";
+        log.debug(finalVmId);
 
         return sb.toString()
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
                 .replace("@MCI_ID", finalMciId)
-                .replace("@TARGET_ID", finalTargetId)
+                .replace("@VM_ID", finalVmId)
                 .replace("@URL", out.getUrl())
                 .replace("@DATABASE", out.getDatabase())
                 .replace("@USERNAME", out.getUsername())

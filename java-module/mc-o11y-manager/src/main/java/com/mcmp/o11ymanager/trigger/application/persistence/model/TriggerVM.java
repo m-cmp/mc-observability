@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.trigger.application.persistence.model;
 
-import com.mcmp.o11ymanager.trigger.application.common.dto.TriggerTargetDto;
-import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerTargetDetailDto;
+import com.mcmp.o11ymanager.trigger.application.common.dto.TriggerVMDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerVMDetailDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -15,9 +15,9 @@ import java.util.UUID;
 import lombok.Getter;
 
 @Getter
-@Table(name = "trigger_target")
+@Table(name = "trigger_vm")
 @Entity
-public class TriggerTarget extends BaseEntity {
+public class TriggerVM extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,9 +27,9 @@ public class TriggerTarget extends BaseEntity {
 
     private String namespaceId;
 
-    private String targetScope;
+    private String vmScope;
 
-    private String targetId;
+    private String vmId;
 
     private boolean isActive;
 
@@ -39,49 +39,49 @@ public class TriggerTarget extends BaseEntity {
 
     @Transient private String key;
 
-    public static TriggerTarget create(TriggerTargetDto dto) {
-        TriggerTarget entity = new TriggerTarget();
+    public static TriggerVM create(TriggerVMDto dto) {
+        TriggerVM entity = new TriggerVM();
         entity.uuid = UUID.randomUUID().toString();
         entity.namespaceId = dto.namespaceId();
-        entity.targetScope = dto.targetScope();
-        entity.targetId = dto.targetId();
+        entity.vmScope = dto.vmScope();
+        entity.vmId = dto.vmId();
         entity.isActive = dto.isActive();
         entity.setupKey();
         return entity;
     }
 
-    public static TriggerTarget create(
-            String namespaceId, String targetScope, String targetId, boolean isActive) {
-        TriggerTarget entity = new TriggerTarget();
+    public static TriggerVM create(
+            String namespaceId, String vmScope, String vmId, boolean isActive) {
+        TriggerVM entity = new TriggerVM();
         entity.uuid = UUID.randomUUID().toString();
         entity.namespaceId = namespaceId;
-        entity.targetScope = targetScope;
-        entity.targetId = targetId;
+        entity.vmScope = vmScope;
+        entity.vmId = vmId;
         entity.isActive = isActive;
         entity.setupKey();
         return entity;
     }
 
-    public TriggerTargetDetailDto toDto() {
-        return TriggerTargetDetailDto.builder()
+    public TriggerVMDetailDto toDto() {
+        return TriggerVMDetailDto.builder()
                 .id(id)
                 .uuid(uuid)
                 .namespaceId(namespaceId)
-                .targetScope(targetScope)
-                .targetId(targetId)
+                .vmScope(vmScope)
+                .vmId(vmId)
                 .isActive(isActive)
                 .build();
     }
 
     public void setupKey() {
-        key = namespaceId + "_" + targetScope + "-" + targetId;
+        key = namespaceId + "_" + vmScope + "-" + vmId;
     }
 
     public void setTriggerPolicy(TriggerPolicy triggerPolicy) {
         this.triggerPolicy = triggerPolicy;
     }
 
-    public boolean isSameWith(TriggerTarget other) {
+    public boolean isSameWith(TriggerVM other) {
         this.setupKey();
         other.setupKey();
         return this.key.equals(other.getKey());

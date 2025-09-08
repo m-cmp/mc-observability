@@ -26,14 +26,14 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictMetric(String nsId, String targetId, Object option) {
-        return insightClient.predictMetric(nsId, targetId, option);
+    public Object predictMetric(String nsId, String vmId, Object option) {
+        return insightClient.predictMetric(nsId, vmId, option);
     }
 
     @Override
     public Object getPredictionHistory(
-            String nsId, String targetId, String measurement, String startTime, String endTime) {
-        return insightClient.getPredictionHistory(nsId, targetId, measurement, startTime, endTime);
+            String nsId, String vmId, String measurement, String startTime, String endTime) {
+        return insightClient.getPredictionHistory(nsId, vmId, measurement, startTime, endTime);
     }
 
     @Override
@@ -72,14 +72,14 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object getAnomalyDetection(String nsId, String targetId) {
-        return insightClient.getAnomalyDetection(nsId, targetId);
+    public Object getAnomalyDetection(String nsId, String vmId) {
+        return insightClient.getAnomalyDetection(nsId, vmId);
     }
 
     @Override
     public Object getAnomalyDetectionHistory(
-            String nsId, String targetId, String measurement, String startTime, String endTime) {
+            String nsId, String vmId, String measurement, String startTime, String endTime) {
         return insightClient.getAnomalyDetectionHistory(
-                nsId, targetId, measurement, startTime, endTime);
+                nsId, vmId, measurement, startTime, endTime);
     }
 }

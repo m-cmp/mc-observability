@@ -15,14 +15,14 @@ public interface InsightClient {
     @GetMapping("/api/o11y" + "/insight/predictions" + "/options")
     Object getPredictionOptions();
 
-    @PostMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/target/{targetId}")
+    @PostMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/vm/{vmId}")
     Object predictMetric(
-            @PathVariable String nsId, @PathVariable String targetId, @RequestBody Object option);
+            @PathVariable String nsId, @PathVariable String vmId, @RequestBody Object option);
 
-    @GetMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/target/{targetId}/history")
+    @GetMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/vm/{vmId}/history")
     Object getPredictionHistory(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String vmId,
             @RequestParam String measurement,
             @RequestParam(required = false) String start_time,
             @RequestParam(required = false) String end_time);
@@ -48,15 +48,13 @@ public interface InsightClient {
     @DeleteMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings/{settingSeq}")
     Object deleteAnomalyDetectionSetting(@PathVariable Long settingSeq);
 
-    @GetMapping(
-            "/api/o11y" + "/insight/anomaly-detection" + "/settings/nsId/{nsId}/target/{targetId}")
-    Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String targetId);
+    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings/nsId/{nsId}/vm/{vmId}")
+    Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String vmId);
 
-    @GetMapping(
-            "/api/o11y" + "/insight/anomaly-detection" + "/nsId/{nsId}/target/{targetId}/history")
+    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/nsId/{nsId}/vm/{vmId}/history")
     Object getAnomalyDetectionHistory(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String vmId,
             @RequestParam String measurement,
             @RequestParam(required = false) String start_time,
             @RequestParam(required = false) String end_time);

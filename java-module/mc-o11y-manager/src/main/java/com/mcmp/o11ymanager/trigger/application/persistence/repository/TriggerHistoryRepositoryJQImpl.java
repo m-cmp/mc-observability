@@ -40,8 +40,8 @@ public class TriggerHistoryRepositoryJQImpl implements TriggerHistoryRepositoryJ
                                                         DSL.field("mci_id")
                                                                 .eq(triggerHistory.getMciId()))
                                                 .and(
-                                                        DSL.field("target_id")
-                                                                .eq(triggerHistory.getTargetId()))
+                                                        DSL.field("vm_id")
+                                                                .eq(triggerHistory.getVmId()))
                                                 .and(
                                                         DSL.field("starts_at")
                                                                 .eq(triggerHistory.getStartsAt())))

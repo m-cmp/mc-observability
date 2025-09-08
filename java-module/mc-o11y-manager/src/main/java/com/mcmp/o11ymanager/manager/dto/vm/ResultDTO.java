@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.manager.dto.target;
+package com.mcmp.o11ymanager.manager.dto.vm;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.mcmp.o11ymanager.manager.enums.ResponseStatus;
@@ -13,7 +13,7 @@ public class ResultDTO {
 
     private String nsId;
     private String mciId;
-    private String targetId;
+    private String vmId;
     private ResponseStatus status;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

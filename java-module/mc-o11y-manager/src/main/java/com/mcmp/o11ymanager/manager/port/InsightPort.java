@@ -7,10 +7,10 @@ public interface InsightPort {
 
     Object getPredictionOptions();
 
-    Object predictMetric(String nsId, String targetId, Object option);
+    Object predictMetric(String nsId, String vmId, Object option);
 
     Object getPredictionHistory(
-            String nsId, String targetId, String measurement, String startTime, String endTime);
+            String nsId, String vmId, String measurement, String startTime, String endTime);
 
     Object getAnomalyDetectionMeasurement();
 
@@ -26,8 +26,8 @@ public interface InsightPort {
 
     Object deleteAnomalyDetectionSetting(Long settingSeq);
 
-    Object getAnomalyDetection(String nsId, String targetId);
+    Object getAnomalyDetection(String nsId, String vmId);
 
     Object getAnomalyDetectionHistory(
-            String nsId, String targetId, String measurement, String startTime, String endTime);
+            String nsId, String vmId, String measurement, String startTime, String endTime);
 }

@@ -1,16 +1,16 @@
 package com.mcmp.o11ymanager.manager.service.interfaces;
 
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 
 public interface StatusService {
 
-    void updateTargetAgentTaskStatus(
+    void updateVMAgentTaskStatus(
             String requestId,
             Integer taskId,
-            TargetAgentTaskStatus hostAgentTaskStatus,
+            VMAgentTaskStatus hostAgentTaskStatus,
             String nsId,
             String mciId,
-            String targetId);
+            String vmId);
 
-    void resetTargetAgentTaskStatus(String requestId, String nsId, String mciId, String targetId);
+    void resetVMAgentTaskStatus(String requestId, String nsId, String mciId, String vmId);
 }

@@ -15,7 +15,7 @@ public record TriggerPolicyDetailDto(
         String aggregationType,
         String holdDuration,
         String repeatInterval,
-        List<TriggerTargetDetailDto> targets,
+        List<TriggerVMDetailDto> vms,
         List<TriggerPolicyNotiChannelDto> notiChannels,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {}

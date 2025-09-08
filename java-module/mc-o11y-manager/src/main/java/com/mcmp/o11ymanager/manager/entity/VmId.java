@@ -8,8 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public class TargetId implements Serializable {
+public class VmId implements Serializable {
     private String nsId;
     private String mciId;
-    private String targetId;
+    private String vmId;
 }

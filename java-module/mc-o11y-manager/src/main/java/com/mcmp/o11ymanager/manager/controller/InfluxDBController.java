@@ -6,7 +6,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
-import com.mcmp.o11ymanager.manager.global.target.ResBody;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

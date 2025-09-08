@@ -9,8 +9,8 @@ import com.mcmp.o11ymanager.manager.enums.ResponseCode;
 import com.mcmp.o11ymanager.manager.exception.config.TelegrafConfigException;
 import com.mcmp.o11ymanager.manager.service.interfaces.AgentPluginDefService;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
-import com.mcmp.o11ymanager.manager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
+import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -38,7 +38,7 @@ public class ItemFacadeService {
     private final TumblebugService tumblebugService;
     private final AgentPluginDefService agentPluginDefService;
     private final InfluxDbService influxDbService;
-    private final TargetService targetService;
+    private final VMService vmService;
 
     private static final Pattern INPUT_PATTERN = Pattern.compile("\\[\\[inputs\\.(\\w+)]]");
 
@@ -47,20 +47,18 @@ public class ItemFacadeService {
     }
 
     public void addTelegrafPlugin(
-            String nsId, String mciId, String targetId, MonitoringItemRequestDTO dto) {
+            String nsId, String mciId, String vmId, MonitoringItemRequestDTO dto) {
         try {
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
-                String errorMsg =
-                        String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
+                String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, vmId)) {
                 String errorMsg =
-                        String.format(
-                                "VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
+                        String.format("VM not connected for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
@@ -79,13 +77,12 @@ public class ItemFacadeService {
             // read config
             String configContent =
                     tumblebugService.executeCommand(
-                            nsId, mciId, targetId, "sudo cat " + getTelegrafConfigPath());
+                            nsId, mciId, vmId, "sudo cat " + getTelegrafConfigPath());
 
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for target: %s/%s/%s",
-                                nsId, mciId, targetId);
+                                "Telegraf config not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
@@ -102,17 +99,16 @@ public class ItemFacadeService {
                     String.format(
                             "echo '%s' | sudo tee %s > /dev/null",
                             updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
-            telegrafFacadeService.restart(nsId, mciId, targetId);
+            telegrafFacadeService.restart(nsId, mciId, vmId);
 
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {
             String errorMsg =
                     String.format(
-                            "Failed to add telegraf plugin for target: %s/%s/%s",
-                            nsId, mciId, targetId);
+                            "Failed to add telegraf plugin for vm: %s/%s/%s", nsId, mciId, vmId);
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
@@ -120,20 +116,18 @@ public class ItemFacadeService {
     }
 
     public void updateTelegrafPlugin(
-            String nsId, String mciId, String targetId, MonitoringItemUpdateDTO dto) {
+            String nsId, String mciId, String vmId, MonitoringItemUpdateDTO dto) {
         try {
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
-                String errorMsg =
-                        String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
+                String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, vmId)) {
                 String errorMsg =
-                        String.format(
-                                "VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
+                        String.format("VM not connected for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
@@ -141,20 +135,19 @@ public class ItemFacadeService {
             // read config and parsing
             String configContent =
                     tumblebugService.executeCommand(
-                            nsId, mciId, targetId, "sudo cat " + getTelegrafConfigPath());
+                            nsId, mciId, vmId, "sudo cat " + getTelegrafConfigPath());
 
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for target: %s/%s/%s",
-                                nsId, mciId, targetId);
+                                "Telegraf config not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
 
             // update plugin
-            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
-            MonitoringItemDTO targetItem =
+            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, vmId);
+            MonitoringItemDTO vmItem =
                     currentItems.stream()
                             .filter(item -> item.getSeq().equals(dto.getSeq()))
                             .findFirst()
@@ -167,61 +160,57 @@ public class ItemFacadeService {
             // update plugin section
             String decodedNewConfig = new String(Base64.getDecoder().decode(dto.getPluginConfig()));
             String updatedConfig =
-                    replacePluginInConfig(configContent, targetItem.getName(), decodedNewConfig);
+                    replacePluginInConfig(configContent, vmItem.getName(), decodedNewConfig);
 
             // update file
             String updateCommand =
                     String.format(
                             "echo '%s' | sudo tee %s > /dev/null",
                             updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {
             String errorMsg =
                     String.format(
-                            "Failed to update telegraf plugin for target: %s/%s/%s",
-                            nsId, mciId, targetId);
+                            "Failed to update telegraf plugin for vm: %s/%s/%s", nsId, mciId, vmId);
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
         }
     }
 
-    public void deleteTelegrafPlugin(String nsId, String mciId, String targetId, Long itemSeq) {
+    public void deleteTelegrafPlugin(String nsId, String mciId, String vmId, Long itemSeq) {
         try {
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, targetId);
+            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
-                String errorMsg =
-                        String.format("VM not found for target: %s/%s/%s", nsId, mciId, targetId);
+                String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
             }
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, vmId)) {
                 String errorMsg =
-                        String.format(
-                                "VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
+                        String.format("VM not connected for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
             String configContent =
                     tumblebugService.executeCommand(
-                            nsId, mciId, targetId, "sudo cat " + getTelegrafConfigPath());
+                            nsId, mciId, vmId, "sudo cat " + getTelegrafConfigPath());
 
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for target: %s/%s/%s",
-                                nsId, mciId, targetId);
+                                "Telegraf config not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
 
-            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, targetId);
-            MonitoringItemDTO targetItem =
+            List<MonitoringItemDTO> currentItems = getTelegrafItems(nsId, mciId, vmId);
+            MonitoringItemDTO vmItem =
                     currentItems.stream()
                             .filter(item -> item.getSeq().equals(itemSeq))
                             .findFirst()
@@ -231,23 +220,22 @@ public class ItemFacadeService {
                                                     ResponseCode.NOT_FOUND,
                                                     "Plugin not found in current config"));
 
-            String updatedConfig = removePluginFromConfig(configContent, targetItem.getName());
+            String updatedConfig = removePluginFromConfig(configContent, vmItem.getName());
 
             String updateCommand =
                     String.format(
                             "echo '%s' | sudo tee %s > /dev/null",
                             updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
-            tumblebugService.executeCommand(nsId, mciId, targetId, updateCommand);
+            tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
-            telegrafFacadeService.restart(nsId, mciId, targetId);
+            telegrafFacadeService.restart(nsId, mciId, vmId);
 
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {
             String errorMsg =
                     String.format(
-                            "Failed to delete telegraf plugin for target: %s/%s/%s",
-                            nsId, mciId, targetId);
+                            "Failed to delete telegraf plugin for vm: %s/%s/%s", nsId, mciId, vmId);
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
@@ -258,26 +246,24 @@ public class ItemFacadeService {
         return "[[inputs." + name + "]]";
     }
 
-    public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String targetId) {
+    public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String vmId) {
         try {
 
-            if (!tumblebugService.isConnectedVM(nsId, mciId, targetId)) {
+            if (!tumblebugService.isConnectedVM(nsId, mciId, vmId)) {
                 String errorMsg =
-                        String.format(
-                                "VM not connected for target: %s/%s/%s", nsId, mciId, targetId);
+                        String.format("VM not connected for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.VM_CONNECTION_FAILED, errorMsg);
             }
 
             String configContent =
                     tumblebugService.executeCommand(
-                            nsId, mciId, targetId, "sudo cat " + getTelegrafConfigPath());
+                            nsId, mciId, vmId, "sudo cat " + getTelegrafConfigPath());
 
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for target: %s/%s/%s",
-                                nsId, mciId, targetId);
+                                "Telegraf config not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
@@ -306,7 +292,7 @@ public class ItemFacadeService {
                                 .seq((long) seq++)
                                 .nsId(nsId)
                                 .mciId(mciId)
-                                .targetId(targetId)
+                                .vmId(vmId)
                                 .name(plugin.getName())
                                 .state("ACTIVE")
                                 .pluginSeq(pluginDef != null ? pluginDef.getSeq() : null)
@@ -325,8 +311,7 @@ public class ItemFacadeService {
         } catch (Exception e) {
             String errorMsg =
                     String.format(
-                            "Failed to read telegraf config for target: %s/%s/%s",
-                            nsId, mciId, targetId);
+                            "Failed to read telegraf config for vm: %s/%s/%s", nsId, mciId, vmId);
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
@@ -383,19 +368,19 @@ public class ItemFacadeService {
             String configContent, String pluginName, String newConfig) {
         String[] lines = configContent.split("\n");
         StringBuilder result = new StringBuilder();
-        boolean inTargetPlugin = false;
+        boolean inVMPlugin = false;
 
         for (String line : lines) {
             String trimmedLine = line.trim();
 
             if (trimmedLine.matches("\\[\\[inputs\\." + pluginName + "]]")) {
-                inTargetPlugin = true;
+                inVMPlugin = true;
                 result.append("[[inputs.").append(pluginName).append("]]\n");
                 result.append(newConfig).append("\n");
-            } else if (inTargetPlugin && trimmedLine.startsWith("[[")) {
-                inTargetPlugin = false;
+            } else if (inVMPlugin && trimmedLine.startsWith("[[")) {
+                inVMPlugin = false;
                 result.append(line).append("\n");
-            } else if (!inTargetPlugin) {
+            } else if (!inVMPlugin) {
                 result.append(line).append("\n");
             }
         }
@@ -406,17 +391,17 @@ public class ItemFacadeService {
     private String removePluginFromConfig(String configContent, String pluginName) {
         String[] lines = configContent.split("\n");
         StringBuilder result = new StringBuilder();
-        boolean inTargetPlugin = false;
+        boolean inVMPlugin = false;
 
         for (String line : lines) {
             String trimmedLine = line.trim();
 
             if (trimmedLine.matches("\\[\\[inputs\\." + pluginName + "]]")) {
-                inTargetPlugin = true;
-            } else if (inTargetPlugin && trimmedLine.startsWith("[[")) {
-                inTargetPlugin = false;
+                inVMPlugin = true;
+            } else if (inVMPlugin && trimmedLine.startsWith("[[")) {
+                inVMPlugin = false;
                 result.append(line).append("\n");
-            } else if (!inTargetPlugin) {
+            } else if (!inVMPlugin) {
                 result.append(line).append("\n");
             }
         }

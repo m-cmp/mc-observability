@@ -1,11 +1,11 @@
-package com.mcmp.o11ymanager.manager.dto.target;
+package com.mcmp.o11ymanager.manager.dto.vm;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mcmp.o11ymanager.manager.entity.TargetEntity;
+import com.mcmp.o11ymanager.manager.entity.VMEntity;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
-import com.mcmp.o11ymanager.manager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,10 +17,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TargetDTO {
+public class VMDTO {
 
-    @JsonProperty("target_id")
-    private String targetId;
+    @JsonProperty("vm_id")
+    private String vmId;
 
     private String name;
 
@@ -29,24 +29,24 @@ public class TargetDTO {
     @JsonProperty("influx_seq")
     private Long influxSeq;
 
-    @JsonProperty("target_status")
-    private TargetStatus targetStatus;
+    @JsonProperty("vm_status")
+    private VMStatus vmStatus;
 
     @JsonProperty("monitoring_agent_task_status")
     @JsonIgnore
-    private TargetAgentTaskStatus monitoringAgentTaskStatus;
+    private VMAgentTaskStatus monitoringAgentTaskStatus;
 
     @JsonProperty("log_agent_task_status")
     @JsonIgnore
-    private TargetAgentTaskStatus logAgentTaskStatus;
+    private VMAgentTaskStatus logAgentTaskStatus;
 
-    @JsonProperty("target_monitoring_agent_task_id")
+    @JsonProperty("vm_monitoring_agent_task_id")
     @JsonIgnore
-    private String targetMonitoringAgentTaskId;
+    private String vmMonitoringAgentTaskId;
 
-    @JsonProperty("target_log_agent_task_id")
+    @JsonProperty("vm_log_agent_task_id")
     @JsonIgnore
-    private String targetLogAgentTaskId;
+    private String vmLogAgentTaskId;
 
     @JsonProperty("monitoring_service_status")
     private AgentServiceStatus monitoringServiceStatus;
@@ -60,16 +60,16 @@ public class TargetDTO {
     @JsonProperty("mci_id")
     private String mciId;
 
-    public static TargetDTO fromEntity(TargetEntity entity) {
-        return TargetDTO.builder()
-                .targetId(entity.getTargetId())
+    public static VMDTO fromEntity(VMEntity entity) {
+        return VMDTO.builder()
+                .vmId(entity.getVmId())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .influxSeq(entity.getInfluxSeq())
-                .targetStatus(entity.getTargetStatus())
+                .vmStatus(entity.getVmStatus())
                 .description(entity.getDescription())
-                .targetMonitoringAgentTaskId(entity.getTargetMonitoringAgentTaskId())
-                .targetLogAgentTaskId(entity.getTargetLogAgentTaskId())
+                .vmMonitoringAgentTaskId(entity.getVmMonitoringAgentTaskId())
+                .vmLogAgentTaskId(entity.getVmLogAgentTaskId())
                 .monitoringServiceStatus(entity.getMonitoringServiceStatus())
                 .logServiceStatus(entity.getLogServiceStatus())
                 .nsId(entity.getNsId())
@@ -77,17 +77,17 @@ public class TargetDTO {
                 .build();
     }
 
-    public TargetEntity toEntity() {
-        return TargetEntity.builder()
-                .targetId(this.getTargetId())
+    public VMEntity toEntity() {
+        return VMEntity.builder()
+                .vmId(this.getVmId())
                 .name(this.name)
                 .influxSeq(this.getInfluxSeq())
-                .targetStatus(this.getTargetStatus())
+                .vmStatus(this.getVmStatus())
                 .description(this.description)
                 .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
                 .logAgentTaskStatus(this.logAgentTaskStatus)
-                .targetMonitoringAgentTaskId(this.targetMonitoringAgentTaskId)
-                .targetLogAgentTaskId(this.targetLogAgentTaskId)
+                .vmMonitoringAgentTaskId(this.vmMonitoringAgentTaskId)
+                .vmLogAgentTaskId(this.vmLogAgentTaskId)
                 .monitoringServiceStatus(this.monitoringServiceStatus)
                 .logServiceStatus(this.logServiceStatus)
                 .nsId(this.nsId)

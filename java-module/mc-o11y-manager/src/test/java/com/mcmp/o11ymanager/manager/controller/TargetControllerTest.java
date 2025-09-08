@@ -6,11 +6,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.mcmp.o11ymanager.manager.dto.target.TargetDTO;
-import com.mcmp.o11ymanager.manager.dto.target.TargetRequestDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
-import com.mcmp.o11ymanager.manager.facade.TargetFacadeService;
-import com.mcmp.o11ymanager.manager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.manager.facade.VMFacadeService;
+import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.util.ApiDocumentation;
 import com.mcmp.o11ymanager.util.JsonConverter;
 import java.util.List;
@@ -28,352 +28,343 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @AutoConfigureRestDocs(outputDir = "build/generated-snippets")
 @AutoConfigureMockMvc
-@WebMvcTest(TargetController.class)
+@WebMvcTest(VMController.class)
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
-class TargetControllerTest {
+class VMControllerTest {
 
-  private static final String TAG = "[Target] Monitoring target management";
+    private static final String TAG = "[VM] Monitoring vm management";
 
-  @Autowired
-  private MockMvc mockMvc;
-  @MockBean
-  private TargetFacadeService targetFacadeService;
+    @Autowired private MockMvc mockMvc;
+    @MockBean private VMFacadeService vmFacadeService;
 
-  @Test
-  void getTarget() throws Exception {
-    TargetDTO dto =
-        TargetDTO.builder()
-            .targetId("string")
-            .name("string")
-            .description("string")
-            .influxSeq(0L)
-            .nsId("string")
-            .mciId("string")
-            .targetStatus(TargetStatus.RUNNING)
-            .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-            .logServiceStatus(AgentServiceStatus.ACTIVE)
-            .build();
-    when(targetFacadeService.getTarget(any(), any(), any())).thenReturn(dto);
+    @Test
+    void getVM() throws Exception {
+        VMDTO dto =
+                VMDTO.builder()
+                        .vmId("string")
+                        .name("string")
+                        .description("string")
+                        .influxSeq(0L)
+                        .nsId("string")
+                        .mciId("string")
+                        .vmStatus(VMStatus.RUNNING)
+                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
+                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .build();
+        when(vmFacadeService.getVM(any(), any(), any())).thenReturn(dto);
 
-    mockMvc.perform(
-            RestDocumentationRequestBuilders.get(
-                "/api/o11y/monitoring/{NS ID}/{mciId}/target/{targetId}",
-                "ns1",
-                "mci1",
-                "target-1"))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("타겟 단건 조회")
-                .summary("GetTarget")
-                .pathParameters(
-                    paramString("NS ID", "NS ID"),
-                    paramString("mciId", "MCI ID"),
-                    paramString("targetId", "TARGET ID"))
-                .responseSchema("TargetDTO")
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldObject("data", "타겟 정보"),
-                    fieldString("data.target_id", "TARGET ID"),
-                    fieldString("data.name", "타겟 이름"),
-                    fieldString("data.description", "설명").optional(),
-                    fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                    fieldEnum("data.target_status", "타겟 상태", TargetStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.monitoring_service_status",
-                        "모니터링 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.log_service_status",
-                        "로그 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldString("data.ns_id", "NS ID"),
-                    fieldString("data.mci_id", "MCI ID"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).getTarget(any(), any(), any());
-  }
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.get(
+                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                "ns1",
+                                "mci1",
+                                "vm-1"))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("타겟 단건 조회")
+                                .summary("GetVM")
+                                .pathParameters(
+                                        paramString("NS ID", "NS ID"),
+                                        paramString("mciId", "MCI ID"),
+                                        paramString("vmId", "TARGET ID"))
+                                .responseSchema("VMDTO")
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("data.vm_id", "TARGET ID"),
+                                        fieldString("data.name", "타겟 이름"),
+                                        fieldString("data.description", "설명").optional(),
+                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
+                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.monitoring_service_status",
+                                                        "모니터링 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.log_service_status",
+                                                        "로그 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldString("data.ns_id", "NS ID"),
+                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).getVM(any(), any(), any());
+    }
 
-  @Test
-  void postTarget() throws Exception {
-    TargetRequestDTO req =
-        TargetRequestDTO.builder().name("string").description("string").build();
-    TargetDTO dto =
-        TargetDTO.builder()
-            .targetId("string")
-            .name("string")
-            .description("string")
-            .influxSeq(0L)
-            .nsId("string")
-        .mciId("string")
-        .targetStatus(TargetStatus.RUNNING)
-        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-        .logServiceStatus(AgentServiceStatus.ACTIVE)
-        .build();
-    when(targetFacadeService.postTarget(any(), any(), any(), any())).thenReturn(dto);
+    @Test
+    void postVM() throws Exception {
+        VMRequestDTO req = VMRequestDTO.builder().name("string").description("string").build();
+        VMDTO dto =
+                VMDTO.builder()
+                        .vmId("string")
+                        .name("string")
+                        .description("string")
+                        .influxSeq(0L)
+                        .nsId("string")
+                        .mciId("string")
+                        .vmStatus(VMStatus.RUNNING)
+                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
+                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .build();
+        when(vmFacadeService.postVM(any(), any(), any(), any())).thenReturn(dto);
 
-    mockMvc.perform(
-            RestDocumentationRequestBuilders.post(
-                    "/api/o11y/monitoring/{NS ID}/{mciId}/target/{targetId}",
-                    "ns1",
-                    "mci1",
-                    "target-1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonConverter.asJsonString(req)))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("타겟 생성")
-                .summary("PostTarget")
-                .pathParameters(
-                    paramString("NS ID", "NS ID"),
-                    paramString("mciId", "MCI ID"),
-                    paramString("targetId", "TARGET ID"))
-                .requestSchema("TargetRequestDTO")
-                .requestFields(
-                    fieldString("name", "타겟 이름"),
-                    fieldString("description", "설명").optional())
-                .responseSchema("TargetDTO")
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldObject("data", "타겟 정보"),
-                    fieldString("data.target_id", "TARGET ID"),
-                    fieldString("data.name", "타겟 이름"),
-                    fieldString("data.description", "설명").optional(),
-                    fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                    fieldEnum("data.target_status", "타겟 상태", TargetStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.monitoring_service_status",
-                        "모니터링 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.log_service_status",
-                        "로그 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldString("data.ns_id", "NS ID"),
-                    fieldString("data.mci_id", "MCI ID"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).postTarget(any(), any(), any(), any());
-  }
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.post(
+                                        "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                        "ns1",
+                                        "mci1",
+                                        "vm-1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(JsonConverter.asJsonString(req)))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("타겟 생성")
+                                .summary("PostVM")
+                                .pathParameters(
+                                        paramString("NS ID", "NS ID"),
+                                        paramString("mciId", "MCI ID"),
+                                        paramString("vmId", "TARGET ID"))
+                                .requestSchema("VMRequestDTO")
+                                .requestFields(
+                                        fieldString("name", "타겟 이름"),
+                                        fieldString("description", "설명").optional())
+                                .responseSchema("VMDTO")
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("data.vm_id", "TARGET ID"),
+                                        fieldString("data.name", "타겟 이름"),
+                                        fieldString("data.description", "설명").optional(),
+                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
+                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.monitoring_service_status",
+                                                        "모니터링 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.log_service_status",
+                                                        "로그 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldString("data.ns_id", "NS ID"),
+                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).postVM(any(), any(), any(), any());
+    }
 
-  @Test
-  void putTarget() throws Exception {
-    TargetRequestDTO req =
-        TargetRequestDTO.builder().name("string").description("string").build();
-    TargetDTO dto =
-        TargetDTO.builder()
-            .targetId("string")
-            .name("string")
-            .description("string")
-            .influxSeq(0L)
-            .nsId("string")
-        .mciId("string")
-        .targetStatus(TargetStatus.RUNNING)
-        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-        .logServiceStatus(AgentServiceStatus.ACTIVE)
-        .build();
-    when(targetFacadeService.putTarget(any(), any(), any(), any())).thenReturn(dto);
+    @Test
+    void putVM() throws Exception {
+        VMRequestDTO req = VMRequestDTO.builder().name("string").description("string").build();
+        VMDTO dto =
+                VMDTO.builder()
+                        .vmId("string")
+                        .name("string")
+                        .description("string")
+                        .influxSeq(0L)
+                        .nsId("string")
+                        .mciId("string")
+                        .vmStatus(VMStatus.RUNNING)
+                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
+                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .build();
+        when(vmFacadeService.putVM(any(), any(), any(), any())).thenReturn(dto);
 
-    mockMvc.perform(
-            RestDocumentationRequestBuilders.put(
-                    "/api/o11y/monitoring/{NS ID}/{mciId}/target/{targetId}",
-                    "ns1",
-                    "mci1",
-                    "target-1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonConverter.asJsonString(req)))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("타겟 수정")
-                .summary("PutTarget")
-                .pathParameters(
-                    paramString("NS ID", "NS ID"),
-                    paramString("mciId", "MCI ID"),
-                    paramString("targetId", "TARGET ID"))
-                .requestSchema("TargetRequestDTO")
-                .requestFields(
-                    fieldString("name", "타겟 이름"),
-                    fieldString("description", "설명").optional())
-                .responseSchema("TargetDTO")
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldObject("data", "타겟 정보"),
-                    fieldString("data.target_id", "TARGET ID"),
-                    fieldString("data.name", "타겟 이름"),
-                    fieldString("data.description", "설명").optional(),
-                    fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                    fieldEnum("data.target_status", "타겟 상태", TargetStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.monitoring_service_status",
-                        "모니터링 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data.log_service_status",
-                        "로그 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldString("data.ns_id", "NS ID"),
-                    fieldString("data.mci_id", "MCI ID"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).putTarget(any(), any(), any(), any());
-  }
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.put(
+                                        "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                        "ns1",
+                                        "mci1",
+                                        "vm-1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(JsonConverter.asJsonString(req)))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("타겟 수정")
+                                .summary("PutVM")
+                                .pathParameters(
+                                        paramString("NS ID", "NS ID"),
+                                        paramString("mciId", "MCI ID"),
+                                        paramString("vmId", "TARGET ID"))
+                                .requestSchema("VMRequestDTO")
+                                .requestFields(
+                                        fieldString("name", "타겟 이름"),
+                                        fieldString("description", "설명").optional())
+                                .responseSchema("VMDTO")
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("data.vm_id", "TARGET ID"),
+                                        fieldString("data.name", "타겟 이름"),
+                                        fieldString("data.description", "설명").optional(),
+                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
+                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.monitoring_service_status",
+                                                        "모니터링 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data.log_service_status",
+                                                        "로그 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldString("data.ns_id", "NS ID"),
+                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).putVM(any(), any(), any(), any());
+    }
 
-  @Test
-  void deleteTarget() throws Exception {
-    mockMvc.perform(
-            RestDocumentationRequestBuilders.delete(
-                "/api/o11y/monitoring/{NS ID}/{mciId}/target/{targetId}",
-                "ns1",
-                "mci1",
-                "target-1"))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("타겟 삭제")
-                .summary("DeleteTarget")
-                .pathParameters(
-                    paramString("NS ID", "NS ID"),
-                    paramString("mciId", "MCI ID"),
-                    paramString("targetId", "TARGET ID"))
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldNull("data", "null 반환"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).deleteTarget(any(), any(), any());
-  }
+    @Test
+    void deleteVM() throws Exception {
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.delete(
+                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                "ns1",
+                                "mci1",
+                                "vm-1"))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("타겟 삭제")
+                                .summary("DeleteVM")
+                                .pathParameters(
+                                        paramString("NS ID", "NS ID"),
+                                        paramString("mciId", "MCI ID"),
+                                        paramString("vmId", "TARGET ID"))
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldNull("data", "null 반환"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).deleteVM(any(), any(), any());
+    }
 
-  @Test
-  void getTargetByNsMci() throws Exception {
-    List<TargetDTO> list =
-        List.of(
-            TargetDTO.builder()
-                .targetId("string")
-                .name("string")
-                .description("string")
-                .influxSeq(0L)
-                .nsId("string")
-                .mciId("string")
-                .targetStatus(TargetStatus.RUNNING)
-                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                .logServiceStatus(AgentServiceStatus.ACTIVE)
-                .build());
-    when(targetFacadeService.getTargetsNsMci(any(), any())).thenReturn(list);
+    @Test
+    void getVMByNsMci() throws Exception {
+        List<VMDTO> list =
+                List.of(
+                        VMDTO.builder()
+                                .vmId("string")
+                                .name("string")
+                                .description("string")
+                                .influxSeq(0L)
+                                .nsId("string")
+                                .mciId("string")
+                                .vmStatus(VMStatus.RUNNING)
+                                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
+                                .logServiceStatus(AgentServiceStatus.ACTIVE)
+                                .build());
+        when(vmFacadeService.getVMsNsMci(any(), any())).thenReturn(list);
 
-    mockMvc.perform(
-            RestDocumentationRequestBuilders.get(
-                "/api/o11y/monitoring/{NS ID}/{mciId}/target", "ns1", "mci1"))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("NS /MCI별 타겟 목록 조회")
-                .summary("GetTargetByNsMci")
-                .pathParameters(
-                    paramString("NS ID", "NS ID"), paramString("mciId", "MCI ID"))
-                .responseSchema("TargetDTO")
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldArray("data", "타겟 정보 목록"),
-                    fieldString("data[].target_id", "TARGET ID"),
-                    fieldString("data[].name", "타겟 이름"),
-                    fieldString("data[].description", "설명").optional(),
-                    fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
-                    fieldEnum(
-                        "data[].target_status",
-                        "타겟 상태",
-                        TargetStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data[].monitoring_service_status",
-                        "모니터링 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data[].log_service_status",
-                        "로그 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldString("data[].ns_id", "NS ID"),
-                    fieldString("data[].mci_id", "MCI ID"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).getTargetsNsMci(any(), any());
-  }
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.get(
+                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm", "ns1", "mci1"))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("NS /MCI별 타겟 목록 조회")
+                                .summary("GetVMByNsMci")
+                                .pathParameters(
+                                        paramString("NS ID", "NS ID"),
+                                        paramString("mciId", "MCI ID"))
+                                .responseSchema("VMDTO")
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldArray("data", "타겟 정보 목록"),
+                                        fieldString("data[].vm_id", "TARGET ID"),
+                                        fieldString("data[].name", "타겟 이름"),
+                                        fieldString("data[].description", "설명").optional(),
+                                        fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
+                                        fieldEnum("data[].vm_status", "타겟 상태", VMStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].monitoring_service_status",
+                                                        "모니터링 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].log_service_status",
+                                                        "로그 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldString("data[].ns_id", "NS ID"),
+                                        fieldString("data[].mci_id", "MCI ID"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).getVMsNsMci(any(), any());
+    }
 
-  @Test
-  void getAllTargets() throws Exception {
-    List<TargetDTO> list =
-        List.of(
-            TargetDTO.builder()
-                .targetId("string")
-                .name("string")
-                .description("string")
-                .influxSeq(0L)
-                .nsId("string")
-                .mciId("string")
-                .targetStatus(TargetStatus.RUNNING)
-                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                .logServiceStatus(AgentServiceStatus.ACTIVE)
-                .build());
-    when(targetFacadeService.getTargets()).thenReturn(list);
+    @Test
+    void getAllVMs() throws Exception {
+        List<VMDTO> list =
+                List.of(
+                        VMDTO.builder()
+                                .vmId("string")
+                                .name("string")
+                                .description("string")
+                                .influxSeq(0L)
+                                .nsId("string")
+                                .mciId("string")
+                                .vmStatus(VMStatus.RUNNING)
+                                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
+                                .logServiceStatus(AgentServiceStatus.ACTIVE)
+                                .build());
+        when(vmFacadeService.getVMs()).thenReturn(list);
 
-    mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/monitoring/target"))
-        .andExpect(status().isOk())
-        .andDo(
-            ApiDocumentation.builder()
-                .tag(TAG)
-                .description("전체 타겟 목록 조회")
-                .summary("GetAllTargets")
-                .responseSchema("TargetDTO")
-                .responseFields(
-                    fieldString("rs_code", "응답 코드"),
-                    fieldString("rs_msg", "응답 메시지"),
-                    fieldArray("data", "타겟 정보 목록"),
-                    fieldString("data[].target_id", "TARGET ID"),
-                    fieldString("data[].name", "타겟 이름"),
-                    fieldString("data[].description", "설명").optional(),
-                    fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
-                    fieldEnum(
-                        "data[].target_status",
-                        "타겟 상태",
-                        TargetStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data[].monitoring_service_status",
-                        "모니터링 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldEnum(
-                        "data[].log_service_status",
-                        "로그 에이전트 서비스 상태",
-                        AgentServiceStatus.class)
-                        .optional(),
-                    fieldString("data[].ns_id", "NS ID"),
-                    fieldString("data[].mci_id", "MCI ID"),
-                    fieldString("error_message", "에러 메시지"))
-                .build());
-    verify(targetFacadeService).getTargets();
-  }
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/monitoring/vm"))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("전체 타겟 목록 조회")
+                                .summary("GetAllVMs")
+                                .responseSchema("VMDTO")
+                                .responseFields(
+                                        fieldString("rs_code", "응답 코드"),
+                                        fieldString("rs_msg", "응답 메시지"),
+                                        fieldArray("data", "타겟 정보 목록"),
+                                        fieldString("data[].vm_id", "TARGET ID"),
+                                        fieldString("data[].name", "타겟 이름"),
+                                        fieldString("data[].description", "설명").optional(),
+                                        fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
+                                        fieldEnum("data[].vm_status", "타겟 상태", VMStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].monitoring_service_status",
+                                                        "모니터링 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].log_service_status",
+                                                        "로그 에이전트 서비스 상태",
+                                                        AgentServiceStatus.class)
+                                                .optional(),
+                                        fieldString("data[].ns_id", "NS ID"),
+                                        fieldString("data[].mci_id", "MCI ID"),
+                                        fieldString("error_message", "에러 메시지"))
+                                .build());
+        verify(vmFacadeService).getVMs();
+    }
 }

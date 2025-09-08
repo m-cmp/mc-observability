@@ -37,7 +37,7 @@ public class TriggerHistory extends BaseEntity {
 
     private String mciId;
 
-    private String targetId;
+    private String vmId;
 
     private String threshold;
 
@@ -77,7 +77,7 @@ public class TriggerHistory extends BaseEntity {
         triggerHistory.resourceType = triggerPolicy.getResourceType();
         triggerHistory.namespaceId = alertDetail.getNamespaceId();
         triggerHistory.mciId = alertDetail.getMciId();
-        triggerHistory.targetId = alertDetail.getTargetId();
+        triggerHistory.vmId = alertDetail.getVmId();
         triggerHistory.threshold = alertDetail.getThreshold();
         triggerHistory.resourceUsage = alertDetail.getResourceUsage();
         triggerHistory.alertLevel = alertDetail.getAlertLevel();
@@ -100,7 +100,7 @@ public class TriggerHistory extends BaseEntity {
                 .resourceType(resourceType)
                 .namespaceId(namespaceId)
                 .mciId(mciId)
-                .targetId(targetId)
+                .vmId(vmId)
                 .threshold(threshold)
                 .resourceUsage(resourceUsage)
                 .alertLevel(alertLevel)

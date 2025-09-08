@@ -24,7 +24,7 @@
         }
         th:nth-child(1) { width: 25%; } /* Namespace ID */
         th:nth-child(2) { width: 25%; } /* MCI ID */
-        th:nth-child(3) { width: 25%; } /* Target ID */
+        th:nth-child(3) { width: 25%; } /* VM ID */
         th:nth-child(4) { width: 25%; } /* Resource Usage */
         td {
             background-color: #ffffff;
@@ -44,7 +44,7 @@
                 <tr>
                     <th>Namespace ID</th>
                     <th>MCI ID</th>
-                    <th>Target ID</th>
+                    <th>VM ID</th>
                     <th>Resource Usage</th>
                 </tr>
             </thead>
@@ -52,7 +52,7 @@
                 <tr th:each="alert : ${alerts}">
                     <td th:text="${alert.namespaceId}">namespace-id</td>
                     <td th:text="${alert.mciId}">mci-id</td>
-                    <td th:text="${alert.targetId}">target-id</td>
+                    <td th:text="${alert.vmId}">vm-id</td>
                     <td class="metric" th:text="${alert.resourceUsage + '%'}">0%</td>
                 </tr>
             </tbody>

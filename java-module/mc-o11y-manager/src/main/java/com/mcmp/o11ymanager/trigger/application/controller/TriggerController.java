@@ -2,8 +2,8 @@ package com.mcmp.o11ymanager.trigger.application.controller;
 
 import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerPolicyCreateRequest;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerPolicyNotiChannelUpdateRequest;
-import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerTargetAddRequest;
-import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerTargetRemoveRequest;
+import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerVMAddRequest;
+import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerVMRemoveRequest;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.response.TriggerPolicyPageResponse;
 import com.mcmp.o11ymanager.trigger.application.service.TriggerService;
 import com.mcmp.o11ymanager.trigger.application.service.dto.CustomPageDto;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * REST API controller for trigger policy management Provides functionality for creating, deleting,
- * retrieving trigger policies, updating notification channels, and adding/removing targets.
+ * retrieving trigger policies, updating notification channels, and adding/removing vms.
  */
 @RestController
 @RequestMapping("/api/o11y/trigger/policy")
@@ -112,32 +112,32 @@ public class TriggerController {
     }
 
     /**
-     * Adds a new trigger target to the specified trigger policy.
+     * Adds a new trigger vm to the specified trigger policy.
      *
-     * @param id ID of the trigger policy to add target to
-     * @param request Information of the trigger target to add
+     * @param id ID of the trigger policy to add vm to
+     * @param request Information of the trigger vm to add
      * @return 202 Accepted response
      */
-    @PostMapping("/{id}/target")
-    public ResponseEntity<?> addTriggerTarget(
-            @PathVariable long id, @Valid @RequestBody TriggerTargetAddRequest request) {
-        triggerService.addTriggerTarget(id, request.toDto());
+    @PostMapping("/{id}/vm")
+    public ResponseEntity<?> addTriggerVM(
+            @PathVariable long id, @Valid @RequestBody TriggerVMAddRequest request) {
+        triggerService.addTriggerVM(id, request.toDto());
         return ResponseEntity.accepted().build();
     }
 
     // Patch (isActive) 추가
 
     /**
-     * Removes a trigger target from the specified trigger policy.
+     * Removes a trigger vm from the specified trigger policy.
      *
-     * @param id ID of the trigger policy to remove target from
-     * @param request Information of the trigger target to remove
+     * @param id ID of the trigger policy to remove vm from
+     * @param request Information of the trigger vm to remove
      * @return 202 Accepted response
      */
-    @DeleteMapping("/{id}/target")
-    public ResponseEntity<?> removeTriggerTarget(
-            @PathVariable long id, @Valid @RequestBody TriggerTargetRemoveRequest request) {
-        triggerService.removeTriggerTarget(id, request.toDto());
+    @DeleteMapping("/{id}/vm")
+    public ResponseEntity<?> removeTriggerVM(
+            @PathVariable long id, @Valid @RequestBody TriggerVMRemoveRequest request) {
+        triggerService.removeTriggerVM(id, request.toDto());
         return ResponseEntity.accepted().build();
     }
 }

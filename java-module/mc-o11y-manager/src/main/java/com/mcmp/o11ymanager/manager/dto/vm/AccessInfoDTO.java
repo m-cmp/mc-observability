@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.manager.dto.target;
+package com.mcmp.o11ymanager.manager.dto.vm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;

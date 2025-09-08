@@ -43,12 +43,12 @@ public class InfluxMapper {
         return dtos.stream().map(d -> toEntity(d)).toList();
     }
 
-    public void merge(InfluxEntity target, InfluxDTO source) {
-        if (source.getUrl() != null) target.setUrl(source.getUrl());
-        if (source.getDatabase() != null) target.setDatabase(source.getDatabase());
+    public void merge(InfluxEntity vm, InfluxDTO source) {
+        if (source.getUrl() != null) vm.setUrl(source.getUrl());
+        if (source.getDatabase() != null) vm.setDatabase(source.getDatabase());
         if (source.getRetention_policy() != null)
-            target.setRetentionPolicy(source.getRetention_policy());
-        if (source.getUsername() != null) target.setUsername(source.getUsername());
-        if (source.getPassword() != null) target.setPassword(source.getPassword());
+            vm.setRetentionPolicy(source.getRetention_policy());
+        if (source.getUsername() != null) vm.setUsername(source.getUsername());
+        if (source.getPassword() != null) vm.setPassword(source.getPassword());
     }
 }

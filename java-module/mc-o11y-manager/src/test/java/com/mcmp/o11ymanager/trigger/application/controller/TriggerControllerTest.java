@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.mcmp.o11ymanager.trigger.application.common.dto.ThresholdCondition;
-import com.mcmp.o11ymanager.trigger.application.common.dto.TriggerTargetDto;
+import com.mcmp.o11ymanager.trigger.application.common.dto.TriggerVMDto;
 import com.mcmp.o11ymanager.trigger.application.common.type.AggregationType;
 import com.mcmp.o11ymanager.trigger.application.common.type.ResourceType;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.request.*;
@@ -193,56 +193,53 @@ class TriggerControllerTest {
     }
 
     @Test
-    void addTriggerTarget() throws Exception {
-        TriggerTargetAddRequest request =
-                new TriggerTargetAddRequest("namespace-1", "vm", "target-1");
+    void addTriggerVM() throws Exception {
+        TriggerVMAddRequest request = new TriggerVMAddRequest("namespace-1", "vm", "vm-1");
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/trigger/policy/{id}/target", 1)
+                        RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy/{id}/vm", 1)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(request)))
                 .andExpect(status().isAccepted())
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("Add trigger target")
-                                .summary("AddTriggerTarget")
-                                .requestSchema("TriggerTargetAddRequest")
+                                .description("Add trigger vm")
+                                .summary("AddTriggerVM")
+                                .requestSchema("TriggerVMAddRequest")
                                 .pathParameters(paramInteger("id", "trigger policy id"))
                                 .requestFields(
                                         fieldString("namespaceId", "namespace id"),
-                                        fieldString("targetScope", "target scope (vm, mci)"),
-                                        fieldString("targetId", "target id"))
+                                        fieldString("vmScope", "vm scope (vm, mci)"),
+                                        fieldString("vmId", "vm id"))
                                 .build());
 
-        verify(triggerService).addTriggerTarget(any(long.class), any(TriggerTargetDto.class));
+        verify(triggerService).addTriggerVM(any(long.class), any(TriggerVMDto.class));
     }
 
     @Test
-    void removeTriggerTarget() throws Exception {
-        TriggerTargetRemoveRequest request =
-                new TriggerTargetRemoveRequest("namespace-1", "vm", "target-1");
+    void removeTriggerVM() throws Exception {
+        TriggerVMRemoveRequest request = new TriggerVMRemoveRequest("namespace-1", "vm", "vm-1");
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.delete(
-                                        "/api/o11y/trigger/policy/{id}/target", 1)
+                                        "/api/o11y/trigger/policy/{id}/vm", 1)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(request)))
                 .andExpect(status().isAccepted())
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("Remove trigger target")
-                                .summary("RemoveTriggerTarget")
-                                .requestSchema("TriggerTargetRemoveRequest")
+                                .description("Remove trigger vm")
+                                .summary("RemoveTriggerVM")
+                                .requestSchema("TriggerVMRemoveRequest")
                                 .pathParameters(paramInteger("id", "trigger policy id"))
                                 .requestFields(
                                         fieldString("namespaceId", "namespace id"),
-                                        fieldString("targetScope", "target scope (vm, mci)"),
-                                        fieldString("targetId", "target id"))
+                                        fieldString("vmScope", "vm scope (vm, mci)"),
+                                        fieldString("vmId", "vm id"))
                                 .build());
 
-        verify(triggerService).removeTriggerTarget(any(long.class), any(TriggerTargetDto.class));
+        verify(triggerService).removeTriggerVM(any(long.class), any(TriggerVMDto.class));
     }
 }

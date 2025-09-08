@@ -13,7 +13,7 @@ import lombok.*;
 @Schema(description = "Config 업데이트를 위한 DTO")
 public class ConfigDTO {
 
-    private String targetId;
+    private String vmId;
 
     private String nsId;
 

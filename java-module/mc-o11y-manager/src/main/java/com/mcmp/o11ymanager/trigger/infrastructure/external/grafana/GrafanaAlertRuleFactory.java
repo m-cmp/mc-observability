@@ -55,7 +55,7 @@ public class GrafanaAlertRuleFactory {
      * @param thresholdCondition threshold expression defining info/warning/critical levels
      * @param repeatInterval interval for re-sending the alert when the same condition/state
      *     continues.
-     * @param targetScope scope identifier for the monitoring target
+     * @param vmScope scope identifier for the monitoring vm
      * @return GrafanaAlertRule configured for the specified parameters
      */
     public GrafanaAlertRule createGrafanaAlertRule(
@@ -65,12 +65,12 @@ public class GrafanaAlertRuleFactory {
             String query,
             String thresholdCondition,
             String repeatInterval,
-            String targetScope,
+            String vmScope,
             String ruleGroup,
             String datasourceUid) {
         List<GrafanaAlertQuery> alertData =
                 createMetricAlertData(query, thresholdCondition, datasourceUid);
-        metricLabels.put("targetScope", targetScope);
+        metricLabels.put("vmScope", vmScope);
         metricLabels.put("ruleGroup", ruleGroup);
 
         return GrafanaAlertRule.builder()

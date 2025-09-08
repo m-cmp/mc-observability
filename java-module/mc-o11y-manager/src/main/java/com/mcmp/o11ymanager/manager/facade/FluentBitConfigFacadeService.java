@@ -20,7 +20,7 @@ public class FluentBitConfigFacadeService {
     private final ClassPathResource fluentBitVariables =
             new ClassPathResource("fluent-bit_variables");
 
-    public String initFluentbitConfig(String nsId, String mciId, String targetId) {
+    public String initFluentbitConfig(String nsId, String mciId, String vmId) {
         String template = fileService.getFileContent(fluentBitVariables);
 
         String[] lokiURLSplit = lokiURL.split("://");
@@ -40,14 +40,14 @@ public class FluentBitConfigFacadeService {
 
         nsId = nsId != null ? nsId : "";
         mciId = mciId != null ? mciId : "";
-        targetId = targetId != null ? targetId : "";
+        vmId = vmId != null ? vmId : "";
         lokiHost = lokiHost != null ? lokiHost : "";
 
-        log.debug("Target={}/{}/{}", nsId, mciId, targetId);
+        log.debug("VM={}/{}/{}", nsId, mciId, vmId);
 
         return template.replace("@NS_ID", nsId)
                 .replace("@MCI_ID", mciId)
-                .replace("@TARGET_ID", targetId)
+                .replace("@VM_ID", vmId)
                 .replace("@LOKI_HOST", lokiHost);
     }
 }
