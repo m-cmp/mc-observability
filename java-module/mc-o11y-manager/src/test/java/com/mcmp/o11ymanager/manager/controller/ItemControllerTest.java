@@ -31,7 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 @MockBean(JpaMetamodelMappingContext.class)
 class ItemControllerTest {
-    private static final String TAG = "[Monitoring item] Monitoring target item management";
+    private static final String TAG = "[Monitoring item] Monitoring vm item management";
 
     @Autowired private MockMvc mockMvc;
     @MockBean private ItemFacadeService itemFacadeService;
@@ -44,7 +44,7 @@ class ItemControllerTest {
                                 .seq(0L)
                                 .nsId("string")
                                 .mciId("string")
-                                .targetId("string")
+                                .vmId("string")
                                 .name("string")
                                 .state("string")
                                 .pluginSeq(0L)
@@ -56,10 +56,10 @@ class ItemControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                "/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item",
+                                "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item",
                                 "ns1",
                                 "mci1",
-                                "target1"))
+                                "vm1"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -69,7 +69,7 @@ class ItemControllerTest {
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .responseSchema("MonitoringItemDTO")
                                 .responseFields(
                                         fieldString("rs_code", "응답 코드"),
@@ -78,7 +78,7 @@ class ItemControllerTest {
                                         fieldNumber("data[].seq", "아이템 시퀀스"),
                                         fieldString("data[].nsId", "NSID"),
                                         fieldString("data[].mciId", "MCI ID"),
-                                        fieldString("data[].targetId", "TARGET ID"),
+                                        fieldString("data[].vmId", "TARGET ID"),
                                         fieldString("data[].name", "아이템 이름"),
                                         fieldString("data[].state", "상태"),
                                         fieldNumber("data[].pluginSeq", "플러그인 시퀀스"),
@@ -97,10 +97,10 @@ class ItemControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item",
+                                        "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item",
                                         "ns1",
                                         "mci1",
-                                        "target1")
+                                        "vm1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(dto)))
                 .andExpect(status().isOk())
@@ -112,7 +112,7 @@ class ItemControllerTest {
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .requestSchema("MonitoringItemRequestDTO")
                                 .requestFields(
                                         fieldNumber("pluginSeq", "플러그인 시퀀스"),
@@ -135,10 +135,10 @@ class ItemControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.put(
-                                        "/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item",
+                                        "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item",
                                         "ns1",
                                         "mci1",
-                                        "target1")
+                                        "vm1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(dto)))
                 .andExpect(status().isOk())
@@ -150,7 +150,7 @@ class ItemControllerTest {
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .requestSchema("MonitoringItemUpdateDTO")
                                 .requestFields(
                                         fieldNumber("seq", "아이템 시퀀스"),
@@ -170,10 +170,10 @@ class ItemControllerTest {
     void deleteItem() throws Exception {
         mockMvc.perform(
                         RestDocumentationRequestBuilders.delete(
-                                "/api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}",
+                                "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}",
                                 "ns1",
                                 "mci1",
-                                "target1",
+                                "vm1",
                                 1L))
                 .andExpect(status().isOk())
                 .andDo(
@@ -184,7 +184,7 @@ class ItemControllerTest {
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"),
-                                        paramString("targetId", "TARGET ID"),
+                                        paramString("vmId", "TARGET ID"),
                                         paramString("itemSeq", "ITEM SEQ"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(

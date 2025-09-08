@@ -63,7 +63,7 @@ public class AlertEvent {
                                 AlertDetail.builder()
                                         .namespaceId(labels.get("ns_id"))
                                         .mciId(labels.get("mci_id"))
-                                        .targetId(labels.get("vm_id"))
+                                        .vmId(labels.get("vm_id"))
                                         .resourceType(labels.get("resource_type"))
                                         .resourceUsage(resourceUsage)
                                         .status(alert.getStatus())
@@ -195,7 +195,7 @@ public class AlertEvent {
         private String namespaceId;
         private String resourceType;
         private String mciId;
-        private String targetId;
+        private String vmId;
         private String alertLevel;
         private String threshold;
         private String resourceUsage;

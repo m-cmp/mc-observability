@@ -4,7 +4,7 @@ import com.mcmp.o11ymanager.trigger.application.common.dto.ThresholdCondition;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyCreateDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyDetailDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyNotiChannelDto;
-import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerTargetDetailDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerVMDetailDto;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,7 +47,7 @@ public class TriggerPolicy extends BaseEntity {
             fetch = FetchType.LAZY,
             cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE},
             orphanRemoval = true)
-    private List<TriggerTarget> triggerTargets = new ArrayList<>();
+    private List<TriggerVM> triggerVMs = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "triggerPolicy",
@@ -88,8 +88,7 @@ public class TriggerPolicy extends BaseEntity {
     }
 
     public TriggerPolicyDetailDto toDto() {
-        List<TriggerTargetDetailDto> targets =
-                triggerTargets.stream().map(TriggerTarget::toDto).toList();
+        List<TriggerVMDetailDto> vms = triggerVMs.stream().map(TriggerVM::toDto).toList();
         List<TriggerPolicyNotiChannelDto> notiChannels =
                 triggerPolicyNotiChannels.stream().map(TriggerPolicyNotiChannel::toDto).toList();
 
@@ -102,27 +101,27 @@ public class TriggerPolicy extends BaseEntity {
                 .aggregationType(aggregationType)
                 .holdDuration(holdDuration)
                 .repeatInterval(repeatInterval)
-                .targets(targets)
+                .vms(vms)
                 .notiChannels(notiChannels)
                 .createdAt(getCreatedAt())
                 .updatedAt(getUpdatedAt())
                 .build();
     }
 
-    public boolean addIfNotContains(TriggerTarget triggerTarget) {
-        boolean hasNotTarget = this.triggerTargets.stream().noneMatch(triggerTarget::isSameWith);
-        if (hasNotTarget) {
-            triggerTarget.setTriggerPolicy(this);
-            triggerTargets.add(triggerTarget);
+    public boolean addIfNotContains(TriggerVM triggerVM) {
+        boolean hasNotVM = this.triggerVMs.stream().noneMatch(triggerVM::isSameWith);
+        if (hasNotVM) {
+            triggerVM.setTriggerPolicy(this);
+            triggerVMs.add(triggerVM);
         }
-        return hasNotTarget;
+        return hasNotVM;
     }
 
-    public boolean removeIfContains(TriggerTarget triggerTarget) {
-        return this.triggerTargets.removeIf(
-                target -> {
-                    if (target.isSameWith(triggerTarget)) {
-                        triggerTarget.syncUuid(target.getUuid());
+    public boolean removeIfContains(TriggerVM triggerVM) {
+        return this.triggerVMs.removeIf(
+                vm -> {
+                    if (vm.isSameWith(triggerVM)) {
+                        triggerVM.syncUuid(vm.getUuid());
                         return true;
                     }
                     return false;

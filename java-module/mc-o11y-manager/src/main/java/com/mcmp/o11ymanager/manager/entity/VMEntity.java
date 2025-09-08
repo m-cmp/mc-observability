@@ -1,32 +1,29 @@
 package com.mcmp.o11ymanager.manager.entity;
 
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
-import com.mcmp.o11ymanager.manager.model.host.TargetStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "target")
+@Table(name = "vm")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @DynamicUpdate
-@IdClass(TargetId.class)
+@IdClass(VmId.class)
 @EntityListeners(AuditingEntityListener.class)
-public class TargetEntity {
-    public static final String HOST_TYPE_HOST = "target";
-    public static final String HOST_TYPE_VM = "vm";
-
+public class VMEntity {
     @Id private String nsId;
 
     @Id private String mciId;
 
-    @Id private String targetId;
+    @Id private String vmId;
 
     @Column(name = "influx_id", nullable = false)
     private Long influxSeq;
@@ -37,17 +34,17 @@ public class TargetEntity {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private TargetStatus targetStatus;
+    private VMStatus vmStatus;
 
     @Enumerated(EnumType.STRING)
-    private TargetAgentTaskStatus monitoringAgentTaskStatus;
+    private VMAgentTaskStatus monitoringAgentTaskStatus;
 
     @Enumerated(EnumType.STRING)
-    private TargetAgentTaskStatus logAgentTaskStatus;
+    private VMAgentTaskStatus logAgentTaskStatus;
 
-    private String targetMonitoringAgentTaskId;
+    private String vmMonitoringAgentTaskId;
 
-    private String targetLogAgentTaskId;
+    private String vmLogAgentTaskId;
 
     private AgentServiceStatus monitoringServiceStatus;
 

@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 @Builder
-public record TriggerTargetDto(
+public record TriggerVMDto(
         @NotNull @NotBlank String namespaceId,
-        @NotNull @NotBlank String targetScope,
-        @NotNull @NotBlank String targetId,
+        @NotNull @NotBlank String vmScope,
+        @NotNull @NotBlank String vmId,
         boolean isActive) {}

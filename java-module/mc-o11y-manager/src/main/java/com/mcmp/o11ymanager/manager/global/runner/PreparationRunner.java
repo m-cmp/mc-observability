@@ -39,7 +39,7 @@ public class PreparationRunner implements ApplicationContextAware {
         }
 
         log.info("호스트들의 에이전트 Task 상태를 초기화 하고 있습니다. 🚀");
-        //    targetService.resetAllHostAgentTaskStatus();
+        //    vmService.resetAllHostAgentTaskStatus();
         log.info("호스트들의 에이전트 Task 상태 초기화가 완료 되었습니다. 🎉");
     }
 }

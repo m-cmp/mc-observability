@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service class for trigger policy management. Handles business logic for creating, deleting, and
- * managing trigger policies and their associated targets and notification channels.
+ * managing trigger policies and their associated vms and notification channels.
  */
 @Transactional
 @Service
@@ -33,7 +33,7 @@ public class TriggerService implements TriggerServiceInternal {
     private final AlertManager alertManager;
     private final ManagerPort managerPort;
 
-    public void addTriggerTarget(long id, TriggerTargetDto triggerTargetDto) {
+    public void addTriggerVM(long id, TriggerVMDto triggerVMDto) {
 
         TriggerPolicy triggerPolicy =
                 triggerPolicyRepository
@@ -42,16 +42,14 @@ public class TriggerService implements TriggerServiceInternal {
 
         String datasourceUid =
                 managerPort.getInfluxUid(
-                        triggerTargetDto.namespaceId(),
-                        triggerTargetDto.targetScope(),
-                        triggerTargetDto.targetId());
+                        triggerVMDto.namespaceId(), triggerVMDto.vmScope(), triggerVMDto.vmId());
 
-        TriggerTarget triggerTarget = TriggerTarget.create(triggerTargetDto);
-        boolean isAdded = triggerPolicy.addIfNotContains(triggerTarget);
+        TriggerVM triggerVM = TriggerVM.create(triggerVMDto);
+        boolean isAdded = triggerPolicy.addIfNotContains(triggerVM);
         if (isAdded) {
             triggerPolicyRepository.save(triggerPolicy);
             alertManager.createAlertRule(
-                    AlertRuleCreateDto.from(triggerPolicy.toDto(), triggerTarget.toDto()),
+                    AlertRuleCreateDto.from(triggerPolicy.toDto(), triggerVM.toDto()),
                     datasourceUid);
         }
     }
@@ -82,9 +80,9 @@ public class TriggerService implements TriggerServiceInternal {
                 triggerPolicyRepository
                         .findById(id)
                         .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
-        List<TriggerTarget> triggerTargets = triggerPolicy.getTriggerTargets();
-        for (TriggerTarget triggerTarget : triggerTargets) {
-            alertManager.deleteAlertRule(triggerTarget.getUuid());
+        List<TriggerVM> triggerVMs = triggerPolicy.getTriggerVMs();
+        for (TriggerVM triggerVM : triggerVMs) {
+            alertManager.deleteAlertRule(triggerVM.getUuid());
         }
         triggerPolicyRepository.deleteById(id);
     }
@@ -123,16 +121,16 @@ public class TriggerService implements TriggerServiceInternal {
         triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
     }
 
-    public void removeTriggerTarget(long id, TriggerTargetDto triggerTargetDto) {
+    public void removeTriggerVM(long id, TriggerVMDto triggerVMDto) {
         TriggerPolicy triggerPolicy =
                 triggerPolicyRepository
                         .findById(id)
                         .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
-        TriggerTarget triggerTarget = TriggerTarget.create(triggerTargetDto);
-        boolean isRemoved = triggerPolicy.removeIfContains(triggerTarget);
+        TriggerVM triggerVM = TriggerVM.create(triggerVMDto);
+        boolean isRemoved = triggerPolicy.removeIfContains(triggerVM);
         if (isRemoved) {
             triggerPolicyRepository.save(triggerPolicy);
-            alertManager.deleteAlertRule(triggerTarget.getUuid());
+            alertManager.deleteAlertRule(triggerVM.getUuid());
         }
     }
 

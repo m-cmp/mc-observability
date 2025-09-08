@@ -73,7 +73,7 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    public synchronized SshConnection getConnection(
+    public SshConnection getConnection(
             String ip, int port, String user, String password) {
         String cacheKey = ip + ":" + port + ":" + user;
         SshConnection connection = connectionCache.get(cacheKey);

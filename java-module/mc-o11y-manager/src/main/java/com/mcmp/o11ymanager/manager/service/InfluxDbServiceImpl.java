@@ -7,7 +7,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
 import com.mcmp.o11ymanager.manager.entity.InfluxDbInfo;
 import com.mcmp.o11ymanager.manager.entity.InfluxEntity;
-import com.mcmp.o11ymanager.manager.global.target.ResBody;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.mapper.Influx.InfluxMapper;
 import com.mcmp.o11ymanager.manager.mapper.Influx.QueryMapper;
 import com.mcmp.o11ymanager.manager.model.influx.InfluxQl;
@@ -291,7 +291,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             }
             if (existsTagCombination(s, nsId, mciId)) {
                 log.info(
-                        "[INF-RESOLVE] found target combination at id={}, url={}",
+                        "[INF-RESOLVE] found vm combination at id={}, url={}",
                         e.getId(),
                         s.getUrl());
                 return e.getId();

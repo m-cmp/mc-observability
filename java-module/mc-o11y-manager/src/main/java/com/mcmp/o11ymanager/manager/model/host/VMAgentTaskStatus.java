@@ -3,7 +3,7 @@ package com.mcmp.o11ymanager.manager.model.host;
 import lombok.Getter;
 
 @Getter
-public enum TargetAgentTaskStatus {
+public enum VMAgentTaskStatus {
     PREPARING("Agent 관련 작업이 준비중 입니다."),
     INSTALLING("Agent 설치가 진행 중 입니다."),
     UPDATING("Agent 업데이트가 진행 중 입니다."),
@@ -14,7 +14,7 @@ public enum TargetAgentTaskStatus {
 
     private final String message;
 
-    TargetAgentTaskStatus(String message) {
+    VMAgentTaskStatus(String message) {
         this.message = message;
     }
 }

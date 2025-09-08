@@ -1,12 +1,9 @@
 package com.mcmp.o11ymanager.exception.log;
 
-
 import com.mcmp.o11ymanager.manager.global.error.BaseException;
 import lombok.Getter;
 
-/**
- * Loki 쿼리 시간 범위가 서버 제한을 초과했을 때 발생하는 예외
- */
+/** Loki 쿼리 시간 범위가 서버 제한을 초과했을 때 발생하는 예외 */
 @Getter
 public class LokiTimeRangeExceededException extends BaseException {
     private final String queryLength;

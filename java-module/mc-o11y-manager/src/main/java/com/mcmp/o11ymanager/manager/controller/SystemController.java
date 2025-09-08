@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.manager.controller;
 
 import com.mcmp.o11ymanager.manager.dto.plugin.PluginDefDTO;
-import com.mcmp.o11ymanager.manager.global.target.ResBody;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.service.AgentPluginDefServiceImpl;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

@@ -20,7 +20,7 @@ public class InfluxDbFacadeService {
     private final InfluxDbService influxDbService;
 
     @Transactional(readOnly = true)
-    public InfluxDTO resolveForTarget(String nsId, String mciId) {
+    public InfluxDTO resolveForVM(String nsId, String mciId) {
         return influxDbService.resolveInfluxDto(nsId, mciId);
     }
 

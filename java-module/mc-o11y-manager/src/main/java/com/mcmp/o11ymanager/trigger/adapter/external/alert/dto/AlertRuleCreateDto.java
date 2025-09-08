@@ -2,18 +2,18 @@ package com.mcmp.o11ymanager.trigger.adapter.external.alert.dto;
 
 import com.mcmp.o11ymanager.trigger.application.common.type.ResourceType;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyDetailDto;
-import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerTargetDetailDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerVMDetailDto;
 import lombok.Builder;
 
 @Builder
 public record AlertRuleCreateDto(
         String uuid,
         ResourceType resourceType,
-        String targetScope,
+        String vmScope,
         String measurement,
         String aggregation,
         String field,
-        String targetId,
+        String vmId,
         String namespaceId,
         String title,
         String holdDuration,
@@ -21,16 +21,16 @@ public record AlertRuleCreateDto(
         String thresholdExpression) {
 
     public static AlertRuleCreateDto from(
-            TriggerPolicyDetailDto triggerPolicyDto, TriggerTargetDetailDto triggerTargetDto) {
+            TriggerPolicyDetailDto triggerPolicyDto, TriggerVMDetailDto triggerVMDto) {
         ResourceType resourceType =
                 ResourceType.findBy(triggerPolicyDto.resourceType().toLowerCase());
 
         return AlertRuleCreateDto.builder()
-                .uuid(triggerTargetDto.uuid())
+                .uuid(triggerVMDto.uuid())
                 .resourceType(resourceType)
-                .targetScope(triggerTargetDto.targetScope())
-                .namespaceId(triggerTargetDto.namespaceId())
-                .targetId(triggerTargetDto.targetId())
+                .vmScope(triggerVMDto.vmScope())
+                .namespaceId(triggerVMDto.namespaceId())
+                .vmId(triggerVMDto.vmId())
                 .title(triggerPolicyDto.title())
                 .measurement(resourceType.getMeasurement())
                 .field(resourceType.getField())
@@ -46,7 +46,7 @@ public record AlertRuleCreateDto(
             String measurement,
             String aggregation,
             String field,
-            String targetId,
+            String vmId,
             String namespaceId,
             String title,
             String holdDuration,
@@ -56,7 +56,7 @@ public record AlertRuleCreateDto(
                 .measurement(measurement)
                 .aggregation(aggregation)
                 .field(field)
-                .targetId(targetId)
+                .vmId(vmId)
                 .namespaceId(namespaceId)
                 .title(title)
                 .holdDuration(holdDuration)

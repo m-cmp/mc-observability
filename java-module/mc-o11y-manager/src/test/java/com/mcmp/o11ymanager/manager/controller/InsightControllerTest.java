@@ -104,9 +104,9 @@ class InsightControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/target/{targetId}/history",
+                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/vm/{vmId}/history",
                                         "ns1",
-                                        "target1")
+                                        "vm1")
                                 .param("measurement", "cpu")
                                 .param("start_time", "2023-01-01T00:00:00Z")
                                 .param("end_time", "2023-01-02T00:00:00Z")
@@ -119,7 +119,7 @@ class InsightControllerTest {
                                 .summary("GetPredictionHistory")
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .queryParameters(
                                         paramString("measurement", "측정값 이름"),
                                         paramString("start_time", "시작 시간"),
@@ -138,9 +138,9 @@ class InsightControllerTest {
         String requestBody = "{\"option\":\"value\"}";
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/target/{targetId}",
+                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/vm/{vmId}",
                                         "ns1",
-                                        "target1")
+                                        "vm1")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(requestBody)
                                 .accept(MediaType.APPLICATION_JSON))
@@ -152,7 +152,7 @@ class InsightControllerTest {
                                 .summary("PredictMetric")
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .requestSchema("Object")
                                 .requestFields(fieldString("option", "옵션 값"))
                                 .responseSchema("Object")
@@ -331,9 +331,9 @@ class InsightControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}",
+                                        "/api/o11y/insight/insight/anomaly-detection/settings/nsId/{nsId}/vm/{vmId}",
                                         "ns1",
-                                        "target1")
+                                        "vm1")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
@@ -343,7 +343,7 @@ class InsightControllerTest {
                                 .summary("GetAnomalyDetection")
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .responseSchema("Object")
                                 .responseFields(fieldString("detection", "이상탐지 결과"))
                                 .build());
@@ -358,9 +358,9 @@ class InsightControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history",
+                                        "/api/o11y/insight/insight/anomaly-detection/nsId/{nsId}/vm/{vmId}/history",
                                         "ns1",
-                                        "target1")
+                                        "vm1")
                                 .param("measurement", "cpu")
                                 .param("start_time", "2023-01-01T00:00:00Z")
                                 .param("end_time", "2023-01-02T00:00:00Z")
@@ -373,7 +373,7 @@ class InsightControllerTest {
                                 .summary("GetAnomalyDetectionHistory")
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
-                                        paramString("targetId", "TARGET ID"))
+                                        paramString("vmId", "TARGET ID"))
                                 .queryParameters(
                                         paramString("measurement", "측정값 이름"),
                                         paramString("start_time", "시작 시간"),

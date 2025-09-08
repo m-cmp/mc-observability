@@ -1,13 +1,13 @@
 package com.mcmp.o11ymanager.manager.exception.host;
 
 import com.mcmp.o11ymanager.manager.global.error.ErrorCode;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import lombok.Getter;
 
 @Getter
 public class HostAgentTaskProcessingException extends BaseException {
     public HostAgentTaskProcessingException(
-            String requestId, String hostId, String agentTypeName, TargetAgentTaskStatus status) {
+            String requestId, String hostId, String agentTypeName, VMAgentTaskStatus status) {
         super(
                 requestId,
                 ErrorCode.AGENT_TASK_IN_PROGRESS,

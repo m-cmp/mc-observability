@@ -3,11 +3,11 @@ package com.mcmp.o11ymanager.manager.facade;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.AgentAction;
 import com.mcmp.o11ymanager.manager.enums.SemaphoreInstallMethod;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.semaphore.Project;
 import com.mcmp.o11ymanager.manager.model.semaphore.Task;
 import com.mcmp.o11ymanager.manager.port.SemaphorePort;
-import com.mcmp.o11ymanager.manager.service.interfaces.TargetService;
+import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import java.util.Objects;
@@ -48,7 +48,7 @@ public class SchedulerFacadeService {
     }
 
     private final SemaphorePort semaphorePort;
-    private final TargetService targetService;
+    private final VMService vmService;
 
     @Value("${feign.semaphore.project-name}")
     private String projectName;
@@ -64,7 +64,7 @@ public class SchedulerFacadeService {
             Integer taskId,
             String nsId,
             String mciId,
-            String targetId,
+            String vmId,
             SemaphoreInstallMethod method,
             Agent agent) {
         AtomicLong startTime = new AtomicLong(System.currentTimeMillis());
@@ -83,11 +83,11 @@ public class SchedulerFacadeService {
                                 log.info(
                                         "🔨🔨 --------------------Task Status-------------------- 🔨🔨");
                                 log.debug(
-                                        "Task Status - Request ID: {}, Target: {}/{}/{}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}",
+                                        "Task Status - Request ID: {}, VM: {}/{}/{}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}",
                                         requestId,
                                         nsId,
                                         mciId,
-                                        targetId,
+                                        vmId,
                                         agent,
                                         method,
                                         currentTask.getId(),
@@ -102,19 +102,19 @@ public class SchedulerFacadeService {
                                 if (currentTime - startTime.get()
                                         > TimeUnit.MINUTES.toMillis(maxWaitMinutes)) {
                                     log.warn(
-                                            "Task timed out after {} minutes. Resetting status to IDLE. Target: {}/{}/{}, Agent: {}",
+                                            "Task timed out after {} minutes. Resetting status to IDLE. VM: {}/{}/{}, Agent: {}",
                                             maxWaitMinutes,
                                             nsId,
                                             mciId,
-                                            targetId,
+                                            vmId,
                                             agent);
 
                                     if (Objects.requireNonNull(agent) == Agent.TELEGRAF) {
-                                        targetService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateMonitoringAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     } else if (agent == Agent.FLUENT_BIT) {
-                                        targetService.updateLogAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateLogAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     }
 
                                     throw new TimeoutException(
@@ -137,19 +137,19 @@ public class SchedulerFacadeService {
 
                                 if (action != null) {
                                     log.debug(
-                                            "Updating Agent History - Request ID: {}, Target: {}/{}/{}, Agent: {}, Action: {}",
+                                            "Updating Agent History - Request ID: {}, VM: {}/{}/{}, Agent: {}, Action: {}",
                                             requestId,
                                             nsId,
                                             mciId,
-                                            targetId,
+                                            vmId,
                                             agent,
                                             action);
                                     if (agent == Agent.TELEGRAF) {
-                                        targetService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateMonitoringAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     } else if (agent == Agent.FLUENT_BIT) {
-                                        targetService.updateLogAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateLogAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     }
 
                                     log.info(
@@ -170,20 +170,20 @@ public class SchedulerFacadeService {
                                 AgentAction action = getAgentActionFailed(method, agent);
                                 if (action != null) {
                                     log.debug(
-                                            "Updating Agent History - Request ID: {}, Target: {}/{}/{}, Agent: {}, Action: {}",
+                                            "Updating Agent History - Request ID: {}, VM: {}/{}/{}, Agent: {}, Action: {}",
                                             requestId,
                                             nsId,
                                             mciId,
-                                            targetId,
+                                            vmId,
                                             agent,
                                             action);
 
                                     if (agent == Agent.TELEGRAF) {
-                                        targetService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateMonitoringAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     } else if (agent == Agent.FLUENT_BIT) {
-                                        targetService.updateLogAgentTaskStatus(
-                                                nsId, mciId, targetId, TargetAgentTaskStatus.IDLE);
+                                        vmService.updateLogAgentTaskStatus(
+                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     }
                                 }
                             }

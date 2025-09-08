@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.manager.service.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.mcmp.o11ymanager.manager.dto.target.AccessInfoDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.AccessInfoDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.manager.exception.agent.SemaphoreException;
@@ -165,10 +165,9 @@ public class SemaphoreDomainService {
                 .addVariable("site_code", deploySiteCode)
                 .addVariable("request_id", requestInfo.getRequestId())
                 .addVariable("target_host", ip)
-                .addVariable("target_port", String.valueOf(port))
-                .addVariable("target_user", user)
-                .addVariable(
-                        "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+                .addVariable("vm_port", String.valueOf(port))
+                .addVariable("vm_user", user)
+                .addVariable("vm_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
     }
 
     private Task createTask(Integer templateId, Environment environment)

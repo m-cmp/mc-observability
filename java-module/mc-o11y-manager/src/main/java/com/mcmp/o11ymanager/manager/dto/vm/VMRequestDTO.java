@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.manager.dto.target;
+package com.mcmp.o11ymanager.manager.dto.vm;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -12,9 +12,9 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TargetRequestDTO {
+public class VMRequestDTO {
 
-    @NotBlank(message = "Target name은 필수입니다") private String name;
+    @NotBlank(message = "VM name은 필수입니다") private String name;
 
     private String description;
 }

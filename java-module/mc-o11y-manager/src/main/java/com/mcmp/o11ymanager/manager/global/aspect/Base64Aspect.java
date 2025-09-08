@@ -75,28 +75,28 @@ public class Base64Aspect {
                         .toList();
 
         for (var field : fields) {
-            var targetMethodName = toUppercase(field.getName());
+            var vmMethodName = toUppercase(field.getName());
             var methods = Arrays.stream(response.getClass().getDeclaredMethods()).toList();
 
-            var targetGetMethod = findMethod(methods, "get" + targetMethodName);
-            var targetSetMethod = findMethod(methods, "set" + targetMethodName);
+            var vmGetMethod = findMethod(methods, "get" + vmMethodName);
+            var vmSetMethod = findMethod(methods, "set" + vmMethodName);
 
-            if (targetGetMethod.isEmpty()) {
+            if (vmGetMethod.isEmpty()) {
                 continue;
             }
 
-            var getInvoke = targetGetMethod.get().invoke(response);
+            var getInvoke = vmGetMethod.get().invoke(response);
             if (getInvoke == null) {
                 continue;
             }
 
-            if (targetSetMethod.isPresent() && String.class.equals(getInvoke.getClass())) {
+            if (vmSetMethod.isPresent() && String.class.equals(getInvoke.getClass())) {
                 var plainText = (String) getInvoke;
                 if (!StringUtils.isBlank(plainText)) {
                     var encodedText =
                             Base64.getEncoder()
                                     .encodeToString(plainText.getBytes(StandardCharsets.UTF_8));
-                    targetSetMethod.get().invoke(response, encodedText);
+                    vmSetMethod.get().invoke(response, encodedText);
                 }
             } else if (ArrayList.class.equals(getInvoke.getClass())) {
                 var list = (List<?>) getInvoke;
@@ -111,21 +111,21 @@ public class Base64Aspect {
 
     private void processFields(Object obj, List<Field> fields) throws Exception {
         for (var field : fields) {
-            var targetMethodName = toUppercase(field.getName());
+            var vmMethodName = toUppercase(field.getName());
             var methods = Arrays.stream(obj.getClass().getDeclaredMethods()).toList();
 
-            var targetGetMethod = findMethod(methods, "get" + targetMethodName);
-            var targetSetMethod = findMethod(methods, "set" + targetMethodName);
+            var vmGetMethod = findMethod(methods, "get" + vmMethodName);
+            var vmSetMethod = findMethod(methods, "set" + vmMethodName);
 
-            if (targetGetMethod.isPresent() && targetSetMethod.isPresent()) {
-                var plainText = (String) targetGetMethod.get().invoke(obj);
+            if (vmGetMethod.isPresent() && vmSetMethod.isPresent()) {
+                var plainText = (String) vmGetMethod.get().invoke(obj);
                 if (!StringUtils.isBlank(plainText)) {
                     var decodedText =
                             new String(
                                     Base64.getDecoder()
                                             .decode(plainText.getBytes(StandardCharsets.UTF_8)),
                                     StandardCharsets.UTF_8);
-                    targetSetMethod.get().invoke(obj, decodedText);
+                    vmSetMethod.get().invoke(obj, decodedText);
                 }
             }
         }
@@ -135,9 +135,9 @@ public class Base64Aspect {
         return methods.stream().filter(method -> method.getName().equals(methodName)).findFirst();
     }
 
-    private static String toUppercase(String targetStr) {
-        return targetStr.length() > 1
-                ? targetStr.substring(0, 1).toUpperCase() + targetStr.substring(1)
-                : targetStr.substring(0, 1).toUpperCase();
+    private static String toUppercase(String vmStr) {
+        return vmStr.length() > 1
+                ? vmStr.substring(0, 1).toUpperCase() + vmStr.substring(1)
+                : vmStr.substring(0, 1).toUpperCase();
     }
 }

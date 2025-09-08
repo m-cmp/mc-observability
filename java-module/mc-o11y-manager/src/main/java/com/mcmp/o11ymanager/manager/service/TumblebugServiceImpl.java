@@ -26,18 +26,18 @@ public class TumblebugServiceImpl implements TumblebugService {
     private String sitecode;
 
     @Override
-    public String executeCommand(String nsId, String mciId, String targetId, String command) {
+    public String executeCommand(String nsId, String mciId, String vmId, String command) {
         TumblebugCmd cmd = new TumblebugCmd();
         cmd.setCommand(List.of(command));
 
-        TumblebugMCI.Vm vm = getVm(nsId, mciId, targetId);
+        TumblebugMCI.Vm vm = getVm(nsId, mciId, vmId);
         if (vm == null) {
             throw new RuntimeException("FAILED TO GET VM");
         }
 
         cmd.setUserName(vm.getVmUserName());
 
-        Object response = tumblebugPort.sendCommand(nsId, mciId, targetId, cmd);
+        Object response = tumblebugPort.sendCommand(nsId, mciId, vmId, cmd);
 
         try {
             JsonNode root = objectMapper.valueToTree(response);
@@ -55,9 +55,9 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public boolean isConnectedVM(String nsId, String mciId, String targetId) {
+    public boolean isConnectedVM(String nsId, String mciId, String vmId) {
         try {
-            String output = executeCommand(nsId, mciId, targetId, "echo hello");
+            String output = executeCommand(nsId, mciId, vmId, "echo hello");
             return "hello".equalsIgnoreCase(output.trim());
         } catch (Exception e) {
             return false;
@@ -65,12 +65,12 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public TumblebugMCI.Vm getVm(String nsId, String mciId, String targetId) {
-        return tumblebugPort.getVM(nsId, mciId, targetId);
+    public TumblebugMCI.Vm getVm(String nsId, String mciId, String vmId) {
+        return tumblebugPort.getVM(nsId, mciId, vmId);
     }
 
     @Override
-    public boolean isServiceActive(String nsId, String mciId, String targetId, Agent agent) {
+    public boolean isServiceActive(String nsId, String mciId, String vmId, Agent agent) {
         log.info(
                 ">>> isServiceActive called with nsId: {}, mciId: {}, agent: {}",
                 nsId,
@@ -83,7 +83,7 @@ public class TumblebugServiceImpl implements TumblebugService {
 
         log.info("==================IS ACTIVE ? INACTIVE CMD : {}", command);
 
-        String result = executeCommand(nsId, mciId, targetId, command);
+        String result = executeCommand(nsId, mciId, vmId, command);
         String trimmed = result.trim();
 
         log.info(
@@ -102,7 +102,7 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public String restart(String nsId, String mciId, String targetId, Agent agent) {
+    public String restart(String nsId, String mciId, String vmId, Agent agent) {
 
         log.info("=================RESTART AGENT======================");
 
@@ -111,7 +111,7 @@ public class TumblebugServiceImpl implements TumblebugService {
                         "systemctl restart cmp-%s-%s.service",
                         agent.name().toLowerCase().replace("_", "-"), sitecode.toLowerCase());
 
-        String result = executeCommand(nsId, mciId, targetId, command).trim();
+        String result = executeCommand(nsId, mciId, vmId, command).trim();
 
         if (!result.isEmpty()) {
             log.warn("❌ Agent Restart Failed - Agent: {}, Result: {}", agent, result);

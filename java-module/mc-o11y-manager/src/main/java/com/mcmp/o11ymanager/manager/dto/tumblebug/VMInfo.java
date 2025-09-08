@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class TargetInfo {
+public class VMInfo {
 
     @JsonProperty("ns_id")
     private String nsId;

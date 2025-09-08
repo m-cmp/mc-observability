@@ -3,17 +3,15 @@ package com.mcmp.o11ymanager.manager.facade;
 import static com.mcmp.o11ymanager.manager.service.domain.SemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS;
 
 import com.mcmp.o11ymanager.manager.dto.host.ConfigDTO;
-import com.mcmp.o11ymanager.manager.dto.target.AccessInfoDTO;
-import com.mcmp.o11ymanager.manager.dto.target.ResultDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugSshKey;
+import com.mcmp.o11ymanager.manager.dto.vm.AccessInfoDTO;
+import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.manager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.manager.global.annotation.Base64Decode;
-import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.manager.port.TumblebugPort;
-import com.mcmp.o11ymanager.manager.service.interfaces.TargetService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AgentFacadeService {
 
-    private final TargetService targetService;
-    private final RequestInfo requestInfo;
-
     private static final Lock semaphoreInstallTemplateCurrentCountLock = new ReentrantLock();
 
     private int semaphoreInstallTemplateCurrentCount = 0;
@@ -46,13 +41,13 @@ public class AgentFacadeService {
             new ConcurrentHashMap<>();
     private final TumblebugService tumblebugService;
 
-    private ReentrantLock getAgentLock(String nsId, String mciId, String targetId) {
-        String lockKey = nsId + "-" + mciId + "-" + targetId;
+    private ReentrantLock getAgentLock(String nsId, String mciId, String vmId) {
+        String lockKey = nsId + "-" + mciId + "-" + vmId;
         return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
     }
 
-    private AccessInfoDTO getAccessInfo(String nsId, String mciId, String targetId) {
-        TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, targetId);
+    private AccessInfoDTO getAccessInfo(String nsId, String mciId, String vmId) {
+        TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, vmId);
         TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
 
         if (sshKey == null) {
@@ -75,22 +70,22 @@ public class AgentFacadeService {
     }
 
     public AgentServiceStatus getAgentServiceStatus(
-            String nsId, String mciId, String targetId, Agent agent) {
-        boolean isActive = tumblebugService.isServiceActive(nsId, mciId, targetId, agent);
+            String nsId, String mciId, String vmId, Agent agent) {
+        boolean isActive = tumblebugService.isServiceActive(nsId, mciId, vmId, agent);
         return isActive ? AgentServiceStatus.ACTIVE : AgentServiceStatus.INACTIVE;
     }
 
-    public List<ResultDTO> install(String nsId, String mciId, String targetId) {
+    public List<ResultDTO> install(String nsId, String mciId, String vmId) {
 
         log.info(
-                "===================================start Agent Install - targetId: {}===========================================",
-                targetId);
+                "===================================start Agent Install - vmId: {}===========================================",
+                vmId);
 
         List<ResultDTO> results = new ArrayList<>();
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
+        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
 
         try {
-            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
+            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
 
             // 1) Lock 걸기
             int templateCount;
@@ -105,16 +100,16 @@ public class AgentFacadeService {
             // 2-1 ) Telegraf 설치
             agentLock.lock();
 
-            telegrafFacadeService.install(nsId, mciId, targetId, accessInfo, templateCount);
+            telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 2-2 ) FluentBit 설치
-            fluentBitFacadeService.install(nsId, mciId, targetId, accessInfo, templateCount);
+            fluentBitFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
 
@@ -123,7 +118,7 @@ public class AgentFacadeService {
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
@@ -137,12 +132,12 @@ public class AgentFacadeService {
     }
 
     @Transactional
-    public List<ResultDTO> update(String nsId, String mciId, String targetId) {
+    public List<ResultDTO> update(String nsId, String mciId, String vmId) {
         List<ResultDTO> results = new ArrayList<>();
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
+        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
 
         try {
-            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
+            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
 
             // 1) Lock 걸기
             int templateCount;
@@ -156,16 +151,16 @@ public class AgentFacadeService {
             // 2 ) 에이전트 업데이트
             // 2-1 ) Telegraf 업데이트
             agentLock.lock();
-            telegrafFacadeService.update(nsId, mciId, targetId, accessInfo, templateCount);
+            telegrafFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 2-1 ) FluentBit 업데이트
-            fluentBitFacadeService.update(nsId, mciId, targetId, accessInfo, templateCount);
+            fluentBitFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
         } catch (Exception e) {
@@ -173,7 +168,7 @@ public class AgentFacadeService {
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
@@ -206,12 +201,12 @@ public class AgentFacadeService {
 
     @Transactional
     @Base64Decode(ConfigDTO.class)
-    public List<ResultDTO> uninstall(String nsId, String mciId, String targetId) {
+    public List<ResultDTO> uninstall(String nsId, String mciId, String vmId) {
 
         List<ResultDTO> results = new ArrayList<>();
 
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, targetId);
-        AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, targetId);
+        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
+        AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
 
         try {
             int templateCount;
@@ -225,16 +220,16 @@ public class AgentFacadeService {
             // 4 ) 에이전트 제거
             // 4-1 ) Telegraf 제거
             agentLock.lock();
-            telegrafFacadeService.uninstall(nsId, mciId, targetId, accessInfo, templateCount);
+            telegrafFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 4-1 ) FluentBit 제거
-            fluentBitFacadeService.uninstall(nsId, mciId, targetId, accessInfo, templateCount);
+            fluentBitFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
         } catch (Exception e) {
@@ -242,7 +237,7 @@ public class AgentFacadeService {
                     ResultDTO.builder()
                             .nsId(nsId)
                             .mciId(mciId)
-                            .targetId(targetId)
+                            .vmId(vmId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
@@ -261,21 +256,21 @@ public class AgentFacadeService {
     //  public List<ResultDTO> updateTelegrafConfig(ConfigDTO configDTO) {
     //
     //
-    //    String targetId = configDTO.getTargetId();
+    //    String vmId = configDTO.getVmId();
     //    String nsId = configDTO.getNsId();
     //    String mciId = configDTO.getMciId();
     //
     //    List<ResultDTO> results = new ArrayList<>();
     //    // TODO : telegraf만 lock 거는 메소드 추가 필요한지
-    //      ReentrantLock monitoringLock = getAgentLock(nsId, mciId, targetId);
+    //      ReentrantLock monitoringLock = getAgentLock(nsId, mciId, vmId);
     //
     //      try {
     //        monitoringLock.lock();
     //
     //        // 2) 호스트 상태 확인
-    //        targetService.isIdleMonitoringAgent(nsId, mciId, targetId);
+    //        vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
     //        // 3) 에이전트 상태 확인
-    //        targetService.isMonitoringAgentInstalled(nsId, mciId, targetId);
+    //        vmService.isMonitoringAgentInstalled(nsId, mciId, vmId);
     //
     //        // 4) 템플릿 카운트
     //        int templateCount;
@@ -289,12 +284,12 @@ public class AgentFacadeService {
     //
     //        // 6) 파일 수정
     //
-    //        telegrafConfigFacadeService.updateTelegrafConfig(target, configDTO.getContent(),
+    //        telegrafConfigFacadeService.updateTelegrafConfig(vm, configDTO.getContent(),
     //            configDTO.getPath());
     //
     //        // 7) Semaphore 수정 요청
     //        Task task;
-    //        HostConnectionDTO hostConnectionInfo = targetService.getHostConnectionInfo(hostId);
+    //        HostConnectionDTO hostConnectionInfo = vmService.getHostConnectionInfo(hostId);
     //        String remoteConfigPath =
     //            fileFacadeService.getHostConfigTelegrafRemotePath() + "/" + configDTO.getPath();
     //
@@ -307,7 +302,7 @@ public class AgentFacadeService {
     //        }
     //
     //        // 8) 호스트 상태 변경
-    //        targetService.updateMonitoringAgentTaskStatus(hostId,
+    //        vmService.updateMonitoringAgentTaskStatus(hostId,
     // HostAgentTaskStatus.UPDATING_CONFIG);
     //
     //
@@ -355,9 +350,9 @@ public class AgentFacadeService {
     //        loggingLock.lock();
     //
     //        // 2) 호스트 상태 확인
-    //        targetService.isIdleLogAgent(hostId);
+    //        vmService.isIdleLogAgent(hostId);
     //        // 3) 에이전트 상태 확인
-    //        targetService.isLogAgentInstalled(hostId);
+    //        vmService.isLogAgentInstalled(hostId);
     //
     //        // 4) 템플릿 카운트
     //        int templateCount;
@@ -369,7 +364,7 @@ public class AgentFacadeService {
     //        }
     //
     //        // 5) 호스트 상태 변경
-    //        targetService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
+    //        vmService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.PREPARING);
     //
     //        // 6) 파일 수정
     //        fluentBitConfigFacadeService.updateFluentBitConfig(hostId, configDTO.getContent(),
@@ -377,7 +372,7 @@ public class AgentFacadeService {
     //
     //        // 7) Semaphore 수정 요청
     //        Task task;
-    //        HostConnectionDTO hostConnectionInfo = targetService.getHostConnectionInfo(hostId);
+    //        HostConnectionDTO hostConnectionInfo = vmService.getHostConnectionInfo(hostId);
     //        String remoteConfigPath =
     //            fileFacadeService.getHostConfigFluentBitRemotePath() + "/" + configDTO.getPath();
     //
@@ -390,7 +385,7 @@ public class AgentFacadeService {
     //        }
     //
     //        // 8) 호스트 상태 변경
-    //        targetService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
+    //        vmService.updateLogAgentTaskStatus(hostId, HostAgentTaskStatus.UPDATING_CONFIG);
     //
     //
     //        // 10) 스케줄러 등록

@@ -1,8 +1,8 @@
 package com.mcmp.o11ymanager.manager.service;
 
-import com.mcmp.o11ymanager.manager.entity.TargetEntity;
-import com.mcmp.o11ymanager.manager.model.host.TargetAgentTaskStatus;
-import com.mcmp.o11ymanager.manager.service.domain.TargetDomainService;
+import com.mcmp.o11ymanager.manager.entity.VMEntity;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.service.domain.VMDomainService;
 import com.mcmp.o11ymanager.manager.service.interfaces.StatusService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -15,57 +15,54 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class StatusServiceImpl implements StatusService {
     private static final Lock agentTaskStatusLock = new ReentrantLock();
-    private final TargetDomainService targetDomainService;
+    private final VMDomainService vmDomainService;
 
     @Override
-    public void updateTargetAgentTaskStatus(
+    public void updateVMAgentTaskStatus(
             String requestId,
             Integer taskId,
-            TargetAgentTaskStatus hostAgentTaskStatus,
+            VMAgentTaskStatus hostAgentTaskStatus,
             String nsId,
             String mciId,
-            String targetId) {
+            String vmId) {
         log.debug(
-                "Updating Agent Task Status - Request ID: {}, Target: {}/{}/{}, Agent Task Status: {}",
+                "Updating Agent Task Status - Request ID: {}, VM: {}/{}/{}, Agent Task Status: {}",
                 requestId,
                 nsId,
                 mciId,
-                targetId,
+                vmId,
                 hostAgentTaskStatus);
 
-        TargetEntity updateTarget =
-                TargetEntity.builder().nsId(nsId).mciId(mciId).targetId(targetId).build();
+        VMEntity updateVM = VMEntity.builder().nsId(nsId).mciId(mciId).vmId(vmId).build();
 
-        updateTarget.setMonitoringAgentTaskStatus(hostAgentTaskStatus);
-        updateTarget.setLogAgentTaskStatus(hostAgentTaskStatus);
+        updateVM.setMonitoringAgentTaskStatus(hostAgentTaskStatus);
+        updateVM.setLogAgentTaskStatus(hostAgentTaskStatus);
 
-        if (hostAgentTaskStatus == TargetAgentTaskStatus.IDLE) {
-            updateTarget.setTargetMonitoringAgentTaskId("");
-            updateTarget.setTargetLogAgentTaskId("");
+        if (hostAgentTaskStatus == VMAgentTaskStatus.IDLE) {
+            updateVM.setVmMonitoringAgentTaskId("");
+            updateVM.setVmLogAgentTaskId("");
         } else if (taskId != null) {
-            updateTarget.setTargetMonitoringAgentTaskId(taskId.toString());
-            updateTarget.setTargetLogAgentTaskId(taskId.toString());
+            updateVM.setVmMonitoringAgentTaskId(taskId.toString());
+            updateVM.setVmLogAgentTaskId(taskId.toString());
         }
 
-        targetDomainService.updateTarget(updateTarget);
+        vmDomainService.updateVM(updateVM);
     }
 
     @Override
-    public void resetTargetAgentTaskStatus(
-            String requestId, String nsId, String mciId, String targetId) {
+    public void resetVMAgentTaskStatus(String requestId, String nsId, String mciId, String vmId) {
         if (nsId == null
                 || nsId.isEmpty()
                 || mciId == null
                 || mciId.isEmpty()
-                || targetId == null
-                || targetId.isEmpty()) {
+                || vmId == null
+                || vmId.isEmpty()) {
             return;
         }
 
         try {
             agentTaskStatusLock.lock();
-            updateTargetAgentTaskStatus(
-                    requestId, null, TargetAgentTaskStatus.IDLE, nsId, mciId, targetId);
+            updateVMAgentTaskStatus(requestId, null, VMAgentTaskStatus.IDLE, nsId, mciId, vmId);
         } finally {
             agentTaskStatusLock.unlock();
         }
