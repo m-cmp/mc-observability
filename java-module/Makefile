@@ -7,6 +7,13 @@ PID_FILE_MANAGER := $(MANAGER).pid
 
 all: build
 
+lint: ## Fix lint warnings
+	@echo Fix lint warnings...
+	@sh gradlew spotlessApply -x test
+	@git diff > .diff_last_build
+	@git rev-parse HEAD > .git_hash_last_build
+	@echo Lint warnings are fixed!
+
 build: ## Build jar files
 	@echo Building...
 	@sh gradlew build -x test
