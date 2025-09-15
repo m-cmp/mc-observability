@@ -14,6 +14,6 @@ services:
     container_name: influxdb-v1-mcp
     env_file: .env
     ports:
-      - "9003:9003"
+      - "8002:8002"
     # depends_on:
     #   - influxdb-server

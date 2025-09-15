@@ -15,7 +15,7 @@ mcp = FastMCP(
     description="실행 경로에 관계없이 안정적으로 작동하는, 자동 탐색 기반의 MCP 서버입니다.",
     version="6.1.0",
     host="0.0.0.0",
-    port=8000,
+    port=8002,
 )
 
 client = InfluxDBClient()
