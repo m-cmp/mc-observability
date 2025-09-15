@@ -14,8 +14,8 @@ async def init_global_mcp():
     """다중 MCP 환경을 초기화합니다.
 
     URL 우선순위:
-    1) 환경변수: MCP_MARIADB_URL, MCP_INFLUXDB_URL
-    2) config.yaml: log_analysis.mcp.mcp_mariadb_url, log_analysis.mcp.mcp_influxdb_url
+    1) 환경변수: MCP_MARIADB_URL, MCP_INFLUXDB_URL, MCP_GRAFANA_URL
+    2) config.yaml: log_analysis.mcp.mcp_mariadb_url, log_analysis.mcp.mcp_influxdb_url, log_analysis.mcp.mcp_grafana_url
     설정이 없으면 해당 MCP는 스킵합니다.
     """
     global _global_mcp_manager
@@ -41,6 +41,14 @@ async def init_global_mcp():
         logger.info(f"Configured InfluxDB MCP: {influxdb_mcp_url}")
     else:
         logger.warning("InfluxDB MCP URL not set. Skipping InfluxDB MCP initialization.")
+
+    # Grafana MCP 추가 (환경변수 우선)
+    grafana_mcp_url = os.getenv("MCP_GRAFANA_URL") or mcp_cfg.get("mcp_grafana_url")
+    if grafana_mcp_url:
+        _global_mcp_manager.add_grafana_mcp("grafana", grafana_mcp_url)
+        logger.info(f"Configured Grafana MCP: {grafana_mcp_url}")
+    else:
+        logger.warning("Grafana MCP URL not set. Skipping Grafana MCP initialization.")
 
     # 모든 MCP 클라이언트 시작
     await _global_mcp_manager.start_all()
