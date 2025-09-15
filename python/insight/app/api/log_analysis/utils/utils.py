@@ -29,9 +29,9 @@ class LogAnalysisService:
 
     def __init__(self, db: Session = None, mcp_context=None):
         self.repo = LogAnalysisRepository(db=db)
-        # mcp_context는 이제 MCPManager 인스턴스를 받음
+        # mcp_context now receives MCPManager instance
         if isinstance(mcp_context, MCPManager):
-            # MCPManager를 MCPContext로 래핑
+            # Wrap MCPManager with MCPContext
             self.mcp_context = MCPContext(mcp_context)
         else:
             self.mcp_context = mcp_context
@@ -137,7 +137,7 @@ class LogAnalysisService:
         query_result = await self.mcp_context.aquery(session_id, message)
         result = query_result["messages"][-1].content
 
-        # 메타데이터 요약 가져오기 (없으면 None)
+        # Get metadata summary (None if not available)
         metadata_summary = None
         try:
             metadata_summary = self.mcp_context.get_metadata_summary()
@@ -150,7 +150,7 @@ class LogAnalysisService:
             and not metadata_summary.get("tool_calls_count")
             and not metadata_summary.get("databases_accessed")
         ):
-            # 가시성 확인을 위한 강제 메타데이터 (임시)
+            # Forced metadata for visibility confirmation (temporary)
             metadata_model = QueryMetadata(
                 queries_executed=["SHOW DATABASES"],
                 total_execution_time=0.85,

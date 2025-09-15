@@ -35,21 +35,21 @@ class ResBodyLogAnalysisSessions(BaseResponse):
 
 
 class QueryMetadata(BaseModel):
-    """쿼리 실행 메타데이터"""
+    """Query execution metadata"""
 
-    queries_executed: List[str] = Field(default_factory=list, description="실행된 쿼리 목록")
-    total_execution_time: float = Field(default=0.0, description="총 실행 시간 (초)")
-    tool_calls_count: int = Field(default=0, description="도구 호출 횟수")
-    databases_accessed: List[str] = Field(default_factory=list, description="접근한 데이터베이스 목록")
+    queries_executed: List[str] = Field(default_factory=list, description="List of executed queries")
+    total_execution_time: float = Field(default=0.0, description="Total execution time (seconds)")
+    tool_calls_count: int = Field(default=0, description="Number of tool calls")
+    databases_accessed: List[str] = Field(default_factory=list, description="List of accessed databases")
 
 
 class Message(BaseModel):
     message_type: str
     message: str
-    # 쿼리 실행 메타데이터 (없을 수도 있으므로 Optional)
-    metadata: Optional[QueryMetadata] = Field(default=None, description="쿼리 실행 메타데이터")
+    # Query execution metadata (optional, may not be present)
+    metadata: Optional[QueryMetadata] = Field(default=None, description="Query execution metadata")
 
-    # Pydantic v2 설정: 필드 할당시 검증 활성화
+    # Pydantic v2 configuration: Enable validation on field assignment
     model_config = {"validate_assignment": True}
 
 
