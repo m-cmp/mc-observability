@@ -1,0 +1,28 @@
+{
+  "name": "influxdb_query_executor",
+  "description": "사용자가 시스템 성능 메트릭(CPU, 메모리 등)에 대해 질문할 때, InfluxQL 쿼리를 생성하고 실행하여 실제 데이터를 가져오는 데 사용하는 필수 도구. 반드시 이 도구를 호출하여 답변의 근거를 마련해야 한다.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "influxql_query": {
+        "type": "string",
+        "description": "실행할 정확한 InfluxQL 쿼리 문장. 예를 들어, 'SELECT mean(\"usage_percent\") FROM \"cpu\"'"
+      }
+    },
+    "required": [
+      "influxql_query"
+    ]
+  },
+  "action": {
+    "type": "http",
+    "endpoint": {
+      "url": "http://localhost:8001/query-stream",
+      "method": "POST",
+      "media_type": "application/json"
+    }
+  },
+  "output": {
+    "format": "text/event-stream",
+    "description": "쿼리 결과가 JSON 객체의 스트림으로 반환됩니다."
+  }
+}

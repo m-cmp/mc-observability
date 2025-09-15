@@ -1,0 +1,13 @@
+# .gitignore
+.venv/
+__pycache__/
+logs/*
+src/logs/*
+*.pyc
+*.pyo
+*.pyd
+.env
+uv.lock
+.DS_Store
+.env
+.env
