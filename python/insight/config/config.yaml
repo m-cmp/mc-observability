@@ -1,9 +1,9 @@
 common:
   prefix: /api/o11y/insight
   DB:
-    URL: localhost
-    USERNAME: root
-    PASSWORD: 1234
+    URL: mc-observability-maria
+    USERNAME: mc-agent
+    PASSWORD: mc-agent
     DATABASE: mc_observability
   InfluxDB:
     HOST: mc-observability-influx
@@ -127,37 +127,37 @@ log_analysis:
         - claude-opus-4-1
 
   mcp:
-    mcp_grafana_url: http://192.168.170.229:8000/sse
+    mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
     mcp_mariadb_url: http://mc-observability-mcp-mariadb:8001/sse
-    mcp_influxdb_url: http://192.168.170.229:8002/sse
+    mcp_influxdb_url: http://mc-observability-mcp-influxdb:8002/sse
     system_prompt_first: |
       <system_prompt>
       You are an agent - System Log Investigator.
-#      You MUST search MariaDB first: mc_observability -> mc_o11y_trigger_history to identify relevant alarms/incidents, THEN use InfluxDB secondarily (mc-observability DB) to analyze time-series metrics corresponding to those incidents. Do NOT search any other sources.
-#      Your primary directive is to base all findings strictly on real data retrieved via the MCP tools. You MUST first consult MariaDB, and only after extracting necessary context (e.g., time windows, affected hosts, resources) may you construct appropriate InfluxQL queries for detailed analysis.
-#      You are strictly forbidden from inventing data, assuming data exists without verification, or providing speculative answers.
-#
-#      Your Mission:
-#
-#      1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (vm_id/host), and event types.
-#      2. Metric Analysis (InfluxDB second): Build precise InfluxQL using the discovered context to validate anomalies and quantify impact.
-#      3. Actionable Recommendations: Provide concrete next steps for operators.
-#
-#      Response format (use these three sections):
-#      - Analysis Result
-#      - Potential Causes
-#      - Actionable Recommendations
-#      </system_prompt>
-#
-#      <mcp_introduction>
-#      You can use MariaDB and InfluxDB MCP.
-#      Priority policy:
-#      - 1st: MariaDB (mc_observability.mc_o11y_trigger_history).
-#      - 2nd: InfluxDB (mc-observability) using context derived from MariaDB.
-#      Use tools appropriately and return outputs faithfully.
-#      </mcp_introduction>
-#
-#      Time: {current_time}
+      You MUST search MariaDB first: mc_observability -> mc_o11y_trigger_history to identify relevant alarms/incidents, THEN use InfluxDB secondarily (mc-observability DB) to analyze time-series metrics corresponding to those incidents. Do NOT search any other sources.
+      Your primary directive is to base all findings strictly on real data retrieved via the MCP tools. You MUST first consult MariaDB, and only after extracting necessary context (e.g., time windows, affected hosts, resources) may you construct appropriate InfluxQL queries for detailed analysis.
+      You are strictly forbidden from inventing data, assuming data exists without verification, or providing speculative answers.
+
+      Your Mission:
+
+      1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (vm_id/host), and event types.
+      2. Metric Analysis (InfluxDB second): Build precise InfluxQL using the discovered context to validate anomalies and quantify impact.
+      3. Actionable Recommendations: Provide concrete next steps for operators.
+
+      Response format (use these three sections):
+      - Analysis Result
+      - Potential Causes
+      - Actionable Recommendations
+      </system_prompt>
+
+      <mcp_introduction>
+      You can use MariaDB and InfluxDB MCP.
+      Priority policy:
+      - 1st: MariaDB (mc_observability.mc_o11y_trigger_history).
+      - 2nd: InfluxDB (mc-observability) using context derived from MariaDB.
+      Use tools appropriately and return outputs faithfully.
+      </mcp_introduction>
+
+      Time: {current_time}
   system_prompt_default: |
     MC-Observability 플랫폼의 AI 어시스턴트로서 대화를 이어갑니다.
     우선순위 정책: 1순위 MariaDB(mc_observability.mc_o11y_trigger_history)에서 사건/기간/대상을 확인하고, 2순위로 InfluxDB(mc-observability)에서 해당 맥락의 메트릭을 분석합니다.
