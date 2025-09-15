@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from app.core.mcp.influxdb_mcp_context import InfluxDBMCPContext
 from app.core.mcp.mariadb_mcp_context import MariaDBMCPContext
+from app.core.mcp.grafana_mcp_context import GrafanaMCPContext
 from app.core.mcp.mcp_context import MCPContext
 from langchain_mcp_adapters.tools import load_mcp_tools
 
@@ -25,6 +26,12 @@ class MCPManager:
     def add_influxdb_mcp(self, name: str, mcp_url: str):
         """InfluxDB MCP 클라이언트를 추가합니다."""
         client = InfluxDBMCPContext(mcp_url)
+        self.mcp_clients[name] = client
+        return client
+
+    def add_grafana_mcp(self, name: str, mcp_url: str):
+        """Grafana MCP 클라이언트를 추가합니다."""
+        client = GrafanaMCPContext(mcp_url)
         self.mcp_clients[name] = client
         return client
 

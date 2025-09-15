@@ -10,12 +10,12 @@ class OpenAIClient:
         self.llm = None
         self.agent = None
 
-    def setup(self, model):
+    def setup(self, model, streaming=False):
         self.model = model
         if self.base_url:
-            self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, base_url=self.base_url, streaming=True)
+            self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, base_url=self.base_url, streaming=streaming)
         else:
-            self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, streaming=True)
+            self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, streaming=streaming)
 
     def bind_tools(self, tools, memory):
         self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)

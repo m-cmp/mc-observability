@@ -47,7 +47,7 @@ class MCPContext:
             "databases_accessed": list(self.query_metadata["databases_accessed"]),
         }
 
-    async def get_agent(self, provider: str, model_name: str, provider_credential: str):
+    async def get_agent(self, provider: str, model_name: str, provider_credential: str, streaming: bool = False):
         try:
             if not provider_credential:
                 msg = f"Missing credential for provider '{provider}'."
@@ -67,7 +67,12 @@ class MCPContext:
                 logger.error(msg)
                 raise ValueError(msg)
 
-            self.llm_client.setup(model=model_name)
+            # OpenAI 계열 클라이언트에만 streaming 파라미터 전달
+            if hasattr(self.llm_client, 'setup'):
+                if provider in ["openai", "google", "anthropic"]:
+                    self.llm_client.setup(model=model_name, streaming=streaming)
+                else:
+                    self.llm_client.setup(model=model_name)
 
             self.tools = self.mcp_manager.get_all_tools() or []
             logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
@@ -234,10 +239,22 @@ class MCPContext:
                                     "list_databases",
                                     "list_tables",
                                 }
+                                grafana_tools = {
+                                    "query_loki_logs",
+                                    "list_loki_label_names",
+                                    "list_loki_label_values",
+                                    "query_loki_stats",
+                                    "list_datasources",
+                                    "get_datasource_by_uid",
+                                    "get_datasource_by_name",
+                                    "generate_deeplink",
+                                }
                                 if ("influx" in name_lower) or (call_name in influx_tools):
                                     inferred_db = "InfluxDB"
                                 elif ("maria" in name_lower) or ("mysql" in name_lower) or (call_name in maria_tools):
                                     inferred_db = "MariaDB"
+                                elif ("grafana" in name_lower) or (call_name in grafana_tools):
+                                    inferred_db = "Grafana"
 
                             args_dict = None
                             if isinstance(tool_call, dict):

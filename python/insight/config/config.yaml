@@ -156,7 +156,7 @@ log_analysis:
       - 2nd: InfluxDB (mc-observability) using context derived from MariaDB.
       Use tools appropriately and return outputs faithfully.
       </mcp_introduction>
-      
+
       Time: {current_time}
   system_prompt_default: |
     MC-Observability 플랫폼의 AI 어시스턴트로서 대화를 이어갑니다.
