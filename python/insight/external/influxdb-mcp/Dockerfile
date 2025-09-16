@@ -14,6 +14,6 @@ COPY . /app
 
 RUN uv sync
 
-EXPOSE 8000
+EXPOSE 8002
 
-CMD ["uv", "run", "src/server.py", "--host", "0.0.0.0", "--port", "8000", "--transport", "sse"]
+CMD ["uv", "run", "src/server.py", "--host", "0.0.0.0", "--port", "8002", "--transport", "sse"]

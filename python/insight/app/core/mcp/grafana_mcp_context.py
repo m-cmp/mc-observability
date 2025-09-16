@@ -6,7 +6,7 @@ from mcp.client.sse import sse_client
 logger = logging.getLogger(__name__)
 
 
-class MariaDBMCPContext:
+class GrafanaMCPContext:
     def __init__(self, mcp_url):
         self.mcp_url = mcp_url
         self._sse = None
@@ -16,7 +16,7 @@ class MariaDBMCPContext:
         self._write = None
 
     async def astart(self):
-        logger.info(f"Starting MariaDB MCP connection to: {self.mcp_url}")
+        logger.info(f"Starting Grafana MCP connection to: {self.mcp_url}")
         try:
             self._sse = sse_client(self.mcp_url)
             self._read, self._write = await self._sse.__aenter__()
@@ -31,11 +31,11 @@ class MariaDBMCPContext:
 
             # Load tool list
             self.tools = await self.session.list_tools()
-            logger.info(f"Successfully loaded {len(self.tools.tools)} MariaDB MCP tools")
+            logger.info(f"Successfully loaded {len(self.tools.tools)} Grafana MCP tools")
             return self.session
 
         except Exception as e:
-            logger.error(f"Failed to start MariaDB MCP context: {e}")
+            logger.error(f"Failed to start Grafana MCP context: {e}")
             import traceback
 
             traceback.print_exc()
@@ -47,13 +47,13 @@ class MariaDBMCPContext:
             if self.session:
                 await self.session.__aexit__(None, None, None)
         except Exception as e:
-            logger.error(f"Error closing MariaDB MCP session: {e}")
+            logger.error(f"Error closing Grafana MCP session: {e}")
 
         try:
             if self._sse:
                 await self._sse.__aexit__(None, None, None)
         except Exception as e:
-            logger.error(f"Error closing MariaDB MCP SSE: {e}")
+            logger.error(f"Error closing Grafana MCP SSE: {e}")
 
     async def get_tools(self):
         if self.tools is None:

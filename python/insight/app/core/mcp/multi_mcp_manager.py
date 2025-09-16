@@ -18,25 +18,25 @@ class MCPManager:
         self.all_tools: List = []
 
     def add_mariadb_mcp(self, name: str, mcp_url: str):
-        """MariaDB MCP 클라이언트를 추가합니다."""
+        """Add MariaDB MCP client."""
         client = MariaDBMCPContext(mcp_url)
         self.mcp_clients[name] = client
         return client
 
     def add_influxdb_mcp(self, name: str, mcp_url: str):
-        """InfluxDB MCP 클라이언트를 추가합니다."""
+        """Add InfluxDB MCP client."""
         client = InfluxDBMCPContext(mcp_url)
         self.mcp_clients[name] = client
         return client
 
     def add_grafana_mcp(self, name: str, mcp_url: str):
-        """Grafana MCP 클라이언트를 추가합니다."""
+        """Add Grafana MCP client."""
         client = GrafanaMCPContext(mcp_url)
         self.mcp_clients[name] = client
         return client
 
     async def start_all(self):
-        """모든 MCP 클라이언트를 시작합니다."""
+        """Start all MCP clients."""
         sessions = {}
         tools_list = []
 
@@ -55,7 +55,7 @@ class MCPManager:
                 import traceback
 
                 traceback.print_exc()
-                # 실패한 클라이언트는 제거하지 않고 계속 진행
+                # Continue without removing failed clients
                 continue
 
         self.all_tools = tools_list
@@ -63,25 +63,25 @@ class MCPManager:
         return sessions
 
     async def stop_all(self):
-        """모든 MCP 클라이언트를 중지합니다."""
+        """Stop all MCP clients."""
         for name, client in self.mcp_clients.items():
             try:
                 await client.astop()
                 logger.info(f"{name} MCP client stopped successfully")
             except Exception as e:
                 logger.error(f"Failed to stop {name} MCP client: {e}")
-                # 오류가 발생해도 다른 클라이언트들은 계속 처리
+                # Continue processing other clients even if errors occur
 
     def get_all_tools(self):
-        """모든 MCP 클라이언트의 도구를 반환합니다."""
+        """Return tools from all MCP clients."""
         return self.all_tools
 
     def get_client(self, name: str):
-        """특정 이름의 클라이언트를 반환합니다."""
+        """Return client with specific name."""
         return self.mcp_clients.get(name)
 
     def get_client_by_tool(self, tool_name: str):
-        """특정 도구를 가진 클라이언트를 찾아 반환합니다."""
+        """Find and return client that has specific tool."""
         for name, client in self.mcp_clients.items():
             if hasattr(client, "tools") and client.tools:
                 for tool in client.tools.tools:

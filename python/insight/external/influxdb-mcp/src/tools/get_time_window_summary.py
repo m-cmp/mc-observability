@@ -29,20 +29,20 @@ def register_tool(mcp, client: InfluxDBClient):
             group_by_tags (str, optional): A comma-separated list of tag keys to group the results by, enabling dimensional analysis (e.g., 'hostname,region'). Defaults to None.
         """
 
-        # 기본 집계 함수
+        # Default aggregation functions
         aggregations = f'mean("{field_key}") AS "mean", max("{field_key}") AS "max", min("{field_key}") AS "min", percentile("{field_key}", 95) AS "p95"'
 
-        # WHERE 절 구성
+        # Build WHERE clause
         where_clause = f"WHERE time > now() - {time_window}"
         if filters:
             where_clause += f" AND {filters}"
 
-        # GROUP BY 절 구성
+        # Build GROUP BY clause
         group_by_clause = ""
         if group_by_tags:
             group_by_clause = f"GROUP BY {group_by_tags}"
 
-        # 전체 쿼리 조합
+        # Combine complete query
         query = f'SELECT {aggregations} FROM "{measurement_name}" {where_clause} {group_by_clause}'
 
         raw_text = client.execute_query(query=query, database=database_name)

@@ -11,22 +11,22 @@ _global_mcp_manager = None
 
 
 async def init_global_mcp():
-    """다중 MCP 환경을 초기화합니다.
+    """Initialize multi-MCP environment.
 
-    URL 우선순위:
-    1) 환경변수: MCP_MARIADB_URL, MCP_INFLUXDB_URL, MCP_GRAFANA_URL
+    URL Priority:
+    1) Environment variables: MCP_MARIADB_URL, MCP_INFLUXDB_URL, MCP_GRAFANA_URL
     2) config.yaml: log_analysis.mcp.mcp_mariadb_url, log_analysis.mcp.mcp_influxdb_url, log_analysis.mcp.mcp_grafana_url
-    설정이 없으면 해당 MCP는 스킵합니다.
+    If no configuration is found, the corresponding MCP is skipped.
     """
     global _global_mcp_manager
 
     config = ConfigManager()
     mcp_cfg = config.get_mcp_config()
 
-    # MCP Manager 생성
+    # Create MCP Manager
     _global_mcp_manager = MCPManager()
 
-    # MariaDB MCP 추가 (환경변수 우선)
+    # Add MariaDB MCP (environment variable priority)
     mariadb_mcp_url = os.getenv("MCP_MARIADB_URL") or mcp_cfg.get("mcp_mariadb_url")
     if mariadb_mcp_url:
         _global_mcp_manager.add_mariadb_mcp("mariadb", mariadb_mcp_url)
@@ -34,7 +34,7 @@ async def init_global_mcp():
     else:
         logger.warning("MariaDB MCP URL not set. Skipping MariaDB MCP initialization.")
 
-    # InfluxDB MCP 추가 (환경변수 우선)
+    # Add InfluxDB MCP (environment variable priority)
     influxdb_mcp_url = os.getenv("MCP_INFLUXDB_URL") or mcp_cfg.get("mcp_influxdb_url")
     if influxdb_mcp_url:
         _global_mcp_manager.add_influxdb_mcp("influxdb", influxdb_mcp_url)
@@ -42,7 +42,7 @@ async def init_global_mcp():
     else:
         logger.warning("InfluxDB MCP URL not set. Skipping InfluxDB MCP initialization.")
 
-    # Grafana MCP 추가 (환경변수 우선)
+    # Add Grafana MCP (environment variable priority)
     grafana_mcp_url = os.getenv("MCP_GRAFANA_URL") or mcp_cfg.get("mcp_grafana_url")
     if grafana_mcp_url:
         _global_mcp_manager.add_grafana_mcp("grafana", grafana_mcp_url)
@@ -50,7 +50,7 @@ async def init_global_mcp():
     else:
         logger.warning("Grafana MCP URL not set. Skipping Grafana MCP initialization.")
 
-    # 모든 MCP 클라이언트 시작
+    # Start all MCP clients
     await _global_mcp_manager.start_all()
 
     logger.info("Multi-MCP environment initialized successfully")
@@ -58,12 +58,12 @@ async def init_global_mcp():
 
 
 async def get_global_mcp():
-    """전역 MCP 매니저를 반환합니다."""
+    """Return the global MCP manager."""
     return _global_mcp_manager
 
 
 async def stop_global_mcp():
-    """전역 MCP 환경을 중지합니다."""
+    """Stop the global MCP environment."""
     global _global_mcp_manager
     if _global_mcp_manager:
         await _global_mcp_manager.stop_all()
