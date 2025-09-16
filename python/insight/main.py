@@ -8,7 +8,7 @@ from app.api.llm_analysis import (
     api_key_router,
     model_router,
     log_analysis_router,
-    alarm_analysis_router
+    alert_analysis_router
 )
 from app.api.prediction import prediction
 from app.core.mcp.registry import init_global_mcp, stop_global_mcp
@@ -56,7 +56,7 @@ app.include_router(session_router, prefix=api_prefix, tags=["[Insight] LLM Sessi
 app.include_router(api_key_router, prefix=api_prefix, tags=["[Insight] LLM API Key Management"])
 app.include_router(model_router, prefix=api_prefix, tags=["[Insight] LLM Model Options"])
 app.include_router(log_analysis_router, prefix=api_prefix, tags=["[Insight] Log Analysis"])
-app.include_router(alarm_analysis_router, prefix=api_prefix, tags=["[Insight] Alarm Analysis"])
+app.include_router(alert_analysis_router, prefix=api_prefix, tags=["[Insight] Alert Analysis"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=9001, log_config="config/log.ini", reload=False)

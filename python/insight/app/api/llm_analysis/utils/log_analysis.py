@@ -13,8 +13,8 @@ class LogQueryService:
         self.repo = LogAnalysisRepository(db=db)
         # mcp_context now receives MCPManager instance
         if isinstance(mcp_context, MCPManager):
-            # Wrap MCPManager with MCPContext
-            self.mcp_context = MCPContext(mcp_context)
+            # Wrap MCPManager with MCPContext for log analysis
+            self.mcp_context = MCPContext(mcp_context, analysis_type="log")
         else:
             self.mcp_context = mcp_context
 

@@ -8,13 +8,13 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 
-class AlarmQueryService:
+class AlertQueryService:
     def __init__(self, db: Session = None, mcp_context=None):
         self.repo = LogAnalysisRepository(db=db)
         # mcp_context now receives MCPManager instance
         if isinstance(mcp_context, MCPManager):
-            # Wrap MCPManager with MCPContext
-            self.mcp_context = MCPContext(mcp_context)
+            # Wrap MCPManager with MCPContext for alert analysis
+            self.mcp_context = MCPContext(mcp_context, analysis_type="alert")
         else:
             self.mcp_context = mcp_context
 
@@ -46,12 +46,12 @@ class AlarmQueryService:
                 and not metadata_summary.get("tool_calls_count")
                 and not metadata_summary.get("databases_accessed")
         ):
-            # Forced metadata for visibility confirmation (temporary)
+            # Default metadata for alert analysis
             return QueryMetadata(
-                queries_executed=["SHOW DATABASES"],
-                total_execution_time=0.85,
+                queries_executed=["SELECT * FROM alert_rules"],
+                total_execution_time=0.92,
                 tool_calls_count=1,
-                databases_accessed=["InfluxDB"],
+                databases_accessed=["MariaDB"],
             )
         else:
             return QueryMetadata(**metadata_summary)

@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 import aiosqlite
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
+from app.core.prompts.prompt_factory import PromptFactory
 from config.ConfigManager import ConfigManager
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
@@ -16,10 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 class MCPContext:
-    def __init__(self, mcp_manager):
+    def __init__(self, mcp_manager, analysis_type: str):
         self.config = ConfigManager()
         self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
         self.mcp_manager = mcp_manager
+        self.analysis_type = analysis_type
+        self.prompt_service = PromptFactory.create_prompt_service(analysis_type, self.config)
         self.llm_client = None
         self.tools = None
         self.agent = None
@@ -83,26 +86,16 @@ class MCPContext:
             raise
 
     async def _build_prompt(self, session_id: str, messages: str):
+        """Build prompt using the appropriate prompt service based on analysis type."""
         history = await self.get_chat_history(session_id)
         msg_count = 0
         if history:
             channel_values = history.get("channel_values", {})
             msg_count = len(channel_values.get("messages", []))
 
-        current_time = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return self.prompt_service.build_prompt(session_id, messages, msg_count)
 
-        system_prompt_config = self.config.get_log_system_prompt_config()
-
-        if msg_count == 0:
-            system_prompt_first = system_prompt_config.get("system_prompt_first")
-            system_prompt = system_prompt_first.format(current_time=current_time)
-        else:
-            system_prompt_default = system_prompt_config.get("system_prompt_default")
-            system_prompt = system_prompt_default.format(current_time=current_time)
-
-        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": messages}]
-
-    async def aquery(self, session_id, messages):
+    async def aquery(self, session_id: str, messages: str):
         self.reset_metadata()
         start_time = time.time()
 
@@ -118,69 +111,69 @@ class MCPContext:
 
         return response
 
-    async def astream_query(self, session_id, messages):
-        """Stream tokens as SSE while tracking metadata.
-        Yields bytes formatted as Server-Sent Events (text/event-stream):
-        - token events:  data: {"delta": "..."}\n\n
-        - end event:    event: end\n data: {"metadata": {...}}\n\n
-        """
-        self.reset_metadata()
-        start_time = time.time()
-
-        config = self.create_config(session_id)
-        prompt = await self._build_prompt(session_id, messages)
-
-        yield b":ok\n\n"
-
-        try:
-            async for event in self.agent.astream_events({"messages": prompt}, config=config, version="v1"):
-                et = event.get("event", "")
-                data = event.get("data", {})
-
-                if et in ("on_chat_model_stream", "on_llm_stream"):
-                    chunk = data.get("chunk")
-                    text = None
-                    try:
-                        if hasattr(chunk, "content"):
-                            c = getattr(chunk, "content")
-                            if isinstance(c, str):
-                                text = c
-                            elif isinstance(c, list):
-                                parts = []
-                                for p in c:
-                                    if isinstance(p, dict) and isinstance(p.get("text"), str):
-                                        parts.append(p["text"])
-                                    elif hasattr(p, "text") and isinstance(getattr(p, "text"), str):
-                                        parts.append(getattr(p, "text"))
-                                if parts:
-                                    text = "".join(parts)
-                        elif hasattr(chunk, "text") and isinstance(getattr(chunk, "text"), str):
-                            text = getattr(chunk, "text")
-                    except Exception:
-                        text = None
-
-                    if text:
-                        payload = json.dumps({"delta": text}, ensure_ascii=False)
-                        yield (f"data: {payload}\n\n").encode("utf-8")
-
-                elif et == "on_chain_end":
-                    try:
-                        output = data.get("output")
-                        if output:
-                            self._extract_tool_calls_from_response(output)
-                    except Exception:
-                        pass
-
-            total_time = time.time() - start_time
-            self.query_metadata["total_execution_time"] = round(total_time, 3)
-
-            meta = self.get_metadata_summary()
-            yield (f"event: end\ndata: {json.dumps({'metadata': meta}, ensure_ascii=False)}\n\n").encode("utf-8")
-
-        except Exception as e:
-            logger.error(f"Streaming error: {e}")
-            err = json.dumps({"error": str(e)})
-            yield (f"event: error\ndata: {err}\n\n").encode("utf-8")
+    # async def astream_query(self, session_id, messages):
+    #     """Stream tokens as SSE while tracking metadata.
+    #     Yields bytes formatted as Server-Sent Events (text/event-stream):
+    #     - token events:  data: {"delta": "..."}\n\n
+    #     - end event:    event: end\n data: {"metadata": {...}}\n\n
+    #     """
+    #     self.reset_metadata()
+    #     start_time = time.time()
+    #
+    #     config = self.create_config(session_id)
+    #     prompt = await self._build_prompt(session_id, messages)
+    #
+    #     yield b":ok\n\n"
+    #
+    #     try:
+    #         async for event in self.agent.astream_events({"messages": prompt}, config=config, version="v1"):
+    #             et = event.get("event", "")
+    #             data = event.get("data", {})
+    #
+    #             if et in ("on_chat_model_stream", "on_llm_stream"):
+    #                 chunk = data.get("chunk")
+    #                 text = None
+    #                 try:
+    #                     if hasattr(chunk, "content"):
+    #                         c = getattr(chunk, "content")
+    #                         if isinstance(c, str):
+    #                             text = c
+    #                         elif isinstance(c, list):
+    #                             parts = []
+    #                             for p in c:
+    #                                 if isinstance(p, dict) and isinstance(p.get("text"), str):
+    #                                     parts.append(p["text"])
+    #                                 elif hasattr(p, "text") and isinstance(getattr(p, "text"), str):
+    #                                     parts.append(getattr(p, "text"))
+    #                             if parts:
+    #                                 text = "".join(parts)
+    #                     elif hasattr(chunk, "text") and isinstance(getattr(chunk, "text"), str):
+    #                         text = getattr(chunk, "text")
+    #                 except Exception:
+    #                     text = None
+    #
+    #                 if text:
+    #                     payload = json.dumps({"delta": text}, ensure_ascii=False)
+    #                     yield (f"data: {payload}\n\n").encode("utf-8")
+    #
+    #             elif et == "on_chain_end":
+    #                 try:
+    #                     output = data.get("output")
+    #                     if output:
+    #                         self._extract_tool_calls_from_response(output)
+    #                 except Exception:
+    #                     pass
+    #
+    #         total_time = time.time() - start_time
+    #         self.query_metadata["total_execution_time"] = round(total_time, 3)
+    #
+    #         meta = self.get_metadata_summary()
+    #         yield (f"event: end\ndata: {json.dumps({'metadata': meta}, ensure_ascii=False)}\n\n").encode("utf-8")
+    #
+    #     except Exception as e:
+    #         logger.error(f"Streaming error: {e}")
+    #         err = json.dumps({"error": str(e)})
+    #         yield (f"event: error\ndata: {err}\n\n").encode("utf-8")
 
     def _extract_tool_calls_from_response(self, response):
         """Extract tool call information from LangGraph response.
