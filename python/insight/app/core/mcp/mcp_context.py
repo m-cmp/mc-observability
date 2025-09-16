@@ -91,7 +91,7 @@ class MCPContext:
 
         current_time = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        system_prompt_config = self.config.get_system_prompt_config()
+        system_prompt_config = self.config.get_log_system_prompt_config()
 
         if msg_count == 0:
             system_prompt_first = system_prompt_config.get("system_prompt_first")

@@ -8,16 +8,16 @@ class BaseResponse(BaseModel):
     rs_msg: str = "Success"
 
 
-class LogAnalysisModel(BaseModel):
+class LLMModel(BaseModel):
     provider: Literal["ollama", "openai", "google", "anthropic"]
     model_name: list[str]
 
 
-class ResBodyLogAnalysisModel(BaseResponse):
-    data: list[LogAnalysisModel]
+class ResBodyLLMModel(BaseResponse):
+    data: list[LLMModel]
 
 
-class LogAnalysisSession(BaseModel):
+class LLMChatSession(BaseModel):
     seq: int
     user_id: str
     session_id: str
@@ -26,12 +26,12 @@ class LogAnalysisSession(BaseModel):
     regdate: datetime
 
 
-class ResBodyLogAnalysisSession(BaseResponse):
-    data: LogAnalysisSession
+class ResBodyLLMChatSession(BaseResponse):
+    data: LLMChatSession
 
 
-class ResBodyLogAnalysisSessions(BaseResponse):
-    data: list[LogAnalysisSession]
+class ResBodyLLMChatSessions(BaseResponse):
+    data: list[LLMChatSession]
 
 
 class QueryMetadata(BaseModel):

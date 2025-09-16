@@ -1,4 +1,4 @@
-from app.api.log_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey, GoogleAPIKey, AnthropicAPIKey
+from app.api.llm_analysis.model.models import LogAnalysisChatSession, OpenAIAPIKey, GoogleAPIKey, AnthropicAPIKey
 from sqlalchemy.orm import Session
 
 
