@@ -1,7 +1,5 @@
 from langchain_ollama import ChatOllama
 
-from langgraph.prebuilt import create_react_agent
-
 
 class OllamaClient:
     def __init__(self, base_url='http://192.168.170.229:11434'):
@@ -14,6 +12,6 @@ class OllamaClient:
         self.model = model
         self.llm = ChatOllama(base_url=self.base_url, model=self.model, temperature=0)
 
-    def bind_tools(self, tools, memory):
-        self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)
-        return self.agent
+    # def bind_tools(self, tools, memory):
+    #     self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)
+    #     return self.agent
