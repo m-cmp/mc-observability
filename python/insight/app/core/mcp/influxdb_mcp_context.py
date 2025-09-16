@@ -29,7 +29,7 @@ class InfluxDBMCPContext:
             await self.session.initialize()
             logger.info("InfluxDB MCP session initialized")
 
-            # 도구 목록 로드
+            # Load tool list
             self.tools = await self.session.list_tools()
             logger.info(f"Successfully loaded {len(self.tools.tools)} InfluxDB MCP tools")
             return self.session

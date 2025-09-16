@@ -26,11 +26,11 @@ class MCPContext:
         self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
 
     def reset_metadata(self):
-        """새로운 쿼리 시작 시 메타데이터 초기화"""
+        """Initialize metadata when starting a new query"""
         self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
 
     def track_query_execution(self, query: str, execution_time: float, database: str = None):
-        """쿼리 실행 정보를 추적"""
+        """Track query execution information"""
         self.query_metadata["queries_executed"].append(query)
         self.query_metadata["total_execution_time"] += execution_time
         self.query_metadata["tool_calls_count"] += 1
@@ -39,7 +39,7 @@ class MCPContext:
             self.query_metadata["databases_accessed"].add(database)
 
     def get_metadata_summary(self):
-        """현재까지 수집된 메타데이터를 반환"""
+        """Return metadata collected so far"""
         return {
             "queries_executed": self.query_metadata["queries_executed"],
             "total_execution_time": round(self.query_metadata["total_execution_time"], 3),
@@ -67,7 +67,7 @@ class MCPContext:
                 logger.error(msg)
                 raise ValueError(msg)
 
-            # OpenAI 계열 클라이언트에만 streaming 파라미터 전달
+            # Pass streaming parameter only to OpenAI-based clients
             if hasattr(self.llm_client, 'setup'):
                 if provider in ["openai", "google", "anthropic"]:
                     self.llm_client.setup(model=model_name, streaming=streaming)
@@ -183,11 +183,11 @@ class MCPContext:
             yield (f"event: error\ndata: {err}\n\n").encode("utf-8")
 
     def _extract_tool_calls_from_response(self, response):
-        """LangGraph 응답에서 도구 호출 정보를 추출.
-        정책 변경: queries_executed에는 순수 쿼리 문자열만 포함.
-        - message.content에서의 정규식 추출은 비활성화
-        - tool_calls.args 내 query/influxql_query/sql_query 키에서만 수집
-        - 좌우 공백 제거 및 중복 제거
+        """Extract tool call information from LangGraph response.
+        Policy change: queries_executed includes only pure query strings.
+        - Regex extraction from message.content is disabled
+        - Collect only from query/influxql_query/sql_query keys in tool_calls.args
+        - Remove leading/trailing whitespace and duplicates
         """
         try:
             messages = response.get("messages", [])

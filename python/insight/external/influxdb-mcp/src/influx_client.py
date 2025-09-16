@@ -97,8 +97,8 @@ class InfluxDBClient:
             response = requests.get(f"{self.base_url}/query", params=params, headers={"Accept": "application/json"})
             response.raise_for_status()
 
-            # InfluxDB로부터 받은 응답을 JSON으로 파싱
-            # 성공적인 응답을 나타내는 JSON 구조 생성
+            # Parse response from InfluxDB as JSON
+            # Create JSON structure representing successful response
             return json.dumps({"status": "success", "data": response.json()})
 
         except requests.exceptions.HTTPError as http_err:

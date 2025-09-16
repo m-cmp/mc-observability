@@ -27,24 +27,24 @@ def register_tool(mcp, client: InfluxDBClient):
             measurement_name (str): The name of the measurement to check for the last data point.
         """
 
-        # 1. 측정값에서 필드 키를 가져옵니다.
+        # 1. Get field keys from the measurement
         field_keys_query = f'SHOW FIELD KEYS FROM "{measurement_name}"'
         field_keys_response = client.execute_query(query=field_keys_query, database=database_name)
         field_keys_data = json.loads(field_keys_response)
 
         try:
-            # 응답에서 첫 번째 필드 키를 추출합니다.
+            # Extract first field key from response
             field_key = field_keys_data["results"][0]["series"][0]["values"][0][0]
         except (KeyError, IndexError):
             return json.dumps({"error": f"No fields found for measurement '{measurement_name}'."})
 
-        # 2. 마지막 데이터 포인트 쿼리를 실행합니다.
+        # 2. Execute query for last data point
         last_point_query = f'SELECT last("{field_key}") FROM "{measurement_name}"'
         last_point_response = client.execute_query(query=last_point_query, database=database_name)
         last_point_data = json.loads(last_point_response)
 
         try:
-            # 응답에서 타임스탬프를 추출합니다.
+            # Extract timestamp from response
             timestamp = last_point_data["results"][0]["series"][0]["values"][0][0]
             if timezone:
                 timestamp = convert_rfc3339_to_timezone(timestamp, timezone)
