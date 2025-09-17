@@ -194,14 +194,14 @@ class MCPContext:
         """
         try:
             messages = response.get("messages", [])
-            logger.info(f"Extracting from {len(messages)} messages")
+            logger.debug(f"Extracting from {len(messages)} messages")
 
             for message in messages:
-                logger.info(f"Message type: {getattr(message, 'type', 'unknown')}")
+                logger.debug(f"Message type: {getattr(message, 'type', 'unknown')}")
 
                 if hasattr(message, "type") and message.type == "tool":
                     self.query_metadata["tool_calls_count"] += 1
-                    logger.info(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
+                    logger.debug(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
 
                 elif hasattr(message, "type") and message.type == "ai":
                     if hasattr(message, "tool_calls") and message.tool_calls:
@@ -211,7 +211,7 @@ class MCPContext:
                         except Exception:
                             tc_len = 0
                         self.query_metadata["tool_calls_count"] += tc_len
-                        logger.info(f"Found {tc_len} tool calls in AI message")
+                        logger.debug(f"Found {tc_len} tool calls in AI message")
 
                         for tool_call in tool_calls:
                             call_name = None
@@ -290,12 +290,12 @@ class MCPContext:
                                         if q and q not in self.query_metadata["queries_executed"]:
                                             self.query_metadata["queries_executed"].append(q)
                                             captured_any_query_for_call = True
-                                            logger.info(f"Captured query: {q[:160]}...")
+                                            logger.debug(f"Captured query: {q[:160]}...")
 
                                 if captured_any_query_for_call and inferred_db:
                                     self.query_metadata["databases_accessed"].add(inferred_db)
 
-            logger.info(f"Final metadata: {self.query_metadata}")
+            logger.debug(f"Final metadata: {self.query_metadata}")
 
         except Exception as e:
             logger.error(f"Error extracting tool calls: {e}")

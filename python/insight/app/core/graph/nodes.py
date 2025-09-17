@@ -6,6 +6,41 @@ from .utils.summarization import ConversationSummarizer
 logger = logging.getLogger(__name__)
 
 
+def _get_latest_human_ai_pair(messages):
+    """
+    Extract the latest Human-AI message pair from the messages list.
+    Returns the most recent Human message followed by AI message pair.
+    If no complete pair is found, returns empty list.
+    """
+    if len(messages) < 2:
+        return []
+
+    # Find the last AI message
+    last_ai_idx = -1
+    for i in range(len(messages) - 1, -1, -1):
+        if hasattr(messages[i], 'type') and messages[i].type == 'ai':
+            last_ai_idx = i
+            break
+
+    if last_ai_idx == -1:
+        # No AI message found, return empty list
+        return []
+
+    # Find the Human message that precedes this AI message
+    human_idx = -1
+    for i in range(last_ai_idx - 1, -1, -1):
+        if hasattr(messages[i], 'type') and messages[i].type == 'human':
+            human_idx = i
+            break
+
+    if human_idx == -1:
+        # No Human message found before AI message, return empty list
+        return []
+
+    # Return only the specific Human and AI messages
+    return [messages[human_idx], messages[last_ai_idx]]
+
+
 async def call_model(state: State, llm=None) -> dict:
     """
     Main LLM call node that processes messages and generates responses.
@@ -74,8 +109,10 @@ async def summary_node(state: State, llm=None, config_manager=None) -> dict:
                 id=f"summary_{updated_summary.last_summarized_message_id}"
             )
 
-            # Configure LLM input messages: SystemMessage + last 2 messages
-            llm_input_messages = [summary_system_message] + messages[-2:]
+            # Configure LLM input messages: latest Human-AI pair + summary_system_message + last 2 messages
+            latest_pair = _get_latest_human_ai_pair(messages)
+            last_two_messages = messages[-2:]
+            llm_input_messages = latest_pair + [summary_system_message] + last_two_messages
 
             updated_context = context.copy()
             updated_context["default"] = updated_summary
