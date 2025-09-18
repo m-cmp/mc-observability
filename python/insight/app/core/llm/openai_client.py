@@ -19,7 +19,7 @@ class OpenAIClient:
 
     def setup_graph_llm(self, model, streaming=False):
         self.model = model
-        self.llm = ChatOpenAI(model=self.model, api_key=self.api_key)
+        self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, base_url=self.base_url, streaming=streaming)
 
     def bind_tools(self, tools, memory):
         self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)
