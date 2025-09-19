@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 시작 시 다중 MCP 초기화
+    # Initialize Multi-MCP environment on startup
     try:
         await init_global_mcp()
         logger.info("Application startup: Multi-MCP environment initialized")
@@ -30,7 +30,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # 종료 시 MCP 정리
+    # Clean up MCP environment on shutdown
     try:
         await stop_global_mcp()
         logger.info("Application shutdown: Multi-MCP environment stopped")

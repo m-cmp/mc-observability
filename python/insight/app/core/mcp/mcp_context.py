@@ -18,17 +18,18 @@ logger = logging.getLogger(__name__)
 
 
 class MCPContext:
-    def __init__(self, mcp_manager, analysis_type: str):
+    def __init__(self, mcp_manager, analysis_type: str = None):
         self.config = ConfigManager()
         self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
         self.mcp_manager = mcp_manager
         self.analysis_type = analysis_type
-        self.prompt_service = PromptFactory.create_prompt_service(analysis_type, self.config)
         self.llm_client = None
         self.llm_with_tools = None
         self.tools = None
         self.agent = None
         self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
+        if analysis_type is not None:
+            self.prompt_service = PromptFactory.create_prompt_service(analysis_type, self.config)
 
     # Todo
     # def _build_db_uri(self):

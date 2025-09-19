@@ -2,7 +2,7 @@ import yaml
 
 
 class ConfigManager:
-    def __init__(self, file_path: str = "config/config.yaml"):
+    def __init__(self, file_path: str = "config/dev_config.yaml"):
         self.config = self._read_yaml(file_path)
 
     @staticmethod
