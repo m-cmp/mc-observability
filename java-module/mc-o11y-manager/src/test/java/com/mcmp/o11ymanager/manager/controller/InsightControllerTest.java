@@ -2,12 +2,28 @@ package com.mcmp.o11ymanager.manager.controller;
 
 import static com.mcmp.o11ymanager.util.ApiDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.restdocs.snippet.Attributes.key;
 
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionBody;
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionHistory;
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionResult;
+import com.mcmp.o11ymanager.manager.dto.insight.prediction.PredictionMeasurement;
+import com.mcmp.o11ymanager.manager.dto.insight.prediction.PredictionOptions;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.infrastructure.insight.InsightClient;
 import com.mcmp.o11ymanager.util.ApiDocumentation;
+import com.mcmp.o11ymanager.util.JsonConverter;
+import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -26,361 +42,195 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
 class InsightControllerTest {
-    private static final String TAG = "[Insight] Prediction";
 
-    @Autowired private MockMvc mockMvc;
-    @MockBean private InsightClient insightClient;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @Test
-    void getPredictionMeasurement() throws Exception {
-        Object mockData = java.util.Map.of("measurement", "string");
-        when(insightClient.getPredictionMeasurement()).thenReturn(mockData);
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/predictions/measurement")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("예측 측정값 목록 조회")
-                                .summary("GetPredictionMeasurement")
-                                .responseSchema("Object")
-                                .responseFields(fieldString("measurement", "측정값 이름"))
-                                .build());
-        verify(insightClient).getPredictionMeasurement();
-    }
+  @MockBean
+  private InsightClient insightClient;
 
-    @Test
-    void getPredictionSpecificMeasurement() throws Exception {
-        Object mockData = java.util.Map.of("measurement", "string");
-        when(insightClient.getPredictionSpecificMeasurement(any())).thenReturn(mockData);
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/predictions/measurement/{measurement}",
-                                        "cpu")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("특정 예측 측정값 조회")
-                                .summary("GetPredictionSpecificMeasurement")
-                                .pathParameters(paramString("measurement", "측정값 이름"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("measurement", "측정값 이름"))
-                                .build());
-        verify(insightClient).getPredictionSpecificMeasurement(any());
-    }
+  private static final String TAG_PREDICTION = "[Insight] Prediction";
+  private static final String TAG_ANOMALY = "[Insight] AnomalyDetection";
+  private static final String TAG_LLM = "[Insight] LLM";
+  private static final String TAG_LOG = "[Insight] LogAnalysis";
 
-    @Test
-    void getPredictionOptions() throws Exception {
-        Object mockData = java.util.Map.of("option", "string");
-        when(insightClient.getPredictionOptions()).thenReturn(mockData);
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/predictions/options")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("예측 옵션 목록 조회")
-                                .summary("GetPredictionOptions")
-                                .responseSchema("Object")
-                                .responseFields(fieldString("option", "옵션 값"))
-                                .build());
-        verify(insightClient).getPredictionOptions();
-    }
+  @Test
+  void getPredictionMeasurements() throws Exception {
+    PredictionMeasurement measurement = new PredictionMeasurement();
+    measurement.setPluginSeq(1);
+    measurement.setMeasurement("cpu");
+    measurement.setFields(List.of(Map.of("field_key", "usage_idle", "unit", "percent")));
 
-    @Test
-    void getPredictionHistory() throws Exception {
-        Object mockData = java.util.Map.of("history", "string");
-        when(insightClient.getPredictionHistory(any(), any(), any(), any(), any()))
-                .thenReturn(mockData);
+    when(insightClient.getPredictionMeasurements())
+        .thenReturn(new ResBody<>(List.of(measurement)));
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/vm/{vmId}/history",
-                                        "ns1",
-                                        "vm1")
-                                .param("measurement", "cpu")
-                                .param("start_time", "2023-01-01T00:00:00Z")
-                                .param("end_time", "2023-01-02T00:00:00Z")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("예측 이력 조회")
-                                .summary("GetPredictionHistory")
-                                .pathParameters(
-                                        paramString("nsId", "NSID"),
-                                        paramString("vmId", "TARGET ID"))
-                                .queryParameters(
-                                        paramString("measurement", "측정값 이름"),
-                                        paramString("start_time", "시작 시간"),
-                                        paramString("end_time", "종료 시간"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("history", "예측 이력"))
-                                .build());
-        verify(insightClient).getPredictionHistory(any(), any(), any(), any(), any());
-    }
+    mockMvc.perform(
+            RestDocumentationRequestBuilders.get("/api/o11y/insight/predictions/measurement"))
+        .andExpect(status().isOk())
+        .andDo(ApiDocumentation.builder()
+            .tag(TAG_PREDICTION)
+            .description("예측 가능한 measurement 목록 조회")
+            .summary("GetPredictionMeasurements")
+            .responseSchema("PredictionMeasurement")
+            .responseFields(
+                fieldString("rs_code", "응답 코드"),
+                fieldString("rs_msg", "응답 메시지"),
+                fieldArray("data", "Measurement 목록"),
+                fieldNumber("data[].pluginSeq", "Plugin sequence")
+                    .attributes(key("example").value(1)),
+                fieldString("data[].measurement", "Measurement name")
+                    .attributes(key("example").value("cpu")),
+                fieldArray("data[].fields", "List of field definitions"),
+                fieldString("data[].fields[].field_key", "Field key")
+                    .attributes(key("example").value("usage_idle")),
+                fieldString("data[].fields[].unit", "Unit of measurement")
+                    .attributes(key("example").value("percent")),
+                fieldString("error_message", "에러 메시지")
+            )
+            .build());
+  }
 
-    @Test
-    void predictMetric() throws Exception {
-        Object mockData = java.util.Map.of("result", "string");
-        when(insightClient.predictMetric(any(), any(), any())).thenReturn(mockData);
+  @Test
+  void getPredictionOptions() throws Exception {
+    PredictionOptions options = new PredictionOptions();
+    options.setTargetTypes(List.of("vm", "mci"));
+    options.setMeasurements(List.of("cpu", "mem", "disk"));
+    options.setPredictionRanges(Map.of("min", "1h", "max", "2160h"));
 
-        String requestBody = "{\"option\":\"value\"}";
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/insight/insight/predictions/nsId/{nsId}/vm/{vmId}",
-                                        "ns1",
-                                        "vm1")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(requestBody)
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("예측 실행")
-                                .summary("PredictMetric")
-                                .pathParameters(
-                                        paramString("nsId", "NSID"),
-                                        paramString("vmId", "TARGET ID"))
-                                .requestSchema("Object")
-                                .requestFields(fieldString("option", "옵션 값"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("result", "예측 결과"))
-                                .build());
-        verify(insightClient).predictMetric(any(), any(), any());
-    }
+    when(insightClient.getPredictionOptions()).thenReturn(new ResBody<>(options));
 
-    @Test
-    void getAnomalyDetectionMeasurement() throws Exception {
-        Object mockData = java.util.Map.of("measurement", "string");
-        when(insightClient.getAnomalyDetectionMeasurement()).thenReturn(mockData);
+    mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/insight/predictions/options"))
+        .andExpect(status().isOk())
+        .andDo(ApiDocumentation.builder()
+            .tag(TAG_PREDICTION)
+            .description("예측 옵션 조회")
+            .summary("GetPredictionOptions")
+            .responseSchema("PredictionOptions")
+            .responseFields(
+                fieldString("rs_code", "응답 코드"),
+                fieldString("rs_msg", "응답 메시지"),
+                fieldObject("data", "Prediction Options"),
+                fieldArray("data.targetTypes", "Available target types")
+                    .attributes(key("example").value("[\"vm\", \"mci\"]")),
+                fieldArray("data.measurements", "Available measurements")
+                    .attributes(key("example").value("[\"cpu\", \"mem\", \"disk\"]")),
+                fieldObject("data.predictionRanges", "Prediction range configuration"),
+                fieldString("data.predictionRanges.min", "Minimum range")
+                    .attributes(key("example").value("1h")),
+                fieldString("data.predictionRanges.max", "Maximum range")
+                    .attributes(key("example").value("2160h")),
+                fieldString("error_message", "에러 메시지")
+            )
+            .build());
+  }
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/measurement")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 측정값 목록 조회")
-                                .summary("GetAnomalyDetectionMeasurement")
-                                .responseSchema("Object")
-                                .responseFields(fieldString("measurement", "측정값 이름"))
-                                .build());
-        verify(insightClient).getAnomalyDetectionMeasurement();
-    }
+  @Test
+  void predictMonitoringData() throws Exception {
+    PredictionBody body = new PredictionBody();
+    body.setTargetType(com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.enums.TargetType.VM);
+    body.setMeasurement(
+        com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.enums.AnomalyMetricType.CPU);
 
-    @Test
-    void getAnomalyDetectionSpecificMeasurement() throws Exception {
-        Object mockData = java.util.Map.of("measurement", "string");
-        when(insightClient.getAnomalyDetectionSpecificMeasurement(any())).thenReturn(mockData);
+    PredictionResult result = new PredictionResult();
+    result.setNsId("ns-001");
+    result.setTargetId("vm-123");
+    result.setMeasurement("cpu");
+    result.setTargetType("vm");
+    result.setValues(List.of(Map.of("timestamp", "2024-08-22T00:00:00Z", "value", 75)));
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/measurement/{measurement}",
-                                        "cpu")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("특정 이상탐지 측정값 조회")
-                                .summary("GetAnomalyDetectionSpecificMeasurement")
-                                .pathParameters(paramString("measurement", "측정값 이름"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("measurement", "측정값 이름"))
-                                .build());
-        verify(insightClient).getAnomalyDetectionSpecificMeasurement(any());
-    }
+    when(insightClient.predictMonitoringData(eq("ns-001"), eq("vm-123"), any()))
+        .thenReturn(new ResBody<>(result));
 
-    @Test
-    void getAnomalyDetectionOptions() throws Exception {
-        Object mockData = java.util.Map.of("option", "string");
-        when(insightClient.getAnomalyDetectionOptions()).thenReturn(mockData);
+    mockMvc.perform(RestDocumentationRequestBuilders.post(
+                "/api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}",
+                "ns-001", "vm-123")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(JsonConverter.asJsonString(body)))
+        .andExpect(status().isOk())
+        .andDo(ApiDocumentation.builder()
+            .tag(TAG_PREDICTION)
+            .description("Metric 예측 실행")
+            .summary("PredictMonitoringData")
+            .pathParameters(
+                paramString("nsId", "Namespace ID"),
+                paramString("targetId", "Target ID"))
+            .requestSchema("PredictionBody")
+            .requestFields(
+                fieldEnum("targetType", "Target type",
+                    com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.enums.TargetType.class),
+                fieldEnum("measurement", "Measurement type",
+                    com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.enums.AnomalyMetricType.class)
+            )
+            .responseSchema("PredictionResult")
+            .responseFields(
+                fieldString("rs_code", "응답 코드"),
+                fieldString("rs_msg", "응답 메시지"),
+                fieldObject("data", "Prediction result"),
+                fieldString("data.nsId", "Namespace ID")
+                    .attributes(key("example").value("ns-001")),
+                fieldString("data.targetId", "Target ID")
+                    .attributes(key("example").value("vm-123")),
+                fieldString("data.measurement", "Measurement type")
+                    .attributes(key("example").value("cpu")),
+                fieldString("data.targetType", "Target type")
+                    .attributes(key("example").value("vm")),
+                fieldArray("data.values", "Predicted values"),
+                fieldString("data.values[].timestamp", "Prediction timestamp")
+                    .attributes(key("example").value("2024-08-22T00:00:00Z")),
+                fieldNumber("data.values[].value", "Predicted value")
+                    .attributes(key("example").value(75)),
+                fieldString("error_message", "에러 메시지")
+            )
+            .build());
+  }
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/options")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 옵션 목록 조회")
-                                .summary("GetAnomalyDetectionOptions")
-                                .responseSchema("Object")
-                                .responseFields(fieldString("option", "옵션 값"))
-                                .build());
-        verify(insightClient).getAnomalyDetectionOptions();
-    }
+  @Test
+  void getPredictionHistory() throws Exception {
+    PredictionHistory history = new PredictionHistory();
+    history.setNsId("ns-001");
+    history.setTargetId("vm-123");
+    history.setMeasurement("cpu");
+    history.setValues(List.of(Map.of("timestamp", "2024-08-22T00:00:00Z", "value", 55)));
 
-    @Test
-    void getAnomalyDetectionSettings() throws Exception {
-        Object mockData = java.util.Map.of("settings", "string");
-        when(insightClient.getAnomalyDetectionSettings()).thenReturn(mockData);
+    when(insightClient.getPredictionHistory(eq("ns-001"), eq("vm-123"), eq("cpu"), any(), any()))
+        .thenReturn(new ResBody<>(history));
 
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 설정 목록 조회")
-                                .summary("GetAnomalyDetectionSettings")
-                                .responseSchema("Object")
-                                .responseFields(fieldString("settings", "설정 값"))
-                                .build());
-        verify(insightClient).getAnomalyDetectionSettings();
-    }
+    mockMvc.perform(RestDocumentationRequestBuilders.get(
+                "/api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history",
+                "ns-001", "vm-123")
+            .param("measurement", "cpu"))
+        .andExpect(status().isOk())
+        .andDo(ApiDocumentation.builder()
+            .tag(TAG_PREDICTION)
+            .description("Prediction 히스토리 조회")
+            .summary("GetPredictionHistory")
+            .pathParameters(
+                paramString("nsId", "Namespace ID"),
+                paramString("targetId", "Target ID"))
+            .queryParameters(paramString("measurement", "Measurement type"))
+            .responseSchema("PredictionHistory")
+            .responseFields(
+                fieldString("rs_code", "응답 코드"),
+                fieldString("rs_msg", "응답 메시지"),
+                fieldObject("data", "Prediction history"),
+                fieldString("data.nsId", "Namespace ID")
+                    .attributes(key("example").value("ns-001")),
+                fieldString("data.targetId", "Target ID")
+                    .attributes(key("example").value("vm-123")),
+                fieldString("data.measurement", "Measurement type")
+                    .attributes(key("example").value("cpu")),
+                fieldArray("data.values", "Historical prediction values"),
+                fieldString("data.values[].timestamp", "History timestamp")
+                    .attributes(key("example").value("2024-08-22T00:00:00Z")),
+                fieldNumber("data.values[].value", "History value")
+                    .attributes(key("example").value(55)),
+                fieldString("error_message", "에러 메시지")
+            )
+            .build());
+  }
 
-    @Test
-    void insertAnomalyDetectionSetting() throws Exception {
-        Object mockData = java.util.Map.of("inserted", true);
-        when(insightClient.insertAnomalyDetectionSetting(any())).thenReturn(mockData);
 
-        String requestBody = "{\"setting\":\"value\"}";
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(requestBody)
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 설정 추가")
-                                .summary("InsertAnomalyDetectionSetting")
-                                .requestSchema("Object")
-                                .requestFields(fieldString("setting", "설정 값"))
-                                .responseSchema("Object")
-                                .responseFields(fieldBoolean("inserted", "추가 성공 여부"))
-                                .build());
-        verify(insightClient).insertAnomalyDetectionSetting(any());
-    }
-
-    @Test
-    void updateAnomalyDetectionSetting() throws Exception {
-        Object mockData = java.util.Map.of("updated", true);
-        when(insightClient.updateAnomalyDetectionSetting(any(), any())).thenReturn(mockData);
-
-        String requestBody = "{\"setting\":\"value\"}";
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.put(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings/{settingSeq}",
-                                        1L)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(requestBody)
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 설정 수정")
-                                .summary("UpdateAnomalyDetectionSetting")
-                                .pathParameters(paramNumber("settingSeq", "설정 시퀀스"))
-                                .requestSchema("Object")
-                                .requestFields(fieldString("setting", "설정 값"))
-                                .responseSchema("Object")
-                                .responseFields(fieldBoolean("updated", "수정 성공 여부"))
-                                .build());
-        verify(insightClient).updateAnomalyDetectionSetting(any(), any());
-    }
-
-    @Test
-    void deleteAnomalyDetectionSetting() throws Exception {
-        Object mockData = java.util.Map.of("deleted", true);
-        when(insightClient.deleteAnomalyDetectionSetting(any())).thenReturn(mockData);
-
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.delete(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings/{settingSeq}",
-                                        1L)
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 설정 삭제")
-                                .summary("DeleteAnomalyDetectionSetting")
-                                .pathParameters(paramNumber("settingSeq", "설정 시퀀스"))
-                                .responseSchema("Object")
-                                .responseFields(fieldBoolean("deleted", "삭제 성공 여부"))
-                                .build());
-        verify(insightClient).deleteAnomalyDetectionSetting(any());
-    }
-
-    @Test
-    void getAnomalyDetection() throws Exception {
-        Object mockData = java.util.Map.of("detection", "string");
-        when(insightClient.getAnomalyDetection(any(), any())).thenReturn(mockData);
-
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/settings/nsId/{nsId}/vm/{vmId}",
-                                        "ns1",
-                                        "vm1")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 결과 조회")
-                                .summary("GetAnomalyDetection")
-                                .pathParameters(
-                                        paramString("nsId", "NSID"),
-                                        paramString("vmId", "TARGET ID"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("detection", "이상탐지 결과"))
-                                .build());
-        verify(insightClient).getAnomalyDetection(any(), any());
-    }
-
-    @Test
-    void getAnomalyDetectionHistory() throws Exception {
-        Object mockData = java.util.Map.of("history", "string");
-        when(insightClient.getAnomalyDetectionHistory(any(), any(), any(), any(), any()))
-                .thenReturn(mockData);
-
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get(
-                                        "/api/o11y/insight/insight/anomaly-detection/nsId/{nsId}/vm/{vmId}/history",
-                                        "ns1",
-                                        "vm1")
-                                .param("measurement", "cpu")
-                                .param("start_time", "2023-01-01T00:00:00Z")
-                                .param("end_time", "2023-01-02T00:00:00Z")
-                                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("이상탐지 이력 조회")
-                                .summary("GetAnomalyDetectionHistory")
-                                .pathParameters(
-                                        paramString("nsId", "NSID"),
-                                        paramString("vmId", "TARGET ID"))
-                                .queryParameters(
-                                        paramString("measurement", "측정값 이름"),
-                                        paramString("start_time", "시작 시간"),
-                                        paramString("end_time", "종료 시간"))
-                                .responseSchema("Object")
-                                .responseFields(fieldString("history", "이상탐지 이력"))
-                                .build());
-        verify(insightClient).getAnomalyDetectionHistory(any(), any(), any(), any(), any());
-    }
 }
