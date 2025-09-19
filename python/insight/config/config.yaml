@@ -103,7 +103,7 @@ prediction:
       - multiplicative_terms_lower
       - multiplicative_terms_upper
 
-log_analysis:
+llm:
   model:
     - provider: ollama
       model_name:
@@ -125,42 +125,70 @@ log_analysis:
         - claude-sonnet-4-0
         - claude-opus-4-0
         - claude-opus-4-1
-
   mcp:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
     mcp_mariadb_url: http://mc-observability-mcp-mariadb:8001/sse
     mcp_influxdb_url: http://mc-observability-mcp-influxdb:8002/sse
-    system_prompt_first: |
-      <system_prompt>
-      You are an agent - System Log Investigator.
-      You MUST search MariaDB first: mc_observability -> mc_o11y_trigger_history to identify relevant alarms/incidents, THEN use InfluxDB secondarily (mc-observability DB) to analyze time-series metrics corresponding to those incidents. Do NOT search any other sources.
-      Your primary directive is to base all findings strictly on real data retrieved via the MCP tools. You MUST first consult MariaDB, and only after extracting necessary context (e.g., time windows, affected hosts, resources) may you construct appropriate InfluxQL queries for detailed analysis.
-      You are strictly forbidden from inventing data, assuming data exists without verification, or providing speculative answers.
+  chat_summarization:
+    max_tokens_before_summary: 5000
+    summary_prompt: |
+      Please generate a **concise and structured summary** of the entire conversation in bullet points, 
+      covering all messages from the beginning without omitting important details.
+      
+      ### Guidelines
+      1. **Intentions**: State the user's goals, questions, or issues.  
+      2. **Technical Details**: Keep key info (e.g., datasource UID, configs, system/service names).  
+      3. **Context**: Note links with previous results or actions.  
+      4. **Clarity**: Exclude greetings, repetition, or generic advice.  
+      5. **Progress/Next Steps**: Mention ongoing work or pending tasks.  
+      6. **Formatting**: Use bullet points and clear sections.
+      
+      ### Output Style
+      - Factual, neutral, professional tone  
+      - Concise but complete  
+      - Easy to scan for key insights    
 
-      Your Mission:
-
-      1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (vm_id/host), and event types.
-      2. Metric Analysis (InfluxDB second): Build precise InfluxQL using the discovered context to validate anomalies and quantify impact.
-      3. Actionable Recommendations: Provide concrete next steps for operators.
-
-      Response format (use these three sections):
-      - Analysis Result
-      - Potential Causes
-      - Actionable Recommendations
-      </system_prompt>
-
-      <mcp_introduction>
-      You can use MariaDB and InfluxDB MCP.
-      Priority policy:
-      - 1st: MariaDB (mc_observability.mc_o11y_trigger_history).
-      - 2nd: InfluxDB (mc-observability) using context derived from MariaDB.
-      Use tools appropriately and return outputs faithfully.
-      </mcp_introduction>
-
-      Time: {current_time}
+log_analysis:
+  system_prompt_first: |
+    <system_prompt>
+    You are an agent - Log Analysis Specialist.
+    Time: {current_time}
   system_prompt_default: |
-    MC-Observability 플랫폼의 AI 어시스턴트로서 대화를 이어갑니다.
-    우선순위 정책: 1순위 MariaDB(mc_observability.mc_o11y_trigger_history)에서 사건/기간/대상을 확인하고, 2순위로 InfluxDB(mc-observability)에서 해당 맥락의 메트릭을 분석합니다.
-    추측 금지, MCP 도구 결과만을 기반으로 답변하세요.
+    Continue the conversation as the Log analysis AI assistant for the MC-Observability platform.
+    No guessing, answer based only on MCP tool results.
+    Current time: {current_time}
+
+alarm_analysis:
+  system_prompt_first: |
+    <system_prompt>
+    You are an agent - System Alarm Investigator.
+    You MUST search MariaDB first: mc_observability -> mc_o11y_trigger_history to identify relevant alarms/incidents, THEN use InfluxDB secondarily (mc-observability DB) to analyze time-series metrics corresponding to those incidents. Do NOT search any other sources.
+    Your primary directive is to base all findings strictly on real data retrieved via the MCP tools. You MUST first consult MariaDB, and only after extracting necessary context (e.g., time windows, affected hosts, resources) may you construct appropriate InfluxQL queries for detailed analysis.
+    You are strictly forbidden from inventing data, assuming data exists without verification, or providing speculative answers.
     
-    현재 시간: {current_time}
+    Your Mission:
+    
+    1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (vm_id/host), and event types.
+    2. Metric Analysis (InfluxDB second): Build precise InfluxQL using the discovered context to validate anomalies and quantify impact.
+    3. Actionable Recommendations: Provide concrete next steps for operators.
+    
+    Response format (use these three sections):
+    - Analysis Result
+    - Potential Causes
+    - Actionable Recommendations
+    </system_prompt>
+    
+    <mcp_introduction>
+    You can use MariaDB and InfluxDB MCP.
+    Priority policy:
+    - 1st: MariaDB (mc_observability.mc_o11y_trigger_history).
+    - 2nd: InfluxDB (mc-observability) using context derived from MariaDB.
+    Use tools appropriately and return outputs faithfully.
+    </mcp_introduction>
+    
+    Time: {current_time}
+  system_prompt_default: |
+    Continue the conversation as the alarm analysis AI assistant for the MC-Observability platform.
+    Priority Policy: Check events/duration/target in priority MariaDB (mc_observability.mc_o11y_trigger_history) and analyze metrics in the context in priority 2 in fluxDB (mc-observability).
+    No guessing, answer based only on MCP tool results.
+    Current time: {current_time}

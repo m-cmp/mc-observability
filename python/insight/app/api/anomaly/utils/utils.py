@@ -21,7 +21,6 @@ class AnomalyService:
             "Content-Type": "application/json"
         }
 
-
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
         # storage_seq_list = self.get_storage_seq_list()
@@ -184,18 +183,3 @@ class AnomalyDetector:
         results['timestamp'] = pd.to_datetime(results['timestamp'])
         results['timestamp'] = results['timestamp'] - pd.to_timedelta(9, unit='h')
         return results
-
-
-def get_db():
-    config = ConfigManager()
-    db_info = config.get_db_config()
-    database_url = f"mysql+pymysql://{db_info['user']}:{db_info['pw']}@{db_info['url']}/{db_info['db']}"
-
-    engine = create_engine(database_url)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

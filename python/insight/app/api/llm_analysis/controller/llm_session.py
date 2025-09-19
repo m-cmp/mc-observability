@@ -1,0 +1,84 @@
+from fastapi import APIRouter, Depends
+from app.api.llm_analysis.request.req import PostSessionBody, SessionIdPath
+from app.api.llm_analysis.response.res import (
+    ResBodyLLMChatSession,
+    ResBodyLLMChatSessions,
+    ResBodySessionHistory,
+)
+from app.api.llm_analysis.utils.session import CommonSessionService
+from app.core.dependencies.mcp import get_mcp_context
+from app.core.dependencies.db import get_db
+from sqlalchemy.orm import Session
+
+router = APIRouter()
+
+
+@router.get(
+    path="/llm/session",
+    response_model=ResBodyLLMChatSessions,
+    operation_id="GetLLMChatSessions",
+)
+async def get_llm_chat_sessions(db: Session = Depends(get_db)):
+    """
+    Get all chat sessions.
+    """
+    session_service = CommonSessionService(db=db)
+    results = session_service.get_sessions()
+    return ResBodyLLMChatSessions(data=results)
+
+
+@router.post(
+    path="/llm/session",
+    response_model=ResBodyLLMChatSession,
+    operation_id="PostLLMChatSession",
+)
+async def post_llm_chat_session(body_params: PostSessionBody, db: Session = Depends(get_db)):
+    """
+    Create a chat session.
+    """
+    session_service = CommonSessionService(db=db)
+    result = session_service.create_chat_session(body=body_params)
+    return ResBodyLLMChatSession(data=result)
+
+
+@router.delete(
+    path="/llm/session",
+    response_model=ResBodyLLMChatSession,
+    operation_id="DeleteLLMChatSession",
+)
+async def delete_llm_chat_session(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db)):
+    """
+    Delete a chat session.
+    """
+    session_service = CommonSessionService(db=db)
+    result = session_service.delete_chat_session(path=path_params)
+    return ResBodyLLMChatSession(data=result)
+
+
+@router.delete(
+    path="/llm/sessions",
+    response_model=ResBodyLLMChatSessions,
+    operation_id="DeleteAllLLMChatSessions",
+)
+async def delete_all_llm_chat_sessions(db: Session = Depends(get_db)):
+    """
+    Delete all chat sessions.
+    """
+    session_service = CommonSessionService(db=db)
+    result = session_service.delete_all_chat_sessions()
+    return ResBodyLLMChatSessions(data=result)
+
+
+@router.get(
+    path="/llm/session/{sessionId}/history",
+    response_model=ResBodySessionHistory,
+    operation_id="GetLLMSessionHistory",
+)
+async def get_llm_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db),
+                                  mcp_context=Depends(get_mcp_context)):
+    """
+    Get chat session history.
+    """
+    session_service = CommonSessionService(db=db, mcp_context=mcp_context)
+    result = await session_service.get_chat_session_history(path=path_params)
+    return ResBodySessionHistory(data=result)
