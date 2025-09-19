@@ -12,6 +12,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.restdocs.snippet.Attributes.key;
 
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.AnomalyDetectionHistoryResponse;
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.AnomalyDetectionMeasurement;
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.AnomalyDetectionOptions;
 import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionBody;
 import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionHistory;
 import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionResult;
@@ -53,6 +56,7 @@ class InsightControllerTest {
 
   private static final String TAG_PREDICTION = "[Insight] Prediction";
   private static final String TAG_ANOMALY = "[Insight] AnomalyDetection";
+  private static final String TAG_ALERT = "[Insight] AlertAnalysis";
   private static final String TAG_LLM = "[Insight] LLM";
   private static final String TAG_LOG = "[Insight] LogAnalysis";
 
@@ -230,6 +234,144 @@ class InsightControllerTest {
                 fieldString("error_message", "에러 메시지")
             )
             .build());
+  }
+
+
+
+  @Test
+  void getAnomalyDetectionMeasurements() throws Exception {
+    AnomalyDetectionMeasurement measurement = new AnomalyDetectionMeasurement();
+    measurement.setPluginSeq(1);
+    measurement.setMeasurement("cpu");
+    measurement.setFields(List.of(Map.of("field_key", "usage_idle", "unit", "percent")));
+
+    ResBody<List<AnomalyDetectionMeasurement>> resBody = new ResBody<>();
+    resBody.setData(List.of(measurement));
+
+    when(insightClient.getMeasurements()).thenReturn(resBody);
+
+    mockMvc.perform(
+            RestDocumentationRequestBuilders.get("/api/o11y/insight/anomaly-detection/measurement"))
+        .andExpect(status().isOk())
+        .andDo(
+            builder()
+                .tag(TAG_ANOMALY)
+                .description("AnomalyDetection Measurement 목록 조회")
+                .summary("GetAnomalyDetectionMeasurements")
+                .responseSchema("AnomalyDetectionMeasurement")
+                .responseFields(
+                    fieldString("rs_code", "응답 코드"),
+                    fieldString("rs_msg", "응답 메시지"),
+                    fieldArray("data", "Measurement 목록"),
+                    fieldNumber("data[].pluginSeq", "Plugin sequence")
+                        .attributes(key("example").value(1)),
+                    fieldString("data[].measurement", "Measurement name")
+                        .attributes(key("example").value("cpu")),
+                    fieldArray("data[].fields", "List of field definitions"),
+                    fieldString("data[].fields[].field_key", "Field key")
+                        .attributes(key("example").value("usage_idle")),
+                    fieldString("data[].fields[].unit", "Unit of measurement")
+                        .attributes(key("example").value("percent")),
+                    fieldString("error_message", "에러 메시지"))
+                .build());
+  }
+
+  @Test
+  void getAnomalyDetectionOptions() throws Exception {
+    AnomalyDetectionOptions options = new AnomalyDetectionOptions();
+    options.setTargetTypes(List.of("vm", "mci"));
+    options.setMeasurements(List.of("cpu", "mem"));
+    options.setExecutionIntervals(List.of("5m", "10m", "30m"));
+
+    ResBody<AnomalyDetectionOptions> resBody = new ResBody<>();
+    resBody.setData(options);
+
+    when(insightClient.getOptions()).thenReturn(resBody);
+
+    mockMvc.perform(
+            RestDocumentationRequestBuilders.get("/api/o11y/insight/anomaly-detection/options"))
+        .andExpect(status().isOk())
+        .andDo(
+            builder()
+                .tag(TAG_ANOMALY)
+                .description("AnomalyDetection Options 조회")
+                .summary("GetAnomalyDetectionOptions")
+                .responseSchema("AnomalyDetectionOptions")
+                .responseFields(
+                    fieldString("rs_code", "응답 코드"),
+                    fieldString("rs_msg", "응답 메시지"),
+                    fieldObject("data", "Options 객체"),
+                    fieldArray("data.targetTypes", "Available target types")
+                        .attributes(key("example").value("[\"vm\", \"mci\"]")),
+                    fieldArray("data.measurements", "Available measurements")
+                        .attributes(key("example").value("[\"cpu\", \"mem\"]")),
+                    fieldArray("data.executionIntervals", "Execution intervals")
+                        .attributes(key("example").value("[\"5m\", \"10m\", \"30m\"]")),
+                    fieldString("error_message", "에러 메시지"))
+                .build());
+  }
+
+
+
+  @Test
+  void getAnomalyDetectionHistory() throws Exception {
+    PredictionHistory history = new PredictionHistory();
+    history.setNsId("ns-001");
+    history.setTargetId("vm-123");
+    history.setMeasurement("cpu");
+    history.setValues(List.of(
+        Map.of(
+            "timestamp", "2024-10-08T06:50:37Z",
+            "anomaly_score", 0.75,
+            "is_anomaly", 1,
+            "value", 85
+        )
+    ));
+
+    ResBody<PredictionHistory> resBody = new ResBody<>();
+    resBody.setData(history);
+
+    when(insightClient.getAnomalyHistory(any(), any(), any(), any(), any()))
+        .thenReturn(resBody);
+
+    mockMvc.perform(
+            RestDocumentationRequestBuilders.get(
+                    "/api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history",
+                    "ns-001",
+                    "vm-123")
+                .param("measurement", "cpu"))
+        .andExpect(status().isOk())
+        .andDo(
+            builder()
+                .tag(TAG_ANOMALY)
+                .description("AnomalyDetection History 조회")
+                .summary("GetAnomalyDetectionHistory")
+                .pathParameters(
+                    paramString("nsId", "Namespace ID"),
+                    paramString("targetId", "Target ID"))
+                .queryParameters(paramString("measurement", "Measurement type"))
+                .responseSchema("PredictionHistory")
+                .responseFields(
+                    fieldString("rs_code", "응답 코드"),
+                    fieldString("rs_msg", "응답 메시지"),
+                    fieldObject("data", "History 결과"),
+                    fieldString("data.nsId", "Namespace ID")
+                        .attributes(key("example").value("ns-001")),
+                    fieldString("data.targetId", "Target ID")
+                        .attributes(key("example").value("vm-123")),
+                    fieldString("data.measurement", "Measurement type")
+                        .attributes(key("example").value("cpu")),
+                    fieldArray("data.values", "Anomaly detection results"),
+                    fieldString("data.values[].timestamp", "Timestamp")
+                        .attributes(key("example").value("2024-10-08T06:50:37Z")),
+                    fieldNumber("data.values[].anomaly_score", "Anomaly score")
+                        .attributes(key("example").value(0.75)),
+                    fieldNumber("data.values[].is_anomaly", "Is anomaly (0/1)")
+                        .attributes(key("example").value(1)),
+                    fieldNumber("data.values[].value", "Observed value")
+                        .attributes(key("example").value(85)),
+                    fieldString("error_message", "에러 메시지"))
+                .build());
   }
 
 
