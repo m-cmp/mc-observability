@@ -21,11 +21,11 @@ class CommonModelService:
             env_key = self.PROVIDER_ENV_MAP[model_info["provider"]]
             if model_info["provider"] == "ollama" and os.getenv(env_key):
                 result.append(self.map_model_to_res(model_info))
-            elif model_info["provider"] == "openai" and self.repo.get_openai_key():
+            elif model_info["provider"] == "openai" and self.repo.get_api_key(provider=model_info["provider"]):
                 result.append(self.map_model_to_res(model_info))
-            elif model_info["provider"] == "google" and self.repo.get_google_key():
+            elif model_info["provider"] == "google" and self.repo.get_api_key(provider=model_info["provider"]):
                 result.append(self.map_model_to_res(model_info))
-            elif model_info["provider"] == "anthropic" and self.repo.get_anthropic_key():
+            elif model_info["provider"] == "anthropic" and self.repo.get_api_key(provider=model_info["provider"]):
                 result.append(self.map_model_to_res(model_info))
             else:
                 pass
