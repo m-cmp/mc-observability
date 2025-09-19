@@ -71,28 +71,13 @@ class ResBodyQuery(BaseResponse):
     data: Message
 
 
-class OpenAIAPIKey(BaseModel):
+class LLMAPIKey(BaseModel):
     seq: int
+    provider: str
     api_key: str
 
+class ResBodyLLMAPIKey(BaseResponse):
+    data: LLMAPIKey
 
-class ResBodyOpenAIAPIKey(BaseResponse):
-    data: OpenAIAPIKey
-
-
-class GoogleAPIKey(BaseModel):
-    seq: int
-    api_key: str
-
-
-class ResBodyGoogleAPIKey(BaseResponse):
-    data: GoogleAPIKey
-
-
-class AnthropicAPIKey(BaseModel):
-    seq: int
-    api_key: str
-
-
-class ResBodyAnthropicAPIKey(BaseResponse):
-    data: AnthropicAPIKey
+class ResBodyLLMAPIKeys(BaseResponse):
+    data: list[LLMAPIKey]

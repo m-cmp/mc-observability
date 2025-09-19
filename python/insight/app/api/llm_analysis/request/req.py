@@ -1,5 +1,7 @@
+from fastapi import Query
 from pydantic import BaseModel, Field
 from enum import Enum
+from typing import Optional
 
 
 class ProviderType(str, Enum):
@@ -8,6 +10,13 @@ class ProviderType(str, Enum):
     google = "google"
     anthropic = "anthropic"
 
+class APIProviderType(str, Enum):
+    openai = "openai"
+    google = "google"
+    anthropic = "anthropic"
+
+class GetAPIKeyPath(BaseModel):
+    provider: ProviderType
 
 class PostSessionBody(BaseModel):
     provider: ProviderType = Field(..., description="The LLM provider to use", example="openai")
@@ -24,5 +33,19 @@ class PostQueryBody(BaseModel):
                          example="Analyze these error logs and find the root cause")
 
 
+class GetAPIKeyFilter(BaseModel):
+    provider: APIProviderType = Field(Query(
+        default=None,
+        description="The LLM provider to use",
+        example="openai"
+    ))
+
 class PostAPIKeyBody(BaseModel):
+    provider: APIProviderType = Field(..., description="The LLM provider to use")
     api_key: str = Field(..., min_length=20, description="API key for the LLM provider")
+
+class DeleteAPIKeyFilter(BaseModel):
+    provider: APIProviderType = Field(Query(
+        description="The LLM provider to use",
+        example="openai"
+    ))
