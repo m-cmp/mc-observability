@@ -223,22 +223,9 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE `mc_o11y_insight_openai_api_key` (
+CREATE TABLE `mc_o11y_insight_llm_api_key` (
   `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `API_KEY` text NOT NULL,
-  PRIMARY KEY (`SEQ`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-
-
-CREATE TABLE `mc_o11y_insight_google_api_key` (
-  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `API_KEY` text NOT NULL,
-  PRIMARY KEY (`SEQ`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-
-
-CREATE TABLE `mc_o11y_insight_anthropic_api_key` (
-  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `PROVIDER` varchar(20) NOT NULL,
   `API_KEY` text NOT NULL,
   PRIMARY KEY (`SEQ`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
