@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from app.api.llm_analysis.request.req import PostQueryBody
 from app.api.llm_analysis.response.res import ResBodyQuery
+from app.api.llm_analysis.description.log_analysis import post_log_analysis_query_description
 from app.api.llm_analysis.utils.log_analysis import LogQueryService
 from app.core.dependencies.mcp import get_mcp_context
 from app.core.dependencies.db import get_db
@@ -12,6 +13,8 @@ router = APIRouter()
 
 @router.post(
     path="/log-analysis/query",
+    description=post_log_analysis_query_description['api_description'],
+    responses=post_log_analysis_query_description['response'],
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery",
 )

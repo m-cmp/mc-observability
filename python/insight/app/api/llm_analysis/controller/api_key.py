@@ -5,6 +5,17 @@ from app.api.llm_analysis.response.res import (
     ResBodyGoogleAPIKey,
     ResBodyAnthropicAPIKey,
 )
+from app.api.llm_analysis.description.api_key import (
+    get_openai_api_key_description,
+    post_openai_api_key_description,
+    delete_openai_api_key_description,
+    get_google_api_key_description,
+    post_google_api_key_description,
+    delete_google_api_key_description,
+    get_anthropic_api_key_description,
+    post_anthropic_api_key_description,
+    delete_anthropic_api_key_description,
+)
 from app.api.llm_analysis.utils.llm_api_key import CommonAPIKeyService
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
@@ -15,9 +26,10 @@ router = APIRouter()
 # OpenAI API Key endpoints
 @router.get(
     path="/llm/openai/api_keys",
-    summary="Get OpenAI API Key",
+    description=get_openai_api_key_description['api_description'],
+    responses=get_openai_api_key_description['response'],
     response_model=ResBodyOpenAIAPIKey,
-    operation_id="GetLLMAnalysisOpenAIAPIKey",
+    operation_id="GetOpenAIAPIKey",
 )
 async def get_openai_api_key(db: Session = Depends(get_db)):
     """
@@ -30,9 +42,10 @@ async def get_openai_api_key(db: Session = Depends(get_db)):
 
 @router.post(
     path="/llm/openai/api_keys",
-    summary="Post OpenAI API Key",
+    description=post_openai_api_key_description['api_description'],
+    responses=post_openai_api_key_description['response'],
     response_model=ResBodyOpenAIAPIKey,
-    operation_id="PostLLMAnalysisOpenAIAPIKey",
+    operation_id="PostOpenAIAPIKey",
 )
 async def post_openai_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
     """
@@ -45,9 +58,10 @@ async def post_openai_api_key(body_params: PostAPIKeyBody, db: Session = Depends
 
 @router.delete(
     path="/llm/openai/api_keys",
-    summary="Delete OpenAI API Key",
+    description=delete_openai_api_key_description['api_description'],
+    responses=delete_openai_api_key_description['response'],
     response_model=ResBodyOpenAIAPIKey,
-    operation_id="DeleteLLMAnalysisOpenAIAPIKey",
+    operation_id="DeleteOpenAIAPIKey",
 )
 async def delete_openai_api_key(db: Session = Depends(get_db)):
     """
@@ -61,9 +75,10 @@ async def delete_openai_api_key(db: Session = Depends(get_db)):
 # Google API Key endpoints
 @router.get(
     path="/llm/google/api_keys",
-    summary="Get Google API Key",
+    description=get_google_api_key_description['api_description'],
+    responses=get_google_api_key_description['response'],
     response_model=ResBodyGoogleAPIKey,
-    operation_id="GetLLMAnalysisGoogleAPIKey",
+    operation_id="GetGoogleAPIKey",
 )
 async def get_google_api_key(db: Session = Depends(get_db)):
     """
@@ -76,9 +91,10 @@ async def get_google_api_key(db: Session = Depends(get_db)):
 
 @router.post(
     path="/llm/google/api_keys",
-    summary="Post Google API Key",
+    description=post_google_api_key_description['api_description'],
+    responses=post_google_api_key_description['response'],
     response_model=ResBodyGoogleAPIKey,
-    operation_id="PostLLMAnalysisGoogleAPIKey",
+    operation_id="PostGoogleAPIKey",
 )
 async def post_google_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
     """
@@ -91,9 +107,10 @@ async def post_google_api_key(body_params: PostAPIKeyBody, db: Session = Depends
 
 @router.delete(
     path="/llm/google/api_keys",
-    summary="Delete Google API Key",
+    description=delete_google_api_key_description['api_description'],
+    responses=delete_google_api_key_description['response'],
     response_model=ResBodyGoogleAPIKey,
-    operation_id="DeleteLLMAnalysisGoogleAPIKey",
+    operation_id="DeleteGoogleAPIKey",
 )
 async def delete_google_api_key(db: Session = Depends(get_db)):
     """
@@ -107,9 +124,10 @@ async def delete_google_api_key(db: Session = Depends(get_db)):
 # Anthropic API Key endpoints
 @router.get(
     path="/llm/anthropic/api_keys",
-    summary="Get Anthropic API Key",
+    description=get_anthropic_api_key_description['api_description'],
+    responses=get_anthropic_api_key_description['response'],
     response_model=ResBodyAnthropicAPIKey,
-    operation_id="GetLLMAnalysisAnthropicAPIKey",
+    operation_id="GetAnthropicAPIKey",
 )
 async def get_anthropic_api_key(db: Session = Depends(get_db)):
     """
@@ -122,9 +140,10 @@ async def get_anthropic_api_key(db: Session = Depends(get_db)):
 
 @router.post(
     path="/llm/anthropic/api_keys",
-    summary="Post Anthropic API Key",
+    description=post_anthropic_api_key_description['api_description'],
+    responses=post_anthropic_api_key_description['response'],
     response_model=ResBodyAnthropicAPIKey,
-    operation_id="PostLLMAnalysisAnthropicAPIKey",
+    operation_id="PostAnthropicAPIKey",
 )
 async def post_anthropic_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
     """
@@ -137,9 +156,10 @@ async def post_anthropic_api_key(body_params: PostAPIKeyBody, db: Session = Depe
 
 @router.delete(
     path="/llm/anthropic/api_keys",
-    summary="Delete Anthropic API Key",
+    description=delete_anthropic_api_key_description['api_description'],
+    responses=delete_anthropic_api_key_description['response'],
     response_model=ResBodyAnthropicAPIKey,
-    operation_id="DeleteLLMAnalysisAnthropicAPIKey",
+    operation_id="DeleteAnthropicAPIKey",
 )
 async def delete_anthropic_api_key(db: Session = Depends(get_db)):
     """
