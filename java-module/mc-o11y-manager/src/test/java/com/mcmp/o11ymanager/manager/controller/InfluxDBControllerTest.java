@@ -60,21 +60,34 @@ class InfluxDBControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("InfluxDB 서버 전체 조회")
+                                .description("Retrieve all InfluxDB servers")
                                 .summary("GetAllInfluxDB")
                                 .responseSchema("InfluxDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "InfluxDB 정보 목록"),
-                                        fieldNumber("data[].id", "ID"),
-                                        fieldString("data[].url", "InfluxDB URL"),
-                                        fieldString("data[].database", "DB명"),
-                                        fieldString("data[].username", "사용자명").optional(),
-                                        fieldString("data[].retention_policy", "보존 정책").optional(),
-                                        fieldString("data[].password", "비밀번호").optional(),
-                                        fieldString("data[].uid", "UID").optional(),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "List of InfluxDB information"),
+                                        fieldNumber("data[].id", "ID (example: 1)"),
+                                        fieldString(
+                                                "data[].url",
+                                                "InfluxDB URL (example: localhost:8086)"),
+                                        fieldString(
+                                                "data[].database", "Database name (example: db-1)"),
+                                        fieldString(
+                                                        "data[].username",
+                                                        "Username (example: mc-user)")
+                                                .optional(),
+                                        fieldString(
+                                                        "data[].retention_policy",
+                                                        "Retention policy (example: autogen)")
+                                                .optional(),
+                                        fieldString(
+                                                        "data[].password",
+                                                        "Password (example: mypassword")
+                                                .optional(),
+                                        fieldString("data[].uid", "UID (example: 1)").optional(),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getInfluxDbs();
     }
@@ -101,18 +114,21 @@ class InfluxDBControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("InfluxDB 측정항목 조회")
+                                .description("Retrieve InfluxDB measurements")
                                 .summary("GetMeasurementFields")
                                 .responseSchema("FieldDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "측정항목 정보 목록"),
-                                        fieldString("data[].measurement", "측정항목명"),
-                                        fieldArray("data[].fields", "필드 정보 목록"),
-                                        fieldString("data[].fields[].key", "필드 키"),
-                                        fieldString("data[].fields[].type", "필드 타입"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "List of measurement information"),
+                                        fieldString(
+                                                "data[].measurement",
+                                                "Measurement name(example: cpu)"),
+                                        fieldArray("data[].fields", "List of field information"),
+                                        fieldString("data[].fields[].key", "Field key"),
+                                        fieldString("data[].fields[].type", "Field type"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getFields();
     }
@@ -132,16 +148,17 @@ class InfluxDBControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("InfluxDB 태그 조회")
+                                .description("Retrieve InfluxDB tags")
                                 .summary("GetMeasurementTags")
                                 .responseSchema("TagDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "태그 정보 목록"),
-                                        fieldString("data[].measurement", "측정항목명"),
-                                        fieldArray("data[].tags", "태그 목록"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "List of tag information"),
+                                        fieldString("data[].measurement", "Measurement name"),
+                                        fieldArray("data[].tags", "List of tags"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getTags();
     }
@@ -184,38 +201,43 @@ class InfluxDBControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("InfluxDB 메트릭 조회")
+                                .description("Retrieve InfluxDB metrics")
                                 .summary("QueryMetrics")
                                 .requestSchema("MetricRequestDTO")
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
                                         paramString("mciId", "MCI ID"))
                                 .requestFields(
-                                        fieldString("measurement", "측정항목명"),
-                                        fieldString("range", "조회 범위"),
-                                        fieldString("group_time", "그룹핑 단위").optional(),
-                                        fieldArray("group_by", "Group by 필드 목록").optional(),
-                                        fieldNumber("limit", "결과 제한 개수").optional(),
-                                        fieldArray("fields", "조회할 필드 목록"),
-                                        fieldString("fields[].function", "집계 함수 (예: mean, max 등)")
+                                        fieldString("measurement", "Measurement name"),
+                                        fieldString("range", "Query range"),
+                                        fieldString("group_time", "Grouping unit").optional(),
+                                        fieldArray("group_by", "List of group by fields")
                                                 .optional(),
-                                        fieldString("fields[].field", "필드 이름").optional(),
-                                        fieldArray("conditions", "조건 필터 목록"),
-                                        fieldString("conditions[].key", "조건 키").optional(),
-                                        fieldString("conditions[].value", "조건 값").optional())
+                                        fieldNumber("limit", "Result limit count").optional(),
+                                        fieldArray("fields", "List of fields to query"),
+                                        fieldString(
+                                                        "fields[].function",
+                                                        "Aggregation function (e.g., mean, max, etc.)")
+                                                .optional(),
+                                        fieldString("fields[].field", "Field name").optional(),
+                                        fieldArray("conditions", "List of condition filters"),
+                                        fieldString("conditions[].key", "Condition key").optional(),
+                                        fieldString("conditions[].value", "Condition value")
+                                                .optional())
                                 .responseSchema("MetricDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "메트릭 정보 목록"),
-                                        fieldString("data[].name", "측정항목명"),
-                                        fieldArray("data[].columns", "컬럼명 목록"),
-                                        fieldObject("data[].tags", "태그 정보").optional(),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "List of metric information"),
+                                        fieldString("data[].name", "Measurement name"),
+                                        fieldArray("data[].columns", "List of column names"),
+                                        fieldObject("data[].tags", "Tag information").optional(),
                                         fieldSubsection(
                                                 "data[].values",
                                                 JsonFieldType.ARRAY,
-                                                "값 목록 (2차원 배열, 각 행은 columns 순서에 맞는 값들)"),
-                                        fieldString("error_message", "에러 메시지"))
+                                                "List of values (2D array, each row corresponds to columns order)"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getMetrics(any(), any(), any());
     }

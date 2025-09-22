@@ -1,6 +1,11 @@
 package com.mcmp.o11ymanager.manager.infrastructure.insight;
 
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.*;
+import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.*;
+import com.mcmp.o11ymanager.manager.dto.insight.prediction.*;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.port.InsightPort;
+import java.util.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,76 +15,102 @@ public class InsightClientAdapter implements InsightPort {
 
     private final InsightClient insightClient;
 
+    /* ===================== Prediction ===================== */
     @Override
-    public Object getPredictionMeasurement() {
-        return insightClient.getPredictionMeasurement();
+    public ResBody<List<PredictionMeasurement>> getPredictionMeasurements() {
+        return insightClient.getPredictionMeasurements();
     }
 
     @Override
-    public Object getPredictionSpecificMeasurement(String measurement) {
+    public ResBody<PredictionMeasurement> getPredictionSpecificMeasurement(String measurement) {
         return insightClient.getPredictionSpecificMeasurement(measurement);
     }
 
     @Override
-    public Object getPredictionOptions() {
+    public ResBody<PredictionOptions> getPredictionOptions() {
         return insightClient.getPredictionOptions();
     }
 
     @Override
-    public Object predictMetric(String nsId, String vmId, Object option) {
-        return insightClient.predictMetric(nsId, vmId, option);
+    public ResBody<PredictionResult> predictMonitoringData(
+            String nsId, String vmId, PredictionBody body) {
+        return insightClient.predictMonitoringData(nsId, vmId, body);
     }
 
     @Override
-    public Object getPredictionHistory(
+    public ResBody<PredictionHistory> getPredictionHistory(
             String nsId, String vmId, String measurement, String startTime, String endTime) {
         return insightClient.getPredictionHistory(nsId, vmId, measurement, startTime, endTime);
     }
 
+    /* ===================== Anomaly Detection ===================== */
     @Override
-    public Object getAnomalyDetectionMeasurement() {
-        return insightClient.getAnomalyDetectionMeasurement();
+    public ResBody<List<AnomalyDetectionMeasurement>> getMeasurements() {
+        return insightClient.getMeasurements();
     }
 
     @Override
-    public Object getAnomalyDetectionSpecificMeasurement(String measurement) {
-        return insightClient.getAnomalyDetectionSpecificMeasurement(measurement);
+    public ResBody<AnomalyDetectionMeasurement> getSpecificMeasurement(String measurement) {
+        return insightClient.getSpecificMeasurement(measurement);
     }
 
     @Override
-    public Object getAnomalyDetectionOptions() {
-        return insightClient.getAnomalyDetectionOptions();
+    public ResBody<AnomalyDetectionOptions> getOptions() {
+        return insightClient.getOptions();
     }
 
     @Override
-    public Object getAnomalyDetectionSettings() {
-        return insightClient.getAnomalyDetectionSettings();
+    public ResBody<PredictionResult> predictMetric(
+            String nsId, String targetId, PredictionBody body) {
+        return insightClient.predictMetric(nsId, targetId, body);
     }
 
     @Override
-    public Object insertAnomalyDetectionSetting(Object body) {
-        return insightClient.insertAnomalyDetectionSetting(body);
+    public ResBody<PredictionHistory> getAnomalyHistory(
+            String nsId, String targetId, String measurement, String startTime, String endTime) {
+        return insightClient.getAnomalyHistory(nsId, targetId, measurement, startTime, endTime);
+    }
+
+    /* ===================== LLM ===================== */
+    @Override
+    public ResBody<List<LLMModel>> getLLMModelOptions() {
+        return insightClient.getLLMModelOptions();
     }
 
     @Override
-    public Object updateAnomalyDetectionSetting(Long settingSeq, Object body) {
-        return insightClient.updateAnomalyDetectionSetting(settingSeq, body);
+    public ResBody<List<LLMChatSession>> getLLMChatSessions() {
+        return insightClient.getLLMChatSessions();
     }
 
     @Override
-    public Object deleteAnomalyDetectionSetting(Long settingSeq) {
-        return insightClient.deleteAnomalyDetectionSetting(settingSeq);
+    public ResBody<LLMChatSession> postLLMChatSession(PostSessionBody body) {
+        return insightClient.postLLMChatSession(body);
     }
 
     @Override
-    public Object getAnomalyDetection(String nsId, String vmId) {
-        return insightClient.getAnomalyDetection(nsId, vmId);
+    public ResBody<LLMChatSession> deleteLLMChatSession(String sessionId) {
+        return insightClient.deleteLLMChatSession(sessionId);
     }
 
     @Override
-    public Object getAnomalyDetectionHistory(
-            String nsId, String vmId, String measurement, String startTime, String endTime) {
-        return insightClient.getAnomalyDetectionHistory(
-                nsId, vmId, measurement, startTime, endTime);
+    public ResBody<List<LLMChatSession>> deleteAllLLMChatSessions() {
+        return insightClient.deleteAllLLMChatSessions();
+    }
+
+    @Override
+    public ResBody<SessionHistory> getLLMSessionHistory(String sessionId) {
+        return insightClient.getLLMSessionHistory(sessionId);
+    }
+
+    /* ===================== Alert Analysis ===================== */
+    @Override
+    public ResBody<Message> queryAlertAnalysis(PostQueryBody body) {
+        return insightClient.queryAlertAnalysis(body);
+    }
+
+    /* ===================== Log Analysis ===================== */
+    @Override
+    public ResBody<Message> queryLogAnalysis(PostQueryBody body) {
+        return insightClient.queryLogAnalysis(body);
     }
 }

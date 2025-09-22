@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 @ActiveProfiles("test")
 class SystemControllerTest {
+
     private static final String TAG = "[System] environment";
 
     @Autowired private MockMvc mockMvc;
@@ -51,18 +52,19 @@ class SystemControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("플러그인 목록 조회")
+                                .description("Retrieve plugin list")
                                 .summary("GetPlugins")
                                 .responseSchema("ResBody<List<PluginDefDTO>>")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "플러그인 목록"),
-                                        fieldNumber("data[].seq", "플러그인 시퀀스"),
-                                        fieldString("data[].name", "플러그인 이름"),
-                                        fieldString("data[].pluginId", "플러그인 ID"),
-                                        fieldString("data[].pluginType", "플러그인 타입"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "Plugin list"),
+                                        fieldNumber("data[].seq", "Plugin sequence"),
+                                        fieldString("data[].name", "Plugin name"),
+                                        fieldString("data[].pluginId", "Plugin ID"),
+                                        fieldString("data[].pluginType", "Plugin type"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(agentPluginDefServiceImpl).getAllPluginDefinitions();
     }

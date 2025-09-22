@@ -64,7 +64,7 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("타겟 단건 조회")
+                                .description("Retrieve single target")
                                 .summary("GetVM")
                                 .pathParameters(
                                         paramString("NS ID", "NS ID"),
@@ -72,28 +72,30 @@ class VMControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldObject("data", "Target information"),
                                         fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "타겟 이름"),
-                                        fieldString("data.description", "설명").optional(),
-                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.description", "Description").optional(),
+                                        fieldNumber("data.influx_seq", "Influx sequence")
+                                                .optional(),
+                                        fieldEnum("data.vm_status", "Target status", VMStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.monitoring_service_status",
-                                                        "모니터링 에이전트 서비스 상태",
+                                                        "Monitoring agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.log_service_status",
-                                                        "로그 에이전트 서비스 상태",
+                                                        "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldString("data.ns_id", "NS ID"),
                                         fieldString("data.mci_id", "MCI ID"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVM(any(), any(), any());
     }
@@ -127,7 +129,7 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("타겟 생성")
+                                .description("Create target")
                                 .summary("PostVM")
                                 .pathParameters(
                                         paramString("NS ID", "NS ID"),
@@ -135,32 +137,34 @@ class VMControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .requestSchema("VMRequestDTO")
                                 .requestFields(
-                                        fieldString("name", "타겟 이름"),
-                                        fieldString("description", "설명").optional())
+                                        fieldString("name", "Target name"),
+                                        fieldString("description", "Description").optional())
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldObject("data", "Target information"),
                                         fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "타겟 이름"),
-                                        fieldString("data.description", "설명").optional(),
-                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.description", "Description").optional(),
+                                        fieldNumber("data.influx_seq", "Influx sequence")
+                                                .optional(),
+                                        fieldEnum("data.vm_status", "Target status", VMStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.monitoring_service_status",
-                                                        "모니터링 에이전트 서비스 상태",
+                                                        "Monitoring agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.log_service_status",
-                                                        "로그 에이전트 서비스 상태",
+                                                        "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldString("data.ns_id", "NS ID"),
                                         fieldString("data.mci_id", "MCI ID"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).postVM(any(), any(), any(), any());
     }
@@ -194,7 +198,7 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("타겟 수정")
+                                .description("Update target")
                                 .summary("PutVM")
                                 .pathParameters(
                                         paramString("NS ID", "NS ID"),
@@ -202,32 +206,34 @@ class VMControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .requestSchema("VMRequestDTO")
                                 .requestFields(
-                                        fieldString("name", "타겟 이름"),
-                                        fieldString("description", "설명").optional())
+                                        fieldString("name", "Target name"),
+                                        fieldString("description", "Description").optional())
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldObject("data", "타겟 정보"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldObject("data", "Target information"),
                                         fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "타겟 이름"),
-                                        fieldString("data.description", "설명").optional(),
-                                        fieldNumber("data.influx_seq", "인플럭스 시퀀스").optional(),
-                                        fieldEnum("data.vm_status", "타겟 상태", VMStatus.class)
+                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.description", "Description").optional(),
+                                        fieldNumber("data.influx_seq", "Influx sequence")
+                                                .optional(),
+                                        fieldEnum("data.vm_status", "Target status", VMStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.monitoring_service_status",
-                                                        "모니터링 에이전트 서비스 상태",
+                                                        "Monitoring agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data.log_service_status",
-                                                        "로그 에이전트 서비스 상태",
+                                                        "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldString("data.ns_id", "NS ID"),
                                         fieldString("data.mci_id", "MCI ID"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).putVM(any(), any(), any(), any());
     }
@@ -244,17 +250,18 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("타겟 삭제")
+                                .description("Delete target")
                                 .summary("DeleteVM")
                                 .pathParameters(
                                         paramString("NS ID", "NS ID"),
                                         paramString("mciId", "MCI ID"),
                                         paramString("vmId", "TARGET ID"))
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldNull("data", "null 반환"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldNull("data", "null return"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).deleteVM(any(), any(), any());
     }
@@ -283,35 +290,40 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("NS /MCI별 타겟 목록 조회")
+                                .description("Retrieve target list by NS/MCI")
                                 .summary("GetVMByNsMci")
                                 .pathParameters(
                                         paramString("NS ID", "NS ID"),
                                         paramString("mciId", "MCI ID"))
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "타겟 정보 목록"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "Target information list"),
                                         fieldString("data[].vm_id", "TARGET ID"),
-                                        fieldString("data[].name", "타겟 이름"),
-                                        fieldString("data[].description", "설명").optional(),
-                                        fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
-                                        fieldEnum("data[].vm_status", "타겟 상태", VMStatus.class)
+                                        fieldString("data[].name", "Target name"),
+                                        fieldString("data[].description", "Description").optional(),
+                                        fieldNumber("data[].influx_seq", "Influx sequence")
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].vm_status",
+                                                        "Target status",
+                                                        VMStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data[].monitoring_service_status",
-                                                        "모니터링 에이전트 서비스 상태",
+                                                        "Monitoring agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data[].log_service_status",
-                                                        "로그 에이전트 서비스 상태",
+                                                        "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldString("data[].ns_id", "NS ID"),
                                         fieldString("data[].mci_id", "MCI ID"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVMsNsMci(any(), any());
     }
@@ -338,32 +350,37 @@ class VMControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("전체 타겟 목록 조회")
+                                .description("Retrieve all targets")
                                 .summary("GetAllVMs")
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "타겟 정보 목록"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "Target information list"),
                                         fieldString("data[].vm_id", "TARGET ID"),
-                                        fieldString("data[].name", "타겟 이름"),
-                                        fieldString("data[].description", "설명").optional(),
-                                        fieldNumber("data[].influx_seq", "인플럭스 시퀀스").optional(),
-                                        fieldEnum("data[].vm_status", "타겟 상태", VMStatus.class)
+                                        fieldString("data[].name", "Target name"),
+                                        fieldString("data[].description", "Description").optional(),
+                                        fieldNumber("data[].influx_seq", "Influx sequence")
+                                                .optional(),
+                                        fieldEnum(
+                                                        "data[].vm_status",
+                                                        "Target status",
+                                                        VMStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data[].monitoring_service_status",
-                                                        "모니터링 에이전트 서비스 상태",
+                                                        "Monitoring agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldEnum(
                                                         "data[].log_service_status",
-                                                        "로그 에이전트 서비스 상태",
+                                                        "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
                                         fieldString("data[].ns_id", "NS ID"),
                                         fieldString("data[].mci_id", "MCI ID"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVMs();
     }

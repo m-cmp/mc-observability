@@ -1,61 +1,95 @@
 package com.mcmp.o11ymanager.manager.infrastructure.insight;
 
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.*;
+import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.*;
+import com.mcmp.o11ymanager.manager.dto.insight.prediction.*;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
+import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
 @FeignClient(name = "insight", url = "${feign.insight.url:}")
 public interface InsightClient {
 
-    @GetMapping("/api/o11y" + "/insight/predictions" + "/measurement")
-    Object getPredictionMeasurement();
+    String ANOMALY = "/anomaly-detection";
+    String ALERT = "/alert-analysis";
+    String LLM = "/llm";
+    String LOG = "/log-analysis";
+    String PREDICTION = "/predictions";
 
-    @GetMapping("/api/o11y" + "/insight/predictions" + "/measurement/{measurement}")
-    Object getPredictionSpecificMeasurement(@PathVariable String measurement);
+    @GetMapping(ANOMALY + "/measurement")
+    ResBody<List<AnomalyDetectionMeasurement>> getMeasurements();
 
-    @GetMapping("/api/o11y" + "/insight/predictions" + "/options")
-    Object getPredictionOptions();
+    @GetMapping(ANOMALY + "/measurement/{measurement}")
+    ResBody<AnomalyDetectionMeasurement> getSpecificMeasurement(
+            @PathVariable("measurement") String measurement);
 
-    @PostMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/vm/{vmId}")
-    Object predictMetric(
-            @PathVariable String nsId, @PathVariable String vmId, @RequestBody Object option);
+    @GetMapping(ANOMALY + "/options")
+    ResBody<AnomalyDetectionOptions> getOptions();
 
-    @GetMapping("/api/o11y" + "/insight/predictions" + "/nsId/{nsId}/vm/{vmId}/history")
-    Object getPredictionHistory(
-            @PathVariable String nsId,
-            @PathVariable String vmId,
-            @RequestParam String measurement,
-            @RequestParam(required = false) String start_time,
-            @RequestParam(required = false) String end_time);
+    @PostMapping(ANOMALY + "/nsId/{nsId}/target/{targetId}")
+    ResBody<PredictionResult> predictMetric(
+            @PathVariable("nsId") String nsId,
+            @PathVariable("targetId") String targetId,
+            @RequestBody PredictionBody body);
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/measurement")
-    Object getAnomalyDetectionMeasurement();
+    @GetMapping(ANOMALY + "/nsId/{nsId}/target/{targetId}/history")
+    ResBody<PredictionHistory> getAnomalyHistory(
+            @PathVariable("nsId") String nsId,
+            @PathVariable("targetId") String targetId,
+            @RequestParam("measurement") String measurement,
+            @RequestParam(value = "start_time", required = false) String startTime,
+            @RequestParam(value = "end_time", required = false) String endTime);
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/measurement/{measurement}")
-    Object getAnomalyDetectionSpecificMeasurement(@PathVariable String measurement);
+    @PostMapping(ALERT + "/query")
+    ResBody<Message> queryAlertAnalysis(@RequestBody PostQueryBody body);
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/options")
-    Object getAnomalyDetectionOptions();
+    @GetMapping(LLM + "/model")
+    ResBody<List<LLMModel>> getLLMModelOptions();
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings")
-    Object getAnomalyDetectionSettings();
+    @GetMapping(LLM + "/session")
+    ResBody<List<LLMChatSession>> getLLMChatSessions();
 
-    @PostMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings")
-    Object insertAnomalyDetectionSetting(@RequestBody Object body);
+    @PostMapping(LLM + "/session")
+    ResBody<LLMChatSession> postLLMChatSession(@RequestBody PostSessionBody body);
 
-    @PutMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings/{settingSeq}")
-    Object updateAnomalyDetectionSetting(@PathVariable Long settingSeq, @RequestBody Object body);
+    @DeleteMapping(LLM + "/session")
+    ResBody<LLMChatSession> deleteLLMChatSession(@RequestParam("sessionId") String sessionId);
 
-    @DeleteMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings/{settingSeq}")
-    Object deleteAnomalyDetectionSetting(@PathVariable Long settingSeq);
+    @DeleteMapping(LLM + "/sessions")
+    ResBody<List<LLMChatSession>> deleteAllLLMChatSessions();
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/settings/nsId/{nsId}/vm/{vmId}")
-    Object getAnomalyDetection(@PathVariable String nsId, @PathVariable String vmId);
+    @GetMapping(LLM + "/session/{sessionId}/history")
+    ResBody<SessionHistory> getLLMSessionHistory(@PathVariable("sessionId") String sessionId);
 
-    @GetMapping("/api/o11y" + "/insight/anomaly-detection" + "/nsId/{nsId}/vm/{vmId}/history")
-    Object getAnomalyDetectionHistory(
-            @PathVariable String nsId,
-            @PathVariable String vmId,
-            @RequestParam String measurement,
-            @RequestParam(required = false) String start_time,
-            @RequestParam(required = false) String end_time);
+    @PostMapping(LOG + "/query")
+    ResBody<Message> queryLogAnalysis(@RequestBody PostQueryBody body);
+
+    @GetMapping(PREDICTION + "/measurement")
+    ResBody<List<PredictionMeasurement>> getPredictionMeasurements();
+
+    /** GET /predictions/measurement/{measurement} */
+    @GetMapping(PREDICTION + "/measurement/{measurement}")
+    ResBody<PredictionMeasurement> getPredictionSpecificMeasurement(
+            @PathVariable("measurement") String measurement);
+
+    /** GET /predictions/options */
+    @GetMapping(PREDICTION + "/options")
+    ResBody<PredictionOptions> getPredictionOptions();
+
+    /** POST /predictions/nsId/{nsId}/vm/{targetId} */
+    @PostMapping(PREDICTION + "/nsId/{nsId}/target/{targetId}")
+    ResBody<PredictionResult> predictMonitoringData(
+            @PathVariable("nsId") String nsId,
+            @PathVariable("targetId") String targetId,
+            @RequestBody PredictionBody body);
+
+    /** GET /predictions/nsId/{nsId}/vm/{targetId}/history */
+    @GetMapping(PREDICTION + "/nsId/{nsId}/target/{targetId}/history")
+    ResBody<PredictionHistory> getPredictionHistory(
+            @PathVariable("nsId") String nsId,
+            @PathVariable("targetId") String targetId,
+            @RequestParam("measurement") String measurement,
+            @RequestParam(value = "start_time", required = false) String startTime,
+            @RequestParam(value = "end_time", required = false) String endTime);
 }
