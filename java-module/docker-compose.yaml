@@ -647,7 +647,7 @@ services:
     container_name: rabbitmq
     volumes:
       - ./rabbitmq/etc:/etc/rabbitmq
-      - ./rabbitmq/data:/var/lib/rabbitmq
+      - /docker/rabbitmq_data:/var/lib/rabbitmq
 #      - ./rabbitmq/logs:/var/log/rabbitmq
     depends_on:
       mc-observability-rabbitmq-init-volumes:
@@ -684,7 +684,7 @@ services:
         chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
         chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
     volumes:
-      - ./rabbitmq/data:/var/lib/rabbitmq
+      - /docker/rabbitmq_data:/var/lib/rabbitmq
     user: root
     init: true
     networks:
