@@ -599,7 +599,7 @@ services:
 
   mc-observability-mcp-maria:
     build:
-      context: ../python/insight/external/mariadb-mcp
+      context: ../python/mcp-mariadb
       dockerfile: Dockerfile
     container_name: mc-observability-mcp-maria
     restart: always
@@ -624,7 +624,7 @@ services:
 
   mc-observability-mcp-influx:
     build:
-      context: ../python/insight/external/influxdb-mcp
+      context: ../python/mcp-influxdb
       dockerfile: Dockerfile
     container_name: mc-observability-mcp-influx
     restart: always
