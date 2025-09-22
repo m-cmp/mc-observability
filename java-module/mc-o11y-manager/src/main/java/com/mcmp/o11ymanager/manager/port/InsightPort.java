@@ -1,33 +1,53 @@
 package com.mcmp.o11ymanager.manager.port;
 
+import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.*;
+import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.*;
+import com.mcmp.o11ymanager.manager.dto.insight.prediction.*;
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
+import java.util.List;
+
 public interface InsightPort {
-    Object getPredictionMeasurement();
 
-    Object getPredictionSpecificMeasurement(String measurement);
+    /* ===================== Prediction ===================== */
+    ResBody<List<PredictionMeasurement>> getPredictionMeasurements();
 
-    Object getPredictionOptions();
+    ResBody<PredictionMeasurement> getPredictionSpecificMeasurement(String measurement);
 
-    Object predictMetric(String nsId, String vmId, Object option);
+    ResBody<PredictionOptions> getPredictionOptions();
 
-    Object getPredictionHistory(
+    ResBody<PredictionResult> predictMonitoringData(String nsId, String vmId, PredictionBody body);
+
+    ResBody<PredictionHistory> getPredictionHistory(
             String nsId, String vmId, String measurement, String startTime, String endTime);
 
-    Object getAnomalyDetectionMeasurement();
+    /* ===================== Anomaly Detection ===================== */
+    ResBody<List<AnomalyDetectionMeasurement>> getMeasurements();
 
-    Object getAnomalyDetectionSpecificMeasurement(String measurement);
+    ResBody<AnomalyDetectionMeasurement> getSpecificMeasurement(String measurement);
 
-    Object getAnomalyDetectionOptions();
+    ResBody<AnomalyDetectionOptions> getOptions();
 
-    Object getAnomalyDetectionSettings();
+    ResBody<PredictionResult> predictMetric(String nsId, String targetId, PredictionBody body);
 
-    Object insertAnomalyDetectionSetting(Object body);
+    ResBody<PredictionHistory> getAnomalyHistory(
+            String nsId, String targetId, String measurement, String startTime, String endTime);
 
-    Object updateAnomalyDetectionSetting(Long settingSeq, Object body);
+    /* ===================== LLM ===================== */
+    ResBody<List<LLMModel>> getLLMModelOptions();
 
-    Object deleteAnomalyDetectionSetting(Long settingSeq);
+    ResBody<List<LLMChatSession>> getLLMChatSessions();
 
-    Object getAnomalyDetection(String nsId, String vmId);
+    ResBody<LLMChatSession> postLLMChatSession(PostSessionBody body);
 
-    Object getAnomalyDetectionHistory(
-            String nsId, String vmId, String measurement, String startTime, String endTime);
+    ResBody<LLMChatSession> deleteLLMChatSession(String sessionId);
+
+    ResBody<List<LLMChatSession>> deleteAllLLMChatSessions();
+
+    ResBody<SessionHistory> getLLMSessionHistory(String sessionId);
+
+    /* ===================== Alert Analysis ===================== */
+    ResBody<Message> queryAlertAnalysis(PostQueryBody body);
+
+    /* ===================== Log Analysis ===================== */
+    ResBody<Message> queryLogAnalysis(PostQueryBody body);
 }

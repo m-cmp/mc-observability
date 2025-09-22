@@ -36,7 +36,7 @@ paths:
       description: ''
       summary: GetTarget
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: GetTarget
       deprecated: false
       produces:
@@ -67,7 +67,7 @@ paths:
       description: ''
       summary: PutTarget
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: PutTarget
       deprecated: false
       produces:
@@ -113,7 +113,7 @@ paths:
       description: ''
       summary: PostTarget
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: PostTarget
       deprecated: false
       produces:
@@ -159,7 +159,7 @@ paths:
       description: ''
       summary: DeleteTarget
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: DeleteTarget
       deprecated: false
       produces:
@@ -191,7 +191,7 @@ paths:
       description: ''
       summary: GetMiningDBs
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: GetMiningDBs
       deprecated: false
       produces:
@@ -239,7 +239,7 @@ paths:
       description: ''
       summary: GetTargetsNSMCI
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: GetTargetsNSMCI
       deprecated: false
       produces:
@@ -266,7 +266,7 @@ paths:
       description: ''
       summary: GetTargets
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: GetTargets
       deprecated: false
       produces:
@@ -283,7 +283,7 @@ paths:
       description: ''
       summary: GetNSs
       tags:
-      - '[Target] Monitoring target management'
+      - '[Target] Monitoring vm management'
       operationId: GetNSs
       deprecated: false
       produces:
@@ -300,7 +300,7 @@ paths:
       description: ''
       summary: GetStorages
       tags:
-      - '[Monitoring storage] Monitoring target storage management'
+      - '[Monitoring storage] Monitoring vm storage management'
       operationId: GetStorages
       deprecated: false
       produces:
@@ -331,7 +331,7 @@ paths:
       description: ''
       summary: PutStorage
       tags:
-      - '[Monitoring storage] Monitoring target storage management'
+      - '[Monitoring storage] Monitoring vm storage management'
       operationId: PutStorage
       deprecated: false
       produces:
@@ -377,7 +377,7 @@ paths:
       description: ''
       summary: PostStorage
       tags:
-      - '[Monitoring storage] Monitoring target storage management'
+      - '[Monitoring storage] Monitoring vm storage management'
       operationId: PostStorage
       deprecated: false
       produces:
@@ -424,7 +424,7 @@ paths:
       description: ''
       summary: DeleteStorage
       tags:
-      - '[Monitoring storage] Monitoring target storage management'
+      - '[Monitoring storage] Monitoring vm storage management'
       operationId: DeleteStorage
       deprecated: false
       produces:
@@ -462,7 +462,7 @@ paths:
       description: ''
       summary: GetItems
       tags:
-      - '[Monitoring item] Monitoring target item management'
+      - '[Monitoring item] Monitoring vm item management'
       operationId: GetItems
       deprecated: false
       produces:
@@ -493,7 +493,7 @@ paths:
       description: ''
       summary: PutItem
       tags:
-      - '[Monitoring item] Monitoring target item management'
+      - '[Monitoring item] Monitoring vm item management'
       operationId: PutItem
       deprecated: false
       produces:
@@ -539,7 +539,7 @@ paths:
       description: ''
       summary: PostItem
       tags:
-      - '[Monitoring item] Monitoring target item management'
+      - '[Monitoring item] Monitoring vm item management'
       operationId: PostItem
       deprecated: false
       produces:
@@ -586,7 +586,7 @@ paths:
       description: ''
       summary: DeleteItem
       tags:
-      - '[Monitoring item] Monitoring target item management'
+      - '[Monitoring item] Monitoring vm item management'
       operationId: DeleteItem
       deprecated: false
       produces:
@@ -822,7 +822,7 @@ paths:
       description: ''
       summary: GetCSP
       tags:
-      - '[Monitoring CSP] Monitoring target from the CSP'
+      - '[Monitoring CSP] Monitoring vm from the CSP'
       operationId: GetCSP
       deprecated: false
       produces:
@@ -1295,7 +1295,7 @@ paths:
           headers: { }
   /api/o11y/insight/anomaly-detection/options:
     get:
-      description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
+      description: Fetch the available vm types, metric types, and interval options for the anomaly detection API.
       summary: GetAnomalyDetectionOptions
       tags:
       - '[Insight] Anomaly Detection'
@@ -1343,7 +1343,7 @@ paths:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
           headers: {}
     post:
-      description: "Register a target for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
+      description: "Register a vm for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
       summary: PostAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1374,7 +1374,7 @@ paths:
           headers: {}
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
-      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
+      description: Modify the settings for a specific anomaly detection vm, including the monitoring metric and interval.
       summary: PutAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1410,7 +1410,7 @@ paths:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
     delete:
-      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
+      description: Remove a vm from anomaly detection, stopping and removing any scheduled tasks.
       summary: DeleteAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1433,7 +1433,7 @@ paths:
           headers: {}
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
-      description: Fetch the current settings for a specific anomaly detection target.
+      description: Fetch the current settings for a specific anomaly detection vm.
       summary: GetTargetAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1460,7 +1460,7 @@ paths:
           headers: {}
   /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
     get:
-      description: Fetch the results of anomaly detection for a specific target within a given time range.
+      description: Fetch the results of anomaly detection for a specific vm within a given time range.
       summary: GetAnomalyDetectionHistory
       tags:
       - '[Insight] Anomaly Detection'
@@ -1478,7 +1478,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target vm or mci group.
+        description: The ID of the vm vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -1602,7 +1602,7 @@ paths:
           headers: { }
   /api/o11y/insight/predictions/options:
     get:
-      description: Fetch the available target types, metric types, and prediction range options for the prediction API.
+      description: Fetch the available vm types, metric types, and prediction range options for the prediction API.
       summary: GetPredictionOptions
       tags:
       - '[Insight] Prediction'
@@ -1655,7 +1655,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target vm or mci group.
+        description: The ID of the vm vm or mci group.
       - name: Content-Type
         in: header
         required: false
@@ -1710,7 +1710,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the target vm or mci group.
+        description: The ID of the vm vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -2678,7 +2678,7 @@ definitions:
         description: Trigger event level
         type: string
       measurement:
-        description: Trigger event target metric name
+        description: Trigger event vm metric name
         type: string
       name:
         description: Base64 Encoded value
@@ -2704,7 +2704,7 @@ definitions:
         description: Vm Id
         type: string
       target_seq:
-        description: Sequence by trigger target
+        description: Sequence by trigger vm
         example: 1
         type: integer
         format: int64
@@ -2737,11 +2737,11 @@ definitions:
         example: ZGVzY3JpcHRpb24=
         type: string
       field:
-        description: Trigger target metric field
+        description: Trigger vm metric field
         example: usage_idle
         type: string
       measurement:
-        description: Trigger target metric
+        description: Trigger vm metric
         example: cpu
         type: string
       name:
@@ -2754,7 +2754,7 @@ definitions:
         type: integer
         format: int64
       statistics:
-        description: Trigger target metric statistics
+        description: Trigger vm metric statistics
         example: min
         type: string
       status:
@@ -2778,20 +2778,20 @@ definitions:
         example: ZGVzY3JpcHRpb24=
         type: string
       field:
-        description: Trigger target metric field
+        description: Trigger vm metric field
         example: usage_idle
         type: string
       measurement:
         type: object
         allOf:
         - $ref: '#/definitions/TriggerMeasurement'
-        - description: Trigger target metric
+        - description: Trigger vm metric
       name:
         description: Base64 Encoded value
         example: Y3B1IHBvbGljeQ==
         type: string
       statistics:
-        description: Trigger target metric statistics
+        description: Trigger vm metric statistics
         example: min
         type: string
       status:
@@ -2812,11 +2812,11 @@ definitions:
         example: ZGVzY3JpcHRpb24=
         type: string
       field:
-        description: Trigger target metric field
+        description: Trigger vm metric field
         example: usage_idle
         type: string
       measurement:
-        description: Trigger target metric
+        description: Trigger vm metric
         example: cpu
         type: string
       name:
@@ -2824,7 +2824,7 @@ definitions:
         example: Y3B1IHBvbGljeQ==
         type: string
       statistics:
-        description: Trigger target metric statistics
+        description: Trigger vm metric statistics
         example: min
         type: string
       status:
@@ -2857,7 +2857,7 @@ definitions:
         example: test-vm
         type: string
       create_at:
-        description: The time when the trigger target was registered
+        description: The time when the trigger vm was registered
         example: 2024-05-24T11:31:55Z
         type: string
       name:
@@ -2873,7 +2873,7 @@ definitions:
         type: integer
         format: int64
       seq:
-        description: Sequence by trigger target
+        description: Sequence by trigger vm
         example: 1
         type: integer
         format: int64
@@ -2887,7 +2887,7 @@ definitions:
         description: The Namespace ID.
         type: string
       target_id:
-        description: The ID of the target (vm ID or mci ID).
+        description: The ID of the vm (vm ID or mci ID).
         type: string
       measurement:
         description: The type of metric being monitored for anomalies (e.g., cpu, mem).
@@ -3073,7 +3073,7 @@ definitions:
     type: object
     properties:
       target_type:
-        description: The type of the target (vm or mci).
+        description: The type of the vm (vm or mci).
         example: vm
         type: string
       measurement:
@@ -3546,7 +3546,7 @@ definitions:
         type: string
   TriggerMeasurement:
     title: TriggerMeasurement
-    description: Trigger target metric
+    description: Trigger vm metric
     type: string
     enum:
     - cpu
@@ -3562,11 +3562,11 @@ definitions:
 tags:
 - name: '[System] environment'
   description: ''
-- name: '[Target] Monitoring target management'
+- name: '[Target] Monitoring vm management'
   description: ''
-- name: '[Monitoring storage] Monitoring target storage management'
+- name: '[Monitoring storage] Monitoring vm storage management'
   description: ''
-- name: '[Monitoring item] Monitoring target item management'
+- name: '[Monitoring item] Monitoring vm item management'
   description: ''
 - name: '[Mining InfluxDB] Monitoring metric downsampling'
   description: ''
@@ -3574,7 +3574,7 @@ tags:
   description: ''
 - name: '[Monitoring metric] Monitoring metric'
   description: ''
-- name: '[Monitoring CSP] Monitoring target from the CSP'
+- name: '[Monitoring CSP] Monitoring vm from the CSP'
   description: ''
 - name: '[Metric Event] monitoring measurement trigger'
   description: ''

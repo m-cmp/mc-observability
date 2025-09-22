@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 @MockBean(JpaMetamodelMappingContext.class)
 class ItemControllerTest {
+
     private static final String TAG = "[Monitoring item] Monitoring vm item management";
 
     @Autowired private MockMvc mockMvc;
@@ -64,7 +65,7 @@ class ItemControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("모니터링 아이템 목록 조회")
+                                .description("Retrieve monitoring item list")
                                 .summary("GetMonitoringItems")
                                 .pathParameters(
                                         paramString("nsId", "NSID"),
@@ -72,20 +73,21 @@ class ItemControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .responseSchema("MonitoringItemDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldArray("data", "모니터링 아이템 목록"),
-                                        fieldNumber("data[].seq", "아이템 시퀀스"),
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldArray("data", "Monitoring item list"),
+                                        fieldNumber("data[].seq", "Item sequence"),
                                         fieldString("data[].nsId", "NSID"),
                                         fieldString("data[].mciId", "MCI ID"),
                                         fieldString("data[].vmId", "TARGET ID"),
-                                        fieldString("data[].name", "아이템 이름"),
-                                        fieldString("data[].state", "상태"),
-                                        fieldNumber("data[].pluginSeq", "플러그인 시퀀스"),
-                                        fieldString("data[].pluginName", "플러그인 이름"),
-                                        fieldString("data[].pluginType", "플러그인 타입"),
-                                        fieldString("data[].pluginConfig", "플러그인 설정"),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("data[].name", "Item name"),
+                                        fieldString("data[].state", "State"),
+                                        fieldNumber("data[].pluginSeq", "Plugin sequence"),
+                                        fieldString("data[].pluginName", "Plugin name"),
+                                        fieldString("data[].pluginType", "Plugin type"),
+                                        fieldString("data[].pluginConfig", "Plugin configuration"),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(itemFacadeService).getTelegrafItems(any(), any(), any());
     }
@@ -107,7 +109,7 @@ class ItemControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("모니터링 아이템 추가")
+                                .description("Add monitoring item")
                                 .summary("AddMonitoringItem")
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
@@ -115,14 +117,15 @@ class ItemControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .requestSchema("MonitoringItemRequestDTO")
                                 .requestFields(
-                                        fieldNumber("pluginSeq", "플러그인 시퀀스"),
-                                        fieldString("pluginConfig", "플러그인 설정"))
+                                        fieldNumber("pluginSeq", "Plugin sequence"),
+                                        fieldString("pluginConfig", "Plugin configuration"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldSubsection("data", "응답 데이터").optional(),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldSubsection("data", "Response data").optional(),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(itemFacadeService)
                 .addTelegrafPlugin(any(), any(), any(), any(MonitoringItemRequestDTO.class));
@@ -145,7 +148,7 @@ class ItemControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("모니터링 아이템 수정")
+                                .description("Update monitoring item")
                                 .summary("UpdateMonitoringItem")
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
@@ -153,14 +156,15 @@ class ItemControllerTest {
                                         paramString("vmId", "TARGET ID"))
                                 .requestSchema("MonitoringItemUpdateDTO")
                                 .requestFields(
-                                        fieldNumber("seq", "아이템 시퀀스"),
-                                        fieldString("pluginConfig", "플러그인 설정"))
+                                        fieldNumber("seq", "Item sequence"),
+                                        fieldString("pluginConfig", "Plugin configuration"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldSubsection("data", "응답 데이터").optional(),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldSubsection("data", "Response data").optional(),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(itemFacadeService)
                 .updateTelegrafPlugin(any(), any(), any(), any(MonitoringItemUpdateDTO.class));
@@ -179,7 +183,7 @@ class ItemControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("모니터링 아이템 삭제")
+                                .description("Delete monitoring item")
                                 .summary("DeleteMonitoringItem")
                                 .pathParameters(
                                         paramString("nsId", "NS ID"),
@@ -188,10 +192,11 @@ class ItemControllerTest {
                                         paramString("itemSeq", "ITEM SEQ"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "응답 코드"),
-                                        fieldString("rs_msg", "응답 메시지"),
-                                        fieldSubsection("data", "응답 데이터").optional(),
-                                        fieldString("error_message", "에러 메시지"))
+                                        fieldString("rs_code", "Response code (example: 0000)"),
+                                        fieldString(
+                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldSubsection("data", "Response data").optional(),
+                                        fieldString("error_message", "Error message"))
                                 .build());
         verify(itemFacadeService).deleteTelegrafPlugin(any(), any(), any(), any(Long.class));
     }

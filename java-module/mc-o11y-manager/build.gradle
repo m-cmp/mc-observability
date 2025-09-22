@@ -93,23 +93,23 @@ bootJar {
 }
 
 
-// TODO : separate manager , trigger
+
 openapi {
     setHost('localhost:8080')
-    title = 'MC-O11Y Manager API'
+    title = 'mc-o11y-manager-openapi-2'
     version = '1.0.0'
     description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
     format = 'yaml'
-    outputFileNamePrefix = 'mc-o11y-manager-api'
+    outputFileNamePrefix = 'mc-o11y-manager-openapi-2'
 }
 
 openapi3 {
     setServer('localhost:8080')
-    title = 'MC-O11Y Manager API'
+    title = 'mc-o11y-manager-openapi-3'
     description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
     version = '1.0.0'
     format = 'yaml'
-    outputFileNamePrefix = 'mc-o11y-manager-api'
+    outputFileNamePrefix = 'mc-o11y-manager-openapi-3'
 }
 
 tasks.register('runSpringBootInBackground') {

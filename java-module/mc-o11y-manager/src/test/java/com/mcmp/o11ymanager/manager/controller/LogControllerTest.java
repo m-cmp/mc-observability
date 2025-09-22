@@ -64,7 +64,6 @@ class LogControllerTest {
                                         .build())
                         .build();
 
-        // ✅ Stub 확실히 걸기
         when(logFacadeService.getRangeLogs(
                         anyString(),
                         anyString(),
@@ -89,38 +88,42 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("로그 기간 조회 API")
-                                .description("특정 쿼리에 대한 기간별 로그 데이터를 조회한다.")
+                                .summary("Log Range Query API")
+                                .description(
+                                        "Retrieve log data for a specific query within a given time range.")
                                 .responseFields(
-                                        fieldString("timestamp", "응답 시간"),
-                                        fieldString("status", "응답 상태"),
-                                        fieldString("code", "응답 코드"),
-                                        fieldString("message", "응답 메시지"),
-                                        fieldString("requestId", "요청 ID"),
-                                        fieldObject("data.result", "로그 결과 객체").optional(),
-                                        fieldString("data.result.status", "로그 상태").optional(),
-                                        fieldObject("data.result.data[].labels", "로그 라벨")
+                                        fieldString("timestamp", "Response timestamp"),
+                                        fieldString("status", "Response status"),
+                                        fieldString("code", "Response code"),
+                                        fieldString("message", "Response message"),
+                                        fieldString("requestId", "Request ID"),
+                                        fieldObject("data.result", "Log result object").optional(),
+                                        fieldString("data.result.status", "Log status").optional(),
+                                        fieldObject("data.result.data[].labels", "Log labels")
                                                 .optional(),
                                         fieldString(
                                                         "data.result.data[].labels.*",
-                                                        "라벨 key-value (동적)")
+                                                        "Label key-value (dynamic)")
                                                 .optional(),
-                                        fieldNumber("data.result.data[].timestamp", "타임스탬프")
+                                        fieldNumber("data.result.data[].timestamp", "Timestamp")
                                                 .optional(),
-                                        fieldString("data.result.data[].value", "로그 값").optional(),
+                                        fieldString("data.result.data[].value", "Log value")
+                                                .optional(),
                                         fieldNumber(
                                                         "data.result.stats.totalBytesProcessed",
-                                                        "처리된 바이트 수")
+                                                        "Total bytes processed")
                                                 .optional(),
                                         fieldNumber(
                                                         "data.result.stats.totalLinesProcessed",
-                                                        "처리된 라인 수")
+                                                        "Total lines processed")
                                                 .optional(),
-                                        fieldNumber("data.result.stats.execTime", "실행 시간(ms)")
+                                        fieldNumber(
+                                                        "data.result.stats.execTime",
+                                                        "Execution time (ms)")
                                                 .optional(),
                                         fieldNumber(
                                                         "data.result.stats.totalEntriesReturned",
-                                                        "반환된 엔트리 수")
+                                                        "Total entries returned")
                                                 .optional())
                                 .build());
     }
@@ -158,21 +161,27 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("로그 볼륨 조회 API")
-                                .description("기간 동안 로그 볼륨(메트릭 시계열 데이터)을 조회한다.")
+                                .summary("Log Volume Query API")
+                                .description(
+                                        "Retrieve log volumes (metric time series data) for the given period.")
                                 .responseFields(
-                                        fieldString("timestamp", "응답 시간"),
-                                        fieldString("status", "응답 상태"),
-                                        fieldString("code", "응답 코드"),
-                                        fieldString("message", "응답 메시지"),
-                                        fieldString("requestId", "요청 ID"),
-                                        fieldObject("data.result.data[].metric", "메트릭 key-value 맵"),
+                                        fieldString("timestamp", "Response timestamp"),
+                                        fieldString("status", "Response status"),
+                                        fieldString("code", "Response code"),
+                                        fieldString("message", "Response message"),
+                                        fieldString("requestId", "Request ID"),
+                                        fieldObject(
+                                                "data.result.data[].metric",
+                                                "Metric key-value map"),
                                         fieldString(
                                                 "data.result.data[].metric.*",
-                                                "메트릭 동적 필드 (예: app, env)"),
+                                                "Metric dynamic fields (e.g., app, env)"),
                                         fieldNumber(
-                                                "data.result.data[].values[].timestamp", "타임스탬프"),
-                                        fieldString("data.result.data[].values[].value", "측정 값"))
+                                                "data.result.data[].values[].timestamp",
+                                                "Timestamp"),
+                                        fieldString(
+                                                "data.result.data[].values[].value",
+                                                "Measured value"))
                                 .build());
     }
 
@@ -194,15 +203,15 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("로그 레이블 조회 API")
-                                .description("Loki에서 제공하는 레이블 key 목록을 조회한다.")
+                                .summary("Log Labels Query API")
+                                .description("Retrieve the list of label keys provided by Loki.")
                                 .responseFields(
-                                        fieldString("timestamp", "응답 시간"),
-                                        fieldString("status", "응답 상태"),
-                                        fieldString("code", "응답 코드"),
-                                        fieldString("message", "응답 메시지"),
-                                        fieldString("requestId", "요청 ID"),
-                                        fieldArray("data.result.labels", "레이블 목록"))
+                                        fieldString("timestamp", "Response timestamp"),
+                                        fieldString("status", "Response status"),
+                                        fieldString("code", "Response code"),
+                                        fieldString("message", "Response message"),
+                                        fieldString("requestId", "Request ID"),
+                                        fieldArray("data.result.labels", "List of labels"))
                                 .build());
     }
 
@@ -227,16 +236,17 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("특정 레이블 값 조회 API")
-                                .description("특정 레이블 키에 대한 값 목록을 조회한다.")
-                                .pathParameters(paramString("label", "레이블 키 (예: app, env 등)"))
+                                .summary("Label Value Query API")
+                                .description(
+                                        "Retrieve the list of values for a specific label key.")
+                                .pathParameters(paramString("label", "Label key (e.g., app, env)"))
                                 .responseFields(
-                                        fieldString("timestamp", "응답 시간"),
-                                        fieldString("status", "응답 상태"),
-                                        fieldString("code", "응답 코드"),
-                                        fieldString("message", "응답 메시지"),
-                                        fieldString("requestId", "요청 ID"),
-                                        fieldArray("data.result.data", "레이블 값 목록"))
+                                        fieldString("timestamp", "Response timestamp"),
+                                        fieldString("status", "Response status"),
+                                        fieldString("code", "Response code"),
+                                        fieldString("message", "Response message"),
+                                        fieldString("requestId", "Request ID"),
+                                        fieldArray("data.result.data", "List of label values"))
                                 .build());
     }
 }
