@@ -5,7 +5,7 @@ FLUSH PRIVILEGES;
 
 CREATE DATABASE IF NOT EXISTS mc_airflow CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 GRANT ALL PRIVILEGES ON mc_airflow.* TO 'mc-agent'@'%';
-FLUSH PRIVILEGES;ㅋ``
+FLUSH PRIVILEGES;
 
 USE mc_observability;
 
@@ -21,13 +21,12 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
                                                    PRIMARY KEY (`SEQ`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-
-CREATE TABLE `mc_o11y_insight_openai_api_key` (
-                                                  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-                                                  `API_KEY` text NOT NULL,
-                                                  PRIMARY KEY (`SEQ`)
+CREATE TABLE `mc_o11y_insight_llm_api_key` (
+  `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `PROVIDER` varchar(20) NOT NULL,
+  `API_KEY` text NOT NULL,
+  PRIMARY KEY (`SEQ`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
-
 
 CREATE TABLE `mc_o11y_insight_chat_session` (
                                                 `SEQ` bigint(20) NOT NULL AUTO_INCREMENT,

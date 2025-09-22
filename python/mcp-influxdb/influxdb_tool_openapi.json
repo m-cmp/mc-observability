@@ -1,0 +1,28 @@
+{
+  "name": "influxdb_query_executor",
+  "description": "Essential tool used to generate and execute InfluxQL queries to fetch actual data when users ask about system performance metrics (CPU, memory, etc.). This tool must be called to provide evidence for answers.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "influxql_query": {
+        "type": "string",
+        "description": "Exact InfluxQL query statement to execute. For example, 'SELECT mean(\"usage_percent\") FROM \"cpu\"'"
+      }
+    },
+    "required": [
+      "influxql_query"
+    ]
+  },
+  "action": {
+    "type": "http",
+    "endpoint": {
+      "url": "http://localhost:8001/query-stream",
+      "method": "POST",
+      "media_type": "application/json"
+    }
+  },
+  "output": {
+    "format": "text/event-stream",
+    "description": "Query results are returned as a stream of JSON objects."
+  }
+}
