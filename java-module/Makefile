@@ -14,6 +14,11 @@ lint: ## Fix lint warnings
 	@git rev-parse HEAD > .git_hash_last_build
 	@echo Lint warnings are fixed!
 
+tests: ## Run tests
+	@echo Running tests...
+	@sh gradlew test
+	@echo Tests finidhed!
+
 build: ## Build jar files
 	@echo Building...
 	@sh gradlew build -x test
