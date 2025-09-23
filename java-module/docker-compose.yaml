@@ -6,11 +6,7 @@ networks:
 
 services:
   mc-observability-manager:
-    # image: cloudbaristaorg/mc-observability:edge
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: mc-observability-manager:latest
+    image: cloudbaristaorg/mc-observability:edge
     container_name: mc-observability-manager
     restart: always
     networks:
@@ -40,16 +36,13 @@ services:
       - OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED=false
       #      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
       #      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
-
+      # ===== service options =====
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-o11y-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=none
       #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
-
-
-
       # ===== disable auto otel instrumentation =====
       #      - OTEL_INSTRUMENTATION_KAFKA_ENABLED=false
       #      - OTEL_INSTRUMENTATION_RABBITMQ_ENABLED=false
@@ -62,8 +55,6 @@ services:
       #      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
       - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
     #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
-
-
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
@@ -142,14 +133,9 @@ services:
   # CB-Tumblebug
   cb-tumblebug:
     image: cloudbaristaorg/cb-tumblebug:0.11.9
-    container_name: cb-tumblebug
-    build:
-      context: .
-      dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network
-    # - terrarium_network # Uncomment this line when you use this compose and the terrarium compose
     ports:
       - 1323:1323
     depends_on:
@@ -284,14 +270,9 @@ services:
   cb-spider:
     image: cloudbaristaorg/cb-spider_azure_monitoring:feat-refactor
     container_name: cb-spider
-    # build:
-    #   context: ../cb-spider
-    #   dockerfile: Dockerfile
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
-    # expose:
-    #   - 1024
     ports:
       - 1024:1024
     volumes:
@@ -528,9 +509,6 @@ services:
 
   mc-observability-insight:
     image: cloudbaristaorg/mc-o11y-insight:edge
-    # build:
-    #   context: ../python/insight
-    #   dockerfile: Dockerfile
     container_name: mc-observability-insight
     restart: always
     ports:
@@ -621,9 +599,7 @@ services:
       - external_network
 
   mc-observability-mcp-maria:
-    build:
-      context: ../python/mcp-mariadb
-      dockerfile: Dockerfile
+    image: cloudbaristaorg/mc-o11y-mcp-mariadb:edge
     container_name: mc-observability-mcp-maria
     restart: always
     ports:
@@ -646,9 +622,7 @@ services:
       - external_network
 
   mc-observability-mcp-influx:
-    build:
-      context: ../python/mcp-influxdb
-      dockerfile: Dockerfile
+    image: cloudbaristaorg/mc-o11y-mcp-influxdb:edge
     container_name: mc-observability-mcp-influx
     restart: always
     ports:
