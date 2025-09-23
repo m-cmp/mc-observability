@@ -435,11 +435,7 @@ services:
       - internal_network
 
   mc-observability-minio:
-    # image: cloudbaristaorg/mc-observability-minio:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.minio
-    image: mc-observability-minio:latest
+    image: cloudbaristaorg/mc-observability-minio:edge
     container_name: mc-observability-minio
     restart: always
     networks:
