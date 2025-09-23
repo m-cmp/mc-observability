@@ -449,11 +449,7 @@ services:
       retries: 30
 
   mc-observability-grafana:
-    # image: cloudbaristaorg/mc-observability-grafana:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.grafana
-    image: mc-observability-grafana:latest
+    image: cloudbaristaorg/mc-observability-grafana:edge
     container_name: mc-observability-grafana
     restart: always
     networks:
