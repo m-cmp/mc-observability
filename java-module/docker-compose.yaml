@@ -76,11 +76,7 @@ services:
       retries: 30
 
   mc-observability-infra:
-    # image: cloudbaristaorg/mc-observability-infra:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.semaphore
-    image: mc-observability-infra:latest
+    image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
     restart: always
     networks:
