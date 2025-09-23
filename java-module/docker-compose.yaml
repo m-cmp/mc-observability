@@ -76,11 +76,7 @@ services:
       retries: 30
 
   mc-observability-infra:
-    # image: cloudbaristaorg/mc-observability-infra:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.semaphore
-    image: mc-observability-infra:latest
+    image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
     restart: always
     networks:
@@ -435,11 +431,7 @@ services:
       - internal_network
 
   mc-observability-minio:
-    # image: cloudbaristaorg/mc-observability-minio:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.minio
-    image: mc-observability-minio:latest
+    image: cloudbaristaorg/mc-observability-minio:edge
     container_name: mc-observability-minio
     restart: always
     networks:
@@ -457,11 +449,7 @@ services:
       retries: 30
 
   mc-observability-grafana:
-    # image: cloudbaristaorg/mc-observability-grafana:edge
-    build:
-      context: .
-      dockerfile: Dockerfile.grafana
-    image: mc-observability-grafana:latest
+    image: cloudbaristaorg/mc-observability-grafana:edge
     container_name: mc-observability-grafana
     restart: always
     networks:
