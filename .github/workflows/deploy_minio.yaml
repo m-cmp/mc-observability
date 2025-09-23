@@ -16,12 +16,10 @@ on:
       - main
     tags:
       - "v*.*.*"
-    paths-ignore:
-      - ".github/**"
-      - "**.md"
-      - "LICENSE"
-      - ".gitignore"
-      - "go/**"
+    paths:
+      - "java-module/minio"
+      - "java-module/Dockerfile.minio"
+
   workflow_dispatch:
 
 env:

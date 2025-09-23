@@ -17,13 +17,8 @@ on:
       - feat/refactor
     tags:
       - "v*.*.*"
-    paths-ignore:
-      - ".github/**"
-      - "**.md"
-      - "LICENSE"
-      - ".gitignore"
-      - "java-module/**"
-      - "python/**"
+    paths:
+      - "go/**"
   # workflow trigger button
   # workflow_dispatch:
 

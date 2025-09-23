@@ -16,12 +16,10 @@ on:
       - main
     tags:
       - "v*.*.*"
-    paths-ignore:
-      - ".github/**"
-      - "**.md"
-      - "LICENSE"
-      - ".gitignore"
-      - "go/**"
+    paths:
+      - "java-module/influxdb-conf"
+      - "java-module/influxdb-init"
+      - "java-module/Dockerfile.influx"
   workflow_dispatch:
 
 env:

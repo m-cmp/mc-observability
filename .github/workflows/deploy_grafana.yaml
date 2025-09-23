@@ -16,12 +16,9 @@ on:
       - main
     tags:
       - "v*.*.*"
-    paths-ignore:
-      - ".github/**"
-      - "**.md"
-      - "LICENSE"
-      - ".gitignore"
-      - "go/**"
+    paths:
+      - "java-module/grafana"
+      - "java-module/Dockerfile.grafana"
   workflow_dispatch:
 
 env:

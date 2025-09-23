@@ -17,12 +17,8 @@ on:
       - develop
     tags:
       - "v*.*.*"
-    paths-ignore:
-      - ".github/**"
-      - "**.md"
-      - "LICENSE"
-      - ".gitignore"
-      - "go/**"
+    paths:
+      - "python/insight"
   workflow_dispatch:
 
 env:
