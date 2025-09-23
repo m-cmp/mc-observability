@@ -16,7 +16,7 @@ RUN git commit --allow-empty -m "a commit for the build"
 
 RUN make
 
-FROM openjdk:17-slim as prod
+FROM openjdk:17-slim AS prod
 
 RUN apt-get update \
     && apt-get install -y curl \
