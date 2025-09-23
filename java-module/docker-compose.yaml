@@ -318,10 +318,7 @@ services:
       start_period: 10s
 
   mc-observability-influx:
-    # image: cloudbaristaorg/mc-observability-influx:1.11.8
-    build:
-      context: .
-      dockerfile: Dockerfile.influx
+    image: cloudbaristaorg/mc-observability-influx:edge
     container_name: mc-observability-influx
     restart: always
     networks:
@@ -354,6 +351,44 @@ services:
     command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
     volumes:
       - /docker/influxdb_data:/var/lib/influxdb
+    user: root
+    init: true
+    networks:
+      - internal_network
+
+  mc-observability-influx-2:
+    image: cloudbaristaorg/mc-observability-influx:edge
+    container_name: mc-observability-influx-2
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 8087:8086
+    depends_on:
+      mc-observability-influx-2-init-volumes:
+        condition: service_completed_successfully
+    environment:
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=mc-agent
+      - INFLUXDB_ADMIN_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability-2"
+    volumes:
+      - /docker/influxdb2_data:/var/lib/influxdb
+    healthcheck:
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-observability-influx-2-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-influx-2-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    volumes:
+      - /docker/influxdb2_data:/var/lib/influxdb
     user: root
     init: true
     networks:
