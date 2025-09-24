@@ -5,7 +5,7 @@ services:
   #   ports:
   #     - "8086:8086"
   #   environment:
-  #     - INFLUXDB_DB=mc-observability
+  #     - INFLUXDB_DATABASE=mc-observability
   #     - INFLUXDB_USER=mc-agent
   #     - INFLUXDB_PASSWORD=mc-agent
 

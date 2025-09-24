@@ -635,6 +635,7 @@ services:
       - INFLUXDB_URL=http://mc-observability-influx:8086
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DATABASE=mc-observability
     networks:
       - internal_network
       - external_network
