@@ -103,7 +103,8 @@ class AlertControllerTest {
         when(alertManager.getAlertBy(any(String.class))).thenReturn(List.of());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/alerts/search")
+                        RestDocumentationRequestBuilders.get(
+                                        "/api/o11y/trigger/alert/alerts/search")
                                 .param("title", "CPU Alert"))
                 .andExpect(status().isOk())
                 .andDo(
@@ -141,7 +142,9 @@ class AlertControllerTest {
     void getAllContactPoints() throws Exception {
         when(alertManager.getAllContactPoints()).thenReturn(List.of());
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/contact-points"))
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.get(
+                                "/api/o11y/trigger/alert/contact-points"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -157,7 +160,9 @@ class AlertControllerTest {
 
     @Test
     void testAlertReceiver() throws Exception {
-        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/o11y/trigger/alert/alert-receiver/test"))
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.post(
+                                "/api/o11y/trigger/alert/alert-receiver/test"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
