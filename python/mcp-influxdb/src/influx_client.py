@@ -30,6 +30,7 @@ class InfluxDBClient:
             INFLUXDB_URL: The URL of the InfluxDB server.
             INFLUXDB_USER: The username for authentication.
             INFLUXDB_PASSWORD: The password for authentication.
+            INFLUXDB_DATABASE: The default database name.
         """
         # Load settings with robust fallbacks and normalization
         raw_url = os.getenv("INFLUXDB_URL") or ""
@@ -62,11 +63,11 @@ class InfluxDBClient:
 
         # Remove trailing slash to avoid double slashes in requests
         self.base_url = raw_url.rstrip("/")
-
         self.user = os.getenv("INFLUXDB_USER") or "mc-agent"
         self.password = os.getenv("INFLUXDB_PASSWORD") or "mc-agent"
+        self.database = os.getenv("INFLUXDB_DATABASE") or "mc-observability"
 
-    def execute_query(self, query: str, database: str = None) -> str:
+    def execute_query(self, query: str) -> str:
         """
         Executes a query on InfluxDB and returns the result as a JSON formatted string.
 
@@ -75,8 +76,6 @@ class InfluxDBClient:
 
         Args:
             query (str): The InfluxQL query to execute.
-            database (str, optional): The name of the database to query. If not provided, the query
-                                      must specify the database internally or use the default.
 
         Returns:
             str: A JSON-formatted string containing the query result or an error message.
@@ -86,13 +85,7 @@ class InfluxDBClient:
             Exception: For other unexpected errors (handled internally and returned as JSON).
         """
         try:
-            params = {
-                "u": self.user,
-                "p": self.password,
-                "q": query,
-            }
-            if database:
-                params["db"] = database
+            params = {"u": self.user, "p": self.password, "q": query, "db": self.database}
 
             response = requests.get(f"{self.base_url}/query", params=params, headers={"Accept": "application/json"})
             response.raise_for_status()
