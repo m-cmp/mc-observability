@@ -68,7 +68,7 @@ public class GrafanaAlertRuleFactory {
             String vmScope,
             String ruleGroup,
             String datasourceUid,
-        String resourceType) {
+            String resourceType) {
         List<GrafanaAlertQuery> alertData =
                 createMetricAlertData(query, thresholdCondition, datasourceUid);
         metricLabels.put("vmScope", vmScope);
