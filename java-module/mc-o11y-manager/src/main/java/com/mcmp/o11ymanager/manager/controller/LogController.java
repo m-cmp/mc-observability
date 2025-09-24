@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 /** Loki 로그 컨트롤러 프레젠테이션 계층에서 API 요청을 처리 */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/log")
+@RequestMapping("/api/o11y/log")
 public class LogController {
 
     private final LogFacadeService logFacadeService;
