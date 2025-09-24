@@ -45,7 +45,7 @@ public class AlertEvent {
     public static AlertEvent from(
             GrafanaAlertMessage grafanaAlertMessage, ThresholdCondition thresholdCondition) {
         AlertEvent alertEvent = new AlertEvent();
-        alertEvent.title = grafanaAlertMessage.getCommonLabels().get("alertname");
+        alertEvent.title = grafanaAlertMessage.getCommonLabels().get("ruleGroup");
         List<GrafanaAlert> alerts = grafanaAlertMessage.getAlerts();
 
         alerts.forEach(

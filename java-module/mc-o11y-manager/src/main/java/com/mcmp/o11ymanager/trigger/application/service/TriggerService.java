@@ -113,7 +113,6 @@ public class TriggerService implements TriggerServiceInternal {
                                     return channelName;
                                 })
                         .toList();
-
         List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
         List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
                 TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
