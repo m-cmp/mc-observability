@@ -45,7 +45,7 @@ public class AlertEvent {
     public static AlertEvent from(
             GrafanaAlertMessage grafanaAlertMessage, ThresholdCondition thresholdCondition) {
         AlertEvent alertEvent = new AlertEvent();
-        alertEvent.title = grafanaAlertMessage.getCommonLabels().get("ruleGroup");
+        alertEvent.title = grafanaAlertMessage.getCommonLabels().get("alertname");
         List<GrafanaAlert> alerts = grafanaAlertMessage.getAlerts();
 
         alerts.forEach(
@@ -64,7 +64,7 @@ public class AlertEvent {
                                         .namespaceId(labels.get("ns_id"))
                                         .mciId(labels.get("mci_id"))
                                         .vmId(labels.get("vm_id"))
-                                        .resourceType(labels.get("resource_type"))
+                                        .resourceType(labels.get("resourceType"))
                                         .resourceUsage(resourceUsage)
                                         .status(alert.getStatus())
                                         .threshold(

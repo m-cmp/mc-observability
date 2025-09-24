@@ -37,7 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 class AlertControllerTest {
 
-    private static final String TAG = "[Metric Event] monitoring trigger event handler";
+    private static final String TAG = "[Metric Event - Only Developer] monitoring trigger event handler";
 
     @Autowired private MockMvc mockMvc;
 

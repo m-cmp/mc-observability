@@ -81,14 +81,16 @@ public class GrafanaAlertManager implements AlertManager {
     GrafanaAlertRule alertRule =
         alertRuleFactory.createGrafanaAlertRule(
             dto.uuid(),
-            dto.namespaceId() + "-" + dto.vmScope() + "-" + dto.vmId(),
+            dto.title(),
+//            dto.namespaceId() + "-" + dto.vmScope() + "-" + dto.vmId(),
             dto.holdDuration(),
             query,
             dto.thresholdExpression(),
             dto.repeatInterval(),
             dto.vmScope(),
-            dto.title(),
-            datasourceUid);
+            "metric",
+            datasourceUid,
+            dto.resourceType().name());
 
     GrafanaClientWrapper.call(
         () -> {
