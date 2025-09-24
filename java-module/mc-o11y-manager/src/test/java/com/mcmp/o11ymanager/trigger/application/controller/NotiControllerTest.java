@@ -56,7 +56,7 @@ public class NotiControllerTest {
                                         .updatedAt(LocalDateTime.now())
                                         .build()));
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/noti/channel"))
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/noti/channel"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -96,7 +96,7 @@ public class NotiControllerTest {
         when(notiService.getNotiHistories(any(Pageable.class))).thenReturn(CustomPageDto.empty());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/o11y/noti/history")
+                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/noti/history")
                                 .param("page", "1")
                                 .param("size", "20")
                                 .param("sortBy", "createdAt")

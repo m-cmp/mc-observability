@@ -78,7 +78,7 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/query_range")
+                        get("/api/o11y/log/query_range")
                                 .param("query", "test-query")
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
@@ -152,7 +152,7 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/log_volumes")
+                        get("/api/o11y/log/log_volumes")
                                 .param("query", "test-query")
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
@@ -198,7 +198,7 @@ class LogControllerTest {
         when(logFacadeService.getLabelResult(any(), any(), any())).thenReturn(mockResult);
         when(requestInfo.getRequestId()).thenReturn("string");
 
-        mockMvc.perform(get("/api/v1/log/labels").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/o11y/log/labels").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -230,7 +230,7 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/labels/{label}/values", "app")
+                        get("/api/o11y/log/labels/{label}/values", "app")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(

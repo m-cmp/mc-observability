@@ -163,9 +163,15 @@ class TriggerControllerTest {
         List<TriggerPolicyNotiChannelUpdateRequest> request =
                 List.of(
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "sms_ncp", List.of("+82-10-1234-5678", "+82-10-9876-5432")),
+                                "kakao_naver-cloud",
+                                List.of("+82-10-1234-5678", "+82-10-9116-5642")),
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "email_smtp", List.of("admin@example.com", "dev@example.com")));
+                                "sms_naver-cloud", List.of("+82-10-1234-5678", "+82-10-9116-5642")),
+                        new TriggerPolicyNotiChannelUpdateRequest(
+                                "email_smtp.gmail.com",
+                                List.of("admin@example.com", "sgua0720@gmail.com")),
+                        new TriggerPolicyNotiChannelUpdateRequest(
+                                "slack", List.of("C09GRJMM7FW", "C09GRJMM7FW")));
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.put(
@@ -194,7 +200,7 @@ class TriggerControllerTest {
 
     @Test
     void addTriggerVM() throws Exception {
-        TriggerVMAddRequest request = new TriggerVMAddRequest("namespace-1", "vm", "vm-1");
+        TriggerVMAddRequest request = new TriggerVMAddRequest("first-ns", "mci", "test01");
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy/{id}/vm", 1)
