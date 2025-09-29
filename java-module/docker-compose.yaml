@@ -4,6 +4,9 @@ networks:
   external_network:
     driver: bridge
 
+volumes:
+  grafana_shared_config:
+
 services:
   mc-observability-manager:
     image: cloudbaristaorg/mc-observability:edge
@@ -59,6 +62,7 @@ services:
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
+      - grafana_shared_config:/grafana_config:ro
       # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
       start_period: 120s
@@ -463,6 +467,7 @@ services:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - /docker/grafana_data/data:/var/lib/grafana
       - /docker/grafana_data/log:/var/log/grafana
+      - grafana_shared_config:/grafana_config
     healthcheck:
       start_period: 120s
       test: |
@@ -484,10 +489,11 @@ services:
     image: busybox:stable
     container_name: mc-observability-grafana-init-volumes
     restart: no
-    command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana"]
+    command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana && chown -R 472:472 /grafana_config"]
     volumes:
       - /docker/grafana_data/data:/var/lib/grafana
       - /docker/grafana_data/log:/var/log/grafana
+      - grafana_shared_config:/grafana_config
     user: root
     init: true
     networks:
