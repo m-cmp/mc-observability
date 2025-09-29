@@ -20,7 +20,7 @@ services:
       mc-observability-infra:
         condition: service_healthy
     environment:
-      - JAVA_TOOL_OPTIONS=-javaagent:/config/otel/opentelemetry-javaagent.jar -XX:-UseContainerSupport
+      - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
       - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
@@ -40,7 +40,8 @@ services:
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-o11y-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
-      - OTEL_TRACES_EXPORTER=none
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
       #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
       # ===== disable auto otel instrumentation =====
@@ -516,6 +517,9 @@ services:
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-o11y-insight}
+      - MODE=${MODE:-otlp-http}
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://mc-observability-tempo:4318/v1/traces}
     volumes:
       - ../python/insight/log:/mc-insight/log
     networks:
@@ -683,6 +687,37 @@ services:
         chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
     volumes:
       - /docker/rabbitmq_data:/var/lib/rabbitmq
+    user: root
+    init: true
+    networks:
+      - internal_network
+
+  mc-observability-tempo:
+    image: grafana/tempo:2.8.2
+    container_name: mc-observability-tempo
+    restart: always
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      - TZ=Asia/Seoul
+    command: ["-config.file=/etc/tempo-config.yaml"]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /docker/tempo_data:/tmp/tempo
+      - ./tempo-conf/config.yaml:/etc/tempo-config.yaml
+    networks:
+      - internal_network
+      - external_network
+
+  mc-observability-tempo-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-tempo-init-volumes
+    restart: no
+    # command: ["sh", "-c", "chown -R 0:0 /tempo"]
+    volumes:
+      - /docker/tempo_data:/tempo
     user: root
     init: true
     networks:
