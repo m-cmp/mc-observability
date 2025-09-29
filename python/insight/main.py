@@ -12,6 +12,8 @@ from app.api.llm_analysis import (
 )
 from app.api.prediction import prediction
 from app.core.mcp.registry import init_global_mcp, stop_global_mcp
+from app.core.otel.trace import init_otel_trace
+from app.core.otel.log import init_otel_logger
 from config.ConfigManager import ConfigManager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,7 +48,9 @@ origins = ["*"]
 
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
+
 # init_otel_trace(app)
+# init_otel_logger()
 
 api_prefix = config.get_prefix()
 app.include_router(anomaly.router, prefix=api_prefix, tags=["[Insight] Anomaly Detection"])
