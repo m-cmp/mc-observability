@@ -134,6 +134,7 @@ services:
   # CB-Tumblebug
   cb-tumblebug:
     image: cloudbaristaorg/cb-tumblebug:0.11.9
+    container_name: cb-tumblebug
     networks:
       - internal_network
       - external_network
@@ -650,7 +651,8 @@ services:
     volumes:
       - ./rabbitmq/etc:/etc/rabbitmq
       - /docker/rabbitmq_data:/var/lib/rabbitmq
-#      - ./rabbitmq/logs:/var/log/rabbitmq
+      - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+#     - /docker/rabbitmq_log:/var/log/rabbitmq
     depends_on:
       mc-observability-rabbitmq-init-volumes:
         condition: service_completed_successfully
