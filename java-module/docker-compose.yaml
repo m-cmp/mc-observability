@@ -133,6 +133,7 @@ services:
   # CB-Tumblebug
   cb-tumblebug:
     image: cloudbaristaorg/cb-tumblebug:0.11.9
+    container_name: cb-tumblebug
     networks:
       - internal_network
       - external_network
