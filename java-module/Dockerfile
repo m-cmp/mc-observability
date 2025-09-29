@@ -29,4 +29,7 @@ COPY --from=builder /java-module/mc-o11y-manager/build/libs/mc-o11y-manager.jar 
 COPY --from=builder /java-module/mc-o11y-manager/mc-o11y-manager_default_key /mc-o11y-manager.key
 RUN mkdir -p /config
 
-ENTRYPOINT ["sh", "-c", "java -jar /mc-o11y-manager.jar"]
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
