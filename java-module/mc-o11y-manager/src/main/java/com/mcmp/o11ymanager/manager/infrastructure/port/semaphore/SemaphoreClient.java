@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @FeignClient(
         name = "semaphore",
-        url = "${feign.semaphore.url:}",
+        url = "${feign.semaphore.url}",
         configuration = SemaphoreFeignConfig.class)
 public interface SemaphoreClient {
     // Auth

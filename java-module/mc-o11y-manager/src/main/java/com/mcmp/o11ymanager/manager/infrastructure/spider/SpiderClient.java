@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 @FeignClient(
         name = "cb-spider",
-        url = "${feign.cb-spider.url:}",
+        url = "${feign.cb-spider.url}",
         configuration = SpiderFeignConfig.class)
 public interface SpiderClient {
     @GetMapping(
