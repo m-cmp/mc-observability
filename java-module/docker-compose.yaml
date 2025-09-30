@@ -653,7 +653,7 @@ services:
 
   mc-observability-rabbitmq:
     image: rabbitmq:4-management-alpine
-    container_name: rabbitmq
+    container_name: mc-observability-rabbitmq
     volumes:
       - ./rabbitmq/etc:/etc/rabbitmq
       - /docker/rabbitmq_data:/var/lib/rabbitmq
