@@ -108,7 +108,7 @@ grafana:
   alert:
     protocol: ${GRAFANA_SERVER_PROTOCOL:http}
     ip: ${GRAFANA_SERVER_IP:mc-observability-grafana}
-    port: ${GRAFANA_SERVER_PORT:8443}
+    port: ${GRAFANA_SERVER_PORT:3000}
     apiKey: ${GRAFANA_API_KEY:glsa_XXXX}
     orgId: ${GRAFANA_ORG_ID:1}
     folder:
