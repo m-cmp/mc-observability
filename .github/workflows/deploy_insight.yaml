@@ -19,10 +19,9 @@ on:
       - "v*.*.*"
     paths:
       - "python/insight/**"
-    paths-ignore:
-      - "python/insight/**.md"
-      - "python/insight/.env.example"
-      - "python/insight/.gitignore"
+      - "!python/insight/**.md"
+      - "!python/insight/.env.example"
+      - "!python/insight/.gitignore"
   workflow_dispatch:
 
 env:
