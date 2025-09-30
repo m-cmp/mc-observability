@@ -24,7 +24,7 @@ on:
 env:
   DOCKER_REGISTRY_NAME: cloudbaristaorg
   GHCR_REGISTRY_NAME: ${{ github.repository_owner }}
-  IMAGE_NAME: mc-o11y-mcp-mariadb
+  IMAGE_NAME: mc-observability-mcp-mariadb
 
 jobs:
   # The job key is "publish-container-image"
