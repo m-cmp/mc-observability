@@ -137,7 +137,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.9
+    image: cloudbaristaorg/cb-tumblebug:0.11.13
     container_name: cb-tumblebug
     networks:
       - internal_network
@@ -274,7 +274,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider_azure_monitoring:feat-refactor
+    image: cloudbaristaorg/cb-spider_azure_monitoring:edge
     container_name: cb-spider
     networks:
       - internal_network

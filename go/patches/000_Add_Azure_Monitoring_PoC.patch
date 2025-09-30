@@ -1,6 +1,6 @@
-commit ed5a88687d79eaf61da3fc778a36a492f7007986
+commit b3316c335dd243d8afd93e8c8a8ceaf9fefc9332
 Author: 임수현 <ish@innogrid.com>
-Date:   Tue Sep 23 12:26:45 2025 +0900
+Date:   Tue Sep 30 16:22:41 2025 +0900
 
     Add Azure Monitoring PoC
 
@@ -206,10 +206,10 @@ index 00000000..51ca7aaf
 +	return &info, nil
 +}
 diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
-index 7199e3e8..fc187800 100644
+index 58bfa6e7..33d750a5 100644
 --- a/api-runtime/rest-runtime/CBSpiderRuntime.go
 +++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
-@@ -466,6 +466,10 @@ func RunServer() {
+@@ -467,6 +467,10 @@ func RunServer() {
  		{"GET", "/filesystem/:Name/accesssubnet", ListAccessSubnet},
  		{"DELETE", "/filesystem/:Name/accesssubnet", RemoveAccessSubnet},
  
@@ -342,10 +342,10 @@ index 00000000..b44940f7
 +	return c.JSON(http.StatusOK, result)
 +}
 diff --git a/api/docs.go b/api/docs.go
-index 460cfd77..b0e122cd 100644
+index 47f04a30..078a6de7 100644
 --- a/api/docs.go
 +++ b/api/docs.go
-@@ -10297,6 +10297,7 @@ const docTemplate = `{
+@@ -10365,6 +10365,7 @@ const docTemplate = `{
                  "sg",
                  "keypair",
                  "vm",
@@ -353,7 +353,7 @@ index 460cfd77..b0e122cd 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -10312,6 +10313,7 @@ const docTemplate = `{
+@@ -10380,6 +10381,7 @@ const docTemplate = `{
                  "SG",
                  "KEY",
                  "VM",
@@ -361,30 +361,11 @@ index 460cfd77..b0e122cd 100644
                  "NLB",
                  "DISK",
                  "MYIMAGE",
-@@ -10814,18 +10816,6 @@ const docTemplate = `{
-                 "Suspending": "from running to suspended",
-                 "Terminating": "from running, suspended to terminated"
-             },
--            "x-enum-descriptions": [
--                "from launch to running",
--                "",
--                "from running to suspended",
--                "",
--                "from suspended to running",
--                "from running to running",
--                "from running, suspended to terminated",
--                "",
--                "VM does not exist",
--                ""
--            ],
-             "x-enum-varnames": [
-                 "Creating",
-                 "Running",
 diff --git a/api/swagger.json b/api/swagger.json
-index 4e315a58..5939261b 100644
+index a7ccafc9..d16d079c 100644
 --- a/api/swagger.json
 +++ b/api/swagger.json
-@@ -10294,6 +10294,7 @@
+@@ -10362,6 +10362,7 @@
                  "sg",
                  "keypair",
                  "vm",
@@ -392,7 +373,7 @@ index 4e315a58..5939261b 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -10309,6 +10310,7 @@
+@@ -10377,6 +10378,7 @@
                  "SG",
                  "KEY",
                  "VM",
@@ -400,30 +381,11 @@ index 4e315a58..5939261b 100644
                  "NLB",
                  "DISK",
                  "MYIMAGE",
-@@ -10811,18 +10813,6 @@
-                 "Suspending": "from running to suspended",
-                 "Terminating": "from running, suspended to terminated"
-             },
--            "x-enum-descriptions": [
--                "from launch to running",
--                "",
--                "from running to suspended",
--                "",
--                "from suspended to running",
--                "from running to running",
--                "from running, suspended to terminated",
--                "",
--                "VM does not exist",
--                ""
--            ],
-             "x-enum-varnames": [
-                 "Creating",
-                 "Running",
 diff --git a/api/swagger.yaml b/api/swagger.yaml
-index a3da6391..d3fdd92c 100644
+index cd5d60ce..7f01eafd 100644
 --- a/api/swagger.yaml
 +++ b/api/swagger.yaml
-@@ -1040,6 +1040,7 @@ definitions:
+@@ -1044,6 +1044,7 @@ definitions:
      - sg
      - keypair
      - vm
@@ -431,7 +393,7 @@ index a3da6391..d3fdd92c 100644
      - nlb
      - disk
      - myimage
-@@ -1055,6 +1056,7 @@ definitions:
+@@ -1059,6 +1060,7 @@ definitions:
      - SG
      - KEY
      - VM
@@ -439,24 +401,6 @@ index a3da6391..d3fdd92c 100644
      - NLB
      - DISK
      - MYIMAGE
-@@ -1411,17 +1413,6 @@ definitions:
-       Resuming: from suspended to running
-       Suspending: from running to suspended
-       Terminating: from running, suspended to terminated
--    x-enum-descriptions:
--    - from launch to running
--    - ""
--    - from running to suspended
--    - ""
--    - from suspended to running
--    - from running to running
--    - from running, suspended to terminated
--    - ""
--    - VM does not exist
--    - ""
-     x-enum-varnames:
-     - Creating
-     - Running
 diff --git a/cloud-control-manager/cloud-driver/call-log/calllogger.go b/cloud-control-manager/cloud-driver/call-log/calllogger.go
 index a86bb428..295bf9e6 100644
 --- a/cloud-control-manager/cloud-driver/call-log/calllogger.go
@@ -491,7 +435,7 @@ index b1df8d8a..bff34bbd 100644
 +	return nil, errors.New("Alibaba Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
-index 5469836f..24cafdbb 100644
+index d69ab865..2b006229 100644
 --- a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 @@ -11,6 +11,7 @@
@@ -502,7 +446,7 @@ index 5469836f..24cafdbb 100644
  	cblog "github.com/cloud-barista/cb-log"
  	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
  
-@@ -215,3 +216,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
+@@ -217,3 +218,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
  	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
  	return &handler, nil
  }
