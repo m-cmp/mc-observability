@@ -18,13 +18,13 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "python/scheduler"
+      - "python/scheduler/**"
   workflow_dispatch:
 
 env:
   DOCKER_REGISTRY_NAME: cloudbaristaorg
   GHCR_REGISTRY_NAME: ${{ github.repository_owner }}
-  IMAGE_NAME: mc-o11y-insight-scheduler
+  IMAGE_NAME: mc-observability-insight-scheduler
 
 jobs:
   # The job key is "publish-container-image"

@@ -40,7 +40,7 @@ services:
       #      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
       #      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
       # ===== service options =====
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-o11y-manager}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=otlp
@@ -516,7 +516,7 @@ services:
       - INFLUXDB_PASSWORD=mc-agent
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-o11y-insight:edge
+    image: cloudbaristaorg/mc-observability-insight:edge
     container_name: mc-observability-insight
     restart: always
     ports:
@@ -524,7 +524,7 @@ services:
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-o11y-insight}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-insight}
       - MODE=${MODE:-otlp-http}
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://mc-observability-tempo:4318/v1/traces}
     volumes:
@@ -535,7 +535,7 @@ services:
 
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-o11y-insight-scheduler:edge
+    image: cloudbaristaorg/mc-observability-insight-scheduler:edge
     container_name: mc-observability-insight-scheduler
     restart: always
     ports:
@@ -610,7 +610,7 @@ services:
       - external_network
 
   mc-observability-mcp-maria:
-    image: cloudbaristaorg/mc-o11y-mcp-mariadb:edge
+    image: cloudbaristaorg/mc-observability-mcp-mariadb:edge
     container_name: mc-observability-mcp-maria
     restart: always
     ports:
@@ -633,7 +633,7 @@ services:
       - external_network
 
   mc-observability-mcp-influx:
-    image: cloudbaristaorg/mc-o11y-mcp-influxdb:edge
+    image: cloudbaristaorg/mc-observability-mcp-influxdb:edge
     container_name: mc-observability-mcp-influx
     restart: always
     ports:
@@ -653,7 +653,7 @@ services:
 
   mc-observability-rabbitmq:
     image: rabbitmq:4-management-alpine
-    container_name: rabbitmq
+    container_name: mc-observability-rabbitmq
     volumes:
       - ./rabbitmq/etc:/etc/rabbitmq
       - /docker/rabbitmq_data:/var/lib/rabbitmq

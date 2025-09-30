@@ -18,13 +18,16 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "python/insight"
+      - "python/insight/**"
+      - "!python/insight/**.md"
+      - "!python/insight/.env.example"
+      - "!python/insight/.gitignore"
   workflow_dispatch:
 
 env:
   DOCKER_REGISTRY_NAME: cloudbaristaorg
   GHCR_REGISTRY_NAME: ${{ github.repository_owner }}
-  IMAGE_NAME: mc-o11y-insight
+  IMAGE_NAME: mc-observability-insight
 
 jobs:
   # The job key is "publish-container-image"
