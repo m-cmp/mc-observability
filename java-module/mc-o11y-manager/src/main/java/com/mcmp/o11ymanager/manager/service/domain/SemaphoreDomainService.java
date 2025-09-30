@@ -167,7 +167,8 @@ public class SemaphoreDomainService {
                 .addVariable("target_host", ip)
                 .addVariable("target_port", String.valueOf(port))
                 .addVariable("target_user", user)
-                .addVariable("target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+                .addVariable(
+                        "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
     }
 
     private Task createTask(Integer templateId, Environment environment)
