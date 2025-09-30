@@ -165,9 +165,10 @@ public class SemaphoreDomainService {
                 .addVariable("site_code", deploySiteCode)
                 .addVariable("request_id", requestInfo.getRequestId())
                 .addVariable("target_host", ip)
-                .addVariable("vm_port", String.valueOf(port))
-                .addVariable("vm_user", user)
-                .addVariable("vm_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+                .addVariable("target_port", String.valueOf(port))
+                .addVariable("target_user", user)
+                .addVariable(
+                        "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
     }
 
     private Task createTask(Integer templateId, Environment environment)

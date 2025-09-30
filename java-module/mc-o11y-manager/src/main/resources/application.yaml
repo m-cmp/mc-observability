@@ -10,9 +10,9 @@ spring:
   application:
     name: ${SPRING_APP_NAME:mc-o11y-manager}
   datasource:
-    url: jdbc:mariadb://${DATABASE_HOST}:${DATABASE_PORT:3306}/${DATABASE_NAME}
-    username: ${DATABASE_ID}
-    password: ${DATABASE_PW}
+    url: jdbc:mariadb://${DATABASE_HOST:mc-observability-maria}:${DATABASE_PORT:3306}/${DATABASE_NAME:mc_observability}
+    username: ${DATABASE_ID:mc-agent}
+    password: ${DATABASE_PW:mc-agent}
     hikari:
       max-lifetime: 150000
   jpa:
@@ -47,18 +47,18 @@ loki:
 
 influxdb:
   servers:
-    - url: ${INFLUX1_URL}
-      database: ${INFLUX1_DATABASE}
-      retention-policy: ${INFLUX1_RETENTION_POLICY}
-      username: ${INFLUX1_USERNAME}
-      password: ${INFLUX1_PASSWORD}
-      uid: ${INFLUX1_UID}
-    - url: ${INFLUX2_URL}
-      database: ${INFLUX2_DATABASE}
-      retention-policy: ${INFLUX2_RETENTION_POLICY}
-      username: ${INFLUX2_USERNAME}
-      password: ${INFLUX2_PASSWORD}
-      uid: ${INFLUX2_UID}
+    - url: ${INFLUX1_URL:http://mc-observability-influx:8086}
+      database: ${INFLUX1_DATABASE:mc-observability}
+      retention-policy: ${INFLUX1_RETENTION_POLICY:autogen}
+      username: ${INFLUX1_USERNAME:mc-agent}
+      password: ${INFLUX1_PASSWORD:mc-agent}
+      uid: ${INFLUX1_UID:P951FEA4DE68E13C5}
+    - url: ${INFLUX2_URL:http://mc-observability-influx-2:8087}
+      database: ${INFLUX2_DATABASE:mc-observability-2}
+      retention-policy: ${INFLUX2_RETENTION_POLICY:autogen}
+      username: ${INFLUX2_USERNAME:mc-agent}
+      password: ${INFLUX2_PASSWORD:mc-agent}
+      uid: ${INFLUX2_UID:P951FEA4DE68E13C52}
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}
@@ -80,36 +80,45 @@ feign:
       LokiFeignClient:
         loggerLevel: full
   semaphore:
-    url: ${SEMAPHORE_URL}
-    username: ${SEMAPHORE_USER}
-    password: ${SEMAPHORE_PASS}
-    project-name: ${SEMAPHORE_PROJECT}
+    url: ${SEMAPHORE_URL:http://mc-observability-infra:3000}
+    username: ${SEMAPHORE_USER:admin}
+    password: ${SEMAPHORE_PASS:semaphorepass}
+    project-name: ${SEMAPHORE_PROJECT:ansible}
     init-max-parallel-tasks: ${SEMAPHORE_MAX_TASKS:10}
     template-names:
-      agent-install: ${SEMAPHORE_TEMPLATE_INSTALL}
-      agent-config-update: ${SEMAPHORE_TEMPLATE_CONFIG}
+      agent-install: ${SEMAPHORE_TEMPLATE_INSTALL:install-agent}
+      agent-config-update: ${SEMAPHORE_TEMPLATE_CONFIG:config-update}
     task-check-scheduler:
       check-interval-sec: ${SEMAPHORE_CHECK_INTERVAL:5}
       max-wait-minutes: ${SEMAPHORE_MAX_WAIT:10}
   cb-tumblebug:
     connect-timeout: 5000
     read-timeout: 600000
-    url: ${TUMBLEBUG_URL}
-    id: ${TUMBLEBUG_ID}
-    pw: ${TUMBLEBUG_PW}
+    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
+    id: ${TUMBLEBUG_ID:default}
+    pw: ${TUMBLEBUG_PW:default}
   cb-spider:
-    url: ${SPIDER_URL}
-    id: ${SPIDER_ID}
-    pw: ${SPIDER_PW}
+    url: ${SPIDER_URL:http://cb-spider:1024}
+    id: ${SPIDER_ID:-}
+    pw: ${SPIDER_PW:-}
   insight:
-    url: ${INSIGHT_URL}
+    url: ${INSIGHT_URL:http://mc-observability-insight:9001}
 
 grafana:
-  url: ${GRAFANA_URL}
-  api-key: ${GRAFANA_API_KEY}
-
-ollama:
-  base-url: ${OLLAMA_BASE_URL}
+  alert:
+    protocol: ${GRAFANA_SERVER_PROTOCOL:http}
+    ip: ${GRAFANA_SERVER_IP:mc-observability-grafana}
+    port: ${GRAFANA_SERVER_PORT:8443}
+    apiKey: ${GRAFANA_API_KEY:glsa_XXXX}
+    orgId: ${GRAFANA_ORG_ID:1}
+    folder:
+      name: ${GRAFANA_FOLDER_NAME:o11yFolder}
+      uid: ${GRAFANA_FOLDER_UID:xxxxxxxx}
+    ruleGroup:
+      metric: ${GRAFANA_RULE_GROUP:metric}
+    receiver: ${GRAFANA_RECEIVER:mcmp}
+    noDataState: ${GRAFANA_NO_DATA_STATE:NoData}
+    execErrState: ${GRAFANA_EXEC_ERR_STATE:Error}
 
 logging:
   file:
@@ -119,6 +128,17 @@ logging:
     rollingpolicy:
       max-file-size: ${MAX_FILE_SIZE:200MB}
       max-history: ${MAX_HISTORY:14}
+  level:
+    org.apache.sshd.client: ERROR
+    org.apache.sshd.common: ERROR
+    feign: DEBUG
+    feign.Logger: DEBUG
+    feign.template: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.type: TRACE
+    org.hibernate.engine.transaction.internal.TransactionImpl: TRACE
+    org.hibernate.type.descriptor.sql: TRACE
 
 management:
   endpoints:
@@ -131,44 +151,44 @@ management:
 
 notification:
   mail:
-    host: ${SMTP_HOST}
-    port: ${SMTP_PORT}
-    username: ${SMTP_USERNAME}
-    password: ${SMTP_PASSWORD}
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:XXXX@gmail.com}
+    password: ${SMTP_PASSWORD:xxxx xxxx xxxx xxxx}
     smtpAuth: ${SMTP_AUTH:true}
     tlsRequired: ${SMTP_TLS_REQUIRED:true}
     tlsEnable: ${SMTP_TLS_ENABLE:true}
   sms:
-    from: ${SMS_FROM}
-    serviceId: ${SMS_SERVICE_ID}
-    accessKey: ${SMS_ACCESS_KEY}
-    secretKey: ${SMS_SECRET_KEY}
-    provider: ${SMS_PROVIDER}
-    baseUrl: ${SMS_BASEURL}
+    from: ${SMS_FROM:01012345678}
+    serviceId: ${SMS_SERVICE_ID:ncp:sms:kr:12345678:xxxx}
+    accessKey: ${SMS_ACCESS_KEY:ncp_iam_XXXX}
+    secretKey: ${SMS_SECRET_KEY:ncp_iam_XXXXYYYY}
+    provider: ${SMS_PROVIDER:naver-cloud}
+    baseUrl: ${SMS_BASEURL:https://sens.apigw.ntruss.com}
   kakao:
-    channelId: ${KAKAO_CHANNEL_ID}
-    templateCode: ${KAKAO_TEMPLATE_CODE}
-    serviceId: ${KAKAO_SERVICE_ID}
-    accessKey: ${KAKAO_ACCESS_KEY}
-    secretKey: ${KAKAO_SECRET_KEY}
-    provider: ${KAKAO_PROVIDER}
-    baseUrl: ${KAKAO_BASEURL}
+    channelId: ${KAKAO_CHANNEL_ID:@xxxx}
+    templateCode: ${KAKAO_TEMPLATE_CODE:triggerTemplate}
+    serviceId: ${KAKAO_SERVICE_ID:ncp:kkobizmsg:kr:12345678:m-cmp}
+    accessKey: ${KAKAO_ACCESS_KEY:ncp_iam_YYYY}
+    secretKey: ${KAKAO_SECRET_KEY:ncp_iam_YYYYZZZZ}
+    provider: ${SMS_PROVIDER:naver-cloud}
+    baseUrl: ${SMS_BASEURL:https://sens.apigw.ntruss.com}
   slack:
-    token: ${SLACK_OAUTH_TOKEN}
-    baseUrl: ${SLACK_BASEURL}
-    apiPath: ${SLACK_API_PATH}
+    token: ${SLACK_OAUTH_TOKEN:xoxb-xxxx}
+    baseUrl: ${SLACK_BASEURL:https://slack.com}
+    apiPath: ${SLACK_API_PATH:/api/chat.postMessage}
 
 rabbitmq:
-  host: ${RABBITMQ_HOST}
-  port: ${RABBITMQ_PORT}
-  username: ${RABBITMQ_USERNAME}
-  password: ${RABBITMQ_PASSWORD}
-  virtual-host: ${RABBITMQ_VHOST:/}
+  host: ${RABBITMQ_HOST:mc-observability-rabbitmq}
+  port: ${RABBITMQ_PORT:5672}
+  username: ${RABBITMQ_USERNAME:mc-agent}
+  password: ${RABBITMQ_PASSWORD:mc-agent}
+  virtual-host: ${RABBITMQ_VHOST:/test}
   alert:
-    queueName: ${RABBIT_ALERT_QUEUE}
-    exchangeName: ${RABBIT_ALERT_EXCHANGE}
-    routingKey: ${RABBIT_ALERT_ROUTING_KEY}
-    deadLetterQueueName: ${RABBIT_DLQ}
-    deadLetterExchangeName: ${RABBIT_DLX}
-    deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY}
-    mqttExchangeName: ${RABBIT_MQTT_EXCHANGE}
+    queueName: ${RABBIT_ALERT_QUEUE:alert.queue}
+    exchangeName: ${RABBIT_ALERT_EXCHANGE:alert.exchange}
+    routingKey: ${RABBIT_ALERT_ROUTING_KEY:alert}
+    deadLetterQueueName: ${RABBIT_DLQ:alert.dlq}
+    deadLetterExchangeName: ${RABBIT_DLX:alert.dlx}
+    deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY:alert.dlq}
+    mqttExchangeName: ${RABBIT_MQTT_EXCHANGE:mqtt.topic}

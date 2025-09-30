@@ -8,7 +8,7 @@ import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "insight", url = "${feign.insight.url:}")
+@FeignClient(name = "insight", url = "${feign.insight.url}")
 public interface InsightClient {
 
     String ANOMALY = "/anomaly-detection";

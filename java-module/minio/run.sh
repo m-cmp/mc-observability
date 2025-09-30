@@ -32,7 +32,7 @@ do
 done
 echo "[*] Successfully logged in to MinIO!"
 
-echo "[*] Checking if bucket 'loki-data' exists..."
+echo "[*] Checking if buckets 'loki-data' and 'tempo-data' exists..."
 BUCKET_CHECK=$(curl -s -w "%{http_code}" -b $RUN_PATH/minio-cookie -XGET \
     "http://127.0.0.1:9001/api/v1/buckets" \
     -H 'Accept: */*' \
@@ -58,6 +58,25 @@ else
         echo "[!] Failed to create bucket 'loki-data'. HTTP Status: $HTTP_STATUS"
     fi
 fi
+
+if [[ $BUCKET_HTTP_STATUS =~ ^2[0-9][0-9]$ ]] && echo "$BUCKET_RESPONSE" | grep -q '"name":"tempo-data"'; then
+    echo "[*] Bucket 'tempo-data' already exists. Skipping bucket creation."
+else
+    echo "[*] Creating bucket 'tempo-data'..."
+    HTTP_STATUS=$(curl -s -w "%{http_code}" -b $RUN_PATH/minio-cookie -XPOST \
+        "http://127.0.0.1:9001/api/v1/buckets" \
+        -H 'Accept: */*' \
+        -H 'Content-Type: application/json' \
+        -d '{"name":"tempo-data","versioning":{"enabled":false,"excludePrefixes":[],"excludeFolders":false},"locking":false}' \
+        -o /dev/null)
+
+    if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
+        echo "[*] Successfully created bucket 'tempo-data'!"
+    else
+        echo "[!] Failed to create bucket 'tempo-data'. HTTP Status: $HTTP_STATUS"
+    fi
+fi
+
 
 echo "[*] Checking if user 'lokiuser' exists..."
 USER_CHECK=$(curl -s -w "%{http_code}" -b $RUN_PATH/minio-cookie -XGET \

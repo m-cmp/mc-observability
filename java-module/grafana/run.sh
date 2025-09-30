@@ -229,5 +229,26 @@ fi
 echo "[*] Deleting cookie..."
 rm -f ~/grafana-cookie
 
+if [ -d /grafana_config ]; then
+    if [ -f ~/env.grafana ]; then
+        echo "[*] Copying ~/env.grafana to /grafana_config/env.grafana..."
+        cp ~/env.grafana /grafana_config/env.grafana
+
+        if [ $? -eq 0 ]; then
+            echo "[*] Successfully copied env.grafana to shared volume"
+            chmod 644 /grafana_config/env.grafana
+        else
+            echo "[!] Failed to copy env.grafana"
+            exit 1
+        fi
+    else
+        echo "[!] Source file ~/env.grafana does not exist"
+        exit 1
+    fi
+else
+    echo "[!] Target directory /grafana_config does not exist"
+    exit 1
+fi
+
 echo "[*] Running NGINX SSL proxy..."
 nginx -g 'daemon off;' > /dev/null

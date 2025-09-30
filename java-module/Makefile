@@ -1,6 +1,7 @@
 SHELL = /bin/bash
 
 MANAGER := "mc-o11y-manager"
+IMAGE_TAG := "cloudbaristaorg/mc-observability:edge"
 PID_FILE_MANAGER := $(MANAGER).pid
 
 .PHONY: all build stop run run run_docker stop stop_docker clean help
@@ -55,6 +56,9 @@ run: stop run ## Stop and run built jar file
 
 run_docker: ## Run pre-built images within Docker
 	@docker compose up -d
+
+image: ## Build docker image
+	@docker build -t $(IMAGE_TAG) .
 
 stop: stop ## Stop built jar file
 
