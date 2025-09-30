@@ -1,8 +1,8 @@
 swagger: '2.0'
 info:
-  version: '0.4.0'
-  title: mc-o11y-manager API Documentation
-  description: API documentation for mc-o11y-manager
+  version: 0.4.1
+  title: MC-Observability API Documentation
+  description: API documentation for MC-Observability
   contact: {}
   license:
     name: Apache 2.0
@@ -14,1288 +14,1354 @@ consumes:
 produces:
 - application/json
 paths:
-  /api/o11y/monitoring/plugins:
-    get:
-      description: ''
-      summary: GetPlugins
-      tags:
-      - '[System] environment'
-      operationId: GetPlugins
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListPluginDefInfo'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}:
-    get:
-      description: ''
-      summary: GetTarget
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: GetTarget
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyTargetInfo'
-          headers: {}
-    put:
-      description: ''
-      summary: PutTarget
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: PutTarget
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/TargetInfoCreateUpdateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-    post:
-      description: ''
-      summary: PostTarget
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: PostTarget
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/TargetInfoCreateUpdateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-    delete:
-      description: ''
-      summary: DeleteTarget
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: DeleteTarget
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-  /api/o11y/monitoring/miningdb:
-    get:
-      description: ''
-      summary: GetMiningDBs
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: GetMiningDBs
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyMiningDBInfo'
-          headers: {}
-    put:
-      description: ''
-      summary: PutMiningDB
-      tags:
-      - '[Mining InfluxDB] Monitoring metric downsampling'
-      operationId: PutMiningDB
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MiningDBSetDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target:
-    get:
-      description: ''
-      summary: GetTargetsNSMCI
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: GetTargetsNSMCI
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTargetInfo'
-          headers: {}
-  /api/o11y/monitoring/target:
-    get:
-      description: ''
-      summary: GetTargets
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: GetTargets
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTargetInfo'
-          headers: {}
-  /api/o11y/monitoring/ns:
-    get:
-      description: ''
-      summary: GetNSs
-      tags:
-      - '[Target] Monitoring vm management'
-      operationId: GetNSs
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/TumblebugNS'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage:
-    get:
-      description: ''
-      summary: GetStorages
-      tags:
-      - '[Monitoring storage] Monitoring vm storage management'
-      operationId: GetStorages
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMonitoringConfigInfo'
-          headers: {}
-    put:
-      description: ''
-      summary: PutStorage
-      tags:
-      - '[Monitoring storage] Monitoring vm storage management'
-      operationId: PutStorage
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MonitoringConfigInfoUpdateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-    post:
-      description: ''
-      summary: PostStorage
-      tags:
-      - '[Monitoring storage] Monitoring vm storage management'
-      operationId: PostStorage
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MonitoringConfigInfoCreateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}:
-    delete:
-      description: ''
-      summary: DeleteStorage
-      tags:
-      - '[Monitoring storage] Monitoring vm storage management'
-      operationId: DeleteStorage
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: storageSeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item:
-    get:
-      description: ''
-      summary: GetItems
-      tags:
-      - '[Monitoring item] Monitoring vm item management'
-      operationId: GetItems
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMonitoringConfigInfo'
-          headers: {}
-    put:
-      description: ''
-      summary: PutItem
-      tags:
-      - '[Monitoring item] Monitoring vm item management'
-      operationId: PutItem
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MonitoringConfigInfoUpdateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-    post:
-      description: ''
-      summary: PostItem
-      tags:
-      - '[Monitoring item] Monitoring vm item management'
-      operationId: PostItem
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MonitoringConfigInfoCreateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}:
-    delete:
-      description: ''
-      summary: DeleteItem
-      tags:
-      - '[Monitoring item] Monitoring vm item management'
-      operationId: DeleteItem
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: mciId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: itemSeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyObject'
-          headers: {}
-  /api/o11y/monitoring/miningdb/metric:
-    post:
-      description: ''
-      summary: GetMiningDBMetrics
-      tags:
-      - '[Mining InfluxDB] Monitoring metric downsampling'
-      operationId: GetMiningDBMetrics
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MetricsInfo'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMetricInfo'
-          headers: {}
-  /api/o11y/monitoring/miningdb/tag:
-    get:
-      description: ''
-      summary: GetMiningDBTags"
-      tags:
-      - '[Mining InfluxDB] Monitoring metric downsampling'
-      operationId: GetMiningDBTags"
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMeasurementTagInfo'
-          headers: {}
-  /api/o11y/monitoring/miningdb/measurement:
-    get:
-      description: ''
-      summary: GetMiningDBMeasurements
-      tags:
-      - '[Mining InfluxDB] Monitoring metric downsampling'
-      operationId: GetMiningDBMeasurements
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMeasurementFieldInfo'
-          headers: {}
-  /api/o11y/monitoring/opensearch/logs:
-    post:
-      description: ''
-      summary: GetOpenSearchLogs
-      tags:
-      - '[Monitoring log] Monitoring log'
-      operationId: GetOpenSearchLogs
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/LogsInfo'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMapStringObject'
-          headers: {}
-  /api/o11y/monitoring/opensearch:
-    get:
-      description: ''
-      summary: GetOpenSearches
-      tags:
-      - '[Monitoring log] Monitoring log'
-      operationId: GetOpenSearches
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListOpenSearchInfo'
-          headers: {}
-  /api/o11y/monitoring/influxdb/metric:
-    post:
-      description: ''
-      summary: GetInfluxDBMetrics
-      tags:
-      - '[Monitoring metric] Monitoring metric'
-      operationId: GetInfluxDBMetrics
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/MetricsInfo'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListMetricInfo'
-          headers: {}
   /api/o11y/monitoring/influxdb:
     get:
-      description: ''
-      summary: GetInfluxDBs
       tags:
-      - '[Monitoring metric] Monitoring metric'
-      operationId: GetInfluxDBs
-      deprecated: false
+      - "[Monitoring metric] Monitoring metric"
+      summary: GetAllInfluxDB
+      description: Retrieve all InfluxDB servers
+      operationId: GetAllInfluxDb
       produces:
       - application/json
-      parameters: []
       responses:
-        '200':
-          description: OK
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "id" : 0,
+                  "url" : "string",
+                  "database" : "string",
+                  "username" : "string",
+                  "retention_policy" : "string",
+                  "password" : "string",
+                  "uid" : "string"
+                } ],
+                "error_message" : ""
+              }
           schema:
-            $ref: '#/definitions/ResBodyListInfluxDBInfo'
-          headers: {}
-  /api/o11y/monitoring/influxdb/tag:
+            $ref: '#/definitions/InfluxDTO'
+  /api/o11y/monitoring/plugins:
     get:
-      description: ''
-      summary: GetInfluxDBTags
       tags:
-      - '[Monitoring metric] Monitoring metric'
-      operationId: GetInfluxDBTags
-      deprecated: false
+      - "[System] environment"
+      summary: GetPlugins
+      description: Retrieve plugin list
+      operationId: GetPlugins
       produces:
       - application/json
-      parameters: []
       responses:
-        '200':
-          description: OK
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "seq" : 0,
+                  "name" : "string",
+                  "pluginId" : "string",
+                  "pluginType" : "string"
+                } ],
+                "error_message" : ""
+              }
           schema:
-            $ref: '#/definitions/ResBodyListMeasurementTagInfo'
-          headers: {}
+            $ref: '#/definitions/ResBody<List<PluginDefDTO>>'
+  /api/o11y/monitoring/vm:
+    get:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: GetAllVMs
+      description: Retrieve all targets
+      operationId: GetAllVms
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "name" : "string",
+                  "description" : "string",
+                  "vm_id" : "string",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "string",
+                  "mci_id" : "string"
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+  /api/o11y/noti/channel:
+    get:
+      tags:
+      - "[Trigger] notification"
+      summary: GetSupportedNotificationChannels
+      description: Get supported notification channels
+      operationId: GetNotiChannels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "notiChannels" : [ {
+                  "id" : 1,
+                  "name" : "sms_naver-cloud",
+                  "type" : "sms",
+                  "provider" : "naver-cloud",
+                  "baseUrl" : "https://sens.apigw.ntruss.com",
+                  "isActive" : true,
+                  "createdAt" : "2025-09-22T12:52:49.245884658",
+                  "updatedAt" : "2025-09-22T12:52:49.245899652"
+                } ]
+              }
+          schema:
+            $ref: '#/definitions/NotiChannelAllResponse'
+  /api/o11y/noti/history:
+    get:
+      tags:
+      - "[Trigger] notification"
+      summary: GetPaginatedNotificationHistories
+      description: Get paginated notification histories
+      operationId: GetNotiHistories
+      produces:
+      - application/json
+      parameters:
+      - name: page
+        in: query
+        description: page number (1 .. N)
+        required: false
+        type: integer
+      - name: size
+        in: query
+        description: size of page (1 .. N)
+        required: false
+        type: integer
+      - name: sortBy
+        in: query
+        description: sort by properties
+        required: false
+        type: string
+      - name: sortDirection
+        in: query
+        description: "sort direction (asc, desc)"
+        required: false
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
+              }
+          schema:
+            $ref: '#/definitions/NotiHistoryPageResponse'
+  /api/o11y/trigger/history:
+    get:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: GetPaginatedTriggerHistories
+      description: Get paginated trigger histories
+      operationId: GetTriggerHistories
+      produces:
+      - application/json
+      parameters:
+      - name: page
+        in: query
+        description: page number (1 .. N)
+        required: false
+        type: integer
+      - name: size
+        in: query
+        description: size of page (1 .. N)
+        required: false
+        type: integer
+      - name: sortBy
+        in: query
+        description: sort by properties
+        required: false
+        type: string
+      - name: sortDirection
+        in: query
+        description: "sort direction (asc, desc)"
+        required: false
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
+              }
+          schema:
+            $ref: '#/definitions/TriggerHistoryPageResponse'
+  /api/o11y/trigger/policy:
+    get:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: GetPaginatedTriggerPolicies
+      description: Get paginated trigger policies
+      operationId: GetTriggerPolicies
+      produces:
+      - application/json
+      parameters:
+      - name: page
+        in: query
+        description: page number (1 .. N)
+        required: false
+        type: integer
+      - name: size
+        in: query
+        description: size of page (1 .. N)
+        required: false
+        type: integer
+      - name: sortBy
+        in: query
+        description: sort by properties
+        required: false
+        type: string
+      - name: direction
+        in: query
+        description: "sort direction (asc, desc)"
+        required: false
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
+              }
+          schema:
+            $ref: '#/definitions/TriggerPolicyPageResponse'
+    post:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: CreateTriggerPolicy
+      description: Create trigger policy
+      operationId: CreateTriggerPolicy
+      consumes:
+      - application/json;charset=UTF-8
+      parameters:
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/TriggerPolicyCreateRequest'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "title" : "CPU Alert Policy",
+              "description" : "Alert when CPU usage is high",
+              "thresholdCondition" : {
+                "info" : 30.0,
+                "warning" : 50.0,
+                "critical" : 70.0
+              },
+              "resourceType" : "CPU",
+              "aggregationType" : "LAST",
+              "holdDuration" : "0m",
+              "repeatInterval" : "1h"
+            }
+      responses:
+        "201":
+          description: ""
+          examples: {}
+  /api/v1/alert/alert-rules:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: GetAllAlertRules
+      description: Get all alert rules
+      operationId: GetAllAlertRules
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: "[ ]"
+          schema:
+            $ref: '#/definitions/AllAlertRulesResponse'
+  /api/v1/alert/alerts:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: GetAllAlerts
+      description: Get all alerts
+      operationId: GetAllA-lerts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: "[ ]"
+          schema:
+            $ref: '#/definitions/AllAlertsResponse'
+  /api/v1/alert/contact-points:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: GetAllContactPoints
+      description: Get all contact points
+      operationId: GetAllContactPoints
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: "[ ]"
+          schema:
+            $ref: '#/definitions/GrafanaManagedReceiverConfig'
+  /api/v1/alert/health:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: CheckGrafanaHealthStatus
+      description: Check grafana health status
+      operationId: CheckGrafanaHealth
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "contactPoint" : {
+                  "hasData" : true
+                },
+                "datasource" : {
+                  "hasData" : true
+                },
+                "folder" : {
+                  "hasData" : true
+                },
+                "org" : {
+                  "hasData" : true
+                }
+              }
+          schema:
+            $ref: '#/definitions/GrafanaHealthCheckResponse'
+  /api/v1/alert/test-history:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: GetPaginatedAlertTestHistories
+      description: Get paginated alert test histories
+      operationId: GetAlertTestHistories
+      produces:
+      - application/json
+      parameters:
+      - name: page
+        in: query
+        description: page number (1 .. N)
+        required: false
+        type: integer
+      - name: size
+        in: query
+        description: size of page (1 .. N)
+        required: false
+        type: integer
+      - name: sortBy
+        in: query
+        description: sort by properties
+        required: false
+        type: string
+      - name: direction
+        in: query
+        description: "sort direction (asc, desc)"
+        required: false
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
+              }
+          schema:
+            $ref: '#/definitions/AlertTestHistoryPageResponse'
+  /api/v1/log/labels:
+    get:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Log Labels Query API
+      description: Retrieve the list of label keys provided by Loki.
+      operationId: GetLabels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-09-22T03:52:47",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "레이블 목록 조회 성공하였습니다.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "labels" : [ "string", "string" ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_v1_log_labels-1630941350'
+  /api/v1/log/log_volumes:
+    get:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Log Volume Query API
+      description: Retrieve log volumes (metric time series data) for the given period.
+      operationId: GetLogVolumes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-09-22T03:52:47",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "data" : [ {
+                      "metric" : {
+                        "env" : "string",
+                        "app" : "string"
+                      },
+                      "values" : [ {
+                        "timestamp" : 0,
+                        "value" : "string"
+                      } ]
+                    } ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_v1_log_log_volumes1332534490'
+  /api/v1/log/query_range:
+    get:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Log Range Query API
+      description: Retrieve log data for a specific query within a given time range.
+      operationId: QueryRangeLogs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-09-22T03:52:47",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "로그 기간 데이터 읽기 성공하였습니다.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : null
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_v1_log_query_range-1819803082'
   /api/o11y/monitoring/influxdb/measurement:
     get:
-      description: ''
-      summary: GetInfluxDBMeasurements
       tags:
-      - '[Monitoring metric] Monitoring metric'
-      operationId: GetInfluxDBMeasurements
-      deprecated: false
+      - "[Monitoring metric] Monitoring metric"
+      summary: GetMeasurementFields
+      description: Retrieve InfluxDB measurements
+      operationId: Measurement
       produces:
       - application/json
-      parameters: []
       responses:
-        '200':
-          description: OK
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "measurement" : "string",
+                  "fields" : [ {
+                    "key" : "string",
+                    "type" : "string"
+                  } ]
+                } ],
+                "error_message" : ""
+              }
           schema:
-            $ref: '#/definitions/ResBodyListMeasurementFieldInfo'
-          headers: {}
-  /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}:
+            $ref: '#/definitions/FieldDTO'
+  /api/o11y/monitoring/influxdb/tag:
     get:
-      description: ''
-      summary: GetCSP
       tags:
-      - '[Monitoring CSP] Monitoring vm from the CSP'
-      operationId: GetCSP
-      deprecated: false
+      - "[Monitoring metric] Monitoring metric"
+      summary: GetMeasurementTags
+      description: Retrieve InfluxDB tags
+      operationId: Tag
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "measurement" : "string",
+                  "tags" : [ "string", "string" ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/TagDTO'
+  /api/o11y/trigger/policy/{id}:
+    delete:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: DeleteTriggerPolicy
+      description: Delete trigger policy
+      operationId: DeleteTriggerPolicy
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+      responses:
+        "202":
+          description: ""
+          examples: {}
+  /api/v1/alert/alert-receiver/test:
+    post:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: TestAlertReceiverConnection
+      description: Test alert receiver connection
+      operationId: TestAlertReceiver
+      responses:
+        "200":
+          description: ""
+          examples: {}
+  /api/v1/alert/alerts/search:
+    get:
+      tags:
+      - "[Metric Event] monitoring trigger event handler"
+      summary: SearchAlertsByTitle
+      description: Search alerts by title
+      operationId: GetAlertByTitle
+      produces:
+      - application/json
+      parameters:
+      - name: title
+        in: query
+        description: alert title to search
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: "[ ]"
+          schema:
+            $ref: '#/definitions/AlertResponse'
+  /api/o11y/monitoring/{NS ID}/{mciId}/vm:
+    get:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: GetVMByNsMci
+      description: Retrieve target list by NS/MCI
+      operationId: GetVmByNsMci
+      produces:
+      - application/json
+      parameters:
+      - name: NS ID
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "name" : "string",
+                  "description" : "string",
+                  "vm_id" : "string",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "string",
+                  "mci_id" : "string"
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+  /api/o11y/trigger/history/{id}/comment:
+    put:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: UpdateTriggerHistoryComment
+      description: Update trigger history comment
+      operationId: UpdateTriggerHistoryComment
+      consumes:
+      - application/json;charset=UTF-8
+      parameters:
+      - name: id
+        in: path
+        description: trigger history id
+        required: true
+        type: integer
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/TriggerHistoryCommentUpdateRequest'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "comment" : "Alert resolved - false positive"
+            }
+      responses:
+        "200":
+          description: ""
+          examples: {}
+  /api/o11y/trigger/policy/{id}/channel:
+    put:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: UpdateTriggerPolicyNotificationChannels
+      description: Update trigger policy notification channels
+      operationId: UpdateTriggerPolicyNotiChannel
+      consumes:
+      - application/json;charset=UTF-8
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/TriggerPolicyNotiChannelUpdateRequest'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            [ {
+              "channelName" : "sms_ncp",
+              "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
+            }, {
+              "channelName" : "email_smtp",
+              "recipients" : [ "admin@example.com", "dev@example.com" ]
+            } ]
+      responses:
+        "202":
+          description: ""
+          examples: {}
+  /api/o11y/trigger/policy/{id}/vm:
+    post:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: AddTriggerVM
+      description: Add trigger vm
+      operationId: AddTriggerVm
+      consumes:
+      - application/json;charset=UTF-8
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/TriggerVMAddRequest'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "namespaceId" : "namespace-1",
+              "vmScope" : "vm",
+              "vmId" : "vm-1"
+            }
+      responses:
+        "202":
+          description: ""
+          examples: {}
+    delete:
+      tags:
+      - "[Metric Event] monitoring measurement trigger"
+      summary: RemoveTriggerVM
+      description: Remove trigger vm
+      operationId: RemoveTriggerVm
+      consumes:
+      - application/json;charset=UTF-8
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/TriggerVMRemoveRequest'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "namespaceId" : "namespace-1",
+              "vmScope" : "vm",
+              "vmId" : "vm-1"
+            }
+      responses:
+        "202":
+          description: ""
+          examples: {}
+  /api/v1/log/labels/{label}/values:
+    get:
+      tags:
+      - "[Monitoring log] Monitoring log"
+      summary: Label Value Query API
+      description: Retrieve the list of values for a specific label key.
+      operationId: GetLabelValues
+      produces:
+      - application/json
+      parameters:
+      - name: label
+        in: path
+        description: "Label key (e.g., app, env)"
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-09-22T03:52:47",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "레이블 값 목록 조회 성공하였습니다.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "data" : [ "string", "string" ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_v1_log_labels_label_values-389755828'
+  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
+    post:
+      tags:
+      - "[Monitoring metric] Monitoring metric"
+      summary: QueryMetrics
+      description: Retrieve InfluxDB metrics
+      operationId: Query
+      consumes:
+      - application/json;charset=UTF-8
       produces:
       - application/json
       parameters:
       - name: nsId
         in: path
+        description: NS ID
         required: true
         type: string
-        description: ''
       - name: mciId
         in: path
+        description: MCI ID
         required: true
         type: string
-        description: ''
-      - name: targetId
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/MetricRequestDTO'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "measurement" : "string",
+              "range" : "string",
+              "group_time" : "string",
+              "group_by" : [ "string" ],
+              "limit" : 0,
+              "fields" : [ {
+                "function" : "string",
+                "field" : "string"
+              } ],
+              "conditions" : [ {
+                "key" : "string",
+                "value" : "string"
+              } ]
+            }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "name" : "string",
+                  "columns" : [ "string", "string" ],
+                  "tags" : null,
+                  "values" : [ [ "string", 0 ] ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/MetricDTO'
+  /api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}:
+    get:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: GetVM
+      description: Retrieve single target
+      operationId: GetVm
+      produces:
+      - application/json
+      parameters:
+      - name: NS ID
         in: path
+        description: NS ID
         required: true
         type: string
-        description: ''
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : {
+                  "name" : "string",
+                  "description" : "string",
+                  "vm_id" : "string",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "string",
+                  "mci_id" : "string"
+                },
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+    post:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: PostVM
+      description: Create target
+      operationId: PostVm
+      consumes:
+      - application/json;charset=UTF-8
+      produces:
+      - application/json
+      parameters:
+      - name: NS ID
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/VMRequestDTO'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "name" : "string",
+              "description" : "string"
+            }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : {
+                  "name" : "string",
+                  "description" : "string",
+                  "vm_id" : "string",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "string",
+                  "mci_id" : "string"
+                },
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+    put:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: PutVM
+      description: Update target
+      operationId: PutVm
+      consumes:
+      - application/json;charset=UTF-8
+      produces:
+      - application/json
+      parameters:
+      - name: NS ID
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/VMRequestDTO'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "name" : "string",
+              "description" : "string"
+            }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : {
+                  "name" : "string",
+                  "description" : "string",
+                  "vm_id" : "string",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "string",
+                  "mci_id" : "string"
+                },
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+    delete:
+      tags:
+      - "[VM] Monitoring vm management"
+      summary: DeleteVM
+      description: Delete target
+      operationId: DeleteVm
+      produces:
+      - application/json
+      parameters:
+      - name: NS ID
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : null,
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167'
+  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
+    get:
+      tags:
+      - "[Monitoring item] Monitoring vm item management"
+      summary: GetMonitoringItems
+      description: Retrieve monitoring item list
+      operationId: GetItems
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: NSID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : [ {
+                  "seq" : 0,
+                  "nsId" : "string",
+                  "mciId" : "string",
+                  "vmId" : "string",
+                  "name" : "string",
+                  "state" : "string",
+                  "pluginSeq" : 0,
+                  "pluginName" : "string",
+                  "pluginType" : "string",
+                  "pluginConfig" : "string"
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/MonitoringItemDTO'
+    post:
+      tags:
+      - "[Monitoring item] Monitoring vm item management"
+      summary: AddMonitoringItem
+      description: Add monitoring item
+      operationId: PostItem
+      consumes:
+      - application/json;charset=UTF-8
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/MonitoringItemRequestDTO'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "pluginSeq" : 0,
+              "pluginConfig" : "string"
+            }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : null,
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+    put:
+      tags:
+      - "[Monitoring item] Monitoring vm item management"
+      summary: UpdateMonitoringItem
+      description: Update monitoring item
+      operationId: PutItem
+      consumes:
+      - application/json;charset=UTF-8
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      - in: body
+        name: ""
+        required: false
+        schema:
+          $ref: '#/definitions/MonitoringItemUpdateDTO'
+        x-examples:
+          application/json;charset=UTF-8: |-
+            {
+              "seq" : 0,
+              "pluginConfig" : "string"
+            }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : null,
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
+    delete:
+      tags:
+      - "[Monitoring item] Monitoring vm item management"
+      summary: DeleteMonitoringItem
+      description: Delete monitoring item
+      operationId: DeleteItem
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: NS ID
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: MCI ID
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: TARGET ID
+        required: true
+        type: string
+      - name: itemSeq
+        in: path
+        description: ITEM SEQ
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "완료되었습니다.",
+                "data" : null,
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/ResBody<Void>'
+  /api/o11y/insight/anomaly-detection/measurement:
+    get:
+      description: Get measurements, field lists available for the feature
+      summary: GetAnomalyMeasurementList
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyMeasurementList
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successfully retrieved anomaly detection measurements
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionMeasurement'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/measurement/{measurement}:
+    get:
+      description: Get Field list of specific measurements available for that feature
+      summary: GetAnomalyFieldListByMeasurement
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyFieldListByMeasurement
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
       - name: measurement
         in: path
         required: true
         type: string
-        description: ''
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyData'
-          headers: {}
-  /api/o11y/trigger/policy/history:
-    get:
-      description: "Base64 Encoded value:  \nname\n"
-      summary: GetTriggerHistoryAllList
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: GetTriggerHistoryAllList
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: query
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTriggerHistoryInfo'
-          headers: {}
-  /api/o11y/trigger/policy:
-    get:
-      description: ''
-      summary: GetTriggerPolicyAllList
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: GetTriggerPolicyAllList
-      deprecated: false
-      produces:
-      - application/json
-      parameters: []
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTriggerPolicyInfo'
-          headers: {}
-    post:
-      description: >
-        The values that require Base64 encoding:
-
-        description, name, threshold
-      summary: CreateRequestTriggerPolicy
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: CreateRequestTriggerPolicy
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - '*/*'
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - '*/*'
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: triggerPolicyCreateDto
-        schema:
-          $ref: '#/definitions/TriggerPolicyCreateDTO'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}:
-    delete:
-      description: ''
-      summary: DeleteRequestTriggerPolicy
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: DeleteRequestTriggerPolicy
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-    patch:
-      description: ''
-      summary: UpdateRequestTriggerPolicy
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: UpdateRequestTriggerPolicy
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: triggerPolicyUpdateDto
-        schema:
-          $ref: '#/definitions/TriggerPolicyUpdateDto'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/target:
-    get:
-      description: ''
-      summary: GetTriggerTargetAllList
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: GetTriggerTargetAllList
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: query
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTriggerTargetInfo'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}/target:
-    put:
-      description: ''
-      summary: PutTriggerTarget
-      tags:
-      - '[Metric Event] monitoring measurement trigger'
-      operationId: PutTriggerTarget
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: targets
-        schema:
-          type: array
-          items:
-            $ref: '#/definitions/ApiO11yTriggerPolicyTargetRequest'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}/alert/email:
-    get:
-      description: ''
-      summary: GetTriggerAlertEmailUserAllList
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: GetTriggerAlertEmailUserAllList
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTriggerEmailUserInfo'
-          headers: {}
-    post:
-      description: ''
-      summary: CreateTriggerAlertEmailUser
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: CreateTriggerAlertEmailUser
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: dto
-        schema:
-          $ref: '#/definitions/TriggerEmailUserCreateDto'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}:
-    delete:
-      description: ''
-      summary: DeleteTriggerAlertEmailUser
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: DeleteTriggerAlertEmailUser
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: seq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: seq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}/alert/slack:
-    get:
-      description: ''
-      summary: GetTriggerAlertSlackUserAllList
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: GetTriggerAlertSlackUserAllList
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyListTriggerSlackUserInfo'
-          headers: {}
-    post:
-      description: ''
-      summary: CreateTriggerAlertSlackUser
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: CreateTriggerAlertSlackUser
-      deprecated: false
-      produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
-        - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: dto
-        schema:
-          $ref: '#/definitions/TriggerSlackUserCreateDto'
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}:
-    delete:
-      description: ''
-      summary: DeleteTriggerAlertSlackUser
-      tags:
-      - '[Metric Event] monitoring trigger event handler'
-      operationId: DeleteTriggerAlertSlackUser
-      deprecated: false
-      produces:
-      - application/json
-      parameters:
-      - name: policySeq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: policySeq
-      - name: seq
-        in: path
-        required: true
-        type: integer
-        format: int64
-        description: seq
-      responses:
-        '200':
-          description: OK
-          schema:
-            $ref: '#/definitions/ResBodyVoid'
-          headers: {}
-  /api/o11y/insight/anomaly-detection/measurement:
-    get:
-      description: Get measurements, field lists available for the feature.
-      summary: GetAnomalyMeasurementList
-      tags:
-        - '[Insight] Anomaly Detection'
-      operationId: GetAnomalyMeasurementList
-      deprecated: false
-      produces:
-        - application/json
-      parameters: [ ]
-      responses:
-        '200':
-          description: Successful retrieval of anomaly detection measurements
-          schema:
-            $ref: '#/definitions/ResBodyAnomalyDetectionMeasurement'
-          examples:
-            application/json:
-              data:
-                - plugin_seq: 1
-                  measurement: cpu
-                  fields:
-                    - field_key: usage_idle
-                      unit: percent
-                - plugin_seq: 4
-                  measurement: mem
-                  fields:
-                    - field_key: used_percent
-                      unit: percent
-              rs_code: '200'
-              rs_msg: Success
-          headers: { }
-  /api/o11y/insight/anomaly-detection/measurement/{measurement}:
-    get:
-      description: Get Field list of specific measurement available for that feature
-      summary: GetAnomalyFieldListByMeasurement
-      tags:
-        - '[Insight] Anomaly Detection'
-      operationId: GetAnomalyFieldListByMeasurement
-      deprecated: false
-      produces:
-        - application/json
-      parameters:
-        - name: measurement
-          in: path
-          required: true
-          type: string
-          description: Specific Measurement.
+        description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved anomaly detection field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSpecificMeasurement'
-          examples:
-            application/json:
-              data:
-                plugin_seq: 1
-                measurement: cpu
-                fields:
-                  - field_key: usage_idle
-                    unit: percent
-              rs_code: '200'
-              rs_msg: Success
-          headers: { }
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/anomaly-detection/options:
     get:
-      description: Fetch the available vm types, metric types, and interval options for the anomaly detection API.
+      description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
       summary: GetAnomalyDetectionOptions
       tags:
       - '[Insight] Anomaly Detection'
@@ -1343,7 +1409,7 @@ paths:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
           headers: {}
     post:
-      description: "Register a vm for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
+      description: Register a target for anomaly detection and automatically schedule detection tasks.
       summary: PostAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1360,6 +1426,7 @@ paths:
         enum:
         - application/json
         type: string
+        description: ''
       - name: body
         in: body
         required: true
@@ -1372,9 +1439,14 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
-      description: Modify the settings for a specific anomaly detection vm, including the monitoring metric and interval.
+      description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
       summary: PutAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1397,6 +1469,7 @@ paths:
         enum:
         - application/json
         type: string
+        description: ''
       - name: body
         in: body
         required: true
@@ -1409,8 +1482,13 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
     delete:
-      description: Remove a vm from anomaly detection, stopping and removing any scheduled tasks.
+      description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
       summary: DeleteAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1431,9 +1509,14 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
-      description: Fetch the current settings for a specific anomaly detection vm.
+      description: Fetch the current settings for a specific anomaly detection target.
       summary: GetTargetAnomalyDetectionSettings
       tags:
       - '[Insight] Anomaly Detection'
@@ -1458,9 +1541,14 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
     get:
-      description: Fetch the results of anomaly detection for a specific vm within a given time range.
+      description: Fetch the results of anomaly detection for a specific target within a given time range.
       summary: GetAnomalyDetectionHistory
       tags:
       - '[Insight] Anomaly Detection'
@@ -1478,7 +1566,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the vm vm or mci group.
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -1491,17 +1579,22 @@ paths:
         in: query
         required: false
         type: string
-        description: "The start timestamp for the range of Anomaly data to retrieve.  \nFormat 'YYYY-MM-DDTHH:MM:SSZ'.  \nDefaults to 12 hours before the current time if not provided."
+        description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
       - name: end_time
         in: query
         required: false
         type: string
-        description: "The end timestamp for the range of Anomaly data to retrieve.  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not provided."
+        description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
           headers: {}
   /api/o11y/insight/anomaly-detection/{settingSeq}:
     post:
@@ -1526,83 +1619,58 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyVoid'
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/predictions/measurement:
     get:
-      description: Get measurements, field lists available for the feature.
+      description: Get measurements, field lists available for the feature
       summary: GetPredictionMeasurementList
       tags:
-        - '[Insight] Prediction'
+      - '[Insight] Prediction'
       operationId: GetPredictionMeasurementList
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
-          description: Successful retrieval of prediction measurements
+          description: Successfully retrieved prediction measurements
           schema:
             $ref: '#/definitions/ResBodyPredictionMeasurement'
-          examples:
-            application/json:
-              data:
-                - plugin_seq: 1
-                  measurement: cpu
-                  fields:
-                    - field_key: usage_idle
-                      unit: percent
-                - plugin_seq: 2
-                  measurement: disk
-                  fields:
-                    - field_key: used_percent
-                      unit: percent
-                - plugin_seq: 4
-                  measurement: mem
-                  fields:
-                    - field_key: used_percent
-                      unit: percent
-                - plugin_seq: 8
-                  measurement: system
-                  fields:
-                    - field_key: load1
-                      unit: percent
-              rs_code: '200'
-              rs_msg: Success
-          headers: { }
+          headers: {}
   /api/o11y/insight/predictions/measurement/{measurement}:
     get:
       description: Get Field list of specific measurement available for that feature
       summary: GetPredictionFieldListByMeasurement
       tags:
-        - '[Insight] Prediction'
+      - '[Insight] Prediction'
       operationId: GetPredictionFieldListByMeasurement
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: measurement
-          in: path
-          required: true
-          type: string
-          description: Specific Measurement.
+      - name: measurement
+        in: path
+        required: true
+        type: string
+        description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved prediction field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyPredictionSpecificMeasurement'
-          examples:
-            application/json:
-              data:
-                plugin_seq: 1
-                measurement: cpu
-                fields:
-                  - field_key: usage_idle
-                    unit: percent
-              rs_code: '200'
-              rs_msg: Success
-          headers: { }
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/predictions/options:
     get:
-      description: Fetch the available vm types, metric types, and prediction range options for the prediction API.
+      description: Fetch the available target types, metric types, and prediction range options for the prediction API.
       summary: GetPredictionOptions
       tags:
       - '[Insight] Prediction'
@@ -1635,7 +1703,7 @@ paths:
           headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
-      description: "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem : load1\n"
+      description: Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.
       summary: PostPrediction
       tags:
       - '[Insight] Prediction'
@@ -1655,13 +1723,14 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the vm vm or mci group.
+        description: The ID of the target vm or mci group.
       - name: Content-Type
         in: header
         required: false
         enum:
         - application/json
         type: string
+        description: ''
       - name: body
         in: body
         required: true
@@ -1690,6 +1759,11 @@ paths:
               rs_code: '200'
               rs_msg: Success
           headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
     get:
       description: Get previously stored prediction data for a specific vm or mci group.
@@ -1710,7 +1784,7 @@ paths:
         in: path
         required: true
         type: string
-        description: The ID of the vm vm or mci group.
+        description: The ID of the target vm or mci group.
       - name: measurement
         in: query
         required: true
@@ -1725,12 +1799,12 @@ paths:
         in: query
         required: false
         type: string
-        description: "The start timestamp for the range of prediction data to retrieve.  \nFormat YYYY-MM-DDTHH:MM:SSZ.  \nDefaults to the current time if not provided."
+        description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
       - name: end_time
         in: query
         required: false
         type: string
-        description: "The end timestamp for the range of prediction data to retrieve. \nFormat YYYY-MM-DDTHH:MM:SSZ. \nDefaults to 7 days after the current time if not provided."
+        description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
       responses:
         '200':
           description: Successfully retrieved prediction history
@@ -1752,200 +1826,452 @@ paths:
               rs_code: '200'
               rs_msg: Success
           headers: {}
-  /api/o11y/insight/log-analysis/model:
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/llm/session:
     get:
-      description: ''
-      summary: GetLogAnalysisModelOptions
+      description: Retrieve all active LLM chat sessions for log analysis.
+      summary: GetLLMChatSessions
       tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: GetLogAnalysisModelOptions
+      - '[Insight] LLM Session Management'
+      operationId: GetLLMChatSessions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
           schema:
-            $ref: '#/definitions/ResBodyLogAnalysisModel'
-          headers: { }
-  /api/o11y/insight/log-analysis/session:
-    get:
-      description: ''
-      summary: GetLogAnalysisSessions
-      tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: GetLogAnalysisSessions
-      deprecated: false
-      produces:
-        - application/json
-      parameters: [ ]
-      responses:
-        '200':
-          description: Successful Response
-          schema:
-            $ref: '#/definitions/ResBodyLogAnalysisSessions'
-          headers: { }
+            $ref: '#/definitions/ResBodyLLMChatSessions'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+              - seq: 1
+                user_id: '1'
+                session_id: 986ef65f-e425-478a-b84c-03fa80682f36
+                provider: openai
+                model_name: gpt-5-mini
+                regdate: 2025-09-17T14:12:36
+              - seq: 2
+                user_id: '1'
+                session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
+                provider: ollama
+                model_name: llama3.1:8b
+                regdate: 2025-09-18T11:46:49
+          headers: {}
     post:
-      description: ''
-      summary: PostLogAnalysisSession
+      description: Create a new LLM chat session for log analysis with specified provider and model.
+      summary: PostLLMChatSession
       tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: PostLogAnalysisSession
+      - '[Insight] LLM Session Management'
+      operationId: PostLLMChatSession
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostSessionBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostSessionBody'
       responses:
         '200':
           description: Successful Response
           schema:
-            $ref: '#/definitions/ResBodyLogAnalysisSession'
-          headers: { }
+            $ref: '#/definitions/ResBodyLLMChatSession'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                seq: 3
+                user_id: '1'
+                session_id: 5e0f421b-7f88-4c1d-9132-f468ec9c557b
+                provider: openai
+                model_name: gpt-5-mini
+                regdate: 2025-09-18T14:54:04
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
     delete:
-      description: ''
-      summary: DeleteLogAnalysisSession
+      description: Delete a specific LLM chat session and its conversation history.
+      summary: DeleteLLMChatSession
       tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: DeleteLogAnalysisSession
+      - '[Insight] LLM Session Management'
+      operationId: DeleteLLMChatSession
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: sessionId
-          in: query
-          required: true
-          type: string
-          description: ''
+      - name: sessionId
+        in: query
+        required: true
+        type: string
+        description: ''
       responses:
         '200':
           description: Successful Response
           schema:
-            $ref: '#/definitions/ResBodyLogAnalysisSession'
-          headers: { }
-  /api/o11y/insight/log-analysis/session/{sessionId}/history:
-    get:
-      description: ''
-      summary: GetLogAnalysisSessionHistory
+            $ref: '#/definitions/ResBodyLLMChatSession'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                seq: 4
+                user_id: '1'
+                session_id: 5e0f421b-7f88-4c1d-9132-f468ec9c557b
+                provider: openai
+                model_name: gpt-5-mini
+                regdate: 2025-09-18T14:54:04
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/llm/sessions:
+    delete:
+      description: Delete all LLM chat sessions and their conversation histories.
+      summary: DeleteAllLLMChatSessions
       tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: GetLogAnalysisSessionHistory
+      - '[Insight] LLM Session Management'
+      operationId: DeleteAllLLMChatSessions
       deprecated: false
       produces:
-        - application/json
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLLMChatSessions'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data: []
+          headers: {}
+  /api/o11y/insight/llm/session/{sessionId}/history:
+    get:
+      description: Retrieve the conversation history for a specific LLM chat session.
+      summary: GetLLMSessionHistory
+      tags:
+      - '[Insight] LLM Session Management'
+      operationId: GetLLMSessionHistory
+      deprecated: false
+      produces:
+      - application/json
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          type: string
-          description: ''
+      - name: sessionId
+        in: path
+        required: true
+        type: string
+        description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodySessionHistory'
-          headers: { }
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                messages:
+                - message_type: human
+                  message: Analyze these error logs and find the root cause
+                - message_type: ai
+                  message: I’ll find the actual error logs (and some context)...
+                seq: 41
+                user_id: '1'
+                session_id: fa746359-ab1b-4755-a1cc-630e373135ff
+                provider: openai
+                model_name: gpt-5-mini
+                regdate: 2025-09-18T14:59:37
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/llm/api_keys:
+    get:
+      description: Retrieve the current API key configuration.
+      summary: GetLLMAPIKeys
+      tags:
+      - '[Insight] LLM API Key Management'
+      operationId: GetLLMAPIKeys
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: provider
+        in: query
+        required: false
+        enum:
+        - openai
+        - google
+        - anthropic
+        type: string
+        description: The LLM provider to use
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLLMAPIKeys'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+              - seq: 1
+                provider: openai
+                api_key: api_key
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+    post:
+      description: Save or update the API key configuration.
+      summary: PostLLMAPIKeys
+      tags:
+      - '[Insight] LLM API Key Management'
+      operationId: PostLLMAPIKeys
+      deprecated: false
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostAPIKeyBody'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLLMAPIKey'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                seq: 2
+                provider: openai
+                api_key: api_key
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+    delete:
+      description: Delete the API key configuration.
+      summary: DeleteLLMAPIKeys
+      tags:
+      - '[Insight] LLM API Key Management'
+      operationId: DeleteLLMAPIKeys
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: provider
+        in: query
+        required: true
+        enum:
+        - openai
+        - google
+        - anthropic
+        type: string
+        description: The LLM provider to use
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLLMAPIKey'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                seq: 3
+                provider: openai
+                api_key: api_key
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/llm/model:
+    get:
+      description: Retrieve available LLM model options and configurations for log analysis.
+      summary: GetLLMModelOptions
+      tags:
+      - '[Insight] LLM Model Options'
+      operationId: GetLLMModelOptions
+      deprecated: false
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyLLMModel'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+              - provider: ollama
+                model_name:
+                - llama3.1:8b
+                - mistral:7b
+              - provider: openai
+                model_name:
+                - gpt-5
+                - gpt-5-mini
+                - gpt-5-nano
+          headers: {}
   /api/o11y/insight/log-analysis/query:
     post:
-      description: ''
+      description: Submit a query to the log analysis chat session for intelligent log investigation and troubleshooting.
       summary: PostLogAnalysisQuery
       tags:
-        - '[Insight] Log Analysis (WIP)'
+      - '[Insight] Log Analysis'
       operationId: PostLogAnalysisQuery
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostQueryBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyQuery'
-          headers: { }
-  /api/o11y/insight/log-analysis/openai/api_keys:
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                message_type: ai
+                message: "I've analyzed the error logs from the past hour and identified 3 critical issues: 1) Database connection timeout errors (15 occurrences), 2) Authentication service failures (8 occurrences), 3) Memory allocation errors (3 occurrences). The root cause appears to be network connectivity issues between the application and database servers."
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/alert-analysis/query:
     post:
-      description: ''
-      summary: PostOpenAIAPIKey
+      description: Submit a query to the alert analysis chat session for intelligent alert investigation.
+      summary: PostAlertAnalysisQuery
       tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: PostOpenAIAPIKey
+      - '[Insight] Alert Analysis'
+      operationId: PostAlertAnalysisQuery
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostAPIKeyBody'
-      responses:
-        '200':
-          description: Successful Response
-          schema:
-            $ref: '#/definitions/ResBodyOpenAIAPIKey'
-          headers: { }
-    delete:
-      description: ''
-      summary: DeleteOpenAIAPIKey
-      tags:
-        - '[Insight] Log Analysis (WIP)'
-      operationId: DeleteOpenAIAPIKey
-      deprecated: false
-      produces:
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
         - application/json
-      parameters: [ ]
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
           schema:
-            $ref: '#/definitions/ResBodyOpenAIAPIKey'
-          headers: { }
-  /api/o11y/readyz:
+            $ref: '#/definitions/ResBodyQuery'
+          examples:
+            application/json:
+              rs_code: '200'
+              rs_msg: Success
+              data:
+                message_type: ai
+                message: 'Based on the alert analysis, I found that the CPU usage spike is related to a memory leak in the application service. Here are the recommended actions: 1) Restart the affected service, 2) Check application logs for memory allocation issues, 3) Monitor memory usage trends over the next 24 hours.'
+                metadata:
+                  queries_executed:
+                  - SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR
+                  - SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR
+                  total_execution_time: 2.3
+                  tool_calls_count: 3
+                  databases_accessed:
+                  - mariadb
+                  - influxdb
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /readyz:
     get:
-      description: ''
+      description: >-
+        Check if the service is ready to serve traffic.
+
+        Returns 200 OK when all systems are ready, 503 if any system is not ready.
       summary: GetReadyz
       tags:
-      - '[Health] Check API Health'
+      - '[Insight] System Management'
       operationId: GetReadyz
       deprecated: false
       produces:
@@ -1953,932 +2279,864 @@ paths:
       parameters: []
       responses:
         '200':
-          description: OK
-          schema:
-            type: object
-            additionalProperties:
-              type: object
-              default: ''
+          description: Successful Response
+          schema: {}
           headers: {}
 definitions:
-  ResBodyObject:
-    title: ResBodyObject
-    description: Generic response body wrapper
+  ResBody<List<PluginDefDTO>>:
     type: object
     properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        description: Response data
-        type: object
       error_message:
+        type: string
         description: Error message
-        type: string
-  ResBodyVoid:
-    title: ResBodyVoid
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
       data:
-        description: Response data
-        type: object
-      error_message:
-        description: Error message
-        type: string
-  TargetInfo:
-    title: TargetInfo
-    type: object
-    properties:
-      ns_id:
-        type: string
-      mci_id:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      alias_name:
-        type: string
-      description:
-        type: string
-      state:
-        type: string
-  TargetInfoCreateUpdateDTO:
-    title: TargetInfoCreateUpdateDTO
-    type: object
-    properties:
-      name:
-        type: string
-      alias_name:
-        type: string
-      description:
-        type: string
-  ConditionInfo:
-    title: ConditionInfo
-    type: object
-    properties:
-      key:
-        type: string
-      value:
-        type: string
-  LogsInfo:
-    title: LogsInfo
-    type: object
-    properties:
-      range:
-        type: string
-      limit:
-        type: integer
-        format: int64
-      conditions:
         type: array
-        items:
-          $ref: '#/definitions/ConditionInfo'
-  ResBodyListMapStringObject:
-    title: ResBodyListMapStringObject
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        description: Response data
-        type: array
+        description: Plugin list
         items:
           type: object
-      error_message:
-        description: Error message
+          properties:
+            pluginType:
+              type: string
+              description: Plugin type
+            pluginId:
+              type: string
+              description: Plugin ID
+            name:
+              type: string
+              description: Plugin name
+            seq:
+              type: number
+              description: Plugin sequence
+      rs_code:
         type: string
-  MetricInfo:
-    title: MetricInfo
-    description: Metric information
+        description: "Response code (example: 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (example: Success)"
+  AlertTestHistoryPageResponse:
     type: object
     properties:
-      name:
-        description: Measurement name
-        type: string
-      columns:
-        description: Column name of values index
-        type: array
-        items:
-          type: string
-      tags:
-        description: tag list of metric
+      numberOfElements:
+        type: number
+        description: number of elements
+      totalPages:
+        type: number
+        description: total pages
+      pageable:
         type: object
-        additionalProperties:
-          type: string
-      values:
-        description: Sequence by monitoring item
+        description: specific page info
+        properties: {}
+      content:
         type: array
-        items:
-          type: array
-          items:
+        description: alert test history list
+        items: {}
+      totalElements:
+        type: number
+        description: total elements
+  NotiHistoryPageResponse:
+    type: object
+    properties:
+      numberOfElements:
+        type: number
+        description: number of elements
+      totalPages:
+        type: number
+        description: total pages
+      pageable:
+        type: object
+        description: specific page info
+        properties: {}
+      content:
+        type: array
+        description: notification history list
+        items: {}
+      totalElements:
+        type: number
+        description: total elements
+  AlertResponse:
+    type: array
+    description: List of matching alerts
+    items: {}
+  TriggerPolicyPageResponse:
+    type: object
+    properties:
+      numberOfElements:
+        type: number
+        description: number of elements
+      totalPages:
+        type: number
+        description: total pages
+      pageable:
+        type: object
+        description: specific page info
+        properties: {}
+      content:
+        type: array
+        description: trigger policy list
+        items: {}
+      totalElements:
+        type: number
+        description: total elements
+  api_v1_log_labels_label_values-389755828:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Response code
+      data:
+        type: object
+        properties:
+          result:
             type: object
-  ResBodyListMetricInfo:
-    title: ResBodyListMetricInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
+            properties:
+              data:
+                type: array
+                description: List of label values
+                items: {}
+      requestId:
         type: string
-      rs_msg:
+        description: Request ID
+      message:
+        type: string
         description: Response message
+      status:
         type: string
-      data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/MetricInfo'
-      error_message:
-        description: Error message
-        type: string
-  FieldInfo:
-    title: FieldInfo
-    type: object
-    properties:
-      function:
-        type: string
-      field:
-        type: string
-  MetricsInfo:
-    title: MetricsInfo
-    type: object
-    properties:
-      measurement:
-        example: cpu
-        type: string
-      range:
-        description: timeunit s,m,h,d(second, minute, hour, day)
-        example: 1h
-        type: string
-      group_time:
-        description: timeunit s,m,h,d(second, minute, hour, day)
-        example: 1h
-        type: string
-      group_by:
-        example:
-        - cpu
-        type: array
-        items:
-          type: string
-      limit:
-        example: 10
-        type: integer
-        format: int64
-      fields:
-        example:
-        - function: mean
-          field: usage_idle
-        type: array
-        items:
-          $ref: '#/definitions/FieldInfo'
-      conditions:
-        example:
-        - key: target_id
-          value: vm-1
-        type: array
-        items:
-          $ref: '#/definitions/ConditionInfo'
-    required:
-    - measurement
-    - range
-  ResBodyListTargetInfo:
-    title: ResBodyListTargetInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/TargetInfo'
-      error_message:
-        description: Error message
-        type: string
-  ResBodyTargetInfo:
-    title: ResBodyTargetInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        $ref: '#/definitions/TargetInfo'
-      error_message:
-        description: Error message
-        type: string
-  MonitoringConfigInfo:
-    title: MonitoringConfigInfo
-    description: Response data
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      ns_id:
-        type: string
-      mci_id:
-        type: string
-      target_id:
-        type: string
-      name:
-        type: string
-      state:
-        type: string
-      plugin_seq:
-        type: integer
-        format: int64
-      plugin_name:
-        type: string
-      plugin_type:
-        type: string
-      plugin_config:
-        type: string
-  MonitoringConfigInfoCreateDTO:
-    title: MonitoringConfigInfoCreateDTO
-    type: object
-    properties:
-      name:
-        type: string
-      plugin_seq:
-        type: integer
-        format: int64
-      plugin_config:
-        type: string
-  MonitoringConfigInfoUpdateDTO:
-    title: MonitoringConfigInfoUpdateDTO
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      plugin_config:
-        type: string
-  ResBodyListMonitoringConfigInfo:
-    title: ResBodyListMonitoringConfigInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/MonitoringConfigInfo'
-      error_message:
-        description: Error message
-        type: string
-  MiningDBSetDTO:
-    title: MiningDBSetDTO
-    description: MiningDB information
-    type: object
-    properties:
-      url:
-        type: string
-      database:
-        type: string
-      retention_policy:
-        type: string
-      username:
-        type: string
-      password:
-        type: string
-  Data:
-    title: Data
-    description: Response data
-    type: object
-    properties:
-      metric_name:
-        type: string
-      metric_unit:
-        type: string
-      timestamp_values:
-        type: array
-        items:
-          $ref: '#/definitions/TimestampValue'
-  ResBodyData:
-    title: ResBodyData
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        type: object
-        allOf:
-        - $ref: '#/definitions/Data'
-        - description: Response data
-      error_message:
-        description: Error message
-        type: string
-  TimestampValue:
-    title: TimestampValue
-    type: object
-    properties:
+        description: Response status
       timestamp:
         type: string
-      value:
-        type: string
-  PluginDefInfo:
-    title: PluginDefInfo
-    description: Response data
+        description: Response timestamp
+  MonitoringItemDTO:
     type: object
     properties:
-      seq:
-        description: Plugin identify sequence number
-        type: integer
-        format: int64
-      name:
-        description: Plugin name
-        type: string
-      plugin_id:
-        description: Plugin ID
-        type: string
-      plugin_type:
-        description: Plugin type
-        type: string
-  ResBodyListPluginDefInfo:
-    title: ResBodyListPluginDefInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
-      data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/PluginDefInfo'
       error_message:
+        type: string
         description: Error message
-        type: string
-  OpenSearchInfo:
-    title: OpenSearchInfo
-    description: Response data
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      url:
-        type: string
-      index_name:
-        type: string
-      username:
-        type: string
-      password:
-        type: string
-  ResBodyListOpenSearchInfo:
-    title: ResBodyListOpenSearchInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
-      rs_code:
-        description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
       data:
-        description: Response data
         type: array
+        description: Monitoring item list
         items:
-          $ref: '#/definitions/OpenSearchInfo'
-      error_message:
-        description: Error message
-        type: string
-  NS:
-    title: NS
-    type: object
-    properties:
-      id:
-        type: string
-      description:
-        type: string
-      name:
-        type: string
-      resource_type:
-        type: string
-      uid:
-        type: string
-  TumblebugNS:
-    title: TumblebugNS
-    type: object
-    properties:
-      ns:
-        type: array
-        items:
-          $ref: '#/definitions/NS'
-  MiningDBInfo:
-    title: MiningDBInfo
-    description: Response data
-    type: object
-    properties:
-      url:
-        type: string
-      database:
-        type: string
-      retention_policy:
-        type: string
-      username:
-        type: string
-      password:
-        type: string
-  ResBodyMiningDBInfo:
-    title: ResBodyMiningDBInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
+          type: object
+          properties:
+            mciId:
+              type: string
+              description: MCI ID
+            pluginType:
+              type: string
+              description: Plugin type
+            nsId:
+              type: string
+              description: NSID
+            pluginName:
+              type: string
+              description: Plugin name
+            vmId:
+              type: string
+              description: TARGET ID
+            name:
+              type: string
+              description: Item name
+            pluginSeq:
+              type: number
+              description: Plugin sequence
+            state:
+              type: string
+              description: State
+            seq:
+              type: number
+              description: Item sequence
+            pluginConfig:
+              type: string
+              description: Plugin configuration
       rs_code:
-        description: Response code
         type: string
+        description: "Response code (example: 0000)"
       rs_msg:
-        description: Response message
         type: string
-      data:
-        type: object
-        allOf:
-        - $ref: '#/definitions/MiningDBInfo'
-        - description: Response data
-      error_message:
-        description: Error message
-        type: string
-  MeasurementTagInfo:
-    title: MeasurementTagInfo
-    description: InfluxDB measurement tag information
+        description: "Response message (example: Success)"
+  InfluxDTO:
     type: object
     properties:
-      measurement:
-        description: influxDB measurement name
-        example: cpu
+      error_message:
         type: string
-      tags:
-        description: influxDB tag list on measurement
-        example:
-        - cpu
-        - host
+        description: Error message
+      data:
         type: array
+        description: List of InfluxDB information
         items:
+          type: object
+          properties:
+            uid:
+              type: string
+              description: "UID (example: 1)"
+            password:
+              type: string
+              description: "Password (example: mypassword"
+            database:
+              type: string
+              description: "Database name (example: db-1)"
+            retention_policy:
+              type: string
+              description: "Retention policy (example: autogen)"
+            id:
+              type: number
+              description: "ID (example: 1)"
+            url:
+              type: string
+              description: "InfluxDB URL (example: localhost:8086)"
+            username:
+              type: string
+              description: "Username (example: mc-user)"
+      rs_code:
+        type: string
+        description: "Response code (example: 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (example: Success)"
+  TriggerPolicyNotiChannelUpdateRequest:
+    type: array
+    description: List of notification channel update objects
+    items:
+      type: object
+      description: List of notification channel update objects
+      properties:
+        recipients:
+          type: array
+          description: list of recipients
+          items: {}
+        channelName:
           type: string
-  ResBodyListMeasurementTagInfo:
-    title: ResBodyListMeasurementTagInfo
-    description: Generic response body wrapper
+          description: notification channel name
+    example: |-
+      [ {
+        "channelName" : "sms_ncp",
+        "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
+      }, {
+        "channelName" : "email_smtp",
+        "recipients" : [ "admin@example.com", "dev@example.com" ]
+      } ]
+  VMRequestDTO:
     type: object
     properties:
-      rs_code:
+      name:
+        type: string
+        description: Target name
+      description:
+        type: string
+        description: Description
+    example: |-
+      {
+        "name" : "string",
+        "description" : "string"
+      }
+  TriggerPolicyCreateRequest:
+    type: object
+    properties:
+      aggregationType:
+        type: string
+        description: aggregation type
+        enum:
+        - MIN
+        - MAX
+        - AVG
+        - LAST
+      repeatInterval:
+        type: string
+        description: repeat interval of evaluation
+      holdDuration:
+        type: string
+        description: minimum duration for firing alert
+      description:
+        type: string
+        description: trigger policy description
+      thresholdCondition:
+        type: object
+        description: threshold condition object
+        properties:
+          critical:
+            type: number
+            description: threshold value for critical level
+          warning:
+            type: number
+            description: threshold value for warning level
+          info:
+            type: number
+            description: threshold value for info level
+      title:
+        type: string
+        description: trigger policy title
+      resourceType:
+        type: string
+        description: resource type
+        enum:
+        - CPU
+        - MEMORY
+        - DISK
+    example: |-
+      {
+        "title" : "CPU Alert Policy",
+        "description" : "Alert when CPU usage is high",
+        "thresholdCondition" : {
+          "info" : 30.0,
+          "warning" : 50.0,
+          "critical" : 70.0
+        },
+        "resourceType" : "CPU",
+        "aggregationType" : "LAST",
+        "holdDuration" : "0m",
+        "repeatInterval" : "1h"
+      }
+  GrafanaHealthCheckResponse:
+    type: object
+    properties:
+      folder:
+        type: object
+        properties:
+          hasData:
+            type: boolean
+            description: folder is set up correctly
+      org:
+        type: object
+        properties:
+          hasData:
+            type: boolean
+            description: org is set up correctly
+      contactPoint:
+        type: object
+        properties:
+          hasData:
+            type: boolean
+            description: contact point is set up correctly
+      datasource:
+        type: object
+        properties:
+          hasData:
+            type: boolean
+            description: datasource is set up correctly
+  api_v1_log_labels-1630941350:
+    type: object
+    properties:
+      code:
+        type: string
         description: Response code
-        type: string
-      rs_msg:
-        description: Response message
-        type: string
       data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/MeasurementTagInfo'
-      error_message:
-        description: Error message
+        type: object
+        properties:
+          result:
+            type: object
+            properties:
+              labels:
+                type: array
+                description: List of labels
+                items: {}
+      requestId:
         type: string
-  MeasurementFieldInfo:
-    title: MeasurementFieldInfo
-    description: Measurement field information
+        description: Request ID
+      message:
+        type: string
+        description: Response message
+      status:
+        type: string
+        description: Response status
+      timestamp:
+        type: string
+        description: Response timestamp
+  VMDTO:
     type: object
     properties:
-      measurement:
-        description: influxDB measurement name
-        example: cpu
+      error_message:
         type: string
+        description: Error message
+      data:
+        type: array
+        description: Target information list
+        items:
+          type: object
+          properties:
+            influx_seq:
+              type: number
+              description: Influx sequence
+            vm_id:
+              type: string
+              description: TARGET ID
+            mci_id:
+              type: string
+              description: MCI ID
+            vm_status:
+              type: string
+              description: Target status
+              enum:
+              - RUNNING
+              - FAILED
+            log_service_status:
+              type: string
+              description: Log agent service status
+              enum:
+              - ACTIVE
+              - INACTIVE
+              - ACTIVATING
+              - DEACTIVATING
+              - RELOADING
+              - NOT_EXIST
+              - FAILED
+            ns_id:
+              type: string
+              description: NS ID
+            monitoring_service_status:
+              type: string
+              description: Monitoring agent service status
+              enum:
+              - ACTIVE
+              - INACTIVE
+              - ACTIVATING
+              - DEACTIVATING
+              - RELOADING
+              - NOT_EXIST
+              - FAILED
+            name:
+              type: string
+              description: Target name
+            description:
+              type: string
+              description: Description
+      rs_code:
+        type: string
+        description: "Response code (example: 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (example: Success)"
+  MonitoringItemRequestDTO:
+    type: object
+    properties:
+      pluginSeq:
+        type: number
+        description: Plugin sequence
+      pluginConfig:
+        type: string
+        description: Plugin configuration
+    example: |-
+      {
+        "pluginSeq" : 0,
+        "pluginConfig" : "string"
+      }
+  TriggerVMAddRequest:
+    type: object
+    properties:
+      vmScope:
+        type: string
+        description: "vm scope (vm, mci)"
+      vmId:
+        type: string
+        description: vm id
+      namespaceId:
+        type: string
+        description: namespace id
+    example: |-
+      {
+        "namespaceId" : "namespace-1",
+        "vmScope" : "vm",
+        "vmId" : "vm-1"
+      }
+  TagDTO:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: array
+        description: List of tag information
+        items:
+          type: object
+          properties:
+            measurement:
+              type: string
+              description: Measurement name
+            tags:
+              type: array
+              description: List of tags
+              items: {}
+      rs_code:
+        type: string
+        description: "Response code (example: 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (example: Success)"
+  MetricRequestDTO:
+    type: object
+    properties:
+      limit:
+        type: number
+        description: Result limit count
+      group_by:
+        type: array
+        description: List of group by fields
+        items: {}
+      range:
+        type: string
+        description: Query range
+      conditions:
+        type: array
+        description: List of condition filters
+        items:
+          type: object
+          properties:
+            value:
+              type: string
+              description: Condition value
+            key:
+              type: string
+              description: Condition key
       fields:
-        description: influxDB field list on measurement
-        example:
-        - key: usage_guest
-          type: float
         type: array
+        description: List of fields to query
         items:
-          $ref: '#/definitions/FieldInfo'
-  ResBodyListMeasurementFieldInfo:
-    title: ResBodyListMeasurementFieldInfo
-    description: Generic response body wrapper
+          type: object
+          properties:
+            field:
+              type: string
+              description: Field name
+            function:
+              type: string
+              description: "Aggregation function (e.g., mean, max, etc.)"
+      group_time:
+        type: string
+        description: Grouping unit
+      measurement:
+        type: string
+        description: Measurement name
+    example: |-
+      {
+        "measurement" : "string",
+        "range" : "string",
+        "group_time" : "string",
+        "group_by" : [ "string" ],
+        "limit" : 0,
+        "fields" : [ {
+          "function" : "string",
+          "field" : "string"
+        } ],
+        "conditions" : [ {
+          "key" : "string",
+          "value" : "string"
+        } ]
+      }
+  AllAlertRulesResponse:
+    type: array
+    description: List of alert rules
+    items: {}
+  TriggerHistoryCommentUpdateRequest:
     type: object
     properties:
-      rs_code:
-        description: Response code
+      comment:
         type: string
-      rs_msg:
-        description: Response message
+        description: comment to update
+    example: |-
+      {
+        "comment" : "Alert resolved - false positive"
+      }
+  MonitoringItemUpdateDTO:
+    type: object
+    properties:
+      seq:
+        type: number
+        description: Item sequence
+      pluginConfig:
         type: string
-      data:
-        description: Response data
+        description: Plugin configuration
+    example: |-
+      {
+        "seq" : 0,
+        "pluginConfig" : "string"
+      }
+  TriggerVMRemoveRequest:
+    type: object
+    properties:
+      vmScope:
+        type: string
+        description: "vm scope (vm, mci)"
+      vmId:
+        type: string
+        description: vm id
+      namespaceId:
+        type: string
+        description: namespace id
+    example: |-
+      {
+        "namespaceId" : "namespace-1",
+        "vmScope" : "vm",
+        "vmId" : "vm-1"
+      }
+  TriggerHistoryPageResponse:
+    type: object
+    properties:
+      numberOfElements:
+        type: number
+        description: number of elements
+      totalPages:
+        type: number
+        description: total pages
+      pageable:
+        type: object
+        description: specific page info
+        properties: {}
+      content:
         type: array
+        description: trigger history list
+        items: {}
+      totalElements:
+        type: number
+        description: total elements
+  NotiChannelAllResponse:
+    type: object
+    properties:
+      notiChannels:
+        type: array
+        description: notification channel list
         items:
-          $ref: '#/definitions/MeasurementFieldInfo'
+          type: object
+          properties:
+            createdAt:
+              type: string
+              description: notification channel created at
+            baseUrl:
+              type: string
+              description: notification channel baseUrl
+            provider:
+              type: string
+              description: notification channel provider
+            name:
+              type: string
+              description: notification channel name
+            id:
+              type: number
+              description: notification channel id
+            isActive:
+              type: boolean
+              description: notification channel active status
+            type:
+              type: string
+              description: notification channel type
+            updatedAt:
+              type: string
+              description: notification channel updated at
+  api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167:
+    type: object
+    properties:
       error_message:
+        type: string
         description: Error message
-        type: string
-  InfluxDBInfo:
-    title: InfluxDBInfo
-    description: InfluxDB information
-    type: object
-    properties:
-      seq:
-        description: Sequence number
-        type: integer
-        format: int64
-      url:
-        description: Host url
-        example: http://localhost:8086
-        type: string
-      database:
-        description: Database name
-        example: mc-agent
-        type: string
-      retention_policy:
-        description: Data retention policy name
-        example: autogen
-        type: string
-      username:
-        description: Authentication username
-        example: mc-agent
-        type: string
-      password:
-        description: Authentication password
-        example: mc-agent
-        type: string
-  ResBodyListInfluxDBInfo:
-    title: ResBodyListInfluxDBInfo
-    description: Generic response body wrapper
-    type: object
-    properties:
       rs_code:
+        type: string
+        description: "Response code (example: 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (example: Success)"
+  AllAlertsResponse:
+    type: array
+    description: List of alerts
+    items: {}
+  GrafanaManagedReceiverConfig:
+    type: array
+    description: List of contact points
+    items: {}
+  api_v1_log_log_volumes1332534490:
+    type: object
+    properties:
+      code:
+        type: string
         description: Response code
+      data:
+        type: object
+        properties:
+          result:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    metric:
+                      type: object
+                      description: Metric key-value map
+                      properties:
+                        '*':
+                          type: string
+                          description: "Metric dynamic fields (e.g., app, env)"
+                    values:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                            description: Measured value
+                          timestamp:
+                            type: number
+                            description: Timestamp
+      requestId:
         type: string
-      rs_msg:
+        description: Request ID
+      message:
+        type: string
         description: Response message
+      status:
         type: string
-      data:
-        description: Response data
-        type: array
-        items:
-          $ref: '#/definitions/InfluxDBInfo'
+        description: Response status
+      timestamp:
+        type: string
+        description: Response timestamp
+  MetricDTO:
+    type: object
+    properties:
       error_message:
+        type: string
         description: Error message
-        type: string
-  TriggerEmailUserCreateDto:
-    title: TriggerEmailUserCreateDto
-    type: object
-    properties:
-      email:
-        description: Alert Receiver Email
-        type: string
-      name:
-        description: Trigger Alert Email User name
-        type: string
-  ResBodyListTriggerEmailUserInfo:
-    title: ResBodyListTriggerEmailUserInfo
-    type: object
-    properties:
       data:
         type: array
+        description: List of metric information
         items:
-          $ref: '#/definitions/TriggerEmailUserInfo'
+          type: object
+          properties:
+            columns:
+              type: array
+              description: List of column names
+              items: {}
+            values:
+              type: array
+              description: "List of values (2D array, each row corresponds to columns\
+                \ order)"
+              items: {}
+            name:
+              type: string
+              description: Measurement name
+            tags:
+              type: object
+              description: Tag information
+              properties: {}
       rs_code:
         type: string
+        description: "Response code (example: 0000)"
       rs_msg:
         type: string
-  TriggerEmailUserInfo:
-    title: TriggerEmailUserInfo
+        description: "Response message (example: Success)"
+  ResBody<Void>:
     type: object
     properties:
-      email:
-        description: Alert Receiver Email
+      error_message:
         type: string
-      name:
-        description: Trigger Alert Email User name
-        type: string
-      policy_seq:
-        description: Sequence by trigger policy
-        example: 1
-        type: integer
-        format: int64
-      seq:
-        description: Sequence by Trigger Email User
-        example: 1
-        type: integer
-        format: int64
-  ResBodyListTriggerSlackUserInfo:
-    title: ResBodyListTriggerSlackUserInfo
-    type: object
-    properties:
+        description: Error message
       data:
-        type: array
-        items:
-          $ref: '#/definitions/TriggerSlackUserInfo'
+        type: object
+        description: Response data
+        properties: {}
       rs_code:
         type: string
+        description: "Response code (example: 0000)"
       rs_msg:
         type: string
-  TriggerSlackUserCreateDto:
-    title: TriggerSlackUserCreateDto
+        description: "Response message (example: Success)"
+  api_v1_log_query_range-1819803082:
     type: object
     properties:
-      channel:
-        description: Base64 Encoded value
+      code:
         type: string
-      name:
-        description: Trigger Alert Slack User name
-        type: string
-      token:
-        description: Base64 Encoded value
-        type: string
-  TriggerSlackUserInfo:
-    title: TriggerSlackUserInfo
-    type: object
-    properties:
-      channel:
-        description: Base64 Encoded value
-        type: string
-      name:
-        description: Trigger Alert Slack User name
-        type: string
-      policy_seq:
-        description: Sequence by trigger policy
-        example: 1
-        type: integer
-        format: int64
-      seq:
-        description: Sequence by Trigger Slack User
-        example: 1
-        type: integer
-        format: int64
-      token:
-        description: Base64 Encoded value
-        type: string
-  ResBodyListTriggerHistoryInfo:
-    title: ResBodyListTriggerHistoryInfo
-    type: object
-    properties:
+        description: Response code
       data:
-        type: array
-        items:
-          $ref: '#/definitions/TriggerHistoryInfo'
-      rs_code:
+        type: object
+        properties:
+          result:
+            type: object
+            description: Log result object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    value:
+                      type: string
+                      description: Log value
+                    timestamp:
+                      type: number
+                      description: Timestamp
+                    labels:
+                      type: object
+                      description: Log labels
+                      properties:
+                        '*':
+                          type: string
+                          description: Label key-value (dynamic)
+              stats:
+                type: object
+                properties:
+                  execTime:
+                    type: number
+                    description: Execution time (ms)
+                  totalLinesProcessed:
+                    type: number
+                    description: Total lines processed
+                  totalEntriesReturned:
+                    type: number
+                    description: Total entries returned
+                  totalBytesProcessed:
+                    type: number
+                    description: Total bytes processed
+              status:
+                type: string
+                description: Log status
+      requestId:
         type: string
-      rs_msg:
+        description: Request ID
+      message:
         type: string
-  TriggerHistoryInfo:
-    title: TriggerHistoryInfo
-    type: object
-    properties:
-      create_at:
-        description: The time when the history was inserted into the database
-        example: 2024-05-24T11:31:55Z
-        type: string
-      data:
-        description: Trigger event alarm details
-        type: string
-      level:
-        description: Trigger event level
-        type: string
-      measurement:
-        description: Trigger event vm metric name
-        type: string
-      name:
-        description: Base64 Encoded value
-        example: localhost
-        type: string
-      ns_id:
-        description: Namespace Id
-        type: string
-      occur_time:
-        description: The time when the history occurred
-        type: string
-      policy_seq:
-        description: Sequence by trigger policy
-        example: 1
-        type: integer
-        format: int64
-      seq:
-        description: Sequence by history
-        example: 1
-        type: integer
-        format: int64
-      target_id:
-        description: Vm Id
-        type: string
-      target_seq:
-        description: Sequence by trigger vm
-        example: 1
-        type: integer
-        format: int64
-  ResBodyListTriggerPolicyInfo:
-    title: ResBodyListTriggerPolicyInfo
-    type: object
-    properties:
-      data:
-        type: array
-        items:
-          $ref: '#/definitions/TriggerPolicyInfo'
-      rs_code:
-        type: string
-      rs_msg:
-        type: string
-  TriggerPolicyInfo:
-    title: TriggerPolicyInfo
-    type: object
-    properties:
-      agent_manager_ip:
-        description: Agent Manager IP
-        example: http://mc-o11y-manager:18080
-        type: string
-      create_at:
-        description: The time when the trigger policy was registered
-        example: 2024-05-24T11:31:55Z
-        type: string
-      description:
-        description: Host description
-        example: ZGVzY3JpcHRpb24=
-        type: string
-      field:
-        description: Trigger vm metric field
-        example: usage_idle
-        type: string
-      measurement:
-        description: Trigger vm metric
-        example: cpu
-        type: string
-      name:
-        description: Base64 Encoded value
-        example: Y3B1IHVzYWdlX2lkbGUgY2hlY2sgcG9saWN5
-        type: string
-      seq:
-        description: Sequence by trigger policy
-        example: 1
-        type: integer
-        format: int64
-      statistics:
-        description: Trigger vm metric statistics
-        example: min
-        type: string
+        description: Response message
       status:
-        type: object
-        allOf:
-        - $ref: '#/definitions/Status'
-        - description: Trigger Policy enablement status
-      threshold:
-        description: Base64 Encoded value
-        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
         type: string
-      update_at:
-        description: The time when the trigger policy was updated
+        description: Response status
+      timestamp:
         type: string
-  TriggerPolicyCreateDTO:
-    title: TriggerPolicyCreateDTO
+        description: Response timestamp
+  FieldDTO:
     type: object
     properties:
-      description:
-        description: Host description
-        example: ZGVzY3JpcHRpb24=
+      error_message:
         type: string
-      field:
-        description: Trigger vm metric field
-        example: usage_idle
-        type: string
-      measurement:
-        type: object
-        allOf:
-        - $ref: '#/definitions/TriggerMeasurement'
-        - description: Trigger vm metric
-      name:
-        description: Base64 Encoded value
-        example: Y3B1IHBvbGljeQ==
-        type: string
-      statistics:
-        description: Trigger vm metric statistics
-        example: min
-        type: string
-      status:
-        type: object
-        allOf:
-        - $ref: '#/definitions/Status'
-        - description: Trigger Policy enablement status
-      threshold:
-        description: Base64 Encoded value
-        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-        type: string
-  TriggerPolicyUpdateDto:
-    title: TriggerPolicyUpdateDto
-    type: object
-    properties:
-      description:
-        description: Host description
-        example: ZGVzY3JpcHRpb24=
-        type: string
-      field:
-        description: Trigger vm metric field
-        example: usage_idle
-        type: string
-      measurement:
-        description: Trigger vm metric
-        example: cpu
-        type: string
-      name:
-        description: Base64 Encoded value
-        example: Y3B1IHBvbGljeQ==
-        type: string
-      statistics:
-        description: Trigger vm metric statistics
-        example: min
-        type: string
-      status:
-        type: object
-        allOf:
-        - $ref: '#/definitions/Status'
-        - description: Trigger Policy enablement status
-      threshold:
-        description: Base64 Encoded value
-        example: eyJjcml0IjogInZhbHVlID4gMjAiLCAid2FybiI6ICJ2YWx1ZSA+IDUwIn0=
-        type: string
-  ResBodyListTriggerTargetInfo:
-    title: ResBodyListTriggerTargetInfo
-    type: object
-    properties:
+        description: Error message
       data:
         type: array
+        description: List of measurement information
         items:
-          $ref: '#/definitions/TriggerTargetInfo'
+          type: object
+          properties:
+            fields:
+              type: array
+              description: List of field information
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: Field type
+                  key:
+                    type: string
+                    description: Field key
+            measurement:
+              type: string
+              description: "Measurement name(example: cpu)"
       rs_code:
         type: string
+        description: "Response code (example: 0000)"
       rs_msg:
         type: string
-  TriggerTargetInfo:
-    title: TriggerTargetInfo
-    type: object
-    properties:
-      alias_name:
-        description: Host Alias Name
-        example: test-vm
-        type: string
-      create_at:
-        description: The time when the trigger vm was registered
-        example: 2024-05-24T11:31:55Z
-        type: string
-      name:
-        description: Host name
-        example: vm1
-        type: string
-      ns_id:
-        description: Namespace Id
-        type: string
-      policy_seq:
-        description: Sequence by trigger policy
-        example: 1
-        type: integer
-        format: int64
-      seq:
-        description: Sequence by trigger vm
-        example: 1
-        type: integer
-        format: int64
-      targetId:
-        type: string
+        description: "Response message (example: Success)"
+  APIProviderType:
+    title: APIProviderType
+    type: string
+    enum:
+    - openai
+    - google
+    - anthropic
   AnomalyDetectionHistoryResponse:
     title: AnomalyDetectionHistoryResponse
     type: object
@@ -2887,7 +3145,7 @@ definitions:
         description: The Namespace ID.
         type: string
       target_id:
-        description: The ID of the vm (vm ID or mci ID).
+        description: The ID of the target (vm ID or mci ID).
         type: string
       measurement:
         description: The type of metric being monitored for anomalies (e.g., cpu, mem).
@@ -2909,28 +3167,37 @@ definitions:
     properties:
       timestamp:
         description: The timestamp for the anomaly detection result.
-        example: 2024-10-10T06:08:00Z
+        example: 2024-10-08T06:50:37Z
         type: string
+        format: date-time
       anomaly_score:
         description: The anomaly score for the corresponding timestamp.
-        example: 0.85
-        type: number
-        format: double
-      isAnomaly:
+      is_anomaly:
         description: Whether the data point is considered an anomaly (1) or normal (0).
-        example: 1
-        type: integer
-        format: int32
       value:
         description: The original monitoring data value for the corresponding timestamp.
-        example: 99.5
-        type: number
-        format: double
     required:
     - timestamp
     - anomaly_score
-    - isAnomaly
+    - is_anomaly
     - value
+  AnomalyDetectionMeasurement:
+    title: AnomalyDetectionMeasurement
+    type: object
+    properties:
+      plugin_seq:
+        type: integer
+        format: int32
+      measurement:
+        type: string
+      fields:
+        type: array
+        items:
+          type: string
+    required:
+    - plugin_seq
+    - measurement
+    - fields
   AnomalyDetectionOptions:
     title: AnomalyDetectionOptions
     type: object
@@ -2956,30 +3223,26 @@ definitions:
     type: object
     properties:
       seq:
-        example: 1
         type: integer
         format: int32
       ns_id:
-        example: ns01
         type: string
       target_id:
-        example: vm01
         type: string
       target_type:
-        example: vm
         type: string
       measurement:
-        example: cpu
         type: string
       execution_interval:
-        example: 5m
         type: string
       last_execution:
-        example: 2024-10-10T06:08:48Z
-        type: string
+        description: The timestamp for the anomaly detection last run.
+        example: 2024-10-08T06:50:37Z
       create_at:
-        example: 2024-10-10T03:08:48Z
+        description: The timestamp for the registration for anomaly detection target.
+        example: 2024-10-08T06:50:37Z
         type: string
+        format: date-time
     required:
     - seq
     - ns_id
@@ -2987,7 +3250,6 @@ definitions:
     - target_type
     - measurement
     - execution_interval
-    - last_execution
     - create_at
   AnomalyDetectionTargetRegistration:
     title: AnomalyDetectionTargetRegistration
@@ -2998,11 +3260,20 @@ definitions:
       target_id:
         type: string
       target_type:
-        $ref: '#/definitions/TargetType'
+        type: object
+        allOf:
+        - $ref: '#/definitions/TargetType2'
+        - description: The type of the target (vm or mci).
       measurement:
-        $ref: '#/definitions/Measurement'
+        type: object
+        allOf:
+        - $ref: '#/definitions/MetricType2'
+        - description: The type of metric being monitored for anomalies (cpu or mem)
       execution_interval:
-        $ref: '#/definitions/ExecutionInterval'
+        type: object
+        allOf:
+        - $ref: '#/definitions/ExecutionInterval1'
+        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
     required:
     - ns_id
     - target_id
@@ -3014,70 +3285,182 @@ definitions:
     type: object
     properties:
       execution_interval:
-        $ref: '#/definitions/ExecutionInterval'
+        type: object
+        allOf:
+        - $ref: '#/definitions/ExecutionInterval1'
+        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
     required:
     - execution_interval
   ExecutionInterval:
     title: ExecutionInterval
-    description: An enumeration.
     type: string
     enum:
     - 5m
     - 10m
     - 30m
+  HTTPValidationError:
+    title: HTTPValidationError
+    type: object
+    properties:
+      detail:
+        type: array
+        items:
+          $ref: '#/definitions/ValidationError'
   HistoryValue:
     title: HistoryValue
     type: object
     properties:
       timestamp:
         type: string
-      value:
-        type: number
-        format: double
+      value: {}
     required:
     - timestamp
-  Measurement:
-    title: Measurement
-    description: An enumeration.
+    - value
+  LLMAPIKey:
+    title: LLMAPIKey
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int32
+      provider:
+        type: string
+      api_key:
+        type: string
+    required:
+    - seq
+    - provider
+    - api_key
+  LLMChatSession:
+    title: LLMChatSession
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int32
+      user_id:
+        type: string
+      session_id:
+        type: string
+      provider:
+        type: string
+      model_name:
+        type: string
+      regdate:
+        type: string
+        format: date-time
+    required:
+    - seq
+    - user_id
+    - session_id
+    - provider
+    - model_name
+    - regdate
+  LLMModel:
+    title: LLMModel
+    type: object
+    properties:
+      provider:
+        $ref: '#/definitions/ProviderType'
+      model_name:
+        type: array
+        items:
+          type: string
+    required:
+    - provider
+    - model_name
+  Message:
+    title: Message
+    type: object
+    properties:
+      message_type:
+        type: string
+      message:
+        type: string
+      metadata:
+        type: object
+        allOf:
+        - $ref: '#/definitions/QueryMetadata'
+        - description: Query execution metadata
+    required:
+    - message_type
+    - message
+  MetricType:
+    title: MetricType
     type: string
     enum:
     - cpu
     - mem
+  PostAPIKeyBody:
+    title: PostAPIKeyBody
+    type: object
+    properties:
+      provider:
+        type: object
+        allOf:
+        - $ref: '#/definitions/APIProviderType1'
+        - description: The LLM provider to use
+      api_key:
+        description: API key for the LLM provider
+        type: string
+        minLength: 20
+    required:
+    - provider
+    - api_key
+  PostQueryBody:
+    title: PostQueryBody
+    type: object
+    properties:
+      session_id:
+        description: The session ID to send the message to
+        example: session_123
+        type: string
+      message:
+        description: The message or query to send to the LLM for log analysis
+        example: Analyze these error logs and find the root cause
+        type: string
+    required:
+    - session_id
+    - message
+  PostSessionBody:
+    title: PostSessionBody
+    type: object
+    properties:
+      provider:
+        type: object
+        allOf:
+        - $ref: '#/definitions/ProviderType2'
+        - description: The LLM provider to use
+      model_name:
+        description: The specific model name to use for analysis
+        example: gpt-5-mini
+        type: string
+    required:
+    - provider
+    - model_name
   PredictValue:
     title: PredictValue
     type: object
     properties:
       timestamp:
         type: string
-      value:
-        type: number
-        format: double
+      value: {}
     required:
     - timestamp
-  AnomalyDetectionMeasurement:
-    title: AnomalyDetectionMeasurement
-    type: object
-    properties:
-      plugin_seq:
-        type: string
-      measurement:
-        type: string
-      fields:
-        type: array
-        items:
-          type: object
-          additionalProperties:
-            type: string
+    - value
   PredictionBody:
     title: PredictionBody
     type: object
     properties:
       target_type:
-        description: The type of the vm (vm or mci).
+        description: The type of the target (vm or mci).
         example: vm
         type: string
       measurement:
-        $ref: '#/definitions/PredictionMetricType'
+        type: object
+        allOf:
+        - $ref: '#/definitions/PredictionMetricType2'
+        - description: The type of metric being monitored for predictions(cpu, mem, disk, system)
       prediction_range:
         description: Data prediction range as of now (1h~2,160h)
         example: 24h
@@ -3105,9 +3488,25 @@ definitions:
     - target_id
     - measurement
     - values
+  PredictionMeasurement:
+    title: PredictionMeasurement
+    type: object
+    properties:
+      plugin_seq:
+        type: integer
+        format: int32
+      measurement:
+        type: string
+      fields:
+        type: array
+        items:
+          type: string
+    required:
+    - plugin_seq
+    - measurement
+    - fields
   PredictionMetricType:
     title: PredictionMetricType
-    description: An enumeration.
     type: string
     enum:
     - cpu
@@ -3134,20 +3533,6 @@ definitions:
     - target_types
     - measurements
     - prediction_ranges
-  PredictionMeasurement:
-    title: PredictionMeasurement
-    type: object
-    properties:
-      plugin_seq:
-        type: string
-      measurement:
-        type: string
-      fields:
-        type: array
-        items:
-          type: object
-          additionalProperties:
-            type: string
   PredictionResult:
     title: PredictionResult
     type: object
@@ -3170,6 +3555,39 @@ definitions:
     - measurement
     - target_type
     - values
+  ProviderType:
+    title: ProviderType
+    type: string
+    enum:
+    - openai
+    - ollama
+    - google
+    - anthropic
+  QueryMetadata:
+    title: QueryMetadata
+    description: Query execution metadata
+    type: object
+    properties:
+      queries_executed:
+        description: List of executed queries
+        type: array
+        items:
+          type: string
+      total_execution_time:
+        description: Total execution time (seconds)
+        type: number
+        default: 0
+        format: double
+      tool_calls_count:
+        description: Number of tool calls
+        type: integer
+        default: 0
+        format: int32
+      databases_accessed:
+        description: List of accessed databases
+        type: array
+        items:
+          type: string
   ResBodyAnomalyDetectionHistoryResponse:
     title: ResBodyAnomalyDetectionHistoryResponse
     type: object
@@ -3182,6 +3600,22 @@ definitions:
         default: '200'
       rs_msg:
         description: Response message
+        type: string
+        default: Success
+    required:
+    - data
+  ResBodyAnomalyDetectionMeasurement:
+    title: ResBodyAnomalyDetectionMeasurement
+    type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/AnomalyDetectionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
         type: string
         default: Success
     required:
@@ -3216,20 +3650,6 @@ definitions:
         default: Success
     required:
     - data
-  ResBodyAnomalyDetectionMeasurement:
-    title: ResBodyAnomalyDetectionMeasurement
-    type: object
-    properties:
-      data:
-        type: array
-        items:
-          $ref: '#/definitions/AnomalyDetectionMeasurement'
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
   ResBodyAnomalyDetectionSpecificMeasurement:
     title: ResBodyAnomalyDetectionSpecificMeasurement
     type: object
@@ -3242,26 +3662,90 @@ definitions:
       rs_msg:
         type: string
         default: Success
-  ResBodyPredictionHistory:
-    title: ResBodyPredictionHistory
+    required:
+    - data
+  ResBodyLLMAPIKey:
+    title: ResBodyLLMAPIKey
     type: object
     properties:
-      data:
-        $ref: '#/definitions/PredictionHistory'
       rs_code:
         type: string
         default: '200'
       rs_msg:
         type: string
         default: Success
+      data:
+        $ref: '#/definitions/LLMAPIKey'
     required:
     - data
-  ResBodyPredictionOptions:
-    title: ResBodyPredictionOptions
+  ResBodyLLMAPIKeys:
+    title: ResBodyLLMAPIKeys
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/LLMAPIKey'
+    required:
+    - data
+  ResBodyLLMChatSession:
+    title: ResBodyLLMChatSession
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        $ref: '#/definitions/LLMChatSession'
+    required:
+    - data
+  ResBodyLLMChatSessions:
+    title: ResBodyLLMChatSessions
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/LLMChatSession'
+    required:
+    - data
+  ResBodyLLMModel:
+    title: ResBodyLLMModel
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/LLMModel'
+    required:
+    - data
+  ResBodyPredictionHistory:
+    title: ResBodyPredictionHistory
     type: object
     properties:
       data:
-        $ref: '#/definitions/PredictionOptions'
+        $ref: '#/definitions/PredictionHistory'
       rs_code:
         type: string
         default: '200'
@@ -3284,18 +3768,22 @@ definitions:
       rs_msg:
         type: string
         default: Success
-  ResBodyPredictionSpecificMeasurement:
-    title: ResBodyPredictionSpecificMeasurement
+    required:
+    - data
+  ResBodyPredictionOptions:
+    title: ResBodyPredictionOptions
     type: object
     properties:
       data:
-        $ref: '#/definitions/PredictionMeasurement'
+        $ref: '#/definitions/PredictionOptions'
       rs_code:
         type: string
         default: '200'
       rs_msg:
         type: string
         default: Success
+    required:
+    - data
   ResBodyPredictionResult:
     title: ResBodyPredictionResult
     type: object
@@ -3310,107 +3798,22 @@ definitions:
         default: Success
     required:
     - data
-  LogAnalysisModel:
-    title: LogAnalysisModel
+  ResBodyPredictionSpecificMeasurement:
+    title: ResBodyPredictionSpecificMeasurement
     type: object
     properties:
-      provider:
-        $ref: '#/definitions/Provider'
-      model_name:
-        type: array
-        items:
-          type: string
+      data:
+        $ref: '#/definitions/PredictionMeasurement'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
     required:
-      - provider
-      - model_name
-  LogAnalysisSession:
-    title: LogAnalysisSession
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int32
-      user_id:
-        type: string
-      session_id:
-        type: string
-      provider:
-        type: string
-      model_name:
-        type: string
-      regdate:
-        type: string
-        format: date-time
-    required:
-      - seq
-      - user_id
-      - session_id
-      - provider
-      - model_name
-      - regdate
-  Message:
-    title: Message
-    type: object
-    properties:
-      message_type:
-        type: string
-      message:
-        type: string
-    required:
-      - message_type
-      - message
-  MetricType:
-    title: MetricType
-    type: string
-    enum:
-      - cpu
-      - mem
-  OpenAIAPIKey:
-    title: OpenAIAPIKey
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int32
-      api_key:
-        type: string
-    required:
-      - seq
-      - api_key
-  PostAPIKeyBody:
-    title: PostAPIKeyBody
-    type: object
-    properties:
-      api_key:
-        description: OpenAI API key
-        type: string
-        minLength: 20
-    required:
-      - api_key
-  PostQueryBody:
-    title: PostQueryBody
-    type: object
-    properties:
-      session_id:
-        type: string
-      message:
-        type: string
-    required:
-      - session_id
-      - message
-  PostSessionBody:
-    title: PostSessionBody
-    type: object
-    properties:
-      provider:
-        type: string
-      model_name:
-        type: string
-    required:
-      - provider
-      - model_name
-  ResBodyLogAnalysisModel:
-    title: ResBodyLogAnalysisModel
+    - data
+  ResBodyQuery:
+    title: ResBodyQuery
     type: object
     properties:
       rs_code:
@@ -3420,55 +3823,9 @@ definitions:
         type: string
         default: Success
       data:
-        type: array
-        items:
-          $ref: '#/definitions/LogAnalysisModel'
+        $ref: '#/definitions/Message'
     required:
-      - data
-  ResBodyLogAnalysisSession:
-    title: ResBodyLogAnalysisSession
-    type: object
-    properties:
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-      data:
-        $ref: '#/definitions/LogAnalysisSession'
-    required:
-      - data
-  ResBodyLogAnalysisSessions:
-    title: ResBodyLogAnalysisSessions
-    type: object
-    properties:
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-      data:
-        type: array
-        items:
-          $ref: '#/definitions/LogAnalysisSession'
-    required:
-      - data
-  ResBodyOpenAIAPIKey:
-    title: ResBodyOpenAIAPIKey
-    type: object
-    properties:
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-      data:
-        $ref: '#/definitions/OpenAIAPIKey'
-    required:
-      - data
+    - data
   ResBodySessionHistory:
     title: ResBodySessionHistory
     type: object
@@ -3481,6 +3838,18 @@ definitions:
         default: Success
       data:
         $ref: '#/definitions/SessionHistory'
+    required:
+    - data
+  ResBodyVoid:
+    title: ResBodyVoid
+    type: object
+    properties:
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
   SessionHistory:
     title: SessionHistory
     type: object
@@ -3511,78 +3880,88 @@ definitions:
     - provider
     - model_name
     - regdate
-  ResBodyQuery:
-    title: ResBodyQuery
-    type: object
-    properties:
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-      data:
-        $ref: '#/definitions/Message'
-  Provider:
-    title: Provider
-    type: string
-    enum:
-    - ollama
-    - openai
   TargetType:
     title: TargetType
-    description: An enumeration.
     type: string
     enum:
     - vm
     - mci
-  ApiO11yTriggerPolicyTargetRequest:
-    title: ApiO11yTriggerPolicyTargetRequest
+  ValidationError:
+    title: ValidationError
     type: object
     properties:
-      ns_id:
+      loc:
+        type: array
+        items: {}
+      msg:
         type: string
-      target_id:
+      type:
         type: string
-  TriggerMeasurement:
-    title: TriggerMeasurement
-    description: Trigger vm metric
+    required:
+    - loc
+    - msg
+    - type
+  APIProviderType1:
+    title: APIProviderType1
+    description: The LLM provider to use
+    type: string
+    enum:
+    - openai
+    - google
+    - anthropic
+  ExecutionInterval1:
+    title: ExecutionInterval1
+    description: The interval at which anomaly detection runs (5m, 10m, 30m)
+    type: string
+    enum:
+    - 5m
+    - 10m
+    - 30m
+  MetricType1:
+    title: MetricType1
+    description: The type of metric to retrieve.
     type: string
     enum:
     - cpu
-    - disk
     - mem
-  Status:
-    title: Status
-    description: Trigger Policy enablement status
+  MetricType2:
+    title: MetricType2
+    description: The type of metric being monitored for anomalies (cpu or mem)
     type: string
     enum:
-    - DISABLED
-    - ENABLED
-tags:
-- name: '[System] environment'
-  description: ''
-- name: '[Target] Monitoring vm management'
-  description: ''
-- name: '[Monitoring storage] Monitoring vm storage management'
-  description: ''
-- name: '[Monitoring item] Monitoring vm item management'
-  description: ''
-- name: '[Mining InfluxDB] Monitoring metric downsampling'
-  description: ''
-- name: '[Monitoring log] Monitoring log'
-  description: ''
-- name: '[Monitoring metric] Monitoring metric'
-  description: ''
-- name: '[Monitoring CSP] Monitoring vm from the CSP'
-  description: ''
-- name: '[Metric Event] monitoring measurement trigger'
-  description: ''
-- name: '[Metric Event] monitoring trigger event handler'
-  description: ''
-- name: '[Insight] Anomaly Detection'
-  description: ''
-- name: '[Insight] Prediction'
-  description: ''
-- name: '[Health] Check API Health'
-  description: ''
+    - cpu
+    - mem
+  PredictionMetricType1:
+    title: PredictionMetricType1
+    description: The type of metric to retrieve.
+    type: string
+    enum:
+    - cpu
+    - mem
+    - disk
+    - system
+  PredictionMetricType2:
+    title: PredictionMetricType2
+    description: The type of metric being monitored for predictions(cpu, mem, disk, system)
+    type: string
+    enum:
+    - cpu
+    - mem
+    - disk
+    - system
+  ProviderType2:
+    title: ProviderType2
+    description: The LLM provider to use
+    type: string
+    enum:
+    - openai
+    - ollama
+    - google
+    - anthropic
+  TargetType2:
+    title: TargetType2
+    description: The type of the target (vm or mci).
+    type: string
+    enum:
+    - vm
+    - mci
