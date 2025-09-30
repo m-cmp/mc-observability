@@ -17,7 +17,7 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "java-module/grafana"
+      - "java-module/grafana/**"
       - "java-module/Dockerfile.grafana"
   workflow_dispatch:
 

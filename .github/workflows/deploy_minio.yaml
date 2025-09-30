@@ -17,7 +17,7 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "java-module/minio"
+      - "java-module/minio/**"
       - "java-module/Dockerfile.minio"
 
   workflow_dispatch:
