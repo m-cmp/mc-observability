@@ -18,7 +18,7 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "python/mcp-mariadb"
+      - "python/mcp-mariadb/**"
   workflow_dispatch:
 
 env:

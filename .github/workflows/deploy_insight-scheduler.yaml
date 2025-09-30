@@ -18,7 +18,7 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "python/scheduler"
+      - "python/scheduler/**"
   workflow_dispatch:
 
 env:

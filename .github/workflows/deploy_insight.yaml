@@ -18,7 +18,11 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "python/insight"
+      - "python/insight/**"
+    paths-ignore:
+      - "python/insight/**.md"
+      - "python/insight/.env.example"
+      - "python/insight/.gitignore"
   workflow_dispatch:
 
 env:
