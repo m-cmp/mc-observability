@@ -3,7 +3,9 @@ FROM grafana/grafana:11.5.1-ubuntu
 USER root
 
 RUN sed -i 's@archive.ubuntu.com@mirror.kakao.com@g' /etc/apt/sources.list
-RUN apt-get update && apt-get install -y nginx && apt-get clean
+RUN apt-get update && apt-get install -y nginx \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
+    && apt-get clean
 
 COPY /grafana/nginx.conf /etc/nginx/nginx.conf
 RUN chown -R grafana /var/log/nginx

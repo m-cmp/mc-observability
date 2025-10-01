@@ -22,6 +22,8 @@ services:
         condition: service_healthy
       mc-observability-infra:
         condition: service_healthy
+      mc-observability-grafana:
+        condition: service_healthy
     environment:
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
@@ -137,7 +139,7 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.11.9
+    image: cloudbaristaorg/cb-tumblebug:0.11.13
     container_name: cb-tumblebug
     networks:
       - internal_network
@@ -274,7 +276,7 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider_azure_monitoring:feat-refactor
+    image: cloudbaristaorg/cb-spider_azure_monitoring:edge
     container_name: cb-spider
     networks:
       - internal_network
@@ -443,7 +445,7 @@ services:
       - internal_network
       - external_network
     ports:
-      - "8443:8443"
+      - "3000:3000"
     depends_on:
       mc-observability-grafana-init-volumes:
         condition: service_completed_successfully
