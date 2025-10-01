@@ -46,9 +46,9 @@ public class WebConfig implements WebMvcConfigurer {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("Host Management API")
-                                .description("호스트를 관리하는 API 문서입니다.")
-                                .version("1.0"))
+                                .title("mc-o11y-manager API Documentation")
+                                .description("API documentation for mc-o11y-manager")
+                                .version("0.4.1"))
                 .components(components)
                 .addSecurityItem(securityRequirement);
     }

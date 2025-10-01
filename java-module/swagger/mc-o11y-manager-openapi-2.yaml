@@ -2,9 +2,9 @@ swagger: "2.0"
 info:
   description: "Multi-Cloud Observability Manager API for managing alert policies,\
     \ notification channels, and alert history"
-  version: 1.0.0
-  title: mc-o11y-manager-openapi-2
-host: localhost:8080
+  version: 0.4.1
+  title: mc-o11y-manager API Documentation
+host: localhost:18080
 tags: []
 schemes:
 - http

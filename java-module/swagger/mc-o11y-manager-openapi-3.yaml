@@ -1,11 +1,11 @@
 openapi: 3.0.1
 info:
-  title: mc-o11y-manager-openapi-3
+  title: mc-o11y-manager API Documentation
   description: "Multi-Cloud Observability Manager API for managing alert policies,\
     \ notification channels, and alert history"
-  version: 1.0.0
+  version: 0.4.1
 servers:
-- url: localhost:8080
+- url: localhost:18080
 tags: []
 paths:
   /api/o11y/log/labels:
