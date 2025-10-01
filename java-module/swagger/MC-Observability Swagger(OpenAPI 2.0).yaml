@@ -1,9 +1,8 @@
 swagger: "2.0"
 info:
-  description: "Multi-Cloud Observability Manager API for managing alert policies,\
-    \ notification channels, and alert history"
+  description: API documentation for MC-Observability
   version: 0.4.1
-  title: mc-o11y-manager API Documentation
+  title: MC-Observability API Documentation
 host: localhost:18080
 tags: []
 schemes:
@@ -15,7 +14,7 @@ paths:
       - "[Manager] Monitoring Log"
       summary: LogLabelsQuery
       description: Retrieve the list of label keys provided by Loki.
-      operationId: get-labels
+      operationId: LogLabelsQuery
       produces:
       - application/json
       responses:
@@ -24,10 +23,10 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-01T00:54:27",
+                "timestamp" : "2025-10-01T05:47:33",
                 "status" : "SUCCESS",
                 "code" : "OK",
-                "message" : "Successfully retrieved label list.",
+                "message" : "레이블 목록 조회 성공하였습니다.",
                 "requestId" : "string",
                 "data" : {
                   "result" : {
@@ -43,7 +42,7 @@ paths:
       - "[Manager] Monitoring Log"
       summary: LogVolumeQuery
       description: Retrieve log volumes (metric time series data) for the given period.
-      operationId: get-log-volumes
+      operationId: GetLogVolumes
       produces:
       - application/json
       responses:
@@ -52,10 +51,10 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-01T00:54:27",
+                "timestamp" : "2025-10-01T01:18:33",
                 "status" : "SUCCESS",
                 "code" : "OK",
-                "message" : "Successfully retrieved log volume data.",
+                "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
                 "requestId" : "string",
                 "data" : {
                   "result" : {
@@ -80,7 +79,7 @@ paths:
       - "[Manager] Monitoring Log"
       summary: LogRangeQuery
       description: Retrieve log data for a specific query within a given time range.
-      operationId: query-range-logs
+      operationId: QueryRangeLogs
       produces:
       - application/json
       responses:
@@ -89,10 +88,10 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-01T00:54:27",
+                "timestamp" : "2025-10-01T01:18:33",
                 "status" : "SUCCESS",
                 "code" : "OK",
-                "message" : "Successfully retrieved log range data.",
+                "message" : "로그 기간 데이터 읽기 성공하였습니다.",
                 "requestId" : "string",
                 "data" : {
                   "result" : null
@@ -106,7 +105,7 @@ paths:
       - "[Manager] Monitoring Metric"
       summary: GetAllInfluxDB
       description: Retrieve all InfluxDB servers
-      operationId: get-all-influx-db
+      operationId: GetAllInfluxDB
       produces:
       - application/json
       responses:
@@ -136,7 +135,7 @@ paths:
       - "[Manager] Environment"
       summary: GetPlugins
       description: Retrieve plugin list
-      operationId: get-plugins
+      operationId: GetPlugins
       produces:
       - application/json
       responses:
@@ -163,7 +162,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: GetAllVMs
       description: Retrieve all targets
-      operationId: get-all-v-ms
+      operationId: GetAllVMs
       produces:
       - application/json
       responses:
@@ -195,7 +194,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerHistories
       description: Get paginated trigger histories
-      operationId: get-trigger-histories
+      operationId: GetPaginatedTriggerHistories
       produces:
       - application/json
       parameters:
@@ -250,7 +249,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
-      operationId: get-trigger-policies
+      operationId: GetTriggerPolicies
       produces:
       - application/json
       parameters:
@@ -304,7 +303,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: CreateTriggerPolicy
       description: Create trigger policy
-      operationId: create-trigger-policy
+      operationId: CreateTriggerPolicy
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -338,7 +337,7 @@ paths:
       - "[Manager] Monitoring Metric"
       summary: GetMeasurementFields
       description: Retrieve InfluxDB measurements
-      operationId: measurement
+      operationId: GetMeasurementFields
       produces:
       - application/json
       responses:
@@ -364,9 +363,9 @@ paths:
     get:
       tags:
       - "[Manager] Monitoring Metric"
-      summary: GetMeasurementTags
+      summary: GetMeasurementFields
       description: Retrieve InfluxDB tags
-      operationId: tag
+      operationId: GetMeasurementFields
       produces:
       - application/json
       responses:
@@ -391,7 +390,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlertRules
       description: Get all alert rules
-      operationId: get-all-alert-rules
+      operationId: GetAllAlertRules
       produces:
       - application/json
       responses:
@@ -407,7 +406,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlerts
       description: Get all alerts
-      operationId: get-all-alerts
+      operationId: GetAllAlerts
       produces:
       - application/json
       responses:
@@ -423,7 +422,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllContactPoints
       description: Get all contact points
-      operationId: get-all-contact-points
+      operationId: GetAllContactPoints
       produces:
       - application/json
       responses:
@@ -439,7 +438,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: CheckGrafanaHealthStatus
       description: Check grafana health status
-      operationId: check-grafana-health
+      operationId: CheckGrafanaHealthStatus
       produces:
       - application/json
       responses:
@@ -469,7 +468,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetPaginatedAlertTestHistories
       description: Get paginated alert test histories
-      operationId: get-alert-test-histories
+      operationId: GetPaginatedAlertTestHistories
       produces:
       - application/json
       parameters:
@@ -524,7 +523,7 @@ paths:
       - "[Trigger] Notification"
       summary: GetSupportedNotificationChannels
       description: Get supported notification channels
-      operationId: get-noti-channels
+      operationId: GetSupportedNotificationChannels
       produces:
       - application/json
       responses:
@@ -540,8 +539,8 @@ paths:
                   "provider" : "naver-cloud",
                   "baseUrl" : "https://sens.apigw.ntruss.com",
                   "isActive" : true,
-                  "createdAt" : "2025-10-01T09:54:29.354212046",
-                  "updatedAt" : "2025-10-01T09:54:29.35422562"
+                  "createdAt" : "2025-10-01T14:47:35.417845978",
+                  "updatedAt" : "2025-10-01T14:47:35.417859595"
                 } ]
               }
           schema:
@@ -552,7 +551,7 @@ paths:
       - "[Trigger] Notification"
       summary: GetPaginatedNotificationHistories
       description: Get paginated notification histories
-      operationId: get-noti-histories
+      operationId: GetPaginatedNotificationHistories
       produces:
       - application/json
       parameters:
@@ -607,7 +606,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: DeleteTriggerPolicy
       description: Delete trigger policy
-      operationId: delete-trigger-policy
+      operationId: DeleteTriggerPolicy
       parameters:
       - name: id
         in: path
@@ -624,7 +623,7 @@ paths:
       - "[Manager] Monitoring Log"
       summary: LabelValueQuery
       description: Retrieve the list of values for a specific label key.
-      operationId: get-label-values
+      operationId: LabelValueQuery
       produces:
       - application/json
       parameters:
@@ -639,10 +638,10 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-01T00:54:27",
+                "timestamp" : "2025-10-01T05:47:33",
                 "status" : "SUCCESS",
                 "code" : "OK",
-                "message" : "Successfully retrieved label values.",
+                "message" : "레이블 값 목록 조회 성공하였습니다.",
                 "requestId" : "string",
                 "data" : {
                   "result" : {
@@ -658,7 +657,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: GetVMByNsMci
       description: Retrieve target list by NS/MCI
-      operationId: get-vm-by-ns-mci
+      operationId: GetVMByNsMci
       produces:
       - application/json
       parameters:
@@ -701,7 +700,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: TestAlertReceiverConnection
       description: Test alert receiver connection
-      operationId: test-alert-receiver
+      operationId: TestAlertReceiverConnection
       responses:
         "200":
           description: ""
@@ -712,7 +711,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: SearchAlertsByTitle
       description: Search alerts by title
-      operationId: get-alert-by-title
+      operationId: SearchAlertsByTitle
       produces:
       - application/json
       parameters:
@@ -734,7 +733,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerHistoryComment
       description: Update trigger history comment
-      operationId: update-trigger-history-comment
+      operationId: UpdateTriggerHistoryComment
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -763,7 +762,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerPolicyNotificationChannels
       description: Update trigger policy notification channels
-      operationId: update-trigger-policy-noti-channel
+      operationId: UpdateTriggerPolicyNotificationChannels
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -802,7 +801,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: AddTriggerVM
       description: Add trigger vm
-      operationId: add-trigger-vm
+      operationId: AddTriggerVM
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -832,7 +831,7 @@ paths:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: RemoveTriggerVM
       description: Remove trigger vm
-      operationId: remove-trigger-vm
+      operationId: RemoveTriggerVM
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -863,7 +862,7 @@ paths:
       - "[Manager] Monitoring Metric"
       summary: QueryMetrics
       description: Retrieve InfluxDB metrics
-      operationId: query
+      operationId: QueryMetrics
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -925,7 +924,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: GetVM
       description: Retrieve single target
-      operationId: get-vm
+      operationId: GetVM
       produces:
       - application/json
       parameters:
@@ -972,7 +971,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: PostVM
       description: Create target
-      operationId: post-vm
+      operationId: PostVM
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1032,7 +1031,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: PutVM
       description: Update target
-      operationId: put-vm
+      operationId: PutVM
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1092,7 +1091,7 @@ paths:
       - "[Manager] Monitoring VM Management"
       summary: DeleteVM
       description: Delete target
-      operationId: delete-vm
+      operationId: DeleteVM
       produces:
       - application/json
       parameters:
@@ -1130,7 +1129,7 @@ paths:
       - "[Manager] Monitoring VM Item Management"
       summary: GetMonitoringItems
       description: Retrieve monitoring item list
-      operationId: get-items
+      operationId: GetMonitoringItems
       produces:
       - application/json
       parameters:
@@ -1178,7 +1177,7 @@ paths:
       - "[Manager] Monitoring VM Item Management"
       summary: AddMonitoringItem
       description: Add monitoring item
-      operationId: post-item
+      operationId: AddMonitoringItem
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1228,7 +1227,7 @@ paths:
       - "[Manager] Monitoring VM Item Management"
       summary: UpdateMonitoringItem
       description: Update monitoring item
-      operationId: put-item
+      operationId: UpdateMonitoringItem
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1279,7 +1278,7 @@ paths:
       - "[Manager] Monitoring VM Item Management"
       summary: DeleteMonitoringItem
       description: Delete monitoring item
-      operationId: delete-item
+      operationId: DeleteMonitoringItem
       produces:
       - application/json
       parameters:
@@ -1616,22 +1615,6 @@ definitions:
         "pluginSeq" : 0,
         "pluginConfig" : "string"
       }
-  ResBody<Void>:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: object
-        description: Response data
-        properties: {}
-      rs_code:
-        type: string
-        description: "Response code (e.g., 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (e.g., Success)"
   TriggerVMAddRequest:
     type: object
     properties:
@@ -1650,6 +1633,22 @@ definitions:
         "vmScope" : "mci",
         "vmId" : "test01"
       }
+  ResBody<Void>:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: object
+        description: Response data
+        properties: {}
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
   FieldDTO:
     type: object
     properties:
@@ -2020,6 +2019,65 @@ definitions:
       rs_msg:
         type: string
         description: "Response message (e.g., Success)"
+  MetricRequestDTO:
+    type: object
+    properties:
+      limit:
+        type: number
+        description: Result limit count
+      group_by:
+        type: array
+        description: "List of group by fields (e.g., [ns_id, mci_id])"
+        items: {}
+      range:
+        type: string
+        description: "Query range (e.g., 1h)"
+      conditions:
+        type: array
+        description: List of condition filters
+        items:
+          type: object
+          properties:
+            value:
+              type: string
+              description: "Condition value (e.g., cpu-total)"
+            key:
+              type: string
+              description: "Condition key (e.g., cpu)"
+      fields:
+        type: array
+        description: List of fields to query
+        items:
+          type: object
+          properties:
+            field:
+              type: string
+              description: "Field name (e.g., usage_idle)"
+            function:
+              type: string
+              description: "Aggregation function (e.g., mean, max, etc.)"
+      group_time:
+        type: string
+        description: Grouping unit
+      measurement:
+        type: string
+        description: "Measurement name (e.g., cpu)"
+    example: |-
+      {
+        "measurement" : "cpu",
+        "range" : "1h",
+        "group_time" : "12m",
+        "group_by" : [ "ns_id" ],
+        "limit" : 0,
+        "fields" : [ {
+          "function" : "mean",
+          "field" : "usage_idle"
+        } ],
+        "conditions" : [ {
+          "key" : "cpu",
+          "value" : "cpu-total"
+        } ]
+      }
   api_o11y_log_query_range-1819803082:
     type: object
     properties:
@@ -2081,65 +2139,6 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  MetricRequestDTO:
-    type: object
-    properties:
-      limit:
-        type: number
-        description: Result limit count
-      group_by:
-        type: array
-        description: "List of group by fields (e.g., [ns_id, mci_id])"
-        items: {}
-      range:
-        type: string
-        description: "Query range (e.g., 1h)"
-      conditions:
-        type: array
-        description: List of condition filters
-        items:
-          type: object
-          properties:
-            value:
-              type: string
-              description: "Condition value (e.g., cpu-total)"
-            key:
-              type: string
-              description: "Condition key (e.g., cpu)"
-      fields:
-        type: array
-        description: List of fields to query
-        items:
-          type: object
-          properties:
-            field:
-              type: string
-              description: "Field name (e.g., usage_idle)"
-            function:
-              type: string
-              description: "Aggregation function (e.g., mean, max, etc.)"
-      group_time:
-        type: string
-        description: Grouping unit
-      measurement:
-        type: string
-        description: "Measurement name (e.g., cpu)"
-    example: |-
-      {
-        "measurement" : "cpu",
-        "range" : "1h",
-        "group_time" : "12m",
-        "group_by" : [ "ns_id" ],
-        "limit" : 0,
-        "fields" : [ {
-          "function" : "mean",
-          "field" : "usage_idle"
-        } ],
-        "conditions" : [ {
-          "key" : "cpu",
-          "value" : "cpu-total"
-        } ]
-      }
   ResBody<List<PluginDefDTO>>:
     type: object
     properties:
