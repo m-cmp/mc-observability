@@ -180,52 +180,6 @@ RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
 DATA_SOURCE_INFLUXDB_UID=$(echo $RESPONSE | sed -n 's/.*"uid":"\([^"]*\)".*/\1/p')
 echo DATA_SOURCE_INFLUXDB_UID=$DATA_SOURCE_INFLUXDB_UID >> ~/env.grafana
 
-echo "[*] Checking existing rules..."
-RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
-    "http://127.0.0.1:3000/api/ruler/grafana/api/v1/rules?subtype=cortex" \
-    -H 'Accept: application/json, text/plain, */*' \
-    -H 'Content-Type: application/json' \
-    -H 'Origin: http://127.0.0.1:3000')
-
-LOG_RULE_EXISTS=$(echo $RESPONSE | grep -q '"log"' && echo "true" || echo "false")
-METRIC_RULE_EXISTS=$(echo $RESPONSE | grep -q '"metric"' && echo "true" || echo "false")
-
-if [ "$LOG_RULE_EXISTS" = "true" ]; then
-    echo "[*] Log rule already exists, skipping initialization."
-else
-    echo "[*] Initializing log rule..."
-    HTTP_STATUS=$(curl -s -w "\n%{http_code}" -b ~/grafana-cookie -XPOST \
-        "http://127.0.0.1:3000/api/ruler/grafana/api/v1/rules/$FOLDER_UID?subtype=cortex" \
-        -H 'Accept: */*' \
-        -H 'Content-Type: application/json' \
-        -H 'Origin: http://127.0.0.1:3000' \
-        -d '{"name":"log","rules":[{"grafana_alert":{"title":"log-rule-init","condition":"C","data":[{"refId":"A","datasourceUid":"'$DATA_SOURCE_LOKI_UID'","queryType":"range","relativeTimeRange":{"from":600,"to":0},"model":{"refId":"A","instant":true,"expr":"{job=\"non-existent-job\", uuid=\"definitely-not-real\"} |= \"never-happens-keyword\"","queryType":"range","editorMode":"code","direction":"backward"}},{"datasourceUid":"__expr__","model":{"refId":"B","datasource":{"type":"__expr__","uid":"__expr__","name":"Expression"},"type":"reduce","reducer":"last","conditions":[{"type":"query","reducer":{"params":[],"type":"avg"},"operator":{"type":"and"},"query":{"params":[]},"evaluator":{"params":[0,0],"type":"gt"}}],"expression":"A"},"refId":"B","queryType":"expression"},{"refId":"C","datasourceUid":"__expr__","queryType":"","model":{"refId":"C","type":"threshold","datasource":{"uid":"__expr__","type":"__expr__"},"conditions":[{"type":"query","evaluator":{"params":[0],"type":"gt"},"operator":{"type":"and"},"query":{"params":["C"]},"reducer":{"params":[],"type":"last"}}],"expression":"B"}}],"is_paused":true,"no_data_state":"NoData","exec_err_state":"Error","notification_settings":{"receiver":"o11y"}},"annotations":{},"labels":{},"for":"0s"}],"interval":"10m"}' | tail -n1)
-    if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
-        echo "[*] Successfully initialized log rule!"
-    else
-        echo "[!] Failed to initialize log rule."
-        exit 1
-    fi
-fi
-
-if [ "$METRIC_RULE_EXISTS" = "true" ]; then
-    echo "[*] Metric rule already exists, skipping initialization."
-else
-    echo "[*] Initializing metric rule..."
-    HTTP_STATUS=$(curl -s -w "\n%{http_code}" -b ~/grafana-cookie -XPOST \
-        "http://127.0.0.1:3000/api/ruler/grafana/api/v1/rules/$FOLDER_UID?subtype=cortex" \
-        -H 'Accept: */*' \
-        -H 'Content-Type: application/json' \
-        -H 'Origin: http://127.0.0.1:3000' \
-        -d '{"name":"metric","rules":[{"grafana_alert":{"title":"metric-rule-init","condition":"C","data":[{"refId":"A","relativeTimeRange":{"from":600,"to":0},"queryType":"","datasourceUid":"'$DATA_SOURCE_INFLUXDB_UID'","model":{"refId":"A","hide":false,"datasource":{"uid":"'$DATA_SOURCE_INFLUXDB_UID'","type":"influxdb"},"instant":true,"query":"SELECT 100-mean(\"usage_idle\") FROM \"cpu\" GROUP BY \"host\"","rawQuery":true,"resultFormat":"time_series"}},{"refId":"C","datasourceUid":"__expr__","queryType":"","model":{"refId":"C","type":"threshold","datasource":{"uid":"__expr__","type":"__expr__"},"conditions":[{"type":"query","evaluator":{"params":[0],"type":"gt"},"operator":{"type":"and"},"query":{"params":["C"]},"reducer":{"params":[],"type":"last"}}],"expression":"A"}}],"is_paused":true,"no_data_state":"NoData","exec_err_state":"Error","notification_settings":{"receiver":"o11y"}},"annotations":{},"labels":{},"for":"0s"}],"interval":"1m"}' | tail -n1)
-    if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
-        echo "[*] Successfully initialized metric rule!"
-    else
-        echo "[!] Failed to initialize metric rule."
-        exit 1
-    fi
-fi
-
 echo "[*] Deleting cookie..."
 rm -f ~/grafana-cookie
 
