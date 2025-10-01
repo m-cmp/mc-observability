@@ -1,27 +1,24 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 USER root
 
 # MySQL Requirements
 RUN apt-get update && \
     apt-get install -y build-essential  default-libmysqlclient-dev pkg-config python3-dev
 
-# Python Requirements
-COPY requirements.txt .
-RUN pip3 install -r requirements.txt
-RUN pip3 install connexion
-RUN pip3 install "connexion[swagger-ui]"
-RUN pip3 cache purge
+WORKDIR /airflow
+COPY . /airflow
+RUN uv sync --locked
+
+FROM python:3.11-slim-bookworm
+COPY --from=builder /airflow /airflow
+ENV PATH="/airflow/.venv/bin:$PATH"
+
+RUN apt-get update && \
+    apt-get install -y libmariadb-dev curl
 
 RUN rm -rf /etc/localtime && \
     ln -s /usr/share/zoneinfo/Asia/Seoul /etc/localtime
-
-RUN apt-get purge -y \
-        python3-dev \
-        default-libmysqlclient-dev \
-        build-essential && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* && \
-    apt-get clean
 
 # Airflow Env Vars
 ENV AIRFLOW_HOME='/usr/local/airflow'
@@ -33,4 +30,4 @@ WORKDIR /usr/local/airflow
 COPY ./airflow-home /usr/local/airflow
 
 # Sleep forever
-CMD sleep infinity
+CMD ["sleep",  "infinity"]
