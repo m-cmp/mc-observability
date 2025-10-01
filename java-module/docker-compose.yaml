@@ -534,6 +534,17 @@ services:
     networks:
       - internal_network
       - external_network
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-influx:
+        condition: service_healthy
+    healthcheck: # for CB-Tumblebug
+      test: [ "CMD", "curl", "-f", "http://localhost:9001/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 
   mc-observability-insight-scheduler:
