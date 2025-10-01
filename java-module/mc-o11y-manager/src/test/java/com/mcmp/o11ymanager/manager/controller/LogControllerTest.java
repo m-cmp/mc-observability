@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class LogControllerTest {
 
-    private static final String TAG = "[Monitoring log] Monitoring log";
+    private static final String TAG = "[Manager] Monitoring Log";
 
     @Autowired private MockMvc mockMvc;
 
@@ -88,7 +88,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Range Query API")
+                                .summary("LogRangeQuery")
                                 .description(
                                         "Retrieve log data for a specific query within a given time range.")
                                 .responseFields(
@@ -161,7 +161,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Volume Query API")
+                                .summary("LogVolumeQuery")
                                 .description(
                                         "Retrieve log volumes (metric time series data) for the given period.")
                                 .responseFields(
@@ -203,7 +203,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Labels Query API")
+                                .summary("LogLabelsQuery")
                                 .description("Retrieve the list of label keys provided by Loki.")
                                 .responseFields(
                                         fieldString("timestamp", "Response timestamp"),
@@ -236,7 +236,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Label Value Query API")
+                                .summary("LabelValueQuery")
                                 .description(
                                         "Retrieve the list of values for a specific label key.")
                                 .pathParameters(paramString("label", "Label key (e.g., app, env)"))
