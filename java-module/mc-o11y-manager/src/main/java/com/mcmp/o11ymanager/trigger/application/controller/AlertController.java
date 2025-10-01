@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * alert rules, contact points, and testing functionalities.
  */
 @RestController
-@RequestMapping("/api/v1/alert")
+@RequestMapping("/api/o11y/trigger/alert")
 @RequiredArgsConstructor
 public class AlertController {
 

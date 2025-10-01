@@ -44,7 +44,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class TriggerControllerTest {
 
-    private static final String TAG = "[Metric Event] monitoring measurement trigger";
+    private static final String TAG = "[Trigger] Monitoring Measurement Trigger";
 
     @Autowired private MockMvc mockMvc;
 
@@ -83,13 +83,13 @@ class TriggerControllerTest {
                                                 "thresholdCondition", "threshold condition object"),
                                         fieldNumber(
                                                 "thresholdCondition.info",
-                                                "threshold value for info level"),
+                                                "threshold value for info level(1~100)"),
                                         fieldNumber(
                                                 "thresholdCondition.warning",
-                                                "threshold value for warning level"),
+                                                "threshold value for warning level(1~100)"),
                                         fieldNumber(
                                                 "thresholdCondition.critical",
-                                                "threshold value for critical level"),
+                                                "threshold value for critical level(1~100)"),
                                         fieldEnum(
                                                 "resourceType",
                                                 "resource type",
@@ -100,9 +100,10 @@ class TriggerControllerTest {
                                                 AggregationType.class),
                                         fieldString(
                                                 "holdDuration",
-                                                "minimum duration for firing alert"),
+                                                "minimum duration for firing alert(0s~1h)"),
                                         fieldString(
-                                                "repeatInterval", "repeat interval of evaluation"))
+                                                "repeatInterval",
+                                                "repeat interval of evaluation(1m~24h)"))
                                 .build());
 
         verify(triggerService).createTriggerPolicy(any(TriggerPolicyCreateDto.class));
@@ -163,9 +164,12 @@ class TriggerControllerTest {
         List<TriggerPolicyNotiChannelUpdateRequest> request =
                 List.of(
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "sms_ncp", List.of("+82-10-1234-5678", "+82-10-9876-5432")),
+                                "kakao_naver-cloud", List.of("+82-10-1234-5678")),
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "email_smtp", List.of("admin@example.com", "dev@example.com")));
+                                "sms_naver-cloud", List.of("+82-10-1234-5678")),
+                        new TriggerPolicyNotiChannelUpdateRequest(
+                                "email_smtp.gmail.com", List.of("admin@example.com")),
+                        new TriggerPolicyNotiChannelUpdateRequest("slack", List.of("C09GRESEF")));
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.put(
@@ -194,7 +198,7 @@ class TriggerControllerTest {
 
     @Test
     void addTriggerVM() throws Exception {
-        TriggerVMAddRequest request = new TriggerVMAddRequest("namespace-1", "vm", "vm-1");
+        TriggerVMAddRequest request = new TriggerVMAddRequest("first-ns", "mci", "test01");
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy/{id}/vm", 1)

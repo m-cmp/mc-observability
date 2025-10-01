@@ -45,7 +45,7 @@ services:
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
-      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_TRACES_EXPORTER=none
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
       #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
@@ -61,6 +61,21 @@ services:
       #      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
       - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
     #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
+      # --- RabbitMQ connection ---
+      - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mc-agent
+      - SPRING_RABBITMQ_PASSWORD=mc-agent
+      - SPRING_RABBITMQ_VIRTUAL_HOST=/test
+
+      # --- Custom alert config ---
+      - SPRING_RABBITMQ_ALERT_QUEUENAME=alert.queue
+      - SPRING_RABBITMQ_ALERT_EXCHANGENAME=alert.exchange
+      - SPRING_RABBITMQ_ALERT_ROUTINGKEY=alert
+      - SPRING_RABBITMQ_ALERT_DEADLETTERQUEUENAME=alert.dlq
+      - SPRING_RABBITMQ_ALERT_DEADLETTEREXCHANGENAME=alert.dlx
+      - SPRING_RABBITMQ_ALERT_DEADLETTERROUTINGKEY=alert.dlq
+      - SPRING_RABBITMQ_ALERT_MQTTEXCHANGENAME=mqtt.topic
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog

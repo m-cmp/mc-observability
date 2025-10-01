@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 public class NotiControllerTest {
 
-    private static final String TAG = "[Trigger] notification";
+    private static final String TAG = "[Trigger] Notification";
 
     @Autowired private MockMvc mockMvc;
 
@@ -56,7 +56,7 @@ public class NotiControllerTest {
                                         .updatedAt(LocalDateTime.now())
                                         .build()));
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/noti/channel"))
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/noti/channel"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -96,7 +96,7 @@ public class NotiControllerTest {
         when(notiService.getNotiHistories(any(Pageable.class))).thenReturn(CustomPageDto.empty());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/o11y/noti/history")
+                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/noti/history")
                                 .param("page", "1")
                                 .param("size", "20")
                                 .param("sortBy", "createdAt")
@@ -111,7 +111,8 @@ public class NotiControllerTest {
                                 .queryParameters(
                                         paramInteger("page", "page number (1 .. N)").optional(),
                                         paramInteger("size", "size of page (1 .. N)").optional(),
-                                        paramString("sortBy", "sort by properties").optional(),
+                                        paramString("sortBy", "sort by properties(id..)")
+                                                .optional(),
                                         paramString("sortDirection", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(

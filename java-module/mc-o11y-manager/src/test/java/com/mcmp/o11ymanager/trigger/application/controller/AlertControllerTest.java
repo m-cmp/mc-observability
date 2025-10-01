@@ -37,7 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 class AlertControllerTest {
 
-    private static final String TAG = "[Metric Event] monitoring trigger event handler";
+    private static final String TAG = "[Trigger - Only Developer] Monitoring Trigger Event Handler";
 
     @Autowired private MockMvc mockMvc;
 
@@ -56,7 +56,7 @@ class AlertControllerTest {
 
         when(alertManager.checkGrafanaHealth()).thenReturn(healthResponse);
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/v1/alert/health"))
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/health"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -83,7 +83,7 @@ class AlertControllerTest {
     void getAllAlerts() throws Exception {
         when(alertManager.getAllAlerts()).thenReturn(List.of());
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/v1/alert/alerts"))
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/alerts"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -102,7 +102,8 @@ class AlertControllerTest {
         when(alertManager.getAlertBy(any(String.class))).thenReturn(List.of());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/v1/alert/alerts/search")
+                        RestDocumentationRequestBuilders.get(
+                                        "/api/o11y/trigger/alert/alerts/search")
                                 .param("title", "CPU Alert"))
                 .andExpect(status().isOk())
                 .andDo(
@@ -122,7 +123,7 @@ class AlertControllerTest {
     void getAllAlertRules() throws Exception {
         when(alertManager.getAllAlertRules()).thenReturn(List.of());
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/v1/alert/alert-rules"))
+        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/alert-rules"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -140,7 +141,9 @@ class AlertControllerTest {
     void getAllContactPoints() throws Exception {
         when(alertManager.getAllContactPoints()).thenReturn(List.of());
 
-        mockMvc.perform(RestDocumentationRequestBuilders.get("/api/v1/alert/contact-points"))
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.get(
+                                "/api/o11y/trigger/alert/contact-points"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -156,7 +159,9 @@ class AlertControllerTest {
 
     @Test
     void testAlertReceiver() throws Exception {
-        mockMvc.perform(RestDocumentationRequestBuilders.post("/api/v1/alert/alert-receiver/test"))
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.post(
+                                "/api/o11y/trigger/alert/alert-receiver/test"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -174,7 +179,7 @@ class AlertControllerTest {
                 .thenReturn(CustomPageDto.empty());
 
         mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/v1/alert/test-history")
+                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/alert/test-history")
                                 .param("page", "1")
                                 .param("size", "10")
                                 .param("sortBy", "id")
@@ -189,7 +194,8 @@ class AlertControllerTest {
                                 .queryParameters(
                                         paramInteger("page", "page number (1 .. N)").optional(),
                                         paramInteger("size", "size of page (1 .. N)").optional(),
-                                        paramString("sortBy", "sort by properties").optional(),
+                                        paramString("sortBy", "sort by properties (id..)")
+                                                .optional(),
                                         paramString("direction", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(

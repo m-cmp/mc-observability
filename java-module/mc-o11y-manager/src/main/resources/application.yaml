@@ -28,8 +28,23 @@ spring:
   banner:
     location: classpath:banner.txt
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:mc-observability-rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:mc-agent}
+    password: ${RABBITMQ_PASSWORD:mc-agent}
+    virtual-host: ${RABBITMQ_VHOST:/test}
+    alert:
+      queueName: ${RABBIT_ALERT_QUEUE:alert.queue}
+      exchangeName: ${RABBIT_ALERT_EXCHANGE:alert.exchange}
+      routingKey: ${RABBIT_ALERT_ROUTING_KEY:alert}
+      deadLetterQueueName: ${RABBIT_DLQ:alert.dlq}
+      deadLetterExchangeName: ${RABBIT_DLX:alert.dlx}
+      deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY:alert.dlq}
+      mqttExchangeName: ${RABBIT_MQTT_EXCHANGE:mqtt.topic}
+
 springdoc:
-  packages-to-scan: com.mcmp.o11ymanager.controller
+  packages-to-scan: com.mcmp.o11ymanager
   paths-to-match: "/**"
   paths-to-exclude:
     - "/api/**/test/**"
@@ -178,17 +193,4 @@ notification:
     baseUrl: ${SLACK_BASEURL:https://slack.com}
     apiPath: ${SLACK_API_PATH:/api/chat.postMessage}
 
-rabbitmq:
-  host: ${RABBITMQ_HOST:mc-observability-rabbitmq}
-  port: ${RABBITMQ_PORT:5672}
-  username: ${RABBITMQ_USERNAME:mc-agent}
-  password: ${RABBITMQ_PASSWORD:mc-agent}
-  virtual-host: ${RABBITMQ_VHOST:/test}
-  alert:
-    queueName: ${RABBIT_ALERT_QUEUE:alert.queue}
-    exchangeName: ${RABBIT_ALERT_EXCHANGE:alert.exchange}
-    routingKey: ${RABBIT_ALERT_ROUTING_KEY:alert}
-    deadLetterQueueName: ${RABBIT_DLQ:alert.dlq}
-    deadLetterExchangeName: ${RABBIT_DLX:alert.dlx}
-    deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY:alert.dlq}
-    mqttExchangeName: ${RABBIT_MQTT_EXCHANGE:mqtt.topic}
+

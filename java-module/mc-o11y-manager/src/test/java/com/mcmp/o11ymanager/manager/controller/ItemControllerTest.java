@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 class ItemControllerTest {
 
-    private static final String TAG = "[Monitoring item] Monitoring vm item management";
+    private static final String TAG = "[Manager] Monitoring VM Item Management";
 
     @Autowired private MockMvc mockMvc;
     @MockBean private ItemFacadeService itemFacadeService;
@@ -43,14 +43,14 @@ class ItemControllerTest {
                 List.of(
                         MonitoringItemDTO.builder()
                                 .seq(0L)
-                                .nsId("string")
-                                .mciId("string")
-                                .vmId("string")
-                                .name("string")
+                                .nsId("ns-1")
+                                .mciId("mci-1")
+                                .vmId("vm-1")
+                                .name("mcmp-vm")
                                 .state("string")
-                                .pluginSeq(0L)
-                                .pluginName("string")
-                                .pluginType("string")
+                                .pluginSeq(1L)
+                                .pluginName("cpu")
+                                .pluginType("INPUT")
                                 .pluginConfig("string")
                                 .build());
         when(itemFacadeService.getTelegrafItems(any(), any(), any())).thenReturn(items);
@@ -68,24 +68,25 @@ class ItemControllerTest {
                                 .description("Retrieve monitoring item list")
                                 .summary("GetMonitoringItems")
                                 .pathParameters(
-                                        paramString("nsId", "NSID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1"),
+                                        paramString("mciId", "mciId (e.g., mci-1"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .responseSchema("MonitoringItemDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "Monitoring item list"),
-                                        fieldNumber("data[].seq", "Item sequence"),
-                                        fieldString("data[].nsId", "NSID"),
-                                        fieldString("data[].mciId", "MCI ID"),
-                                        fieldString("data[].vmId", "TARGET ID"),
-                                        fieldString("data[].name", "Item name"),
+                                        fieldNumber("data[].seq", "Item Sequence (e.g., 1)"),
+                                        fieldString("data[].nsId", "nsId(e.g., ns-1"),
+                                        fieldString("data[].mciId", "mciId(e.g., mci-1"),
+                                        fieldString("data[].vmId", "vmId(e.g., vm-1"),
+                                        fieldString("data[].name", "Item name (e.g., cpu)"),
                                         fieldString("data[].state", "State"),
-                                        fieldNumber("data[].pluginSeq", "Plugin sequence"),
-                                        fieldString("data[].pluginName", "Plugin name"),
-                                        fieldString("data[].pluginType", "Plugin type"),
+                                        fieldNumber(
+                                                "data[].pluginSeq", "Plugin sequence (e.g., 1)"),
+                                        fieldString("data[].pluginName", "Plugin name (e.g., cpu)"),
+                                        fieldString(
+                                                "data[].pluginType", "Plugin type (e.g., INPUT)"),
                                         fieldString("data[].pluginConfig", "Plugin configuration"),
                                         fieldString("error_message", "Error message"))
                                 .build());
@@ -112,18 +113,17 @@ class ItemControllerTest {
                                 .description("Add monitoring item")
                                 .summary("AddMonitoringItem")
                                 .pathParameters(
-                                        paramString("nsId", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .requestSchema("MonitoringItemRequestDTO")
                                 .requestFields(
                                         fieldNumber("pluginSeq", "Plugin sequence"),
                                         fieldString("pluginConfig", "Plugin configuration"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldSubsection("data", "Response data").optional(),
                                         fieldString("error_message", "Error message"))
                                 .build());
@@ -151,18 +151,17 @@ class ItemControllerTest {
                                 .description("Update monitoring item")
                                 .summary("UpdateMonitoringItem")
                                 .pathParameters(
-                                        paramString("nsId", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .requestSchema("MonitoringItemUpdateDTO")
                                 .requestFields(
-                                        fieldNumber("seq", "Item sequence"),
+                                        fieldNumber("seq", "Item Sequence (e.g., 1)"),
                                         fieldString("pluginConfig", "Plugin configuration"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldSubsection("data", "Response data").optional(),
                                         fieldString("error_message", "Error message"))
                                 .build());
@@ -186,15 +185,14 @@ class ItemControllerTest {
                                 .description("Delete monitoring item")
                                 .summary("DeleteMonitoringItem")
                                 .pathParameters(
-                                        paramString("nsId", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"),
-                                        paramString("itemSeq", "ITEM SEQ"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"),
+                                        paramString("itemSeq", "Item Seq (e.g., 1)"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldSubsection("data", "Response data").optional(),
                                         fieldString("error_message", "Error message"))
                                 .build());

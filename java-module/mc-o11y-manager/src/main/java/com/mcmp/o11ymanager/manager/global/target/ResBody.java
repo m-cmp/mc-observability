@@ -19,7 +19,7 @@ public class ResBody<T> {
     private String rsCode = "0000";
 
     @JsonProperty("rs_msg")
-    private String rsMsg = "완료되었습니다.";
+    private String rsMsg = "success";
 
     private T data;
 

@@ -17,6 +17,7 @@ import org.springframework.util.MimeTypeUtils;
  */
 @Getter
 public class SlackNoti implements Noti {
+
     private static final NotificationType notiType = SLACK;
     private List<String> recipients;
     private RequestHeader header;
@@ -115,16 +116,18 @@ public class SlackNoti implements Noti {
         sb.append("```\n");
         sb.append(
                 String.format(
-                        "%-15s %-15s %-15s %s\n", "Namespace ID", "MCI ID", "VM ID", "Usage"));
-        sb.append("─".repeat(70)).append("\n");
+                        "%-15s %-15s %-15s %-15s %s\n",
+                        "Namespace ID", "MCI ID", "VM ID", "Metric", "Usage"));
+        sb.append("─".repeat(90)).append("\n");
 
         for (AlertDetail alert : alerts) {
             sb.append(
                     String.format(
-                            "%-15s %-15s %-15s %s%%\n",
+                            "%-15s %-15s %-15s %-15s %s%%\n",
                             truncateString(alert.getNamespaceId(), 14),
                             truncateString(alert.getMciId(), 14),
                             truncateString(alert.getVmId(), 14),
+                            truncateString(alert.getResourceType(), 14),
                             alert.getResourceUsage()));
         }
 
@@ -133,7 +136,9 @@ public class SlackNoti implements Noti {
     }
 
     private static String truncateString(String str, int maxLength) {
-        if (str == null) return "";
+        if (str == null) {
+            return "";
+        }
         return str.length() > maxLength ? str.substring(0, maxLength - 1) + "…" : str;
     }
 
@@ -148,6 +153,7 @@ public class SlackNoti implements Noti {
 
     @Getter
     public static class RequestHeader {
+
         private static final String contentType = MimeTypeUtils.APPLICATION_JSON.toString();
         private String url;
         private String authorization;
@@ -159,12 +165,14 @@ public class SlackNoti implements Noti {
 
     @Getter
     public static class RequestBody {
+
         private String channel;
         private List<Attachment> attachments;
     }
 
     @Getter
     public static class Attachment {
+
         private final String color = "#3AA3E3";
         private final String fallback = "(Fallback) Failed to send message.";
         private String pretext = "[M-CMP] ";
@@ -176,6 +184,7 @@ public class SlackNoti implements Noti {
 
     @Getter
     public static class Field {
+
         private final boolean isShort = false;
         private String title;
         private String value;

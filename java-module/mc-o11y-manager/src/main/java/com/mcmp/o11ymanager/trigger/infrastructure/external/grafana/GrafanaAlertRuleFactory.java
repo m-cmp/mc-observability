@@ -67,11 +67,13 @@ public class GrafanaAlertRuleFactory {
             String repeatInterval,
             String vmScope,
             String ruleGroup,
-            String datasourceUid) {
+            String datasourceUid,
+            String resourceType) {
         List<GrafanaAlertQuery> alertData =
                 createMetricAlertData(query, thresholdCondition, datasourceUid);
         metricLabels.put("vmScope", vmScope);
         metricLabels.put("ruleGroup", ruleGroup);
+        metricLabels.put("resourceType", resourceType);
 
         return GrafanaAlertRule.builder()
                 .uid(uid)

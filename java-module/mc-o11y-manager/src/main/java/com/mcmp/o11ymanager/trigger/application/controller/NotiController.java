@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * functionality for retrieving notification channels and notification delivery history.
  */
 @RestController
-@RequestMapping("/api/o11y/noti")
+@RequestMapping("/api/o11y/trigger/noti")
 public class NotiController {
 
     private final NotiService notiService;

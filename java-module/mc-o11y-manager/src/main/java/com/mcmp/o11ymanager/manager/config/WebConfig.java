@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -45,9 +46,9 @@ public class WebConfig implements WebMvcConfigurer {
         return new OpenAPI()
                 .info(
                         new Info()
-                                .title("Host Management API")
-                                .description("호스트를 관리하는 API 문서입니다.")
-                                .version("1.0"))
+                                .title("mc-o11y-manager API Documentation")
+                                .description("API documentation for mc-o11y-manager")
+                                .version("0.4.1"))
                 .components(components)
                 .addSecurityItem(securityRequirement);
     }
@@ -59,5 +60,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST")
                 .allowedHeaders("*")
                 .allowCredentials(true);
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/api/docs").setViewName("forward:/swagger-ui/index.html");
     }
 }

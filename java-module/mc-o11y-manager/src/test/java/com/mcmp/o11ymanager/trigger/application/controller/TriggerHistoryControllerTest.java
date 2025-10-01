@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class TriggerHistoryControllerTest {
 
-    private static final String TAG = "[Metric Event] monitoring measurement trigger";
+    private static final String TAG = "[Trigger] Monitoring Measurement Trigger";
 
     @Autowired private MockMvc mockMvc;
 

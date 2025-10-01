@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 응용 계층에서 사용하는 쿼리 범위 로그 응답 DTO */
 @Data
 @Builder
 @NoArgsConstructor

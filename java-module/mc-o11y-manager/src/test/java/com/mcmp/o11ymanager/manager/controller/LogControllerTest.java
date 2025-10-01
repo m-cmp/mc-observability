@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class LogControllerTest {
 
-    private static final String TAG = "[Monitoring log] Monitoring log";
+    private static final String TAG = "[Manager] Monitoring Log";
 
     @Autowired private MockMvc mockMvc;
 
@@ -78,7 +78,7 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/query_range")
+                        get("/api/o11y/log/query_range")
                                 .param("query", "test-query")
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
@@ -88,7 +88,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Range Query API")
+                                .summary("LogRangeQuery")
                                 .description(
                                         "Retrieve log data for a specific query within a given time range.")
                                 .responseFields(
@@ -152,7 +152,7 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/log_volumes")
+                        get("/api/o11y/log/log_volumes")
                                 .param("query", "test-query")
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
@@ -161,7 +161,7 @@ class LogControllerTest {
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Volume Query API")
+                                .summary("LogVolumeQuery")
                                 .description(
                                         "Retrieve log volumes (metric time series data) for the given period.")
                                 .responseFields(
@@ -198,12 +198,12 @@ class LogControllerTest {
         when(logFacadeService.getLabelResult(any(), any(), any())).thenReturn(mockResult);
         when(requestInfo.getRequestId()).thenReturn("string");
 
-        mockMvc.perform(get("/api/v1/log/labels").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/o11y/log/labels").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Log Labels Query API")
+                                .summary("LogLabelsQuery")
                                 .description("Retrieve the list of label keys provided by Loki.")
                                 .responseFields(
                                         fieldString("timestamp", "Response timestamp"),
@@ -230,13 +230,13 @@ class LogControllerTest {
         when(requestInfo.getRequestId()).thenReturn("string");
 
         mockMvc.perform(
-                        get("/api/v1/log/labels/{label}/values", "app")
+                        get("/api/o11y/log/labels/{label}/values", "app")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .summary("Label Value Query API")
+                                .summary("LabelValueQuery")
                                 .description(
                                         "Retrieve the list of values for a specific label key.")
                                 .pathParameters(paramString("label", "Label key (e.g., app, env)"))

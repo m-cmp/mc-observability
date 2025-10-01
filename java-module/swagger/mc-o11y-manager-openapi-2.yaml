@@ -2,20 +2,111 @@ swagger: "2.0"
 info:
   description: "Multi-Cloud Observability Manager API for managing alert policies,\
     \ notification channels, and alert history"
-  version: 1.0.0
-  title: mc-o11y-manager-openapi-2
-host: localhost:8080
+  version: 0.4.1
+  title: mc-o11y-manager API Documentation
+host: localhost:18080
 tags: []
 schemes:
 - http
 paths:
+  /api/o11y/log/labels:
+    get:
+      tags:
+      - "[Manager] Monitoring Log"
+      summary: LogLabelsQuery
+      description: Retrieve the list of label keys provided by Loki.
+      operationId: get-labels
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-01T00:54:27",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved label list.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "labels" : [ "string", "string" ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_labels-1630941350'
+  /api/o11y/log/log_volumes:
+    get:
+      tags:
+      - "[Manager] Monitoring Log"
+      summary: LogVolumeQuery
+      description: Retrieve log volumes (metric time series data) for the given period.
+      operationId: get-log-volumes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-01T00:54:27",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved log volume data.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "data" : [ {
+                      "metric" : {
+                        "env" : "string",
+                        "app" : "string"
+                      },
+                      "values" : [ {
+                        "timestamp" : 0,
+                        "value" : "string"
+                      } ]
+                    } ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_log_volumes1332534490'
+  /api/o11y/log/query_range:
+    get:
+      tags:
+      - "[Manager] Monitoring Log"
+      summary: LogRangeQuery
+      description: Retrieve log data for a specific query within a given time range.
+      operationId: query-range-logs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-01T00:54:27",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved log range data.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : null
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_query_range-1819803082'
   /api/o11y/monitoring/influxdb:
     get:
       tags:
-      - "[Monitoring metric] Monitoring metric"
+      - "[Manager] Monitoring Metric"
       summary: GetAllInfluxDB
       description: Retrieve all InfluxDB servers
-      operationId: GetAllInfluxDb
+      operationId: get-all-influx-db
       produces:
       - application/json
       responses:
@@ -25,15 +116,15 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
                   "id" : 0,
-                  "url" : "string",
-                  "database" : "string",
-                  "username" : "string",
-                  "retention_policy" : "string",
-                  "password" : "string",
-                  "uid" : "string"
+                  "url" : "mcmp:8086",
+                  "database" : "mydb",
+                  "username" : "mc-user",
+                  "retention_policy" : "autogen",
+                  "password" : "mypw",
+                  "uid" : "sdfsj1df33ff"
                 } ],
                 "error_message" : ""
               }
@@ -42,10 +133,10 @@ paths:
   /api/o11y/monitoring/plugins:
     get:
       tags:
-      - "[System] environment"
+      - "[Manager] Environment"
       summary: GetPlugins
       description: Retrieve plugin list
-      operationId: GetPlugins
+      operationId: get-plugins
       produces:
       - application/json
       responses:
@@ -55,7 +146,7 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
                   "seq" : 0,
                   "name" : "string",
@@ -69,10 +160,10 @@ paths:
   /api/o11y/monitoring/vm:
     get:
       tags:
-      - "[VM] Monitoring vm management"
+      - "[Manager] Monitoring VM Management"
       summary: GetAllVMs
       description: Retrieve all targets
-      operationId: GetAllVms
+      operationId: get-all-v-ms
       produces:
       - application/json
       responses:
@@ -82,112 +173,29 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 } ],
                 "error_message" : ""
               }
           schema:
             $ref: '#/definitions/VMDTO'
-  /api/o11y/noti/channel:
-    get:
-      tags:
-      - "[Trigger] notification"
-      summary: GetSupportedNotificationChannels
-      description: Get supported notification channels
-      operationId: GetNotiChannels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "notiChannels" : [ {
-                  "id" : 1,
-                  "name" : "sms_naver-cloud",
-                  "type" : "sms",
-                  "provider" : "naver-cloud",
-                  "baseUrl" : "https://sens.apigw.ntruss.com",
-                  "isActive" : true,
-                  "createdAt" : "2025-09-22T12:52:49.245884658",
-                  "updatedAt" : "2025-09-22T12:52:49.245899652"
-                } ]
-              }
-          schema:
-            $ref: '#/definitions/NotiChannelAllResponse'
-  /api/o11y/noti/history:
-    get:
-      tags:
-      - "[Trigger] notification"
-      summary: GetPaginatedNotificationHistories
-      description: Get paginated notification histories
-      operationId: GetNotiHistories
-      produces:
-      - application/json
-      parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: sortDirection
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "content" : [ ],
-                "pageable" : {
-                  "pageNumber" : 0,
-                  "pageSize" : 1,
-                  "sort" : {
-                    "sorted" : false,
-                    "empty" : true,
-                    "unsorted" : true
-                  },
-                  "offset" : 0,
-                  "paged" : true,
-                  "unpaged" : false
-                },
-                "totalPages" : 1,
-                "totalElements" : 0,
-                "numberOfElements" : 0
-              }
-          schema:
-            $ref: '#/definitions/NotiHistoryPageResponse'
   /api/o11y/trigger/history:
     get:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerHistories
       description: Get paginated trigger histories
-      operationId: GetTriggerHistories
+      operationId: get-trigger-histories
       produces:
       - application/json
       parameters:
@@ -239,10 +247,10 @@ paths:
   /api/o11y/trigger/policy:
     get:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
-      operationId: GetTriggerPolicies
+      operationId: get-trigger-policies
       produces:
       - application/json
       parameters:
@@ -293,10 +301,10 @@ paths:
             $ref: '#/definitions/TriggerPolicyPageResponse'
     post:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: CreateTriggerPolicy
       description: Create trigger policy
-      operationId: CreateTriggerPolicy
+      operationId: create-trigger-policy
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -324,13 +332,66 @@ paths:
         "201":
           description: ""
           examples: {}
-  /api/v1/alert/alert-rules:
+  /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Manager] Monitoring Metric"
+      summary: GetMeasurementFields
+      description: Retrieve InfluxDB measurements
+      operationId: measurement
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "measurement" : "string",
+                  "fields" : [ {
+                    "key" : "cpu",
+                    "type" : "Integer"
+                  } ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/FieldDTO'
+  /api/o11y/monitoring/influxdb/tag:
+    get:
+      tags:
+      - "[Manager] Monitoring Metric"
+      summary: GetMeasurementTags
+      description: Retrieve InfluxDB tags
+      operationId: tag
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "measurement" : "cpu",
+                  "tags" : [ "host", "mci_id" ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/TagDTO'
+  /api/o11y/trigger/alert/alert-rules:
+    get:
+      tags:
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlertRules
       description: Get all alert rules
-      operationId: GetAllAlertRules
+      operationId: get-all-alert-rules
       produces:
       - application/json
       responses:
@@ -340,13 +401,13 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/AllAlertRulesResponse'
-  /api/v1/alert/alerts:
+  /api/o11y/trigger/alert/alerts:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlerts
       description: Get all alerts
-      operationId: GetAllA-lerts
+      operationId: get-all-alerts
       produces:
       - application/json
       responses:
@@ -356,13 +417,13 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/AllAlertsResponse'
-  /api/v1/alert/contact-points:
+  /api/o11y/trigger/alert/contact-points:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllContactPoints
       description: Get all contact points
-      operationId: GetAllContactPoints
+      operationId: get-all-contact-points
       produces:
       - application/json
       responses:
@@ -372,13 +433,13 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/GrafanaManagedReceiverConfig'
-  /api/v1/alert/health:
+  /api/o11y/trigger/alert/health:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: CheckGrafanaHealthStatus
       description: Check grafana health status
-      operationId: CheckGrafanaHealth
+      operationId: check-grafana-health
       produces:
       - application/json
       responses:
@@ -402,13 +463,13 @@ paths:
               }
           schema:
             $ref: '#/definitions/GrafanaHealthCheckResponse'
-  /api/v1/alert/test-history:
+  /api/o11y/trigger/alert/test-history:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetPaginatedAlertTestHistories
       description: Get paginated alert test histories
-      operationId: GetAlertTestHistories
+      operationId: get-alert-test-histories
       produces:
       - application/json
       parameters:
@@ -424,7 +485,7 @@ paths:
         type: integer
       - name: sortBy
         in: query
-        description: sort by properties
+        description: sort by properties (id..)
         required: false
         type: string
       - name: direction
@@ -457,13 +518,13 @@ paths:
               }
           schema:
             $ref: '#/definitions/AlertTestHistoryPageResponse'
-  /api/v1/log/labels:
+  /api/o11y/trigger/noti/channel:
     get:
       tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Labels Query API
-      description: Retrieve the list of label keys provided by Loki.
-      operationId: GetLabels
+      - "[Trigger] Notification"
+      summary: GetSupportedNotificationChannels
+      description: Get supported notification channels
+      operationId: get-noti-channels
       produces:
       - application/json
       responses:
@@ -472,142 +533,81 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "레이블 목록 조회 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : {
-                    "labels" : [ "string", "string" ]
-                  }
-                }
+                "notiChannels" : [ {
+                  "id" : 1,
+                  "name" : "sms_naver-cloud",
+                  "type" : "sms",
+                  "provider" : "naver-cloud",
+                  "baseUrl" : "https://sens.apigw.ntruss.com",
+                  "isActive" : true,
+                  "createdAt" : "2025-10-01T09:54:29.354212046",
+                  "updatedAt" : "2025-10-01T09:54:29.35422562"
+                } ]
               }
           schema:
-            $ref: '#/definitions/api_v1_log_labels-1630941350'
-  /api/v1/log/log_volumes:
+            $ref: '#/definitions/NotiChannelAllResponse'
+  /api/o11y/trigger/noti/history:
     get:
       tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Volume Query API
-      description: Retrieve log volumes (metric time series data) for the given period.
-      operationId: GetLogVolumes
+      - "[Trigger] Notification"
+      summary: GetPaginatedNotificationHistories
+      description: Get paginated notification histories
+      operationId: get-noti-histories
       produces:
       - application/json
+      parameters:
+      - name: page
+        in: query
+        description: page number (1 .. N)
+        required: false
+        type: integer
+      - name: size
+        in: query
+        description: size of page (1 .. N)
+        required: false
+        type: integer
+      - name: sortBy
+        in: query
+        description: sort by properties(id..)
+        required: false
+        type: string
+      - name: sortDirection
+        in: query
+        description: "sort direction (asc, desc)"
+        required: false
+        type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : {
-                    "data" : [ {
-                      "metric" : {
-                        "env" : "string",
-                        "app" : "string"
-                      },
-                      "values" : [ {
-                        "timestamp" : 0,
-                        "value" : "string"
-                      } ]
-                    } ]
-                  }
-                }
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
               }
           schema:
-            $ref: '#/definitions/api_v1_log_log_volumes1332534490'
-  /api/v1/log/query_range:
-    get:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Range Query API
-      description: Retrieve log data for a specific query within a given time range.
-      operationId: QueryRangeLogs
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "로그 기간 데이터 읽기 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : null
-                }
-              }
-          schema:
-            $ref: '#/definitions/api_v1_log_query_range-1819803082'
-  /api/o11y/monitoring/influxdb/measurement:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: GetMeasurementFields
-      description: Retrieve InfluxDB measurements
-      operationId: Measurement
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "measurement" : "string",
-                  "fields" : [ {
-                    "key" : "string",
-                    "type" : "string"
-                  } ]
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/FieldDTO'
-  /api/o11y/monitoring/influxdb/tag:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: GetMeasurementTags
-      description: Retrieve InfluxDB tags
-      operationId: Tag
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "measurement" : "string",
-                  "tags" : [ "string", "string" ]
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/TagDTO'
+            $ref: '#/definitions/NotiHistoryPageResponse'
   /api/o11y/trigger/policy/{id}:
     delete:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: DeleteTriggerPolicy
       description: Delete trigger policy
-      operationId: DeleteTriggerPolicy
+      operationId: delete-trigger-policy
       parameters:
       - name: id
         in: path
@@ -618,24 +618,101 @@ paths:
         "202":
           description: ""
           examples: {}
-  /api/v1/alert/alert-receiver/test:
+  /api/o11y/log/labels/{label}/values:
+    get:
+      tags:
+      - "[Manager] Monitoring Log"
+      summary: LabelValueQuery
+      description: Retrieve the list of values for a specific label key.
+      operationId: get-label-values
+      produces:
+      - application/json
+      parameters:
+      - name: label
+        in: path
+        description: "Label key (e.g., app, env)"
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-01T00:54:27",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved label values.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "data" : [ "string", "string" ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_labels_label_values-389755828'
+  /api/o11y/monitoring/{nsId}/{mciId}/vm:
+    get:
+      tags:
+      - "[Manager] Monitoring VM Management"
+      summary: GetVMByNsMci
+      description: Retrieve target list by NS/MCI
+      operationId: get-vm-by-ns-mci
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: "nsId (e.g., ns-1)"
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: "mciId (e.g., mci-1)"
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "name" : "mcmp-vm",
+                  "description" : "string",
+                  "vm_id" : "vm-1",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+  /api/o11y/trigger/alert/alert-receiver/test:
     post:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: TestAlertReceiverConnection
       description: Test alert receiver connection
-      operationId: TestAlertReceiver
+      operationId: test-alert-receiver
       responses:
         "200":
           description: ""
           examples: {}
-  /api/v1/alert/alerts/search:
+  /api/o11y/trigger/alert/alerts/search:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: SearchAlertsByTitle
       description: Search alerts by title
-      operationId: GetAlertByTitle
+      operationId: get-alert-by-title
       produces:
       - application/json
       parameters:
@@ -651,56 +728,13 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/AlertResponse'
-  /api/o11y/monitoring/{NS ID}/{mciId}/vm:
-    get:
-      tags:
-      - "[VM] Monitoring vm management"
-      summary: GetVMByNsMci
-      description: Retrieve target list by NS/MCI
-      operationId: GetVmByNsMci
-      produces:
-      - application/json
-      parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "name" : "string",
-                  "description" : "string",
-                  "vm_id" : "string",
-                  "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/VMDTO'
   /api/o11y/trigger/history/{id}/comment:
     put:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerHistoryComment
       description: Update trigger history comment
-      operationId: UpdateTriggerHistoryComment
+      operationId: update-trigger-history-comment
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -726,10 +760,10 @@ paths:
   /api/o11y/trigger/policy/{id}/channel:
     put:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerPolicyNotificationChannels
       description: Update trigger policy notification channels
-      operationId: UpdateTriggerPolicyNotiChannel
+      operationId: update-trigger-policy-noti-channel
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -746,11 +780,17 @@ paths:
         x-examples:
           application/json;charset=UTF-8: |-
             [ {
-              "channelName" : "sms_ncp",
-              "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
+              "channelName" : "kakao_naver-cloud",
+              "recipients" : [ "+82-10-1234-5678" ]
             }, {
-              "channelName" : "email_smtp",
-              "recipients" : [ "admin@example.com", "dev@example.com" ]
+              "channelName" : "sms_naver-cloud",
+              "recipients" : [ "+82-10-1234-5678" ]
+            }, {
+              "channelName" : "email_smtp.gmail.com",
+              "recipients" : [ "admin@example.com" ]
+            }, {
+              "channelName" : "slack",
+              "recipients" : [ "C09GRESEF" ]
             } ]
       responses:
         "202":
@@ -759,10 +799,10 @@ paths:
   /api/o11y/trigger/policy/{id}/vm:
     post:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: AddTriggerVM
       description: Add trigger vm
-      operationId: AddTriggerVm
+      operationId: add-trigger-vm
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -779,9 +819,9 @@ paths:
         x-examples:
           application/json;charset=UTF-8: |-
             {
-              "namespaceId" : "namespace-1",
-              "vmScope" : "vm",
-              "vmId" : "vm-1"
+              "namespaceId" : "first-ns",
+              "vmScope" : "mci",
+              "vmId" : "test01"
             }
       responses:
         "202":
@@ -789,10 +829,10 @@ paths:
           examples: {}
     delete:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+      - "[Trigger] Monitoring Measurement Trigger"
       summary: RemoveTriggerVM
       description: Remove trigger vm
-      operationId: RemoveTriggerVm
+      operationId: remove-trigger-vm
       consumes:
       - application/json;charset=UTF-8
       parameters:
@@ -817,47 +857,13 @@ paths:
         "202":
           description: ""
           examples: {}
-  /api/v1/log/labels/{label}/values:
-    get:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Label Value Query API
-      description: Retrieve the list of values for a specific label key.
-      operationId: GetLabelValues
-      produces:
-      - application/json
-      parameters:
-      - name: label
-        in: path
-        description: "Label key (e.g., app, env)"
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "레이블 값 목록 조회 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : {
-                    "data" : [ "string", "string" ]
-                  }
-                }
-              }
-          schema:
-            $ref: '#/definitions/api_v1_log_labels_label_values-389755828'
   /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
     post:
       tags:
-      - "[Monitoring metric] Monitoring metric"
+      - "[Manager] Monitoring Metric"
       summary: QueryMetrics
       description: Retrieve InfluxDB metrics
-      operationId: Query
+      operationId: query
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -865,12 +871,12 @@ paths:
       parameters:
       - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - in: body
@@ -881,18 +887,18 @@ paths:
         x-examples:
           application/json;charset=UTF-8: |-
             {
-              "measurement" : "string",
-              "range" : "string",
-              "group_time" : "string",
-              "group_by" : [ "string" ],
+              "measurement" : "cpu",
+              "range" : "1h",
+              "group_time" : "12m",
+              "group_by" : [ "ns_id" ],
               "limit" : 0,
               "fields" : [ {
-                "function" : "string",
-                "field" : "string"
+                "function" : "mean",
+                "field" : "usage_idle"
               } ],
               "conditions" : [ {
-                "key" : "string",
-                "value" : "string"
+                "key" : "cpu",
+                "value" : "cpu-total"
               } ]
             }
       responses:
@@ -902,10 +908,10 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
-                  "name" : "string",
-                  "columns" : [ "string", "string" ],
+                  "name" : "cpu",
+                  "columns" : [ "cpu", "ns_id" ],
                   "tags" : null,
                   "values" : [ [ "string", 0 ] ]
                 } ],
@@ -913,29 +919,29 @@ paths:
               }
           schema:
             $ref: '#/definitions/MetricDTO'
-  /api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}:
+  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}:
     get:
       tags:
-      - "[VM] Monitoring vm management"
+      - "[Manager] Monitoring VM Management"
       summary: GetVM
       description: Retrieve single target
-      operationId: GetVm
+      operationId: get-vm
       produces:
       - application/json
       parameters:
-      - name: NS ID
+      - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       responses:
@@ -945,17 +951,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -963,28 +969,28 @@ paths:
             $ref: '#/definitions/VMDTO'
     post:
       tags:
-      - "[VM] Monitoring vm management"
+      - "[Manager] Monitoring VM Management"
       summary: PostVM
       description: Create target
-      operationId: PostVm
+      operationId: post-vm
       consumes:
       - application/json;charset=UTF-8
       produces:
       - application/json
       parameters:
-      - name: NS ID
+      - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       - in: body
@@ -995,7 +1001,7 @@ paths:
         x-examples:
           application/json;charset=UTF-8: |-
             {
-              "name" : "string",
+              "name" : "mcmp-vm",
               "description" : "string"
             }
       responses:
@@ -1005,17 +1011,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -1023,28 +1029,28 @@ paths:
             $ref: '#/definitions/VMDTO'
     put:
       tags:
-      - "[VM] Monitoring vm management"
+      - "[Manager] Monitoring VM Management"
       summary: PutVM
       description: Update target
-      operationId: PutVm
+      operationId: put-vm
       consumes:
       - application/json;charset=UTF-8
       produces:
       - application/json
       parameters:
-      - name: NS ID
+      - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       - in: body
@@ -1055,7 +1061,7 @@ paths:
         x-examples:
           application/json;charset=UTF-8: |-
             {
-              "name" : "string",
+              "name" : "mcmp-vm",
               "description" : "string"
             }
       responses:
@@ -1065,17 +1071,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -1083,64 +1089,26 @@ paths:
             $ref: '#/definitions/VMDTO'
     delete:
       tags:
-      - "[VM] Monitoring vm management"
+      - "[Manager] Monitoring VM Management"
       summary: DeleteVM
       description: Delete target
-      operationId: DeleteVm
-      produces:
-      - application/json
-      parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : null,
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167'
-  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
-    get:
-      tags:
-      - "[Monitoring item] Monitoring vm item management"
-      summary: GetMonitoringItems
-      description: Retrieve monitoring item list
-      operationId: GetItems
+      operationId: delete-vm
       produces:
       - application/json
       parameters:
       - name: nsId
         in: path
-        description: NSID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       responses:
@@ -1150,17 +1118,55 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
+                "data" : null,
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_monitoring_nsId_mciId_vm_vmId-1790047999'
+  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
+    get:
+      tags:
+      - "[Manager] Monitoring VM Item Management"
+      summary: GetMonitoringItems
+      description: Retrieve monitoring item list
+      operationId: get-items
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: "nsId (e.g., ns-1"
+        required: true
+        type: string
+      - name: mciId
+        in: path
+        description: "mciId (e.g., mci-1"
+        required: true
+        type: string
+      - name: vmId
+        in: path
+        description: "vmId (e.g., vm-1)"
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
                 "data" : [ {
                   "seq" : 0,
-                  "nsId" : "string",
-                  "mciId" : "string",
-                  "vmId" : "string",
-                  "name" : "string",
+                  "nsId" : "ns-1",
+                  "mciId" : "mci-1",
+                  "vmId" : "vm-1",
+                  "name" : "mcmp-vm",
                   "state" : "string",
-                  "pluginSeq" : 0,
-                  "pluginName" : "string",
-                  "pluginType" : "string",
+                  "pluginSeq" : 1,
+                  "pluginName" : "cpu",
+                  "pluginType" : "INPUT",
                   "pluginConfig" : "string"
                 } ],
                 "error_message" : ""
@@ -1169,10 +1175,10 @@ paths:
             $ref: '#/definitions/MonitoringItemDTO'
     post:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+      - "[Manager] Monitoring VM Item Management"
       summary: AddMonitoringItem
       description: Add monitoring item
-      operationId: PostItem
+      operationId: post-item
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1180,17 +1186,17 @@ paths:
       parameters:
       - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       - in: body
@@ -1211,7 +1217,7 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
@@ -1219,10 +1225,10 @@ paths:
             $ref: '#/definitions/ResBody<Void>'
     put:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+      - "[Manager] Monitoring VM Item Management"
       summary: UpdateMonitoringItem
       description: Update monitoring item
-      operationId: PutItem
+      operationId: put-item
       consumes:
       - application/json;charset=UTF-8
       produces:
@@ -1230,17 +1236,17 @@ paths:
       parameters:
       - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       - in: body
@@ -1261,7 +1267,7 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
@@ -1270,31 +1276,31 @@ paths:
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
     delete:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+      - "[Manager] Monitoring VM Item Management"
       summary: DeleteMonitoringItem
       description: Delete monitoring item
-      operationId: DeleteItem
+      operationId: delete-item
       produces:
       - application/json
       parameters:
       - name: nsId
         in: path
-        description: NS ID
+        description: "nsId (e.g., ns-1)"
         required: true
         type: string
       - name: mciId
         in: path
-        description: MCI ID
+        description: "mciId (e.g., mci-1)"
         required: true
         type: string
       - name: vmId
         in: path
-        description: TARGET ID
+        description: "vmId (e.g., vm-1)"
         required: true
         type: string
       - name: itemSeq
         in: path
-        description: ITEM SEQ
+        description: "Item Seq (e.g., 1)"
         required: true
         type: string
       responses:
@@ -1304,43 +1310,13 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
           schema:
             $ref: '#/definitions/ResBody<Void>'
 definitions:
-  ResBody<List<PluginDefDTO>>:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: array
-        description: Plugin list
-        items:
-          type: object
-          properties:
-            pluginType:
-              type: string
-              description: Plugin type
-            pluginId:
-              type: string
-              description: Plugin ID
-            name:
-              type: string
-              description: Plugin name
-            seq:
-              type: number
-              description: Plugin sequence
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
   AlertTestHistoryPageResponse:
     type: object
     properties:
@@ -1385,6 +1361,20 @@ definitions:
     type: array
     description: List of matching alerts
     items: {}
+  VMRequestDTO:
+    type: object
+    properties:
+      name:
+        type: string
+        description: "Target name(e.g.,  mcmp-vm)"
+      description:
+        type: string
+        description: Description
+    example: |-
+      {
+        "name" : "mcmp-vm",
+        "description" : "string"
+      }
   TriggerPolicyPageResponse:
     type: object
     properties:
@@ -1405,7 +1395,55 @@ definitions:
       totalElements:
         type: number
         description: total elements
-  api_v1_log_labels_label_values-389755828:
+  MonitoringItemDTO:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: array
+        description: Monitoring item list
+        items:
+          type: object
+          properties:
+            mciId:
+              type: string
+              description: "mciId(e.g., mci-1"
+            pluginType:
+              type: string
+              description: "Plugin type (e.g., INPUT)"
+            nsId:
+              type: string
+              description: "nsId(e.g., ns-1"
+            pluginName:
+              type: string
+              description: "Plugin name (e.g., cpu)"
+            vmId:
+              type: string
+              description: "vmId(e.g., vm-1"
+            name:
+              type: string
+              description: "Item name (e.g., cpu)"
+            pluginSeq:
+              type: number
+              description: "Plugin sequence (e.g., 1)"
+            state:
+              type: string
+              description: State
+            seq:
+              type: number
+              description: "Item Sequence (e.g., 1)"
+            pluginConfig:
+              type: string
+              description: Plugin configuration
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
+  api_o11y_log_labels_label_values-389755828:
     type: object
     properties:
       code:
@@ -1433,186 +1471,18 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  MonitoringItemDTO:
+  api_o11y_monitoring_nsId_mciId_vm_vmId-1790047999:
     type: object
     properties:
       error_message:
         type: string
         description: Error message
-      data:
-        type: array
-        description: Monitoring item list
-        items:
-          type: object
-          properties:
-            mciId:
-              type: string
-              description: MCI ID
-            pluginType:
-              type: string
-              description: Plugin type
-            nsId:
-              type: string
-              description: NSID
-            pluginName:
-              type: string
-              description: Plugin name
-            vmId:
-              type: string
-              description: TARGET ID
-            name:
-              type: string
-              description: Item name
-            pluginSeq:
-              type: number
-              description: Plugin sequence
-            state:
-              type: string
-              description: State
-            seq:
-              type: number
-              description: Item sequence
-            pluginConfig:
-              type: string
-              description: Plugin configuration
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  InfluxDTO:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: array
-        description: List of InfluxDB information
-        items:
-          type: object
-          properties:
-            uid:
-              type: string
-              description: "UID (example: 1)"
-            password:
-              type: string
-              description: "Password (example: mypassword"
-            database:
-              type: string
-              description: "Database name (example: db-1)"
-            retention_policy:
-              type: string
-              description: "Retention policy (example: autogen)"
-            id:
-              type: number
-              description: "ID (example: 1)"
-            url:
-              type: string
-              description: "InfluxDB URL (example: localhost:8086)"
-            username:
-              type: string
-              description: "Username (example: mc-user)"
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
-  TriggerPolicyNotiChannelUpdateRequest:
-    type: array
-    description: List of notification channel update objects
-    items:
-      type: object
-      description: List of notification channel update objects
-      properties:
-        recipients:
-          type: array
-          description: list of recipients
-          items: {}
-        channelName:
-          type: string
-          description: notification channel name
-    example: |-
-      [ {
-        "channelName" : "sms_ncp",
-        "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
-      }, {
-        "channelName" : "email_smtp",
-        "recipients" : [ "admin@example.com", "dev@example.com" ]
-      } ]
-  VMRequestDTO:
-    type: object
-    properties:
-      name:
-        type: string
-        description: Target name
-      description:
-        type: string
-        description: Description
-    example: |-
-      {
-        "name" : "string",
-        "description" : "string"
-      }
-  TriggerPolicyCreateRequest:
-    type: object
-    properties:
-      aggregationType:
-        type: string
-        description: aggregation type
-        enum:
-        - MIN
-        - MAX
-        - AVG
-        - LAST
-      repeatInterval:
-        type: string
-        description: repeat interval of evaluation
-      holdDuration:
-        type: string
-        description: minimum duration for firing alert
-      description:
-        type: string
-        description: trigger policy description
-      thresholdCondition:
-        type: object
-        description: threshold condition object
-        properties:
-          critical:
-            type: number
-            description: threshold value for critical level
-          warning:
-            type: number
-            description: threshold value for warning level
-          info:
-            type: number
-            description: threshold value for info level
-      title:
-        type: string
-        description: trigger policy title
-      resourceType:
-        type: string
-        description: resource type
-        enum:
-        - CPU
-        - MEMORY
-        - DISK
-    example: |-
-      {
-        "title" : "CPU Alert Policy",
-        "description" : "Alert when CPU usage is high",
-        "thresholdCondition" : {
-          "info" : 30.0,
-          "warning" : 50.0,
-          "critical" : 70.0
-        },
-        "resourceType" : "CPU",
-        "aggregationType" : "LAST",
-        "holdDuration" : "0m",
-        "repeatInterval" : "1h"
-      }
+        description: "Response message (e.g., Success)"
   GrafanaHealthCheckResponse:
     type: object
     properties:
@@ -1640,7 +1510,71 @@ definitions:
           hasData:
             type: boolean
             description: datasource is set up correctly
-  api_v1_log_labels-1630941350:
+  VMDTO:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: array
+        description: Target information list
+        items:
+          type: object
+          properties:
+            influx_seq:
+              type: number
+              description: Influx sequence
+            vm_id:
+              type: string
+              description: vmId
+            mci_id:
+              type: string
+              description: "mciId (e.g.,  ci-1)"
+            vm_status:
+              type: string
+              description: Target status
+              enum:
+              - RUNNING
+              - FAILED
+            log_service_status:
+              type: string
+              description: Log agent service status
+              enum:
+              - ACTIVE
+              - INACTIVE
+              - ACTIVATING
+              - DEACTIVATING
+              - RELOADING
+              - NOT_EXIST
+              - FAILED
+            ns_id:
+              type: string
+              description: "nsId (e.g., ns-1)"
+            monitoring_service_status:
+              type: string
+              description: Monitoring agent service status
+              enum:
+              - ACTIVE
+              - INACTIVE
+              - ACTIVATING
+              - DEACTIVATING
+              - RELOADING
+              - NOT_EXIST
+              - FAILED
+            name:
+              type: string
+              description: "Target name (e.g., mcmp-vm)"
+            description:
+              type: string
+              description: Description
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
+  api_o11y_log_labels-1630941350:
     type: object
     properties:
       code:
@@ -1668,70 +1602,6 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  VMDTO:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: array
-        description: Target information list
-        items:
-          type: object
-          properties:
-            influx_seq:
-              type: number
-              description: Influx sequence
-            vm_id:
-              type: string
-              description: TARGET ID
-            mci_id:
-              type: string
-              description: MCI ID
-            vm_status:
-              type: string
-              description: Target status
-              enum:
-              - RUNNING
-              - FAILED
-            log_service_status:
-              type: string
-              description: Log agent service status
-              enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
-            ns_id:
-              type: string
-              description: NS ID
-            monitoring_service_status:
-              type: string
-              description: Monitoring agent service status
-              enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
-            name:
-              type: string
-              description: Target name
-            description:
-              type: string
-              description: Description
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
   MonitoringItemRequestDTO:
     type: object
     properties:
@@ -1746,6 +1616,22 @@ definitions:
         "pluginSeq" : 0,
         "pluginConfig" : "string"
       }
+  ResBody<Void>:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: object
+        description: Response data
+        properties: {}
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
   TriggerVMAddRequest:
     type: object
     properties:
@@ -1760,10 +1646,61 @@ definitions:
         description: namespace id
     example: |-
       {
-        "namespaceId" : "namespace-1",
-        "vmScope" : "vm",
-        "vmId" : "vm-1"
+        "namespaceId" : "first-ns",
+        "vmScope" : "mci",
+        "vmId" : "test01"
       }
+  FieldDTO:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: array
+        description: List of measurement information
+        items:
+          type: object
+          properties:
+            fields:
+              type: array
+              description: List of field information
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: "Field type (e.g., integer)"
+                  key:
+                    type: string
+                    description: "Field key (e.g., server_time)"
+            measurement:
+              type: string
+              description: "Measurement name(e.g., cpu)"
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
+  MonitoringItemUpdateDTO:
+    type: object
+    properties:
+      seq:
+        type: number
+        description: "Item Sequence (e.g., 1)"
+      pluginConfig:
+        type: string
+        description: Plugin configuration
+    example: |-
+      {
+        "seq" : 0,
+        "pluginConfig" : "string"
+      }
+  AllAlertRulesResponse:
+    type: array
+    description: List of alert rules
+    items: {}
   TagDTO:
     type: object
     properties:
@@ -1778,80 +1715,17 @@ definitions:
           properties:
             measurement:
               type: string
-              description: Measurement name
+              description: "Measurement name (e.g., cpu)"
             tags:
               type: array
               description: List of tags
               items: {}
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  MetricRequestDTO:
-    type: object
-    properties:
-      limit:
-        type: number
-        description: Result limit count
-      group_by:
-        type: array
-        description: List of group by fields
-        items: {}
-      range:
-        type: string
-        description: Query range
-      conditions:
-        type: array
-        description: List of condition filters
-        items:
-          type: object
-          properties:
-            value:
-              type: string
-              description: Condition value
-            key:
-              type: string
-              description: Condition key
-      fields:
-        type: array
-        description: List of fields to query
-        items:
-          type: object
-          properties:
-            field:
-              type: string
-              description: Field name
-            function:
-              type: string
-              description: "Aggregation function (e.g., mean, max, etc.)"
-      group_time:
-        type: string
-        description: Grouping unit
-      measurement:
-        type: string
-        description: Measurement name
-    example: |-
-      {
-        "measurement" : "string",
-        "range" : "string",
-        "group_time" : "string",
-        "group_by" : [ "string" ],
-        "limit" : 0,
-        "fields" : [ {
-          "function" : "string",
-          "field" : "string"
-        } ],
-        "conditions" : [ {
-          "key" : "string",
-          "value" : "string"
-        } ]
-      }
-  AllAlertRulesResponse:
-    type: array
-    description: List of alert rules
-    items: {}
+        description: "Response message (e.g., Success)"
   TriggerHistoryCommentUpdateRequest:
     type: object
     properties:
@@ -1862,20 +1736,34 @@ definitions:
       {
         "comment" : "Alert resolved - false positive"
       }
-  MonitoringItemUpdateDTO:
-    type: object
-    properties:
-      seq:
-        type: number
-        description: Item sequence
-      pluginConfig:
-        type: string
-        description: Plugin configuration
+  TriggerPolicyNotiChannelUpdateRequest:
+    type: array
+    description: List of notification channel update objects
+    items:
+      type: object
+      description: List of notification channel update objects
+      properties:
+        recipients:
+          type: array
+          description: list of recipients
+          items: {}
+        channelName:
+          type: string
+          description: notification channel name
     example: |-
-      {
-        "seq" : 0,
-        "pluginConfig" : "string"
-      }
+      [ {
+        "channelName" : "kakao_naver-cloud",
+        "recipients" : [ "+82-10-1234-5678" ]
+      }, {
+        "channelName" : "sms_naver-cloud",
+        "recipients" : [ "+82-10-1234-5678" ]
+      }, {
+        "channelName" : "email_smtp.gmail.com",
+        "recipients" : [ "admin@example.com" ]
+      }, {
+        "channelName" : "slack",
+        "recipients" : [ "C09GRESEF" ]
+      } ]
   TriggerVMRemoveRequest:
     type: object
     properties:
@@ -1914,6 +1802,63 @@ definitions:
       totalElements:
         type: number
         description: total elements
+  TriggerPolicyCreateRequest:
+    type: object
+    properties:
+      aggregationType:
+        type: string
+        description: aggregation type
+        enum:
+        - MIN
+        - MAX
+        - AVG
+        - LAST
+      repeatInterval:
+        type: string
+        description: repeat interval of evaluation(1m~24h)
+      holdDuration:
+        type: string
+        description: minimum duration for firing alert(0s~1h)
+      description:
+        type: string
+        description: trigger policy description
+      thresholdCondition:
+        type: object
+        description: threshold condition object
+        properties:
+          critical:
+            type: number
+            description: threshold value for critical level(1~100)
+          warning:
+            type: number
+            description: threshold value for warning level(1~100)
+          info:
+            type: number
+            description: threshold value for info level(1~100)
+      title:
+        type: string
+        description: trigger policy title
+      resourceType:
+        type: string
+        description: resource type
+        enum:
+        - CPU
+        - MEMORY
+        - DISK
+    example: |-
+      {
+        "title" : "CPU Alert Policy",
+        "description" : "Alert when CPU usage is high",
+        "thresholdCondition" : {
+          "info" : 30.0,
+          "warning" : 50.0,
+          "critical" : 70.0
+        },
+        "resourceType" : "CPU",
+        "aggregationType" : "LAST",
+        "holdDuration" : "0m",
+        "repeatInterval" : "1h"
+      }
   NotiChannelAllResponse:
     type: object
     properties:
@@ -1947,27 +1892,49 @@ definitions:
             updatedAt:
               type: string
               description: notification channel updated at
-  api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167:
+  AllAlertsResponse:
+    type: array
+    description: List of alerts
+    items: {}
+  MetricDTO:
     type: object
     properties:
       error_message:
         type: string
         description: Error message
+      data:
+        type: array
+        description: List of metric information
+        items:
+          type: object
+          properties:
+            columns:
+              type: array
+              description: List of column names
+              items: {}
+            values:
+              type: array
+              description: "List of values (2D array, each row corresponds to columns\
+                \ order)"
+              items: {}
+            name:
+              type: string
+              description: "Measurement name (e.g., cpu)"
+            tags:
+              type: object
+              description: Tag information
+              properties: {}
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  AllAlertsResponse:
-    type: array
-    description: List of alerts
-    items: {}
+        description: "Response message (e.g.,  Success)"
   GrafanaManagedReceiverConfig:
     type: array
     description: List of contact points
     items: {}
-  api_v1_log_log_volumes1332534490:
+  api_o11y_log_log_volumes1332534490:
     type: object
     properties:
       code:
@@ -2014,7 +1981,7 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  MetricDTO:
+  InfluxDTO:
     type: object
     properties:
       error_message:
@@ -2022,49 +1989,38 @@ definitions:
         description: Error message
       data:
         type: array
-        description: List of metric information
+        description: List of InfluxDB information
         items:
           type: object
           properties:
-            columns:
-              type: array
-              description: List of column names
-              items: {}
-            values:
-              type: array
-              description: "List of values (2D array, each row corresponds to columns\
-                \ order)"
-              items: {}
-            name:
+            uid:
               type: string
-              description: Measurement name
-            tags:
-              type: object
-              description: Tag information
-              properties: {}
+              description: "UID (e.g.,  1)"
+            password:
+              type: string
+              description: "Password (e.g., mypw"
+            database:
+              type: string
+              description: "Database name (e.g.,  db1)"
+            retention_policy:
+              type: string
+              description: "Retention policy (e.g., autogen)"
+            id:
+              type: number
+              description: "ID (e.g.,  1)"
+            url:
+              type: string
+              description: "InfluxDB URL (e.g., localhost:8086)"
+            username:
+              type: string
+              description: "Username (e.g., mc-user)"
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  ResBody<Void>:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: object
-        description: Response data
-        properties: {}
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
-  api_v1_log_query_range-1819803082:
+        description: "Response message (e.g., Success)"
+  api_o11y_log_query_range-1819803082:
     type: object
     properties:
       code:
@@ -2125,7 +2081,66 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  FieldDTO:
+  MetricRequestDTO:
+    type: object
+    properties:
+      limit:
+        type: number
+        description: Result limit count
+      group_by:
+        type: array
+        description: "List of group by fields (e.g., [ns_id, mci_id])"
+        items: {}
+      range:
+        type: string
+        description: "Query range (e.g., 1h)"
+      conditions:
+        type: array
+        description: List of condition filters
+        items:
+          type: object
+          properties:
+            value:
+              type: string
+              description: "Condition value (e.g., cpu-total)"
+            key:
+              type: string
+              description: "Condition key (e.g., cpu)"
+      fields:
+        type: array
+        description: List of fields to query
+        items:
+          type: object
+          properties:
+            field:
+              type: string
+              description: "Field name (e.g., usage_idle)"
+            function:
+              type: string
+              description: "Aggregation function (e.g., mean, max, etc.)"
+      group_time:
+        type: string
+        description: Grouping unit
+      measurement:
+        type: string
+        description: "Measurement name (e.g., cpu)"
+    example: |-
+      {
+        "measurement" : "cpu",
+        "range" : "1h",
+        "group_time" : "12m",
+        "group_by" : [ "ns_id" ],
+        "limit" : 0,
+        "fields" : [ {
+          "function" : "mean",
+          "field" : "usage_idle"
+        } ],
+        "conditions" : [ {
+          "key" : "cpu",
+          "value" : "cpu-total"
+        } ]
+      }
+  ResBody<List<PluginDefDTO>>:
     type: object
     properties:
       error_message:
@@ -2133,28 +2148,25 @@ definitions:
         description: Error message
       data:
         type: array
-        description: List of measurement information
+        description: Plugin list
         items:
           type: object
           properties:
-            fields:
-              type: array
-              description: List of field information
-              items:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    description: Field type
-                  key:
-                    type: string
-                    description: Field key
-            measurement:
+            pluginType:
               type: string
-              description: "Measurement name(example: cpu)"
+              description: "Plugin type (e.g.,  INPUT)"
+            pluginId:
+              type: string
+              description: "Plugin ID (e.g.,  [[inputs.cpu]])"
+            name:
+              type: string
+              description: "Plugin name (e.g., cpu)"
+            seq:
+              type: number
+              description: "Plugin sequence (e.g., 1)"
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
+        description: "Response message (e.g., Success)"
