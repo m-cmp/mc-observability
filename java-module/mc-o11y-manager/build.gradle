@@ -26,6 +26,7 @@ dependencies {
     implementation 'org.apache.sshd:sshd-core:2.15.0'
     implementation 'org.apache.sshd:sshd-sftp:2.15.0'
     implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.3'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
