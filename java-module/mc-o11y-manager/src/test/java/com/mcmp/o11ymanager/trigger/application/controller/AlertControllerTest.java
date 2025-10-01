@@ -37,8 +37,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @MockBean(JpaMetamodelMappingContext.class)
 class AlertControllerTest {
 
-    private static final String TAG =
-            "[Metric Event - Only Developer] monitoring trigger event handler";
+    private static final String TAG = "[Trigger - Only Developer] Monitoring Trigger Event Handler";
 
     @Autowired private MockMvc mockMvc;
 
@@ -195,7 +194,8 @@ class AlertControllerTest {
                                 .queryParameters(
                                         paramInteger("page", "page number (1 .. N)").optional(),
                                         paramInteger("size", "size of page (1 .. N)").optional(),
-                                        paramString("sortBy", "sort by properties").optional(),
+                                        paramString("sortBy", "sort by properties (id..)")
+                                                .optional(),
                                         paramString("direction", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(

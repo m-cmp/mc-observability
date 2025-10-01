@@ -33,7 +33,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class VMControllerTest {
 
-    private static final String TAG = "[VM] Monitoring vm management";
+    private static final String TAG = "[Manager] Monitoring VM Management";
 
     @Autowired private MockMvc mockMvc;
     @MockBean private VMFacadeService vmFacadeService;
@@ -42,12 +42,12 @@ class VMControllerTest {
     void getVM() throws Exception {
         VMDTO dto =
                 VMDTO.builder()
-                        .vmId("string")
-                        .name("string")
+                        .vmId("vm-1")
+                        .name("mcmp-vm")
                         .description("string")
                         .influxSeq(0L)
-                        .nsId("string")
-                        .mciId("string")
+                        .nsId("ns-1")
+                        .mciId("mci-1")
                         .vmStatus(VMStatus.RUNNING)
                         .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
                         .logServiceStatus(AgentServiceStatus.ACTIVE)
@@ -56,7 +56,7 @@ class VMControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}",
                                 "ns1",
                                 "mci1",
                                 "vm-1"))
@@ -67,17 +67,16 @@ class VMControllerTest {
                                 .description("Retrieve single target")
                                 .summary("GetVM")
                                 .pathParameters(
-                                        paramString("NS ID", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldObject("data", "Target information"),
-                                        fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.vm_id", "vmId (e.g., vm-1)"),
+                                        fieldString("data.name", "Target name(e.g., mcmp-vm)"),
                                         fieldString("data.description", "Description").optional(),
                                         fieldNumber("data.influx_seq", "Influx sequence")
                                                 .optional(),
@@ -93,8 +92,8 @@ class VMControllerTest {
                                                         "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
-                                        fieldString("data.ns_id", "NS ID"),
-                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("data.ns_id", "nsId (e.g., ns-1)"),
+                                        fieldString("data.mci_id", "mciId (e.g., mci-1)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVM(any(), any(), any());
@@ -102,15 +101,15 @@ class VMControllerTest {
 
     @Test
     void postVM() throws Exception {
-        VMRequestDTO req = VMRequestDTO.builder().name("string").description("string").build();
+        VMRequestDTO req = VMRequestDTO.builder().name("mcmp-vm").description("string").build();
         VMDTO dto =
                 VMDTO.builder()
-                        .vmId("string")
-                        .name("string")
+                        .vmId("vm-1")
+                        .name("mcmp-vm")
                         .description("string")
                         .influxSeq(0L)
-                        .nsId("string")
-                        .mciId("string")
+                        .nsId("ns-1")
+                        .mciId("mci-1")
                         .vmStatus(VMStatus.RUNNING)
                         .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
                         .logServiceStatus(AgentServiceStatus.ACTIVE)
@@ -119,7 +118,7 @@ class VMControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post(
-                                        "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                        "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}",
                                         "ns1",
                                         "mci1",
                                         "vm-1")
@@ -132,21 +131,20 @@ class VMControllerTest {
                                 .description("Create target")
                                 .summary("PostVM")
                                 .pathParameters(
-                                        paramString("NS ID", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .requestSchema("VMRequestDTO")
                                 .requestFields(
-                                        fieldString("name", "Target name"),
+                                        fieldString("name", "Target name(e.g.,  mcmp-vm)"),
                                         fieldString("description", "Description").optional())
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldObject("data", "Target information"),
-                                        fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.vm_id", "vmId (e.g., vm-1)"),
+                                        fieldString("data.name", "Target name(e.g., mcmp-vm)"),
                                         fieldString("data.description", "Description").optional(),
                                         fieldNumber("data.influx_seq", "Influx sequence")
                                                 .optional(),
@@ -162,8 +160,8 @@ class VMControllerTest {
                                                         "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
-                                        fieldString("data.ns_id", "NS ID"),
-                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("data.ns_id", "nsId (e.g., ns-1)"),
+                                        fieldString("data.mci_id", "mciId (e.g., mci-1)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).postVM(any(), any(), any(), any());
@@ -171,15 +169,15 @@ class VMControllerTest {
 
     @Test
     void putVM() throws Exception {
-        VMRequestDTO req = VMRequestDTO.builder().name("string").description("string").build();
+        VMRequestDTO req = VMRequestDTO.builder().name("mcmp-vm").description("string").build();
         VMDTO dto =
                 VMDTO.builder()
-                        .vmId("string")
-                        .name("string")
+                        .vmId("vm-1")
+                        .name("mcmp-vm")
                         .description("string")
                         .influxSeq(0L)
-                        .nsId("string")
-                        .mciId("string")
+                        .nsId("ns-1")
+                        .mciId("mci-1")
                         .vmStatus(VMStatus.RUNNING)
                         .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
                         .logServiceStatus(AgentServiceStatus.ACTIVE)
@@ -188,7 +186,7 @@ class VMControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.put(
-                                        "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                        "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}",
                                         "ns1",
                                         "mci1",
                                         "vm-1")
@@ -201,21 +199,20 @@ class VMControllerTest {
                                 .description("Update target")
                                 .summary("PutVM")
                                 .pathParameters(
-                                        paramString("NS ID", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .requestSchema("VMRequestDTO")
                                 .requestFields(
-                                        fieldString("name", "Target name"),
+                                        fieldString("name", "Target name (e.g., mcmp-vm)"),
                                         fieldString("description", "Description").optional())
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g.,  0000)"),
+                                        fieldString("rs_msg", "Response message (e.g.,  Success)"),
                                         fieldObject("data", "Target information"),
-                                        fieldString("data.vm_id", "TARGET ID"),
-                                        fieldString("data.name", "Target name"),
+                                        fieldString("data.vm_id", "vmId (e.g.,  vm-1)"),
+                                        fieldString("data.name", "Target name (e.g.,  mcmp-vm)"),
                                         fieldString("data.description", "Description").optional(),
                                         fieldNumber("data.influx_seq", "Influx sequence")
                                                 .optional(),
@@ -231,8 +228,8 @@ class VMControllerTest {
                                                         "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
-                                        fieldString("data.ns_id", "NS ID"),
-                                        fieldString("data.mci_id", "MCI ID"),
+                                        fieldString("data.ns_id", "nsId (e.g., ns-1)"),
+                                        fieldString("data.mci_id", "mciId (e.g., mci-1)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).putVM(any(), any(), any(), any());
@@ -242,7 +239,7 @@ class VMControllerTest {
     void deleteVM() throws Exception {
         mockMvc.perform(
                         RestDocumentationRequestBuilders.delete(
-                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}",
+                                "/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}",
                                 "ns1",
                                 "mci1",
                                 "vm-1"))
@@ -253,13 +250,12 @@ class VMControllerTest {
                                 .description("Delete target")
                                 .summary("DeleteVM")
                                 .pathParameters(
-                                        paramString("NS ID", "NS ID"),
-                                        paramString("mciId", "MCI ID"),
-                                        paramString("vmId", "TARGET ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"),
+                                        paramString("vmId", "vmId (e.g., vm-1)"))
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldNull("data", "null return"),
                                         fieldString("error_message", "Error message"))
                                 .build());
@@ -271,12 +267,12 @@ class VMControllerTest {
         List<VMDTO> list =
                 List.of(
                         VMDTO.builder()
-                                .vmId("string")
-                                .name("string")
+                                .vmId("vm-1")
+                                .name("mcmp-vm")
                                 .description("string")
                                 .influxSeq(0L)
-                                .nsId("string")
-                                .mciId("string")
+                                .nsId("ns-1")
+                                .mciId("mci-1")
                                 .vmStatus(VMStatus.RUNNING)
                                 .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
                                 .logServiceStatus(AgentServiceStatus.ACTIVE)
@@ -285,7 +281,7 @@ class VMControllerTest {
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.get(
-                                "/api/o11y/monitoring/{NS ID}/{mciId}/vm", "ns1", "mci1"))
+                                "/api/o11y/monitoring/{nsId}/{mciId}/vm", "ns1", "mci1"))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
@@ -293,16 +289,15 @@ class VMControllerTest {
                                 .description("Retrieve target list by NS/MCI")
                                 .summary("GetVMByNsMci")
                                 .pathParameters(
-                                        paramString("NS ID", "NS ID"),
-                                        paramString("mciId", "MCI ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"))
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "Target information list"),
-                                        fieldString("data[].vm_id", "TARGET ID"),
-                                        fieldString("data[].name", "Target name"),
+                                        fieldString("data[].vm_id", "vmId"),
+                                        fieldString("data[].name", "Target name(e.g., mcmp-vm)"),
                                         fieldString("data[].description", "Description").optional(),
                                         fieldNumber("data[].influx_seq", "Influx sequence")
                                                 .optional(),
@@ -321,8 +316,8 @@ class VMControllerTest {
                                                         "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
-                                        fieldString("data[].ns_id", "NS ID"),
-                                        fieldString("data[].mci_id", "MCI ID"),
+                                        fieldString("data[].ns_id", "nsId (e.g., ns-1)"),
+                                        fieldString("data[].mci_id", "mciId (e.g., mci-1)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVMsNsMci(any(), any());
@@ -333,12 +328,12 @@ class VMControllerTest {
         List<VMDTO> list =
                 List.of(
                         VMDTO.builder()
-                                .vmId("string")
-                                .name("string")
+                                .vmId("vm-1")
+                                .name("mcmp-vm")
                                 .description("string")
                                 .influxSeq(0L)
-                                .nsId("string")
-                                .mciId("string")
+                                .nsId("ns-1")
+                                .mciId("mci-1")
                                 .vmStatus(VMStatus.RUNNING)
                                 .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
                                 .logServiceStatus(AgentServiceStatus.ACTIVE)
@@ -354,12 +349,11 @@ class VMControllerTest {
                                 .summary("GetAllVMs")
                                 .responseSchema("VMDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "Target information list"),
-                                        fieldString("data[].vm_id", "TARGET ID"),
-                                        fieldString("data[].name", "Target name"),
+                                        fieldString("data[].vm_id", "vmId"),
+                                        fieldString("data[].name", "Target name (e.g., mcmp-vm)"),
                                         fieldString("data[].description", "Description").optional(),
                                         fieldNumber("data[].influx_seq", "Influx sequence")
                                                 .optional(),
@@ -378,8 +372,8 @@ class VMControllerTest {
                                                         "Log agent service status",
                                                         AgentServiceStatus.class)
                                                 .optional(),
-                                        fieldString("data[].ns_id", "NS ID"),
-                                        fieldString("data[].mci_id", "MCI ID"),
+                                        fieldString("data[].ns_id", "nsId (e.g., ns-1)"),
+                                        fieldString("data[].mci_id", "mciId (e.g.,  ci-1)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(vmFacadeService).getVMs();

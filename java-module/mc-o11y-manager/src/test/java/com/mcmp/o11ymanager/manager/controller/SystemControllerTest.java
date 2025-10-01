@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class SystemControllerTest {
 
-    private static final String TAG = "[System] environment";
+    private static final String TAG = "[Manager] Environment";
 
     @Autowired private MockMvc mockMvc;
     @MockBean private AgentPluginDefServiceImpl agentPluginDefServiceImpl;
@@ -56,14 +56,16 @@ class SystemControllerTest {
                                 .summary("GetPlugins")
                                 .responseSchema("ResBody<List<PluginDefDTO>>")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "Plugin list"),
-                                        fieldNumber("data[].seq", "Plugin sequence"),
-                                        fieldString("data[].name", "Plugin name"),
-                                        fieldString("data[].pluginId", "Plugin ID"),
-                                        fieldString("data[].pluginType", "Plugin type"),
+                                        fieldNumber("data[].seq", "Plugin sequence (e.g., 1)"),
+                                        fieldString("data[].name", "Plugin name (e.g., cpu)"),
+                                        fieldString(
+                                                "data[].pluginId",
+                                                "Plugin ID (e.g.,  [[inputs.cpu]])"),
+                                        fieldString(
+                                                "data[].pluginType", "Plugin type (e.g.,  INPUT)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(agentPluginDefServiceImpl).getAllPluginDefinitions();

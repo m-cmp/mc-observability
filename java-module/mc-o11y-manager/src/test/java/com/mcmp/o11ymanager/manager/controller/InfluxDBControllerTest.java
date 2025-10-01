@@ -35,7 +35,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 class InfluxDBControllerTest {
 
-    private static final String TAG = "[Monitoring metric] Monitoring metric";
+    private static final String TAG = "[Manager] Monitoring Metric";
 
     @Autowired private MockMvc mockMvc;
     @MockBean private InfluxDbFacadeService influxDbFacadeService;
@@ -46,12 +46,12 @@ class InfluxDBControllerTest {
                 List.of(
                         InfluxDTO.builder()
                                 .id(0L)
-                                .url("string")
-                                .database("string")
-                                .username("string")
-                                .retention_policy("string")
-                                .password("string")
-                                .uid("string")
+                                .url("mcmp:8086")
+                                .database("mydb")
+                                .username("mc-user")
+                                .retention_policy("autogen")
+                                .password("mypw")
+                                .uid("sdfsj1df33ff")
                                 .build());
         when(influxDbFacadeService.getInfluxDbs()).thenReturn(influxList);
 
@@ -64,29 +64,24 @@ class InfluxDBControllerTest {
                                 .summary("GetAllInfluxDB")
                                 .responseSchema("InfluxDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "List of InfluxDB information"),
-                                        fieldNumber("data[].id", "ID (example: 1)"),
+                                        fieldNumber("data[].id", "ID (e.g.,  1)"),
                                         fieldString(
                                                 "data[].url",
-                                                "InfluxDB URL (example: localhost:8086)"),
+                                                "InfluxDB URL (e.g., localhost:8086)"),
                                         fieldString(
-                                                "data[].database", "Database name (example: db-1)"),
-                                        fieldString(
-                                                        "data[].username",
-                                                        "Username (example: mc-user)")
+                                                "data[].database", "Database name (e.g.,  db1)"),
+                                        fieldString("data[].username", "Username (e.g., mc-user)")
                                                 .optional(),
                                         fieldString(
                                                         "data[].retention_policy",
-                                                        "Retention policy (example: autogen)")
+                                                        "Retention policy (e.g., autogen)")
                                                 .optional(),
-                                        fieldString(
-                                                        "data[].password",
-                                                        "Password (example: mypassword")
+                                        fieldString("data[].password", "Password (e.g., mypw")
                                                 .optional(),
-                                        fieldString("data[].uid", "UID (example: 1)").optional(),
+                                        fieldString("data[].uid", "UID (e.g.,  1)").optional(),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getInfluxDbs();
@@ -101,8 +96,8 @@ class InfluxDBControllerTest {
                                 .fields(
                                         List.of(
                                                 FieldDTO.FieldInfo.builder()
-                                                        .key("string")
-                                                        .type("string")
+                                                        .key("cpu")
+                                                        .type("Integer")
                                                         .build()))
                                 .build());
         when(influxDbFacadeService.getFields()).thenReturn(fieldList);
@@ -118,16 +113,19 @@ class InfluxDBControllerTest {
                                 .summary("GetMeasurementFields")
                                 .responseSchema("FieldDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "List of measurement information"),
                                         fieldString(
                                                 "data[].measurement",
-                                                "Measurement name(example: cpu)"),
+                                                "Measurement name(e.g., cpu)"),
                                         fieldArray("data[].fields", "List of field information"),
-                                        fieldString("data[].fields[].key", "Field key"),
-                                        fieldString("data[].fields[].type", "Field type"),
+                                        fieldString(
+                                                "data[].fields[].key",
+                                                "Field key (e.g., server_time)"),
+                                        fieldString(
+                                                "data[].fields[].type",
+                                                "Field type (e.g., integer)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
         verify(influxDbFacadeService).getFields();
@@ -138,8 +136,8 @@ class InfluxDBControllerTest {
         List<TagDTO> tagList =
                 List.of(
                         TagDTO.builder()
-                                .measurement("string")
-                                .tags(List.of("string", "string"))
+                                .measurement("cpu")
+                                .tags(List.of("host", "mci_id"))
                                 .build());
         when(influxDbFacadeService.getTags()).thenReturn(tagList);
 
@@ -152,11 +150,12 @@ class InfluxDBControllerTest {
                                 .summary("GetMeasurementTags")
                                 .responseSchema("TagDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., Success)"),
                                         fieldArray("data", "List of tag information"),
-                                        fieldString("data[].measurement", "Measurement name"),
+                                        fieldString(
+                                                "data[].measurement",
+                                                "Measurement name (e.g., cpu)"),
                                         fieldArray("data[].tags", "List of tags"),
                                         fieldString("error_message", "Error message"))
                                 .build());
@@ -165,27 +164,27 @@ class InfluxDBControllerTest {
 
     @Test
     void query() throws Exception {
-        String nsId = "string";
-        String mciId = "string";
+        String nsId = "ns-1";
+        String mciId = "mci-1";
         MetricRequestDTO req = new MetricRequestDTO();
-        req.setMeasurement("string");
-        req.setRange("string");
-        req.setGroupTime("string");
-        req.setGroupBy(List.of("string"));
+        req.setMeasurement("cpu");
+        req.setRange("1h");
+        req.setGroupTime("12m");
+        req.setGroupBy(List.of("ns_id"));
         req.setLimit(0L);
         MetricRequestDTO.FieldInfo fieldInfo = new MetricRequestDTO.FieldInfo();
-        fieldInfo.setFunction("string");
-        fieldInfo.setField("string");
+        fieldInfo.setFunction("mean");
+        fieldInfo.setField("usage_idle");
         req.setFields(List.of(fieldInfo));
         MetricRequestDTO.ConditionInfo condInfo = new MetricRequestDTO.ConditionInfo();
-        condInfo.setKey("string");
-        condInfo.setValue("string");
+        condInfo.setKey("cpu");
+        condInfo.setValue("cpu-total");
         req.setConditions(List.of(condInfo));
         List<MetricDTO> metricList =
                 List.of(
                         MetricDTO.builder()
-                                .name("string")
-                                .columns(List.of("string", "string"))
+                                .name("cpu")
+                                .columns(List.of("cpu", "ns_id"))
                                 .values(List.of(List.of("string", 0)))
                                 .build());
         when(influxDbFacadeService.getMetrics(any(), any(), any())).thenReturn(metricList);
@@ -205,13 +204,15 @@ class InfluxDBControllerTest {
                                 .summary("QueryMetrics")
                                 .requestSchema("MetricRequestDTO")
                                 .pathParameters(
-                                        paramString("nsId", "NS ID"),
-                                        paramString("mciId", "MCI ID"))
+                                        paramString("nsId", "nsId (e.g., ns-1)"),
+                                        paramString("mciId", "mciId (e.g., mci-1)"))
                                 .requestFields(
-                                        fieldString("measurement", "Measurement name"),
-                                        fieldString("range", "Query range"),
+                                        fieldString("measurement", "Measurement name (e.g., cpu)"),
+                                        fieldString("range", "Query range (e.g., 1h)"),
                                         fieldString("group_time", "Grouping unit").optional(),
-                                        fieldArray("group_by", "List of group by fields")
+                                        fieldArray(
+                                                        "group_by",
+                                                        "List of group by fields (e.g., [ns_id, mci_id])")
                                                 .optional(),
                                         fieldNumber("limit", "Result limit count").optional(),
                                         fieldArray("fields", "List of fields to query"),
@@ -219,18 +220,23 @@ class InfluxDBControllerTest {
                                                         "fields[].function",
                                                         "Aggregation function (e.g., mean, max, etc.)")
                                                 .optional(),
-                                        fieldString("fields[].field", "Field name").optional(),
+                                        fieldString(
+                                                        "fields[].field",
+                                                        "Field name (e.g., usage_idle)")
+                                                .optional(),
                                         fieldArray("conditions", "List of condition filters"),
-                                        fieldString("conditions[].key", "Condition key").optional(),
-                                        fieldString("conditions[].value", "Condition value")
+                                        fieldString("conditions[].key", "Condition key (e.g., cpu)")
+                                                .optional(),
+                                        fieldString(
+                                                        "conditions[].value",
+                                                        "Condition value (e.g., cpu-total)")
                                                 .optional())
                                 .responseSchema("MetricDTO")
                                 .responseFields(
-                                        fieldString("rs_code", "Response code (example: 0000)"),
-                                        fieldString(
-                                                "rs_msg", "Response message (example: Success)"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g.,  Success)"),
                                         fieldArray("data", "List of metric information"),
-                                        fieldString("data[].name", "Measurement name"),
+                                        fieldString("data[].name", "Measurement name (e.g., cpu)"),
                                         fieldArray("data[].columns", "List of column names"),
                                         fieldObject("data[].tags", "Tag information").optional(),
                                         fieldSubsection(

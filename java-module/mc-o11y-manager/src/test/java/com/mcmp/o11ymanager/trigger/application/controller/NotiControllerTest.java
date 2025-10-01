@@ -32,7 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 public class NotiControllerTest {
 
-    private static final String TAG = "[Trigger] notification";
+    private static final String TAG = "[Trigger] Notification";
 
     @Autowired private MockMvc mockMvc;
 
@@ -111,7 +111,8 @@ public class NotiControllerTest {
                                 .queryParameters(
                                         paramInteger("page", "page number (1 .. N)").optional(),
                                         paramInteger("size", "size of page (1 .. N)").optional(),
-                                        paramString("sortBy", "sort by properties").optional(),
+                                        paramString("sortBy", "sort by properties(id..)")
+                                                .optional(),
                                         paramString("sortDirection", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(
