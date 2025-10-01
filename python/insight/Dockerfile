@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /mc-insight
 
-RUN apt-get update && apt-get install -y vim && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y vim curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /mc-insight
 COPY /external /mc-insight/external
