@@ -13,5 +13,7 @@ ENV PATH="/mc-insight/.venv/bin:$PATH"
 WORKDIR /mc-insight
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
+RUN apt-get update && apt-get install -y vim curl && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 EXPOSE 9001
 ENTRYPOINT ["/entrypoint.sh"]
