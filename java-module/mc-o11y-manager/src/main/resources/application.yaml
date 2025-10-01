@@ -29,7 +29,7 @@ spring:
     location: classpath:banner.txt
 
 springdoc:
-  packages-to-scan: com.mcmp.o11ymanager.controller
+  packages-to-scan: com.mcmp.o11ymanager
   paths-to-match: "/**"
   paths-to-exclude:
     - "/api/**/test/**"
