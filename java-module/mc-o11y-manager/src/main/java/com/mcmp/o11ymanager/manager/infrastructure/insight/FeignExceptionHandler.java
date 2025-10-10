@@ -13,17 +13,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @Order(value = 1)
 public class FeignExceptionHandler {
 
-  @ExceptionHandler(FeignException.class)
-  public ResponseEntity<Object> handleFeignStatusException(FeignException e) {
-    HttpStatus status = HttpStatus.valueOf(e.status());
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<Object> handleFeignStatusException(FeignException e) {
+        HttpStatus status = HttpStatus.valueOf(e.status());
 
-    String responseBody = e.contentUTF8();
+        String responseBody = e.contentUTF8();
 
-    log.warn("[FeignExceptionHandler] status={} body={}", status, responseBody);
+        log.warn("[FeignExceptionHandler] status={} body={}", status, responseBody);
 
-    return ResponseEntity
-        .status(status)
-        .body(responseBody);
-  }
-
+        return ResponseEntity.status(status).body(responseBody);
+    }
 }

@@ -14,8 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class VMRequestDTO {
 
-  @NotBlank(message = "VM name is required")
-  private String name;
+    @NotBlank(message = "VM name is required") private String name;
 
-  private String description;
+    private String description;
 }

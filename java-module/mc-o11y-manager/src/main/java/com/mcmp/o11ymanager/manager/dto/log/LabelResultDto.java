@@ -9,40 +9,39 @@ import lombok.NoArgsConstructor;
 /** Label result response DTO */
 public class LabelResultDto {
 
-  /** Label list query result */
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class LabelsResultDto {
-    private LabelsDto result;
-  }
+    /** Label list query result */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LabelsResultDto {
+        private LabelsDto result;
+    }
 
-  /** Label value list query result */
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class LabelValuesResultDto {
-    private LabelValuesDto result;
-  }
+    /** Label value list query result */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LabelValuesResultDto {
+        private LabelValuesDto result;
+    }
 
-  /** Label list data */
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class LabelsDto {
-    private List<String> labels;
-  }
+    /** Label list data */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LabelsDto {
+        private List<String> labels;
+    }
 
-  /** Label value list data */
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class LabelValuesDto {
-    private List<String> data;
-  }
+    /** Label value list data */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LabelValuesDto {
+        private List<String> data;
+    }
 }
-
