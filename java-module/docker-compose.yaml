@@ -26,10 +26,10 @@ services:
         condition: service_healthy
     environment:
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
-      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
+      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://mc-infra-manager:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
       - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
-      - SPIDER_URL=${SPIDER_URL:-http://cb-spider:1024}
+      - SPIDER_URL=${SPIDER_URL:-http://mc-infra-connector:1024}
       - SPIDER_ID=${SPIDER_ID:-}
       - SPIDER_PW=${SPIDER_PW:-}
       - INSIGHT_URL=http://mc-observability-insight:9001
@@ -45,7 +45,7 @@ services:
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-manager}
       - OTEL_METRICS_EXPORTER=none
       - OTEL_LOGS_EXPORTER=none
-      - OTEL_TRACES_EXPORTER=none
+      - OTEL_TRACES_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
       #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
       #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
@@ -60,7 +60,8 @@ services:
       #      - OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED=false
       #      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
       - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
-    #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
+      - MAX_FILE_SIZE=200MB
+      #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
       # --- RabbitMQ connection ---
       - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
       - SPRING_RABBITMQ_PORT=5672
@@ -153,43 +154,43 @@ services:
       retries: 30
 
   # CB-Tumblebug
-  cb-tumblebug:
+  mc-infra-manager:
     image: cloudbaristaorg/cb-tumblebug:0.11.13
-    container_name: cb-tumblebug
+    container_name: mc-infra-manager
     networks:
       - internal_network
       - external_network
     ports:
       - 1323:1323
     depends_on:
-      cb-tumblebug-etcd:
+      mc-infra-manager-etcd:
         condition: service_started
-      cb-spider:
+      mc-infra-connector:
         condition: service_started
-      cb-tumblebug-postgres:
+      mc-infra-manager-postgres:
         condition: service_healthy
     volumes:
       - ./conf/setup.env:/app/conf/setup.env
       - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
       - ~/.cloud-barista/credentials.yaml.enc:/app/conf/credentials.yaml.enc
-      - /docker/cb-tumblebug-container/meta_db/:/app/meta_db/
-      - /docker/cb-tumblebug-container/log/:/app/log/
+      - /docker/mc-infra-manager-container/meta_db/:/app/meta_db/
+      - /docker/mc-infra-manager-container/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
       # # Enable TB_SELF_ENDPOINT to specify an endpoint for CB-TB API (default: localhost:1323)
       # # Use public IP if you want to access the API Dashboard from outside of localhost
       # - TB_SELF_ENDPOINT=xxx.xxx.xxx.xxx:1323
-      - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
-      - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
+      - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
+      - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
       - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=false
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      - TB_POSTGRES_ENDPOINT=cb-tumblebug-postgres:5432
-      - TB_POSTGRES_DATABASE=cb_tumblebug
-      - TB_POSTGRES_USER=cb_tumblebug
-      - TB_POSTGRES_PASSWORD=cb_tumblebug
+      - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:5432
+      - TB_POSTGRES_DATABASE=tumblebug
+      - TB_POSTGRES_USER=tumblebug
+      - TB_POSTGRES_PASSWORD=tumblebug
     # - TB_TERRARIUM_API_USERNAME=default
     # - TB_TERRARIUM_API_PASSWORD=default
     # - TB_ALLOW_ORIGINS=*
@@ -210,7 +211,7 @@ services:
     # - TB_LOGWRITER=both
     # - TB_NODE_ENV=development
     healthcheck: # for CB-Tumblebug
-      test: ["CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz"]
+      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -218,16 +219,16 @@ services:
 
   # CB-Tumblebug ETCD
   # This is used for storing CB-Tumblebug metadata.
-  cb-tumblebug-etcd:
+  mc-infra-manager-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.21
-    container_name: cb-tumblebug-etcd
+    container_name: mc-infra-manager-etcd
     networks:
       - internal_network
     ports:
       - 2379:2379
       - 2380:2380
     volumes:
-      - /docker/etcd/data:/etcd-data
+      - /docker/mc-infra-manager/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
       - --name
@@ -257,7 +258,7 @@ services:
       - --auth-token
       - simple
     healthcheck: # for etcd
-      test: ["CMD", "/usr/local/bin/etcd", "--version"]
+      test: [ "CMD", "/usr/local/bin/etcd", "--version" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -265,9 +266,9 @@ services:
 
   # CB-Tumblebug PostgreSQL
   # This is used for storing CB-Tumblebug Spec and Image.
-  cb-tumblebug-postgres:
+  mc-infra-manager-postgres:
     image: postgres:16-alpine
-    container_name: cb-tumblebug-postgres
+    container_name: mc-infra-manager-postgres
     restart: always
     networks:
       - internal_network
@@ -277,22 +278,22 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - /docker/cb-tumblebug-container/meta_db/postgres/:/var/lib/postgresql/data/
+      - /docker/mc-infra-manager-container/meta_db/postgres/:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_USER=cb_tumblebug
-      - POSTGRES_PASSWORD=cb_tumblebug
-      - POSTGRES_DB=cb_tumblebug
+      - POSTGRES_USER=tumblebug
+      - POSTGRES_PASSWORD=tumblebug
+      - POSTGRES_DB=tumblebug
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      test: [ "CMD-SHELL", "pg_isready -U cb_tumblebug" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
   # CB-Spider
-  cb-spider:
+  mc-infra-connector:
     image: cloudbaristaorg/cb-spider_azure_monitoring:edge
-    container_name: cb-spider
+    container_name: mc-infra-connector
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
@@ -311,7 +312,7 @@ services:
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
     healthcheck: # for CB-Spider
-      test: ["CMD", "curl", "-f", "http://localhost:1024/spider/readyz"]
+      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
       interval: 1m
       timeout: 5s
       retries: 3
@@ -348,7 +349,7 @@ services:
     image: busybox:stable
     container_name: mc-observability-influx-init-volumes
     restart: no
-    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    command: [ "sh", "-c", "chown -R 1500:1500 /var/lib/influxdb" ]
     volumes:
       - /docker/influxdb_data:/var/lib/influxdb
     user: root
@@ -386,7 +387,7 @@ services:
     image: busybox:stable
     container_name: mc-observability-influx-2-init-volumes
     restart: no
-    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    command: [ "sh", "-c", "chown -R 1500:1500 /var/lib/influxdb" ]
     volumes:
       - /docker/influxdb2_data:/var/lib/influxdb
     user: root
@@ -426,7 +427,7 @@ services:
     image: busybox:stable
     container_name: mc-observability-loki-init-volumes
     restart: no
-    command: ["sh", "-c", "chown -R 10001:10001 /loki"]
+    command: [ "sh", "-c", "chown -R 10001:10001 /loki" ]
     volumes:
       - /docker/loki_data:/loki
     user: root
@@ -506,7 +507,7 @@ services:
     image: busybox:stable
     container_name: mc-observability-grafana-init-volumes
     restart: no
-    command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana && chown -R 472:472 /grafana_config"]
+    command: [ "sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana && chown -R 472:472 /grafana_config" ]
     volumes:
       - /docker/grafana_data/data:/var/lib/grafana
       - /docker/grafana_data/log:/var/log/grafana
@@ -549,6 +550,17 @@ services:
     networks:
       - internal_network
       - external_network
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-influx:
+        condition: service_healthy
+    healthcheck: # for CB-Tumblebug
+      test: [ "CMD", "curl", "-f", "http://localhost:9001/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 
   mc-observability-insight-scheduler:
@@ -671,24 +683,24 @@ services:
   mc-observability-rabbitmq:
     image: rabbitmq:4-management-alpine
     container_name: mc-observability-rabbitmq
-    volumes:
-      - ./rabbitmq/etc:/etc/rabbitmq
-      - /docker/rabbitmq_data:/var/lib/rabbitmq
-      - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-#     - /docker/rabbitmq_log:/var/log/rabbitmq
-    depends_on:
-      mc-observability-rabbitmq-init-volumes:
-        condition: service_completed_successfully
+    restart: always
     ports:
       - "5672:5672"    # AMQP
       - "1883:1883"    # MQTT
       - "15672:15672"  # Dashboard
       # - "8883:8883"    # MQTT/TLS (optional)
       # - "15675:15675"  # MQTT WebSocket (optional)
+    depends_on:
+      mc-observability-rabbitmq-init-volumes:
+        condition: service_completed_successfully
     environment:
-      RABBITMQ_ENABLED_PLUGINS_FILE: "/etc/rabbitmq/enabled_plugins"
-      RABBITMQ_LOAD_DEFINITIONS: "/etc/rabbitmq/definitions.json"
-    restart: unless-stopped
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/enabled_plugins
+      - RABBITMQ_LOAD_DEFINITIONS=/etc/rabbitmq/definitions.json
+    volumes:
+      - ./rabbitmq/etc:/etc/rabbitmq
+      - /docker/rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    #     - /docker/rabbitmq_log:/var/log/rabbitmq
     networks:
       - internal_network
       - external_network
@@ -696,7 +708,7 @@ services:
   mc-observability-rabbitmq-init-volumes:
     image: busybox:stable
     container_name: mc-observability-rabbitmq-init-volumes
-    restart: "no"
+    restart: no
     command:
       - sh
       - -c
@@ -727,7 +739,7 @@ services:
       - "4318:4318"
     environment:
       - TZ=Asia/Seoul
-    command: ["-config.file=/etc/tempo-config.yaml"]
+    command: [ "-config.file=/etc/tempo-config.yaml" ]
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /docker/tempo_data:/tmp/tempo

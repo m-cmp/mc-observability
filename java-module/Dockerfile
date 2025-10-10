@@ -20,6 +20,8 @@ ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/release
 
 FROM eclipse-temurin:17-jre-alpine-3.22 AS prod
 
+RUN apk add --no-cache curl
+
 COPY --from=builder /java-module/mc-o11y-manager/build/libs/mc-o11y-manager.jar /mc-o11y-manager.jar
 COPY --from=builder /java-module/mc-o11y-manager/mc-o11y-manager_default_key /mc-o11y-manager.key
 COPY --from=builder /opentelemetry-javaagent.jar /opentelemetry-javaagent.jar

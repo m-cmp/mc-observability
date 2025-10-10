@@ -50,8 +50,8 @@ origins = ["*"]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
 
-# init_otel_trace(app)
-# init_otel_logger()
+init_otel_trace(app)
+init_otel_logger()
 
 api_prefix = config.get_prefix()
 

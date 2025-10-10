@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 router = APIRouter()
 
 @router.get(
-    path="/llm/api_keys",
+    path="/llm/api-keys",
     description=get_api_key_description['api_description'],
     responses=get_api_key_description['response'],
     response_model=ResBodyLLMAPIKeys,
@@ -29,7 +29,7 @@ async def get_llm_api_key(
     return ResBodyLLMAPIKeys(data=result)
 
 @router.post(
-    path="/llm/api_keys",
+    path="/llm/api-keys",
     description=post_api_key_description['api_description'],
     responses=post_api_key_description['response'],
     response_model=ResBodyLLMAPIKey,
@@ -45,7 +45,7 @@ async def post_llm_api_key(
 
 
 @router.delete(
-    path="/llm/api_keys",
+    path="/llm/api-keys",
     description=delete_api_key_description['api_description'],
     responses=delete_api_key_description['response'],
     response_model=ResBodyLLMAPIKey,
