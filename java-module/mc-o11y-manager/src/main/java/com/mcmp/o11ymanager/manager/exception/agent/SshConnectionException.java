@@ -6,10 +6,12 @@ import lombok.Getter;
 
 @Getter
 public class SshConnectionException extends BaseException {
-    public SshConnectionException(String requestId, String ip) {
-        super(
-                requestId,
-                ErrorCode.SSH_CONNECTION_FAILED,
-                String.format("Host(IP: %s) 접속 정보 실패.", ip));
-    }
+
+  public SshConnectionException(String requestId, String ip) {
+    super(
+        requestId,
+        ErrorCode.SSH_CONNECTION_FAILED,
+        String.format("Failed to retrieve connection info for host (IP: %s).", ip));
+
+  }
 }
