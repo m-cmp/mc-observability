@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.exception.log;
+package com.mcmp.o11ymanager.manager.exception.log;
 
 import com.mcmp.o11ymanager.manager.global.error.BaseException;
 import lombok.Getter;

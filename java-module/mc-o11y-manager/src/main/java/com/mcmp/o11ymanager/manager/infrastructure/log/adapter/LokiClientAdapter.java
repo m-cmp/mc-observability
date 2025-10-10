@@ -1,6 +1,6 @@
 package com.mcmp.o11ymanager.manager.infrastructure.log.adapter;
 
-import com.mcmp.o11ymanager.exception.log.LokiTimeRangeExceededException;
+import com.mcmp.o11ymanager.manager.exception.log.LokiTimeRangeExceededException;
 import com.mcmp.o11ymanager.manager.infrastructure.log.client.LokiFeignClient;
 import com.mcmp.o11ymanager.manager.infrastructure.log.dto.LokiLabelsResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.log.dto.LokiResponseDto;
