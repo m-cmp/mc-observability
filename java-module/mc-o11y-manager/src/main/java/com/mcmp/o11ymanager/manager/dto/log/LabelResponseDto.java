@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 응용 계층에서 사용하는 레이블 응답 DTO */
+/** Label response DTO used in the application layer */
 @Data
 @Builder
 @NoArgsConstructor
