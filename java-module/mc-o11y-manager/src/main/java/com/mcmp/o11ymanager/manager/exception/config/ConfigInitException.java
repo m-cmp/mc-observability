@@ -7,11 +7,10 @@ import lombok.Getter;
 @Getter
 public class ConfigInitException extends BaseException {
 
-  public ConfigInitException(String requestId, String path) {
-    super(
-        requestId,
-        ErrorCode.CONFIG_INIT_FAILURE,
-        String.format("Failed to create config base directory. Path: %s", path));
-
-  }
+    public ConfigInitException(String requestId, String path) {
+        super(
+                requestId,
+                ErrorCode.CONFIG_INIT_FAILURE,
+                String.format("Failed to create config base directory. Path: %s", path));
+    }
 }

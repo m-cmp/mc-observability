@@ -7,11 +7,10 @@ import lombok.Getter;
 @Getter
 public class NotFoundTypeException extends BaseException {
 
-  public NotFoundTypeException(String requestId, Agent agent) {
-    super(
-        requestId,
-        ErrorCode.AGENT_CONFIG_NOT_FOUND,
-        String.format("Invalid agent type!", requestId, agent.getName()));
-  }
-
+    public NotFoundTypeException(String requestId, Agent agent) {
+        super(
+                requestId,
+                ErrorCode.AGENT_CONFIG_NOT_FOUND,
+                String.format("Invalid agent type!", requestId, agent.getName()));
+    }
 }

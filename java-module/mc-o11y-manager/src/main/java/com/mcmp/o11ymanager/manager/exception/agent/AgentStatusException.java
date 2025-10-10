@@ -8,11 +8,10 @@ import lombok.Getter;
 @Getter
 public class AgentStatusException extends BaseException {
 
-  public AgentStatusException(String requestId, String message, Agent agent) {
-    super(
-        requestId,
-        ErrorCode.AGENT_STATUS_ERROR,
-        String.format("Failed to change status of agent [%s].", agent.getName()));
-
-  }
+    public AgentStatusException(String requestId, String message, Agent agent) {
+        super(
+                requestId,
+                ErrorCode.AGENT_STATUS_ERROR,
+                String.format("Failed to change status of agent [%s].", agent.getName()));
+    }
 }

@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 public class DuplicatedHostIpException extends BaseException {
 
-  public DuplicatedHostIpException(String requestId, String ipPortList) {
-    super(requestId, ErrorCode.DUPLICATE_HOST, "Duplicate host(s) found: " + ipPortList);
-
-  }
+    public DuplicatedHostIpException(String requestId, String ipPortList) {
+        super(requestId, ErrorCode.DUPLICATE_HOST, "Duplicate host(s) found: " + ipPortList);
+    }
 }

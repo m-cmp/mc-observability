@@ -6,8 +6,7 @@ import lombok.Getter;
 @Getter
 public class HostConnectionFailedException extends BaseException {
 
-  public HostConnectionFailedException(String requestId, String id) {
-    super(requestId, ErrorCode.HOST_CONNECTION_FAILED, "Unable to connect to host: " + id);
-
-  }
+    public HostConnectionFailedException(String requestId, String id) {
+        super(requestId, ErrorCode.HOST_CONNECTION_FAILED, "Unable to connect to host: " + id);
+    }
 }

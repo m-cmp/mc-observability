@@ -7,10 +7,9 @@ import lombok.Getter;
 @Getter
 public class ConfigNotFoundException extends BaseException {
 
-  private String filePath;
+    private String filePath;
 
-  public ConfigNotFoundException(String requestId, String filePath) {
-    super(requestId, ErrorCode.CONFIG_NOT_FOUND, "Configuration file not found: " + filePath);
-
-  }
+    public ConfigNotFoundException(String requestId, String filePath) {
+        super(requestId, ErrorCode.CONFIG_NOT_FOUND, "Configuration file not found: " + filePath);
+    }
 }
