@@ -95,21 +95,21 @@ bootJar {
 
 
 openapi {
-    setHost('localhost:8080')
-    title = 'mc-o11y-manager-openapi-2'
-    version = '1.0.0'
-    description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
+    setHost('localhost:18080')
+    title = 'MC-Observability API Documentation'
+    version = '0.4.1'
+    description = 'API documentation for MC-Observability'
     format = 'yaml'
-    outputFileNamePrefix = 'mc-o11y-manager-openapi-2'
+    outputFileNamePrefix = 'MC-Observability Swagger(OpenAPI 2.0)'
 }
 
 openapi3 {
-    setServer('localhost:8080')
-    title = 'mc-o11y-manager-openapi-3'
-    description = 'Multi-Cloud Observability Manager API for managing alert policies, notification channels, and alert history'
-    version = '1.0.0'
+    setServer('localhost:18080')
+    title = 'MC-Observability API Documentation'
+    description = 'API documentation for MC-Observability'
+    version = '0.4.1'
     format = 'yaml'
-    outputFileNamePrefix = 'mc-o11y-manager-openapi-3'
+    outputFileNamePrefix = 'MC-Observability Swagger(OpenAPI 3.0)'
 }
 
 tasks.register('runSpringBootInBackground') {

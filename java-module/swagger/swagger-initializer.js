@@ -5,8 +5,8 @@ window.onload = function () {
     window.ui = SwaggerUIBundle({
         urls: [
             {url: "./swagger.yaml", name: "MC-Observability Swagger (OpenAPI 2.0)"},
-            {url: "./mc-o11y-manager-openapi-2.yaml", name: "Manager Swagger (OpenAPI 2.0)"},
-            {url: "./mc-o11y-manager-openapi-3.yaml", name: "Manager Swagger (OpenAPI 3.0)"}
+            {url: "./MC-Observability Swagger(OpenAPI 2.0).yaml", name: "Manager Swagger (OpenAPI 2.0)"},
+            {url: "./MC-Observability Swagger(OpenAPI 3.0).yaml", name: "Manager Swagger (OpenAPI 3.0)"}
         ],
         dom_id: '#swagger-ui',
         deepLinking: true,
