@@ -25,21 +25,7 @@ paths:
                 LogLabelsQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-01T05:47:33",
-                      "status" : "SUCCESS",
-                      "code" : "OK",
-                      "message" : "레이블 목록 조회 성공하였습니다.",
-                      "requestId" : "string",
-                      "data" : {
-                        "result" : {
-                          "labels" : [ "string", "string" ]
-                        }
-                      }
-                    }
-                get-labels:
-                  value: |-
-                    {
-                      "timestamp" : "2025-10-01T01:18:33",
+                      "timestamp" : "2025-10-10T06:29:15",
                       "status" : "SUCCESS",
                       "code" : "OK",
                       "message" : "레이블 목록 조회 성공하였습니다.",
@@ -65,33 +51,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/api-o11y-log-log_volumes794457377'
               examples:
-                get-log-volumes:
-                  value: |-
-                    {
-                      "timestamp" : "2025-10-01T01:18:33",
-                      "status" : "SUCCESS",
-                      "code" : "OK",
-                      "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
-                      "requestId" : "string",
-                      "data" : {
-                        "result" : {
-                          "data" : [ {
-                            "metric" : {
-                              "env" : "string",
-                              "app" : "string"
-                            },
-                            "values" : [ {
-                              "timestamp" : 0,
-                              "value" : "string"
-                            } ]
-                          } ]
-                        }
-                      }
-                    }
                 LogVolumeQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-01T05:47:33",
+                      "timestamp" : "2025-10-10T06:29:15",
                       "status" : "SUCCESS",
                       "code" : "OK",
                       "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
@@ -100,8 +63,8 @@ paths:
                         "result" : {
                           "data" : [ {
                             "metric" : {
-                              "env" : "string",
-                              "app" : "string"
+                              "app" : "string",
+                              "env" : "string"
                             },
                             "values" : [ {
                               "timestamp" : 0,
@@ -126,22 +89,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/api-o11y-log-query_range942726149'
               examples:
-                query-range-logs:
-                  value: |-
-                    {
-                      "timestamp" : "2025-10-01T01:18:33",
-                      "status" : "SUCCESS",
-                      "code" : "OK",
-                      "message" : "로그 기간 데이터 읽기 성공하였습니다.",
-                      "requestId" : "string",
-                      "data" : {
-                        "result" : null
-                      }
-                    }
                 LogRangeQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-01T05:47:33",
+                      "timestamp" : "2025-10-10T06:29:15",
                       "status" : "SUCCESS",
                       "code" : "OK",
                       "message" : "로그 기간 데이터 읽기 성공하였습니다.",
@@ -181,29 +132,13 @@ paths:
                       } ],
                       "error_message" : ""
                     }
-                get-all-influx-db:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "id" : 0,
-                        "url" : "mcmp:8086",
-                        "database" : "mydb",
-                        "username" : "mc-user",
-                        "retention_policy" : "autogen",
-                        "password" : "mypw",
-                        "uid" : "sdfsj1df33ff"
-                      } ],
-                      "error_message" : ""
-                    }
   /api/o11y/monitoring/plugins:
     get:
       tags:
       - "[Manager] Environment"
       summary: GetPlugins
       description: Retrieve plugin list
-      operationId: GetPluginsget-plugins
+      operationId: GetPlugins
       responses:
         "200":
           description: "200"
@@ -213,19 +148,6 @@ paths:
                 $ref: '#/components/schemas/ResBody<List<PluginDefDTO>>'
               examples:
                 GetPlugins:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "seq" : 0,
-                        "name" : "string",
-                        "pluginId" : "string",
-                        "pluginType" : "string"
-                      } ],
-                      "error_message" : ""
-                    }
-                get-plugins:
                   value: |-
                     {
                       "rs_code" : "0000",
@@ -271,31 +193,13 @@ paths:
                       } ],
                       "error_message" : ""
                     }
-                get-all-v-ms:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "name" : "mcmp-vm",
-                        "description" : "string",
-                        "vm_id" : "vm-1",
-                        "influx_seq" : 0,
-                        "vm_status" : "RUNNING",
-                        "monitoring_service_status" : "ACTIVE",
-                        "log_service_status" : "ACTIVE",
-                        "ns_id" : "ns-1",
-                        "mci_id" : "mci-1"
-                      } ],
-                      "error_message" : ""
-                    }
   /api/o11y/trigger/history:
     get:
       tags:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerHistories
       description: Get paginated trigger histories
-      operationId: GetPaginatedTriggerHistoriesget-trigger-histories
+      operationId: GetPaginatedTriggerHistories
       parameters:
       - name: page
         in: query
@@ -351,33 +255,13 @@ paths:
                       "totalElements" : 0,
                       "numberOfElements" : 0
                     }
-                get-trigger-histories:
-                  value: |-
-                    {
-                      "content" : [ ],
-                      "pageable" : {
-                        "pageNumber" : 0,
-                        "pageSize" : 1,
-                        "sort" : {
-                          "sorted" : false,
-                          "empty" : true,
-                          "unsorted" : true
-                        },
-                        "offset" : 0,
-                        "paged" : true,
-                        "unpaged" : false
-                      },
-                      "totalPages" : 1,
-                      "totalElements" : 0,
-                      "numberOfElements" : 0
-                    }
   /api/o11y/trigger/policy:
     get:
       tags:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
-      operationId: GetPaginatedTrigger
+      operationId: GetPaginatedTriggerPolicies
       parameters:
       - name: page
         in: query
@@ -413,26 +297,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/TriggerPolicyPageResponse'
               examples:
-                get-trigger-policies:
-                  value: |-
-                    {
-                      "content" : [ ],
-                      "pageable" : {
-                        "pageNumber" : 0,
-                        "pageSize" : 1,
-                        "sort" : {
-                          "sorted" : false,
-                          "empty" : true,
-                          "unsorted" : true
-                        },
-                        "offset" : 0,
-                        "paged" : true,
-                        "unpaged" : false
-                      },
-                      "totalPages" : 1,
-                      "totalElements" : 0,
-                      "numberOfElements" : 0
-                    }
                 GetPaginatedTriggerPolicies:
                   value: |-
                     {
@@ -480,21 +344,6 @@ paths:
                     "holdDuration" : "0m",
                     "repeatInterval" : "1h"
                   }
-              create-trigger-policy:
-                value: |-
-                  {
-                    "title" : "CPU Alert Policy",
-                    "description" : "Alert when CPU usage is high",
-                    "thresholdCondition" : {
-                      "info" : 30.0,
-                      "warning" : 50.0,
-                      "critical" : 70.0
-                    },
-                    "resourceType" : "CPU",
-                    "aggregationType" : "LAST",
-                    "holdDuration" : "0m",
-                    "repeatInterval" : "1h"
-                  }
       responses:
         "201":
           description: "201"
@@ -504,7 +353,7 @@ paths:
       - "[Manager] Monitoring Metric"
       summary: GetMeasurementFields
       description: Retrieve InfluxDB measurements
-      operationId: GetMeasurementField
+      operationId: GetMeasurementFields
       responses:
         "200":
           description: "200"
@@ -513,20 +362,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/FieldDTO'
               examples:
-                measurement:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "measurement" : "string",
-                        "fields" : [ {
-                          "key" : "cpu",
-                          "type" : "Integer"
-                        } ]
-                      } ],
-                      "error_message" : ""
-                    }
                 GetMeasurementFields:
                   value: |-
                     {
@@ -556,17 +391,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/TagDTO'
               examples:
-                tag:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "measurement" : "cpu",
-                        "tags" : [ "host", "mci_id" ]
-                      } ],
-                      "error_message" : ""
-                    }
                 GetMeasurementTags:
                   value: |-
                     {
@@ -595,8 +419,6 @@ paths:
               examples:
                 GetAllAlertRules:
                   value: "[ ]"
-                get-all-alert-rules:
-                  value: "[ ]"
   /api/o11y/trigger/alert/alerts:
     get:
       tags:
@@ -612,8 +434,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AllAlertsResponse'
               examples:
-                get-all-alerts:
-                  value: "[ ]"
                 GetAllAlerts:
                   value: "[ ]"
   /api/o11y/trigger/alert/contact-points:
@@ -633,15 +453,13 @@ paths:
               examples:
                 GetAllContactPoints:
                   value: "[ ]"
-                get-all-contact-points:
-                  value: "[ ]"
   /api/o11y/trigger/alert/health:
     get:
       tags:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: CheckGrafanaHealthStatus
       description: Check grafana health status
-      operationId: CheckGrafanaHealth
+      operationId: CheckGrafanaHealthStatus
       responses:
         "200":
           description: "200"
@@ -650,22 +468,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/GrafanaHealthCheckResponse'
               examples:
-                check-grafana-health:
-                  value: |-
-                    {
-                      "contactPoint" : {
-                        "hasData" : true
-                      },
-                      "datasource" : {
-                        "hasData" : true
-                      },
-                      "folder" : {
-                        "hasData" : true
-                      },
-                      "org" : {
-                        "hasData" : true
-                      }
-                    }
                 CheckGrafanaHealthStatus:
                   value: |-
                     {
@@ -688,7 +490,7 @@ paths:
       - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetPaginatedAlertTestHistories
       description: Get paginated alert test histories
-      operationId: GetPaginatedAlertTest
+      operationId: GetPaginatedAlertTestHistories
       parameters:
       - name: page
         in: query
@@ -744,33 +546,13 @@ paths:
                       "totalElements" : 0,
                       "numberOfElements" : 0
                     }
-                get-alert-test-histories:
-                  value: |-
-                    {
-                      "content" : [ ],
-                      "pageable" : {
-                        "pageNumber" : 0,
-                        "pageSize" : 1,
-                        "sort" : {
-                          "sorted" : false,
-                          "empty" : true,
-                          "unsorted" : true
-                        },
-                        "offset" : 0,
-                        "paged" : true,
-                        "unpaged" : false
-                      },
-                      "totalPages" : 1,
-                      "totalElements" : 0,
-                      "numberOfElements" : 0
-                    }
   /api/o11y/trigger/noti/channel:
     get:
       tags:
       - "[Trigger] Notification"
       summary: GetSupportedNotificationChannels
       description: Get supported notification channels
-      operationId: GetSupportedNotification
+      operationId: GetSupportedNotificationChannels
       responses:
         "200":
           description: "200"
@@ -789,22 +571,8 @@ paths:
                         "provider" : "naver-cloud",
                         "baseUrl" : "https://sens.apigw.ntruss.com",
                         "isActive" : true,
-                        "createdAt" : "2025-10-01T14:47:35.417845978",
-                        "updatedAt" : "2025-10-01T14:47:35.417859595"
-                      } ]
-                    }
-                get-noti-channels:
-                  value: |-
-                    {
-                      "notiChannels" : [ {
-                        "id" : 1,
-                        "name" : "sms_naver-cloud",
-                        "type" : "sms",
-                        "provider" : "naver-cloud",
-                        "baseUrl" : "https://sens.apigw.ntruss.com",
-                        "isActive" : true,
-                        "createdAt" : "2025-10-01T10:18:35.665427372",
-                        "updatedAt" : "2025-10-01T10:18:35.665450188"
+                        "createdAt" : "2025-10-10T15:29:17.04023957",
+                        "updatedAt" : "2025-10-10T15:29:17.040253439"
                       } ]
                     }
   /api/o11y/trigger/noti/history:
@@ -813,7 +581,7 @@ paths:
       - "[Trigger] Notification"
       summary: GetPaginatedNotificationHistories
       description: Get paginated notification histories
-      operationId: GetPaginatedNotification
+      operationId: GetPaginatedNotificationHistories
       parameters:
       - name: page
         in: query
@@ -869,33 +637,13 @@ paths:
                       "totalElements" : 0,
                       "numberOfElements" : 0
                     }
-                get-noti-histories:
-                  value: |-
-                    {
-                      "content" : [ ],
-                      "pageable" : {
-                        "pageNumber" : 0,
-                        "pageSize" : 1,
-                        "sort" : {
-                          "sorted" : false,
-                          "empty" : true,
-                          "unsorted" : true
-                        },
-                        "offset" : 0,
-                        "paged" : true,
-                        "unpaged" : false
-                      },
-                      "totalPages" : 1,
-                      "totalElements" : 0,
-                      "numberOfElements" : 0
-                    }
   /api/o11y/trigger/policy/{id}:
     delete:
       tags:
       - "[Trigger] Monitoring Measurement Trigger"
       summary: DeleteTriggerPolicy
       description: Delete trigger policy
-      operationId: DeleteTriggerPolicydelete-trigger-policy
+      operationId: DeleteTriggerPolicy
       parameters:
       - name: id
         in: path
@@ -932,21 +680,7 @@ paths:
                 LabelValueQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-01T05:47:33",
-                      "status" : "SUCCESS",
-                      "code" : "OK",
-                      "message" : "레이블 값 목록 조회 성공하였습니다.",
-                      "requestId" : "string",
-                      "data" : {
-                        "result" : {
-                          "data" : [ "string", "string" ]
-                        }
-                      }
-                    }
-                get-label-values:
-                  value: |-
-                    {
-                      "timestamp" : "2025-10-01T01:18:33",
+                      "timestamp" : "2025-10-10T06:29:15",
                       "status" : "SUCCESS",
                       "code" : "OK",
                       "message" : "레이블 값 목록 조회 성공하였습니다.",
@@ -985,24 +719,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/VMDTO'
               examples:
-                get-vm-by-ns-mci:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "name" : "mcmp-vm",
-                        "description" : "string",
-                        "vm_id" : "vm-1",
-                        "influx_seq" : 0,
-                        "vm_status" : "RUNNING",
-                        "monitoring_service_status" : "ACTIVE",
-                        "log_service_status" : "ACTIVE",
-                        "ns_id" : "ns-1",
-                        "mci_id" : "mci-1"
-                      } ],
-                      "error_message" : ""
-                    }
                 GetVMByNsMci:
                   value: |-
                     {
@@ -1053,8 +769,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AlertResponse'
               examples:
-                get-alert-by-title:
-                  value: "[ ]"
                 SearchAlertsByTitle:
                   value: "[ ]"
   /api/o11y/trigger/history/{id}/comment:
@@ -1078,11 +792,6 @@ paths:
             schema:
               $ref: '#/components/schemas/TriggerHistoryCommentUpdateRequest'
             examples:
-              update-trigger-history-comment:
-                value: |-
-                  {
-                    "comment" : "Alert resolved - false positive"
-                  }
               UpdateTriggerHistoryComment:
                 value: |-
                   {
@@ -1112,21 +821,6 @@ paths:
             schema:
               $ref: '#/components/schemas/TriggerPolicyNotiChannelUpdateRequest'
             examples:
-              update-trigger-policy-noti-channel:
-                value: |-
-                  [ {
-                    "channelName" : "kakao_naver-cloud",
-                    "recipients" : [ "+82-10-1234-5678" ]
-                  }, {
-                    "channelName" : "sms_naver-cloud",
-                    "recipients" : [ "+82-10-1234-5678" ]
-                  }, {
-                    "channelName" : "email_smtp.gmail.com",
-                    "recipients" : [ "admin@example.com" ]
-                  }, {
-                    "channelName" : "slack",
-                    "recipients" : [ "C09GRESEF" ]
-                  } ]
               UpdateTriggerPolicyNotificationChannels:
                 value: |-
                   [ {
@@ -1173,13 +867,6 @@ paths:
                     "vmScope" : "mci",
                     "vmId" : "test01"
                   }
-              add-trigger-vm:
-                value: |-
-                  {
-                    "namespaceId" : "first-ns",
-                    "vmScope" : "mci",
-                    "vmId" : "test01"
-                  }
       responses:
         "202":
           description: "202"
@@ -1204,13 +891,6 @@ paths:
               $ref: '#/components/schemas/TriggerVMRemoveRequest'
             examples:
               RemoveTriggerVM:
-                value: |-
-                  {
-                    "namespaceId" : "namespace-1",
-                    "vmScope" : "vm",
-                    "vmId" : "vm-1"
-                  }
-              remove-trigger-vm:
                 value: |-
                   {
                     "namespaceId" : "namespace-1",
@@ -1263,23 +943,6 @@ paths:
                       "value" : "cpu-total"
                     } ]
                   }
-              query:
-                value: |-
-                  {
-                    "measurement" : "cpu",
-                    "range" : "1h",
-                    "group_time" : "12m",
-                    "group_by" : [ "ns_id" ],
-                    "limit" : 0,
-                    "fields" : [ {
-                      "function" : "mean",
-                      "field" : "usage_idle"
-                    } ],
-                    "conditions" : [ {
-                      "key" : "cpu",
-                      "value" : "cpu-total"
-                    } ]
-                  }
       responses:
         "200":
           description: "200"
@@ -1289,19 +952,6 @@ paths:
                 $ref: '#/components/schemas/MetricDTO'
               examples:
                 QueryMetrics:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "name" : "cpu",
-                        "columns" : [ "cpu", "ns_id" ],
-                        "tags" : null,
-                        "values" : [ [ "string", 0 ] ]
-                      } ],
-                      "error_message" : ""
-                    }
-                query:
                   value: |-
                     {
                       "rs_code" : "0000",
@@ -1348,24 +998,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/VMDTO'
               examples:
-                get-vm:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : {
-                        "name" : "mcmp-vm",
-                        "description" : "string",
-                        "vm_id" : "vm-1",
-                        "influx_seq" : 0,
-                        "vm_status" : "RUNNING",
-                        "monitoring_service_status" : "ACTIVE",
-                        "log_service_status" : "ACTIVE",
-                        "ns_id" : "ns-1",
-                        "mci_id" : "mci-1"
-                      },
-                      "error_message" : ""
-                    }
                 GetVM:
                   value: |-
                     {
@@ -1415,12 +1047,6 @@ paths:
             schema:
               $ref: '#/components/schemas/VMRequestDTO'
             examples:
-              put-vm:
-                value: |-
-                  {
-                    "name" : "mcmp-vm",
-                    "description" : "string"
-                  }
               PutVM:
                 value: |-
                   {
@@ -1435,24 +1061,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/VMDTO'
               examples:
-                put-vm:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : {
-                        "name" : "mcmp-vm",
-                        "description" : "string",
-                        "vm_id" : "vm-1",
-                        "influx_seq" : 0,
-                        "vm_status" : "RUNNING",
-                        "monitoring_service_status" : "ACTIVE",
-                        "log_service_status" : "ACTIVE",
-                        "ns_id" : "ns-1",
-                        "mci_id" : "mci-1"
-                      },
-                      "error_message" : ""
-                    }
                 PutVM:
                   value: |-
                     {
@@ -1508,12 +1116,6 @@ paths:
                     "name" : "mcmp-vm",
                     "description" : "string"
                   }
-              post-vm:
-                value: |-
-                  {
-                    "name" : "mcmp-vm",
-                    "description" : "string"
-                  }
       responses:
         "200":
           description: "200"
@@ -1523,24 +1125,6 @@ paths:
                 $ref: '#/components/schemas/VMDTO'
               examples:
                 PostVM:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : {
-                        "name" : "mcmp-vm",
-                        "description" : "string",
-                        "vm_id" : "vm-1",
-                        "influx_seq" : 0,
-                        "vm_status" : "RUNNING",
-                        "monitoring_service_status" : "ACTIVE",
-                        "log_service_status" : "ACTIVE",
-                        "ns_id" : "ns-1",
-                        "mci_id" : "mci-1"
-                      },
-                      "error_message" : ""
-                    }
-                post-vm:
                   value: |-
                     {
                       "rs_code" : "0000",
@@ -1591,14 +1175,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/api-o11y-monitoring-nsId-mciId-vm-vmId-357262848'
               examples:
-                delete-vm:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : null,
-                      "error_message" : ""
-                    }
                 DeleteVM:
                   value: |-
                     {
@@ -1660,25 +1236,6 @@ paths:
                       } ],
                       "error_message" : ""
                     }
-                get-items:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : [ {
-                        "seq" : 0,
-                        "nsId" : "ns-1",
-                        "mciId" : "mci-1",
-                        "vmId" : "vm-1",
-                        "name" : "mcmp-vm",
-                        "state" : "string",
-                        "pluginSeq" : 1,
-                        "pluginName" : "cpu",
-                        "pluginType" : "INPUT",
-                        "pluginConfig" : "string"
-                      } ],
-                      "error_message" : ""
-                    }
     put:
       tags:
       - "[Manager] Monitoring VM Item Management"
@@ -1716,12 +1273,6 @@ paths:
                     "seq" : 0,
                     "pluginConfig" : "string"
                   }
-              put-item:
-                value: |-
-                  {
-                    "seq" : 0,
-                    "pluginConfig" : "string"
-                  }
       responses:
         "200":
           description: "200"
@@ -1731,14 +1282,6 @@ paths:
                 $ref: '#/components/schemas/ResBody<Void>'
               examples:
                 UpdateMonitoringItem:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : null,
-                      "error_message" : ""
-                    }
-                put-item:
                   value: |-
                     {
                       "rs_code" : "0000",
@@ -1777,12 +1320,6 @@ paths:
             schema:
               $ref: '#/components/schemas/MonitoringItemRequestDTO'
             examples:
-              post-item:
-                value: |-
-                  {
-                    "pluginSeq" : 0,
-                    "pluginConfig" : "string"
-                  }
               AddMonitoringItem:
                 value: |-
                   {
@@ -1797,14 +1334,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResBody<Void>'
               examples:
-                post-item:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : null,
-                      "error_message" : ""
-                    }
                 AddMonitoringItem:
                   value: |-
                     {
@@ -1854,14 +1383,6 @@ paths:
                 $ref: '#/components/schemas/ResBody<Void>'
               examples:
                 DeleteMonitoringItem:
-                  value: |-
-                    {
-                      "rs_code" : "0000",
-                      "rs_msg" : "success",
-                      "data" : null,
-                      "error_message" : ""
-                    }
-                delete-item:
                   value: |-
                     {
                       "rs_code" : "0000",
@@ -2459,6 +1980,106 @@ components:
         rs_msg:
           type: string
           description: "Response message (e.g., Success)"
+    MetricDTO:
+      title: MetricDTO
+      type: object
+      properties:
+        error_message:
+          type: string
+          description: Error message
+        data:
+          type: array
+          description: List of metric information
+          items:
+            type: object
+            properties:
+              columns:
+                type: array
+                description: List of column names
+                items:
+                  oneOf:
+                  - type: object
+                  - type: boolean
+                  - type: string
+                  - type: number
+              values:
+                type: array
+                description: "List of values (2D array, each row corresponds to columns\
+                  \ order)"
+                items:
+                  oneOf:
+                  - type: object
+                  - type: boolean
+                  - type: string
+                  - type: number
+              name:
+                type: string
+                description: "Measurement name (e.g., cpu)"
+              tags:
+                type: object
+                description: Tag information
+        rs_code:
+          type: string
+          description: "Response code (e.g., 0000)"
+        rs_msg:
+          type: string
+          description: "Response message (e.g.,  Success)"
+    TriggerPolicyPageResponse:
+      title: TriggerPolicyPageResponse
+      type: object
+      properties:
+        numberOfElements:
+          type: number
+          description: number of elements
+        totalPages:
+          type: number
+          description: total pages
+        pageable:
+          type: object
+          description: specific page info
+        content:
+          type: array
+          description: trigger policy list
+          items:
+            oneOf:
+            - type: object
+            - type: boolean
+            - type: string
+            - type: number
+        totalElements:
+          type: number
+          description: total elements
+    TagDTO:
+      title: TagDTO
+      type: object
+      properties:
+        error_message:
+          type: string
+          description: Error message
+        data:
+          type: array
+          description: List of tag information
+          items:
+            type: object
+            properties:
+              measurement:
+                type: string
+                description: "Measurement name (e.g., cpu)"
+              tags:
+                type: array
+                description: List of tags
+                items:
+                  oneOf:
+                  - type: object
+                  - type: boolean
+                  - type: string
+                  - type: number
+        rs_code:
+          type: string
+          description: "Response code (e.g., 0000)"
+        rs_msg:
+          type: string
+          description: "Response message (e.g., Success)"
     api-o11y-log-query_range942726149:
       type: object
       properties:
@@ -2520,106 +2141,6 @@ components:
         timestamp:
           type: string
           description: Response timestamp
-    MetricDTO:
-      title: MetricDTO
-      type: object
-      properties:
-        error_message:
-          type: string
-          description: Error message
-        data:
-          type: array
-          description: List of metric information
-          items:
-            type: object
-            properties:
-              columns:
-                type: array
-                description: List of column names
-                items:
-                  oneOf:
-                  - type: object
-                  - type: boolean
-                  - type: string
-                  - type: number
-              values:
-                type: array
-                description: "List of values (2D array, each row corresponds to columns\
-                  \ order)"
-                items:
-                  oneOf:
-                  - type: object
-                  - type: boolean
-                  - type: string
-                  - type: number
-              name:
-                type: string
-                description: "Measurement name (e.g., cpu)"
-              tags:
-                type: object
-                description: Tag information
-        rs_code:
-          type: string
-          description: "Response code (e.g., 0000)"
-        rs_msg:
-          type: string
-          description: "Response message (e.g.,  Success)"
-    TagDTO:
-      title: TagDTO
-      type: object
-      properties:
-        error_message:
-          type: string
-          description: Error message
-        data:
-          type: array
-          description: List of tag information
-          items:
-            type: object
-            properties:
-              measurement:
-                type: string
-                description: "Measurement name (e.g., cpu)"
-              tags:
-                type: array
-                description: List of tags
-                items:
-                  oneOf:
-                  - type: object
-                  - type: boolean
-                  - type: string
-                  - type: number
-        rs_code:
-          type: string
-          description: "Response code (e.g., 0000)"
-        rs_msg:
-          type: string
-          description: "Response message (e.g., Success)"
-    TriggerPolicyPageResponse:
-      title: TriggerPolicyPageResponse
-      type: object
-      properties:
-        numberOfElements:
-          type: number
-          description: number of elements
-        totalPages:
-          type: number
-          description: total pages
-        pageable:
-          type: object
-          description: specific page info
-        content:
-          type: array
-          description: trigger policy list
-          items:
-            oneOf:
-            - type: object
-            - type: boolean
-            - type: string
-            - type: number
-        totalElements:
-          type: number
-          description: total elements
     InfluxDTO:
       title: InfluxDTO
       type: object
