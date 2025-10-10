@@ -4,19 +4,19 @@ info:
   version: 0.4.1
   title: MC-Observability API Documentation
 host: localhost:18080
-tags: []
+tags: [ ]
 schemes:
-- http
+  - http
 paths:
   /api/o11y/log/labels:
     get:
       tags:
-      - "[Manager] Monitoring Log"
+        - "[Manager] Monitoring Log"
       summary: LogLabelsQuery
       description: Retrieve the list of label keys provided by Loki.
       operationId: LogLabelsQuery
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -39,12 +39,12 @@ paths:
   /api/o11y/log/log_volumes:
     get:
       tags:
-      - "[Manager] Monitoring Log"
+        - "[Manager] Monitoring Log"
       summary: LogVolumeQuery
       description: Retrieve log volumes (metric time series data) for the given period.
       operationId: LogVolumeQuery
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -76,12 +76,12 @@ paths:
   /api/o11y/log/query_range:
     get:
       tags:
-      - "[Manager] Monitoring Log"
+        - "[Manager] Monitoring Log"
       summary: LogRangeQuery
       description: Retrieve log data for a specific query within a given time range.
       operationId: LogRangeQuery
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -102,12 +102,12 @@ paths:
   /api/o11y/monitoring/influxdb:
     get:
       tags:
-      - "[Manager] Monitoring Metric"
+        - "[Manager] Monitoring Metric"
       summary: GetAllInfluxDB
       description: Retrieve all InfluxDB servers
       operationId: GetAllInfluxDB
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -132,12 +132,12 @@ paths:
   /api/o11y/monitoring/plugins:
     get:
       tags:
-      - "[Manager] Environment"
+        - "[Manager] Environment"
       summary: GetPlugins
       description: Retrieve plugin list
       operationId: GetPlugins
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -159,12 +159,12 @@ paths:
   /api/o11y/monitoring/vm:
     get:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: GetAllVMs
       description: Retrieve all targets
       operationId: GetAllVMs
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -191,33 +191,33 @@ paths:
   /api/o11y/trigger/history:
     get:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerHistories
       description: Get paginated trigger histories
       operationId: GetPaginatedTriggerHistories
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: sortDirection
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties
+          required: false
+          type: string
+        - name: sortDirection
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -246,33 +246,33 @@ paths:
   /api/o11y/trigger/policy:
     get:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
       operationId: GetPaginatedTriggerPolicies
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: direction
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties
+          required: false
+          type: string
+        - name: direction
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -300,46 +300,46 @@ paths:
             $ref: '#/definitions/TriggerPolicyPageResponse'
     post:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: CreateTriggerPolicy
       description: Create trigger policy
       operationId: CreateTriggerPolicy
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerPolicyCreateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "title" : "CPU Alert Policy",
-              "description" : "Alert when CPU usage is high",
-              "thresholdCondition" : {
-                "info" : 30.0,
-                "warning" : 50.0,
-                "critical" : 70.0
-              },
-              "resourceType" : "CPU",
-              "aggregationType" : "LAST",
-              "holdDuration" : "0m",
-              "repeatInterval" : "1h"
-            }
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerPolicyCreateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "title" : "CPU Alert Policy",
+                "description" : "Alert when CPU usage is high",
+                "thresholdCondition" : {
+                  "info" : 30.0,
+                  "warning" : 50.0,
+                  "critical" : 70.0
+                },
+                "resourceType" : "CPU",
+                "aggregationType" : "LAST",
+                "holdDuration" : "0m",
+                "repeatInterval" : "1h"
+              }
       responses:
         "201":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
-      - "[Manager] Monitoring Metric"
+        - "[Manager] Monitoring Metric"
       summary: GetMeasurementFields
       description: Retrieve InfluxDB measurements
       operationId: GetMeasurementFields
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -362,12 +362,12 @@ paths:
   /api/o11y/monitoring/influxdb/tag:
     get:
       tags:
-      - "[Manager] Monitoring Metric"
+        - "[Manager] Monitoring Metric"
       summary: GetMeasurementTags
       description: Retrieve InfluxDB tags
       operationId: GetMeasurementTags
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -387,12 +387,12 @@ paths:
   /api/o11y/trigger/alert/alert-rules:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlertRules
       description: Get all alert rules
       operationId: GetAllAlertRules
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -403,12 +403,12 @@ paths:
   /api/o11y/trigger/alert/alerts:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlerts
       description: Get all alerts
       operationId: GetAllAlerts
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -419,12 +419,12 @@ paths:
   /api/o11y/trigger/alert/contact-points:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllContactPoints
       description: Get all contact points
       operationId: GetAllContactPoints
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -435,12 +435,12 @@ paths:
   /api/o11y/trigger/alert/health:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: CheckGrafanaHealthStatus
       description: Check grafana health status
       operationId: CheckGrafanaHealthStatus
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -465,33 +465,33 @@ paths:
   /api/o11y/trigger/alert/test-history:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetPaginatedAlertTestHistories
       description: Get paginated alert test histories
       operationId: GetPaginatedAlertTestHistories
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties (id..)
-        required: false
-        type: string
-      - name: direction
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties (id..)
+          required: false
+          type: string
+        - name: direction
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -520,12 +520,12 @@ paths:
   /api/o11y/trigger/noti/channel:
     get:
       tags:
-      - "[Trigger] Notification"
+        - "[Trigger] Notification"
       summary: GetSupportedNotificationChannels
       description: Get supported notification channels
       operationId: GetSupportedNotificationChannels
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -548,33 +548,33 @@ paths:
   /api/o11y/trigger/noti/history:
     get:
       tags:
-      - "[Trigger] Notification"
+        - "[Trigger] Notification"
       summary: GetPaginatedNotificationHistories
       description: Get paginated notification histories
       operationId: GetPaginatedNotificationHistories
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties(id..)
-        required: false
-        type: string
-      - name: sortDirection
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties(id..)
+          required: false
+          type: string
+        - name: sortDirection
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -603,35 +603,35 @@ paths:
   /api/o11y/trigger/policy/{id}:
     delete:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: DeleteTriggerPolicy
       description: Delete trigger policy
       operationId: DeleteTriggerPolicy
       parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
       responses:
         "202":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/log/labels/{label}/values:
     get:
       tags:
-      - "[Manager] Monitoring Log"
+        - "[Manager] Monitoring Log"
       summary: LabelValueQuery
       description: Retrieve the list of values for a specific label key.
       operationId: LabelValueQuery
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: label
-        in: path
-        description: "Label key (e.g., app, env)"
-        required: true
-        type: string
+        - name: label
+          in: path
+          description: "Label key (e.g., app, env)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -654,23 +654,23 @@ paths:
   /api/o11y/monitoring/{nsId}/{mciId}/vm:
     get:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: GetVMByNsMci
-      description: Retrieve target list by NS/MCI
+      description: Retrieve vm list by NS/MCI
       operationId: GetVMByNsMci
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -697,29 +697,29 @@ paths:
   /api/o11y/trigger/alert/alert-receiver/test:
     post:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: TestAlertReceiverConnection
       description: Test alert receiver connection
       operationId: TestAlertReceiverConnection
       responses:
         "200":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/trigger/alert/alerts/search:
     get:
       tags:
-      - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: SearchAlertsByTitle
       description: Search alerts by title
       operationId: SearchAlertsByTitle
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: title
-        in: query
-        description: alert title to search
-        required: true
-        type: string
+        - name: title
+          in: query
+          description: alert title to search
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -730,176 +730,176 @@ paths:
   /api/o11y/trigger/history/{id}/comment:
     put:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerHistoryComment
       description: Update trigger history comment
       operationId: UpdateTriggerHistoryComment
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - name: id
-        in: path
-        description: trigger history id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerHistoryCommentUpdateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "comment" : "Alert resolved - false positive"
-            }
+        - name: id
+          in: path
+          description: trigger history id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerHistoryCommentUpdateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "comment" : "Alert resolved - false positive"
+              }
       responses:
         "200":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/trigger/policy/{id}/channel:
     put:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: UpdateTriggerPolicyNotificationChannels
       description: Update trigger policy notification channels
       operationId: UpdateTriggerPolicyNotificationChannels
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerPolicyNotiChannelUpdateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            [ {
-              "channelName" : "kakao_naver-cloud",
-              "recipients" : [ "+82-10-1234-5678" ]
-            }, {
-              "channelName" : "sms_naver-cloud",
-              "recipients" : [ "+82-10-1234-5678" ]
-            }, {
-              "channelName" : "email_smtp.gmail.com",
-              "recipients" : [ "admin@example.com" ]
-            }, {
-              "channelName" : "slack",
-              "recipients" : [ "C09GRESEF" ]
-            } ]
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerPolicyNotiChannelUpdateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              [ {
+                "channelName" : "kakao_naver-cloud",
+                "recipients" : [ "+82-10-1234-5678" ]
+              }, {
+                "channelName" : "sms_naver-cloud",
+                "recipients" : [ "+82-10-1234-5678" ]
+              }, {
+                "channelName" : "email_smtp.gmail.com",
+                "recipients" : [ "admin@example.com" ]
+              }, {
+                "channelName" : "slack",
+                "recipients" : [ "C09GRESEF" ]
+              } ]
       responses:
         "202":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/trigger/policy/{id}/vm:
     post:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: AddTriggerVM
       description: Add trigger vm
       operationId: AddTriggerVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerVMAddRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "namespaceId" : "first-ns",
-              "vmScope" : "mci",
-              "vmId" : "test01"
-            }
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerVMAddRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "namespaceId" : "first-ns",
+                "vmScope" : "mci",
+                "vmId" : "test01"
+              }
       responses:
         "202":
           description: ""
-          examples: {}
+          examples: { }
     delete:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: RemoveTriggerVM
       description: Remove trigger vm
       operationId: RemoveTriggerVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerVMRemoveRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "namespaceId" : "namespace-1",
-              "vmScope" : "vm",
-              "vmId" : "vm-1"
-            }
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerVMRemoveRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "namespaceId" : "namespace-1",
+                "vmScope" : "vm",
+                "vmId" : "vm-1"
+              }
       responses:
         "202":
           description: ""
-          examples: {}
+          examples: { }
   /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
     post:
       tags:
-      - "[Manager] Monitoring Metric"
+        - "[Manager] Monitoring Metric"
       summary: QueryMetrics
       description: Retrieve InfluxDB metrics
       operationId: QueryMetrics
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MetricRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "measurement" : "cpu",
-              "range" : "1h",
-              "group_time" : "12m",
-              "group_by" : [ "ns_id" ],
-              "limit" : 0,
-              "fields" : [ {
-                "function" : "mean",
-                "field" : "usage_idle"
-              } ],
-              "conditions" : [ {
-                "key" : "cpu",
-                "value" : "cpu-total"
-              } ]
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MetricRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "measurement" : "cpu",
+                "range" : "1h",
+                "group_time" : "12m",
+                "group_by" : [ "ns_id" ],
+                "limit" : 0,
+                "fields" : [ {
+                  "function" : "mean",
+                  "field" : "usage_idle"
+                } ],
+                "conditions" : [ {
+                  "key" : "cpu",
+                  "value" : "cpu-total"
+                } ]
+              }
       responses:
         "200":
           description: ""
@@ -921,28 +921,28 @@ paths:
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}:
     get:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: GetVM
-      description: Retrieve single target
+      description: Retrieve single vm
       operationId: GetVM
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -968,41 +968,41 @@ paths:
             $ref: '#/definitions/VMDTO'
     post:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: PostVM
-      description: Create target
+      description: Create vm
       operationId: PostVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/VMRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "name" : "mcmp-vm",
-              "description" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/VMRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "name" : "mcmp-vm",
+                "description" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1028,41 +1028,41 @@ paths:
             $ref: '#/definitions/VMDTO'
     put:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: PutVM
-      description: Update target
+      description: Update vm
       operationId: PutVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/VMRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "name" : "mcmp-vm",
-              "description" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/VMRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "name" : "mcmp-vm",
+                "description" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1088,28 +1088,28 @@ paths:
             $ref: '#/definitions/VMDTO'
     delete:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: DeleteVM
-      description: Delete target
+      description: Delete vm
       operationId: DeleteVM
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1126,28 +1126,28 @@ paths:
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
     get:
       tags:
-      - "[Manager] Monitoring VM Item Management"
+        - "[Manager] Monitoring VM Item Management"
       summary: GetMonitoringItems
       description: Retrieve monitoring item list
       operationId: GetMonitoringItems
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1174,41 +1174,41 @@ paths:
             $ref: '#/definitions/MonitoringItemDTO'
     post:
       tags:
-      - "[Manager] Monitoring VM Item Management"
+        - "[Manager] Monitoring VM Item Management"
       summary: AddMonitoringItem
       description: Add monitoring item
       operationId: AddMonitoringItem
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MonitoringItemRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "pluginSeq" : 0,
-              "pluginConfig" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MonitoringItemRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "pluginSeq" : 0,
+                "pluginConfig" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1224,41 +1224,41 @@ paths:
             $ref: '#/definitions/ResBody<Void>'
     put:
       tags:
-      - "[Manager] Monitoring VM Item Management"
+        - "[Manager] Monitoring VM Item Management"
       summary: UpdateMonitoringItem
       description: Update monitoring item
       operationId: UpdateMonitoringItem
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MonitoringItemUpdateDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "seq" : 0,
-              "pluginConfig" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MonitoringItemUpdateDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "seq" : 0,
+                "pluginConfig" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1275,33 +1275,33 @@ paths:
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
     delete:
       tags:
-      - "[Manager] Monitoring VM Item Management"
+        - "[Manager] Monitoring VM Item Management"
       summary: DeleteMonitoringItem
       description: Delete monitoring item
       operationId: DeleteMonitoringItem
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - name: itemSeq
-        in: path
-        description: "Item Seq (e.g., 1)"
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - name: itemSeq
+          in: path
+          description: "Item Seq (e.g., 1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1328,11 +1328,11 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: alert test history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
@@ -1348,18 +1348,18 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: notification history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
   AlertResponse:
     type: array
     description: List of matching alerts
-    items: {}
+    items: { }
   TriggerPolicyPageResponse:
     type: object
     properties:
@@ -1372,11 +1372,11 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: trigger policy list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
@@ -1457,7 +1457,7 @@ definitions:
               data:
                 type: array
                 description: List of label values
-                items: {}
+                items: { }
       requestId:
         type: string
         description: Request ID
@@ -1534,19 +1534,19 @@ definitions:
               type: string
               description: Target status
               enum:
-              - RUNNING
-              - FAILED
+                - RUNNING
+                - FAILED
             log_service_status:
               type: string
               description: Log agent service status
               enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
+                - ACTIVE
+                - INACTIVE
+                - ACTIVATING
+                - DEACTIVATING
+                - RELOADING
+                - NOT_EXIST
+                - FAILED
             ns_id:
               type: string
               description: "nsId (e.g., ns-1)"
@@ -1554,13 +1554,13 @@ definitions:
               type: string
               description: Monitoring agent service status
               enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
+                - ACTIVE
+                - INACTIVE
+                - ACTIVATING
+                - DEACTIVATING
+                - RELOADING
+                - NOT_EXIST
+                - FAILED
             name:
               type: string
               description: "Target name (e.g., mcmp-vm)"
@@ -1588,7 +1588,7 @@ definitions:
               labels:
                 type: array
                 description: List of labels
-                items: {}
+                items: { }
       requestId:
         type: string
         description: Request ID
@@ -1642,7 +1642,7 @@ definitions:
       data:
         type: object
         description: Response data
-        properties: {}
+        properties: { }
       rs_code:
         type: string
         description: "Response code (e.g., 0000)"
@@ -1699,7 +1699,7 @@ definitions:
   AllAlertRulesResponse:
     type: array
     description: List of alert rules
-    items: {}
+    items: { }
   TagDTO:
     type: object
     properties:
@@ -1718,7 +1718,7 @@ definitions:
             tags:
               type: array
               description: List of tags
-              items: {}
+              items: { }
       rs_code:
         type: string
         description: "Response code (e.g., 0000)"
@@ -1745,7 +1745,7 @@ definitions:
         recipients:
           type: array
           description: list of recipients
-          items: {}
+          items: { }
         channelName:
           type: string
           description: notification channel name
@@ -1793,11 +1793,11 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: trigger history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
@@ -1808,10 +1808,10 @@ definitions:
         type: string
         description: aggregation type
         enum:
-        - MIN
-        - MAX
-        - AVG
-        - LAST
+          - MIN
+          - MAX
+          - AVG
+          - LAST
       repeatInterval:
         type: string
         description: repeat interval of evaluation(1m~24h)
@@ -1841,9 +1841,9 @@ definitions:
         type: string
         description: resource type
         enum:
-        - CPU
-        - MEMORY
-        - DISK
+          - CPU
+          - MEMORY
+          - DISK
     example: |-
       {
         "title" : "CPU Alert Policy",
@@ -1894,7 +1894,7 @@ definitions:
   AllAlertsResponse:
     type: array
     description: List of alerts
-    items: {}
+    items: { }
   MetricDTO:
     type: object
     properties:
@@ -1910,19 +1910,19 @@ definitions:
             columns:
               type: array
               description: List of column names
-              items: {}
+              items: { }
             values:
               type: array
               description: "List of values (2D array, each row corresponds to columns\
                 \ order)"
-              items: {}
+              items: { }
             name:
               type: string
               description: "Measurement name (e.g., cpu)"
             tags:
               type: object
               description: Tag information
-              properties: {}
+              properties: { }
       rs_code:
         type: string
         description: "Response code (e.g., 0000)"
@@ -1932,7 +1932,7 @@ definitions:
   GrafanaManagedReceiverConfig:
     type: array
     description: List of contact points
-    items: {}
+    items: { }
   api_o11y_log_log_volumes1332534490:
     type: object
     properties:
@@ -2028,7 +2028,7 @@ definitions:
       group_by:
         type: array
         description: "List of group by fields (e.g., [ns_id, mci_id])"
-        items: {}
+        items: { }
       range:
         type: string
         description: "Query range (e.g., 1h)"
@@ -2169,3 +2169,4 @@ definitions:
       rs_msg:
         type: string
         description: "Response message (e.g., Success)"
+

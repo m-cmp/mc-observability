@@ -696,7 +696,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: GetVMByNsMci
-      description: Retrieve target list by NS/MCI
+      description: Retrieve vm list by NS/MCI
       operationId: GetVMByNsMci
       parameters:
       - name: nsId
@@ -969,7 +969,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: GetVM
-      description: Retrieve single target
+      description: Retrieve single vm
       operationId: GetVM
       parameters:
       - name: nsId
@@ -1020,7 +1020,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: PutVM
-      description: Update target
+      description: Update vm
       operationId: PutVM
       parameters:
       - name: nsId
@@ -1083,7 +1083,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: PostVM
-      description: Create target
+      description: Create vm
       operationId: PostVM
       parameters:
       - name: nsId
@@ -1146,7 +1146,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: DeleteVM
-      description: Delete target
+      description: Delete vm
       operationId: DeleteVM
       parameters:
       - name: nsId
