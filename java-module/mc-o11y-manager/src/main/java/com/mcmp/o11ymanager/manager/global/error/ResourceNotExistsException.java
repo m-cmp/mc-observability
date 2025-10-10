@@ -7,6 +7,6 @@ import lombok.Getter;
 public class ResourceNotExistsException extends BaseException {
 
     public ResourceNotExistsException(String requestId, String resourceName, String id) {
-        super(requestId, ErrorCode.RESOURCE_NOT_EXISTS, resourceName + " ID가 존재하지 않습니다 : " + id);
+        super(requestId, ErrorCode.RESOURCE_NOT_EXISTS, resourceName + " ID does not exist: " + id);
     }
 }
