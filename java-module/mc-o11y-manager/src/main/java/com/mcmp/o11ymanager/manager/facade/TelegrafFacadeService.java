@@ -42,12 +42,10 @@ public class TelegrafFacadeService {
             @NotBlank int templateCount)
             throws Exception {
 
-        // 1. host IDLE 상태 확인
         log.info("==========================telegraf idle start===============================");
         vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
         log.info("==========================telegraf idle finish===============================");
 
-        // 2. host 상태 업데이트
         vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
         log.info("==========================update vm status===============================");
 
@@ -56,7 +54,7 @@ public class TelegrafFacadeService {
         log.info("Telegraf config: {}", configContent);
 
         log.info("========================= START INSTALL REQUEST============================");
-        // 4. 전송(semaphore) - 설치 요청
+
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -67,7 +65,6 @@ public class TelegrafFacadeService {
 
         log.info("=========================FINISH INSTALL REQUEST============================");
 
-        // 5. task ID, task status 업데이트
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
@@ -75,7 +72,6 @@ public class TelegrafFacadeService {
                 "==========================update vm status task ID: {}============================",
                 task.getId());
 
-        // 7. 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -94,13 +90,10 @@ public class TelegrafFacadeService {
             @NotBlank int templateCount)
             throws Exception {
 
-        // 1. host IDLE 상태 확인
         vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
 
-        // 2. host 상태 업데이트
         vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
 
-        // 3. 전송(semaphore) - 업데이트 요청
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -109,11 +102,9 @@ public class TelegrafFacadeService {
                         Agent.TELEGRAF,
                         templateCount);
 
-        // 4. task ID, task status 업데이트
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
-        // 6. 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -127,13 +118,10 @@ public class TelegrafFacadeService {
     public void uninstall(
             String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
 
-        // 1) 상태 확인
         vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
 
-        // 2) 상태 변경
         vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
 
-        // 3) 전송(semaphore) - 삭제 요청
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -142,11 +130,9 @@ public class TelegrafFacadeService {
                         Agent.TELEGRAF,
                         templateCount);
 
-        // 4) task ID, task status 업데이트
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
 
-        // 6) 스케줄러 등록
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -170,7 +156,6 @@ public class TelegrafFacadeService {
             vmService.updateMonitoringAgentTaskStatus(
                     nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
 
-            // TODO : Use Tumblebug CMD
             tumblebugService.restart(nsId, mciId, vmId, Agent.TELEGRAF);
 
             vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);

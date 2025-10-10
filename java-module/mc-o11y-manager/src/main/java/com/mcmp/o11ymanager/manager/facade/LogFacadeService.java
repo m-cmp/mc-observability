@@ -27,17 +27,17 @@ public class LogFacadeService {
     private final LokiService lokiService;
 
     /**
-     * 특정 기간의 로그 데이터 조회 (요약 응답)
+     * Retrieve log data within a specific time range (summary response)
      *
-     * @param query 로그 쿼리
-     * @param start 시작 시간
-     * @param end 종료 시간
-     * @param limit 조회 제한 수
-     * @param direction 조회 방향(forward/backward)
-     * @param interval 개별 로그 라인(스트림) 결과 사이의 최소 시간 간격
-     * @param step 메트릭 쿼리(매트릭스) 결과의 계산/평가 시간 간격
-     * @param since 쿼리 시작 시점을 end 시점(또는 현재) 기준으로 기간
-     * @return 요약된 로그 응답 DTO
+     * @param query Log query
+     * @param start Start time
+     * @param end End time
+     * @param limit Query result limit
+     * @param direction Query direction (forward/backward)
+     * @param interval Minimum time interval between individual log line (stream) results
+     * @param step Evaluation interval for metric query (matrix)
+     * @param since Time duration from the end (or current) point for query start
+     * @return Log summary response DTO
      */
     public LogSummaryDto.ResultDto getRangeLogs(
             String query,
@@ -56,12 +56,12 @@ public class LogFacadeService {
     }
 
     /**
-     * 레이블 목록 조회 (결과 형식)
+     * Retrieve label list (formatted result)
      *
-     * @param start 시작 시간 (선택)
-     * @param end 종료 시간 (선택)
-     * @param query 쿼리 (선택)
-     * @return 레이블 결과 응답 DTO
+     * @param start Start time (optional)
+     * @param end End time (optional)
+     * @param query Query (optional)
+     * @return Label result response DTO
      */
     public LabelResultDto.LabelsResultDto getLabelResult(String start, String end, String query) {
         LabelResponseDto responseDto = getLabels(start, end, query);
@@ -69,14 +69,14 @@ public class LogFacadeService {
     }
 
     /**
-     * 특정 레이블의 값 목록 조회 (결과 형식)
+     * Retrieve value list for a specific label (formatted result)
      *
-     * @param label 레이블 이름
-     * @param start 시작 시간 (선택)
-     * @param end 종료 시간 (선택)
-     * @param since 특정 시점 이후 (선택)
-     * @param query 쿼리 (선택)
-     * @return 레이블 값 결과 응답 DTO
+     * @param label Label name
+     * @param start Start time (optional)
+     * @param end End time (optional)
+     * @param since Time since specific point (optional)
+     * @param query Query (optional)
+     * @return Label value result response DTO
      */
     public LabelResultDto.LabelValuesResultDto getLabelValuesResult(
             String label, String start, String end, String since, String query) {
@@ -85,12 +85,12 @@ public class LogFacadeService {
     }
 
     /**
-     * 레이블 목록 조회
+     * Retrieve label list
      *
-     * @param start 시작 시간 (선택)
-     * @param end 종료 시간 (선택)
-     * @param query 쿼리 (선택)
-     * @return 레이블 응답 DTO
+     * @param start Start time (optional)
+     * @param end End time (optional)
+     * @param query Query (optional)
+     * @return Label response DTO
      */
     private LabelResponseDto getLabels(String start, String end, String query) {
         Label label = lokiService.getLabels(start, end, query);
@@ -98,14 +98,14 @@ public class LogFacadeService {
     }
 
     /**
-     * 특정 레이블의 값 목록 조회
+     * Retrieve values for a specific label
      *
-     * @param label 레이블 이름
-     * @param start 시작 시간 (선택)
-     * @param end 종료 시간 (선택)
-     * @param since 특정 시점 이후 (선택)
-     * @param query 쿼리 (선택)
-     * @return 레이블 값 응답 DTO
+     * @param label Label name
+     * @param start Start time (optional)
+     * @param end End time (optional)
+     * @param since Time since specific point (optional)
+     * @param query Query (optional)
+     * @return Label value response DTO
      */
     public LabelResponseDto getLabelValues(
             String label, String start, String end, String since, String query) {
@@ -114,13 +114,13 @@ public class LogFacadeService {
     }
 
     /**
-     * 로그 범위 쿼리 데이터 조회
+     * Retrieve log volume query data
      *
-     * @param query 로그 쿼리
-     * @param start 시작 시간
-     * @param end 종료 시간
-     * @param limit 조회 제한 수 (선택)*
-     * @return 로그 범위 쿼리 응답 DTO
+     * @param query Log query
+     * @param start Start time
+     * @param end End time
+     * @param limit Query limit (optional)
+     * @return Log volume query response DTO
      */
     public LogVolumeResponseDto getLogVolumes(
             String query, String start, String end, Integer limit) {
