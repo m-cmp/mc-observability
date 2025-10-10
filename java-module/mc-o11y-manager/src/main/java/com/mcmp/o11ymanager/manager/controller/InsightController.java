@@ -1,21 +1,6 @@
 package com.mcmp.o11ymanager.manager.controller;
 
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.AnomalyDetectionMeasurement;
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.AnomalyDetectionOptions;
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionBody;
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionHistory;
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.PredictionResult;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.LLMChatSession;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.LLMModel;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.Message;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.PostQueryBody;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.PostSessionBody;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.SessionHistory;
-import com.mcmp.o11ymanager.manager.dto.insight.prediction.PredictionMeasurement;
-import com.mcmp.o11ymanager.manager.dto.insight.prediction.PredictionOptions;
-import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.port.InsightPort;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,31 +13,47 @@ public class InsightController {
 
     /* ===================== ANOMALY ===================== */
     @GetMapping("/anomaly-detection/measurement")
-    public ResBody<List<AnomalyDetectionMeasurement>> getMeasurements() {
+    public Object getMeasurements() {
         return insightPort.getMeasurements();
     }
 
     @GetMapping("/anomaly-detection/measurement/{measurement}")
-    public ResBody<AnomalyDetectionMeasurement> getSpecificMeasurement(
-            @PathVariable String measurement) {
+    public Object getSpecificMeasurement(@PathVariable String measurement) {
         return insightPort.getSpecificMeasurement(measurement);
     }
 
     @GetMapping("/anomaly-detection/options")
-    public ResBody<AnomalyDetectionOptions> getOptions() {
+    public Object getOptions() {
         return insightPort.getOptions();
     }
 
-    @PostMapping("/anomaly-detection/nsId/{nsId}/target/{targetId}")
-    public ResBody<PredictionResult> predictMetric(
-            @PathVariable String nsId,
-            @PathVariable String targetId,
-            @RequestBody PredictionBody body) {
-        return insightPort.predictMetric(nsId, targetId, body);
+    @PostMapping("/anomaly-detection/{settingSeq}")
+    public Object predictAnomalyDetection(@PathVariable int settingSeq, @RequestBody Object body) {
+        return insightPort.predictAnomaly(settingSeq, body);
+    }
+
+    @GetMapping("/anomaly-detection/settings")
+    public Object getAnomalySettings() {
+        return insightPort.getAnomalySettings();
+    }
+
+    @PostMapping("/anomaly-detection/settings")
+    public Object createAnomalySetting(@RequestBody Object body) {
+        return insightPort.createAnomalySetting(body);
+    }
+
+    @PutMapping("/anomaly-detection/settings/{settingSeq}")
+    public Object updateAnomalySetting(@PathVariable int settingSeq, @RequestBody Object body) {
+        return insightPort.updateAnomalySetting(settingSeq, body);
+    }
+
+    @DeleteMapping("/anomaly-detection/settings/{settingSeq}")
+    public Object deleteAnomalySetting(@PathVariable int settingSeq) {
+        return insightPort.deleteAnomalySetting(settingSeq);
     }
 
     @GetMapping("/anomaly-detection/nsId/{nsId}/target/{targetId}/history")
-    public ResBody<PredictionHistory> getAnomalyHistory(
+    public Object getAnomalyHistory(
             @PathVariable String nsId,
             @PathVariable String targetId,
             @RequestParam String measurement,
@@ -63,74 +64,86 @@ public class InsightController {
 
     /* ===================== ALERT ===================== */
     @PostMapping("/alert-analysis/query")
-    public ResBody<Message> queryAlertAnalysis(@RequestBody PostQueryBody body) {
+    public Object queryAlertAnalysis(@RequestBody Object body) {
         return insightPort.queryAlertAnalysis(body);
     }
 
     /* ===================== LLM ===================== */
     @GetMapping("/llm/model")
-    public ResBody<List<LLMModel>> getLLMModelOptions() {
+    public Object getLLMModelOptions() {
         return insightPort.getLLMModelOptions();
     }
 
     @GetMapping("/llm/session")
-    public ResBody<List<LLMChatSession>> getLLMChatSessions() {
+    public Object getLLMChatSessions() {
         return insightPort.getLLMChatSessions();
     }
 
     @PostMapping("/llm/session")
-    public ResBody<LLMChatSession> postLLMChatSession(@RequestBody PostSessionBody body) {
+    public Object postLLMChatSession(@RequestBody Object body) {
         return insightPort.postLLMChatSession(body);
     }
 
     @DeleteMapping("/llm/session")
-    public ResBody<LLMChatSession> deleteLLMChatSession(@RequestParam String sessionId) {
+    public Object deleteLLMChatSession(@RequestParam String sessionId) {
         return insightPort.deleteLLMChatSession(sessionId);
     }
 
     @DeleteMapping("/llm/sessions")
-    public ResBody<List<LLMChatSession>> deleteAllLLMChatSessions() {
+    public Object deleteAllLLMChatSessions() {
         return insightPort.deleteAllLLMChatSessions();
     }
 
     @GetMapping("/llm/session/{sessionId}/history")
-    public ResBody<SessionHistory> getLLMSessionHistory(@PathVariable String sessionId) {
+    public Object getLLMSessionHistory(@PathVariable String sessionId) {
         return insightPort.getLLMSessionHistory(sessionId);
+    }
+
+    @GetMapping("/llm/apikeys")
+    public Object getLLMApiKeys(String provider) {
+        return insightPort.getLLMApiKeys(provider);
+    }
+
+    @PostMapping("/llm/apikeys")
+    public Object postLLMApiKeys(@RequestBody Object body) {
+        return insightPort.postLLMApiKeys(body);
+    }
+
+    @DeleteMapping("/llm/apiKeys")
+    public Object deleteLLMApiKeys(@RequestParam String provider) {
+        return insightPort.deleteLLMApiKeys(provider);
     }
 
     /* ===================== LOG ===================== */
     @PostMapping("/log-analysis/query")
-    public ResBody<Message> queryLogAnalysis(@RequestBody PostQueryBody body) {
+    public Object queryLogAnalysis(@RequestBody Object body) {
         return insightPort.queryLogAnalysis(body);
     }
 
     /* ===================== PREDICTION ===================== */
     @GetMapping("/predictions/measurement")
-    public ResBody<List<PredictionMeasurement>> getPredictionMeasurements() {
+    public Object getPredictionMeasurements() {
         return insightPort.getPredictionMeasurements();
     }
 
     @GetMapping("/predictions/measurement/{measurement}")
-    public ResBody<PredictionMeasurement> getPredictionSpecificMeasurement(
-            @PathVariable String measurement) {
+    public Object getPredictionSpecificMeasurement(@PathVariable String measurement) {
         return insightPort.getPredictionSpecificMeasurement(measurement);
     }
 
     @GetMapping("/predictions/options")
-    public ResBody<PredictionOptions> getPredictionOptions() {
+    public Object getPredictionOptions() {
         return insightPort.getPredictionOptions();
     }
 
     @PostMapping("/predictions/nsId/{nsId}/target/{targetId}")
-    public ResBody<PredictionResult> predictMonitoringData(
-            @PathVariable String nsId,
-            @PathVariable String targetId,
-            @RequestBody PredictionBody body) {
-        return insightPort.predictMonitoringData(nsId, targetId, body); // ✅ 수정
+    public Object predictMonitoringData(
+            @PathVariable String nsId, @PathVariable String targetId, @RequestBody Object body) {
+        return insightPort.predictMonitoringData(nsId, targetId, body);
     }
 
     @GetMapping("/predictions/nsId/{nsId}/target/{targetId}/history")
-    public ResBody<PredictionHistory> getPredictionHistory(
+    public Object getPredictionHistory(
             @PathVariable String nsId,
             @PathVariable String targetId,
             @RequestParam String measurement,
