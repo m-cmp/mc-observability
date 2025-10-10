@@ -8,10 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Loki API 응답 DTO를 도메인 모델로 변환하는 매퍼 */
 public class LokiResponseMapper {
 
-    /** DTO를 도메인 모델로 변환 */
     public static Log toDomain(LokiResponseDto dto) {
         if (dto == null || dto.getData() == null) {
             return Log.builder()
@@ -46,7 +44,7 @@ public class LokiResponseMapper {
                 .build();
     }
 
-    /** 벡터 타입 결과 추출 */
+    /** Extract vector type results */
     @SuppressWarnings("unchecked")
     private static List<Log.LogResult> extractVectorResults(LokiResponseDto.LokiDataDto data) {
         if (data.getResult() == null) {
@@ -59,19 +57,18 @@ public class LokiResponseMapper {
                         item -> {
                             Map<String, Object> map = (Map<String, Object>) item;
 
-                            // LokiResponseDto.VectorValueDto로 변환
+                            // Convert to LokiResponseDto.VectorValueDto
                             LokiResponseDto.VectorValueDto vectorDto =
                                     new LokiResponseDto.VectorValueDto();
                             vectorDto.setMetric((Map<String, String>) map.get("metric"));
                             vectorDto.setValue((List<Object>) map.get("value"));
 
-                            // 도메인 객체로 변환
                             return toVectorLogResult(vectorDto);
                         })
                 .collect(Collectors.toList());
     }
 
-    /** 스트림 타입 결과 추출 */
+    /** Extract stream type results */
     @SuppressWarnings("unchecked")
     private static List<Log.LogResult> extractStreamResults(LokiResponseDto.LokiDataDto data) {
         if (data.getResult() == null) {
@@ -84,19 +81,16 @@ public class LokiResponseMapper {
                         item -> {
                             Map<String, Object> map = (Map<String, Object>) item;
 
-                            // LokiResponseDto.StreamValueDto로 변환
                             LokiResponseDto.StreamValueDto streamDto =
                                     new LokiResponseDto.StreamValueDto();
                             streamDto.setStream((Map<String, String>) map.get("stream"));
                             streamDto.setValues((List<List<String>>) map.get("values"));
 
-                            // 도메인 객체로 변환
                             return toStreamLogResult(streamDto);
                         })
                 .collect(Collectors.toList());
     }
 
-    /** 벡터 타입 DTO를 도메인 모델로 변환 */
     private static Log.VectorLogResult toVectorLogResult(LokiResponseDto.VectorValueDto dto) {
         if (dto == null) {
             return Log.VectorLogResult.builder().build();
@@ -124,7 +118,6 @@ public class LokiResponseMapper {
                 .build();
     }
 
-    /** 스트림 타입 DTO를 도메인 모델로 변환 */
     private static Log.StreamLogResult toStreamLogResult(LokiResponseDto.StreamValueDto dto) {
         if (dto == null) {
             return Log.StreamLogResult.builder().build();
