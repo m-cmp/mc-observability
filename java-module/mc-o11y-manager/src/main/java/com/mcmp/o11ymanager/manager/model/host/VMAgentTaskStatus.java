@@ -4,17 +4,18 @@ import lombok.Getter;
 
 @Getter
 public enum VMAgentTaskStatus {
-    PREPARING("Agent 관련 작업이 준비중 입니다."),
-    INSTALLING("Agent 설치가 진행 중 입니다."),
-    UPDATING("Agent 업데이트가 진행 중 입니다."),
-    UPDATING_CONFIG("Agent 설정 업데이트가 진행 중 입니다."),
-    UNINSTALLING("Agent 제거가 진행 중 입니다."),
-    RESTARTING("Agent 재시작이 진행 중 입니다."),
-    IDLE("현재 진행중인 에이전트 관련 작업이 없습니다.");
+  PREPARING("Agent-related task is being prepared."),
+  INSTALLING("Agent installation is in progress."),
+  UPDATING("Agent update is in progress."),
+  UPDATING_CONFIG("Agent configuration update is in progress."),
+  UNINSTALLING("Agent uninstallation is in progress."),
+  RESTARTING("Agent restart is in progress."),
+  IDLE("There are no agent-related tasks currently in progress.");
 
-    private final String message;
 
-    VMAgentTaskStatus(String message) {
-        this.message = message;
-    }
+  private final String message;
+
+  VMAgentTaskStatus(String message) {
+    this.message = message;
+  }
 }

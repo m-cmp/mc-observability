@@ -5,7 +5,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
-/** Loki 쿼리 범위 로그 도메인 모델 */
+
 @Getter
 @Builder
 public class RangeQueryLog {

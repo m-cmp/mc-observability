@@ -5,7 +5,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
-/** Loki 로그 볼륨 도메인 모델 */
+
 @Getter
 @Builder
 public class LogVolume {
