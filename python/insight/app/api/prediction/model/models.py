@@ -10,4 +10,3 @@ class AgentPlugin(Base):
     SEQ = Column(Integer, primary_key=True, index=True)
     NAME = Column(String, nullable=False)
     PLUGIN_ID = Column(String(50), nullable=False)
-    PLUGIN_TYPE = Column(String(20), nullable=False)

@@ -2014,7 +2014,7 @@ paths:
           schema:
             $ref: '#/definitions/HTTPValidationError'
           headers: {}
-  /api/o11y/insight/llm/api_keys:
+  /api/o11y/insight/llm/api-keys:
     get:
       description: Retrieve the current API key configuration.
       summary: GetLLMAPIKeys
@@ -3260,20 +3260,11 @@ definitions:
       target_id:
         type: string
       target_type:
-        type: object
-        allOf:
-        - $ref: '#/definitions/TargetType2'
-        - description: The type of the target (vm or mci).
+        $ref: '#/definitions/TargetType'
       measurement:
-        type: object
-        allOf:
-        - $ref: '#/definitions/MetricType2'
-        - description: The type of metric being monitored for anomalies (cpu or mem)
+        $ref: '#/definitions/MetricType'
       execution_interval:
-        type: object
-        allOf:
-        - $ref: '#/definitions/ExecutionInterval1'
-        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
+        $ref: '#/definitions/ExecutionInterval'
     required:
     - ns_id
     - target_id
@@ -3285,19 +3276,9 @@ definitions:
     type: object
     properties:
       execution_interval:
-        type: object
-        allOf:
-        - $ref: '#/definitions/ExecutionInterval1'
-        - description: The interval at which anomaly detection runs (5m, 10m, 30m)
+        $ref: '#/definitions/ExecutionInterval'
     required:
     - execution_interval
-  ExecutionInterval:
-    title: ExecutionInterval
-    type: string
-    enum:
-    - 5m
-    - 10m
-    - 30m
   HTTPValidationError:
     title: HTTPValidationError
     type: object
@@ -3378,28 +3359,16 @@ definitions:
       message:
         type: string
       metadata:
-        type: object
-        allOf:
-        - $ref: '#/definitions/QueryMetadata'
-        - description: Query execution metadata
+        $ref: '#/definitions/QueryMetadata'
     required:
     - message_type
     - message
-  MetricType:
-    title: MetricType
-    type: string
-    enum:
-    - cpu
-    - mem
   PostAPIKeyBody:
     title: PostAPIKeyBody
     type: object
     properties:
       provider:
-        type: object
-        allOf:
-        - $ref: '#/definitions/APIProviderType1'
-        - description: The LLM provider to use
+        $ref: '#/definitions/APIProviderType'
       api_key:
         description: API key for the LLM provider
         type: string
@@ -3427,10 +3396,7 @@ definitions:
     type: object
     properties:
       provider:
-        type: object
-        allOf:
-        - $ref: '#/definitions/ProviderType2'
-        - description: The LLM provider to use
+        $ref: '#/definitions/ProviderType'
       model_name:
         description: The specific model name to use for analysis
         example: gpt-5-mini
@@ -3457,10 +3423,7 @@ definitions:
         example: vm
         type: string
       measurement:
-        type: object
-        allOf:
-        - $ref: '#/definitions/PredictionMetricType2'
-        - description: The type of metric being monitored for predictions(cpu, mem, disk, system)
+        $ref: '#/definitions/PredictionMetricType'
       prediction_range:
         description: Data prediction range as of now (1h~2,160h)
         example: 24h
@@ -3505,14 +3468,6 @@ definitions:
     - plugin_seq
     - measurement
     - fields
-  PredictionMetricType:
-    title: PredictionMetricType
-    type: string
-    enum:
-    - cpu
-    - mem
-    - disk
-    - system
   PredictionOptions:
     title: PredictionOptions
     type: object
@@ -3901,47 +3856,23 @@ definitions:
     - loc
     - msg
     - type
-  APIProviderType1:
-    title: APIProviderType1
-    description: The LLM provider to use
-    type: string
-    enum:
-    - openai
-    - google
-    - anthropic
-  ExecutionInterval1:
-    title: ExecutionInterval1
+  ExecutionInterval:
+    title: ExecutionInterval
     description: The interval at which anomaly detection runs (5m, 10m, 30m)
     type: string
     enum:
     - 5m
     - 10m
     - 30m
-  MetricType1:
-    title: MetricType1
-    description: The type of metric to retrieve.
-    type: string
-    enum:
-    - cpu
-    - mem
-  MetricType2:
-    title: MetricType2
+  MetricType:
+    title: MetricType
     description: The type of metric being monitored for anomalies (cpu or mem)
     type: string
     enum:
     - cpu
     - mem
-  PredictionMetricType1:
-    title: PredictionMetricType1
-    description: The type of metric to retrieve.
-    type: string
-    enum:
-    - cpu
-    - mem
-    - disk
-    - system
-  PredictionMetricType2:
-    title: PredictionMetricType2
+  PredictionMetricType:
+    title: PredictionMetricType
     description: The type of metric being monitored for predictions(cpu, mem, disk, system)
     type: string
     enum:
@@ -3949,15 +3880,6 @@ definitions:
     - mem
     - disk
     - system
-  ProviderType2:
-    title: ProviderType2
-    description: The LLM provider to use
-    type: string
-    enum:
-    - openai
-    - ollama
-    - google
-    - anthropic
   TargetType2:
     title: TargetType2
     description: The type of the target (vm or mci).

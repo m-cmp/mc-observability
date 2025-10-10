@@ -27,7 +27,6 @@ spring:
     show-sql: false
   banner:
     location: classpath:banner.txt
-
   rabbitmq:
     host: ${RABBITMQ_HOST:mc-observability-rabbitmq}
     port: ${RABBITMQ_PORT:5672}
@@ -109,11 +108,11 @@ feign:
   cb-tumblebug:
     connect-timeout: 5000
     read-timeout: 600000
-    url: ${TUMBLEBUG_URL:http://cb-tumblebug:1323}
+    url: ${TUMBLEBUG_URL:http://mc-infra-manager:1323}
     id: ${TUMBLEBUG_ID:default}
     pw: ${TUMBLEBUG_PW:default}
   cb-spider:
-    url: ${SPIDER_URL:http://cb-spider:1024}
+    url: ${SPIDER_URL:http://mc-infra-connector:1024}
     id: ${SPIDER_ID:-}
     pw: ${SPIDER_PW:-}
   insight:
