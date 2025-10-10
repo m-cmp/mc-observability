@@ -6,27 +6,36 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "insight", url = "${feign.insight.url}")
 public interface InsightClient {
 
-    String ANOMALY = "/anomaly-detection";
-    String ALERT = "/alert-analysis";
-    String LLM = "/llm";
-    String LOG = "/log-analysis";
-    String PREDICTION = "/predictions";
+    String ANOMALY = "/api/o11y/insight/anomaly-detection";
+    String ALERT = "/api/o11y/insight/alert-analysis";
+    String LLM = "/api/o11y/insight/llm";
+    String LOG = "/api/o11y/insight/log-analysis";
+    String PREDICTION = "/api/o11y/insight/predictions";
 
     @GetMapping(ANOMALY + "/measurement")
     Object getMeasurements();
 
     @GetMapping(ANOMALY + "/measurement/{measurement}")
-    Object getSpecificMeasurement(
-            @PathVariable("measurement") String measurement);
+    Object getSpecificMeasurement(@PathVariable("measurement") String measurement);
 
     @GetMapping(ANOMALY + "/options")
     Object getOptions();
 
-    @PostMapping(ANOMALY + "/nsId/{nsId}/target/{targetId}")
-    Object predictMetric(
-            @PathVariable("nsId") String nsId,
-            @PathVariable("targetId") String targetId,
-            @RequestBody Object body);
+    @PostMapping(ANOMALY + "/{settingSeq}")
+    Object predictMetric(@PathVariable("settingSeq") int settingSeq, @RequestBody Object body);
+
+    @GetMapping(ANOMALY + "/settings")
+    Object getAnomalySettings();
+
+    @PostMapping(ANOMALY + "/settings")
+    Object createAnomalySetting(@RequestBody Object body);
+
+    @PutMapping(ANOMALY + "/settings/{settingSeq}")
+    Object updateAnomalySetting(
+            @PathVariable("settingSeq") int settingSeq, @RequestBody Object body);
+
+    @DeleteMapping(ANOMALY + "/settings/{settingSeq}")
+    Object deleteAnomalySetting(@PathVariable("settingSeq") int settingSeq);
 
     @GetMapping(ANOMALY + "/nsId/{nsId}/target/{targetId}/history")
     Object getAnomalyHistory(
@@ -57,6 +66,15 @@ public interface InsightClient {
     @GetMapping(LLM + "/session/{sessionId}/history")
     Object getLLMSessionHistory();
 
+    @GetMapping(LLM + "/api-keys")
+    Object getLLMApiKeys(@RequestParam("provider") String provider);
+
+    @PostMapping(LLM + "/api-keys")
+    Object postLLMApiKeys(@RequestBody Object body);
+
+    @DeleteMapping(LLM + "/api-keys")
+    Object deleteLLMApiKey(@RequestParam("provider") String provider);
+
     @PostMapping(LOG + "/query")
     Object queryLogAnalysis();
 
@@ -65,8 +83,7 @@ public interface InsightClient {
 
     /** GET /predictions/measurement/{measurement} */
     @GetMapping(PREDICTION + "/measurement/{measurement}")
-    Object getPredictionSpecificMeasurement(
-            @PathVariable("measurement") String measurement);
+    Object getPredictionSpecificMeasurement(@PathVariable("measurement") String measurement);
 
     /** GET /predictions/options */
     @GetMapping(PREDICTION + "/options")
@@ -74,8 +91,7 @@ public interface InsightClient {
 
     /** POST /predictions/nsId/{nsId}/vm/{targetId} */
     @PostMapping(PREDICTION + "/nsId/{nsId}/target/{targetId}")
-    Object predictMonitoringData(
-            @RequestBody Object body);
+    Object predictMonitoringData(@RequestBody Object body);
 
     /** GET /predictions/nsId/{nsId}/vm/{targetId}/history */
     @GetMapping(PREDICTION + "/nsId/{nsId}/target/{targetId}/history")

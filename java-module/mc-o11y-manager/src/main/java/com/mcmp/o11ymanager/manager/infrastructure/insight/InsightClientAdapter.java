@@ -1,8 +1,5 @@
 package com.mcmp.o11ymanager.manager.infrastructure.insight;
 
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.*;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.*;
-import com.mcmp.o11ymanager.manager.dto.insight.prediction.*;
 import com.mcmp.o11ymanager.manager.port.InsightPort;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +28,7 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictMonitoringData(
-            String nsId, String vmId, Object body) {
+    public Object predictMonitoringData(String nsId, String vmId, Object body) {
         return insightClient.predictMonitoringData(body);
     }
 
@@ -59,9 +55,28 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictMetric(
-            String nsId, String targetId, Object body) {
-        return insightClient.predictMetric(nsId, targetId, body);
+    public Object predictAnomaly(int settingSeq, Object body) {
+        return insightClient.predictMetric(settingSeq, body); // Feign 호출 연결
+    }
+
+    @Override
+    public Object getAnomalySettings() {
+        return insightClient.getAnomalySettings();
+    }
+
+    @Override
+    public Object createAnomalySetting(Object body) {
+        return insightClient.createAnomalySetting(body);
+    }
+
+    @Override
+    public Object updateAnomalySetting(int settingSeq, Object body) {
+        return insightClient.updateAnomalySetting(settingSeq, body);
+    }
+
+    @Override
+    public Object deleteAnomalySetting(int settingSeq) {
+        return insightClient.deleteAnomalySetting(settingSeq);
     }
 
     @Override
@@ -99,6 +114,21 @@ public class InsightClientAdapter implements InsightPort {
     @Override
     public Object getLLMSessionHistory(String sessionId) {
         return insightClient.getLLMSessionHistory();
+    }
+
+    @Override
+    public Object getLLMApiKeys(String provider) {
+        return insightClient.getLLMApiKeys(provider);
+    }
+
+    @Override
+    public Object postLLMApiKeys(Object body) {
+        return insightClient.postLLMApiKeys(body);
+    }
+
+    @Override
+    public Object deleteLLMApiKeys(String provider) {
+        return insightClient.deleteLLMApiKey(provider);
     }
 
     /* ===================== Alert Analysis ===================== */
