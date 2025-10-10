@@ -9,6 +9,6 @@ public class MonitoringAgentNotInstalled extends BaseException {
         super(
                 requestId,
                 ErrorCode.MONITORING_AGENT_NOT_EXIST,
-                String.format("호스트(ID: %s)에 에이전트가 존재하지 않습니다.", hostId));
+                String.format("No agent exists on host (ID: %s).", hostId));
     }
 }

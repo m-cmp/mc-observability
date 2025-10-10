@@ -11,10 +11,13 @@ public class InfluxQl {
     // -----------------------------------generate
     // query--------------------------------------------------//
     public static String buildQuery(MetricRequestDTO r, String retentionPolicy) {
-        if (!StringUtils.hasText(r.getMeasurement()))
-            throw new IllegalArgumentException("measurement는 필수입니다.");
-        if (!StringUtils.hasText(r.getRange()) || !r.getRange().matches("\\d+[smhd]"))
+        if (!StringUtils.hasText(r.getMeasurement())) {
+            throw new IllegalArgumentException("Measurement is required.");
+        }
+
+        if (!StringUtils.hasText(r.getRange()) || !r.getRange().matches("\\d+[smhd]")) {
             throw new IllegalArgumentException("The range must be in the format 10s/5m/1h/2d.");
+        }
 
         String select = "select time as timestamp" + projection(r.getFields());
         String from = " from " + qualifiedMeasurement(retentionPolicy, r.getMeasurement());
@@ -29,15 +32,18 @@ public class InfluxQl {
     // ------------------------------------select
     // query--------------------------------------------------//
     private static String projection(List<FieldInfo> fields) {
-        if (fields == null || fields.isEmpty()) return ", *";
+        if (fields == null || fields.isEmpty()) {
+            return ", *";
+        }
         var j = new StringJoiner(", ", ", ", "");
         boolean anyFunc = false, anySimple = false;
 
         for (var f : fields) {
             String fn = f.getFunction();
             String fd = f.getField();
-            if (!StringUtils.hasText(fd))
+            if (!StringUtils.hasText(fd)) {
                 throw new IllegalArgumentException("fields[].fields are required");
+            }
             if (StringUtils.hasText(fn)) {
                 anyFunc = true;
                 j.add(fn + "(" + fd + ") as " + fd);
@@ -46,20 +52,24 @@ public class InfluxQl {
                 j.add(fd);
             }
         }
-        if (anyFunc && anySimple)
+        if (anyFunc && anySimple) {
             throw new IllegalArgumentException(
                     "fields: Simple fields and aggregate functions are not mixed");
+        }
         return j.toString();
     }
 
     // ------------------------------------where
     // query--------------------------------------------------//
     private static String conditions(List<MetricRequestDTO.ConditionInfo> conds) {
-        if (conds == null || conds.isEmpty()) return "";
+        if (conds == null || conds.isEmpty()) {
+            return "";
+        }
         var sb = new StringBuilder();
         for (var c : conds) {
-            if (!StringUtils.hasText(c.getKey()) || !StringUtils.hasText(c.getValue()))
+            if (!StringUtils.hasText(c.getKey()) || !StringUtils.hasText(c.getValue())) {
                 throw new IllegalArgumentException("The key/value of conditions cannot be empty.");
+            }
             sb.append(" and ")
                     .append("\"")
                     .append(escapeIdent(c.getKey()))
@@ -76,10 +86,16 @@ public class InfluxQl {
     private static String groupBy(String groupTime, List<String> groupBy) {
         boolean hasTime = StringUtils.hasText(groupTime);
         boolean hasGroup = groupBy != null && !groupBy.isEmpty();
-        if (!hasTime && !hasGroup) return "";
+        if (!hasTime && !hasGroup) {
+            return "";
+        }
         var j = new StringJoiner(", ", " group by ", "");
-        if (hasTime) j.add("time(" + groupTime + ")");
-        if (hasGroup) j.add(String.join(",", groupBy));
+        if (hasTime) {
+            j.add("time(" + groupTime + ")");
+        }
+        if (hasGroup) {
+            j.add(String.join(",", groupBy));
+        }
         return j.toString();
     }
 

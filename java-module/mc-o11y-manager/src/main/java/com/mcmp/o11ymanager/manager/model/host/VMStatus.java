@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum VMStatus {
-    RUNNING("호스트가 동작 중입니다."),
-    FAILED("호스트에 연결할 수 없습니다.");
+    RUNNING("The host is running."),
+    FAILED("Unable to connect to the host.");
 
     private final String message;
 

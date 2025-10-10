@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.manager.port;
 
-
 public interface InsightPort {
 
     /* ===================== Prediction ===================== */

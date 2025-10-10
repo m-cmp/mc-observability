@@ -6,10 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 레이블 결과 응답 DTO */
+/** Label result response DTO */
 public class LabelResultDto {
 
-    /** 레이블 목록 조회 결과 */
+    /** Label list query result */
     @Data
     @Builder
     @NoArgsConstructor
@@ -18,7 +18,7 @@ public class LabelResultDto {
         private LabelsDto result;
     }
 
-    /** 레이블 값 목록 조회 결과 */
+    /** Label value list query result */
     @Data
     @Builder
     @NoArgsConstructor
@@ -27,7 +27,7 @@ public class LabelResultDto {
         private LabelValuesDto result;
     }
 
-    /** 레이블 목록 데이터 */
+    /** Label list data */
     @Data
     @Builder
     @NoArgsConstructor
@@ -36,7 +36,7 @@ public class LabelResultDto {
         private List<String> labels;
     }
 
-    /** 레이블 값 목록 데이터 */
+    /** Label value list data */
     @Data
     @Builder
     @NoArgsConstructor

@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** Loki 로그 컨트롤러 프레젠테이션 계층에서 API 요청을 처리 */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/log")
@@ -36,7 +35,10 @@ public class LogController {
                         query, start, end, limit, direction, interval, step, since);
 
         return SuccessResponse.of(
-                requestInfo.getRequestId(), logs, ResponseCode.OK, "로그 기간 데이터 읽기 성공하였습니다.");
+                requestInfo.getRequestId(),
+                logs,
+                ResponseCode.OK,
+                "Successfully retrieved log range data.");
     }
 
     @GetMapping("/labels")
@@ -51,7 +53,7 @@ public class LogController {
                 requestInfo.getRequestId(),
                 labels.getResult(),
                 ResponseCode.OK,
-                "레이블 목록 조회 성공하였습니다.");
+                "Successfully retrieved label list.");
     }
 
     @GetMapping("/labels/{label}/values")
@@ -69,7 +71,7 @@ public class LogController {
                 requestInfo.getRequestId(),
                 labelValues.getResult(),
                 ResponseCode.OK,
-                "레이블 값 목록 조회 성공하였습니다.");
+                "Successfully retrieved label value list.");
     }
 
     @GetMapping("/log_volumes")
@@ -82,6 +84,9 @@ public class LogController {
         LogVolumeResponseDto volumes = logFacadeService.getLogVolumes(query, start, end, limit);
 
         return SuccessResponse.of(
-                requestInfo.getRequestId(), volumes, ResponseCode.OK, "로그 볼륨 데이터 조회 성공하였습니다.");
+                requestInfo.getRequestId(),
+                volumes,
+                ResponseCode.OK,
+                "Successfully retrieved log volume data.");
     }
 }

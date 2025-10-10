@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 로그 볼륨 데이터 요약 응답을 위한 DTO */
+/** DTO for log volume data summary response */
 public class VolumeResultDto {
 
     @Data
