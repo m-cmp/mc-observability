@@ -99,17 +99,17 @@ public class InsightController {
         return insightPort.getLLMSessionHistory(sessionId);
     }
 
-    @GetMapping("/llm/apikeys")
+    @GetMapping("/llm/api-keys")
     public Object getLLMApiKeys(String provider) {
         return insightPort.getLLMApiKeys(provider);
     }
 
-    @PostMapping("/llm/apikeys")
+    @PostMapping("/llm/api-keys")
     public Object postLLMApiKeys(@RequestBody Object body) {
         return insightPort.postLLMApiKeys(body);
     }
 
-    @DeleteMapping("/llm/apiKeys")
+    @DeleteMapping("/llm/api-Keys")
     public Object deleteLLMApiKeys(@RequestParam String provider) {
         return insightPort.deleteLLMApiKeys(provider);
     }
