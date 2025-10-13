@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @ApiResponses({
     @ApiResponse(
             responseCode = "500",
-            description = "실패",
+            description = "Common Fail Response",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
 })
 public @interface CommonErrorResponse {}

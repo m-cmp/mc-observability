@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** 도메인 모델을 프레젠테이션 계층 DTO로 변환하는 매퍼 */
 public class LogResponseMapper {
 
-    /** 도메인 모델을 프레젠테이션 DTO로 변환 */
     public static LogResponseDto toDto(Log domain) {
         if (domain == null) {
             return null;
@@ -44,7 +42,6 @@ public class LogResponseMapper {
                 .build();
     }
 
-    /** 벡터 타입 도메인 모델을 DTO로 변환 */
     private static LogResponseDto.VectorLogResultDto toVectorDto(Log.VectorLogResult domain) {
         return LogResponseDto.VectorLogResultDto.builder()
                 .labels(domain.getLabels())
@@ -53,7 +50,6 @@ public class LogResponseMapper {
                 .build();
     }
 
-    /** 스트림 타입 도메인 모델을 DTO로 변환 */
     private static LogResponseDto.StreamLogResultDto toStreamDto(Log.StreamLogResult domain) {
         List<LogResponseDto.StreamLogResultDto.LogEntryDto> entryDtos =
                 domain.getEntries() != null

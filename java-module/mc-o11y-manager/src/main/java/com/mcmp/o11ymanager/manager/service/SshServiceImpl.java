@@ -85,7 +85,8 @@ public class SshServiceImpl implements SshService {
                     connection.close();
                 } catch (IOException e) {
                     log.error("Error closing stale connection: {}", e.getMessage());
-                    throw new SshConnectionException("SSH 연결 해제 실패" + ip, user);
+                    throw new SshConnectionException(
+                            "Failed to disconnect SSH connection" + ip, user);
                 }
             }
         }
@@ -98,7 +99,8 @@ public class SshServiceImpl implements SshService {
             return connection;
         } catch (Exception e) {
             log.error("Error establishing SSH connection to {}: {}", ip, e.getMessage());
-            throw new SshConnectionException(requestInfo.getRequestId(), "SSH 연결 실패" + ip);
+            throw new SshConnectionException(
+                    requestInfo.getRequestId(), "Failed to connect via SSH" + ip);
         }
     }
 
@@ -325,7 +327,7 @@ public class SshServiceImpl implements SshService {
 
         } catch (Exception e) {
             log.error("Failed to list directory {}: {}", directoryPath, e.getMessage());
-            throw new IOException("디렉터리 목록 조회에 실패했습니다: " + directoryPath, e);
+            throw new IOException("Failed to retrieve directory list: " + directoryPath, e);
         }
         return Arrays.stream(listRes.getOutput().split("\\r?\\n"))
                 .filter(line -> !line.isBlank())
@@ -340,7 +342,7 @@ public class SshServiceImpl implements SshService {
             catRes = sshPort.executeCommand(connection, catCmd);
         } catch (Exception e) {
             log.error("Failed to read file {}: {}", filePath, e.getMessage());
-            throw new IOException("파일 읽기에 실패했습니다: " + filePath, e);
+            throw new IOException("Failed to read file: " + filePath, e);
         }
         return catRes.getOutput();
     }
@@ -356,40 +358,42 @@ public class SshServiceImpl implements SshService {
             String password)
             throws IOException {
 
-        // 로컬 경로가 디렉토리인지 확인하고, 없으면 생성
+        // Check if the local path is a directory, and create it if it doesn't exist
         if (!Files.exists(localPath)) {
             Files.createDirectories(localPath);
-            log.info("로컬 디렉토리 생성: {}", localPath);
+            log.info("The specified local path is not a directory: {}", localPath);
         } else if (!Files.isDirectory(localPath)) {
-            log.error("에러: 지정된 로컬 경로가 디렉토리가 아닙니다: {}", localPath);
+            log.error("지정된 로컬 경로가 디렉토리가 아닙니다: {}", localPath);
             return;
         }
 
         try (SshClient client = SshClient.setUpDefaultClient()) {
-            client.start(); // 클라이언트 시작
+            client.start();
 
             try (ClientSession session =
-                    client.connect(username, ip, port)
-                            .verify(15, TimeUnit.SECONDS) // 연결 타임아웃 (15초)
-                            .getSession()) {
+                    client.connect(username, ip, port).verify(15, TimeUnit.SECONDS).getSession()) {
 
                 session.addPasswordIdentity(password); // 비밀번호 인증
 
-                // 공개키 인증을 사용하려면:
+                // To use public key authentication:
                 // session.addPublicKeyIdentity(UserInteraction.loadKeyIdentity("path/to/your/private_key_file", null, null));
 
-                // 인증 시도 및 타임아웃 설정
+                // Attempt authentication and set timeout
+
                 if (session.auth().verify(15, TimeUnit.SECONDS).isFailure()) {
-                    throw new IOException("SSH 서버 인증 실패: " + ip);
+                    throw new IOException("SSH server authentication failed: " + ip);
                 }
-                log.info("SSH 세션 인증 성공. {}", ip);
+                log.info("SSH session authentication successful. {}", ip);
 
                 SftpClientFactory factory = SftpClientFactory.instance();
 
                 try (SftpClient sftpClient = factory.createSftpClient(session)) {
-                    log.info("SFTP 클라이언트 생성됨. 다운로드 시작: {} -> {}", remoteFilePath, localPath);
+                    log.info(
+                            "SFTP client created. Starting download: {} -> {}",
+                            remoteFilePath,
+                            localPath);
                     recursiveDownload(sftpClient, remoteFilePath, localPath);
-                    log.info("다운로드 완료: {} -> {}", remoteFilePath, localPath);
+                    log.info("Download completed: {} -> {}", remoteFilePath, localPath);
                 }
             }
         }
@@ -399,19 +403,22 @@ public class SshServiceImpl implements SshService {
             SftpClient sftpClient, String currentRemotePath, Path currentLocalPath)
             throws IOException {
 
-        // 원격 디렉토리의 항목들을 읽어옴
+        // Read entries from the remote directory
         Iterable<SftpClient.DirEntry> entries;
         try {
             entries = sftpClient.readDir(currentRemotePath);
         } catch (IOException e) {
-            log.error("에러: 원격 디렉토리를 읽는 중 오류 발생 {} : {}", currentRemotePath, e.getMessage());
-            // 접근 권한이 없거나 경로가 잘못되었을 수 있습니다. 이 디렉토리는 건너뜁니다.
+            log.error(
+                    "Error: Failed to read remote directory {} : {}",
+                    currentRemotePath,
+                    e.getMessage());
+            // The directory may be skipped due to incorrect path or insufficient permissions.
             return;
         }
 
         for (SftpClient.DirEntry entry : entries) {
             String entryName = entry.getFilename();
-            // 현재 디렉토리(.)나 부모 디렉토리(..)는 건너뜀
+            // Skip current (.) and parent (..) directories
             if (entryName.equals(".") || entryName.equals("..")) {
                 continue;
             }
@@ -421,32 +428,35 @@ public class SshServiceImpl implements SshService {
             SftpClient.Attributes attrs = entry.getAttributes();
 
             if (attrs.isDirectory()) {
-                // 로컬에 해당 디렉토리가 없으면 생성
+                // Create the corresponding local directory if it doesn't exist
                 if (!Files.exists(nextLocalPath)) {
                     Files.createDirectories(nextLocalPath);
-                    log.info("디렉토리 생성: {}", nextLocalPath);
+                    log.info("Directory created: {}", nextLocalPath);
                 }
-                log.info("디렉토리 진입: {}", nextRemotePath);
-                recursiveDownload(sftpClient, nextRemotePath, nextLocalPath); // 재귀 호출
+                log.info("Entering directory: {}", nextRemotePath);
+                recursiveDownload(sftpClient, nextRemotePath, nextLocalPath); // Recursive call
             } else if (attrs.isRegularFile()) {
-                log.info("파일 다운로드: {} -> {}", nextRemotePath, nextLocalPath);
+                log.info("Downloading file: {} -> {}", nextRemotePath, nextLocalPath);
                 try (InputStream inputStream = sftpClient.read(nextRemotePath)) {
                     Files.copy(inputStream, nextLocalPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e) {
-                    log.error("에러: 파일 다운로드 중 오류 발생 {} : {}'", nextRemotePath, e.getMessage());
-                    // 개별 파일 다운로드 실패 시 계속 진행할 수 있도록 여기서 예외를 처리할 수 있습니다.
+                    log.error(
+                            "Error: Failed to download file {} : {}",
+                            nextRemotePath,
+                            e.getMessage());
+                    // Continue execution even if a file download fails
                 }
             } else if (attrs.isSymbolicLink()) {
-                log.info("심볼릭 링크 건너뜀: : {}", nextRemotePath);
-                // 필요하다면 심볼릭 링크 처리 로직 추가
+                log.info("Skipping symbolic link: {}", nextRemotePath);
+                // Add symbolic link handling logic if necessary
             } else {
-                log.info("지원되지 않는 파일 타입 건너뜀: {}", nextRemotePath);
+                log.info("Skipping unsupported file type: {}", nextRemotePath);
             }
         }
     }
 
     @Override
-    // fluent-bit enable 함수
+    // fluent-bit enable function
     public void enableFluentBit(
             SshConnection connection, String ip, int port, String user, String password) {
 
@@ -490,7 +500,7 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    // fluent-bit disable 함수
+    // fluent-bit disable function
     public void disableFluentBit(
             SshConnection connection, String ip, int port, String user, String password) {
 
@@ -524,8 +534,7 @@ public class SshServiceImpl implements SshService {
         }
     }
 
-    // fluent-bit restart 함수
-
+    // fluent-bit restart function
     @Override
     public void restartFluentBit(
             SshConnection connection, String ip, int port, String user, String password) {
@@ -537,7 +546,7 @@ public class SshServiceImpl implements SshService {
                         + getFluentBitServiceName();
 
         try {
-            // 1) enable 상태가 아니면 재시작 불가
+            // 1) If not enabled, cannot restart
             if (!isEnable(Agent.FLUENT_BIT, ip, port, user, password, connection)) {
                 throw new AgentStatusException(
                         requestInfo.getRequestId(),
@@ -545,7 +554,7 @@ public class SshServiceImpl implements SshService {
                         Agent.FLUENT_BIT);
             }
 
-            // 2) restart 명령 실행
+            // 2) Execute restart command
             AgentCommandResult restartRes = sshPort.executeCommand(connection, restartCommand);
 
             if (restartRes.getExitCode() != 0) {
@@ -556,7 +565,7 @@ public class SshServiceImpl implements SshService {
                                 + restartRes.getError());
             }
 
-            log.info("✅ Successfully restarted Fluent Bit service.");
+            log.info("Successfully restarted Fluent Bit service.");
 
         } catch (AgentStatusException e) {
             throw e;
@@ -583,7 +592,7 @@ public class SshServiceImpl implements SshService {
             isAlreadyEnabled = isEnable(Agent.TELEGRAF, ip, port, user, password, connection);
 
             if (isAlreadyEnabled) {
-                log.info("Telegraf Bit service is already enabled. No need to enable.");
+                log.info("Telegraf service is already enabled. No need to enable.");
                 return;
             }
 
@@ -609,7 +618,7 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    // fluent-bit disable 함수
+    // telegraf disable function
     public void disableTelgraf(
             SshConnection connection, String ip, int port, String user, String password) {
 
@@ -628,12 +637,12 @@ public class SshServiceImpl implements SshService {
                 log.info("Successfully disabled Telegraf service.");
             } else {
                 log.error(
-                        "Failed to disable Telgarf service. ExitCode: {}, Error: {}",
+                        "Failed to disable Telegraf service. ExitCode: {}, Error: {}",
                         disableRes.getExitCode(),
                         disableRes.getError());
                 throw new AgentStatusException(
                         requestInfo.getRequestId(),
-                        "Failed to disable Telgarf service.",
+                        "Failed to disable Telegraf service.",
                         Agent.TELEGRAF);
             }
         } catch (AgentStatusException e) {
@@ -643,8 +652,7 @@ public class SshServiceImpl implements SshService {
         }
     }
 
-    // fluent-bit restart 함수
-
+    // telegraf restart function
     @Override
     public void restartTelegraf(
             SshConnection connection, String ip, int port, String user, String password) {
@@ -656,15 +664,15 @@ public class SshServiceImpl implements SshService {
                         + getTelegrafServiceName();
 
         try {
-            // 1) enable 상태가 아니면 재시작 불가
+            // 1) If not enabled, cannot restart
             if (!isEnable(Agent.TELEGRAF, ip, port, user, password, connection)) {
                 throw new AgentStatusException(
                         requestInfo.getRequestId(),
-                        "telgraf is not enabled. Cannot restart.",
+                        "Telegraf is not enabled. Cannot restart.",
                         Agent.TELEGRAF);
             }
 
-            // 2) restart 명령 실행
+            // 2) Execute restart command
             AgentCommandResult restartRes = sshPort.executeCommand(connection, restartCommand);
 
             if (restartRes.getExitCode() != 0) {
@@ -675,7 +683,7 @@ public class SshServiceImpl implements SshService {
                                 + restartRes.getError());
             }
 
-            log.info("Successfully restarted telegraf service.");
+            log.info("Successfully restarted Telegraf service.");
 
         } catch (AgentStatusException e) {
             throw e;

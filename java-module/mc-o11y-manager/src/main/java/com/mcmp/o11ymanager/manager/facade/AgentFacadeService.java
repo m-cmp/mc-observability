@@ -51,11 +51,11 @@ public class AgentFacadeService {
         TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
 
         if (sshKey == null) {
-            log.warn("🔴 SSH private key not found");
+            log.warn("SSH private key not found");
             throw new RuntimeException("SSH private key not found");
         } else {
             log.info(
-                    "🔑 key name={}, id={}, privateKey={}",
+                    "key name={}, id={}, privateKey={}",
                     sshKey.getName(),
                     sshKey.getId(),
                     sshKey.getPrivateKey());
@@ -78,7 +78,7 @@ public class AgentFacadeService {
     public List<ResultDTO> install(String nsId, String mciId, String vmId) {
 
         log.info(
-                "===================================start Agent Install - vmId: {}===========================================",
+                "=================================== Start Agent Installation - vmId: {} ===========================================",
                 vmId);
 
         List<ResultDTO> results = new ArrayList<>();
@@ -87,7 +87,7 @@ public class AgentFacadeService {
         try {
             AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
 
-            // 1) Lock 걸기
+            // 1) Acquire lock
             int templateCount;
             try {
                 semaphoreInstallTemplateCurrentCountLock.lock();
@@ -96,13 +96,12 @@ public class AgentFacadeService {
                 semaphoreInstallTemplateCurrentCountLock.unlock();
             }
 
-            // 2 ) 에이전트 설치
-            // 2-1 ) Telegraf 설치
+            // 2) Install agent
+            // 2-1) Install Telegraf
             agentLock.lock();
-
             telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
 
-            // 2-2 ) FluentBit 설치
+            // 2-2) Install FluentBit
             fluentBitFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
 
             results.add(

@@ -9,10 +9,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
-/** LogResponseDto를 LogSummaryDto로 변환하는 매퍼 */
 public class LogSummaryMapper {
 
-    /** LogSummaryDto.ResultDto 생성 */
     public static LogSummaryDto.ResultDto toResultDto(LogResponseDto dto, String direction) {
         if (dto == null) {
             return null;
@@ -23,7 +21,6 @@ public class LogSummaryMapper {
         if (dto.getData() != null && dto.getData().getResults() != null) {
             for (LogResponseDto.LogResultDto result : dto.getData().getResults()) {
                 if (result instanceof LogResponseDto.VectorLogResultDto vectorResult) {
-                    // 벡터 타입 결과 처리
                     entries.add(
                             LogSummaryDto.LogEntryDto.builder()
                                     .labels(vectorResult.getLabels())
@@ -31,7 +28,6 @@ public class LogSummaryMapper {
                                     .value(vectorResult.getValue())
                                     .build());
                 } else if (result instanceof LogResponseDto.StreamLogResultDto streamResult) {
-                    // 스트림 타입 결과 처리
                     if (streamResult.getEntries() != null && !streamResult.getEntries().isEmpty()) {
                         for (LogResponseDto.StreamLogResultDto.LogEntryDto entry :
                                 streamResult.getEntries()) {
@@ -39,7 +35,7 @@ public class LogSummaryMapper {
                             try {
                                 timestamp = Double.parseDouble(entry.getTimestamp());
                             } catch (NumberFormatException e) {
-                                // 숫자 변환 실패 시 기본값 사용
+                                // ignore parse error
                             }
 
                             entries.add(
@@ -54,10 +50,8 @@ public class LogSummaryMapper {
             }
         }
 
-        // 통계 정보 추출
         LogSummaryDto.StatsDto statsDto = extractStats(dto);
 
-        // 정렬
         if (StringUtils.isEmpty(direction)) {
             direction = "backward";
         }
@@ -85,14 +79,11 @@ public class LogSummaryMapper {
                 .build();
     }
 
-    /** 통계 정보 추출 메서드 */
     private static LogSummaryDto.StatsDto extractStats(LogResponseDto dto) {
         if (dto.getData() != null && dto.getData().getStats() != null) {
             try {
                 if (dto.getData().getStats() instanceof Map) {
                     Map<String, Object> stats = (Map<String, Object>) dto.getData().getStats();
-
-                    // stats.summary에서 필요한 정보 추출
                     Map<String, Object> summary = (Map<String, Object>) stats.get("summary");
                     if (summary != null) {
                         return LogSummaryDto.StatsDto.builder()
@@ -104,11 +95,10 @@ public class LogSummaryMapper {
                     }
                 }
             } catch (Exception e) {
-                // 예외 발생 시 빈 통계 정보 반환
+                // ignore parsing errors
             }
         }
 
-        // 기본 통계 정보 생성
         return LogSummaryDto.StatsDto.builder()
                 .totalBytesProcessed(0L)
                 .totalLinesProcessed(0L)
@@ -117,7 +107,6 @@ public class LogSummaryMapper {
                 .build();
     }
 
-    /** Map에서 Long 값 추출 */
     private static Long getLongValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value instanceof Number) {
@@ -126,7 +115,6 @@ public class LogSummaryMapper {
         return 0L;
     }
 
-    /** Map에서 Double 값 추출 */
     private static Double getDoubleValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value instanceof Number) {
@@ -135,7 +123,6 @@ public class LogSummaryMapper {
         return 0.0;
     }
 
-    /** Map에서 Integer 값 추출 */
     private static Integer getIntValue(Map<String, Object> map, String key) {
         Object value = map.get(key);
         if (value instanceof Number) {

@@ -20,7 +20,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Loki 레포지토리 어댑터 도메인의 포트 인터페이스를 구현하여 인프라 계층의 구현체와 연결 */
 @Component
 @RequiredArgsConstructor
 public class LokiClientAdapter implements LokiPort {
@@ -29,7 +28,7 @@ public class LokiClientAdapter implements LokiPort {
 
     @Override
     public Log fetchLogs(String query, int limit) {
-        // HTML 엔티티를 디코딩
+
         String decodedQuery = decodeHtmlEntities(query);
         LokiResponseDto response =
                 lokiFeignClient
@@ -50,9 +49,9 @@ public class LokiClientAdapter implements LokiPort {
             String step,
             String since) {
         try {
-            // HTML 엔티티를 디코딩
+
             String decodedQuery = decodeHtmlEntities(query);
-            // 날짜 형식 변환
+
             String formattedStart = formatDateForLoki(start);
             String formattedEnd = formatDateForLoki(end);
 
@@ -77,23 +76,24 @@ public class LokiClientAdapter implements LokiPort {
                 throw new LokiTimeRangeExceededException(
                         UUID.randomUUID().toString(), timeRangeInfo[0], timeRangeInfo[1]);
             }
-            throw new RuntimeException("Loki API 호출 실패: " + e.getMessage());
+            throw new RuntimeException("Failed to call Loki API: " + e.getMessage());
         }
     }
 
     @Override
     public Label fetchLabels(String start, String end, String query) {
         try {
-            // 쿼리가 있는 경우 HTML 엔티티 디코딩
+            // Decode HTML entities if query is provided
             String decodedQuery = query != null ? decodeHtmlEntities(query) : null;
-            // 날짜 형식 변환
+            // Format date strings
             String formattedStart = start != null ? formatDateForLoki(start) : null;
             String formattedEnd = end != null ? formatDateForLoki(end) : null;
 
             LokiLabelsResponseDto response =
                     lokiFeignClient
                             .fetchLabels(formattedStart, formattedEnd, decodedQuery)
-                            .orElseThrow(() -> new RuntimeException("Loki 레이블 API 호출 실패"));
+                            .orElseThrow(
+                                    () -> new RuntimeException("Failed to call Loki label API"));
 
             return LokiLabelsResponseMapper.toDomain(response);
         } catch (FeignException e) {
@@ -103,7 +103,7 @@ public class LokiClientAdapter implements LokiPort {
                 throw new LokiTimeRangeExceededException(
                         UUID.randomUUID().toString(), timeRangeInfo[0], timeRangeInfo[1]);
             }
-            throw new RuntimeException("Loki 레이블 API 호출 실패: " + e.getMessage());
+            throw new RuntimeException("Failed to call Loki label API: " + e.getMessage());
         }
     }
 
@@ -111,9 +111,9 @@ public class LokiClientAdapter implements LokiPort {
     public Label fetchLabelValues(
             String label, String start, String end, String since, String query) {
         try {
-            // 쿼리가 있는 경우 HTML 엔티티 디코딩
+            // Decode HTML entities if query is provided
             String decodedQuery = query != null ? decodeHtmlEntities(query) : null;
-            // 날짜 형식 변환
+            // Format date strings
             String formattedStart = start != null ? formatDateForLoki(start) : null;
             String formattedEnd = end != null ? formatDateForLoki(end) : null;
             String formattedSince = since != null ? formatDateForLoki(since) : null;
@@ -126,45 +126,50 @@ public class LokiClientAdapter implements LokiPort {
                                     formattedEnd,
                                     formattedSince,
                                     decodedQuery)
-                            .orElseThrow(() -> new RuntimeException("Loki 레이블 값 API 호출 실패"));
+                            .orElseThrow(
+                                    () ->
+                                            new RuntimeException(
+                                                    "Failed to call Loki label values API"));
 
             return LokiLabelsResponseMapper.toDomain(response);
         } catch (FeignException e) {
             if (e.status() == 400
                     && e.contentUTF8().contains("query time range exceeds the limit")) {
-                // 시간 범위 제한 에러 처리
+                // Handle time range limit error
                 String[] errorMessage = extractTimeRangeError(e.contentUTF8());
                 throw new RuntimeException(
-                        "조회 시간 범위가 Loki 서버의 제한을 초과했습니다. "
+                        "The query time range exceeds the limit of the Loki server. "
                                 + errorMessage
-                                + " 더 짧은 시간 범위로 다시 시도해주세요.");
+                                + " Please try again with a shorter time range.");
             }
-            throw new RuntimeException("Loki 레이블 값 API 호출 실패: " + e.getMessage());
+            throw new RuntimeException("Failed to call Loki label values API: " + e.getMessage());
         }
     }
 
     @Override
     public LogVolume fetchLogVolumes(String query, String start, String end, Integer limit) {
         try {
-            // HTML 엔티티를 디코딩
+            // Decode HTML entities
             String decodedQuery = decodeHtmlEntities(query);
 
-            // 날짜 형식 변환
+            // Format date strings
             String formattedStart = formatDateForLoki(start);
             String formattedEnd = formatDateForLoki(end);
 
-            // step 값을 동적으로 계산
+            // Dynamically calculate step value
             int step = calculateOptimalStep(formattedStart, formattedEnd);
 
             String transformedQuery =
-                    String.format(
-                            "sum by (level) (count_over_time(%s [%ds] ))", decodedQuery, step);
+                    String.format("sum by (level) (count_over_time(%s [%ds]))", decodedQuery, step);
 
             LokiVolumeResponseDto response =
                     lokiFeignClient
                             .fetchLogVolumes(
                                     transformedQuery, formattedStart, formattedEnd, step, limit)
-                            .orElseThrow(() -> new RuntimeException("Loki 로그 범위 쿼리 API 호출 실패"));
+                            .orElseThrow(
+                                    () ->
+                                            new RuntimeException(
+                                                    "Failed to call Loki log range query API"));
 
             return LokiVolumeResponseMapper.toDomain(response);
         } catch (FeignException e) {
@@ -174,49 +179,51 @@ public class LokiClientAdapter implements LokiPort {
                 throw new LokiTimeRangeExceededException(
                         UUID.randomUUID().toString(), timeRangeInfo[0], timeRangeInfo[1]);
             }
-            throw new RuntimeException("Loki 로그 범위 쿼리 API 호출 실패: " + e.getMessage());
+            throw new RuntimeException(
+                    "Failed to call Loki log range query API: " + e.getMessage());
         }
     }
 
     /**
-     * 시간 범위에 따라 최적의 step 값을 계산 최대 11,000개의 데이터 포인트를 넘지 않도록 조절
+     * Calculates the optimal step value based on the given time range. Ensures that the number of
+     * data points does not exceed 10,000.
      *
-     * @param startStr 시작 시간 (나노초 Unix timestamp)
-     * @param endStr 종료 시간 (나노초 Unix timestamp)
-     * @return 최적화된 step 값 (초 단위)
+     * @param startStr Start time (Unix timestamp in nanoseconds)
+     * @param endStr End time (Unix timestamp in nanoseconds)
+     * @return Optimized step value in seconds
      */
     private int calculateOptimalStep(String startStr, String endStr) {
         try {
-            // 나노초 타임스탬프를 초 단위로 변환
+            // Convert nanosecond timestamps to seconds
             long startSeconds = Long.parseLong(startStr) / 1_000_000_000L;
             long endSeconds = Long.parseLong(endStr) / 1_000_000_000L;
 
             long durationSeconds = endSeconds - startSeconds;
 
-            // 최대 데이터 포인트 수를 10,000개로 설정 (여유분 확보)
-            int maxDataPoints = 10000;
+            // Set maximum data points to 10,000 (for buffer margin)
+            int maxDataPoints = 10_000;
 
-            // 필요한 step 계산 (최소 10초)
+            // Calculate required step (minimum 10 seconds)
             int calculatedStep = Math.max(10, (int) (durationSeconds / maxDataPoints));
 
-            // step을 10의 배수로 반올림
+            // Round step to the nearest multiple of 10
             calculatedStep = ((calculatedStep + 9) / 10) * 10;
 
-            // 최대 step은 3600초(1시간)로 제한
+            // Limit maximum step to 3600 seconds (1 hour)
             return Math.min(calculatedStep, 3600);
 
         } catch (Exception e) {
-            // 파싱 실패시 기본값 30초 반환
-            System.err.println("Step 계산 실패: " + e.getMessage());
+            // Return default step (30s) if parsing fails
+            System.err.println("Failed to calculate step: " + e.getMessage());
             return 30;
         }
     }
 
     /**
-     * HTML 엔티티를 디코딩하는 유틸리티 메서드 예: &quot; -> "
+     * Decodes HTML entities in the given string. Example: &quot; → "
      *
-     * @param input 디코딩할 문자열
-     * @return 디코딩된 문자열
+     * @param input String to decode
+     * @return Decoded string
      */
     private String decodeHtmlEntities(String input) {
         if (input == null || input.isEmpty()) {
@@ -231,10 +238,11 @@ public class LokiClientAdapter implements LokiPort {
     }
 
     /**
-     * 날짜 형식을 Loki API에서 처리할 수 있는 형식으로 변환하는 메서드 Loki는 Unix 타임스탬프(초 단위)를 기대합니다.
+     * Converts a date string into a format compatible with the Loki API. Loki expects Unix
+     * timestamps in seconds (converted to nanoseconds internally).
      *
-     * @param dateStr 변환할 날짜 문자열
-     * @return Unix 타임스탬프 문자열
+     * @param dateStr Date string to convert
+     * @return Unix timestamp string in nanoseconds
      */
     private String formatDateForLoki(String dateStr) {
         if (dateStr == null || dateStr.isEmpty()) {
@@ -244,46 +252,46 @@ public class LokiClientAdapter implements LokiPort {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-            // yyyy-MM-dd HH:mm:ss 형식인지 체크
+            // Check if the format is yyyy-MM-dd HH:mm:ss
             try {
                 LocalDateTime dateTime = LocalDateTime.parse(dateStr, formatter);
-                // Unix 타임스탬프 나노초로 변환
+                // Convert to Unix timestamp in nanoseconds
                 long nanoSeconds =
                         dateTime.atZone(ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
                                 * 1_000_000L;
                 return String.valueOf(nanoSeconds);
             } catch (Exception e) {
-                // Unix 타임스탬프인지 확인 (숫자로만 구성되어 있고 10자리 또는 13자리)
+                // Check if the string is a Unix timestamp (10 or 13 digits)
                 if (dateStr.matches("\\d{10}") || dateStr.matches("\\d{13}")) {
                     try {
                         long timestamp = Long.parseLong(dateStr);
-                        // 10자리면 초 단위, 13자리면 밀리초 단위
+                        // Convert seconds to milliseconds if it's 10 digits
                         if (dateStr.length() == 10) {
-                            timestamp = timestamp * 1000; // 초를 밀리초로 변환
+                            timestamp = timestamp * 1000;
                         }
-                        // Unix 타임스탬프를 Asia/Seoul 타임존 기준 나노초로 변환
+                        // Convert to nanoseconds
                         long nanoSeconds = timestamp * 1_000_000L;
                         return String.valueOf(nanoSeconds);
                     } catch (NumberFormatException nfe) {
                         return dateStr;
                     }
                 }
-                // 해당 형식이 아닌 경우 원본 반환
+                // Return original string if format is invalid
                 return dateStr;
             }
 
         } catch (Exception e) {
-            // 날짜 파싱 실패시 원본 문자열 반환 (로깅 추가)
-            System.err.println("날짜 변환 실패: " + dateStr + ", 오류: " + e.getMessage());
+            // Return original string if parsing fails (with logging)
+            System.err.println("Failed to convert date: " + dateStr + ", error: " + e.getMessage());
             return dateStr;
         }
     }
 
     /**
-     * 시간 범위 초과 에러 메시지에서 상세 정보 추출
+     * Extracts detailed time range information from a Loki error message.
      *
-     * @param errorMessage 에러 메시지 문자열
-     * @return [queryLength, limit] 배열
+     * @param errorMessage Error message returned by Loki
+     * @return Array containing [queryLength, limit]
      */
     private String[] extractTimeRangeError(String errorMessage) {
         try {
@@ -299,8 +307,7 @@ public class LokiClientAdapter implements LokiPort {
                     return new String[] {queryLength, limit};
                 }
             }
-        } catch (Exception e) {
-            // 파싱 실패시 기본값 반환
+        } catch (Exception ignored) {
         }
         return new String[] {"unknown", "unknown"};
     }

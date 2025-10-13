@@ -267,7 +267,8 @@ public class SemaphoreDomainService {
 
             semaphorePort.createRepository(project.getId(), repository);
         } catch (Exception e) {
-            throw new RuntimeException(repositoryName + " 레포지토리 생성 중 오류가 발생 하였습니다 😵💫");
+            throw new RuntimeException(
+                    "An error occurred while creating the repository: " + repositoryName);
         }
     }
 
@@ -314,7 +315,7 @@ public class SemaphoreDomainService {
                 semaphorePort.createTemplate(project.getId(), template);
             } catch (Exception e) {
                 throw new RuntimeException(
-                        templateNameAgentInstall + " 템플릿 등록 중 오류가 발생 하였습니다 😵💫");
+                        templateNameAgentInstall + " template registration failed");
             }
         }
     }

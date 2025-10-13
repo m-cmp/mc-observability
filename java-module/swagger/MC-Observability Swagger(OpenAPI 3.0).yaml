@@ -25,10 +25,10 @@ paths:
                 LogLabelsQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-10T06:29:15",
+                      "timestamp" : "2025-10-13T06:34:07",
                       "status" : "SUCCESS",
                       "code" : "OK",
-                      "message" : "레이블 목록 조회 성공하였습니다.",
+                      "message" : "Successfully retrieved label list.",
                       "requestId" : "string",
                       "data" : {
                         "result" : {
@@ -54,17 +54,17 @@ paths:
                 LogVolumeQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-10T06:29:15",
+                      "timestamp" : "2025-10-13T06:34:07",
                       "status" : "SUCCESS",
                       "code" : "OK",
-                      "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
+                      "message" : "Successfully retrieved log volume data.",
                       "requestId" : "string",
                       "data" : {
                         "result" : {
                           "data" : [ {
                             "metric" : {
-                              "app" : "string",
-                              "env" : "string"
+                              "env" : "string",
+                              "app" : "string"
                             },
                             "values" : [ {
                               "timestamp" : 0,
@@ -92,10 +92,10 @@ paths:
                 LogRangeQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-10T06:29:15",
+                      "timestamp" : "2025-10-13T06:34:07",
                       "status" : "SUCCESS",
                       "code" : "OK",
-                      "message" : "로그 기간 데이터 읽기 성공하였습니다.",
+                      "message" : "Successfully retrieved log range data.",
                       "requestId" : "string",
                       "data" : {
                         "result" : null
@@ -145,7 +145,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<List<PluginDefDTO>>'
+                allOf:
+                  - $ref: '#/components/schemas/ResBody'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: Plugin list
+                        items:
+                          $ref: '#/components/schemas/PluginDefDTO'
               examples:
                 GetPlugins:
                   value: |-
@@ -571,8 +579,8 @@ paths:
                         "provider" : "naver-cloud",
                         "baseUrl" : "https://sens.apigw.ntruss.com",
                         "isActive" : true,
-                        "createdAt" : "2025-10-10T15:29:17.04023957",
-                        "updatedAt" : "2025-10-10T15:29:17.040253439"
+                        "createdAt" : "2025-10-13T15:34:10.397689797",
+                        "updatedAt" : "2025-10-13T15:34:10.397724146"
                       } ]
                     }
   /api/o11y/trigger/noti/history:
@@ -680,10 +688,10 @@ paths:
                 LabelValueQuery:
                   value: |-
                     {
-                      "timestamp" : "2025-10-10T06:29:15",
+                      "timestamp" : "2025-10-13T06:34:07",
                       "status" : "SUCCESS",
                       "code" : "OK",
-                      "message" : "레이블 값 목록 조회 성공하였습니다.",
+                      "message" : "Successfully retrieved label value list.",
                       "requestId" : "string",
                       "data" : {
                         "result" : {
@@ -696,7 +704,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: GetVMByNsMci
-      description: Retrieve vm list by NS/MCI
+      description: Retrieve target list by NS/MCI
       operationId: GetVMByNsMci
       parameters:
       - name: nsId
@@ -969,7 +977,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: GetVM
-      description: Retrieve single vm
+      description: Retrieve single target
       operationId: GetVM
       parameters:
       - name: nsId
@@ -1020,7 +1028,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: PutVM
-      description: Update vm
+      description: Update target
       operationId: PutVM
       parameters:
       - name: nsId
@@ -1083,7 +1091,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: PostVM
-      description: Create vm
+      description: Create target
       operationId: PostVM
       parameters:
       - name: nsId
@@ -1146,7 +1154,7 @@ paths:
       tags:
       - "[Manager] Monitoring VM Management"
       summary: DeleteVM
-      description: Delete vm
+      description: Delete target
       operationId: DeleteVM
       parameters:
       - name: nsId
@@ -1279,7 +1287,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 UpdateMonitoringItem:
                   value: |-
@@ -1332,7 +1340,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 AddMonitoringItem:
                   value: |-
@@ -1380,7 +1388,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 DeleteMonitoringItem:
                   value: |-
@@ -1392,6 +1400,55 @@ paths:
                     }
 components:
   schemas:
+    MetricRequestDTO:
+      title: MetricRequestDTO
+      type: object
+      properties:
+        limit:
+          type: number
+          description: Result limit count
+        group_by:
+          type: array
+          description: "List of group-by fields, for example: ns_id, mci_id"
+          items:
+            oneOf:
+            - type: object
+            - type: boolean
+            - type: string
+            - type: number
+        range:
+          type: string
+          description: "Query range (e.g., 1h)"
+        conditions:
+          type: array
+          description: List of condition filters
+          items:
+            type: object
+            properties:
+              value:
+                type: string
+                description: "Condition value (e.g., cpu-total)"
+              key:
+                type: string
+                description: "Condition key (e.g., cpu)"
+        fields:
+          type: array
+          description: List of fields to query
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: "Field name (e.g., usage_idle)"
+              function:
+                type: string
+                description: "Aggregation function (e.g., mean, max, etc.)"
+        group_time:
+          type: string
+          description: Grouping unit
+        measurement:
+          type: string
+          description: "Measurement name (e.g., cpu)"
     VMRequestDTO:
       title: VMRequestDTO
       type: object
@@ -1427,16 +1484,6 @@ components:
         totalElements:
           type: number
           description: total elements
-    MonitoringItemRequestDTO:
-      title: MonitoringItemRequestDTO
-      type: object
-      properties:
-        pluginSeq:
-          type: number
-          description: Plugin sequence
-        pluginConfig:
-          type: string
-          description: Plugin configuration
     MonitoringItemUpdateDTO:
       title: MonitoringItemUpdateDTO
       type: object
@@ -1515,37 +1562,21 @@ components:
         rs_msg:
           type: string
           description: "Response message (e.g., Success)"
-    ResBody<List<PluginDefDTO>>:
-      title: ResBody<List<PluginDefDTO>>
+    PluginDefDTO:
       type: object
       properties:
-        error_message:
+        pluginType:
           type: string
-          description: Error message
-        data:
-          type: array
-          description: Plugin list
-          items:
-            type: object
-            properties:
-              pluginType:
-                type: string
-                description: "Plugin type (e.g.,  INPUT)"
-              pluginId:
-                type: string
-                description: "Plugin ID (e.g.,  [[inputs.cpu]])"
-              name:
-                type: string
-                description: "Plugin name (e.g., cpu)"
-              seq:
-                type: number
-                description: "Plugin sequence (e.g., 1)"
-        rs_code:
+          description: "Plugin type (e.g., INPUT)"
+        pluginId:
           type: string
-          description: "Response code (e.g., 0000)"
-        rs_msg:
+          description: "Plugin ID (e.g., [[inputs.cpu]])"
+        name:
           type: string
-          description: "Response message (e.g., Success)"
+          description: "Plugin name (e.g., cpu)"
+        seq:
+          type: number
+          description: "Plugin sequence (e.g., 1)"
     TriggerHistoryPageResponse:
       title: TriggerHistoryPageResponse
       type: object
@@ -1571,55 +1602,39 @@ components:
         totalElements:
           type: number
           description: total elements
-    MetricRequestDTO:
-      title: MetricRequestDTO
+    api-o11y-log-labels-258413105:
       type: object
       properties:
-        limit:
-          type: number
-          description: Result limit count
-        group_by:
-          type: array
-          description: "List of group by fields (e.g., [ns_id, mci_id])"
-          items:
-            oneOf:
-            - type: object
-            - type: boolean
-            - type: string
-            - type: number
-        range:
+        code:
           type: string
-          description: "Query range (e.g., 1h)"
-        conditions:
-          type: array
-          description: List of condition filters
-          items:
-            type: object
-            properties:
-              value:
-                type: string
-                description: "Condition value (e.g., cpu-total)"
-              key:
-                type: string
-                description: "Condition key (e.g., cpu)"
-        fields:
-          type: array
-          description: List of fields to query
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-                description: "Field name (e.g., usage_idle)"
-              function:
-                type: string
-                description: "Aggregation function (e.g., mean, max, etc.)"
-        group_time:
+          description: Response code
+        data:
+          type: object
+          properties:
+            result:
+              type: object
+              properties:
+                labels:
+                  type: array
+                  description: List of labels
+                  items:
+                    oneOf:
+                    - type: object
+                    - type: boolean
+                    - type: string
+                    - type: number
+        requestId:
           type: string
-          description: Grouping unit
-        measurement:
+          description: Request ID
+        message:
           type: string
-          description: "Measurement name (e.g., cpu)"
+          description: Response message
+        status:
+          type: string
+          description: Response status
+        timestamp:
+          type: string
+          description: Response timestamp
     VMDTO:
       title: VMDTO
       type: object
@@ -1685,39 +1700,6 @@ components:
         rs_msg:
           type: string
           description: "Response message (e.g., Success)"
-    api-o11y-log-labels-258413105:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Response code
-        data:
-          type: object
-          properties:
-            result:
-              type: object
-              properties:
-                labels:
-                  type: array
-                  description: List of labels
-                  items:
-                    oneOf:
-                    - type: object
-                    - type: boolean
-                    - type: string
-                    - type: number
-        requestId:
-          type: string
-          description: Request ID
-        message:
-          type: string
-          description: Response message
-        status:
-          type: string
-          description: Response status
-        timestamp:
-          type: string
-          description: Response timestamp
     MonitoringItemDTO:
       title: MonitoringItemDTO
       type: object
@@ -1930,8 +1912,7 @@ components:
         - type: boolean
         - type: string
         - type: number
-    ResBody<Void>:
-      title: ResBody<Void>
+    ResBody:
       type: object
       properties:
         error_message:
@@ -1939,7 +1920,7 @@ components:
           description: Error message
         data:
           type: object
-          description: Response data
+          description: Response data (nullable)
         rs_code:
           type: string
           description: "Response code (e.g., 0000)"
@@ -2262,3 +2243,14 @@ components:
         - type: boolean
         - type: string
         - type: number
+    MonitoringItemRequestDTO:
+      title: MonitoringItemRequestDTO
+      type: object
+      properties:
+        pluginSeq:
+          type: number
+          description: Plugin sequence
+        pluginConfig:
+          type: string
+          description: "Plugin configuration encoded in Base64 (e.g., 'W1tpbnB1dHMuc3lzdGVtXV0='\
+            \ is Base64 encoding of '[[inputs.system]]')"

@@ -46,7 +46,7 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    // 파일 수집
+    // fetch files
     @Override
     public List<File> getFilesRecursively(File dir) throws FileReadingException {
         List<File> files = new ArrayList<>();
@@ -100,7 +100,7 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    // 파일 이름, 내용 write
+    // write fileName, content
     @Override
     public void writeFile(File directory, String fileName, String content)
             throws FileReadingException {
@@ -112,11 +112,12 @@ public class FileServiceImpl implements FileService {
             Path filePath = new File(directory, fileName).toPath();
             Files.writeString(filePath, content);
         } catch (IOException e) {
-            throw new FileReadingException("파일 작성 중 오류가 발생했습니다: " + e.getMessage());
+            throw new FileReadingException(
+                    "An error occurred while writing the file: " + e.getMessage());
         }
     }
 
-    // 파일, 내용 write
+    // write file, content
     @Override
     public void generateFile(File file, String content) throws FileReadingException {
         if (file == null || content == null) {
@@ -126,14 +127,15 @@ public class FileServiceImpl implements FileService {
         try {
             Files.writeString(file.toPath(), content);
         } catch (IOException e) {
-            throw new FileReadingException("파일 작성 중 오류가 발생했습니다: " + e.getMessage());
+            throw new FileReadingException(
+                    "An error occurred while writing the file: " + e.getMessage());
         }
     }
 
     @Override
     public void deleteDirectory(Path dir) throws FailedDeleteFileException {
         if (!Files.exists(dir)) {
-            log.warn("삭제할 디렉터리가 없습니다: {}", dir);
+            log.warn("No directory found to delete: {}", dir);
             throw new FailedDeleteFileException("Directory does not exist: " + dir);
         }
         try (var paths = Files.walk(dir)) {
@@ -150,11 +152,12 @@ public class FileServiceImpl implements FileService {
                                 }
                             });
         } catch (IOException e) {
-            throw new FailedDeleteFileException("디렉터리 탐색 중 오류 발생: " + dir);
+            throw new FailedDeleteFileException(
+                    "Error occurred while traversing the directory: " + dir);
         }
     }
 
-    // config 디렉토리 삭제, 호스트 삭제 시 호출
+    // Delete config directory, called when a host is removed
     @Override
     public void deleteDirectoryByHostId(String uuid) {
         Path dir = Path.of(configBasePath, uuid);
@@ -222,7 +225,7 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    // 템플릿 리소스 로딩
+    // Load template resource
     @Override
     public String getFileContent(ClassPathResource classPathResource) throws FileReadingException {
         StringBuilder sb = new StringBuilder();
@@ -243,15 +246,15 @@ public class FileServiceImpl implements FileService {
         return sb.toString();
     }
 
-    // content 추가
+    // add content
     @Override
     public void appendConfig(ClassPathResource classPathResource, StringBuilder sb) {
         String content = getClassResourceContent(classPathResource);
         sb.append(content).append("\n\n");
     }
 
-    // configBasePath 경로 하위 config 디렉토리 초기화 (Host의 id값 이름 폴더, 그 아래 fluent-bit, telegraf, telegraf.d
-    // 폴더)
+    // Initialize config directories under the configBasePath (folder named after the Host ID,
+    // containing fluent-bit, telegraf, and telegraf.d)
     @Override
     @PostConstruct
     public void init() {
@@ -262,7 +265,7 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    // 폴더 생성
+    // createDirectory
     @Override
     public Path createDirectory(Path path) {
         try {
