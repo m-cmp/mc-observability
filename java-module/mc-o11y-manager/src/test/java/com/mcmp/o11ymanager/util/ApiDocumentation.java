@@ -19,6 +19,7 @@ import com.mcmp.o11ymanager.util.ApiDocumentation.ApiDocumentationBuilder.Parame
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.restdocs.mockmvc.RestDocumentationResultHandler;
 import org.springframework.restdocs.payload.FieldDescriptor;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -181,9 +182,17 @@ public final class ApiDocumentation {
             return this;
         }
 
+        private String toPascalCase(String input) {
+            if (input == null || input.isBlank()) return "{method-name}";
+            return Arrays.stream(input.split("[\\s_-]+"))
+                    .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1))
+                    .collect(Collectors.joining());
+        }
+
         public RestDocumentationResultHandler build() {
+            String operationId = toPascalCase(summary);
             return MockMvcRestDocumentationWrapper.document(
-                    "{method-name}",
+                    operationId,
                     preprocessRequest(prettyPrint()),
                     preprocessResponse(prettyPrint()),
                     resource(

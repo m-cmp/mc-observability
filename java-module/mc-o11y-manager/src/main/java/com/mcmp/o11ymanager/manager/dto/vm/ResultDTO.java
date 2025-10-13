@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-@Schema(description = "API 응답 객체")
+@Schema(description = "API response object")
 public class ResultDTO {
 
     private String nsId;

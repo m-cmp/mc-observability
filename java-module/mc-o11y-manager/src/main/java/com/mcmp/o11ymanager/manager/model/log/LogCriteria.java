@@ -3,7 +3,7 @@ package com.mcmp.o11ymanager.manager.model.log;
 import lombok.Builder;
 import lombok.Getter;
 
-/** 로그 검색 조건을 나타내는 도메인 모델 */
+/** Domain model representing log search criteria */
 @Getter
 @Builder
 public class LogCriteria {
@@ -16,12 +16,12 @@ public class LogCriteria {
     private final String step;
     private final String since;
 
-    /** 기본 로그 검색 조건 생성 */
+    /** Create basic log search criteria */
     public static LogCriteria of(String query, int limit) {
         return LogCriteria.builder().query(query).limit(limit).build();
     }
 
-    /** 시간 범위가 있는 로그 검색 조건 생성 */
+    /** Create log search criteria with a time range */
     public static LogCriteria ofRange(
             String query,
             String start,

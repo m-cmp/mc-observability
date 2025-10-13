@@ -7,7 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 로그 데이터 요약 응답을 위한 DTO */
 public class LogSummaryDto {
 
     @Data

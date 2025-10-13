@@ -12,6 +12,6 @@ public class AgentStatusException extends BaseException {
         super(
                 requestId,
                 ErrorCode.AGENT_STATUS_ERROR,
-                String.format("Agent [%s] 상태 변화에 실패했습니다.", agent.getName()));
+                String.format("Failed to change status of agent [%s].", agent.getName()));
     }
 }

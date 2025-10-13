@@ -11,17 +11,20 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Config 파일/디렉토리 목록 조회를 위한 DTO")
+@Schema(description = "DTO for retrieving the list of config files/directories")
 public class ConfigFileDTO {
-    @Schema(description = "파일/디렉토리 이름", example = "telegraf.conf")
+
+    @Schema(description = "File or directory name", example = "telegraf.conf")
     private String name;
 
-    @Schema(description = "파일/디렉토리 경로", example = "telegraf.conf")
+    @Schema(description = "File or directory path", example = "telegraf.conf")
     private String path;
 
-    @Schema(description = "디렉토리 인지 여부", example = "false")
+    @Schema(description = "Indicates whether it is a directory", example = "false")
     private boolean isDirectory;
 
-    @Schema(description = "디렉토리일 경우의 하위 파일/디렉토리 리스트", example = "[\"001.conf\", \"002.conf\"]")
+    @Schema(
+            description = "List of child files/directories if it is a directory",
+            example = "[\"001.conf\", \"002.conf\"]")
     private List<ConfigFileDTO> children;
 }

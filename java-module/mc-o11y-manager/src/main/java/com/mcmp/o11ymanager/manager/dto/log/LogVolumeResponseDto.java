@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** 로그 볼륨 응답 DTO LogVolume 도메인 모델을 위한 응답 객체 */
+/** Log volume response DTO — response object for the LogVolume domain model */
 @Data
 @Builder
 @NoArgsConstructor

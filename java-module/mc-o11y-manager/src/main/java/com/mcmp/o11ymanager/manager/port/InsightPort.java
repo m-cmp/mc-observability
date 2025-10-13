@@ -1,53 +1,61 @@
 package com.mcmp.o11ymanager.manager.port;
 
-import com.mcmp.o11ymanager.manager.dto.insight.anomaly_detection.*;
-import com.mcmp.o11ymanager.manager.dto.insight.llm_analysis.*;
-import com.mcmp.o11ymanager.manager.dto.insight.prediction.*;
-import com.mcmp.o11ymanager.manager.global.vm.ResBody;
-import java.util.List;
-
 public interface InsightPort {
 
     /* ===================== Prediction ===================== */
-    ResBody<List<PredictionMeasurement>> getPredictionMeasurements();
+    Object getPredictionMeasurements();
 
-    ResBody<PredictionMeasurement> getPredictionSpecificMeasurement(String measurement);
+    Object getPredictionSpecificMeasurement(String measurement);
 
-    ResBody<PredictionOptions> getPredictionOptions();
+    Object getPredictionOptions();
 
-    ResBody<PredictionResult> predictMonitoringData(String nsId, String vmId, PredictionBody body);
+    Object predictMonitoringData(String nsId, String vmId, Object body);
 
-    ResBody<PredictionHistory> getPredictionHistory(
+    Object getPredictionHistory(
             String nsId, String vmId, String measurement, String startTime, String endTime);
 
     /* ===================== Anomaly Detection ===================== */
-    ResBody<List<AnomalyDetectionMeasurement>> getMeasurements();
+    Object getMeasurements();
 
-    ResBody<AnomalyDetectionMeasurement> getSpecificMeasurement(String measurement);
+    Object getSpecificMeasurement(String measurement);
 
-    ResBody<AnomalyDetectionOptions> getOptions();
+    Object getOptions();
 
-    ResBody<PredictionResult> predictMetric(String nsId, String targetId, PredictionBody body);
+    Object predictAnomaly(int settingSeq, Object body);
 
-    ResBody<PredictionHistory> getAnomalyHistory(
+    Object getAnomalySettings();
+
+    Object createAnomalySetting(Object body);
+
+    Object updateAnomalySetting(int settingSeq, Object body);
+
+    Object deleteAnomalySetting(int settingSeq);
+
+    Object getAnomalyHistory(
             String nsId, String targetId, String measurement, String startTime, String endTime);
 
     /* ===================== LLM ===================== */
-    ResBody<List<LLMModel>> getLLMModelOptions();
+    Object getLLMModelOptions();
 
-    ResBody<List<LLMChatSession>> getLLMChatSessions();
+    Object getLLMChatSessions();
 
-    ResBody<LLMChatSession> postLLMChatSession(PostSessionBody body);
+    Object postLLMChatSession(Object body);
 
-    ResBody<LLMChatSession> deleteLLMChatSession(String sessionId);
+    Object deleteLLMChatSession(String sessionId);
 
-    ResBody<List<LLMChatSession>> deleteAllLLMChatSessions();
+    Object deleteAllLLMChatSessions();
 
-    ResBody<SessionHistory> getLLMSessionHistory(String sessionId);
+    Object getLLMSessionHistory(String sessionId);
+
+    Object getLLMApiKeys(String provider);
+
+    Object postLLMApiKeys(Object body);
+
+    Object deleteLLMApiKeys(String provider);
 
     /* ===================== Alert Analysis ===================== */
-    ResBody<Message> queryAlertAnalysis(PostQueryBody body);
+    Object queryAlertAnalysis(Object body);
 
     /* ===================== Log Analysis ===================== */
-    ResBody<Message> queryLogAnalysis(PostQueryBody body);
+    Object queryLogAnalysis(Object body);
 }
