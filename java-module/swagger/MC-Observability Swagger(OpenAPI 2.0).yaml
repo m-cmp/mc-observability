@@ -155,7 +155,15 @@ paths:
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<List<PluginDefDTO>>'
+            allOf:
+              - $ref: '#/definitions/ResBody'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    description: Plugin list
+                    items:
+                      $ref: '#/definitions/PluginDefDTO'
   /api/o11y/monitoring/vm:
     get:
       tags:
@@ -1221,7 +1229,7 @@ paths:
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
     put:
       tags:
       - "[Manager] Monitoring VM Item Management"
@@ -1271,7 +1279,7 @@ paths:
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
     delete:
       tags:
@@ -1314,7 +1322,7 @@ paths:
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
 definitions:
   AlertTestHistoryPageResponse:
     type: object
@@ -1660,7 +1668,7 @@ definitions:
           "value" : "cpu-total"
         } ]
       }
-  ResBody<Void>:
+  ResBody:
     type: object
     properties:
       error_message:
@@ -2140,33 +2148,20 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  ResBody<List<PluginDefDTO>>:
+  PluginDefDTO:
     type: object
+    description: Plugin definition object
     properties:
-      error_message:
+      pluginType:
         type: string
-        description: Error message
-      data:
-        type: array
-        description: Plugin list
-        items:
-          type: object
-          properties:
-            pluginType:
-              type: string
-              description: "Plugin type (e.g.,  INPUT)"
-            pluginId:
-              type: string
-              description: "Plugin ID (e.g.,  [[inputs.cpu]])"
-            name:
-              type: string
-              description: "Plugin name (e.g., cpu)"
-            seq:
-              type: number
-              description: "Plugin sequence (e.g., 1)"
-      rs_code:
+        description: "Plugin type (e.g., INPUT)"
+      pluginId:
         type: string
-        description: "Response code (e.g., 0000)"
-      rs_msg:
+        description: "Plugin ID (e.g., [[inputs.cpu]])"
+      name:
         type: string
-        description: "Response message (e.g., Success)"
+        description: "Plugin name (e.g., cpu)"
+      seq:
+        type: number
+        description: "Plugin sequence (e.g., 1)"
+

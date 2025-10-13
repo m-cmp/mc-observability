@@ -3,26 +3,117 @@ info:
   version: 0.4.1
   title: MC-Observability API Documentation
   description: API documentation for MC-Observability
-  contact: {}
+  contact: { }
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 host: localhost:18080
 basePath: /
 consumes:
-- application/json
+  - application/json
 produces:
-- application/json
+  - application/json
 paths:
+  /api/o11y/log/labels:
+    get:
+      tags:
+        - "[Manager] Monitoring Log"
+      summary: LogLabelsQuery
+      description: Retrieve the list of label keys provided by Loki.
+      operationId: LogLabelsQuery
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-13T06:34:07",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved label list.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "labels" : [ "string", "string" ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_labels-1630941350'
+  /api/o11y/log/log_volumes:
+    get:
+      tags:
+        - "[Manager] Monitoring Log"
+      summary: LogVolumeQuery
+      description: Retrieve log volumes (metric time series data) for the given period.
+      operationId: LogVolumeQuery
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-13T06:34:07",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved log volume data.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : {
+                    "data" : [ {
+                      "metric" : {
+                        "env" : "string",
+                        "app" : "string"
+                      },
+                      "values" : [ {
+                        "timestamp" : 0,
+                        "value" : "string"
+                      } ]
+                    } ]
+                  }
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_log_volumes1332534490'
+  /api/o11y/log/query_range:
+    get:
+      tags:
+        - "[Manager] Monitoring Log"
+      summary: LogRangeQuery
+      description: Retrieve log data for a specific query within a given time range.
+      operationId: LogRangeQuery
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "timestamp" : "2025-10-13T06:34:07",
+                "status" : "SUCCESS",
+                "code" : "OK",
+                "message" : "Successfully retrieved log range data.",
+                "requestId" : "string",
+                "data" : {
+                  "result" : null
+                }
+              }
+          schema:
+            $ref: '#/definitions/api_o11y_log_query_range-1819803082'
   /api/o11y/monitoring/influxdb:
     get:
       tags:
-      - "[Monitoring metric] Monitoring metric"
+        - "[Manager] Monitoring Metric"
       summary: GetAllInfluxDB
       description: Retrieve all InfluxDB servers
-      operationId: GetAllInfluxDb
+      operationId: GetAllInfluxDB
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -30,15 +121,15 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
                   "id" : 0,
-                  "url" : "string",
-                  "database" : "string",
-                  "username" : "string",
-                  "retention_policy" : "string",
-                  "password" : "string",
-                  "uid" : "string"
+                  "url" : "mcmp:8086",
+                  "database" : "mydb",
+                  "username" : "mc-user",
+                  "retention_policy" : "autogen",
+                  "password" : "mypw",
+                  "uid" : "sdfsj1df33ff"
                 } ],
                 "error_message" : ""
               }
@@ -47,12 +138,12 @@ paths:
   /api/o11y/monitoring/plugins:
     get:
       tags:
-      - "[System] environment"
+        - "[Manager] Environment"
       summary: GetPlugins
       description: Retrieve plugin list
       operationId: GetPlugins
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -60,7 +151,7 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
                   "seq" : 0,
                   "name" : "string",
@@ -70,16 +161,24 @@ paths:
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<List<PluginDefDTO>>'
+            allOf:
+              - $ref: '#/definitions/ResBody'
+              - type: object
+                properties:
+                  data:
+                    type: array
+                    description: Plugin list
+                    items:
+                      $ref: '#/definitions/PluginDefDTO'
   /api/o11y/monitoring/vm:
     get:
       tags:
-      - "[VM] Monitoring vm management"
+        - "[Manager] Monitoring VM Management"
       summary: GetAllVMs
       description: Retrieve all targets
-      operationId: GetAllVms
+      operationId: GetAllVMs
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -87,135 +186,52 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 } ],
                 "error_message" : ""
               }
           schema:
             $ref: '#/definitions/VMDTO'
-  /api/o11y/noti/channel:
-    get:
-      tags:
-      - "[Trigger] notification"
-      summary: GetSupportedNotificationChannels
-      description: Get supported notification channels
-      operationId: GetNotiChannels
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "notiChannels" : [ {
-                  "id" : 1,
-                  "name" : "sms_naver-cloud",
-                  "type" : "sms",
-                  "provider" : "naver-cloud",
-                  "baseUrl" : "https://sens.apigw.ntruss.com",
-                  "isActive" : true,
-                  "createdAt" : "2025-09-22T12:52:49.245884658",
-                  "updatedAt" : "2025-09-22T12:52:49.245899652"
-                } ]
-              }
-          schema:
-            $ref: '#/definitions/NotiChannelAllResponse'
-  /api/o11y/noti/history:
-    get:
-      tags:
-      - "[Trigger] notification"
-      summary: GetPaginatedNotificationHistories
-      description: Get paginated notification histories
-      operationId: GetNotiHistories
-      produces:
-      - application/json
-      parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: sortDirection
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "content" : [ ],
-                "pageable" : {
-                  "pageNumber" : 0,
-                  "pageSize" : 1,
-                  "sort" : {
-                    "sorted" : false,
-                    "empty" : true,
-                    "unsorted" : true
-                  },
-                  "offset" : 0,
-                  "paged" : true,
-                  "unpaged" : false
-                },
-                "totalPages" : 1,
-                "totalElements" : 0,
-                "numberOfElements" : 0
-              }
-          schema:
-            $ref: '#/definitions/NotiHistoryPageResponse'
   /api/o11y/trigger/history:
     get:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerHistories
       description: Get paginated trigger histories
-      operationId: GetTriggerHistories
+      operationId: GetPaginatedTriggerHistories
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: sortDirection
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties
+          required: false
+          type: string
+        - name: sortDirection
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -244,33 +260,33 @@ paths:
   /api/o11y/trigger/policy:
     get:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
-      operationId: GetTriggerPolicies
+      operationId: GetPaginatedTriggerPolicies
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: direction
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties
+          required: false
+          type: string
+        - name: direction
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -298,46 +314,99 @@ paths:
             $ref: '#/definitions/TriggerPolicyPageResponse'
     post:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: CreateTriggerPolicy
       description: Create trigger policy
       operationId: CreateTriggerPolicy
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       parameters:
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerPolicyCreateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "title" : "CPU Alert Policy",
-              "description" : "Alert when CPU usage is high",
-              "thresholdCondition" : {
-                "info" : 30.0,
-                "warning" : 50.0,
-                "critical" : 70.0
-              },
-              "resourceType" : "CPU",
-              "aggregationType" : "LAST",
-              "holdDuration" : "0m",
-              "repeatInterval" : "1h"
-            }
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerPolicyCreateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "title" : "CPU Alert Policy",
+                "description" : "Alert when CPU usage is high",
+                "thresholdCondition" : {
+                  "info" : 30.0,
+                  "warning" : 50.0,
+                  "critical" : 70.0
+                },
+                "resourceType" : "CPU",
+                "aggregationType" : "LAST",
+                "holdDuration" : "0m",
+                "repeatInterval" : "1h"
+              }
       responses:
         "201":
           description: ""
-          examples: {}
-  /api/v1/alert/alert-rules:
+          examples: { }
+  /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+        - "[Manager] Monitoring Metric"
+      summary: GetMeasurementFields
+      description: Retrieve InfluxDB measurements
+      operationId: GetMeasurementFields
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "measurement" : "string",
+                  "fields" : [ {
+                    "key" : "cpu",
+                    "type" : "Integer"
+                  } ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/FieldDTO'
+  /api/o11y/monitoring/influxdb/tag:
+    get:
+      tags:
+        - "[Manager] Monitoring Metric"
+      summary: GetMeasurementTags
+      description: Retrieve InfluxDB tags
+      operationId: GetMeasurementTags
+      produces:
+        - application/json
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "measurement" : "cpu",
+                  "tags" : [ "host", "mci_id" ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/TagDTO'
+  /api/o11y/trigger/alert/alert-rules:
+    get:
+      tags:
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlertRules
       description: Get all alert rules
       operationId: GetAllAlertRules
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -345,15 +414,15 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/AllAlertRulesResponse'
-  /api/v1/alert/alerts:
+  /api/o11y/trigger/alert/alerts:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllAlerts
       description: Get all alerts
-      operationId: GetAllA-lerts
+      operationId: GetAllAlerts
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -361,15 +430,15 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/AllAlertsResponse'
-  /api/v1/alert/contact-points:
+  /api/o11y/trigger/alert/contact-points:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetAllContactPoints
       description: Get all contact points
       operationId: GetAllContactPoints
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -377,15 +446,15 @@ paths:
             application/json: "[ ]"
           schema:
             $ref: '#/definitions/GrafanaManagedReceiverConfig'
-  /api/v1/alert/health:
+  /api/o11y/trigger/alert/health:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: CheckGrafanaHealthStatus
       description: Check grafana health status
-      operationId: CheckGrafanaHealth
+      operationId: CheckGrafanaHealthStatus
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
@@ -407,36 +476,36 @@ paths:
               }
           schema:
             $ref: '#/definitions/GrafanaHealthCheckResponse'
-  /api/v1/alert/test-history:
+  /api/o11y/trigger/alert/test-history:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
       summary: GetPaginatedAlertTestHistories
       description: Get paginated alert test histories
-      operationId: GetAlertTestHistories
+      operationId: GetPaginatedAlertTestHistories
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        type: integer
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        type: integer
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        type: string
-      - name: direction
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        type: string
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties (id..)
+          required: false
+          type: string
+        - name: direction
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
@@ -462,391 +531,131 @@ paths:
               }
           schema:
             $ref: '#/definitions/AlertTestHistoryPageResponse'
-  /api/v1/log/labels:
+  /api/o11y/trigger/noti/channel:
     get:
       tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Labels Query API
-      description: Retrieve the list of label keys provided by Loki.
-      operationId: GetLabels
+        - "[Trigger] Notification"
+      summary: GetSupportedNotificationChannels
+      description: Get supported notification channels
+      operationId: GetSupportedNotificationChannels
       produces:
-      - application/json
+        - application/json
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "레이블 목록 조회 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : {
-                    "labels" : [ "string", "string" ]
-                  }
-                }
+                "notiChannels" : [ {
+                  "id" : 1,
+                  "name" : "sms_naver-cloud",
+                  "type" : "sms",
+                  "provider" : "naver-cloud",
+                  "baseUrl" : "https://sens.apigw.ntruss.com",
+                  "isActive" : true,
+                  "createdAt" : "2025-10-13T15:34:10.397689797",
+                  "updatedAt" : "2025-10-13T15:34:10.397724146"
+                } ]
               }
           schema:
-            $ref: '#/definitions/api_v1_log_labels-1630941350'
-  /api/v1/log/log_volumes:
+            $ref: '#/definitions/NotiChannelAllResponse'
+  /api/o11y/trigger/noti/history:
     get:
       tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Volume Query API
-      description: Retrieve log volumes (metric time series data) for the given period.
-      operationId: GetLogVolumes
+        - "[Trigger] Notification"
+      summary: GetPaginatedNotificationHistories
+      description: Get paginated notification histories
+      operationId: GetPaginatedNotificationHistories
       produces:
-      - application/json
+        - application/json
+      parameters:
+        - name: page
+          in: query
+          description: page number (1 .. N)
+          required: false
+          type: integer
+        - name: size
+          in: query
+          description: size of page (1 .. N)
+          required: false
+          type: integer
+        - name: sortBy
+          in: query
+          description: sort by properties(id..)
+          required: false
+          type: string
+        - name: sortDirection
+          in: query
+          description: "sort direction (asc, desc)"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "로그 볼륨 데이터 조회 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : {
-                    "data" : [ {
-                      "metric" : {
-                        "env" : "string",
-                        "app" : "string"
-                      },
-                      "values" : [ {
-                        "timestamp" : 0,
-                        "value" : "string"
-                      } ]
-                    } ]
-                  }
-                }
+                "content" : [ ],
+                "pageable" : {
+                  "pageNumber" : 0,
+                  "pageSize" : 1,
+                  "sort" : {
+                    "sorted" : false,
+                    "empty" : true,
+                    "unsorted" : true
+                  },
+                  "offset" : 0,
+                  "paged" : true,
+                  "unpaged" : false
+                },
+                "totalPages" : 1,
+                "totalElements" : 0,
+                "numberOfElements" : 0
               }
           schema:
-            $ref: '#/definitions/api_v1_log_log_volumes1332534490'
-  /api/v1/log/query_range:
-    get:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Log Range Query API
-      description: Retrieve log data for a specific query within a given time range.
-      operationId: QueryRangeLogs
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "timestamp" : "2025-09-22T03:52:47",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "로그 기간 데이터 읽기 성공하였습니다.",
-                "requestId" : "string",
-                "data" : {
-                  "result" : null
-                }
-              }
-          schema:
-            $ref: '#/definitions/api_v1_log_query_range-1819803082'
-  /api/o11y/monitoring/influxdb/measurement:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: GetMeasurementFields
-      description: Retrieve InfluxDB measurements
-      operationId: Measurement
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "measurement" : "string",
-                  "fields" : [ {
-                    "key" : "string",
-                    "type" : "string"
-                  } ]
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/FieldDTO'
-  /api/o11y/monitoring/influxdb/tag:
-    get:
-      tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: GetMeasurementTags
-      description: Retrieve InfluxDB tags
-      operationId: Tag
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "measurement" : "string",
-                  "tags" : [ "string", "string" ]
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/TagDTO'
+            $ref: '#/definitions/NotiHistoryPageResponse'
   /api/o11y/trigger/policy/{id}:
     delete:
       tags:
-      - "[Metric Event] monitoring measurement trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: DeleteTriggerPolicy
       description: Delete trigger policy
       operationId: DeleteTriggerPolicy
       parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
       responses:
         "202":
           description: ""
-          examples: {}
-  /api/v1/alert/alert-receiver/test:
-    post:
-      tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: TestAlertReceiverConnection
-      description: Test alert receiver connection
-      operationId: TestAlertReceiver
-      responses:
-        "200":
-          description: ""
-          examples: {}
-  /api/v1/alert/alerts/search:
+          examples: { }
+  /api/o11y/log/labels/{label}/values:
     get:
       tags:
-      - "[Metric Event] monitoring trigger event handler"
-      summary: SearchAlertsByTitle
-      description: Search alerts by title
-      operationId: GetAlertByTitle
-      produces:
-      - application/json
-      parameters:
-      - name: title
-        in: query
-        description: alert title to search
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: "[ ]"
-          schema:
-            $ref: '#/definitions/AlertResponse'
-  /api/o11y/monitoring/{NS ID}/{mciId}/vm:
-    get:
-      tags:
-      - "[VM] Monitoring vm management"
-      summary: GetVMByNsMci
-      description: Retrieve target list by NS/MCI
-      operationId: GetVmByNsMci
-      produces:
-      - application/json
-      parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      responses:
-        "200":
-          description: ""
-          examples:
-            application/json: |-
-              {
-                "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
-                "data" : [ {
-                  "name" : "string",
-                  "description" : "string",
-                  "vm_id" : "string",
-                  "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
-                } ],
-                "error_message" : ""
-              }
-          schema:
-            $ref: '#/definitions/VMDTO'
-  /api/o11y/trigger/history/{id}/comment:
-    put:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: UpdateTriggerHistoryComment
-      description: Update trigger history comment
-      operationId: UpdateTriggerHistoryComment
-      consumes:
-      - application/json;charset=UTF-8
-      parameters:
-      - name: id
-        in: path
-        description: trigger history id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerHistoryCommentUpdateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "comment" : "Alert resolved - false positive"
-            }
-      responses:
-        "200":
-          description: ""
-          examples: {}
-  /api/o11y/trigger/policy/{id}/channel:
-    put:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: UpdateTriggerPolicyNotificationChannels
-      description: Update trigger policy notification channels
-      operationId: UpdateTriggerPolicyNotiChannel
-      consumes:
-      - application/json;charset=UTF-8
-      parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerPolicyNotiChannelUpdateRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            [ {
-              "channelName" : "sms_ncp",
-              "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
-            }, {
-              "channelName" : "email_smtp",
-              "recipients" : [ "admin@example.com", "dev@example.com" ]
-            } ]
-      responses:
-        "202":
-          description: ""
-          examples: {}
-  /api/o11y/trigger/policy/{id}/vm:
-    post:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: AddTriggerVM
-      description: Add trigger vm
-      operationId: AddTriggerVm
-      consumes:
-      - application/json;charset=UTF-8
-      parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerVMAddRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "namespaceId" : "namespace-1",
-              "vmScope" : "vm",
-              "vmId" : "vm-1"
-            }
-      responses:
-        "202":
-          description: ""
-          examples: {}
-    delete:
-      tags:
-      - "[Metric Event] monitoring measurement trigger"
-      summary: RemoveTriggerVM
-      description: Remove trigger vm
-      operationId: RemoveTriggerVm
-      consumes:
-      - application/json;charset=UTF-8
-      parameters:
-      - name: id
-        in: path
-        description: trigger policy id
-        required: true
-        type: integer
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/TriggerVMRemoveRequest'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "namespaceId" : "namespace-1",
-              "vmScope" : "vm",
-              "vmId" : "vm-1"
-            }
-      responses:
-        "202":
-          description: ""
-          examples: {}
-  /api/v1/log/labels/{label}/values:
-    get:
-      tags:
-      - "[Monitoring log] Monitoring log"
-      summary: Label Value Query API
+        - "[Manager] Monitoring Log"
+      summary: LabelValueQuery
       description: Retrieve the list of values for a specific label key.
-      operationId: GetLabelValues
+      operationId: LabelValueQuery
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: label
-        in: path
-        description: "Label key (e.g., app, env)"
-        required: true
-        type: string
+        - name: label
+          in: path
+          description: "Label key (e.g., app, env)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-09-22T03:52:47",
+                "timestamp" : "2025-10-13T06:34:07",
                 "status" : "SUCCESS",
                 "code" : "OK",
-                "message" : "레이블 값 목록 조회 성공하였습니다.",
+                "message" : "Successfully retrieved label value list.",
                 "requestId" : "string",
                 "data" : {
                   "result" : {
@@ -855,51 +664,27 @@ paths:
                 }
               }
           schema:
-            $ref: '#/definitions/api_v1_log_labels_label_values-389755828'
-  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
-    post:
+            $ref: '#/definitions/api_o11y_log_labels_label_values-389755828'
+  /api/o11y/monitoring/{nsId}/{mciId}/vm:
+    get:
       tags:
-      - "[Monitoring metric] Monitoring metric"
-      summary: QueryMetrics
-      description: Retrieve InfluxDB metrics
-      operationId: Query
-      consumes:
-      - application/json;charset=UTF-8
+        - "[Manager] Monitoring VM Management"
+      summary: GetVMByNsMci
+      description: Retrieve target list by NS/MCI
+      operationId: GetVMByNsMci
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MetricRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "measurement" : "string",
-              "range" : "string",
-              "group_time" : "string",
-              "group_by" : [ "string" ],
-              "limit" : 0,
-              "fields" : [ {
-                "function" : "string",
-                "field" : "string"
-              } ],
-              "conditions" : [ {
-                "key" : "string",
-                "value" : "string"
-              } ]
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -907,10 +692,239 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
-                  "name" : "string",
-                  "columns" : [ "string", "string" ],
+                  "name" : "mcmp-vm",
+                  "description" : "string",
+                  "vm_id" : "vm-1",
+                  "influx_seq" : 0,
+                  "vm_status" : "RUNNING",
+                  "monitoring_service_status" : "ACTIVE",
+                  "log_service_status" : "ACTIVE",
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/VMDTO'
+  /api/o11y/trigger/alert/alert-receiver/test:
+    post:
+      tags:
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+      summary: TestAlertReceiverConnection
+      description: Test alert receiver connection
+      operationId: TestAlertReceiverConnection
+      responses:
+        "200":
+          description: ""
+          examples: { }
+  /api/o11y/trigger/alert/alerts/search:
+    get:
+      tags:
+        - "[Trigger - Only Developer] Monitoring Trigger Event Handler"
+      summary: SearchAlertsByTitle
+      description: Search alerts by title
+      operationId: SearchAlertsByTitle
+      produces:
+        - application/json
+      parameters:
+        - name: title
+          in: query
+          description: alert title to search
+          required: true
+          type: string
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: "[ ]"
+          schema:
+            $ref: '#/definitions/AlertResponse'
+  /api/o11y/trigger/history/{id}/comment:
+    put:
+      tags:
+        - "[Trigger] Monitoring Measurement Trigger"
+      summary: UpdateTriggerHistoryComment
+      description: Update trigger history comment
+      operationId: UpdateTriggerHistoryComment
+      consumes:
+        - application/json;charset=UTF-8
+      parameters:
+        - name: id
+          in: path
+          description: trigger history id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerHistoryCommentUpdateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "comment" : "Alert resolved - false positive"
+              }
+      responses:
+        "200":
+          description: ""
+          examples: { }
+  /api/o11y/trigger/policy/{id}/channel:
+    put:
+      tags:
+        - "[Trigger] Monitoring Measurement Trigger"
+      summary: UpdateTriggerPolicyNotificationChannels
+      description: Update trigger policy notification channels
+      operationId: UpdateTriggerPolicyNotificationChannels
+      consumes:
+        - application/json;charset=UTF-8
+      parameters:
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerPolicyNotiChannelUpdateRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              [ {
+                "channelName" : "kakao_naver-cloud",
+                "recipients" : [ "+82-10-1234-5678" ]
+              }, {
+                "channelName" : "sms_naver-cloud",
+                "recipients" : [ "+82-10-1234-5678" ]
+              }, {
+                "channelName" : "email_smtp.gmail.com",
+                "recipients" : [ "admin@example.com" ]
+              }, {
+                "channelName" : "slack",
+                "recipients" : [ "C09GRESEF" ]
+              } ]
+      responses:
+        "202":
+          description: ""
+          examples: { }
+  /api/o11y/trigger/policy/{id}/vm:
+    post:
+      tags:
+        - "[Trigger] Monitoring Measurement Trigger"
+      summary: AddTriggerVM
+      description: Add trigger vm
+      operationId: AddTriggerVM
+      consumes:
+        - application/json;charset=UTF-8
+      parameters:
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerVMAddRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "namespaceId" : "first-ns",
+                "vmScope" : "mci",
+                "vmId" : "test01"
+              }
+      responses:
+        "202":
+          description: ""
+          examples: { }
+    delete:
+      tags:
+        - "[Trigger] Monitoring Measurement Trigger"
+      summary: RemoveTriggerVM
+      description: Remove trigger vm
+      operationId: RemoveTriggerVM
+      consumes:
+        - application/json;charset=UTF-8
+      parameters:
+        - name: id
+          in: path
+          description: trigger policy id
+          required: true
+          type: integer
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/TriggerVMRemoveRequest'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "namespaceId" : "namespace-1",
+                "vmScope" : "vm",
+                "vmId" : "vm-1"
+              }
+      responses:
+        "202":
+          description: ""
+          examples: { }
+  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
+    post:
+      tags:
+        - "[Manager] Monitoring Metric"
+      summary: QueryMetrics
+      description: Retrieve InfluxDB metrics
+      operationId: QueryMetrics
+      consumes:
+        - application/json;charset=UTF-8
+      produces:
+        - application/json
+      parameters:
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MetricRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "measurement" : "cpu",
+                "range" : "1h",
+                "group_time" : "12m",
+                "group_by" : [ "ns_id" ],
+                "limit" : 0,
+                "fields" : [ {
+                  "function" : "mean",
+                  "field" : "usage_idle"
+                } ],
+                "conditions" : [ {
+                  "key" : "cpu",
+                  "value" : "cpu-total"
+                } ]
+              }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "name" : "cpu",
+                  "columns" : [ "cpu", "ns_id" ],
                   "tags" : null,
                   "values" : [ [ "string", 0 ] ]
                 } ],
@@ -918,31 +932,31 @@ paths:
               }
           schema:
             $ref: '#/definitions/MetricDTO'
-  /api/o11y/monitoring/{NS ID}/{mciId}/vm/{vmId}:
+  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}:
     get:
       tags:
-      - "[VM] Monitoring vm management"
+        - "[Manager] Monitoring VM Management"
       summary: GetVM
       description: Retrieve single target
-      operationId: GetVm
+      operationId: GetVM
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -950,17 +964,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -968,41 +982,41 @@ paths:
             $ref: '#/definitions/VMDTO'
     post:
       tags:
-      - "[VM] Monitoring vm management"
+        - "[Manager] Monitoring VM Management"
       summary: PostVM
       description: Create target
-      operationId: PostVm
+      operationId: PostVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/VMRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "name" : "string",
-              "description" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/VMRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "name" : "mcmp-vm",
+                "description" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1010,17 +1024,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -1028,41 +1042,41 @@ paths:
             $ref: '#/definitions/VMDTO'
     put:
       tags:
-      - "[VM] Monitoring vm management"
+        - "[Manager] Monitoring VM Management"
       summary: PutVM
       description: Update target
-      operationId: PutVm
+      operationId: PutVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/VMRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "name" : "string",
-              "description" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/VMRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "name" : "mcmp-vm",
+                "description" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1070,17 +1084,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : {
-                  "name" : "string",
+                  "name" : "mcmp-vm",
                   "description" : "string",
-                  "vm_id" : "string",
+                  "vm_id" : "vm-1",
                   "influx_seq" : 0,
                   "vm_status" : "RUNNING",
                   "monitoring_service_status" : "ACTIVE",
                   "log_service_status" : "ACTIVE",
-                  "ns_id" : "string",
-                  "mci_id" : "string"
+                  "ns_id" : "ns-1",
+                  "mci_id" : "mci-1"
                 },
                 "error_message" : ""
               }
@@ -1088,28 +1102,28 @@ paths:
             $ref: '#/definitions/VMDTO'
     delete:
       tags:
-      - "[VM] Monitoring vm management"
+        - "[Manager] Monitoring VM Management"
       summary: DeleteVM
       description: Delete target
-      operationId: DeleteVm
+      operationId: DeleteVM
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: NS ID
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1117,37 +1131,37 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167'
+            $ref: '#/definitions/api_o11y_monitoring_nsId_mciId_vm_vmId-1790047999'
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
     get:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+        - "[Manager] Monitoring VM Item Management"
       summary: GetMonitoringItems
       description: Retrieve monitoring item list
-      operationId: GetItems
+      operationId: GetMonitoringItems
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: NSID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1155,17 +1169,17 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : [ {
                   "seq" : 0,
-                  "nsId" : "string",
-                  "mciId" : "string",
-                  "vmId" : "string",
-                  "name" : "string",
+                  "nsId" : "ns-1",
+                  "mciId" : "mci-1",
+                  "vmId" : "vm-1",
+                  "name" : "mcmp-vm",
                   "state" : "string",
-                  "pluginSeq" : 0,
-                  "pluginName" : "string",
-                  "pluginType" : "string",
+                  "pluginSeq" : 1,
+                  "pluginName" : "cpu",
+                  "pluginType" : "INPUT",
                   "pluginConfig" : "string"
                 } ],
                 "error_message" : ""
@@ -1174,41 +1188,41 @@ paths:
             $ref: '#/definitions/MonitoringItemDTO'
     post:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+        - "[Manager] Monitoring VM Item Management"
       summary: AddMonitoringItem
       description: Add monitoring item
-      operationId: PostItem
+      operationId: AddMonitoringItem
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MonitoringItemRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "pluginSeq" : 0,
-              "pluginConfig" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MonitoringItemRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "pluginSeq" : 0,
+                "pluginConfig" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1216,49 +1230,49 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
     put:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+        - "[Manager] Monitoring VM Item Management"
       summary: UpdateMonitoringItem
       description: Update monitoring item
-      operationId: PutItem
+      operationId: UpdateMonitoringItem
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MonitoringItemUpdateDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "seq" : 0,
-              "pluginConfig" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MonitoringItemUpdateDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "seq" : 0,
+                "pluginConfig" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1266,42 +1280,42 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
   /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
     delete:
       tags:
-      - "[Monitoring item] Monitoring vm item management"
+        - "[Manager] Monitoring VM Item Management"
       summary: DeleteMonitoringItem
       description: Delete monitoring item
-      operationId: DeleteItem
+      operationId: DeleteMonitoringItem
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: NS ID
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: MCI ID
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: TARGET ID
-        required: true
-        type: string
-      - name: itemSeq
-        in: path
-        description: ITEM SEQ
-        required: true
-        type: string
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - name: itemSeq
+          in: path
+          description: "Item Seq (e.g., 1)"
+          required: true
+          type: string
       responses:
         "200":
           description: ""
@@ -1309,67 +1323,67 @@ paths:
             application/json: |-
               {
                 "rs_code" : "0000",
-                "rs_msg" : "완료되었습니다.",
+                "rs_msg" : "success",
                 "data" : null,
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/ResBody<Void>'
+            $ref: '#/definitions/ResBody'
   /api/o11y/insight/anomaly-detection/measurement:
     get:
       description: Get measurements, field lists available for the feature
       summary: GetAnomalyMeasurementList
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetAnomalyMeasurementList
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successfully retrieved anomaly detection measurements
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionMeasurement'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/measurement/{measurement}:
     get:
       description: Get Field list of specific measurements available for that feature
       summary: GetAnomalyFieldListByMeasurement
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetAnomalyFieldListByMeasurement
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: measurement
-        in: path
-        required: true
-        type: string
-        description: Specific Measurement.
+        - name: measurement
+          in: path
+          required: true
+          type: string
+          description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved anomaly detection field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSpecificMeasurement'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/options:
     get:
       description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
       summary: GetAnomalyDetectionOptions
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetAnomalyDetectionOptions
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
@@ -1379,306 +1393,306 @@ paths:
             application/json:
               data:
                 target_types:
-                - vm
-                - mci
+                  - vm
+                  - mci
                 measurements:
-                - cpu
-                - mem
+                  - cpu
+                  - mem
                 execution_intervals:
-                - 5m
-                - 10m
-                - 30m
+                  - 5m
+                  - 10m
+                  - 30m
               rs_code: '200'
               rs_msg: Success
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/settings:
     get:
       description: Fetch the current settings for all anomaly detection targets.
       summary: GetAllAnomalyDetectionSettings
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetAllAnomalyDetectionSettings
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
-          headers: {}
+          headers: { }
     post:
       description: Register a target for anomaly detection and automatically schedule detection tasks.
       summary: PostAnomalyDetectionSettings
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetectionSettings
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/AnomalyDetectionTargetRegistration'
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/AnomalyDetectionTargetRegistration'
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
       description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
       summary: PutAnomalyDetectionSettings
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: PutAnomalyDetectionSettings
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: settingSeq
-        in: path
-        required: true
-        type: integer
-        format: int32
-        description: ''
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/AnomalyDetectionTargetUpdate'
+      consumes:
+        - application/json
+      parameters:
+        - name: settingSeq
+          in: path
+          required: true
+          type: integer
+          format: int32
+          description: ''
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/AnomalyDetectionTargetUpdate'
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
     delete:
       description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
       summary: DeleteAnomalyDetectionSettings
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: DeleteAnomalyDetectionSettings
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: settingSeq
-        in: path
-        required: true
-        type: integer
-        format: int32
-        description: ''
+        - name: settingSeq
+          in: path
+          required: true
+          type: integer
+          format: int32
+          description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
     get:
       description: Fetch the current settings for a specific anomaly detection target.
       summary: GetTargetAnomalyDetectionSettings
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetTargetAnomalyDetectionSettings
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: ''
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: ''
+        - name: nsId
+          in: path
+          required: true
+          type: string
+          description: ''
+        - name: targetId
+          in: path
+          required: true
+          type: string
+          description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
     get:
       description: Fetch the results of anomaly detection for a specific target within a given time range.
       summary: GetAnomalyDetectionHistory
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: GetAnomalyDetectionHistory
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: The Namespace ID for the prediction.
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: The ID of the target vm or mci group.
-      - name: measurement
-        in: query
-        required: true
-        enum:
-        - cpu
-        - mem
-        type: string
-        description: The type of metric to retrieve.
-      - name: start_time
-        in: query
-        required: false
-        type: string
-        description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
-      - name: end_time
-        in: query
-        required: false
-        type: string
-        description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
+        - name: nsId
+          in: path
+          required: true
+          type: string
+          description: The Namespace ID for the prediction.
+        - name: targetId
+          in: path
+          required: true
+          type: string
+          description: The ID of the target vm or mci group.
+        - name: measurement
+          in: query
+          required: true
+          enum:
+            - cpu
+            - mem
+          type: string
+          description: The type of metric to retrieve.
+        - name: start_time
+          in: query
+          required: false
+          type: string
+          description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
+        - name: end_time
+          in: query
+          required: false
+          type: string
+          description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/anomaly-detection/{settingSeq}:
     post:
       description: Request anomaly detection
       summary: PostAnomalyDetection
       tags:
-      - '[Insight] Anomaly Detection'
+        - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetection
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: settingSeq
-        in: path
-        required: true
-        type: integer
-        format: int32
-        description: ''
+        - name: settingSeq
+          in: path
+          required: true
+          type: integer
+          format: int32
+          description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/predictions/measurement:
     get:
       description: Get measurements, field lists available for the feature
       summary: GetPredictionMeasurementList
       tags:
-      - '[Insight] Prediction'
+        - '[Insight] Prediction'
       operationId: GetPredictionMeasurementList
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successfully retrieved prediction measurements
           schema:
             $ref: '#/definitions/ResBodyPredictionMeasurement'
-          headers: {}
+          headers: { }
   /api/o11y/insight/predictions/measurement/{measurement}:
     get:
       description: Get Field list of specific measurement available for that feature
       summary: GetPredictionFieldListByMeasurement
       tags:
-      - '[Insight] Prediction'
+        - '[Insight] Prediction'
       operationId: GetPredictionFieldListByMeasurement
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: measurement
-        in: path
-        required: true
-        type: string
-        description: Specific Measurement.
+        - name: measurement
+          in: path
+          required: true
+          type: string
+          description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved prediction field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyPredictionSpecificMeasurement'
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/predictions/options:
     get:
       description: Fetch the available target types, metric types, and prediction range options for the prediction API.
       summary: GetPredictionOptions
       tags:
-      - '[Insight] Prediction'
+        - '[Insight] Prediction'
       operationId: GetPredictionOptions
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful retrieval of prediction options
@@ -1688,55 +1702,55 @@ paths:
             application/json:
               data:
                 target_types:
-                - vm
-                - mci
+                  - vm
+                  - mci
                 measurements:
-                - cpu
-                - mem
-                - disk
-                - system
+                  - cpu
+                  - mem
+                  - disk
+                  - system
                 prediction_ranges:
                   min: 1h
                   max: 2160h
               rs_code: '200'
               rs_msg: Success
-          headers: {}
+          headers: { }
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
     post:
       description: Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.
       summary: PostPrediction
       tags:
-      - '[Insight] Prediction'
+        - '[Insight] Prediction'
       operationId: PostPrediction
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: The Namespace ID for the prediction.
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: The ID of the target vm or mci group.
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/PredictionBody'
+      consumes:
+        - application/json
+      parameters:
+        - name: nsId
+          in: path
+          required: true
+          type: string
+          description: The Namespace ID for the prediction.
+        - name: targetId
+          in: path
+          required: true
+          type: string
+          description: The ID of the target vm or mci group.
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PredictionBody'
       responses:
         '200':
           description: Successful prediction response
@@ -1750,61 +1764,61 @@ paths:
                 measurement: cpu
                 target_type: vm
                 values:
-                - timestamp: 2024-08-22T00:00:00Z
-                  value: 75
-                - timestamp: 2024-08-22T01:00:00Z
-                  value: 78
-                - timestamp: 2024-08-22T02:00:00Z
-                  value: 80
+                  - timestamp: 2024-08-22T00:00:00Z
+                    value: 75
+                  - timestamp: 2024-08-22T01:00:00Z
+                    value: 78
+                  - timestamp: 2024-08-22T02:00:00Z
+                    value: 80
               rs_code: '200'
               rs_msg: Success
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
     get:
       description: Get previously stored prediction data for a specific vm or mci group.
       summary: GetPredictionHistory
       tags:
-      - '[Insight] Prediction'
+        - '[Insight] Prediction'
       operationId: GetPredictionHistory
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        required: true
-        type: string
-        description: The Namespace ID for the prediction.
-      - name: targetId
-        in: path
-        required: true
-        type: string
-        description: The ID of the target vm or mci group.
-      - name: measurement
-        in: query
-        required: true
-        enum:
-        - cpu
-        - mem
-        - disk
-        - system
-        type: string
-        description: The type of metric to retrieve.
-      - name: start_time
-        in: query
-        required: false
-        type: string
-        description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
-      - name: end_time
-        in: query
-        required: false
-        type: string
-        description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
+        - name: nsId
+          in: path
+          required: true
+          type: string
+          description: The Namespace ID for the prediction.
+        - name: targetId
+          in: path
+          required: true
+          type: string
+          description: The ID of the target vm or mci group.
+        - name: measurement
+          in: query
+          required: true
+          enum:
+            - cpu
+            - mem
+            - disk
+            - system
+          type: string
+          description: The type of metric to retrieve.
+        - name: start_time
+          in: query
+          required: false
+          type: string
+          description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
+        - name: end_time
+          in: query
+          required: false
+          type: string
+          description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
       responses:
         '200':
           description: Successfully retrieved prediction history
@@ -1817,31 +1831,31 @@ paths:
                 target_id: string
                 measurement: cpu
                 values:
-                - timestamp: 2024-08-22T00:00:00Z
-                  value: 50
-                - timestamp: 2024-08-22T01:00:00Z
-                  value: 55
-                - timestamp: 2024-08-22T02:00:00Z
-                  value: 60
+                  - timestamp: 2024-08-22T00:00:00Z
+                    value: 50
+                  - timestamp: 2024-08-22T01:00:00Z
+                    value: 55
+                  - timestamp: 2024-08-22T02:00:00Z
+                    value: 60
               rs_code: '200'
               rs_msg: Success
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/llm/session:
     get:
       description: Retrieve all active LLM chat sessions for log analysis.
       summary: GetLLMChatSessions
       tags:
-      - '[Insight] LLM Session Management'
+        - '[Insight] LLM Session Management'
       operationId: GetLLMChatSessions
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
@@ -1852,44 +1866,44 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-              - seq: 1
-                user_id: '1'
-                session_id: 986ef65f-e425-478a-b84c-03fa80682f36
-                provider: openai
-                model_name: gpt-5-mini
-                regdate: 2025-09-17T14:12:36
-              - seq: 2
-                user_id: '1'
-                session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
-                provider: ollama
-                model_name: llama3.1:8b
-                regdate: 2025-09-18T11:46:49
-          headers: {}
+                - seq: 1
+                  user_id: '1'
+                  session_id: 986ef65f-e425-478a-b84c-03fa80682f36
+                  provider: openai
+                  model_name: gpt-5-mini
+                  regdate: 2025-09-17T14:12:36
+                - seq: 2
+                  user_id: '1'
+                  session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
+                  provider: ollama
+                  model_name: llama3.1:8b
+                  regdate: 2025-09-18T11:46:49
+          headers: { }
     post:
       description: Create a new LLM chat session for log analysis with specified provider and model.
       summary: PostLLMChatSession
       tags:
-      - '[Insight] LLM Session Management'
+        - '[Insight] LLM Session Management'
       operationId: PostLLMChatSession
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/PostSessionBody'
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostSessionBody'
       responses:
         '200':
           description: Successful Response
@@ -1906,27 +1920,27 @@ paths:
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:54:04
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
     delete:
       description: Delete a specific LLM chat session and its conversation history.
       summary: DeleteLLMChatSession
       tags:
-      - '[Insight] LLM Session Management'
+        - '[Insight] LLM Session Management'
       operationId: DeleteLLMChatSession
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: sessionId
-        in: query
-        required: true
-        type: string
-        description: ''
+        - name: sessionId
+          in: query
+          required: true
+          type: string
+          description: ''
       responses:
         '200':
           description: Successful Response
@@ -1943,23 +1957,23 @@ paths:
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:54:04
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/llm/sessions:
     delete:
       description: Delete all LLM chat sessions and their conversation histories.
       summary: DeleteAllLLMChatSessions
       tags:
-      - '[Insight] LLM Session Management'
+        - '[Insight] LLM Session Management'
       operationId: DeleteAllLLMChatSessions
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
@@ -1969,24 +1983,24 @@ paths:
             application/json:
               rs_code: '200'
               rs_msg: Success
-              data: []
-          headers: {}
+              data: [ ]
+          headers: { }
   /api/o11y/insight/llm/session/{sessionId}/history:
     get:
       description: Retrieve the conversation history for a specific LLM chat session.
       summary: GetLLMSessionHistory
       tags:
-      - '[Insight] LLM Session Management'
+        - '[Insight] LLM Session Management'
       operationId: GetLLMSessionHistory
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: sessionId
-        in: path
-        required: true
-        type: string
-        description: ''
+        - name: sessionId
+          in: path
+          required: true
+          type: string
+          description: ''
       responses:
         '200':
           description: Successful Response
@@ -1998,42 +2012,42 @@ paths:
               rs_msg: Success
               data:
                 messages:
-                - message_type: human
-                  message: Analyze these error logs and find the root cause
-                - message_type: ai
-                  message: I’ll find the actual error logs (and some context)...
+                  - message_type: human
+                    message: Analyze these error logs and find the root cause
+                  - message_type: ai
+                    message: I’ll find the actual error logs (and some context)...
                 seq: 41
                 user_id: '1'
                 session_id: fa746359-ab1b-4755-a1cc-630e373135ff
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:59:37
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/llm/api-keys:
     get:
       description: Retrieve the current API key configuration.
       summary: GetLLMAPIKeys
       tags:
-      - '[Insight] LLM API Key Management'
+        - '[Insight] LLM API Key Management'
       operationId: GetLLMAPIKeys
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: provider
-        in: query
-        required: false
-        enum:
-        - openai
-        - google
-        - anthropic
-        type: string
-        description: The LLM provider to use
+        - name: provider
+          in: query
+          required: false
+          enum:
+            - openai
+            - google
+            - anthropic
+          type: string
+          description: The LLM provider to use
       responses:
         '200':
           description: Successful Response
@@ -2044,40 +2058,40 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-              - seq: 1
-                provider: openai
-                api_key: api_key
-          headers: {}
+                - seq: 1
+                  provider: openai
+                  api_key: api_key
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
     post:
       description: Save or update the API key configuration.
       summary: PostLLMAPIKeys
       tags:
-      - '[Insight] LLM API Key Management'
+        - '[Insight] LLM API Key Management'
       operationId: PostLLMAPIKeys
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/PostAPIKeyBody'
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostAPIKeyBody'
       responses:
         '200':
           description: Successful Response
@@ -2091,31 +2105,31 @@ paths:
                 seq: 2
                 provider: openai
                 api_key: api_key
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
     delete:
       description: Delete the API key configuration.
       summary: DeleteLLMAPIKeys
       tags:
-      - '[Insight] LLM API Key Management'
+        - '[Insight] LLM API Key Management'
       operationId: DeleteLLMAPIKeys
       deprecated: false
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: provider
-        in: query
-        required: true
-        enum:
-        - openai
-        - google
-        - anthropic
-        type: string
-        description: The LLM provider to use
+        - name: provider
+          in: query
+          required: true
+          enum:
+            - openai
+            - google
+            - anthropic
+          type: string
+          description: The LLM provider to use
       responses:
         '200':
           description: Successful Response
@@ -2129,23 +2143,23 @@ paths:
                 seq: 3
                 provider: openai
                 api_key: api_key
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/llm/model:
     get:
       description: Retrieve available LLM model options and configurations for log analysis.
       summary: GetLLMModelOptions
       tags:
-      - '[Insight] LLM Model Options'
+        - '[Insight] LLM Model Options'
       operationId: GetLLMModelOptions
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
@@ -2156,42 +2170,42 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-              - provider: ollama
-                model_name:
-                - llama3.1:8b
-                - mistral:7b
-              - provider: openai
-                model_name:
-                - gpt-5
-                - gpt-5-mini
-                - gpt-5-nano
-          headers: {}
+                - provider: ollama
+                  model_name:
+                    - llama3.1:8b
+                    - mistral:7b
+                - provider: openai
+                  model_name:
+                    - gpt-5
+                    - gpt-5-mini
+                    - gpt-5-nano
+          headers: { }
   /api/o11y/insight/log-analysis/query:
     post:
       description: Submit a query to the log analysis chat session for intelligent log investigation and troubleshooting.
       summary: PostLogAnalysisQuery
       tags:
-      - '[Insight] Log Analysis'
+        - '[Insight] Log Analysis'
       operationId: PostLogAnalysisQuery
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/PostQueryBody'
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
@@ -2204,38 +2218,38 @@ paths:
               data:
                 message_type: ai
                 message: "I've analyzed the error logs from the past hour and identified 3 critical issues: 1) Database connection timeout errors (15 occurrences), 2) Authentication service failures (8 occurrences), 3) Memory allocation errors (3 occurrences). The root cause appears to be network connectivity issues between the application and database servers."
-          headers: {}
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /api/o11y/insight/alert-analysis/query:
     post:
       description: Submit a query to the alert analysis chat session for intelligent alert investigation.
       summary: PostAlertAnalysisQuery
       tags:
-      - '[Insight] Alert Analysis'
+        - '[Insight] Alert Analysis'
       operationId: PostAlertAnalysisQuery
       deprecated: false
       produces:
-      - application/json
-      consumes:
-      - application/json
-      parameters:
-      - name: Content-Type
-        in: header
-        required: false
-        enum:
         - application/json
-        type: string
-        description: ''
-      - name: body
-        in: body
-        required: true
-        description: ''
-        schema:
-          $ref: '#/definitions/PostQueryBody'
+      consumes:
+        - application/json
+      parameters:
+        - name: Content-Type
+          in: header
+          required: false
+          enum:
+            - application/json
+          type: string
+          description: ''
+        - name: body
+          in: body
+          required: true
+          description: ''
+          schema:
+            $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
@@ -2250,19 +2264,19 @@ paths:
                 message: 'Based on the alert analysis, I found that the CPU usage spike is related to a memory leak in the application service. Here are the recommended actions: 1) Restart the affected service, 2) Check application logs for memory allocation issues, 3) Monitor memory usage trends over the next 24 hours.'
                 metadata:
                   queries_executed:
-                  - SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR
-                  - SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR
+                    - SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR
+                    - SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR
                   total_execution_time: 2.3
                   tool_calls_count: 3
                   databases_accessed:
-                  - mariadb
-                  - influxdb
-          headers: {}
+                    - mariadb
+                    - influxdb
+          headers: { }
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: {}
+          headers: { }
   /readyz:
     get:
       description: >-
@@ -2271,48 +2285,18 @@ paths:
         Returns 200 OK when all systems are ready, 503 if any system is not ready.
       summary: GetReadyz
       tags:
-      - '[Insight] System Management'
+        - '[Insight] System Management'
       operationId: GetReadyz
       deprecated: false
       produces:
-      - application/json
-      parameters: []
+        - application/json
+      parameters: [ ]
       responses:
         '200':
           description: Successful Response
-          schema: {}
-          headers: {}
+          schema: { }
+          headers: { }
 definitions:
-  ResBody<List<PluginDefDTO>>:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: array
-        description: Plugin list
-        items:
-          type: object
-          properties:
-            pluginType:
-              type: string
-              description: Plugin type
-            pluginId:
-              type: string
-              description: Plugin ID
-            name:
-              type: string
-              description: Plugin name
-            seq:
-              type: number
-              description: Plugin sequence
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
   AlertTestHistoryPageResponse:
     type: object
     properties:
@@ -2325,11 +2309,11 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: alert test history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
@@ -2345,18 +2329,18 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: notification history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
   AlertResponse:
     type: array
     description: List of matching alerts
-    items: {}
+    items: { }
   TriggerPolicyPageResponse:
     type: object
     properties:
@@ -2369,42 +2353,28 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: trigger policy list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
-  api_v1_log_labels_label_values-389755828:
+  VMRequestDTO:
     type: object
     properties:
-      code:
+      name:
         type: string
-        description: Response code
-      data:
-        type: object
-        properties:
-          result:
-            type: object
-            properties:
-              data:
-                type: array
-                description: List of label values
-                items: {}
-      requestId:
+        description: "Target name(e.g.,  mcmp-vm)"
+      description:
         type: string
-        description: Request ID
-      message:
-        type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
+        description: Description
+    example: |-
+      {
+        "name" : "mcmp-vm",
+        "description" : "string"
+      }
   MonitoringItemDTO:
     type: object
     properties:
@@ -2419,172 +2389,80 @@ definitions:
           properties:
             mciId:
               type: string
-              description: MCI ID
+              description: "mciId(e.g., mci-1"
             pluginType:
               type: string
-              description: Plugin type
+              description: "Plugin type (e.g., INPUT)"
             nsId:
               type: string
-              description: NSID
+              description: "nsId(e.g., ns-1"
             pluginName:
               type: string
-              description: Plugin name
+              description: "Plugin name (e.g., cpu)"
             vmId:
               type: string
-              description: TARGET ID
+              description: "vmId(e.g., vm-1"
             name:
               type: string
-              description: Item name
+              description: "Item name (e.g., cpu)"
             pluginSeq:
               type: number
-              description: Plugin sequence
+              description: "Plugin sequence (e.g., 1)"
             state:
               type: string
               description: State
             seq:
               type: number
-              description: Item sequence
+              description: "Item Sequence (e.g., 1)"
             pluginConfig:
               type: string
               description: Plugin configuration
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  InfluxDTO:
+        description: "Response message (e.g., Success)"
+  api_o11y_log_labels_label_values-389755828:
+    type: object
+    properties:
+      code:
+        type: string
+        description: Response code
+      data:
+        type: object
+        properties:
+          result:
+            type: object
+            properties:
+              data:
+                type: array
+                description: List of label values
+                items: { }
+      requestId:
+        type: string
+        description: Request ID
+      message:
+        type: string
+        description: Response message
+      status:
+        type: string
+        description: Response status
+      timestamp:
+        type: string
+        description: Response timestamp
+  api_o11y_monitoring_nsId_mciId_vm_vmId-1790047999:
     type: object
     properties:
       error_message:
         type: string
         description: Error message
-      data:
-        type: array
-        description: List of InfluxDB information
-        items:
-          type: object
-          properties:
-            uid:
-              type: string
-              description: "UID (example: 1)"
-            password:
-              type: string
-              description: "Password (example: mypassword"
-            database:
-              type: string
-              description: "Database name (example: db-1)"
-            retention_policy:
-              type: string
-              description: "Retention policy (example: autogen)"
-            id:
-              type: number
-              description: "ID (example: 1)"
-            url:
-              type: string
-              description: "InfluxDB URL (example: localhost:8086)"
-            username:
-              type: string
-              description: "Username (example: mc-user)"
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  TriggerPolicyNotiChannelUpdateRequest:
-    type: array
-    description: List of notification channel update objects
-    items:
-      type: object
-      description: List of notification channel update objects
-      properties:
-        recipients:
-          type: array
-          description: list of recipients
-          items: {}
-        channelName:
-          type: string
-          description: notification channel name
-    example: |-
-      [ {
-        "channelName" : "sms_ncp",
-        "recipients" : [ "+82-10-1234-5678", "+82-10-9876-5432" ]
-      }, {
-        "channelName" : "email_smtp",
-        "recipients" : [ "admin@example.com", "dev@example.com" ]
-      } ]
-  VMRequestDTO:
-    type: object
-    properties:
-      name:
-        type: string
-        description: Target name
-      description:
-        type: string
-        description: Description
-    example: |-
-      {
-        "name" : "string",
-        "description" : "string"
-      }
-  TriggerPolicyCreateRequest:
-    type: object
-    properties:
-      aggregationType:
-        type: string
-        description: aggregation type
-        enum:
-        - MIN
-        - MAX
-        - AVG
-        - LAST
-      repeatInterval:
-        type: string
-        description: repeat interval of evaluation
-      holdDuration:
-        type: string
-        description: minimum duration for firing alert
-      description:
-        type: string
-        description: trigger policy description
-      thresholdCondition:
-        type: object
-        description: threshold condition object
-        properties:
-          critical:
-            type: number
-            description: threshold value for critical level
-          warning:
-            type: number
-            description: threshold value for warning level
-          info:
-            type: number
-            description: threshold value for info level
-      title:
-        type: string
-        description: trigger policy title
-      resourceType:
-        type: string
-        description: resource type
-        enum:
-        - CPU
-        - MEMORY
-        - DISK
-    example: |-
-      {
-        "title" : "CPU Alert Policy",
-        "description" : "Alert when CPU usage is high",
-        "thresholdCondition" : {
-          "info" : 30.0,
-          "warning" : 50.0,
-          "critical" : 70.0
-        },
-        "resourceType" : "CPU",
-        "aggregationType" : "LAST",
-        "holdDuration" : "0m",
-        "repeatInterval" : "1h"
-      }
+        description: "Response message (e.g., Success)"
   GrafanaHealthCheckResponse:
     type: object
     properties:
@@ -2612,34 +2490,6 @@ definitions:
           hasData:
             type: boolean
             description: datasource is set up correctly
-  api_v1_log_labels-1630941350:
-    type: object
-    properties:
-      code:
-        type: string
-        description: Response code
-      data:
-        type: object
-        properties:
-          result:
-            type: object
-            properties:
-              labels:
-                type: array
-                description: List of labels
-                items: {}
-      requestId:
-        type: string
-        description: Request ID
-      message:
-        type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
   VMDTO:
     type: object
     properties:
@@ -2657,67 +2507,156 @@ definitions:
               description: Influx sequence
             vm_id:
               type: string
-              description: TARGET ID
+              description: vmId
             mci_id:
               type: string
-              description: MCI ID
+              description: "mciId (e.g.,  ci-1)"
             vm_status:
               type: string
               description: Target status
               enum:
-              - RUNNING
-              - FAILED
+                - RUNNING
+                - FAILED
             log_service_status:
               type: string
               description: Log agent service status
               enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
+                - ACTIVE
+                - INACTIVE
+                - ACTIVATING
+                - DEACTIVATING
+                - RELOADING
+                - NOT_EXIST
+                - FAILED
             ns_id:
               type: string
-              description: NS ID
+              description: "nsId (e.g., ns-1)"
             monitoring_service_status:
               type: string
               description: Monitoring agent service status
               enum:
-              - ACTIVE
-              - INACTIVE
-              - ACTIVATING
-              - DEACTIVATING
-              - RELOADING
-              - NOT_EXIST
-              - FAILED
+                - ACTIVE
+                - INACTIVE
+                - ACTIVATING
+                - DEACTIVATING
+                - RELOADING
+                - NOT_EXIST
+                - FAILED
             name:
               type: string
-              description: Target name
+              description: "Target name (e.g., mcmp-vm)"
             description:
               type: string
               description: Description
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  MonitoringItemRequestDTO:
+        description: "Response message (e.g., Success)"
+  api_o11y_log_labels-1630941350:
     type: object
     properties:
-      pluginSeq:
-        type: number
-        description: Plugin sequence
-      pluginConfig:
+      code:
         type: string
-        description: Plugin configuration
+        description: Response code
+      data:
+        type: object
+        properties:
+          result:
+            type: object
+            properties:
+              labels:
+                type: array
+                description: List of labels
+                items: { }
+      requestId:
+        type: string
+        description: Request ID
+      message:
+        type: string
+        description: Response message
+      status:
+        type: string
+        description: Response status
+      timestamp:
+        type: string
+        description: Response timestamp
+  MetricRequestDTO:
+    type: object
+    properties:
+      limit:
+        type: number
+        description: Result limit count
+      group_by:
+        type: array
+        description: "List of group-by fields, for example: ns_id, mci_id"
+        items: { }
+      range:
+        type: string
+        description: "Query range (e.g., 1h)"
+      conditions:
+        type: array
+        description: List of condition filters
+        items:
+          type: object
+          properties:
+            value:
+              type: string
+              description: "Condition value (e.g., cpu-total)"
+            key:
+              type: string
+              description: "Condition key (e.g., cpu)"
+      fields:
+        type: array
+        description: List of fields to query
+        items:
+          type: object
+          properties:
+            field:
+              type: string
+              description: "Field name (e.g., usage_idle)"
+            function:
+              type: string
+              description: "Aggregation function (e.g., mean, max, etc.)"
+      group_time:
+        type: string
+        description: Grouping unit
+      measurement:
+        type: string
+        description: "Measurement name (e.g., cpu)"
     example: |-
       {
-        "pluginSeq" : 0,
-        "pluginConfig" : "string"
+        "measurement" : "cpu",
+        "range" : "1h",
+        "group_time" : "12m",
+        "group_by" : [ "ns_id" ],
+        "limit" : 0,
+        "fields" : [ {
+          "function" : "mean",
+          "field" : "usage_idle"
+        } ],
+        "conditions" : [ {
+          "key" : "cpu",
+          "value" : "cpu-total"
+        } ]
       }
+  ResBody:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: object
+        description: Response data
+        properties: { }
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
   TriggerVMAddRequest:
     type: object
     properties:
@@ -2732,10 +2671,61 @@ definitions:
         description: namespace id
     example: |-
       {
-        "namespaceId" : "namespace-1",
-        "vmScope" : "vm",
-        "vmId" : "vm-1"
+        "namespaceId" : "first-ns",
+        "vmScope" : "mci",
+        "vmId" : "test01"
       }
+  FieldDTO:
+    type: object
+    properties:
+      error_message:
+        type: string
+        description: Error message
+      data:
+        type: array
+        description: List of measurement information
+        items:
+          type: object
+          properties:
+            fields:
+              type: array
+              description: List of field information
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    description: "Field type (e.g., integer)"
+                  key:
+                    type: string
+                    description: "Field key (e.g., server_time)"
+            measurement:
+              type: string
+              description: "Measurement name(e.g., cpu)"
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., Success)"
+  MonitoringItemUpdateDTO:
+    type: object
+    properties:
+      seq:
+        type: number
+        description: "Item Sequence (e.g., 1)"
+      pluginConfig:
+        type: string
+        description: Plugin configuration
+    example: |-
+      {
+        "seq" : 0,
+        "pluginConfig" : "string"
+      }
+  AllAlertRulesResponse:
+    type: array
+    description: List of alert rules
+    items: { }
   TagDTO:
     type: object
     properties:
@@ -2750,80 +2740,17 @@ definitions:
           properties:
             measurement:
               type: string
-              description: Measurement name
+              description: "Measurement name (e.g., cpu)"
             tags:
               type: array
               description: List of tags
-              items: {}
+              items: { }
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  MetricRequestDTO:
-    type: object
-    properties:
-      limit:
-        type: number
-        description: Result limit count
-      group_by:
-        type: array
-        description: List of group by fields
-        items: {}
-      range:
-        type: string
-        description: Query range
-      conditions:
-        type: array
-        description: List of condition filters
-        items:
-          type: object
-          properties:
-            value:
-              type: string
-              description: Condition value
-            key:
-              type: string
-              description: Condition key
-      fields:
-        type: array
-        description: List of fields to query
-        items:
-          type: object
-          properties:
-            field:
-              type: string
-              description: Field name
-            function:
-              type: string
-              description: "Aggregation function (e.g., mean, max, etc.)"
-      group_time:
-        type: string
-        description: Grouping unit
-      measurement:
-        type: string
-        description: Measurement name
-    example: |-
-      {
-        "measurement" : "string",
-        "range" : "string",
-        "group_time" : "string",
-        "group_by" : [ "string" ],
-        "limit" : 0,
-        "fields" : [ {
-          "function" : "string",
-          "field" : "string"
-        } ],
-        "conditions" : [ {
-          "key" : "string",
-          "value" : "string"
-        } ]
-      }
-  AllAlertRulesResponse:
-    type: array
-    description: List of alert rules
-    items: {}
+        description: "Response message (e.g., Success)"
   TriggerHistoryCommentUpdateRequest:
     type: object
     properties:
@@ -2834,20 +2761,34 @@ definitions:
       {
         "comment" : "Alert resolved - false positive"
       }
-  MonitoringItemUpdateDTO:
-    type: object
-    properties:
-      seq:
-        type: number
-        description: Item sequence
-      pluginConfig:
-        type: string
-        description: Plugin configuration
+  TriggerPolicyNotiChannelUpdateRequest:
+    type: array
+    description: List of notification channel update objects
+    items:
+      type: object
+      description: List of notification channel update objects
+      properties:
+        recipients:
+          type: array
+          description: list of recipients
+          items: { }
+        channelName:
+          type: string
+          description: notification channel name
     example: |-
-      {
-        "seq" : 0,
-        "pluginConfig" : "string"
-      }
+      [ {
+        "channelName" : "kakao_naver-cloud",
+        "recipients" : [ "+82-10-1234-5678" ]
+      }, {
+        "channelName" : "sms_naver-cloud",
+        "recipients" : [ "+82-10-1234-5678" ]
+      }, {
+        "channelName" : "email_smtp.gmail.com",
+        "recipients" : [ "admin@example.com" ]
+      }, {
+        "channelName" : "slack",
+        "recipients" : [ "C09GRESEF" ]
+      } ]
   TriggerVMRemoveRequest:
     type: object
     properties:
@@ -2878,14 +2819,71 @@ definitions:
       pageable:
         type: object
         description: specific page info
-        properties: {}
+        properties: { }
       content:
         type: array
         description: trigger history list
-        items: {}
+        items: { }
       totalElements:
         type: number
         description: total elements
+  TriggerPolicyCreateRequest:
+    type: object
+    properties:
+      aggregationType:
+        type: string
+        description: aggregation type
+        enum:
+          - MIN
+          - MAX
+          - AVG
+          - LAST
+      repeatInterval:
+        type: string
+        description: repeat interval of evaluation(1m~24h)
+      holdDuration:
+        type: string
+        description: minimum duration for firing alert(0s~1h)
+      description:
+        type: string
+        description: trigger policy description
+      thresholdCondition:
+        type: object
+        description: threshold condition object
+        properties:
+          critical:
+            type: number
+            description: threshold value for critical level(1~100)
+          warning:
+            type: number
+            description: threshold value for warning level(1~100)
+          info:
+            type: number
+            description: threshold value for info level(1~100)
+      title:
+        type: string
+        description: trigger policy title
+      resourceType:
+        type: string
+        description: resource type
+        enum:
+          - CPU
+          - MEMORY
+          - DISK
+    example: |-
+      {
+        "title" : "CPU Alert Policy",
+        "description" : "Alert when CPU usage is high",
+        "thresholdCondition" : {
+          "info" : 30.0,
+          "warning" : 50.0,
+          "critical" : 70.0
+        },
+        "resourceType" : "CPU",
+        "aggregationType" : "LAST",
+        "holdDuration" : "0m",
+        "repeatInterval" : "1h"
+      }
   NotiChannelAllResponse:
     type: object
     properties:
@@ -2919,27 +2917,64 @@ definitions:
             updatedAt:
               type: string
               description: notification channel updated at
-  api_o11y_monitoring_NS ID_mciId_vm_vmId-1532498167:
+  MonitoringItemRequestDTO:
+    type: object
+    properties:
+      pluginSeq:
+        type: number
+        description: Plugin sequence
+      pluginConfig:
+        type: string
+        description: "Plugin configuration encoded in Base64 (e.g., 'W1tpbnB1dHMuc3lzdGVtXV0='\
+          \ is Base64 encoding of '[[inputs.system]]')"
+    example: |-
+      {
+        "pluginSeq" : 0,
+        "pluginConfig" : "string"
+      }
+  AllAlertsResponse:
+    type: array
+    description: List of alerts
+    items: { }
+  MetricDTO:
     type: object
     properties:
       error_message:
         type: string
         description: Error message
+      data:
+        type: array
+        description: List of metric information
+        items:
+          type: object
+          properties:
+            columns:
+              type: array
+              description: List of column names
+              items: { }
+            values:
+              type: array
+              description: "List of values (2D array, each row corresponds to columns\
+                \ order)"
+              items: { }
+            name:
+              type: string
+              description: "Measurement name (e.g., cpu)"
+            tags:
+              type: object
+              description: Tag information
+              properties: { }
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  AllAlertsResponse:
-    type: array
-    description: List of alerts
-    items: {}
+        description: "Response message (e.g.,  Success)"
   GrafanaManagedReceiverConfig:
     type: array
     description: List of contact points
-    items: {}
-  api_v1_log_log_volumes1332534490:
+    items: { }
+  api_o11y_log_log_volumes1332534490:
     type: object
     properties:
       code:
@@ -2986,7 +3021,7 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  MetricDTO:
+  InfluxDTO:
     type: object
     properties:
       error_message:
@@ -2994,49 +3029,38 @@ definitions:
         description: Error message
       data:
         type: array
-        description: List of metric information
+        description: List of InfluxDB information
         items:
           type: object
           properties:
-            columns:
-              type: array
-              description: List of column names
-              items: {}
-            values:
-              type: array
-              description: "List of values (2D array, each row corresponds to columns\
-                \ order)"
-              items: {}
-            name:
+            uid:
               type: string
-              description: Measurement name
-            tags:
-              type: object
-              description: Tag information
-              properties: {}
+              description: "UID (e.g.,  1)"
+            password:
+              type: string
+              description: "Password (e.g., mypw"
+            database:
+              type: string
+              description: "Database name (e.g.,  db1)"
+            retention_policy:
+              type: string
+              description: "Retention policy (e.g., autogen)"
+            id:
+              type: number
+              description: "ID (e.g.,  1)"
+            url:
+              type: string
+              description: "InfluxDB URL (e.g., localhost:8086)"
+            username:
+              type: string
+              description: "Username (e.g., mc-user)"
       rs_code:
         type: string
-        description: "Response code (example: 0000)"
+        description: "Response code (e.g., 0000)"
       rs_msg:
         type: string
-        description: "Response message (example: Success)"
-  ResBody<Void>:
-    type: object
-    properties:
-      error_message:
-        type: string
-        description: Error message
-      data:
-        type: object
-        description: Response data
-        properties: {}
-      rs_code:
-        type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
-        type: string
-        description: "Response message (example: Success)"
-  api_v1_log_query_range-1819803082:
+        description: "Response message (e.g., Success)"
+  api_o11y_log_query_range-1819803082:
     type: object
     properties:
       code:
@@ -3097,46 +3121,29 @@ definitions:
       timestamp:
         type: string
         description: Response timestamp
-  FieldDTO:
+  PluginDefDTO:
     type: object
+    description: Plugin definition object
     properties:
-      error_message:
+      pluginType:
         type: string
-        description: Error message
-      data:
-        type: array
-        description: List of measurement information
-        items:
-          type: object
-          properties:
-            fields:
-              type: array
-              description: List of field information
-              items:
-                type: object
-                properties:
-                  type:
-                    type: string
-                    description: Field type
-                  key:
-                    type: string
-                    description: Field key
-            measurement:
-              type: string
-              description: "Measurement name(example: cpu)"
-      rs_code:
+        description: "Plugin type (e.g., INPUT)"
+      pluginId:
         type: string
-        description: "Response code (example: 0000)"
-      rs_msg:
+        description: "Plugin ID (e.g., [[inputs.cpu]])"
+      name:
         type: string
-        description: "Response message (example: Success)"
+        description: "Plugin name (e.g., cpu)"
+      seq:
+        type: number
+        description: "Plugin sequence (e.g., 1)"
   APIProviderType:
     title: APIProviderType
     type: string
     enum:
-    - openai
-    - google
-    - anthropic
+      - openai
+      - google
+      - anthropic
   AnomalyDetectionHistoryResponse:
     title: AnomalyDetectionHistoryResponse
     type: object
@@ -3157,10 +3164,10 @@ definitions:
         items:
           $ref: '#/definitions/AnomalyDetectionHistoryValue'
     required:
-    - ns_id
-    - target_id
-    - measurement
-    - values
+      - ns_id
+      - target_id
+      - measurement
+      - values
   AnomalyDetectionHistoryValue:
     title: AnomalyDetectionHistoryValue
     type: object
@@ -3177,10 +3184,10 @@ definitions:
       value:
         description: The original monitoring data value for the corresponding timestamp.
     required:
-    - timestamp
-    - anomaly_score
-    - is_anomaly
-    - value
+      - timestamp
+      - anomaly_score
+      - is_anomaly
+      - value
   AnomalyDetectionMeasurement:
     title: AnomalyDetectionMeasurement
     type: object
@@ -3195,9 +3202,9 @@ definitions:
         items:
           type: string
     required:
-    - plugin_seq
-    - measurement
-    - fields
+      - plugin_seq
+      - measurement
+      - fields
   AnomalyDetectionOptions:
     title: AnomalyDetectionOptions
     type: object
@@ -3215,9 +3222,9 @@ definitions:
         items:
           type: string
     required:
-    - target_types
-    - measurements
-    - execution_intervals
+      - target_types
+      - measurements
+      - execution_intervals
   AnomalyDetectionSettings:
     title: AnomalyDetectionSettings
     type: object
@@ -3244,13 +3251,13 @@ definitions:
         type: string
         format: date-time
     required:
-    - seq
-    - ns_id
-    - target_id
-    - target_type
-    - measurement
-    - execution_interval
-    - create_at
+      - seq
+      - ns_id
+      - target_id
+      - target_type
+      - measurement
+      - execution_interval
+      - create_at
   AnomalyDetectionTargetRegistration:
     title: AnomalyDetectionTargetRegistration
     type: object
@@ -3266,11 +3273,11 @@ definitions:
       execution_interval:
         $ref: '#/definitions/ExecutionInterval'
     required:
-    - ns_id
-    - target_id
-    - target_type
-    - measurement
-    - execution_interval
+      - ns_id
+      - target_id
+      - target_type
+      - measurement
+      - execution_interval
   AnomalyDetectionTargetUpdate:
     title: AnomalyDetectionTargetUpdate
     type: object
@@ -3278,7 +3285,7 @@ definitions:
       execution_interval:
         $ref: '#/definitions/ExecutionInterval'
     required:
-    - execution_interval
+      - execution_interval
   HTTPValidationError:
     title: HTTPValidationError
     type: object
@@ -3293,10 +3300,10 @@ definitions:
     properties:
       timestamp:
         type: string
-      value: {}
+      value: { }
     required:
-    - timestamp
-    - value
+      - timestamp
+      - value
   LLMAPIKey:
     title: LLMAPIKey
     type: object
@@ -3309,9 +3316,9 @@ definitions:
       api_key:
         type: string
     required:
-    - seq
-    - provider
-    - api_key
+      - seq
+      - provider
+      - api_key
   LLMChatSession:
     title: LLMChatSession
     type: object
@@ -3331,12 +3338,12 @@ definitions:
         type: string
         format: date-time
     required:
-    - seq
-    - user_id
-    - session_id
-    - provider
-    - model_name
-    - regdate
+      - seq
+      - user_id
+      - session_id
+      - provider
+      - model_name
+      - regdate
   LLMModel:
     title: LLMModel
     type: object
@@ -3348,8 +3355,8 @@ definitions:
         items:
           type: string
     required:
-    - provider
-    - model_name
+      - provider
+      - model_name
   Message:
     title: Message
     type: object
@@ -3361,8 +3368,8 @@ definitions:
       metadata:
         $ref: '#/definitions/QueryMetadata'
     required:
-    - message_type
-    - message
+      - message_type
+      - message
   PostAPIKeyBody:
     title: PostAPIKeyBody
     type: object
@@ -3374,8 +3381,8 @@ definitions:
         type: string
         minLength: 20
     required:
-    - provider
-    - api_key
+      - provider
+      - api_key
   PostQueryBody:
     title: PostQueryBody
     type: object
@@ -3389,8 +3396,8 @@ definitions:
         example: Analyze these error logs and find the root cause
         type: string
     required:
-    - session_id
-    - message
+      - session_id
+      - message
   PostSessionBody:
     title: PostSessionBody
     type: object
@@ -3402,18 +3409,18 @@ definitions:
         example: gpt-5-mini
         type: string
     required:
-    - provider
-    - model_name
+      - provider
+      - model_name
   PredictValue:
     title: PredictValue
     type: object
     properties:
       timestamp:
         type: string
-      value: {}
+      value: { }
     required:
-    - timestamp
-    - value
+      - timestamp
+      - value
   PredictionBody:
     title: PredictionBody
     type: object
@@ -3429,9 +3436,9 @@ definitions:
         example: 24h
         type: string
     required:
-    - target_type
-    - measurement
-    - prediction_range
+      - target_type
+      - measurement
+      - prediction_range
   PredictionHistory:
     title: PredictionHistory
     type: object
@@ -3447,10 +3454,10 @@ definitions:
         items:
           $ref: '#/definitions/HistoryValue'
     required:
-    - ns_id
-    - target_id
-    - measurement
-    - values
+      - ns_id
+      - target_id
+      - measurement
+      - values
   PredictionMeasurement:
     title: PredictionMeasurement
     type: object
@@ -3465,9 +3472,9 @@ definitions:
         items:
           type: string
     required:
-    - plugin_seq
-    - measurement
-    - fields
+      - plugin_seq
+      - measurement
+      - fields
   PredictionOptions:
     title: PredictionOptions
     type: object
@@ -3485,9 +3492,9 @@ definitions:
         additionalProperties:
           type: string
     required:
-    - target_types
-    - measurements
-    - prediction_ranges
+      - target_types
+      - measurements
+      - prediction_ranges
   PredictionResult:
     title: PredictionResult
     type: object
@@ -3505,19 +3512,19 @@ definitions:
         items:
           $ref: '#/definitions/PredictValue'
     required:
-    - ns_id
-    - target_id
-    - measurement
-    - target_type
-    - values
+      - ns_id
+      - target_id
+      - measurement
+      - target_type
+      - values
   ProviderType:
     title: ProviderType
     type: string
     enum:
-    - openai
-    - ollama
-    - google
-    - anthropic
+      - openai
+      - ollama
+      - google
+      - anthropic
   QueryMetadata:
     title: QueryMetadata
     description: Query execution metadata
@@ -3558,7 +3565,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyAnomalyDetectionMeasurement:
     title: ResBodyAnomalyDetectionMeasurement
     type: object
@@ -3574,7 +3581,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyAnomalyDetectionOptions:
     title: ResBodyAnomalyDetectionOptions
     type: object
@@ -3588,7 +3595,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyAnomalyDetectionSettings:
     title: ResBodyAnomalyDetectionSettings
     type: object
@@ -3604,7 +3611,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyAnomalyDetectionSpecificMeasurement:
     title: ResBodyAnomalyDetectionSpecificMeasurement
     type: object
@@ -3618,7 +3625,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyLLMAPIKey:
     title: ResBodyLLMAPIKey
     type: object
@@ -3632,7 +3639,7 @@ definitions:
       data:
         $ref: '#/definitions/LLMAPIKey'
     required:
-    - data
+      - data
   ResBodyLLMAPIKeys:
     title: ResBodyLLMAPIKeys
     type: object
@@ -3648,7 +3655,7 @@ definitions:
         items:
           $ref: '#/definitions/LLMAPIKey'
     required:
-    - data
+      - data
   ResBodyLLMChatSession:
     title: ResBodyLLMChatSession
     type: object
@@ -3662,7 +3669,7 @@ definitions:
       data:
         $ref: '#/definitions/LLMChatSession'
     required:
-    - data
+      - data
   ResBodyLLMChatSessions:
     title: ResBodyLLMChatSessions
     type: object
@@ -3678,7 +3685,7 @@ definitions:
         items:
           $ref: '#/definitions/LLMChatSession'
     required:
-    - data
+      - data
   ResBodyLLMModel:
     title: ResBodyLLMModel
     type: object
@@ -3694,7 +3701,7 @@ definitions:
         items:
           $ref: '#/definitions/LLMModel'
     required:
-    - data
+      - data
   ResBodyPredictionHistory:
     title: ResBodyPredictionHistory
     type: object
@@ -3708,7 +3715,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyPredictionMeasurement:
     title: ResBodyPredictionMeasurement
     type: object
@@ -3724,7 +3731,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyPredictionOptions:
     title: ResBodyPredictionOptions
     type: object
@@ -3738,7 +3745,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyPredictionResult:
     title: ResBodyPredictionResult
     type: object
@@ -3752,7 +3759,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyPredictionSpecificMeasurement:
     title: ResBodyPredictionSpecificMeasurement
     type: object
@@ -3766,7 +3773,7 @@ definitions:
         type: string
         default: Success
     required:
-    - data
+      - data
   ResBodyQuery:
     title: ResBodyQuery
     type: object
@@ -3780,7 +3787,7 @@ definitions:
       data:
         $ref: '#/definitions/Message'
     required:
-    - data
+      - data
   ResBodySessionHistory:
     title: ResBodySessionHistory
     type: object
@@ -3794,7 +3801,7 @@ definitions:
       data:
         $ref: '#/definitions/SessionHistory'
     required:
-    - data
+      - data
   ResBodyVoid:
     title: ResBodyVoid
     type: object
@@ -3828,62 +3835,62 @@ definitions:
         type: string
         format: date-time
     required:
-    - messages
-    - seq
-    - user_id
-    - session_id
-    - provider
-    - model_name
-    - regdate
+      - messages
+      - seq
+      - user_id
+      - session_id
+      - provider
+      - model_name
+      - regdate
   TargetType:
     title: TargetType
     type: string
     enum:
-    - vm
-    - mci
+      - vm
+      - mci
   ValidationError:
     title: ValidationError
     type: object
     properties:
       loc:
         type: array
-        items: {}
+        items: { }
       msg:
         type: string
       type:
         type: string
     required:
-    - loc
-    - msg
-    - type
+      - loc
+      - msg
+      - type
   ExecutionInterval:
     title: ExecutionInterval
     description: The interval at which anomaly detection runs (5m, 10m, 30m)
     type: string
     enum:
-    - 5m
-    - 10m
-    - 30m
+      - 5m
+      - 10m
+      - 30m
   MetricType:
     title: MetricType
     description: The type of metric being monitored for anomalies (cpu or mem)
     type: string
     enum:
-    - cpu
-    - mem
+      - cpu
+      - mem
   PredictionMetricType:
     title: PredictionMetricType
     description: The type of metric being monitored for predictions(cpu, mem, disk, system)
     type: string
     enum:
-    - cpu
-    - mem
-    - disk
-    - system
+      - cpu
+      - mem
+      - disk
+      - system
   TargetType2:
     title: TargetType2
     description: The type of the target (vm or mci).
     type: string
     enum:
-    - vm
-    - mci
+      - vm
+      - mci

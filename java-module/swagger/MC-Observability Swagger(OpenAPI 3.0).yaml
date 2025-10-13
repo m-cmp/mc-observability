@@ -145,7 +145,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<List<PluginDefDTO>>'
+                allOf:
+                  - $ref: '#/components/schemas/ResBody'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        description: Plugin list
+                        items:
+                          $ref: '#/components/schemas/PluginDefDTO'
               examples:
                 GetPlugins:
                   value: |-
@@ -1279,7 +1287,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 UpdateMonitoringItem:
                   value: |-
@@ -1332,7 +1340,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 AddMonitoringItem:
                   value: |-
@@ -1380,7 +1388,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResBody<Void>'
+                $ref: '#/components/schemas/ResBody'
               examples:
                 DeleteMonitoringItem:
                   value: |-
@@ -1554,37 +1562,21 @@ components:
         rs_msg:
           type: string
           description: "Response message (e.g., Success)"
-    ResBody<List<PluginDefDTO>>:
-      title: ResBody<List<PluginDefDTO>>
+    PluginDefDTO:
       type: object
       properties:
-        error_message:
+        pluginType:
           type: string
-          description: Error message
-        data:
-          type: array
-          description: Plugin list
-          items:
-            type: object
-            properties:
-              pluginType:
-                type: string
-                description: "Plugin type (e.g.,  INPUT)"
-              pluginId:
-                type: string
-                description: "Plugin ID (e.g.,  [[inputs.cpu]])"
-              name:
-                type: string
-                description: "Plugin name (e.g., cpu)"
-              seq:
-                type: number
-                description: "Plugin sequence (e.g., 1)"
-        rs_code:
+          description: "Plugin type (e.g., INPUT)"
+        pluginId:
           type: string
-          description: "Response code (e.g., 0000)"
-        rs_msg:
+          description: "Plugin ID (e.g., [[inputs.cpu]])"
+        name:
           type: string
-          description: "Response message (e.g., Success)"
+          description: "Plugin name (e.g., cpu)"
+        seq:
+          type: number
+          description: "Plugin sequence (e.g., 1)"
     TriggerHistoryPageResponse:
       title: TriggerHistoryPageResponse
       type: object
@@ -1920,8 +1912,7 @@ components:
         - type: boolean
         - type: string
         - type: number
-    ResBody<Void>:
-      title: ResBody<Void>
+    ResBody:
       type: object
       properties:
         error_message:
@@ -1929,7 +1920,7 @@ components:
           description: Error message
         data:
           type: object
-          description: Response data
+          description: Response data (nullable)
         rs_code:
           type: string
           description: "Response code (e.g., 0000)"
