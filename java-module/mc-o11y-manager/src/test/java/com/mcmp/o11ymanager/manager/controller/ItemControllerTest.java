@@ -119,7 +119,9 @@ class ItemControllerTest {
                                 .requestSchema("MonitoringItemRequestDTO")
                                 .requestFields(
                                         fieldNumber("pluginSeq", "Plugin sequence"),
-                                        fieldString("pluginConfig", "Plugin configuration"))
+                                        fieldString(
+                                                "pluginConfig",
+                                                "Plugin configuration encoded in Base64 (e.g., 'W1tpbnB1dHMuc3lzdGVtXV0=' is Base64 encoding of '[[inputs.system]]')"))
                                 .responseSchema("ResBody<Void>")
                                 .responseFields(
                                         fieldString("rs_code", "Response code (e.g., 0000)"),
