@@ -54,8 +54,9 @@ class FileLogExporter(LogExporter):
 
     @staticmethod
     def _format_timestamp(timestamp_ns):
-        """Convert nanosecond timestamp to ISO format"""
-        return datetime.fromtimestamp(timestamp_ns / 1e9).isoformat() + "Z"
+        """Convert nanosecond timestamp to ISO format in UTC"""
+        from datetime import timezone
+        return datetime.fromtimestamp(timestamp_ns / 1e9, tz=timezone.utc).isoformat().replace('+00:00', 'Z')
 
     @staticmethod
     def _format_trace_id(trace_id):
