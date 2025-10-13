@@ -6,6 +6,7 @@ networks:
 
 volumes:
   grafana_shared_config:
+  shared_logs:
 
 services:
   mc-observability-manager:
@@ -80,6 +81,7 @@ services:
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
+      - shared_logs:/applog:rw
       - grafana_shared_config:/grafana_config:ro
       # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
@@ -759,3 +761,32 @@ services:
     init: true
     networks:
       - internal_network
+
+  mc-observability-log-collector:
+    image: fluent/fluent-bit:3.2.4
+    container_name: mc-observability-log-collector
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    depends_on:
+      mc-observability-loki:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Seoul
+      - LOKI_HOST=mc-observability-loki
+      - LOKI_PORT=3100
+    volumes:
+      - shared_logs:/logs:ro
+      - ./log-conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./log-conf/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+    command:
+      - /fluent-bit/bin/fluent-bit
+      - -c
+      - /fluent-bit/etc/fluent-bit.conf
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:2020/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
