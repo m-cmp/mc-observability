@@ -3,12 +3,9 @@ package com.mcmp.o11ymanager.manager.mapper.log;
 import com.mcmp.o11ymanager.manager.dto.log.LabelResponseDto;
 import com.mcmp.o11ymanager.manager.model.log.Label;
 
-
 public class LabelResponseMapper {
 
     /**
-
-     *
      * @param label
      * @return
      */

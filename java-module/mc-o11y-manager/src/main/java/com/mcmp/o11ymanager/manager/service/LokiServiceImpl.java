@@ -15,31 +15,30 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LokiServiceImpl implements LokiService {
 
-  private final LokiPort lokiPort;
+    private final LokiPort lokiPort;
 
-  public Log getRangeLogs(LogCriteria criteria) {
-    return lokiPort.fetchLogs(
-        criteria.getQuery(),
-        criteria.getStart(),
-        criteria.getEnd(),
-        criteria.getLimit(),
-        criteria.getDirection(),
-        criteria.getInterval(),
-        criteria.getStep(),
-        criteria.getSince());
-  }
+    public Log getRangeLogs(LogCriteria criteria) {
+        return lokiPort.fetchLogs(
+                criteria.getQuery(),
+                criteria.getStart(),
+                criteria.getEnd(),
+                criteria.getLimit(),
+                criteria.getDirection(),
+                criteria.getInterval(),
+                criteria.getStep(),
+                criteria.getSince());
+    }
 
-  public Label getLabels(String start, String end, String query) {
-    return lokiPort.fetchLabels(start, end, query);
-  }
+    public Label getLabels(String start, String end, String query) {
+        return lokiPort.fetchLabels(start, end, query);
+    }
 
-  public Label getLabelValues(
-      String label, String start, String end, String since, String query) {
-    return lokiPort.fetchLabelValues(label, start, end, since, query);
-  }
+    public Label getLabelValues(
+            String label, String start, String end, String since, String query) {
+        return lokiPort.fetchLabelValues(label, start, end, since, query);
+    }
 
-  public LogVolume getLogVolumes(String query, String start, String end, Integer limit) {
-    return lokiPort.fetchLogVolumes(query, start, end, limit);
-  }
+    public LogVolume getLogVolumes(String query, String start, String end, Integer limit) {
+        return lokiPort.fetchLogVolumes(query, start, end, limit);
+    }
 }
-

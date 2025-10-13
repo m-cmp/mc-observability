@@ -112,7 +112,8 @@ public class FileServiceImpl implements FileService {
             Path filePath = new File(directory, fileName).toPath();
             Files.writeString(filePath, content);
         } catch (IOException e) {
-          throw new FileReadingException("An error occurred while writing the file: " + e.getMessage());
+            throw new FileReadingException(
+                    "An error occurred while writing the file: " + e.getMessage());
         }
     }
 
@@ -126,15 +127,16 @@ public class FileServiceImpl implements FileService {
         try {
             Files.writeString(file.toPath(), content);
         } catch (IOException e) {
-          throw new FileReadingException("An error occurred while writing the file: " + e.getMessage());
+            throw new FileReadingException(
+                    "An error occurred while writing the file: " + e.getMessage());
         }
     }
 
     @Override
     public void deleteDirectory(Path dir) throws FailedDeleteFileException {
         if (!Files.exists(dir)) {
-          log.warn("No directory found to delete: {}", dir);
-          throw new FailedDeleteFileException("Directory does not exist: " + dir);
+            log.warn("No directory found to delete: {}", dir);
+            throw new FailedDeleteFileException("Directory does not exist: " + dir);
         }
         try (var paths = Files.walk(dir)) {
             paths.sorted(Comparator.reverseOrder())
@@ -150,12 +152,13 @@ public class FileServiceImpl implements FileService {
                                 }
                             });
         } catch (IOException e) {
-          throw new FailedDeleteFileException("Error occurred while traversing the directory: " + dir);
+            throw new FailedDeleteFileException(
+                    "Error occurred while traversing the directory: " + dir);
         }
     }
 
-  // Delete config directory, called when a host is removed
-  @Override
+    // Delete config directory, called when a host is removed
+    @Override
     public void deleteDirectoryByHostId(String uuid) {
         Path dir = Path.of(configBasePath, uuid);
 
@@ -222,8 +225,8 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-  // Load template resource
-  @Override
+    // Load template resource
+    @Override
     public String getFileContent(ClassPathResource classPathResource) throws FileReadingException {
         StringBuilder sb = new StringBuilder();
 
@@ -250,8 +253,9 @@ public class FileServiceImpl implements FileService {
         sb.append(content).append("\n\n");
     }
 
-  // Initialize config directories under the configBasePath (folder named after the Host ID, containing fluent-bit, telegraf, and telegraf.d)
-  @Override
+    // Initialize config directories under the configBasePath (folder named after the Host ID,
+    // containing fluent-bit, telegraf, and telegraf.d)
+    @Override
     @PostConstruct
     public void init() {
         File baseDir = new File(configBasePath);
