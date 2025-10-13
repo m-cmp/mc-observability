@@ -24,6 +24,8 @@ services:
         condition: service_healthy
       mc-observability-grafana:
         condition: service_healthy
+      mc-observability-rabbitmq:
+        condition: service_healthy
     environment:
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://mc-infra-manager:1323}
@@ -704,6 +706,12 @@ services:
     networks:
       - internal_network
       - external_network
+    healthcheck:
+      start_period: 120s
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-rabbitmq-init-volumes:
     image: busybox:stable
