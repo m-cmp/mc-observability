@@ -7,15 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** LogVolume 도메인 모델을 응용 계층 DTO로 변환하는 매퍼 */
 public class LogVolumeResponseMapper {
 
-    /**
-     * 도메인 모델을 DTO로 변환
-     *
-     * @param logVolume 로그 볼륨 도메인 모델
-     * @return 응용 계층 DTO
-     */
     public static LogVolumeResponseDto toDto(LogVolume logVolume) {
         if (logVolume == null) {
             return LogVolumeResponseDto.builder().data(Collections.emptyList()).build();
@@ -32,12 +25,6 @@ public class LogVolumeResponseMapper {
         return LogVolumeResponseDto.builder().data(resultDtos).build();
     }
 
-    /**
-     * 도메인 모델의 MetricResult를 DTO로 변환
-     *
-     * @param result MetricResult 도메인 객체
-     * @return MetricResultDto 응용 계층 DTO
-     */
     private static LogVolumeResponseDto.MetricResultDto mapToMetricResultDto(
             LogVolume.MetricResult result) {
         if (result == null) {
@@ -61,12 +48,6 @@ public class LogVolumeResponseMapper {
                 .build();
     }
 
-    /**
-     * 도메인 모델의 TimeSeriesValue를 DTO로 변환
-     *
-     * @param value TimeSeriesValue 도메인 객체
-     * @return TimeSeriesValueDto 응용 계층 DTO
-     */
     private static LogVolumeResponseDto.TimeSeriesValueDto mapToTimeSeriesValueDto(
             LogVolume.TimeSeriesValue value) {
         if (value == null) {

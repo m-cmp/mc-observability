@@ -7,15 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** 쿼리 범위 로그 도메인 모델을 응용 계층 DTO로 변환하는 매퍼 */
 public class RangeQueryLogResponseMapper {
 
-    /**
-     * 도메인 모델을 DTO로 변환
-     *
-     * @param rangeQueryLog 쿼리 범위 로그 도메인 모델
-     * @return 응용 계층 DTO
-     */
     public static RangeQueryLogResponseDto toDto(RangeQueryLog rangeQueryLog) {
         if (rangeQueryLog == null) {
             return null;

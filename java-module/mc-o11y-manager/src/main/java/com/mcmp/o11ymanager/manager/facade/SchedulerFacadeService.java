@@ -80,8 +80,6 @@ public class SchedulerFacadeService {
                                 Project project = semaphorePort.getProjectByName(projectName);
                                 Task currentTask = semaphorePort.getTask(project.getId(), taskId);
 
-                                log.info(
-                                        "🔨🔨 --------------------Task Status-------------------- 🔨🔨");
                                 log.debug(
                                         "Task Status - Request ID: {}, VM: {}/{}/{}, Agent: {}, Install Method: {}, Task ID: {}, Status: {}",
                                         requestId,
@@ -98,7 +96,7 @@ public class SchedulerFacadeService {
                                     return;
                                 }
 
-                                // 타임아웃의 경우
+                                // case of timeout
                                 if (currentTime - startTime.get()
                                         > TimeUnit.MINUTES.toMillis(maxWaitMinutes)) {
                                     log.warn(
@@ -123,7 +121,7 @@ public class SchedulerFacadeService {
                                                     + " minutes");
                                 }
 
-                                // 성공시
+                                // case of success
                                 if ("success".equals(currentTask.getStatus())) {
                                     action = getAgentActionFinished(method, agent);
                                     log.debug(action.toString());
@@ -151,9 +149,6 @@ public class SchedulerFacadeService {
                                         vmService.updateLogAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     }
-
-                                    log.info(
-                                            "🔨🔨 --------------------task end-------------------- 🔨🔨");
                                 }
 
                                 ScheduledFuture<?> scheduledFuture = futureRef.get();

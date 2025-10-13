@@ -40,17 +40,17 @@ public class FluentBitFacadeService {
             @NotBlank int templateCount)
             throws Exception {
 
-        // 1. host IDLE 상태 확인
+        // 1. Check if host is in IDLE state
         vmService.isIdleLogAgent(nsId, mciId, vmId);
 
-        // 2. host 상태 업데이트
+        // 2. Update host status
         vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
 
         String configContent = fluentBitConfigFacadeService.initFluentbitConfig(nsId, mciId, vmId);
 
         log.info(String.format("Fluent-Bit config: %s", configContent));
 
-        // 4. 전송(semaphore) - 설치 요청
+        // 4. Send (via semaphore) - installation request
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -59,11 +59,11 @@ public class FluentBitFacadeService {
                         Agent.FLUENT_BIT,
                         templateCount);
 
-        // 5. task ID, task status 업데이트
+        // 5. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
-        // 7. 스케줄러 등록
+        // 7. Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -82,13 +82,13 @@ public class FluentBitFacadeService {
             @NotBlank int templateCount)
             throws Exception {
 
-        // 1. host IDLE 상태 확인
+        // 1. Check if host is in IDLE state
         vmService.isIdleLogAgent(nsId, mciId, vmId);
 
-        // 2. host 상태 업데이트
+        // 2. Update host status
         vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
 
-        // 3. 전송(semaphore) - 업데이트 요청
+        // 3. Send (via semaphore) - update request
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -97,11 +97,11 @@ public class FluentBitFacadeService {
                         Agent.FLUENT_BIT,
                         templateCount);
 
-        // 4. task ID, task status 업데이트
+        // 4. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
-        // 6. 스케줄러 등록
+        // 6. Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -115,13 +115,13 @@ public class FluentBitFacadeService {
     public void uninstall(
             String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
 
-        // 1) 상태 확인
+        // 1) Check current status
         vmService.isIdleLogAgent(nsId, mciId, vmId);
 
-        // 2) 상태 변경
+        // 2) Update status
         vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
 
-        // 3. 전송(semaphore) - 삭제 요청
+        // 3. Send (via semaphore) - uninstall request
         Task task =
                 semaphoreDomainService.install(
                         accessInfo,
@@ -130,11 +130,11 @@ public class FluentBitFacadeService {
                         Agent.FLUENT_BIT,
                         templateCount);
 
-        // 5. task ID, task status 업데이트
+        // 5. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
                 nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
 
-        // 6) 스케줄러 등록
+        // 6) Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
@@ -152,13 +152,13 @@ public class FluentBitFacadeService {
         try {
             agentTaskStatusLock.lock();
 
-            // 1. 싫행 상태 확인
+            // 1. Check if host is in IDLE state
             vmService.isIdleLogAgent(nsId, mciId, vmId);
 
-            // 2. RESTARTING 상태로 변경
+            // 2. Change status to RESTARTING
             vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
 
-            // TODO : Use Tumblebug CMD - 3. restart 실행
+            // TODO: Use Tumblebug CMD - 3. Execute restart
 
             vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
 

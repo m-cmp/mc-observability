@@ -212,7 +212,7 @@ class InfluxDBControllerTest {
                                         fieldString("group_time", "Grouping unit").optional(),
                                         fieldArray(
                                                         "group_by",
-                                                        "List of group by fields (e.g., [ns_id, mci_id])")
+                                                        "List of group-by fields, for example: ns_id, mci_id")
                                                 .optional(),
                                         fieldNumber("limit", "Result limit count").optional(),
                                         fieldArray("fields", "List of fields to query"),

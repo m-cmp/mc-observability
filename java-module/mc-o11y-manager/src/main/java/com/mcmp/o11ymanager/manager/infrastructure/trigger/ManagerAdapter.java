@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.manager.infrastructure.trigger;
 
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
-import com.mcmp.o11ymanager.manager.repository.InfluxJpaRepository;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import com.mcmp.o11ymanager.trigger.adapter.internal.trigger.ManagerPort;
@@ -18,28 +17,27 @@ public class ManagerAdapter implements ManagerPort {
 
     private final VMService vmService;
     private final InfluxDbService influxDbService;
-    private final InfluxJpaRepository influxJpaRepository;
 
     @Override
     public String getInfluxUid(String nsId, String vmScope, String vmId) {
 
         Long influxId;
 
-        // 1.vmScope가 "mci_id"인지 "vm_id" 인지
+        // 1. Check whether vmScope is "mci_id" or "vm_id"
         if ("mci".equalsIgnoreCase(vmScope)) {
             final String mciId = vmId;
 
-            // 2. ns id + mci id  조합으로 influx id 매핑
+            // 2. Map influx id using the combination of ns id and mci id
             List<VMDTO> vms = vmService.getByNsMci(nsId, mciId);
             influxId =
                     vms.stream()
                             .map(VMDTO::getInfluxSeq)
                             .filter(Objects::nonNull)
-                            .findFirst() // 규칙에 따라 first/최신/최소 등 선택 가능
+                            .findFirst() // Can choose first/latest/minimum based on rules
                             .orElseGet(() -> influxDbService.resolveInfluxDb(nsId, mciId));
 
         } else if ("vm".equalsIgnoreCase(vmScope)) {
-            // 3. ns + vm 으로 mci id 매핑
+            // 3. Map mci id using ns and vm
             VMDTO t = vmService.getByNsVm(nsId, vmId);
 
             influxId = t.getInfluxSeq();
