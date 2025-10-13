@@ -83,7 +83,7 @@ services:
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
-      - shared_logs:/applog:rw
+      - shared_logs:/applog/mc-o11y-manager:rw
       - grafana_shared_config:/grafana_config:ro
       # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
@@ -551,6 +551,7 @@ services:
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://mc-observability-tempo:4318/v1/traces}
     volumes:
       - ../python/insight/log:/mc-insight/log
+      - shared_logs:/mc-insight/log:rw
     networks:
       - internal_network
       - external_network
