@@ -65,27 +65,38 @@ public class NotiControllerTest {
                                 .summary("GetSupportedNotificationChannels")
                                 .responseSchema("NotiChannelAllResponse")
                                 .responseFields(
-                                        fieldArray("notiChannels", "notification channel list"),
-                                        fieldNumber("notiChannels[].id", "notification channel id"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldArray(
+                                                "data.notiChannels", "notification channel list"),
+                                        fieldNumber(
+                                                "data.notiChannels[].id",
+                                                "notification channel id"),
                                         fieldString(
-                                                "notiChannels[].name", "notification channel name"),
+                                                "data.notiChannels[].name",
+                                                "notification channel name"),
                                         fieldString(
-                                                "notiChannels[].type", "notification channel type"),
+                                                "data.notiChannels[].type",
+                                                "notification channel type"),
                                         fieldString(
-                                                "notiChannels[].provider",
+                                                "data.notiChannels[].provider",
                                                 "notification channel provider"),
                                         fieldString(
-                                                "notiChannels[].baseUrl",
+                                                "data.notiChannels[].baseUrl",
                                                 "notification channel baseUrl"),
                                         fieldBoolean(
-                                                "notiChannels[].isActive",
+                                                "data.notiChannels[].isActive",
                                                 "notification channel active status"),
                                         fieldString(
-                                                "notiChannels[].createdAt",
+                                                "data.notiChannels[].createdAt",
                                                 "notification channel created at"),
                                         fieldString(
-                                                "notiChannels[].updatedAt",
-                                                "notification channel updated at"))
+                                                "data.notiChannels[].updatedAt",
+                                                "notification channel updated at"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"))
                                 .build());
 
         verify(notiService).getNotiChannels();
@@ -116,11 +127,17 @@ public class NotiControllerTest {
                                         paramString("sortDirection", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(
-                                        fieldArray("content", "notification history list"),
-                                        fieldSubsection("pageable", "specific page info"),
-                                        fieldNumber("totalPages", "total pages"),
-                                        fieldNumber("totalElements", "total elements"),
-                                        fieldNumber("numberOfElements", "number of elements"))
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldArray("data.content", "notification history list"),
+                                        fieldSubsection("data.pageable", "specific page info"),
+                                        fieldNumber("data.totalPages", "total pages"),
+                                        fieldNumber("data.totalElements", "total elements"),
+                                        fieldNumber("data.numberOfElements", "number of elements"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"))
                                 .build());
 
         verify(notiService).getNotiHistories(any(Pageable.class));

@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.trigger.application.controller;
 
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.response.NotiChannelAllResponse;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.response.NotiHistoryPageResponse;
 import com.mcmp.o11ymanager.trigger.application.service.NotiService;
@@ -10,7 +11,6 @@ import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,9 +42,9 @@ public class NotiController {
      * @return List of notification channels
      */
     @GetMapping("/channel")
-    public ResponseEntity<?> getNotiChannels() {
+    public ResBody<NotiChannelAllResponse> getNotiChannels() {
         List<NotiChannelDetailDto> notiChannels = notiService.getNotiChannels();
-        return ResponseEntity.ok(NotiChannelAllResponse.from(notiChannels));
+        return new ResBody<>(NotiChannelAllResponse.from(notiChannels));
     }
 
     /**
@@ -57,7 +57,7 @@ public class NotiController {
      * @return Notification delivery history list with paging information
      */
     @GetMapping("/history")
-    public ResponseEntity<NotiHistoryPageResponse> getNotiHistories(
+    public ResBody<NotiHistoryPageResponse> getNotiHistories(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -67,6 +67,6 @@ public class NotiController {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
 
         CustomPageDto<NotiHistoryDetailDto> dto = notiService.getNotiHistories(pageable);
-        return ResponseEntity.ok(NotiHistoryPageResponse.from(dto));
+        return new ResBody<>(NotiHistoryPageResponse.from(dto));
     }
 }

@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.trigger.application.controller;
 
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerHistoryCommentUpdateRequest;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.response.TriggerHistoryPageResponse;
 import com.mcmp.o11ymanager.trigger.application.service.TriggerHistoryService;
@@ -9,7 +10,6 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -47,7 +47,7 @@ public class TriggerHistoryController {
      * @return Trigger history list with paging information
      */
     @GetMapping
-    public ResponseEntity<TriggerHistoryPageResponse> getTriggerHistories(
+    public ResBody<TriggerHistoryPageResponse> getTriggerHistories(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -58,21 +58,17 @@ public class TriggerHistoryController {
 
         CustomPageDto<TriggerHistoryDetailDto> dto =
                 triggerHistoryService.getTriggerHistories(pageable);
-        return ResponseEntity.ok(TriggerHistoryPageResponse.from(dto));
+
+        return new ResBody<>(TriggerHistoryPageResponse.from(dto));
     }
 
-    /**
-     * Updates comment for the specified trigger history.
-     *
-     * @param id ID of the trigger history to update comment
-     * @param request Comment update information
-     * @return 200 OK response
-     */
-    // comment of deal with alert
+    /** Updates comment for the specified trigger history. */
     @PutMapping("/{id}/comment")
-    public ResponseEntity<Void> updateComment(
+    public ResBody<Void> updateComment(
             @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
+
         triggerHistoryService.updateComment(id, request.toDto());
-        return ResponseEntity.ok().build();
+
+        return new ResBody<>();
     }
 }

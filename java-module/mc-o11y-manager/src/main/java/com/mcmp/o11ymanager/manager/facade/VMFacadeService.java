@@ -10,9 +10,11 @@ import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,11 @@ import org.springframework.stereotype.Service;
 public class VMFacadeService {
 
     private ExecutorService executor;
+
+    @PostConstruct
+    public void init() {
+        this.executor = Executors.newFixedThreadPool(10);
+    }
 
     private final VMService vmService;
     private final AgentFacadeService agentFacadeService;
