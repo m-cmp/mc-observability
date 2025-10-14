@@ -1,5 +1,4 @@
-UUID=ffffffff-ffff-ffff-ffff-ffffffffffff
+NS_ID=
+MCI_ID=
+VM_ID=
 LOKI_HOST=127.0.0.1
-credential_id=ffffffff-ffff-ffff-ffff-ffffffffffff
-cloud_service=openstack
-type=vm
