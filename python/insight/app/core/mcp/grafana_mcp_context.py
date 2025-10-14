@@ -35,10 +35,7 @@ class GrafanaMCPContext:
             return self.session
 
         except Exception as e:
-            logger.error(f"Failed to start Grafana MCP context: {e}")
-            import traceback
-
-            traceback.print_exc()
+            logger.exception(f"Failed to start Grafana MCP context: {e}")
             await self.astop()
             raise
 

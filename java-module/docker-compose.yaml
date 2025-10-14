@@ -789,6 +789,7 @@ services:
       - shared_logs:/logs:ro
       - ./log-conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./log-conf/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./log-conf/extract_component.lua:/fluent-bit/etc/extract_component.lua:ro
     command:
       - /fluent-bit/bin/fluent-bit
       - -c

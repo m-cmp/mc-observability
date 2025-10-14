@@ -6,6 +6,7 @@ from datetime import datetime
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, LogExporter
 from opentelemetry.sdk.resources import Resource
+from datetime import timezone
 
 SERVICE_NAME = os.environ.get('OTEL_SERVICE_NAME', 'mc-observability-insight')
 
@@ -54,9 +55,9 @@ class FileLogExporter(LogExporter):
 
     @staticmethod
     def _format_timestamp(timestamp_ns):
-        """Convert nanosecond timestamp to ISO format in UTC"""
-        from datetime import timezone
-        return datetime.fromtimestamp(timestamp_ns / 1e9, tz=timezone.utc).isoformat().replace('+00:00', 'Z')
+        """Convert nanosecond timestamp to ISO format in UTC with milliseconds"""
+        dt = datetime.fromtimestamp(timestamp_ns / 1e9, tz=timezone.utc)
+        return dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
 
     @staticmethod
     def _format_trace_id(trace_id):

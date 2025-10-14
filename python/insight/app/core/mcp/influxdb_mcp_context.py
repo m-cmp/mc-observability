@@ -35,10 +35,7 @@ class InfluxDBMCPContext:
             return self.session
 
         except Exception as e:
-            logger.error(f"Failed to start InfluxDB MCP context: {e}")
-            import traceback
-
-            traceback.print_exc()
+            logger.exception(f"Failed to start InfluxDB MCP context: {e}")
             await self.astop()
             raise
 
