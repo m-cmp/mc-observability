@@ -92,8 +92,8 @@ RESPONSE=$(curl -s -b ~/grafana-cookie -XPOST \
     -H 'Content-Type: application/json' \
     -H 'Origin: http://127.0.0.1:3000' \
     -d '{"name":"o11y-token"}')
-export GRAFANA_TOKEN=$(echo $RESPONSE | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
-echo GRAFANA_TOKEN=$GRAFANA_TOKEN > ~/env.grafana
+export GRAFANA_API_KEY=$(echo $RESPONSE | sed -n 's/.*"key":"\([^"]*\)".*/\1/p')
+echo GRAFANA_API_KEY=$GRAFANA_API_KEY > ~/env.grafana
 
 echo "[*] Getting folders..."
 RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
@@ -101,9 +101,9 @@ RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
     -H 'Accept: */*' \
     -H 'Content-Type: application/json' \
     -H 'Origin: http://127.0.0.1:3000')
-FOLDER_UID=$(echo $RESPONSE | tr ',' '\n' | grep -B2 '"title":"o11yFolder"' | grep '"uid":"' | sed 's/.*"uid":"\([^"]*\)".*/\1/')
+GRAFANA_FOLDER_UID=$(echo $RESPONSE | tr ',' '\n' | grep -B2 '"title":"o11yFolder"' | grep '"uid":"' | sed 's/.*"uid":"\([^"]*\)".*/\1/')
 
-if [ "$FOLDER_UID" != "" ]; then
+if [ "$GRAFANA_FOLDER_UID" != "" ]; then
   echo "[*] Folder already exist!"
 else
   echo "[*] Creating folder..."
@@ -127,8 +127,8 @@ RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
     -H 'Accept: */*' \
     -H 'Content-Type: application/json' \
     -H 'Origin: http://127.0.0.1:3000')
-FOLDER_UID=$(echo $RESPONSE | tr ',' '\n' | grep -B2 '"title":"o11yFolder"' | grep '"uid":"' | sed 's/.*"uid":"\([^"]*\)".*/\1/')
-echo FOLDER_UID=$FOLDER_UID >> ~/env.grafana
+GRAFANA_FOLDER_UID=$(echo $RESPONSE | tr ',' '\n' | grep -B2 '"title":"o11yFolder"' | grep '"uid":"' | sed 's/.*"uid":"\([^"]*\)".*/\1/')
+echo GRAFANA_FOLDER_UID=$GRAFANA_FOLDER_UID >> ~/env.grafana
 
 echo "[*] Getting receivers..."
 RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
