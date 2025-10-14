@@ -23,5 +23,42 @@ else
     echo "Proceeding without Grafana environment..."
 fi
 
-echo "Starting application..."
-exec java -jar /mc-o11y-manager.jar
+CONFIG_DIR="/app-config"
+DOCKER_CONFIG="$CONFIG_DIR/application-docker.yaml"
+
+if [ -z "$O11Y_EXTERNAL_IP" ]; then
+    echo "O11Y_EXTERNAL_IP not set. Fetching external IP..."
+
+    O11Y_EXTERNAL_IP=$(curl -s ifconfig.me)
+
+    if [ -z "$O11Y_EXTERNAL_IP" ]; then
+        O11Y_EXTERNAL_IP=$(curl -s api.ipify.org)
+    fi
+
+    if [ -z "$O11Y_EXTERNAL_IP" ]; then
+        O11Y_EXTERNAL_IP=$(curl -s icanhazip.com)
+    fi
+
+    echo "Fetched external IP: $O11Y_EXTERNAL_IP"
+else
+    echo "Using provided O11Y_EXTERNAL_IP: $O11Y_EXTERNAL_IP"
+fi
+
+if [ -z "$O11Y_EXTERNAL_IP" ]; then
+    echo "Starting application..."
+    exec java -jar -Dspring.config.location=file:/app-config/ /mc-o11y-manager.jar
+else
+    echo "Creating application-docker.yaml with O11Y_EXTERNAL_IP=$O11Y_EXTERNAL_IP..."
+
+    cat > "$DOCKER_CONFIG" << EOF
+influxdb:
+  servers:
+    - url: http://$O11Y_EXTERNAL_IP:8086
+    - url: http://$O11Y_EXTERNAL_IP:8087
+EOF
+
+    echo "application-docker.yaml created successfully."
+
+    echo "Starting application..."
+    exec java -jar -Dspring.config.location=file:/app-config/ -Dspring.profiles.active=docker /mc-o11y-manager.jar
+fi
