@@ -96,55 +96,54 @@ public class TriggerService implements TriggerServiceInternal {
                 () -> triggerPolicyPage.getContent().stream().map(TriggerPolicy::toDto).toList());
     }
 
+    @Transactional
+    public void updateTriggerPolicyNotiChannelByName(
+            long id, List<TriggerPolicyNotiChannelUpdateDto> dtos) {
 
+        TriggerPolicy triggerPolicy =
+                triggerPolicyRepository
+                        .findById(id)
+                        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
 
-  @Transactional
-  public void updateTriggerPolicyNotiChannelByName(
-      long id, List<TriggerPolicyNotiChannelUpdateDto> dtos) {
+        Map<String, String> channelNameMap =
+                Map.of(
+                        "sms", "sms_naver-cloud",
+                        "email", "email_smtp.gmail.com",
+                        "kakao", "kakao_naver-cloud",
+                        "slack", "slack");
 
-    TriggerPolicy triggerPolicy = triggerPolicyRepository
-        .findById(id)
-        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
+        Map<String, String> channelRecipientMap = new HashMap<>();
 
+        List<String> notiChannelNames =
+                dtos.stream()
+                        .map(
+                                dto -> {
+                                    String simpleName = dto.channelName().toLowerCase();
+                                    String dbName =
+                                            channelNameMap.getOrDefault(simpleName, simpleName);
 
-    Map<String, String> channelNameMap = Map.of(
-        "sms", "sms_naver-cloud",
-        "email", "email_smtp.gmail.com",
-        "kakao", "kakao_naver-cloud",
-        "slack", "slack"
-    );
+                                    if (!channelNameMap.containsKey(simpleName)) {
+                                        throw new InvalidNotificationTypeException(
+                                                "Unsupported notification channel: "
+                                                        + simpleName
+                                                        + " (allowed values: kakao, sms, email, slack)");
+                                    }
 
-    Map<String, String> channelRecipientMap = new HashMap<>();
+                                    String recipients = String.join(", ", dto.recipients());
+                                    channelRecipientMap.put(dbName, recipients);
+                                    return dbName;
+                                })
+                        .toList();
 
+        List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
 
-    List<String> notiChannelNames = dtos.stream()
-        .map(dto -> {
-          String simpleName = dto.channelName().toLowerCase();
-          String dbName = channelNameMap.getOrDefault(simpleName, simpleName);
+        List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
+                TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
 
-          if (!channelNameMap.containsKey(simpleName)) {
-            throw new InvalidNotificationTypeException(
-                "Unsupported notification channel: " + simpleName +
-                    " (allowed values: kakao, sms, email, slack)"
-            );
-          }
+        triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
+    }
 
-          String recipients = String.join(", ", dto.recipients());
-          channelRecipientMap.put(dbName, recipients);
-          return dbName;
-        })
-        .toList();
-
-    List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
-
-    List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
-        TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
-
-    triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
-  }
-
-
-  public void removeTriggerVM(long id, TriggerVMDto triggerVMDto) {
+    public void removeTriggerVM(long id, TriggerVMDto triggerVMDto) {
         TriggerPolicy triggerPolicy =
                 triggerPolicyRepository
                         .findById(id)

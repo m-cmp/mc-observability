@@ -69,7 +69,7 @@ class TriggerControllerTest {
                         RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isCreated()) // Changed to 201 Created
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
@@ -104,6 +104,14 @@ class TriggerControllerTest {
                                         fieldString(
                                                 "repeatInterval",
                                                 "repeat interval of evaluation(1m~24h)"))
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldNumber("data.id", "Created trigger policy ID"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"))
                                 .build());
 
         verify(triggerService).createTriggerPolicy(any(TriggerPolicyCreateDto.class));
@@ -112,13 +120,24 @@ class TriggerControllerTest {
     @Test
     void deleteTriggerPolicy() throws Exception {
         mockMvc.perform(RestDocumentationRequestBuilders.delete("/api/o11y/trigger/policy/{id}", 1))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isAccepted()) // 202 Accepted
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
                                 .description("Delete trigger policy")
                                 .summary("DeleteTriggerPolicy")
                                 .pathParameters(paramInteger("id", "trigger policy id"))
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                        "data",
+                                                        "Response data (null for delete operation)")
+                                                .optional(),
+                                        fieldString(
+                                                        "error_message",
+                                                        "Error message (empty if success)")
+                                                .optional())
                                 .build());
 
         verify(triggerService).deleteTriggerPolicy(any(long.class));
@@ -149,14 +168,56 @@ class TriggerControllerTest {
                                         paramString("direction", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(
-                                        fieldArray("content", "trigger policy list"),
-                                        fieldSubsection("pageable", "specific page info"),
-                                        fieldNumber("totalPages", "total pages"),
-                                        fieldNumber("totalElements", "total elements"),
-                                        fieldNumber("numberOfElements", "number of elements"))
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldArray("data.content", "trigger policy list"),
+                                        fieldSubsection("data.pageable", "specific page info"),
+                                        fieldNumber("data.totalPages", "total pages"),
+                                        fieldNumber("data.totalElements", "total elements"),
+                                        fieldNumber("data.numberOfElements", "number of elements"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"))
                                 .build());
 
         verify(triggerService).getTriggerPolicies(any(Pageable.class));
+    }
+
+    @Test
+    void addTriggerVM() throws Exception {
+        TriggerVMAddRequest request = new TriggerVMAddRequest("first-ns", "mci", "test01");
+
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy/{id}/vm", 1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(JsonConverter.asJsonString(request)))
+                .andExpect(status().isAccepted()) // 202 Accepted
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("Add trigger VM")
+                                .summary("AddTriggerVM")
+                                .requestSchema("TriggerVMAddRequest")
+                                .pathParameters(paramInteger("id", "trigger policy id"))
+                                .requestFields(
+                                        fieldString("namespaceId", "Namespace ID"),
+                                        fieldString("vmScope", "VM scope (e.g., vm, mci)"),
+                                        fieldString("vmId", "VM ID"))
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                        "data",
+                                                        "Response data (null for add operation)")
+                                                .optional(),
+                                        fieldString(
+                                                        "error_message",
+                                                        "Error message (empty if success)")
+                                                .optional())
+                                .build());
+
+        verify(triggerService).addTriggerVM(any(long.class), any(TriggerVMDto.class));
     }
 
     @Test
@@ -164,11 +225,11 @@ class TriggerControllerTest {
         List<TriggerPolicyNotiChannelUpdateRequest> request =
                 List.of(
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "kakao_naver-cloud", List.of("+82-10-1234-5678")),
+                                "kakao", List.of("+82-10-1234-5678")),
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "sms_naver-cloud", List.of("+82-10-1234-5678")),
+                                "sms", List.of("+82-10-1234-5678")),
                         new TriggerPolicyNotiChannelUpdateRequest(
-                                "email_smtp.gmail.com", List.of("admin@example.com")),
+                                "email", List.of("admin@example.com")),
                         new TriggerPolicyNotiChannelUpdateRequest("slack", List.of("C09GRESEF")));
 
         mockMvc.perform(
@@ -176,7 +237,7 @@ class TriggerControllerTest {
                                         "/api/o11y/trigger/policy/{id}/channel", 1)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(request)))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isAccepted()) // 202 Accepted
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
@@ -188,37 +249,25 @@ class TriggerControllerTest {
                                         fieldArray(
                                                 "[]",
                                                 "List of notification channel update objects"),
-                                        fieldString("[].channelName", "notification channel name"),
-                                        fieldArray("[].recipients", "list of recipients"))
+                                        fieldString(
+                                                "[].channelName",
+                                                "Notification channel name (e.g., kakao, sms, email, slack)"),
+                                        fieldArray("[].recipients", "List of recipients"))
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                        "data",
+                                                        "Response data (null for update operation)")
+                                                .optional(),
+                                        fieldString(
+                                                        "error_message",
+                                                        "Error message (empty if success)")
+                                                .optional())
                                 .build());
 
         verify(triggerService)
                 .updateTriggerPolicyNotiChannelByName(any(long.class), any(List.class));
-    }
-
-    @Test
-    void addTriggerVM() throws Exception {
-        TriggerVMAddRequest request = new TriggerVMAddRequest("first-ns", "mci", "test01");
-
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.post("/api/o11y/trigger/policy/{id}/vm", 1)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(JsonConverter.asJsonString(request)))
-                .andExpect(status().isAccepted())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("Add trigger vm")
-                                .summary("AddTriggerVM")
-                                .requestSchema("TriggerVMAddRequest")
-                                .pathParameters(paramInteger("id", "trigger policy id"))
-                                .requestFields(
-                                        fieldString("namespaceId", "namespace id"),
-                                        fieldString("vmScope", "vm scope (vm, mci)"),
-                                        fieldString("vmId", "vm id"))
-                                .build());
-
-        verify(triggerService).addTriggerVM(any(long.class), any(TriggerVMDto.class));
     }
 
     @Test
@@ -230,18 +279,29 @@ class TriggerControllerTest {
                                         "/api/o11y/trigger/policy/{id}/vm", 1)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(JsonConverter.asJsonString(request)))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isAccepted()) // 202 Accepted
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
-                                .description("Remove trigger vm")
+                                .description("Remove trigger VM")
                                 .summary("RemoveTriggerVM")
                                 .requestSchema("TriggerVMRemoveRequest")
                                 .pathParameters(paramInteger("id", "trigger policy id"))
                                 .requestFields(
-                                        fieldString("namespaceId", "namespace id"),
-                                        fieldString("vmScope", "vm scope (vm, mci)"),
-                                        fieldString("vmId", "vm id"))
+                                        fieldString("namespaceId", "Namespace ID"),
+                                        fieldString("vmScope", "VM scope (e.g., vm, mci)"),
+                                        fieldString("vmId", "VM ID"))
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                        "data",
+                                                        "Response data (null for remove operation)")
+                                                .optional(),
+                                        fieldString(
+                                                        "error_message",
+                                                        "Error message (empty if success)")
+                                                .optional())
                                 .build());
 
         verify(triggerService).removeTriggerVM(any(long.class), any(TriggerVMDto.class));

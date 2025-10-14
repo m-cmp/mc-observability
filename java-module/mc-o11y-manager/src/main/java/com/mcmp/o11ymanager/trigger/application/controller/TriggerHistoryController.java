@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.trigger.application.controller;
 
+import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.request.TriggerHistoryCommentUpdateRequest;
 import com.mcmp.o11ymanager.trigger.application.controller.dto.response.TriggerHistoryPageResponse;
 import com.mcmp.o11ymanager.trigger.application.service.TriggerHistoryService;
@@ -16,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.mcmp.o11ymanager.manager.global.vm.ResBody;
-
 
 /**
  * REST API controller for trigger history management Provides functionality for retrieving trigger
@@ -27,54 +26,49 @@ import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 @RequestMapping("/api/o11y/trigger/history")
 public class TriggerHistoryController {
 
-  private final TriggerHistoryService triggerHistoryService;
+    private final TriggerHistoryService triggerHistoryService;
 
-  /**
-   * Constructor for TriggerHistoryController
-   *
-   * @param triggerHistoryService Service that handles trigger history related business logic
-   */
-  public TriggerHistoryController(TriggerHistoryService triggerHistoryService) {
-    this.triggerHistoryService = triggerHistoryService;
-  }
+    /**
+     * Constructor for TriggerHistoryController
+     *
+     * @param triggerHistoryService Service that handles trigger history related business logic
+     */
+    public TriggerHistoryController(TriggerHistoryService triggerHistoryService) {
+        this.triggerHistoryService = triggerHistoryService;
+    }
 
-  /**
-   * Retrieves trigger histories with pagination.
-   *
-   * @param page          Page number (default: 1)
-   * @param size          Page size (default: 20)
-   * @param sortBy        Field to sort by (default: createdAt)
-   * @param sortDirection Sort direction (default: desc)
-   * @return Trigger history list with paging information
-   */
+    /**
+     * Retrieves trigger histories with pagination.
+     *
+     * @param page Page number (default: 1)
+     * @param size Page size (default: 20)
+     * @param sortBy Field to sort by (default: createdAt)
+     * @param sortDirection Sort direction (default: desc)
+     * @return Trigger history list with paging information
+     */
+    @GetMapping
+    public ResBody<TriggerHistoryPageResponse> getTriggerHistories(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
 
-  @GetMapping
-  public ResBody<TriggerHistoryPageResponse> getTriggerHistories(
-      @RequestParam(defaultValue = "1") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "createdAt") String sortBy,
-      @RequestParam(defaultValue = "desc") String sortDirection) {
+        Sort.Direction direction = Sort.Direction.fromString(sortDirection);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
 
-    Sort.Direction direction = Sort.Direction.fromString(sortDirection);
-    Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
+        CustomPageDto<TriggerHistoryDetailDto> dto =
+                triggerHistoryService.getTriggerHistories(pageable);
 
-    CustomPageDto<TriggerHistoryDetailDto> dto =
-        triggerHistoryService.getTriggerHistories(pageable);
+        return new ResBody<>(TriggerHistoryPageResponse.from(dto));
+    }
 
+    /** Updates comment for the specified trigger history. */
+    @PutMapping("/{id}/comment")
+    public ResBody<Void> updateComment(
+            @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
 
-    return new ResBody<>(TriggerHistoryPageResponse.from(dto));
-  }
+        triggerHistoryService.updateComment(id, request.toDto());
 
-  /**
-   * Updates comment for the specified trigger history.
-   */
-  @PutMapping("/{id}/comment")
-  public ResBody<Void> updateComment(
-      @PathVariable long id,
-      @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
-
-    triggerHistoryService.updateComment(id, request.toDto());
-
-    return new ResBody<>();
-  }
+        return new ResBody<>();
+    }
 }

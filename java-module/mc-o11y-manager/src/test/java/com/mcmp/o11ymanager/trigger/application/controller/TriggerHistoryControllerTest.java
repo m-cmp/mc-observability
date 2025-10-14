@@ -63,11 +63,17 @@ class TriggerHistoryControllerTest {
                                         paramString("sortDirection", "sort direction (asc, desc)")
                                                 .optional())
                                 .responseFields(
-                                        fieldArray("content", "trigger history list"),
-                                        fieldSubsection("pageable", "specific page info"),
-                                        fieldNumber("totalPages", "total pages"),
-                                        fieldNumber("totalElements", "total elements"),
-                                        fieldNumber("numberOfElements", "number of elements"))
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldArray("data.content", "trigger history list"),
+                                        fieldSubsection("data.pageable", "specific page info"),
+                                        fieldNumber("data.totalPages", "total pages"),
+                                        fieldNumber("data.totalElements", "total elements"),
+                                        fieldNumber("data.numberOfElements", "number of elements"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"))
                                 .build());
 
         verify(triggerHistoryService).getTriggerHistories(any(Pageable.class));
