@@ -11,5 +11,8 @@ ${AnsiColor.BRIGHT_RED}
 Site Code: ${deploy.site-code}
 Active Profile: ${spring.profiles.active:[No active profile]}
 Current Server Port: ${server.port}
+Loki URL: ${loki.url}
+InfluxDB 1 URL: ${influxdb.servers[0].url}
+InfluxDB 2 URL: ${influxdb.servers[1].url}
 
 ${AnsiColor.DEFAULT}

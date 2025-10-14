@@ -44,21 +44,11 @@ else
     echo "Using provided O11Y_EXTERNAL_IP: $O11Y_EXTERNAL_IP"
 fi
 
-if [ -z "$O11Y_EXTERNAL_IP" ]; then
-    echo "Starting application..."
-    exec java -jar -Dspring.config.location=file:/app-config/ /mc-o11y-manager.jar
-else
-    echo "Creating application-docker.yaml with O11Y_EXTERNAL_IP=$O11Y_EXTERNAL_IP..."
-
-    cat > "$DOCKER_CONFIG" << EOF
-influxdb:
-  servers:
-    - url: http://$O11Y_EXTERNAL_IP:8086
-    - url: http://$O11Y_EXTERNAL_IP:8087
-EOF
-
-    echo "application-docker.yaml created successfully."
-
-    echo "Starting application..."
-    exec java -jar -Dspring.config.location=file:/app-config/ -Dspring.profiles.active=docker /mc-o11y-manager.jar
+if [ ! -z "$O11Y_EXTERNAL_IP" ]; then
+  export LOKI_URL="http://$O11Y_EXTERNAL_IP:3100"
+  export INFLUX1_URL="http://$O11Y_EXTERNAL_IP:8086"
+  export INFLUX2_URL="http://$O11Y_EXTERNAL_IP:8087"
 fi
+
+echo "Starting application..."
+exec java -jar -Dspring.config.location=file:/app-config/ /mc-o11y-manager.jar
