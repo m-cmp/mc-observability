@@ -27,6 +27,7 @@ services:
       mc-observability-rabbitmq:
         condition: service_healthy
     environment:
+      # - O11Y_EXTERNAL_IP=111.111.111.111 # External IP will be set automatically. Set this value if you want to change.
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
       - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://mc-infra-manager:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
