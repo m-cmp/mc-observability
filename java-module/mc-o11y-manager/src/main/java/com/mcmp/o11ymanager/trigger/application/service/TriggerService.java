@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.trigger.adapter.external.alert.dto.*;
 import com.mcmp.o11ymanager.trigger.adapter.internal.trigger.ManagerPort;
 import com.mcmp.o11ymanager.trigger.adapter.internal.trigger.TriggerServiceInternal;
 import com.mcmp.o11ymanager.trigger.application.common.dto.*;
+import com.mcmp.o11ymanager.trigger.application.common.exception.InvalidNotificationTypeException;
 import com.mcmp.o11ymanager.trigger.application.common.exception.TriggerPolicyNotFoundException;
 import com.mcmp.o11ymanager.trigger.application.persistence.model.*;
 import com.mcmp.o11ymanager.trigger.application.persistence.repository.*;
@@ -95,32 +96,55 @@ public class TriggerService implements TriggerServiceInternal {
                 () -> triggerPolicyPage.getContent().stream().map(TriggerPolicy::toDto).toList());
     }
 
-    public void updateTriggerPolicyNotiChannelByName(
-            long id, List<TriggerPolicyNotiChannelUpdateDto> dtos) {
-        TriggerPolicy triggerPolicy =
-                triggerPolicyRepository
-                        .findById(id)
-                        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
 
-        Map<String, String> channelRecipientMap = new HashMap<>();
-        List<String> notiChannelNames =
-                dtos.stream()
-                        .map(
-                                dto -> {
-                                    String channelName = dto.channelName();
-                                    String recipients = String.join(", ", dto.recipients());
-                                    channelRecipientMap.put(channelName, recipients);
-                                    return channelName;
-                                })
-                        .toList();
-        List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
-        List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
-                TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
 
-        triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
-    }
+  @Transactional
+  public void updateTriggerPolicyNotiChannelByName(
+      long id, List<TriggerPolicyNotiChannelUpdateDto> dtos) {
 
-    public void removeTriggerVM(long id, TriggerVMDto triggerVMDto) {
+    TriggerPolicy triggerPolicy = triggerPolicyRepository
+        .findById(id)
+        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
+
+
+    Map<String, String> channelNameMap = Map.of(
+        "sms", "sms_naver-cloud",
+        "email", "email_smtp.gmail.com",
+        "kakao", "kakao_naver-cloud",
+        "slack", "slack"
+    );
+
+    Map<String, String> channelRecipientMap = new HashMap<>();
+
+
+    List<String> notiChannelNames = dtos.stream()
+        .map(dto -> {
+          String simpleName = dto.channelName().toLowerCase();
+          String dbName = channelNameMap.getOrDefault(simpleName, simpleName);
+
+          if (!channelNameMap.containsKey(simpleName)) {
+            throw new InvalidNotificationTypeException(
+                "Unsupported notification channel: " + simpleName +
+                    " (allowed values: kakao, sms, email, slack)"
+            );
+          }
+
+          String recipients = String.join(", ", dto.recipients());
+          channelRecipientMap.put(dbName, recipients);
+          return dbName;
+        })
+        .toList();
+
+    List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
+
+    List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
+        TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
+
+    triggerPolicyNotiChannelRepository.saveAll(triggerPolicyNotiChannels);
+  }
+
+
+  public void removeTriggerVM(long id, TriggerVMDto triggerVMDto) {
         TriggerPolicy triggerPolicy =
                 triggerPolicyRepository
                         .findById(id)

@@ -95,7 +95,7 @@ public class TumblebugServiceImpl implements TumblebugService {
                     "===============================================Agent Status Failed gent: {}, result: {}===============================================",
                     agent,
                     trimmed);
-            throw new AgentStatusException("systemctl-check", "Agent 상태가 비정상입니다", agent);
+            return false;
         }
 
         return true;
