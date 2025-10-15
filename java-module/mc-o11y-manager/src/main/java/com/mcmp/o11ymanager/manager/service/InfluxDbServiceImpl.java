@@ -474,12 +474,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         if (values != null && !values.isEmpty()) {
           Object val = values.get(0).get(0);
           if (val != null) {
-            log.info(
-                "====================================================type={}, value={}====================================================",
-                val.getClass().getName(), val);
-
             try {
-              // InfluxDB가 Double로 반환할 수 있으므로 Double.parseDouble 사용
               total += (int) Math.floor(Double.parseDouble(val.toString()));
             } catch (NumberFormatException nfe) {
               log.warn("[CARDINALITY] parse error value={}", val);
