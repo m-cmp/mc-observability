@@ -144,10 +144,10 @@ public class SchedulerFacadeService {
                                             action);
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
                                     }
                                 }
 
@@ -175,10 +175,10 @@ public class SchedulerFacadeService {
 
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
                                     }
                                 }
                             }

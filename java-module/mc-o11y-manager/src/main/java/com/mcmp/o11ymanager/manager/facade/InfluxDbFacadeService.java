@@ -17,26 +17,31 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class InfluxDbFacadeService {
 
-    private final InfluxDbService influxDbService;
+  private final InfluxDbService influxDbService;
 
-    @Transactional(readOnly = true)
-    public InfluxDTO resolveForVM(String nsId, String mciId) {
-        return influxDbService.resolveInfluxDto(nsId, mciId);
-    }
+  @Transactional(readOnly = true)
+  public InfluxDTO resolveForVM(String nsId, String mciId) {
+    return influxDbService.resolveInfluxDto(nsId, mciId);
+  }
 
-    public List<TagDTO> getTags() {
-        return influxDbService.getTags().getData();
-    }
+  public List<TagDTO> getTags() {
+    return influxDbService.getTags().getData();
+  }
 
-    public List<FieldDTO> getFields() {
-        return influxDbService.getFields().getData();
-    }
+  public List<FieldDTO> getFields() {
+    return influxDbService.getFields().getData();
+  }
 
-    public List<MetricDTO> getMetrics(String nsId, String mciId, MetricRequestDTO req) {
-        return influxDbService.getMetrics(nsId, mciId, req);
-    }
+  public List<MetricDTO> postMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req) {
+    return influxDbService.getMetricsByNsMci(nsId, mciId, req);
+  }
 
-    public List<InfluxDTO> getInfluxDbs() {
-        return influxDbService.rawServers();
-    }
+  public List<MetricDTO> postMetricsByVM(String nsId, String mciId, String vmId,
+      MetricRequestDTO req) {
+    return influxDbService.getMetricsByVM(nsId, mciId, vmId, req);
+  }
+
+  public List<InfluxDTO> getInfluxDbs() {
+    return influxDbService.rawServers();
+  }
 }
