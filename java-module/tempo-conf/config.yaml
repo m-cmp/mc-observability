@@ -38,4 +38,4 @@ storage:
     pool:
       queue_depth: 2000
     wal:
-      path: /tmp/tempo/wal
+      path: /etc/tempo/wal
