@@ -1,6 +1,8 @@
 package com.mcmp.o11ymanager.manager.dto.vm;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mcmp.o11ymanager.manager.entity.VMEntity;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
@@ -17,6 +19,7 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(Include.NON_NULL)
 public class VMDTO {
 
     @JsonProperty("vm_id")

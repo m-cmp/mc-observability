@@ -32,12 +32,13 @@ public class VMController {
     }
 
     @PostMapping("/{nsId}/{mciId}/vm/{vmId}")
-    public ResBody<VMDTO> postVM(
+    public ResBody<Void> postVM(
             @PathVariable String nsId,
             @PathVariable String mciId,
             @PathVariable String vmId,
             @RequestBody @Valid VMRequestDTO dto) {
-        return new ResBody<>(vmFacadeService.postVM(nsId, mciId, vmId, dto));
+      vmFacadeService.postVM(nsId, mciId, vmId, dto);
+        return new ResBody<>();
     }
 
     @PutMapping("/{nsId}/{mciId}/vm/{vmId}")
