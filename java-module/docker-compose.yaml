@@ -754,7 +754,7 @@ services:
     command: [ "-config.file=/etc/tempo-config.yaml" ]
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /docker/tempo_data:/tmp/tempo
+      - /docker/tempo_data:/etc/tempo
       - ./tempo-conf/config.yaml:/etc/tempo-config.yaml
     networks:
       - internal_network
@@ -764,9 +764,9 @@ services:
     image: busybox:stable
     container_name: mc-observability-tempo-init-volumes
     restart: no
-    # command: ["sh", "-c", "chown -R 0:0 /tempo"]
+    command: ["sh", "-c", "chown -R 10001:10001 /etc/tempo"]
     volumes:
-      - /docker/tempo_data:/tempo
+      - /docker/tempo_data:/etc/tempo
     user: root
     init: true
     networks:
