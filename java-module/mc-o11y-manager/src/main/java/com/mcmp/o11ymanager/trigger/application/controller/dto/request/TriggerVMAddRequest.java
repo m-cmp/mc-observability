@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull;
 
 public record TriggerVMAddRequest(
         @NotNull @NotBlank String namespaceId,
-        @NotNull @NotBlank String vmScope,
-        @NotNull @NotBlank String vmId) {
+        @NotNull @NotBlank String targetScope,
+        @NotNull @NotBlank String targetId) {
 
     public TriggerVMDto toDto() {
-        return new TriggerVMDto(namespaceId, vmScope, vmId, true);
+        return new TriggerVMDto(namespaceId, targetScope, targetId, true);
     }
 }

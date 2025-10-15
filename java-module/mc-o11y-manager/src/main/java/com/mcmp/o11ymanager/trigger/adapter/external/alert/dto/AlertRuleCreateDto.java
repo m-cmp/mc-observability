@@ -9,11 +9,11 @@ import lombok.Builder;
 public record AlertRuleCreateDto(
         String uuid,
         ResourceType resourceType,
-        String vmScope,
+        String targetScope,
         String measurement,
         String aggregation,
         String field,
-        String vmId,
+        String targetId,
         String namespaceId,
         String title,
         String holdDuration,
@@ -28,9 +28,9 @@ public record AlertRuleCreateDto(
         return AlertRuleCreateDto.builder()
                 .uuid(triggerVMDto.uuid())
                 .resourceType(resourceType)
-                .vmScope(triggerVMDto.vmScope())
+                .targetScope(triggerVMDto.targetScope())
                 .namespaceId(triggerVMDto.namespaceId())
-                .vmId(triggerVMDto.vmId())
+                .targetId(triggerVMDto.targetId())
                 .title(triggerPolicyDto.title())
                 .measurement(resourceType.getMeasurement())
                 .field(resourceType.getField())
@@ -46,7 +46,7 @@ public record AlertRuleCreateDto(
             String measurement,
             String aggregation,
             String field,
-            String vmId,
+            String targetId,
             String namespaceId,
             String title,
             String holdDuration,
@@ -56,7 +56,7 @@ public record AlertRuleCreateDto(
                 .measurement(measurement)
                 .aggregation(aggregation)
                 .field(field)
-                .vmId(vmId)
+                .targetId(targetId)
                 .namespaceId(namespaceId)
                 .title(title)
                 .holdDuration(holdDuration)

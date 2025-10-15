@@ -4,4 +4,4 @@ import lombok.Builder;
 
 @Builder
 public record TriggerVMDetailDto(
-        long id, String uuid, String namespaceId, String vmScope, String vmId, boolean isActive) {}
+        long id, String uuid, String namespaceId, String targetScope, String targetId, boolean isActive) {}
