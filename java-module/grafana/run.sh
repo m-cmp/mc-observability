@@ -143,10 +143,11 @@ if [ "$GRAFANA_O11Y_RECEIVER_UID" != "" ]; then
 else
   echo "[*] Creating receiver..."
   HTTP_STATUS=$(curl -s -w "\n%{http_code}" -b ~/grafana-cookie -XPOST \
-      "http://127.0.0.1:3000/api/v1/provisioning/contact-points" \
-      -H 'Accept: application/json' \
+      "http://127.0.0.1:3000/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/default/receivers" \
+      -H 'Accept: */*' \
       -H 'Content-Type: application/json' \
-      -d '{"name":"o11y","type":"mqtt","settings":{"brokerUrl":"tcp://mc-observability-rabbitmq:1883","topic":"alert","username":"mc-agent","password":"mc-agent","messageFormat":"json"},"disableResolveMessage":false}' | tail -n1)
+      -H 'Origin: http://127.0.0.1:3000' \
+      -d '{"metadata":{},"spec":{"title":"o11y","integrations":[{"type":"mqtt","name":"o11y","disableResolveMessage":false,"settings":{"brokerUrl":"tcp://mc-observability-rabbitmq:1883","topic":"alert","username":"mc-agent","password":"mc-agent","messageFormat":"json"}}]}}' | tail -n1)
   if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
     echo "[*] Successfully created the receiver!"
   else
