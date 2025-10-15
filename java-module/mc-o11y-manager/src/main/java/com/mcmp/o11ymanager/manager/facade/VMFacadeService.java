@@ -68,15 +68,17 @@ public class VMFacadeService {
 
         agentFacadeService.install(nsId, mciId, vmId);
 
-//        log.info(">>> start checking monitoring agent status");
-//        AgentServiceStatus monitoringStatus =
-//                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId, Agent.TELEGRAF);
-//        log.info(">>> start checking log agent status");
-//        AgentServiceStatus logStatus =
-//                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
+        //        log.info(">>> start checking monitoring agent status");
+        //        AgentServiceStatus monitoringStatus =
+        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+        // Agent.TELEGRAF);
+        //        log.info(">>> start checking log agent status");
+        //        AgentServiceStatus logStatus =
+        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+        // Agent.FLUENT_BIT);
 
-//        savedVM.setMonitoringServiceStatus(monitoringStatus);
-//        savedVM.setLogServiceStatus(logStatus);
+        //        savedVM.setMonitoringServiceStatus(monitoringStatus);
+        //        savedVM.setLogServiceStatus(logStatus);
 
         return savedVM;
     }

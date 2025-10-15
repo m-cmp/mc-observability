@@ -37,7 +37,7 @@ public class VMController {
             @PathVariable String mciId,
             @PathVariable String vmId,
             @RequestBody @Valid VMRequestDTO dto) {
-      vmFacadeService.postVM(nsId, mciId, vmId, dto);
+        vmFacadeService.postVM(nsId, mciId, vmId, dto);
         return new ResBody<>();
     }
 

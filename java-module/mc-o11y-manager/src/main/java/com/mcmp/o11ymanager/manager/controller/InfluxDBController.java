@@ -38,7 +38,6 @@ public class InfluxDBController {
         return new ResBody<>(influxDbFacadeService.getTags());
     }
 
-
     @PostMapping("/metric/{nsId}/{mciId}")
     public ResBody<List<MetricDTO>> MetricByNsIdAndMciId(
             @PathVariable String nsId,
@@ -47,13 +46,12 @@ public class InfluxDBController {
         return new ResBody<>(influxDbFacadeService.postMetricsByNsMci(nsId, mciId, req));
     }
 
-
-  @PostMapping("/metric/{nsId}/{mciId}/{vmId}")
-  public ResBody<List<MetricDTO>> MetricByVMId(
-      @PathVariable String nsId,
-      @PathVariable String mciId,
-      @PathVariable String vmId,
-      @RequestBody MetricRequestDTO req) {
-    return new ResBody<>(influxDbFacadeService.postMetricsByVM(nsId, mciId, vmId, req));
-  }
+    @PostMapping("/metric/{nsId}/{mciId}/{vmId}")
+    public ResBody<List<MetricDTO>> MetricByVMId(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @PathVariable String vmId,
+            @RequestBody MetricRequestDTO req) {
+        return new ResBody<>(influxDbFacadeService.postMetricsByVM(nsId, mciId, vmId, req));
+    }
 }
