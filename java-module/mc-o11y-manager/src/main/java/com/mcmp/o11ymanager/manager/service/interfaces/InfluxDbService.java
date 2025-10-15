@@ -10,23 +10,23 @@ import java.util.List;
 
 public interface InfluxDbService {
 
-  InfluxDTO get(Long id);
+    InfluxDTO get(Long id);
 
-  boolean isConnectedDb(InfluxDTO influxDTO);
+    boolean isConnectedDb(InfluxDTO influxDTO);
 
-  Long resolveInfluxDb(String nsId, String mciId);
+    Long resolveInfluxDb(String nsId, String mciId);
 
-  ResBody<List<FieldDTO>> getFields();
+    ResBody<List<FieldDTO>> getFields();
 
-  ResBody<List<TagDTO>> getTags();
+    ResBody<List<TagDTO>> getTags();
 
-  String fetchDefaultRp(InfluxDTO influxDTO);
+    String fetchDefaultRp(InfluxDTO influxDTO);
 
-  List<MetricDTO> getMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req);
+    List<MetricDTO> getMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req);
 
-  List<MetricDTO> getMetricsByVM(String nsId, String mciId, String vmId, MetricRequestDTO req);
+    List<MetricDTO> getMetricsByVM(String nsId, String mciId, String vmId, MetricRequestDTO req);
 
-  List<InfluxDTO> rawServers();
+    List<InfluxDTO> rawServers();
 
-  InfluxDTO resolveInfluxDto(String nsId, String mciId);
+    InfluxDTO resolveInfluxDto(String nsId, String mciId);
 }

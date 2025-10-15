@@ -10,9 +10,9 @@ public enum VMAgentTaskStatus {
     UPDATING_CONFIG("Agent configuration update is in progress."),
     UNINSTALLING("Agent uninstallation is in progress."),
     RESTARTING("Agent restart is in progress."),
-  FAILED("There are no agent-related tasks currently in progress."),
-  FINISHED("There are no agent-related tasks currently in progress."),
-  IDLE("There are no agent-related tasks currently in progress.");
+    FAILED("There are no agent-related tasks currently in progress."),
+    FINISHED("There are no agent-related tasks currently in progress."),
+    IDLE("There are no agent-related tasks currently in progress.");
 
     private final String message;
 

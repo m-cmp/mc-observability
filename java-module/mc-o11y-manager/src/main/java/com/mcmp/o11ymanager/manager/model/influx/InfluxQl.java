@@ -68,9 +68,9 @@ public class InfluxQl {
         var sb = new StringBuilder();
         for (var c : conds) {
 
-          if (!StringUtils.hasText(c.getKey()) || !StringUtils.hasText(c.getValue())) {
-            continue;
-          }
+            if (!StringUtils.hasText(c.getKey()) || !StringUtils.hasText(c.getValue())) {
+                continue;
+            }
 
             sb.append(" and ")
                     .append("\"")
@@ -86,31 +86,29 @@ public class InfluxQl {
     // ------------------------------------groupby
     // query--------------------------------------------------//
     private static String groupBy(String groupTime, List<String> groupBy) {
-      boolean hasTime = StringUtils.hasText(groupTime);
-      boolean hasGroup = groupBy != null && !groupBy.isEmpty();
+        boolean hasTime = StringUtils.hasText(groupTime);
+        boolean hasGroup = groupBy != null && !groupBy.isEmpty();
 
-      List<String> cleanGroups = (groupBy == null)
-          ? List.of()
-          : groupBy.stream()
-              .filter(StringUtils::hasText)
-              .toList();
+        List<String> cleanGroups =
+                (groupBy == null)
+                        ? List.of()
+                        : groupBy.stream().filter(StringUtils::hasText).toList();
 
-      if (!hasTime && cleanGroups.isEmpty()) {
-        return "";
-      }
+        if (!hasTime && cleanGroups.isEmpty()) {
+            return "";
+        }
 
-      var j = new StringJoiner(", ", " group by ", "");
-      if (hasTime) {
-        j.add("time(" + groupTime + ")");
-      }
-      if (!cleanGroups.isEmpty()) {
-        j.add(String.join(",", cleanGroups));
-      }
-      return j.toString();
+        var j = new StringJoiner(", ", " group by ", "");
+        if (hasTime) {
+            j.add("time(" + groupTime + ")");
+        }
+        if (!cleanGroups.isEmpty()) {
+            j.add(String.join(",", cleanGroups));
+        }
+        return j.toString();
     }
 
-
-  private static String qualifiedMeasurement(String rp, String measurement) {
+    private static String qualifiedMeasurement(String rp, String measurement) {
         return StringUtils.hasText(rp) ? rp + "." + measurement : measurement;
     }
 
