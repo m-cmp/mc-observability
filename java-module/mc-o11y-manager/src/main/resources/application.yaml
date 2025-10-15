@@ -130,7 +130,7 @@ grafana:
       uid: ${GRAFANA_FOLDER_UID:xxxxxxxx}
     ruleGroup:
       metric: ${GRAFANA_RULE_GROUP:metric}
-    receiver: ${GRAFANA_RECEIVER:mcmp}
+    receiver: ${GRAFANA_RECEIVER:o11y}
     noDataState: ${GRAFANA_NO_DATA_STATE:NoData}
     execErrState: ${GRAFANA_EXEC_ERR_STATE:Error}
 

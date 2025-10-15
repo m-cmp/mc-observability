@@ -147,7 +147,7 @@ else
       -H 'Accept: */*' \
       -H 'Content-Type: application/json' \
       -H 'Origin: http://127.0.0.1:3000' \
-      -d '{"metadata":{},"spec":{"title":"o11y","integrations":[{"type":"webhook","name":"o11y","disableResolveMessage":false,"secureFields":{"authorization_credentials":true,"tlsConfig.caCertificate":true,"tlsConfig.clientCertificate":true,"tlsConfig.clientKey":true},"settings":{"url":"'"$ALARM_END_POINT_URL"'","httpMethod":"POST","username":"'"$ALARM_END_POINT_USERNAME"'","tlsConfig":{"insecureSkipVerify":true},"password":"'"$ALARM_END_POINT_PASSWORD"'"}}]}}' | tail -n1)
+      -d '{"metadata":{},"spec":{"title":"o11y","integrations":[{"type":"mqtt","name":"o11y","disableResolveMessage":false,"settings":{"brokerUrl":"tcp://mc-observability-rabbitmq:1883","topic":"alert","username":"mc-agent","password":"mc-agent","messageFormat":"json"}}]}}' | tail -n1)
   if [[ $HTTP_STATUS =~ ^2[0-9][0-9]$ ]]; then
     echo "[*] Successfully created the receiver!"
   else

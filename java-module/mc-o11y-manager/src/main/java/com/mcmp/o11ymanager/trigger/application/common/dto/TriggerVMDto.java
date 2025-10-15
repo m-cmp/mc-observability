@@ -7,6 +7,6 @@ import lombok.Builder;
 @Builder
 public record TriggerVMDto(
         @NotNull @NotBlank String namespaceId,
-        @NotNull @NotBlank String vmScope,
-        @NotNull @NotBlank String vmId,
+        @NotNull @NotBlank String targetScope,
+        @NotNull @NotBlank String targetId,
         boolean isActive) {}

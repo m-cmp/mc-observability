@@ -27,9 +27,9 @@ public class TriggerVM extends BaseEntity {
 
     private String namespaceId;
 
-    private String vmScope;
+    private String targetScope;
 
-    private String vmId;
+    private String targetId;
 
     private boolean isActive;
 
@@ -43,20 +43,20 @@ public class TriggerVM extends BaseEntity {
         TriggerVM entity = new TriggerVM();
         entity.uuid = UUID.randomUUID().toString();
         entity.namespaceId = dto.namespaceId();
-        entity.vmScope = dto.vmScope();
-        entity.vmId = dto.vmId();
+        entity.targetScope = dto.targetScope();
+        entity.targetId = dto.targetId();
         entity.isActive = dto.isActive();
         entity.setupKey();
         return entity;
     }
 
     public static TriggerVM create(
-            String namespaceId, String vmScope, String vmId, boolean isActive) {
+            String namespaceId, String targetScope, String targetId, boolean isActive) {
         TriggerVM entity = new TriggerVM();
         entity.uuid = UUID.randomUUID().toString();
         entity.namespaceId = namespaceId;
-        entity.vmScope = vmScope;
-        entity.vmId = vmId;
+        entity.targetScope = targetScope;
+        entity.targetId = targetId;
         entity.isActive = isActive;
         entity.setupKey();
         return entity;
@@ -67,14 +67,14 @@ public class TriggerVM extends BaseEntity {
                 .id(id)
                 .uuid(uuid)
                 .namespaceId(namespaceId)
-                .vmScope(vmScope)
-                .vmId(vmId)
+                .targetScope(targetScope)
+                .targetId(targetId)
                 .isActive(isActive)
                 .build();
     }
 
     public void setupKey() {
-        key = namespaceId + "_" + vmScope + "-" + vmId;
+        key = namespaceId + "_" + targetScope + "-" + targetId;
     }
 
     public void setTriggerPolicy(TriggerPolicy triggerPolicy) {

@@ -54,10 +54,7 @@ public class AgentFacadeService {
             log.warn("SSH private key not found");
             throw new RuntimeException("SSH private key not found");
         } else {
-            log.info(
-                    "key name={}, id={}",
-                    sshKey.getName(),
-                    sshKey.getId());
+            log.info("key name={}, id={}", sshKey.getName(), sshKey.getId());
         }
 
         return AccessInfoDTO.builder()
