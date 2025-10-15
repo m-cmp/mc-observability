@@ -43,7 +43,9 @@ public class TriggerService implements TriggerServiceInternal {
 
         String datasourceUid =
                 managerPort.getInfluxUid(
-                        triggerVMDto.namespaceId(), triggerVMDto.targetScope(), triggerVMDto.targetId());
+                        triggerVMDto.namespaceId(),
+                        triggerVMDto.targetScope(),
+                        triggerVMDto.targetId());
 
         TriggerVM triggerVM = TriggerVM.create(triggerVMDto);
         boolean isAdded = triggerPolicy.addIfNotContains(triggerVM);
