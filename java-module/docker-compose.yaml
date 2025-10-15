@@ -759,6 +759,12 @@ services:
     networks:
       - internal_network
       - external_network
+    healthcheck:
+      start_period: 120s
+      test: [ "CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:3200/ready" ]
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-tempo-init-volumes:
     image: busybox:stable
