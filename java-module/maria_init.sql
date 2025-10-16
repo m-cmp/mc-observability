@@ -12,7 +12,7 @@ USE mc_observability;
 CREATE TABLE `mc_o11y_insight_anomaly_setting` (
                                                    `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
                                                    `NAMESPACE_ID` varchar(100) NOT NULL,
-                                                   `VM_ID` varchar(100) NOT NULL,
+                                                   `TARGET_ID` varchar(100) NOT NULL,
                                                    `TARGET_TYPE` varchar(100) NOT NULL,
                                                    `MEASUREMENT` varchar(100) NOT NULL,
                                                    `EXECUTION_INTERVAL` varchar(100) NOT NULL,
