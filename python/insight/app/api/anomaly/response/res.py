@@ -33,8 +33,8 @@ class ResBodyAnomalyDetectionOptions(BaseModel):
 class AnomalyDetectionSettings(BaseModel):
     seq: int
     ns_id: str
-    target_id: str
-    target_type: str
+    mci_id: str
+    vm_id: Optional[str]
     measurement: str
     execution_interval: str
     last_execution: Optional[str] = Field(
@@ -67,7 +67,8 @@ class AnomalyDetectionHistoryValue(BaseModel):
 
 class AnomalyDetectionHistoryResponse(BaseModel):
     ns_id: str = Field(..., description="The Namespace ID.")
-    target_id: str = Field(..., description="The ID of the target (vm ID or mci ID).")
+    mci_id: str = Field(..., description="The ID of the mci group.")
+    vm_id: Optional[str] = Field(..., description="The ID of the vm.")
     measurement: str = Field(..., description="The type of metric being monitored for anomalies (e.g., cpu, mem).", example="cpu")
     values: List[AnomalyDetectionHistoryValue] = Field(..., description="List of anomaly detection results for the given time range.")
 

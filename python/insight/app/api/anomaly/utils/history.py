@@ -1,6 +1,6 @@
 from app.api.anomaly.repo.repo import InfluxDBRepository
 from app.api.anomaly.response.res import AnomalyDetectionHistoryValue, AnomalyDetectionHistoryResponse
-from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
+from app.api.anomaly.request.req import GetAnomalyHistoryFilter
 from config.ConfigManager import ConfigManager
 import requests
 import pandas as pd
@@ -11,7 +11,7 @@ from fastapi import HTTPException
 
 
 class AnomalyHistoryService:
-    def __init__(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
+    def __init__(self, path_params, query_params: GetAnomalyHistoryFilter):
         config = ConfigManager()
         self.repo = InfluxDBRepository()
         self.path_params = path_params
@@ -40,9 +40,13 @@ class AnomalyHistoryService:
 
     def get_raw_data(self):
         all_data = []
-
-        url = self._build_url(path="influxdb/metric")
+        vm_id = getattr(self.path_params, 'vmId', None)
+        if vm_id:
+            url = self._build_url(f'influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}/{vm_id}')
+        else:
+            url = self._build_url(f'influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}')
         body = self._build_body()
+
         response = self._send_request("POST", url, json=body)
         data = response.json().get("data", [])
         all_data.extend(data)
@@ -78,16 +82,6 @@ class AnomalyHistoryService:
             range_value = f"{hours_diff}h"
 
         return {
-            "conditions": [
-                {
-                    "key": "ns_id",
-                    "value": self.path_params.nsId
-                },
-                {
-                    "key": "target_id",
-                    "value": self.path_params.targetId
-                }
-            ],
             "fields": [
                 {
                     "function": "mean",
@@ -113,6 +107,7 @@ class AnomalyHistoryService:
         raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
 
         for entry in results:
+            print(f'entry: {entry}')
             entry_timestamp = pd.to_datetime(entry['timestamp']).strftime('%Y-%m-%dT%H:%M:%SZ')
             matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
 
@@ -130,9 +125,11 @@ class AnomalyHistoryService:
             )
             values.append(value)
 
+        vm_id = getattr(self.path_params, 'vmId', None)
         data = AnomalyDetectionHistoryResponse(
             ns_id=self.path_params.nsId,
-            target_id=self.path_params.targetId,
+            mci_id=self.path_params.mciId,
+            vm_id=vm_id,
             measurement=self.query_params.measurement.value,
             values=values
         )

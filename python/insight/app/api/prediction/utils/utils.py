@@ -110,7 +110,7 @@ class PredictionService:
             # raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Data retrieval failed. {e}')
 
         # 테스트용 데이터
-        data = test_data
+        # data = test_data
 
         all_data.extend(data)
 

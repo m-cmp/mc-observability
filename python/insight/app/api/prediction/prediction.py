@@ -70,9 +70,9 @@ async def get_prediction_options():
     description=post_prediction_mci_description['api_description'],
     responses=post_prediction_mci_description['response'],
     response_model=ResBodyPredictionMCIResult,
-    operation_id='PostPredictionVM'
+    operation_id='PostPredictionMCI'
 )
-async def predict_vm(
+async def predict_mci(
         body_params: PredictionBody,
         path_params: PredictionMCIPath = Depends()
 ):
@@ -118,9 +118,9 @@ async def predict_vm(
     description=get_history_mci_description['api_description'],
     responses=get_history_mci_description['response'],
     response_model=ResBodyPredictionMCIHistory,
-    operation_id="GetPredictionHistory"
+    operation_id="GetPredictionMCIHistory"
 )
-async def get_prediction_history(
+async def get_prediction_mci_history(
         path_params: GetHistoryMCIPath = Depends(),
         query_params: GetPredictionHistoryQuery = Depends()
 ):
@@ -141,9 +141,9 @@ async def get_prediction_history(
     description=get_history_vm_description['api_description'],
     responses=get_history_vm_description['response'],
     response_model=ResBodyPredictionVMHistory,
-    operation_id="GetPredictionHistory"
+    operation_id="GetPredictionVMHistory"
 )
-async def get_prediction_history(
+async def get_prediction_vm_history(
         path_params: GetHistoryVMPath = Depends(),
         query_params: GetPredictionHistoryQuery = Depends()
 ):
