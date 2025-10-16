@@ -163,14 +163,14 @@ class InfluxDBControllerTest {
     }
 
     @Test
-    void query() throws Exception {
+    void getMetricsByNsIdAndMciId() throws Exception {
         String nsId = "ns-1";
         String mciId = "mci-1";
         MetricRequestDTO req = new MetricRequestDTO();
         req.setMeasurement("cpu");
         req.setRange("1h");
         req.setGroupTime("12m");
-        req.setGroupBy(List.of("ns_id"));
+        req.setGroupBy(List.of("vm_id"));
         req.setLimit(0L);
         MetricRequestDTO.FieldInfo fieldInfo = new MetricRequestDTO.FieldInfo();
         fieldInfo.setFunction("mean");
@@ -187,7 +187,7 @@ class InfluxDBControllerTest {
                                 .columns(List.of("cpu", "ns_id"))
                                 .values(List.of(List.of("string", 0)))
                                 .build());
-        when(influxDbFacadeService.getMetrics(any(), any(), any())).thenReturn(metricList);
+        when(influxDbFacadeService.postMetricsByNsMci(any(), any(), any())).thenReturn(metricList);
 
         mockMvc.perform(
                         RestDocumentationRequestBuilders.post(
@@ -201,7 +201,7 @@ class InfluxDBControllerTest {
                         ApiDocumentation.builder()
                                 .tag(TAG)
                                 .description("Retrieve InfluxDB metrics")
-                                .summary("QueryMetrics")
+                                .summary("GetMetricsByNsIdAndMciId")
                                 .requestSchema("MetricRequestDTO")
                                 .pathParameters(
                                         paramString("nsId", "nsId (e.g., ns-1)"),
@@ -212,7 +212,7 @@ class InfluxDBControllerTest {
                                         fieldString("group_time", "Grouping unit").optional(),
                                         fieldArray(
                                                         "group_by",
-                                                        "List of group-by fields, for example: ns_id, mci_id")
+                                                        "List of group-by fields (e.g., vm_id)")
                                                 .optional(),
                                         fieldNumber("limit", "Result limit count").optional(),
                                         fieldArray("fields", "List of fields to query"),
@@ -245,6 +245,95 @@ class InfluxDBControllerTest {
                                                 "List of values (2D array, each row corresponds to columns order)"),
                                         fieldString("error_message", "Error message"))
                                 .build());
-        verify(influxDbFacadeService).getMetrics(any(), any(), any());
+        verify(influxDbFacadeService).postMetricsByNsMci(any(), any(), any());
     }
+
+  @Test
+  void getMetricsByVMId() throws Exception {
+    String nsId = "ns-1";
+    String mciId = "mci-1";
+    String vmId = "vm-1";
+    MetricRequestDTO req = new MetricRequestDTO();
+    req.setMeasurement("cpu");
+    req.setRange("1h");
+    req.setGroupTime("12m");
+    req.setGroupBy(List.of("vm_id"));
+    req.setLimit(0L);
+    MetricRequestDTO.FieldInfo fieldInfo = new MetricRequestDTO.FieldInfo();
+    fieldInfo.setFunction("mean");
+    fieldInfo.setField("usage_idle");
+    req.setFields(List.of(fieldInfo));
+    MetricRequestDTO.ConditionInfo condInfo = new MetricRequestDTO.ConditionInfo();
+    condInfo.setKey("cpu");
+    condInfo.setValue("cpu-total");
+    req.setConditions(List.of(condInfo));
+    List<MetricDTO> metricList =
+        List.of(
+            MetricDTO.builder()
+                .name("cpu")
+                .columns(List.of("cpu", "vm_id"))
+                .values(List.of(List.of("string", 0)))
+                .build());
+    when(influxDbFacadeService.postMetricsByVM(any(), any(), any(),any())).thenReturn(metricList);
+
+    mockMvc.perform(
+            RestDocumentationRequestBuilders.post(
+                    "/api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}/{vmId}",
+                    nsId,
+                    mciId,
+                    vmId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JsonConverter.asJsonString(req)))
+        .andExpect(status().isOk())
+        .andDo(
+            ApiDocumentation.builder()
+                .tag(TAG)
+                .description("Retrieve InfluxDB metrics")
+                .summary("GetMetricsByVMId")
+                .requestSchema("MetricRequestDTO")
+                .pathParameters(
+                    paramString("nsId", "nsId (e.g., ns-1)"),
+                    paramString("mciId", "mciId (e.g., mci-1)"),
+                    paramString("vmId", "vmId (e.g., vm-1)"))
+                .requestFields(
+                    fieldString("measurement", "Measurement name (e.g., cpu)"),
+                    fieldString("range", "Query range (e.g., 1h)"),
+                    fieldString("group_time", "Grouping unit").optional(),
+                    fieldArray(
+                        "group_by",
+                        "List of group-by fields (e.g., vm_id)")
+                        .optional(),
+                    fieldNumber("limit", "Result limit count").optional(),
+                    fieldArray("fields", "List of fields to query"),
+                    fieldString(
+                        "fields[].function",
+                        "Aggregation function (e.g., mean, max, etc.)")
+                        .optional(),
+                    fieldString(
+                        "fields[].field",
+                        "Field name (e.g., usage_idle)")
+                        .optional(),
+                    fieldArray("conditions", "List of condition filters"),
+                    fieldString("conditions[].key", "Condition key (e.g., cpu)")
+                        .optional(),
+                    fieldString(
+                        "conditions[].value",
+                        "Condition value (e.g., cpu-total)")
+                        .optional())
+                .responseSchema("MetricDTO")
+                .responseFields(
+                    fieldString("rs_code", "Response code (e.g., 0000)"),
+                    fieldString("rs_msg", "Response message (e.g.,  Success)"),
+                    fieldArray("data", "List of metric information"),
+                    fieldString("data[].name", "Measurement name (e.g., cpu)"),
+                    fieldArray("data[].columns", "List of column names"),
+                    fieldObject("data[].tags", "Tag information").optional(),
+                    fieldSubsection(
+                        "data[].values",
+                        JsonFieldType.ARRAY,
+                        "List of values (2D array, each row corresponds to columns order)"),
+                    fieldString("error_message", "Error message"))
+                .build());
+    verify(influxDbFacadeService).postMetricsByVM(any(), any(), any(), any());
+  }
 }
