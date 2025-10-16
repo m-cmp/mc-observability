@@ -185,7 +185,7 @@ public class RabbitMQConfig {
      */
     @Bean
     public RabbitListenerErrorHandler jsonParseErrorHandler() {
-        return (amqpMessage, channel, message, exception) -> {
+        return (amqpMessage, message, exception) -> {
             if (exception.getCause() instanceof MessageConversionException) {
                 log.error("Failed to convert message.", exception);
             }
