@@ -171,20 +171,10 @@ async def get_anomaly_detection_mci_history(
         path_params: GetHistoryMCIPath = Depends(),
         query_params: GetAnomalyHistoryFilter = Depends(),
 ):
-    try:
-        service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
-        data = service.get_anomaly_detection_results()
-        return ResBodyAnomalyDetectionHistoryResponse(data=data)
-    except Exception as e:
-        print(e)
-        return JSONResponse(
-            status_code=e.status_code,
-            content={
-                "error_message": e.detail,
-                "rs_code": e.status_code,
-                "rs_msg": "Fail"
-            }
-        )
+    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+    data = service.get_anomaly_detection_results()
+    return ResBodyAnomalyDetectionHistoryResponse(data=data)
+
 
 @router.get(
     path="/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history",
@@ -196,19 +186,9 @@ async def get_anomaly_detection_vm_history(
         path_params: GetHistoryVMPath = Depends(),
         query_params: GetAnomalyHistoryFilter = Depends(),
 ):
-    try:
-        service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
-        data = service.get_anomaly_detection_results()
-        return ResBodyAnomalyDetectionHistoryResponse(data=data)
-    except Exception as e:
-        return JSONResponse(
-            status_code=e.status_code,
-            content={
-                "error_message": e.detail,
-                "rs_code": e.status_code,
-                "rs_msg": "Fail"
-            }
-        )
+    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+    data = service.get_anomaly_detection_results()
+    return ResBodyAnomalyDetectionHistoryResponse(data=data)
 
 
 @router.post(

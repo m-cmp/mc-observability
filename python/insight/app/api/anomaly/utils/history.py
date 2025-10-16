@@ -52,7 +52,7 @@ class AnomalyHistoryService:
         all_data.extend(data)
 
         if not data:
-            raise Exception("No data retrieved from mc-o11y.")
+            raise HTTPException(status_code=500, detail=f"No data retrieved from mc-o11y.")
 
         df_cleaned = pd.DataFrame(data[0]["values"], columns=["timestamp", "resource_pct"])
 
@@ -107,7 +107,6 @@ class AnomalyHistoryService:
         raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
 
         for entry in results:
-            print(f'entry: {entry}')
             entry_timestamp = pd.to_datetime(entry['timestamp']).strftime('%Y-%m-%dT%H:%M:%SZ')
             matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
 
