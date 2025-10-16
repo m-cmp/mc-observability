@@ -202,8 +202,8 @@ class TriggerControllerTest {
                                 .pathParameters(paramInteger("id", "trigger policy id"))
                                 .requestFields(
                                         fieldString("namespaceId", "Namespace ID"),
-                                        fieldString("vmScope", "VM scope (e.g., vm, mci)"),
-                                        fieldString("vmId", "VM ID"))
+                                        fieldString("targetScope", "Target scope (e.g., vm, mci)"),
+                                        fieldString("targetId", "Target ID (e.g., vm_id, mci_id)"))
                                 .responseFields(
                                         fieldString("rs_code", "Response code (e.g., 0000)"),
                                         fieldString("rs_msg", "Response message (e.g., success)"),
@@ -289,8 +289,8 @@ class TriggerControllerTest {
                                 .pathParameters(paramInteger("id", "trigger policy id"))
                                 .requestFields(
                                         fieldString("namespaceId", "Namespace ID"),
-                                        fieldString("vmScope", "VM scope (e.g., vm, mci)"),
-                                        fieldString("vmId", "VM ID"))
+                                        fieldString("targetScope", "Target scope (e.g., vm, mci)"),
+                                        fieldString("targetId", "Target ID (e.g., vm_id, mci_id)"))
                                 .responseFields(
                                         fieldString("rs_code", "Response code (e.g., 0000)"),
                                         fieldString("rs_msg", "Response message (e.g., success)"),
