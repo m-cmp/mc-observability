@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: 0.4.1
+  version: 0.4.2
   title: MC-Observability API Documentation
   description: API documentation for MC-Observability
   contact: { }
@@ -1386,61 +1386,62 @@ paths:
               }
           schema:
             $ref: '#/definitions/ResBody'
+  # # Insight API
   /api/o11y/insight/anomaly-detection/measurement:
     get:
       description: Get measurements, field lists available for the feature
       summary: GetAnomalyMeasurementList
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: GetAnomalyMeasurementList
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successfully retrieved anomaly detection measurements
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionMeasurement'
-          headers: { }
+          headers: {}
   /api/o11y/insight/anomaly-detection/measurement/{measurement}:
     get:
       description: Get Field list of specific measurements available for that feature
       summary: GetAnomalyFieldListByMeasurement
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: GetAnomalyFieldListByMeasurement
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: measurement
-          in: path
-          required: true
-          type: string
-          description: Specific Measurement.
+      - name: measurement
+        in: path
+        required: true
+        type: string
+        description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved anomaly detection field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSpecificMeasurement'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/anomaly-detection/options:
     get:
       description: Fetch the available target types, metric types, and interval options for the anomaly detection API.
       summary: GetAnomalyDetectionOptions
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: GetAnomalyDetectionOptions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
@@ -1450,306 +1451,398 @@ paths:
             application/json:
               data:
                 target_types:
-                  - vm
-                  - mci
+                - vm
+                - mci
                 measurements:
-                  - cpu
-                  - mem
+                - cpu
+                - mem
                 execution_intervals:
-                  - 5m
-                  - 10m
-                  - 30m
+                - 5m
+                - 10m
+                - 30m
               rs_code: '200'
               rs_msg: Success
-          headers: { }
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings:
     get:
       description: Fetch the current settings for all anomaly detection targets.
       summary: GetAllAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: GetAllAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
-          headers: { }
+          headers: {}
     post:
       description: Register a target for anomaly detection and automatically schedule detection tasks.
       summary: PostAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetRegistration'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetRegistration'
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
       description: Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.
       summary: PutAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: PutAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: settingSeq
-          in: path
-          required: true
-          type: integer
-          format: int32
-          description: ''
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/AnomalyDetectionTargetUpdate'
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/AnomalyDetectionTargetUpdate'
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
     delete:
       description: Remove a target from anomaly detection, stopping and removing any scheduled tasks.
       summary: DeleteAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: DeleteAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: settingSeq
-          in: path
-          required: true
-          type: integer
-          format: int32
-          description: ''
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
-  /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}:
+          headers: {}
+  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/mci/{mciId}:
     get:
-      description: Fetch the current settings for a specific anomaly detection target.
-      summary: GetTargetAnomalyDetectionSettings
+      description: Fetch the current anomaly detection settings for a specific mci group.
+      summary: GetMCIAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
-      operationId: GetTargetAnomalyDetectionSettings
+      - '[Insight] Anomaly Detection'
+      operationId: GetMCIAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-          description: ''
-        - name: targetId
-          in: path
-          required: true
-          type: string
-          description: ''
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
-  /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history:
+          headers: {}
+  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}:
     get:
-      description: Fetch the results of anomaly detection for a specific target within a given time range.
-      summary: GetAnomalyDetectionHistory
+      description: Fetch the current anomaly detection settings for a specific vm.
+      summary: GetVMAnomalyDetectionSettings
       tags:
-        - '[Insight] Anomaly Detection'
-      operationId: GetAnomalyDetectionHistory
+      - '[Insight] Anomaly Detection'
+      operationId: GetVMAnomalyDetectionSettings
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-          description: The Namespace ID for the prediction.
-        - name: targetId
-          in: path
-          required: true
-          type: string
-          description: The ID of the target vm or mci group.
-        - name: measurement
-          in: query
-          required: true
-          enum:
-            - cpu
-            - mem
-          type: string
-          description: The type of metric to retrieve.
-        - name: start_time
-          in: query
-          required: false
-          type: string
-          description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
-        - name: end_time
-          in: query
-          required: false
-          type: string
-          description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: ''
+      - name: vmId
+        in: path
+        required: true
+        type: string
+        description: ''
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionSettings'
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/history:
+    get:
+      description: Fetch the results of anomaly detection for mci group within a given time range.
+      summary: GetAnomalyDetectionMCIHistory
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyDetectionMCIHistory
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for anomaly detection.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for anomaly detection.
+      - name: measurement
+        in: query
+        required: true
+        enum:
+        - cpu
+        - mem
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
+  /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history:
+    get:
+      description: Fetch the results of anomaly detection for a specific vm within a given time range.
+      summary: GetAnomalyDetectionVMHistory
+      tags:
+      - '[Insight] Anomaly Detection'
+      operationId: GetAnomalyDetectionVMHistory
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for anomaly detection.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for anomaly detection.
+      - name: vmId
+        in: path
+        required: true
+        type: string
+        description: The VM ID for anomaly detection
+      - name: measurement
+        in: query
+        required: true
+        enum:
+        - cpu
+        - mem
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        description: "The start timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to 12 hours before the current time if not provided."
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        description: "The end timestamp for the range of Anomaly data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'.Defaults to the current time if not provided."
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResBodyAnomalyDetectionHistoryResponse'
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/anomaly-detection/{settingSeq}:
     post:
       description: Request anomaly detection
       summary: PostAnomalyDetection
       tags:
-        - '[Insight] Anomaly Detection'
+      - '[Insight] Anomaly Detection'
       operationId: PostAnomalyDetection
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: settingSeq
-          in: path
-          required: true
-          type: integer
-          format: int32
-          description: ''
+      - name: settingSeq
+        in: path
+        required: true
+        type: integer
+        format: int32
+        description: ''
       responses:
         '200':
           description: Successful Response
           schema:
             $ref: '#/definitions/ResBodyVoid'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/predictions/measurement:
     get:
       description: Get measurements, field lists available for the feature
       summary: GetPredictionMeasurementList
       tags:
-        - '[Insight] Prediction'
+      - '[Insight] Prediction'
       operationId: GetPredictionMeasurementList
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successfully retrieved prediction measurements
           schema:
             $ref: '#/definitions/ResBodyPredictionMeasurement'
-          headers: { }
+          headers: {}
   /api/o11y/insight/predictions/measurement/{measurement}:
     get:
       description: Get Field list of specific measurement available for that feature
       summary: GetPredictionFieldListByMeasurement
       tags:
-        - '[Insight] Prediction'
+      - '[Insight] Prediction'
       operationId: GetPredictionFieldListByMeasurement
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: measurement
-          in: path
-          required: true
-          type: string
-          description: Specific Measurement.
+      - name: measurement
+        in: path
+        required: true
+        type: string
+        description: Specific Measurement.
       responses:
         '200':
           description: Successfully retrieved prediction field list of specific measurement
           schema:
             $ref: '#/definitions/ResBodyPredictionSpecificMeasurement'
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/predictions/options:
     get:
       description: Fetch the available target types, metric types, and prediction range options for the prediction API.
       summary: GetPredictionOptions
       tags:
-        - '[Insight] Prediction'
+      - '[Insight] Prediction'
       operationId: GetPredictionOptions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful retrieval of prediction options
@@ -1759,160 +1852,300 @@ paths:
             application/json:
               data:
                 target_types:
-                  - vm
-                  - mci
+                - vm
+                - mci
                 measurements:
-                  - cpu
-                  - mem
-                  - disk
-                  - system
+                - cpu
+                - mem
+                - disk
+                - system
                 prediction_ranges:
                   min: 1h
                   max: 2160h
               rs_code: '200'
               rs_msg: Success
-          headers: { }
-  /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}:
+          headers: {}
+  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}:
     post:
-      description: Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.
-      summary: PostPrediction
+      description: Predict future metrics (cpu, mem, disk, system) for a given mci group.
+      summary: PostPredictionMCI
       tags:
-        - '[Insight] Prediction'
-      operationId: PostPrediction
+      - '[Insight] Prediction'
+      operationId: PostPredictionMCI
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-          description: The Namespace ID for the prediction.
-        - name: targetId
-          in: path
-          required: true
-          type: string
-          description: The ID of the target vm or mci group.
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PredictionBody'
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for the prediction.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for the prediction.
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PredictionBody'
       responses:
         '200':
           description: Successful prediction response
           schema:
-            $ref: '#/definitions/ResBodyPredictionResult'
+            $ref: '#/definitions/ResBodyPredictionMCIResult'
           examples:
             application/json:
               data:
                 ns_id: string
-                target_id: string
+                mci_id: string
                 measurement: cpu
-                target_type: vm
                 values:
-                  - timestamp: 2024-08-22T00:00:00Z
-                    value: 75
-                  - timestamp: 2024-08-22T01:00:00Z
-                    value: 78
-                  - timestamp: 2024-08-22T02:00:00Z
-                    value: 80
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 75
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 78
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 80
               rs_code: '200'
               rs_msg: Success
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
-  /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history:
-    get:
-      description: Get previously stored prediction data for a specific vm or mci group.
-      summary: GetPredictionHistory
+          headers: {}
+  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}:
+    post:
+      description: Predict future metrics (cpu, mem, disk, system) for a given vm.
+      summary: PostPredictionVM
       tags:
-        - '[Insight] Prediction'
-      operationId: GetPredictionHistory
+      - '[Insight] Prediction'
+      operationId: PostPredictionVM
       deprecated: false
       produces:
-        - application/json
+      - application/json
+      consumes:
+      - application/json
       parameters:
-        - name: nsId
-          in: path
-          required: true
-          type: string
-          description: The Namespace ID for the prediction.
-        - name: targetId
-          in: path
-          required: true
-          type: string
-          description: The ID of the target vm or mci group.
-        - name: measurement
-          in: query
-          required: true
-          enum:
-            - cpu
-            - mem
-            - disk
-            - system
-          type: string
-          description: The type of metric to retrieve.
-        - name: start_time
-          in: query
-          required: false
-          type: string
-          description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
-        - name: end_time
-          in: query
-          required: false
-          type: string
-          description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for the prediction.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for the prediction.
+      - name: vmId
+        in: path
+        required: true
+        type: string
+        description: The VM ID for the prediction.
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PredictionBody'
+      responses:
+        '200':
+          description: Successful prediction response
+          schema:
+            $ref: '#/definitions/ResBodyPredictionVMResult'
+          examples:
+            application/json:
+              data:
+                ns_id: string
+                mci_id: string
+                vm_id: string
+                measurement: cpu
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 75
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 78
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 80
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
+  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/history:
+    get:
+      description: Get previously stored prediction data for a specific mci group.
+      summary: GetPredictionMCIHistory
+      tags:
+      - '[Insight] Prediction'
+      operationId: GetPredictionMCIHistory
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for retrieving predictions.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for retrieving predictions.
+      - name: measurement
+        in: query
+        required: true
+        enum:
+        - cpu
+        - mem
+        - disk
+        - system
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
       responses:
         '200':
           description: Successfully retrieved prediction history
           schema:
-            $ref: '#/definitions/ResBodyPredictionHistory'
+            $ref: '#/definitions/ResBodyPredictionMCIHistory'
           examples:
             application/json:
               data:
                 ns_id: string
-                target_id: string
+                mci_id: string
                 measurement: cpu
                 values:
-                  - timestamp: 2024-08-22T00:00:00Z
-                    value: 50
-                  - timestamp: 2024-08-22T01:00:00Z
-                    value: 55
-                  - timestamp: 2024-08-22T02:00:00Z
-                    value: 60
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 50
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 55
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 60
               rs_code: '200'
               rs_msg: Success
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
+  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history:
+    get:
+      description: Get previously stored prediction data for a specific vm.
+      summary: GetPredictionVMHistory
+      tags:
+      - '[Insight] Prediction'
+      operationId: GetPredictionVMHistory
+      deprecated: false
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+        description: The Namespace ID for retrieving predictions.
+      - name: mciId
+        in: path
+        required: true
+        type: string
+        description: The MCI ID for retrieving predictions.
+      - name: vmId
+        in: path
+        required: true
+        type: string
+        description: The VM ID for retrieving predictions.
+      - name: measurement
+        in: query
+        required: true
+        enum:
+        - cpu
+        - mem
+        - disk
+        - system
+        type: string
+        description: The type of metric to retrieve.
+      - name: start_time
+        in: query
+        required: false
+        type: string
+        description: "The start timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to the current time if not provided."
+      - name: end_time
+        in: query
+        required: false
+        type: string
+        description: "The end timestamp for the range of prediction data to retrieve. **Format**: 'YYYY-MM-DDTHH:MM:SSZ'. Defaults to 7 days after the current time if not provided."
+      responses:
+        '200':
+          description: Successfully retrieved prediction history
+          schema:
+            $ref: '#/definitions/ResBodyPredictionVMHistory'
+          examples:
+            application/json:
+              data:
+                ns_id: string
+                mci_id: string
+                vm_id: string
+                measurement: cpu
+                values:
+                - timestamp: 2024-08-22T00:00:00Z
+                  value: 50
+                - timestamp: 2024-08-22T01:00:00Z
+                  value: 55
+                - timestamp: 2024-08-22T02:00:00Z
+                  value: 60
+              rs_code: '200'
+              rs_msg: Success
+          headers: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          headers: {}
   /api/o11y/insight/llm/session:
     get:
       description: Retrieve all active LLM chat sessions for log analysis.
       summary: GetLLMChatSessions
       tags:
-        - '[Insight] LLM Session Management'
+      - '[Insight] LLM Session Management'
       operationId: GetLLMChatSessions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
@@ -1923,44 +2156,44 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-                - seq: 1
-                  user_id: '1'
-                  session_id: 986ef65f-e425-478a-b84c-03fa80682f36
-                  provider: openai
-                  model_name: gpt-5-mini
-                  regdate: 2025-09-17T14:12:36
-                - seq: 2
-                  user_id: '1'
-                  session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
-                  provider: ollama
-                  model_name: llama3.1:8b
-                  regdate: 2025-09-18T11:46:49
-          headers: { }
+              - seq: 1
+                user_id: '1'
+                session_id: 986ef65f-e425-478a-b84c-03fa80682f36
+                provider: openai
+                model_name: gpt-5-mini
+                regdate: 2025-09-17T14:12:36
+              - seq: 2
+                user_id: '1'
+                session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
+                provider: ollama
+                model_name: llama3.1:8b
+                regdate: 2025-09-18T11:46:49
+          headers: {}
     post:
       description: Create a new LLM chat session for log analysis with specified provider and model.
       summary: PostLLMChatSession
       tags:
-        - '[Insight] LLM Session Management'
+      - '[Insight] LLM Session Management'
       operationId: PostLLMChatSession
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostSessionBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostSessionBody'
       responses:
         '200':
           description: Successful Response
@@ -1977,27 +2210,27 @@ paths:
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:54:04
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
     delete:
       description: Delete a specific LLM chat session and its conversation history.
       summary: DeleteLLMChatSession
       tags:
-        - '[Insight] LLM Session Management'
+      - '[Insight] LLM Session Management'
       operationId: DeleteLLMChatSession
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: sessionId
-          in: query
-          required: true
-          type: string
-          description: ''
+      - name: sessionId
+        in: query
+        required: true
+        type: string
+        description: ''
       responses:
         '200':
           description: Successful Response
@@ -2014,23 +2247,23 @@ paths:
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:54:04
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/llm/sessions:
     delete:
       description: Delete all LLM chat sessions and their conversation histories.
       summary: DeleteAllLLMChatSessions
       tags:
-        - '[Insight] LLM Session Management'
+      - '[Insight] LLM Session Management'
       operationId: DeleteAllLLMChatSessions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
@@ -2040,24 +2273,24 @@ paths:
             application/json:
               rs_code: '200'
               rs_msg: Success
-              data: [ ]
-          headers: { }
+              data: []
+          headers: {}
   /api/o11y/insight/llm/session/{sessionId}/history:
     get:
       description: Retrieve the conversation history for a specific LLM chat session.
       summary: GetLLMSessionHistory
       tags:
-        - '[Insight] LLM Session Management'
+      - '[Insight] LLM Session Management'
       operationId: GetLLMSessionHistory
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          type: string
-          description: ''
+      - name: sessionId
+        in: path
+        required: true
+        type: string
+        description: ''
       responses:
         '200':
           description: Successful Response
@@ -2069,42 +2302,42 @@ paths:
               rs_msg: Success
               data:
                 messages:
-                  - message_type: human
-                    message: Analyze these error logs and find the root cause
-                  - message_type: ai
-                    message: I’ll find the actual error logs (and some context)...
+                - message_type: human
+                  message: Analyze these error logs and find the root cause
+                - message_type: ai
+                  message: I’ll find the actual error logs (and some context)...
                 seq: 41
                 user_id: '1'
                 session_id: fa746359-ab1b-4755-a1cc-630e373135ff
                 provider: openai
                 model_name: gpt-5-mini
                 regdate: 2025-09-18T14:59:37
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/llm/api-keys:
     get:
       description: Retrieve the current API key configuration.
       summary: GetLLMAPIKeys
       tags:
-        - '[Insight] LLM API Key Management'
+      - '[Insight] LLM API Key Management'
       operationId: GetLLMAPIKeys
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: provider
-          in: query
-          required: false
-          enum:
-            - openai
-            - google
-            - anthropic
-          type: string
-          description: The LLM provider to use
+      - name: provider
+        in: query
+        required: false
+        enum:
+        - openai
+        - google
+        - anthropic
+        type: string
+        description: The LLM provider to use
       responses:
         '200':
           description: Successful Response
@@ -2115,40 +2348,40 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-                - seq: 1
-                  provider: openai
-                  api_key: api_key
-          headers: { }
+              - seq: 1
+                provider: openai
+                api_key: api_key
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
     post:
       description: Save or update the API key configuration.
       summary: PostLLMAPIKeys
       tags:
-        - '[Insight] LLM API Key Management'
+      - '[Insight] LLM API Key Management'
       operationId: PostLLMAPIKeys
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostAPIKeyBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostAPIKeyBody'
       responses:
         '200':
           description: Successful Response
@@ -2162,31 +2395,31 @@ paths:
                 seq: 2
                 provider: openai
                 api_key: api_key
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
     delete:
       description: Delete the API key configuration.
       summary: DeleteLLMAPIKeys
       tags:
-        - '[Insight] LLM API Key Management'
+      - '[Insight] LLM API Key Management'
       operationId: DeleteLLMAPIKeys
       deprecated: false
       produces:
-        - application/json
+      - application/json
       parameters:
-        - name: provider
-          in: query
-          required: true
-          enum:
-            - openai
-            - google
-            - anthropic
-          type: string
-          description: The LLM provider to use
+      - name: provider
+        in: query
+        required: true
+        enum:
+        - openai
+        - google
+        - anthropic
+        type: string
+        description: The LLM provider to use
       responses:
         '200':
           description: Successful Response
@@ -2200,23 +2433,23 @@ paths:
                 seq: 3
                 provider: openai
                 api_key: api_key
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/llm/model:
     get:
       description: Retrieve available LLM model options and configurations for log analysis.
       summary: GetLLMModelOptions
       tags:
-        - '[Insight] LLM Model Options'
+      - '[Insight] LLM Model Options'
       operationId: GetLLMModelOptions
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
@@ -2227,42 +2460,42 @@ paths:
               rs_code: '200'
               rs_msg: Success
               data:
-                - provider: ollama
-                  model_name:
-                    - llama3.1:8b
-                    - mistral:7b
-                - provider: openai
-                  model_name:
-                    - gpt-5
-                    - gpt-5-mini
-                    - gpt-5-nano
-          headers: { }
+              - provider: ollama
+                model_name:
+                - llama3.1:8b
+                - mistral:7b
+              - provider: openai
+                model_name:
+                - gpt-5
+                - gpt-5-mini
+                - gpt-5-nano
+          headers: {}
   /api/o11y/insight/log-analysis/query:
     post:
       description: Submit a query to the log analysis chat session for intelligent log investigation and troubleshooting.
       summary: PostLogAnalysisQuery
       tags:
-        - '[Insight] Log Analysis'
+      - '[Insight] Log Analysis'
       operationId: PostLogAnalysisQuery
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostQueryBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
@@ -2275,38 +2508,38 @@ paths:
               data:
                 message_type: ai
                 message: "I've analyzed the error logs from the past hour and identified 3 critical issues: 1) Database connection timeout errors (15 occurrences), 2) Authentication service failures (8 occurrences), 3) Memory allocation errors (3 occurrences). The root cause appears to be network connectivity issues between the application and database servers."
-          headers: { }
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /api/o11y/insight/alert-analysis/query:
     post:
       description: Submit a query to the alert analysis chat session for intelligent alert investigation.
       summary: PostAlertAnalysisQuery
       tags:
-        - '[Insight] Alert Analysis'
+      - '[Insight] Alert Analysis'
       operationId: PostAlertAnalysisQuery
       deprecated: false
       produces:
-        - application/json
+      - application/json
       consumes:
-        - application/json
+      - application/json
       parameters:
-        - name: Content-Type
-          in: header
-          required: false
-          enum:
-            - application/json
-          type: string
-          description: ''
-        - name: body
-          in: body
-          required: true
-          description: ''
-          schema:
-            $ref: '#/definitions/PostQueryBody'
+      - name: Content-Type
+        in: header
+        required: false
+        enum:
+        - application/json
+        type: string
+        description: ''
+      - name: body
+        in: body
+        required: true
+        description: ''
+        schema:
+          $ref: '#/definitions/PostQueryBody'
       responses:
         '200':
           description: Successful Response
@@ -2321,19 +2554,19 @@ paths:
                 message: 'Based on the alert analysis, I found that the CPU usage spike is related to a memory leak in the application service. Here are the recommended actions: 1) Restart the affected service, 2) Check application logs for memory allocation issues, 3) Monitor memory usage trends over the next 24 hours.'
                 metadata:
                   queries_executed:
-                    - SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR
-                    - SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR
+                  - SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR
+                  - SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR
                   total_execution_time: 2.3
                   tool_calls_count: 3
                   databases_accessed:
-                    - mariadb
-                    - influxdb
-          headers: { }
+                  - mariadb
+                  - influxdb
+          headers: {}
         '422':
           description: Validation Error
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          headers: { }
+          headers: {}
   /readyz:
     get:
       description: >-
@@ -2342,17 +2575,17 @@ paths:
         Returns 200 OK when all systems are ready, 503 if any system is not ready.
       summary: GetReadyz
       tags:
-        - '[Insight] System Management'
+      - '[Insight] System Management'
       operationId: GetReadyz
       deprecated: false
       produces:
-        - application/json
-      parameters: [ ]
+      - application/json
+      parameters: []
       responses:
         '200':
           description: Successful Response
-          schema: { }
-          headers: { }
+          schema: {}
+          headers: {}
 definitions:
   AlertTestHistoryPageResponse:
     type: object
@@ -3198,6 +3431,7 @@ definitions:
       seq:
         type: number
         description: "Plugin sequence (e.g., 1)"
+  # Insight Model
   APIProviderType:
     title: APIProviderType
     type: string
@@ -3205,6 +3439,144 @@ definitions:
       - openai
       - google
       - anthropic
+  PredictionMCIHistory:
+    title: PredictionMCIHistory
+    type: object
+    properties:
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      measurement:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/HistoryValue'
+    required:
+      - ns_id
+      - mci_id
+      - measurement
+      - values
+  ResBodyPredictionMCIHistory:
+    title: ResBodyPredictionMCIHistory
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionMCIHistory'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+      - data
+  PredictionVMResult:
+    title: PredictionVMResult
+    type: object
+    properties:
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      vm_id:
+        type: string
+      measurement:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/PredictValue'
+    required:
+      - ns_id
+      - mci_id
+      - vm_id
+      - measurement
+      - values
+  ResBodyPredictionVMResult:
+    title: ResBodyPredictionVMResult
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionVMResult'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+      - data
+  PredictionMCIResult:
+    title: PredictionMCIResult
+    type: object
+    properties:
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      measurement:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/PredictValue'
+    required:
+      - ns_id
+      - mci_id
+      - measurement
+      - values
+  ResBodyPredictionMCIResult:
+    title: ResBodyPredictionMCIResult
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionMCIResult'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+      - data
+  PredictionVMHistory:
+    title: PredictionVMHistory
+    type: object
+    properties:
+      ns_id:
+        type: string
+      mci_id:
+        type: string
+      vm_id:
+        type: string
+      measurement:
+        type: string
+      values:
+        type: array
+        items:
+          $ref: '#/definitions/HistoryValue'
+    required:
+      - ns_id
+      - mci_id
+      - vm_id
+      - measurement
+      - values
+  ResBodyPredictionVMHistory:
+    title: ResBodyPredictionVMHistory
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/PredictionVMHistory'
+      rs_code:
+        type: string
+        default: '200'
+      rs_msg:
+        type: string
+        default: Success
+    required:
+      - data
   AnomalyDetectionHistoryResponse:
     title: AnomalyDetectionHistoryResponse
     type: object
@@ -3500,25 +3872,6 @@ definitions:
       - target_type
       - measurement
       - prediction_range
-  PredictionHistory:
-    title: PredictionHistory
-    type: object
-    properties:
-      ns_id:
-        type: string
-      target_id:
-        type: string
-      measurement:
-        type: string
-      values:
-        type: array
-        items:
-          $ref: '#/definitions/HistoryValue'
-    required:
-      - ns_id
-      - target_id
-      - measurement
-      - values
   PredictionMeasurement:
     title: PredictionMeasurement
     type: object
@@ -3556,28 +3909,6 @@ definitions:
       - target_types
       - measurements
       - prediction_ranges
-  PredictionResult:
-    title: PredictionResult
-    type: object
-    properties:
-      ns_id:
-        type: string
-      target_id:
-        type: string
-      measurement:
-        type: string
-      target_type:
-        type: string
-      values:
-        type: array
-        items:
-          $ref: '#/definitions/PredictValue'
-    required:
-      - ns_id
-      - target_id
-      - measurement
-      - target_type
-      - values
   ProviderType:
     title: ProviderType
     type: string
@@ -3763,20 +4094,6 @@ definitions:
           $ref: '#/definitions/LLMModel'
     required:
       - data
-  ResBodyPredictionHistory:
-    title: ResBodyPredictionHistory
-    type: object
-    properties:
-      data:
-        $ref: '#/definitions/PredictionHistory'
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-    required:
-      - data
   ResBodyPredictionMeasurement:
     title: ResBodyPredictionMeasurement
     type: object
@@ -3799,20 +4116,6 @@ definitions:
     properties:
       data:
         $ref: '#/definitions/PredictionOptions'
-      rs_code:
-        type: string
-        default: '200'
-      rs_msg:
-        type: string
-        default: Success
-    required:
-      - data
-  ResBodyPredictionResult:
-    title: ResBodyPredictionResult
-    type: object
-    properties:
-      data:
-        $ref: '#/definitions/PredictionResult'
       rs_code:
         type: string
         default: '200'
@@ -3948,10 +4251,3 @@ definitions:
       - mem
       - disk
       - system
-  TargetType2:
-    title: TargetType2
-    description: The type of the target (vm or mci).
-    type: string
-    enum:
-      - vm
-      - mci
