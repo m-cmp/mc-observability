@@ -39,7 +39,6 @@ class LogAnalysisRepository:
         self.db.commit()
 
     def get_api_key(self, provider=None):
-        print(f'provider: {provider}')
         if provider:
             return self.db.query(LLMAPIKey).filter_by(
                 PROVIDER=provider
@@ -51,7 +50,6 @@ class LogAnalysisRepository:
         record = self.db.query(LLMAPIKey).filter_by(
             PROVIDER=provider
         ).first()
-        print(f'record: {record}')
         if record:
             record.API_KEY = api_key
         else:

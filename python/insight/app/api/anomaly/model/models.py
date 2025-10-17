@@ -9,8 +9,8 @@ class AnomalyDetectionSettings(Base):
 
     SEQ = Column(Integer, primary_key=True, index=True)
     NAMESPACE_ID = Column(String(100))
-    TARGET_ID = Column(String(100))
-    TARGET_TYPE = Column(String(45))
+    MCI_ID = Column(String(100))
+    VM_ID = Column(String(100), nullable=True)
     MEASUREMENT = Column(String(45))
     EXECUTION_INTERVAL = Column(String(10))
     LAST_EXECUTION = Column(DateTime)

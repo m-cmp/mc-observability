@@ -1,5 +1,5 @@
 from app.api.anomaly.model.models import AnomalyDetectionSettings, AgentPlugin
-from app.api.anomaly.request.req import GetHistoryPathParams, GetAnomalyHistoryFilter
+from app.api.anomaly.request.req import GetAnomalyHistoryFilter
 from config.ConfigManager import ConfigManager
 from influxdb import InfluxDBClient
 import pandas as pd
@@ -7,6 +7,7 @@ import pytz
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import update
+from typing import Optional
 
 
 class AnomalySettingsRepository:
@@ -19,8 +20,8 @@ class AnomalySettingsRepository:
     def get_all_settings(self):
         return self.db.query(AnomalyDetectionSettings).all()
 
-    def get_specific_setting(self, ns_id: str, target_id: str):
-        return self.db.query(AnomalyDetectionSettings).filter_by(NAMESPACE_ID=ns_id, TARGET_ID=target_id).all()
+    def get_specific_setting(self, ns_id: str, mci_id: str, vm_id: Optional[str] = None):
+        return self.db.query(AnomalyDetectionSettings).filter_by(NAMESPACE_ID=ns_id, MCI_ID=mci_id, VM_ID=vm_id).all()
 
     def create_setting(self, setting_data: dict):
         new_setting = AnomalyDetectionSettings(**setting_data)
@@ -50,8 +51,8 @@ class AnomalySettingsRepository:
     def check_duplicate(self, setting_data: dict):
         return self.db.query(AnomalyDetectionSettings).filter_by(
             NAMESPACE_ID=setting_data['NAMESPACE_ID'],
-            TARGET_ID=setting_data['TARGET_ID'],
-            TARGET_TYPE=setting_data['TARGET_TYPE'],
+            MCI_ID=setting_data['MCI_ID'],
+            VM_ID=setting_data.get('VM_ID', None),
             MEASUREMENT=setting_data['MEASUREMENT']
         ).first()
 
@@ -65,9 +66,14 @@ class InfluxDBRepository:
 
     def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
         tag = {
-            'namespace_id': setting.NAMESPACE_ID,
-            'target_id': setting.TARGET_ID,
+            'ns_id': setting.NAMESPACE_ID,
+            'mci_id': setting.MCI_ID,
         }
+
+        vm_id = getattr(setting, 'VM_ID', None)
+        if vm_id:
+            tag['vm_id'] = vm_id
+
 
         json_body = []
 
@@ -85,25 +91,29 @@ class InfluxDBRepository:
 
         self.client.write_points(json_body)
 
-    def query_anomaly_detection_results(self, path_params: GetHistoryPathParams, query_params: GetAnomalyHistoryFilter):
+    def query_anomaly_detection_results(self, path_params, query_params: GetAnomalyHistoryFilter):
         ns_id = path_params.nsId
-        target_id = path_params.targetId
+        mci_id = path_params.mciId
+        vm_id = getattr(path_params, 'vmId', None)
         measurement = query_params.measurement.value.lower()
 
         start_time = query_params.start_time
         end_time = query_params.end_time
 
-        influxql_query = f'''
-        SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" 
-        FROM "insight"."autogen"."{measurement}" \
-        WHERE "namespace_id" = '{ns_id}' \
-        AND "target_id" = '{target_id}' \
-        AND time >= '{start_time}' \
-        AND time <= '{end_time}'  \
-        GROUP BY time(1m) FILL(null)
-        '''
+        query = f'SELECT mean("anomaly_score") as "anomaly_score", mean("isAnomaly") as "isAnomaly" FROM "insight"."autogen".f"{measurement}"'
 
-        results = self.client.query(influxql_query)
+        conditions = []
+        conditions.append(f'"ns_id" = \'{ns_id}\'')
+        conditions.append(f'"mci_id" = \'{mci_id}\'')
+        if vm_id:
+            conditions.append(f'"vm_id" = \'{vm_id}\'')
+        conditions.append(f"time >= '{start_time}'")
+        conditions.append(f"time <= '{end_time}'")
+
+        query += ' WHERE ' + ' AND '.join(conditions)
+        query += f'GROUP BY time(1m) FILL(null)'
+
+        results = self.client.query(query)
         points = list(results.get_points())
 
         parsed_results = []

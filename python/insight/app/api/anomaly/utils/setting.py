@@ -3,6 +3,7 @@ from app.api.anomaly.response.res import ResBodyAnomalyDetectionSettings, ResBod
 from enum import Enum
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 
 
 class AnomalySettingsService:
@@ -35,8 +36,8 @@ class AnomalySettingsService:
             AnomalyDetectionSettings(
                 seq=setting.SEQ,
                 ns_id=setting.NAMESPACE_ID,
-                target_id=setting.TARGET_ID,
-                target_type=setting.TARGET_TYPE,
+                mci_id=setting.MCI_ID,
+                vm_id=setting.VM_ID,
                 measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ') if setting.LAST_EXECUTION else None,
@@ -47,15 +48,15 @@ class AnomalySettingsService:
 
         return ResBodyAnomalyDetectionSettings(data=results)
 
-    def get_setting(self, ns_id: str, target_id: str) -> ResBodyAnomalyDetectionSettings | JSONResponse:
-        settings = self.repo.get_specific_setting(ns_id=ns_id, target_id=target_id)
+    def get_setting(self, ns_id: str, mci_id: str, vm_id: Optional[str] = None) -> ResBodyAnomalyDetectionSettings | JSONResponse:
+        settings = self.repo.get_specific_setting(ns_id=ns_id, mci_id=mci_id, vm_id=vm_id)
         if settings:
             results = [
                 AnomalyDetectionSettings(
                     seq=setting.SEQ,
                     ns_id=setting.NAMESPACE_ID,
-                    target_id=setting.TARGET_ID,
-                    target_type=setting.TARGET_TYPE,
+                    mci_id=setting.MCI_ID,
+                    vm_id=setting.VM_ID,
                     measurement=setting.MEASUREMENT,
                     execution_interval=setting.EXECUTION_INTERVAL,
                     last_execution=setting.LAST_EXECUTION.strftime('%Y-%m-%dT%H:%M:%SZ'),
@@ -72,8 +73,10 @@ class AnomalySettingsService:
     def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
         if 'ns_id' in setting_data:
             setting_data['NAMESPACE_ID'] = setting_data.pop('ns_id')
-        if 'target_id' in setting_data:
-            setting_data['TARGET_ID'] = setting_data.pop('target_id')
+        if 'mci_id' in setting_data:
+            setting_data['MCI_ID'] = setting_data.pop('mci_id')
+        if 'vm_id' in setting_data:
+            setting_data['VM_ID'] = setting_data.pop('vm_id')
 
         setting_data = {key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in
                         setting_data.items()}
@@ -81,8 +84,8 @@ class AnomalySettingsService:
         duplicate = self.repo.check_duplicate(setting_data=setting_data)
         if duplicate:
             return JSONResponse(status_code=409, content={"rs_code": "409",
-                                                          "rs_msg": "A record with the same namespace_id, target_id, "
-                                                                   "target_type, and measurement already exists."})
+                                                          "rs_msg": "A record with the same id and measurement already exists."})
+
 
         self.repo.create_setting(setting_data=setting_data)
         return ResBodyVoid(rs_msg="Target Registered Successfully")

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api.anomaly.description.description import (get_options_description, get_settings_description,
                                                      post_settings_description, put_settings_description,
-                                                     delete_settings_description, get_specific_settings_description,
-                                                     get_history_description, post_anomaly_detection_description,
+                                                     delete_settings_description, get_specific_settings_mci_description, get_specific_settings_vm_description,
+                                                     get_history_mci_description, get_history_vm_description, post_anomaly_detection_description,
                                                      get_anomaly_detection_measurements_description,
                                                      get_specific_measurement_description)
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionOptions, AnomalyDetectionOptions,
@@ -14,7 +14,7 @@ from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.response.res import (ResBodyAnomalyDetectionMeasurement, ResBodyAnomalyDetectionSpecificMeasurement,
                                           ResBodyVoid, ResBodyAnomalyDetectionHistoryResponse)
 from app.api.anomaly.request.req import (GetMeasurementPath, AnomalyDetectionTargetRegistration, AnomalyDetectionTargetUpdate,
-                                         GetHistoryPathParams, GetAnomalyHistoryFilter)
+                                         GetHistoryMCIPath, GetHistoryVMPath, GetAnomalyHistoryFilter)
 from config.ConfigManager import ConfigManager
 from app.core.dependencies.db import get_db
 from fastapi.responses import JSONResponse
@@ -133,43 +133,62 @@ async def delete_anomaly_detection_target(
 
 
 @router.get(
-    path="/anomaly-detection/settings/nsId/{nsId}/target/{targetId}",
-    description=get_specific_settings_description['api_description'],
+    path="/anomaly-detection/settings/ns/{nsId}/mci/{mciId}",
+    description=get_specific_settings_mci_description['api_description'],
     response_model=ResBodyAnomalyDetectionSettings,
-    operation_id="GetTargetAnomalyDetectionSettings"
+    operation_id="GetMCIAnomalyDetectionSettings"
 )
-async def get_specific_anomaly_detection_target(
+async def get_specific_anomaly_detection_mci(
         nsId: str,
-        targetId: str,
+        mciId: str,
         db: Session = Depends(get_db)
 ):
     service = AnomalySettingsService(db=db)
-    return service.get_setting(ns_id=nsId, target_id=targetId)
+    return service.get_setting(ns_id=nsId, mci_id=mciId)
+
+@router.get(
+    path="/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}",
+    description=get_specific_settings_vm_description['api_description'],
+    response_model=ResBodyAnomalyDetectionSettings,
+    operation_id="GetVMAnomalyDetectionSettings"
+)
+async def get_specific_anomaly_detection_vm(
+        nsId: str,
+        mciId: str,
+        vmId: str,
+        db: Session = Depends(get_db)
+):
+    service = AnomalySettingsService(db=db)
+    return service.get_setting(ns_id=nsId, mci_id=mciId, vm_id=vmId)
+
+@router.get(
+    path="/anomaly-detection/ns/{nsId}/mci/{mciId}/history",
+    description=get_history_mci_description['api_description'],
+    response_model=ResBodyAnomalyDetectionHistoryResponse,
+    operation_id="GetAnomalyDetectionMCIHistory"
+)
+async def get_anomaly_detection_mci_history(
+        path_params: GetHistoryMCIPath = Depends(),
+        query_params: GetAnomalyHistoryFilter = Depends(),
+):
+    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+    data = service.get_anomaly_detection_results()
+    return ResBodyAnomalyDetectionHistoryResponse(data=data)
 
 
 @router.get(
-    path="/anomaly-detection/nsId/{nsId}/target/{targetId}/history",
-    description=get_history_description['api_description'],
+    path="/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history",
+    description=get_history_vm_description['api_description'],
     response_model=ResBodyAnomalyDetectionHistoryResponse,
-    operation_id="GetAnomalyDetectionHistory"
+    operation_id="GetAnomalyDetectionVMHistory"
 )
-async def get_anomaly_detection_history(
-        path_params: GetHistoryPathParams = Depends(),
+async def get_anomaly_detection_vm_history(
+        path_params: GetHistoryVMPath = Depends(),
         query_params: GetAnomalyHistoryFilter = Depends(),
 ):
-    try:
-        service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
-        data = service.get_anomaly_detection_results()
-        return ResBodyAnomalyDetectionHistoryResponse(data=data)
-    except Exception as e:
-        return JSONResponse(
-            status_code=e.status_code,
-            content={
-                "error_message": e.detail,
-                "rs_code": e.status_code,
-                "rs_msg": "Fail"
-            }
-        )
+    service = AnomalyHistoryService(path_params=path_params, query_params=query_params)
+    data = service.get_anomaly_detection_results()
+    return ResBodyAnomalyDetectionHistoryResponse(data=data)
 
 
 @router.post(

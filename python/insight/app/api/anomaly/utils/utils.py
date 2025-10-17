@@ -44,8 +44,12 @@ class AnomalyService:
         return seq_list
 
     def get_raw_data(self, setting: object):
-        url = self._build_url(path=f"influxdb/metric")
+        if setting.VM_ID:
+            url = self._build_url(f'influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}/{setting.VM_ID}')
+        else:
+            url = self._build_url(f'influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}')
         body = self._build_body(setting)
+
         response = self._send_request(method="POST", url=url, json=body)
         data = response.json().get("data", [])
 
@@ -73,20 +77,9 @@ class AnomalyService:
             "cpu": "usage_idle",
             "mem": "used_percent",
         }
-
         field_value = field_mapping.get(setting.MEASUREMENT)
 
         return {
-            "conditions": [
-                {
-                    "key": "ns_id",
-                    "value": setting.NAMESPACE_ID
-                },
-                {
-                    "key": "target_id",
-                    "value": setting.TARGET_ID
-                }
-            ],
             "fields": [
                 {
                     "function": "mean",

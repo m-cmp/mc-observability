@@ -4,12 +4,14 @@ from prophet import Prophet
 import pandas as pd
 import numpy as np
 import requests
-from app.api.prediction.request.req import PredictionPath, PredictionBody, GetHistoryPath, GetPredictionHistoryQuery
+from app.api.prediction.request.req import PredictionBody, GetHistoryMCIPath
 from config.ConfigManager import ConfigManager
 from app.api.prediction.repo.repo import PredictionRepository, InfluxDBRepository
 from datetime import datetime
 from sqlalchemy.orm import Session
+import logging
 
+logger = logging.getLogger(__name__)
 
 class PredictionService:
     def __init__(self, db: Session=None):
@@ -41,31 +43,17 @@ class PredictionService:
         else:
             raise ValueError(f'Unsupported HTTP method: {method}')
 
-    def _build_body(self, nsId: str, targetId: str, target_type: str, measurement: str, prediction_range: str):
-        target_mapping = {
-            'vm': 'target_id',
-            'mci': 'mci_id'
-        }
+    @staticmethod
+    def _build_body(measurement: str, prediction_range: str):
         field_mapping = {
             "cpu": "usage_idle",
             "mem": "used_percent",
             "disk": "used_percent",
             "system": 'load1'
         }
-        target_value = target_mapping[target_type]
         field_value = field_mapping.get(measurement)
 
         return {
-            "conditions": [
-                {
-                    'key': 'ns_id',
-                    'value': nsId
-                },
-                {
-                    "key": target_value,
-                    "value": targetId
-                }
-            ],
             "fields": [
                 {
                     "function": "mean",
@@ -98,19 +86,32 @@ class PredictionService:
 
 
 
-    def get_data(self, path_params: PredictionPath, body_params: PredictionBody):
+    def get_data(self, path_params, body_params):
         nsId = path_params.nsId
-        targetId = path_params.targetId
-        target_type = body_params.target_type
+        mciId = path_params.mciId
+        vmId = getattr(path_params, 'vmId', None)
+
         measurement = body_params.measurement
         prediction_range = body_params.prediction_range
 
         all_data = []
-        body = self._build_body(nsId, targetId, target_type, measurement, prediction_range)
-        # for seq in self.seq_list:
-        url = self._build_url(f'influxdb/metric')
-        response = self._send_request('POST', url, json=body)
-        data = response.json().get("data", [])
+        if vmId:
+            url = self._build_url(f'influxdb/metric/{nsId}/{mciId}/{vmId}')
+        else:
+            url = self._build_url(f'influxdb/metric/{nsId}/{mciId}')
+
+        body = self._build_body(measurement, prediction_range)
+
+        try:
+            response = self._send_request('POST', url, json=body)
+            data = response.json().get("data", [])
+        except Exception as e:
+            pass
+            # raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f'Data retrieval failed. {e}')
+
+        # 테스트용 데이터
+        # data = test_data
+
         all_data.extend(data)
 
         try:
@@ -122,9 +123,12 @@ class PredictionService:
 
         return df_cleaned
 
-    def predict(self, df: pd.DataFrame, path_params: PredictionPath, body_params: PredictionBody):
+    def predict(self, df: pd.DataFrame, path_params, body_params):
+        logger.info('start prediction')
         nsId = path_params.nsId
-        targetId = path_params.targetId
+        mciId = path_params.mciId
+        vmId = getattr(path_params, 'vmId', None)
+
         measurement = body_params.measurement
         prediction_range = body_params.prediction_range
         model = Prophet(
@@ -139,6 +143,7 @@ class PredictionService:
         model.fit(df)
 
         future = model.make_future_dataframe(periods=prediction_range, freq=freq)
+        logger.info('end prediction')
         prediction = model.predict(future)
         prediction = prediction.drop(columns=self.prophet_config['remove_columns'], errors='ignore')
         prediction = prediction[prediction['ds'] > last_datetime]
@@ -148,14 +153,14 @@ class PredictionService:
         #     prediction['value'] = prediction['value'].apply(lambda x: 100 - x if not pd.isna(x) else np.nan)
         prediction['value'] = np.clip(prediction['value'], 0, 100).round(2)
         prediction['timestamp'] = prediction['timestamp'].apply(self.insert_timezone)
-
-        self.save_prediction_result(prediction, nsId, targetId, measurement)
+        logger.info('start prediction result saving')
+        self.save_prediction_result(prediction, nsId, mciId, vmId, measurement)
         result_dict = prediction.to_dict('records')
 
         return result_dict
 
-    def save_prediction_result(self, df: pd.DataFrame, nsId: str, targetId: str, measurement: str):
-        self.influxdb_repo.save_results(df, nsId, targetId, measurement)
+    def save_prediction_result(self, df: pd.DataFrame, nsId: str, mciId: str, vmId: str, measurement: str):
+        self.influxdb_repo.save_results(df, nsId, mciId, vmId, measurement)
 
     @staticmethod
     def convert_prediction_range(prediction_range: str):
@@ -179,10 +184,10 @@ class PredictionService:
     def insert_timezone(dt):
         return dt.replace(tzinfo=pytz.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
 
-    def get_prediction_history(self, path_params: GetHistoryPath, query_params: GetPredictionHistoryQuery):
+    def get_prediction_history(self, path_params, query_params):
         prediction_points = self.influxdb_repo.query_prediction_history(
             nsId=path_params.nsId,
-            targetId=path_params.targetId,
+            mciId=path_params.mciId,
             measurement=query_params.measurement,
             start_time=query_params.start_time,
             end_time=query_params.end_time,
@@ -202,3 +207,22 @@ class PredictionService:
                            if start_time_dt <= datetime.strptime(v['timestamp'], '%Y-%m-%dT%H:%M:%SZ') <= end_time_dt]
 
         return filtered_values
+
+
+test_data = [{
+    "name": "mem",
+    "columns": [
+        "timestamp",
+        "used_percent"
+    ],
+    "tags": None,
+    "values": [
+        ["2025-10-15T06:35:00Z", None],["2025-10-15T06:30:00Z",8.524897731100753],["2025-10-15T06:25:00Z",8.541117568298437],["2025-10-15T06:20:00Z",8.455709689469378],
+        ["2025-10-15T06:15:00Z",8.471702999636038],["2025-10-15T06:10:00Z",8.249204541717358],["2025-10-15T06:05:00Z",7.728326565876877],["2025-10-15T06:00:00Z",7.762228146385579],
+        ["2025-10-15T05:55:00Z",7.852878533517208],["2025-10-15T05:50:00Z",7.774399619656505],["2025-10-15T05:45:00Z",7.816169888151867],["2025-10-15T05:40:00Z",7.9928438046599535],
+        ["2025-10-15T05:35:00Z",8.038936886095353],["2025-10-15T05:30:00Z",8.102800652556228],["2025-10-15T05:25:00Z",8.187103845453866],["2025-10-15T05:20:00Z",8.258108460003845],
+        ["2025-10-15T05:15:00Z",8.133861803573744],["2025-10-15T05:10:00Z",7.870466216287082],["2025-10-15T05:05:00Z",7.826407248983348],["2025-10-15T05:00:00Z",7.8494832402639805],
+        ["2025-10-15T04:55:00Z",7.841764432997545],["2025-10-15T04:50:00Z",7.877505966708912],["2025-10-15T04:45:00Z",7.962841745153734],["2025-10-15T04:40:00Z",7.9460932335444285],
+        ["2025-10-15T04:35:00Z",7.768245757419109]
+    ]
+}]

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from fastapi import Query, Path
 from pydantic import BaseModel, validator, Field
+from typing import Optional
 import pytz
 
 
@@ -35,8 +36,8 @@ class GetMeasurementPath(BaseModel):
 
 class AnomalyDetectionTargetRegistration(BaseModel):
     ns_id: str
-    target_id: str
-    target_type: TargetType = Field(..., description="The type of the target (vm or mci).", example="vm")
+    mci_id: str
+    vm_id: Optional[str] = None
     measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu")
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
@@ -45,10 +46,14 @@ class AnomalyDetectionTargetUpdate(BaseModel):
     execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
 
 
-class GetHistoryPathParams(BaseModel):
-    nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
+class GetHistoryMCIPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for anomaly detection.'))
+    mciId: str = Field(Path(description='The MCI ID for anomaly detection.'))
 
+class GetHistoryVMPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for anomaly detection.'))
+    mciId: str = Field(Path(description='The MCI ID for anomaly detection.'))
+    vmId: str = Field(Path(description='The VM ID for anomaly detection'))
 
 class GetAnomalyHistoryFilter(BaseModel):
     measurement: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))

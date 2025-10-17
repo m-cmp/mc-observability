@@ -35,40 +35,62 @@ class ResBodyPredictionOptions(BaseModel):
     rs_msg: str = 'Success'
 
 
-# POST /predictions/nsId/{nsId}/target/{targetId}
+# POST /predictions/ns/{nsId}/mci/{mciId}
 class PredictValue(BaseModel):
     timestamp: str
     value: Union[float, None]
 
 
-class PredictionResult(BaseModel):
+class PredictionMCIResult(BaseModel):
     ns_id: str
-    target_id: str
+    mci_id: str
     measurement: str
-    target_type: str
     values: list[PredictValue]
 
+# POST /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}
+class PredictionVMResult(BaseModel):
+    ns_id: str
+    mci_id: str
+    vm_id: str
+    measurement: str
+    values: list[PredictValue]
 
-class ResBodyPredictionResult(BaseModel):
-    data: PredictionResult
+class ResBodyPredictionVMResult(BaseModel):
+    data: PredictionVMResult
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
+
+class ResBodyPredictionMCIResult(BaseModel):
+    data: PredictionMCIResult
     rs_code: str = '200'
     rs_msg: str = 'Success'
 
 
-# GET /predictions/nsId/{nsId}/target/{targetId}/history
+# GET /predictions/ns/{nsId}/mci/{mciId}/history
 class HistoryValue(BaseModel):
     timestamp: str
     value: Union[float, None]
 
-
-class PredictionHistory(BaseModel):
+class PredictionMCIHistory(BaseModel):
     ns_id: str
-    target_id: str
+    mci_id: str
     measurement: str
     values: list[HistoryValue]
 
+class ResBodyPredictionMCIHistory(BaseModel):
+    data: PredictionMCIHistory
+    rs_code: str = '200'
+    rs_msg: str = 'Success'
 
-class ResBodyPredictionHistory(BaseModel):
-    data: PredictionHistory
+# GET /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}history
+class PredictionVMHistory(BaseModel):
+    ns_id: str
+    mci_id: str
+    vm_id: str
+    measurement: str
+    values: list[HistoryValue]
+
+class ResBodyPredictionVMHistory(BaseModel):
+    data: PredictionVMHistory
     rs_code: str = '200'
     rs_msg: str = 'Success'

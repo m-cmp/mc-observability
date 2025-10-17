@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize Multi-MCP environment on startup
+    logger.info("Observability Insight start")
     try:
         await init_global_mcp()
         logger.info("Application startup: Multi-MCP environment initialized")

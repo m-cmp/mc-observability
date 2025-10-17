@@ -16,10 +16,15 @@ class GetMeasurementPath(BaseModel):
     measurement: str = Field(Path(description='Specific Measurement.'))
 
 # post prediction request parameters
-class PredictionPath(BaseModel):
-    nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
 
+class PredictionMCIPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
+    mciId: str = Field(Path(description='The MCI ID for the prediction.'))
+
+class PredictionVMPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
+    mciId: str = Field(Path(description='The MCI ID for the prediction.'))
+    vmId: str = Field(Path(description='The VM ID for the prediction.'))
 
 class PredictionMetricType(str, Enum):
     cpu = 'cpu'
@@ -29,7 +34,7 @@ class PredictionMetricType(str, Enum):
 
 
 class PredictionBody(BaseModel):
-    target_type: str = Field(..., description="The type of the target (vm or mci).", example="vm")
+    # target_type: str = Field(..., description="The type of the target (vm or mci).", example="vm")
     measurement: PredictionMetricType = Field(..., description="The type of metric being monitored for predictions(cpu, mem,"
                                                      " disk, system)", example="cpu")
     prediction_range: str = Field(..., description="Data prediction range as of now (1h~2,160h)", example="24h")
@@ -42,10 +47,14 @@ def add_time_delta(delta=0) -> str:
     return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
-class GetHistoryPath(BaseModel):
-    nsId: str = Field(Path(description='The Namespace ID for the prediction.'))
-    targetId: str = Field(Path(description='The ID of the target vm or mci group.'))
+class GetHistoryMCIPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for retrieving predictions.'))
+    mciId: str = Field(Path(description='The MCI ID for retrieving predictions.'))
 
+class GetHistoryVMPath(BaseModel):
+    nsId: str = Field(Path(description='The Namespace ID for retrieving predictions.'))
+    mciId: str = Field(Path(description='The MCI ID for retrieving predictions.'))
+    vmId: str = Field(Path(description='The VM ID for retrieving predictions.'))
 
 class GetPredictionHistoryQuery(BaseModel):
     measurement: PredictionMetricType = Field(Query(description='The type of metric to retrieve.'))
