@@ -224,8 +224,12 @@ class InfluxDBControllerTest {
                                                         "fields[].field",
                                                         "Field name (e.g., usage_idle)")
                                                 .optional(),
-                                        fieldArray("conditions", "List of condition filters"),
-                                        fieldString("conditions[].key", "Condition key (e.g., cpu)")
+                                        fieldArray(
+                                                "conditions",
+                                                "List of condition filters (excluding default keys: ns_id, mci_id)"),
+                                        fieldString(
+                                                        "conditions[].key",
+                                                        "Condition key (e.g., cpu) — omit ns_id, mci_id since they are added by default")
                                                 .optional(),
                                         fieldString(
                                                         "conditions[].value",
@@ -314,8 +318,12 @@ class InfluxDBControllerTest {
                                                         "fields[].field",
                                                         "Field name (e.g., usage_idle)")
                                                 .optional(),
-                                        fieldArray("conditions", "List of condition filters"),
-                                        fieldString("conditions[].key", "Condition key (e.g., cpu)")
+                                        fieldArray(
+                                                "conditions",
+                                                "List of condition filters (excluding default keys: ns_id, mci_id, vm_id)"),
+                                        fieldString(
+                                                        "conditions[].key",
+                                                        "Condition key (e.g., cpu) — omit ns_id, mci_id, vm_id since they are added by default")
                                                 .optional(),
                                         fieldString(
                                                         "conditions[].value",
