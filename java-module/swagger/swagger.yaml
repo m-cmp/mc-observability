@@ -214,22 +214,22 @@ paths:
       parameters:
         - name: page
           in: query
-          description: page number (1 .. N)
+          description: Page number (1 .. N)
           required: false
           type: integer
         - name: size
           in: query
-          description: size of page (1 .. N)
+          description: Page size (1 .. N)
           required: false
           type: integer
         - name: sortBy
           in: query
-          description: sort by properties
+          description: "Property to sort by (e.g., createdAt)"
           required: false
           type: string
         - name: sortDirection
           in: query
-          description: "sort direction (asc, desc)"
+          description: "Sort direction (asc, desc)"
           required: false
           type: string
       responses:
@@ -238,22 +238,45 @@ paths:
           examples:
             application/json: |-
               {
-                "content" : [ ],
-                "pageable" : {
-                  "pageNumber" : 0,
-                  "pageSize" : 1,
-                  "sort" : {
-                    "sorted" : false,
-                    "empty" : true,
-                    "unsorted" : true
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : {
+                  "content" : [ {
+                    "id" : 13,
+                    "triggerTitle" : "string",
+                    "aggregationType" : "last",
+                    "holdDuration" : "0s",
+                    "repeatInterval" : "1h",
+                    "resourceType" : "cpu",
+                    "namespaceId" : "test01",
+                    "mciId" : "test01",
+                    "vmId" : "vm-1",
+                    "threshold" : "30.0",
+                    "resourceUsage" : "51.6",
+                    "alertLevel" : "CRITICAL",
+                    "status" : "firing",
+                    "comment" : null,
+                    "startsAt" : "2025-10-17T15:32:10",
+                    "createdAt" : "2025-10-17T06:32:10.112181",
+                    "updatedAt" : "2025-10-17T06:32:10.112186"
+                  } ],
+                  "pageable" : {
+                    "pageNumber" : 0,
+                    "pageSize" : 20,
+                    "sort" : {
+                      "empty" : false,
+                      "sorted" : true,
+                      "unsorted" : false
+                    },
+                    "offset" : 0,
+                    "paged" : true,
+                    "unpaged" : false
                   },
-                  "offset" : 0,
-                  "paged" : true,
-                  "unpaged" : false
+                  "totalPages" : 1,
+                  "totalElements" : 13,
+                  "numberOfElements" : 13
                 },
-                "totalPages" : 1,
-                "totalElements" : 0,
-                "numberOfElements" : 0
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/TriggerHistoryPageResponse'
@@ -269,22 +292,22 @@ paths:
       parameters:
         - name: page
           in: query
-          description: page number (1 .. N)
+          description: Page number (1..N)
           required: false
           type: integer
         - name: size
           in: query
-          description: size of page (1 .. N)
+          description: Page size (1..N)
           required: false
           type: integer
         - name: sortBy
           in: query
-          description: sort by properties
+          description: "Property to sort by (e.g., id)"
           required: false
           type: string
         - name: direction
           in: query
-          description: "sort direction (asc, desc)"
+          description: "Sort direction (asc, desc)"
           required: false
           type: string
       responses:
@@ -293,22 +316,75 @@ paths:
           examples:
             application/json: |-
               {
-                "content" : [ ],
-                "pageable" : {
-                  "pageNumber" : 0,
-                  "pageSize" : 1,
-                  "sort" : {
-                    "sorted" : false,
-                    "empty" : true,
-                    "unsorted" : true
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : {
+                  "content" : [ {
+                    "id" : 4,
+                    "title" : "string",
+                    "description" : "string",
+                    "thresholdCondition" : {
+                      "info" : 10.0,
+                      "warning" : 20.0,
+                      "critical" : 30.0
+                    },
+                    "resourceType" : "cpu",
+                    "aggregationType" : "last",
+                    "holdDuration" : "0s",
+                    "repeatInterval" : "1h",
+                    "vms" : [ {
+                      "id" : 8,
+                      "uuid" : "a0c1eec0-9074-4517-ad83-4876bc23fb2a",
+                      "namespaceId" : "test01",
+                      "targetScope" : "vm",
+                      "targetId" : "vm-1",
+                      "isActive" : true
+                    } ],
+                    "notiChannels" : [ {
+                      "id" : 1,
+                      "name" : "email_smtp.gmail.com",
+                      "type" : "email",
+                      "provider" : "smtp.gmail.com",
+                      "baseUrl" : null,
+                      "isActive" : true,
+                      "recipients" : [ "example@gmail.com" ]
+                    }, {
+                      "id" : 2,
+                      "name" : "slack",
+                      "type" : "slack",
+                      "provider" : "slack",
+                      "baseUrl" : "https://slack.com",
+                      "isActive" : true,
+                      "recipients" : [ "C09M4LBEN68" ]
+                    }, {
+                      "id" : 3,
+                      "name" : "kakao_naver-cloud",
+                      "type" : "kakao",
+                      "provider" : "naver-cloud",
+                      "baseUrl" : "https://sens.apigw.ntruss.com",
+                      "isActive" : true,
+                      "recipients" : [ "01012345678" ]
+                    } ],
+                    "createdAt" : "2025-10-17T03:26:05.442633",
+                    "updatedAt" : "2025-10-17T03:26:05.442646"
+                  } ],
+                  "pageable" : {
+                    "pageNumber" : 0,
+                    "pageSize" : 10,
+                    "sort" : {
+                      "empty" : false,
+                      "sorted" : true,
+                      "unsorted" : false
+                    },
+                    "offset" : 0,
+                    "paged" : true,
+                    "unpaged" : false
                   },
-                  "offset" : 0,
-                  "paged" : true,
-                  "unpaged" : false
+                  "totalPages" : 1,
+                  "totalElements" : 1,
+                  "numberOfElements" : 1
                 },
-                "totalPages" : 1,
-                "totalElements" : 0,
-                "numberOfElements" : 0
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/TriggerPolicyPageResponse'
@@ -2589,6 +2665,12 @@ paths:
 definitions:
   AlertTestHistoryPageResponse:
     type: object
+    required:
+      - content
+      - numberOfElements
+      - pageable
+      - totalElements
+      - totalPages
     properties:
       numberOfElements:
         type: number
@@ -2633,24 +2715,175 @@ definitions:
     items: { }
   TriggerPolicyPageResponse:
     type: object
+    required:
+      - data
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      numberOfElements:
-        type: number
-        description: number of elements
-      totalPages:
-        type: number
-        description: total pages
-      pageable:
+      error_message:
+        type: string
+        description: "Error message (empty if success, e.g., '')"
+      data:
         type: object
-        description: specific page info
-        properties: { }
-      content:
-        type: array
-        description: trigger policy list
-        items: { }
-      totalElements:
-        type: number
-        description: total elements
+        description: Response data
+        properties:
+          numberOfElements:
+            type: number
+            description: "Number of elements in this page (e.g., 1)"
+          totalPages:
+            type: number
+            description: "Total number of pages (e.g., 1)"
+          pageable:
+            type: object
+            description: "Pagination metadata (page number, size, sort info)"
+            properties: { }
+          content:
+            type: array
+            description: List of trigger policy items
+            items:
+              type: object
+              properties:
+                createdAt:
+                  type: string
+                  description: "Creation timestamp (e.g., '2025-10-17T03:26:05.442633')"
+                aggregationType:
+                  type: string
+                  description: "Aggregation type (e.g., last, avg)"
+                notiChannels:
+                  type: array
+                  description: Notification channel list
+                  items:
+                    type: object
+                    properties:
+                      baseUrl:
+                        type: string
+                        description: "Notification service base URL (nullable, e.g.,\
+                          \ 'https://slack.com')"
+                      provider:
+                        type: string
+                        description: "Notification provider (e.g., smtp.gmail.com,\
+                          \ slack)"
+                      recipients:
+                        type: array
+                        description: "List of recipients (e.g., ['C09M4LBEN68'])"
+                        items: { }
+                      name:
+                        type: string
+                        description: "Notification channel name (e.g., 'slack')"
+                      id:
+                        type: number
+                        description: "Notification channel ID (e.g., 2)"
+                      isActive:
+                        type: boolean
+                        description: Indicates whether the channel is active (true/false)
+                      type:
+                        type: string
+                        description: "Notification type (email, slack, kakao)"
+                    required:
+                      - id
+                      - isActive
+                      - name
+                      - provider
+                      - recipients
+                      - type
+                repeatInterval:
+                  type: string
+                  description: "Repeat interval for alert notification (e.g., '1h')"
+                holdDuration:
+                  type: string
+                  description: "Hold duration before triggering (e.g., '0s')"
+                description:
+                  type: string
+                  description: "Description (e.g., 'CPU usage threshold policy')"
+                id:
+                  type: number
+                  description: "Trigger policy ID (e.g., 4)"
+                thresholdCondition:
+                  type: object
+                  description: Threshold condition per alert level
+                  properties:
+                    critical:
+                      type: number
+                      description: "Critical level threshold (e.g., 30)"
+                    warning:
+                      type: number
+                      description: "Warning level threshold (e.g., 20)"
+                    info:
+                      type: number
+                      description: "Info level threshold (e.g., 10)"
+                  required:
+                    - critical
+                    - info
+                    - warning
+                title:
+                  type: string
+                  description: "Trigger policy title (e.g., 'CPU Alert')"
+                vms:
+                  type: array
+                  description: Associated VM list
+                  items:
+                    type: object
+                    properties:
+                      targetId:
+                        type: string
+                        description: "Target ID (e.g., 'vm-1')"
+                      namespaceId:
+                        type: string
+                        description: "Namespace ID (e.g., 'test01')"
+                      id:
+                        type: number
+                        description: "VM mapping ID (e.g., 8)"
+                      isActive:
+                        type: boolean
+                        description: Indicates whether VM alerting is active (true/false)
+                      targetScope:
+                        type: string
+                        description: "Target scope (e.g., 'vm')"
+                      uuid:
+                        type: string
+                        description: "Grafana Alert UUID(e.g., 'a0c1eec0-9074-4517-ad83-4876bc23fb2a')"
+                    required:
+                      - id
+                      - isActive
+                      - namespaceId
+                      - targetId
+                      - targetScope
+                      - uuid
+                updatedAt:
+                  type: string
+                  description: "Last updated timestamp (e.g., '2025-10-17T03:26:05.442646')"
+                resourceType:
+                  type: string
+                  description: "Resource type (e.g., cpu, memory)"
+              required:
+                - aggregationType
+                - createdAt
+                - description
+                - holdDuration
+                - id
+                - notiChannels
+                - repeatInterval
+                - resourceType
+                - thresholdCondition
+                - title
+                - updatedAt
+                - vms
+          totalElements:
+            type: number
+            description: "Total number of elements (e.g., 1)"
+        required:
+          - content
+          - numberOfElements
+          - pageable
+          - totalElements
+          - totalPages
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., success)"
   VMRequestDTO:
     type: object
     properties:
@@ -3103,24 +3336,118 @@ definitions:
       }
   TriggerHistoryPageResponse:
     type: object
+    required:
+      - data
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      numberOfElements:
-        type: number
-        description: number of elements
-      totalPages:
-        type: number
-        description: total pages
-      pageable:
+      error_message:
+        type: string
+        description: "Error message (empty if success, e.g., '')"
+      data:
         type: object
-        description: specific page info
-        properties: { }
-      content:
-        type: array
-        description: trigger history list
-        items: { }
-      totalElements:
-        type: number
-        description: total elements
+        description: Response data
+        properties:
+          numberOfElements:
+            type: number
+            description: "Number of elements in this page (e.g., 13)"
+          totalPages:
+            type: number
+            description: "Total number of pages (e.g., 1)"
+          pageable:
+            type: object
+            description: "Pagination metadata (page number, size, sort info)"
+            properties: { }
+          content:
+            type: array
+            description: List of trigger history items
+            items:
+              type: object
+              properties:
+                mciId:
+                  type: string
+                  description: "MCI ID (e.g., test01)"
+                aggregationType:
+                  type: string
+                  description: "Aggregation type (e.g., last)"
+                resourceUsage:
+                  type: string
+                  description: "Actual resource usage (e.g., 51.6)"
+                vmId:
+                  type: string
+                  description: "VM ID (e.g., vm-1)"
+                triggerTitle:
+                  type: string
+                  description: "Trigger title (e.g., string)"
+                alertLevel:
+                  type: string
+                  description: "Alert level (e.g., INFO, WARNING, CRITICAL)"
+                threshold:
+                  type: string
+                  description: "Alert threshold value (e.g., 30.0)"
+                createdAt:
+                  type: string
+                  description: "Creation timestamp (e.g., 2025-10-17T06:32:10.112181)"
+                namespaceId:
+                  type: string
+                  description: "Namespace ID (e.g., test01)"
+                repeatInterval:
+                  type: string
+                  description: "Repeat interval (e.g., 1h)"
+                startsAt:
+                  type: string
+                  description: "Alert start time (e.g., 2025-10-17T15:32:10)"
+                holdDuration:
+                  type: string
+                  description: "Hold duration before alert (e.g., 0s)"
+                comment:
+                  type: string
+                  description: Additional comment (nullable)
+                id:
+                  type: number
+                  description: "Trigger history ID (e.g., 13)"
+                updatedAt:
+                  type: string
+                  description: "Last updated timestamp (e.g., 2025-10-17T06:32:10.112186)"
+                status:
+                  type: string
+                  description: "Alert status (e.g., firing, resolved)"
+                resourceType:
+                  type: string
+                  description: "Resource type (e.g., cpu, memory)"
+              required:
+                - aggregationType
+                - alertLevel
+                - createdAt
+                - holdDuration
+                - id
+                - mciId
+                - namespaceId
+                - repeatInterval
+                - resourceType
+                - resourceUsage
+                - startsAt
+                - status
+                - threshold
+                - triggerTitle
+                - updatedAt
+                - vmId
+          totalElements:
+            type: number
+            description: "Total number of elements (e.g., 13)"
+        required:
+          - content
+          - numberOfElements
+          - pageable
+          - totalElements
+          - totalPages
+      rs_code:
+        type: string
+        description: "Response code (e.g., 0000)"
+      rs_msg:
+        type: string
+        description: "Response message (e.g., success)"
   TriggerPolicyCreateRequest:
     type: object
     properties:

@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.trigger.application.controller;
 
 import static com.mcmp.o11ymanager.util.ApiDocumentation.fieldArray;
+import static com.mcmp.o11ymanager.util.ApiDocumentation.fieldBoolean;
 import static com.mcmp.o11ymanager.util.ApiDocumentation.fieldEnum;
 import static com.mcmp.o11ymanager.util.ApiDocumentation.fieldNumber;
 import static com.mcmp.o11ymanager.util.ApiDocumentation.fieldObject;
@@ -21,8 +22,12 @@ import com.mcmp.o11ymanager.trigger.application.controller.dto.request.*;
 import com.mcmp.o11ymanager.trigger.application.service.TriggerService;
 import com.mcmp.o11ymanager.trigger.application.service.dto.CustomPageDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyCreateDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyDetailDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyNotiChannelDto;
+import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerVMDetailDto;
 import com.mcmp.o11ymanager.util.ApiDocumentation;
 import com.mcmp.o11ymanager.util.JsonConverter;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +35,9 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
@@ -118,6 +125,195 @@ class TriggerControllerTest {
     }
 
     @Test
+    void getTriggerPolicies() throws Exception {
+
+        TriggerVMDetailDto vm =
+                new TriggerVMDetailDto(
+                        8L, "a0c1eec0-9074-4517-ad83-4876bc23fb2a", "test01", "vm", "vm-1", true);
+
+        List<TriggerPolicyNotiChannelDto> notiChannels =
+                List.of(
+                        new TriggerPolicyNotiChannelDto(
+                                1L,
+                                "email_smtp.gmail.com",
+                                "email",
+                                "smtp.gmail.com",
+                                null,
+                                true,
+                                List.of("example@gmail.com")),
+                        new TriggerPolicyNotiChannelDto(
+                                2L,
+                                "slack",
+                                "slack",
+                                "slack",
+                                "https://slack.com",
+                                true,
+                                List.of("C09M4LBEN68")),
+                        new TriggerPolicyNotiChannelDto(
+                                3L,
+                                "kakao_naver-cloud",
+                                "kakao",
+                                "naver-cloud",
+                                "https://sens.apigw.ntruss.com",
+                                true,
+                                List.of("01012345678")));
+
+        ThresholdCondition threshold = new ThresholdCondition(10, 20, 30);
+
+        TriggerPolicyDetailDto mockPolicy =
+                new TriggerPolicyDetailDto(
+                        4L,
+                        "string",
+                        "string",
+                        threshold,
+                        "cpu",
+                        "last",
+                        "0s",
+                        "1h",
+                        List.of(vm),
+                        notiChannels,
+                        LocalDateTime.parse("2025-10-17T03:26:05.442633"),
+                        LocalDateTime.parse("2025-10-17T03:26:05.442646"));
+
+        CustomPageDto<TriggerPolicyDetailDto> mockPage =
+                new CustomPageDto<>(
+                        List.of(mockPolicy),
+                        PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id")),
+                        1,
+                        1,
+                        1);
+
+        when(triggerService.getTriggerPolicies(any(Pageable.class))).thenReturn(mockPage);
+
+        mockMvc.perform(
+                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/policy")
+                                .param("page", "1")
+                                .param("size", "10")
+                                .param("sortBy", "id")
+                                .param("direction", "desc")
+                                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(
+                        ApiDocumentation.builder()
+                                .tag(TAG)
+                                .description("Get paginated trigger policies")
+                                .summary("GetPaginatedTriggerPolicies")
+                                .responseSchema("TriggerPolicyPageResponse")
+                                .queryParameters(
+                                        paramInteger("page", "Page number (1..N)").optional(),
+                                        paramInteger("size", "Page size (1..N)").optional(),
+                                        paramString("sortBy", "Property to sort by (e.g., id)")
+                                                .optional(),
+                                        paramString("direction", "Sort direction (asc, desc)")
+                                                .optional())
+                                .responseFields(
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldObject("data", "Response data"),
+                                        fieldArray("data.content", "List of trigger policy items"),
+                                        fieldNumber(
+                                                "data.content[].id", "Trigger policy ID (e.g., 4)"),
+                                        fieldString(
+                                                "data.content[].title",
+                                                "Trigger policy title (e.g., 'CPU Alert')"),
+                                        fieldString(
+                                                "data.content[].description",
+                                                "Description (e.g., 'CPU usage threshold policy')"),
+                                        fieldObject(
+                                                "data.content[].thresholdCondition",
+                                                "Threshold condition per alert level"),
+                                        fieldNumber(
+                                                "data.content[].thresholdCondition.info",
+                                                "Info level threshold (e.g., 10)"),
+                                        fieldNumber(
+                                                "data.content[].thresholdCondition.warning",
+                                                "Warning level threshold (e.g., 20)"),
+                                        fieldNumber(
+                                                "data.content[].thresholdCondition.critical",
+                                                "Critical level threshold (e.g., 30)"),
+                                        fieldString(
+                                                "data.content[].resourceType",
+                                                "Resource type (e.g., cpu, memory)"),
+                                        fieldString(
+                                                "data.content[].aggregationType",
+                                                "Aggregation type (e.g., last, avg)"),
+                                        fieldString(
+                                                "data.content[].holdDuration",
+                                                "Hold duration before triggering (e.g., '0s')"),
+                                        fieldString(
+                                                "data.content[].repeatInterval",
+                                                "Repeat interval for alert notification (e.g., '1h')"),
+                                        fieldArray("data.content[].vms", "Associated VM list"),
+                                        fieldNumber(
+                                                "data.content[].vms[].id",
+                                                "VM mapping ID (e.g., 8)"),
+                                        fieldString(
+                                                "data.content[].vms[].uuid",
+                                                "Grafana Alert UUID(e.g., 'a0c1eec0-9074-4517-ad83-4876bc23fb2a')"),
+                                        fieldString(
+                                                "data.content[].vms[].namespaceId",
+                                                "Namespace ID (e.g., 'test01')"),
+                                        fieldString(
+                                                "data.content[].vms[].targetScope",
+                                                "Target scope (e.g., 'vm')"),
+                                        fieldString(
+                                                "data.content[].vms[].targetId",
+                                                "Target ID (e.g., 'vm-1')"),
+                                        fieldBoolean(
+                                                "data.content[].vms[].isActive",
+                                                "Indicates whether VM alerting is active (true/false)"),
+                                        fieldArray(
+                                                "data.content[].notiChannels",
+                                                "Notification channel list"),
+                                        fieldNumber(
+                                                "data.content[].notiChannels[].id",
+                                                "Notification channel ID (e.g., 2)"),
+                                        fieldString(
+                                                "data.content[].notiChannels[].name",
+                                                "Notification channel name (e.g., 'slack')"),
+                                        fieldString(
+                                                "data.content[].notiChannels[].type",
+                                                "Notification type (email, slack, kakao)"),
+                                        fieldString(
+                                                "data.content[].notiChannels[].provider",
+                                                "Notification provider (e.g., smtp.gmail.com, slack)"),
+                                        fieldString(
+                                                        "data.content[].notiChannels[].baseUrl",
+                                                        "Notification service base URL (nullable, e.g., 'https://slack.com')")
+                                                .optional(),
+                                        fieldBoolean(
+                                                "data.content[].notiChannels[].isActive",
+                                                "Indicates whether the channel is active (true/false)"),
+                                        fieldArray(
+                                                "data.content[].notiChannels[].recipients",
+                                                "List of recipients (e.g., ['C09M4LBEN68'])"),
+                                        fieldString(
+                                                "data.content[].createdAt",
+                                                "Creation timestamp (e.g., '2025-10-17T03:26:05.442633')"),
+                                        fieldString(
+                                                "data.content[].updatedAt",
+                                                "Last updated timestamp (e.g., '2025-10-17T03:26:05.442646')"),
+                                        fieldSubsection(
+                                                "data.pageable",
+                                                "Pagination metadata (page number, size, sort info)"),
+                                        fieldNumber(
+                                                "data.totalPages",
+                                                "Total number of pages (e.g., 1)"),
+                                        fieldNumber(
+                                                "data.totalElements",
+                                                "Total number of elements (e.g., 1)"),
+                                        fieldNumber(
+                                                "data.numberOfElements",
+                                                "Number of elements in this page (e.g., 1)"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success, e.g., '')"))
+                                .build());
+
+        verify(triggerService).getTriggerPolicies(any(Pageable.class));
+    }
+
+    @Test
     void deleteTriggerPolicy() throws Exception {
         mockMvc.perform(RestDocumentationRequestBuilders.delete("/api/o11y/trigger/policy/{id}", 1))
                 .andExpect(status().isAccepted()) // 202 Accepted
@@ -141,47 +337,6 @@ class TriggerControllerTest {
                                 .build());
 
         verify(triggerService).deleteTriggerPolicy(any(long.class));
-    }
-
-    @Test
-    void getTriggerPolicies() throws Exception {
-        when(triggerService.getTriggerPolicies(any(Pageable.class)))
-                .thenReturn(CustomPageDto.empty());
-
-        mockMvc.perform(
-                        RestDocumentationRequestBuilders.get("/api/o11y/trigger/policy")
-                                .param("page", "1")
-                                .param("size", "10")
-                                .param("sortBy", "id")
-                                .param("direction", "desc"))
-                .andExpect(status().isOk())
-                .andDo(
-                        ApiDocumentation.builder()
-                                .tag(TAG)
-                                .description("Get paginated trigger policies")
-                                .summary("GetPaginatedTriggerPolicies")
-                                .responseSchema("TriggerPolicyPageResponse")
-                                .queryParameters(
-                                        paramInteger("page", "page number (1 .. N)").optional(),
-                                        paramInteger("size", "size of page (1 .. N)").optional(),
-                                        paramString("sortBy", "sort by properties").optional(),
-                                        paramString("direction", "sort direction (asc, desc)")
-                                                .optional())
-                                .responseFields(
-                                        fieldString("rs_code", "Response code (e.g., 0000)"),
-                                        fieldString("rs_msg", "Response message (e.g., success)"),
-                                        fieldObject("data", "Response data"),
-                                        fieldArray("data.content", "trigger policy list"),
-                                        fieldSubsection("data.pageable", "specific page info"),
-                                        fieldNumber("data.totalPages", "total pages"),
-                                        fieldNumber("data.totalElements", "total elements"),
-                                        fieldNumber("data.numberOfElements", "number of elements"),
-                                        fieldString(
-                                                "error_message",
-                                                "Error message (empty if success)"))
-                                .build());
-
-        verify(triggerService).getTriggerPolicies(any(Pageable.class));
     }
 
     @Test
@@ -224,10 +379,8 @@ class TriggerControllerTest {
     void updateTriggerPolicyNotiChannel() throws Exception {
         List<TriggerPolicyNotiChannelUpdateRequest> request =
                 List.of(
-                        new TriggerPolicyNotiChannelUpdateRequest(
-                                "kakao", List.of("+82-10-1234-5678")),
-                        new TriggerPolicyNotiChannelUpdateRequest(
-                                "sms", List.of("+82-10-1234-5678")),
+                        new TriggerPolicyNotiChannelUpdateRequest("kakao", List.of("01012345678")),
+                        new TriggerPolicyNotiChannelUpdateRequest("sms", List.of("01012345678")),
                         new TriggerPolicyNotiChannelUpdateRequest(
                                 "email", List.of("admin@example.com")),
                         new TriggerPolicyNotiChannelUpdateRequest("slack", List.of("C09GRESEF")));
