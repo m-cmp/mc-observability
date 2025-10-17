@@ -59,9 +59,7 @@ public class InsightController {
 
     @GetMapping("/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}")
     public Object getAnomalySettingsForVm(
-            @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String vmId) {
+            @PathVariable String nsId, @PathVariable String mciId, @PathVariable String vmId) {
         return insightPort.getAnomalySettingsForVm(nsId, mciId, vmId);
     }
 
@@ -183,8 +181,7 @@ public class InsightController {
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getPredictionHistoryForMci(
-                nsId, mciId, measurement, startTime, endTime);
+        return insightPort.getPredictionHistoryForMci(nsId, mciId, measurement, startTime, endTime);
     }
 
     @GetMapping("/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")

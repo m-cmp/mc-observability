@@ -110,8 +110,7 @@ public class InsightClientAdapter implements InsightPort {
     @Override
     public Object getAnomalyHistoryForMci(
             String nsId, String mciId, String measurement, String startTime, String endTime) {
-        return insightClient.getAnomalyHistoryForMci(
-                nsId, mciId, measurement, startTime, endTime);
+        return insightClient.getAnomalyHistoryForMci(nsId, mciId, measurement, startTime, endTime);
     }
 
     @Override
