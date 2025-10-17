@@ -266,37 +266,37 @@ paths:
   /api/o11y/trigger/policy:
     get:
       tags:
-      - "[Trigger] Monitoring Measurement Trigger"
+        - "[Trigger] Monitoring Measurement Trigger"
       summary: GetPaginatedTriggerPolicies
       description: Get paginated trigger policies
       operationId: GetPaginatedTriggerPolicies
       parameters:
-      - name: page
-        in: query
-        description: page number (1 .. N)
-        required: false
-        schema:
-          type: integer
-          format: int32
-      - name: size
-        in: query
-        description: size of page (1 .. N)
-        required: false
-        schema:
-          type: integer
-          format: int32
-      - name: sortBy
-        in: query
-        description: sort by properties
-        required: false
-        schema:
-          type: string
-      - name: direction
-        in: query
-        description: "sort direction (asc, desc)"
-        required: false
-        schema:
-          type: string
+        - name: page
+          in: query
+          description: Page number (1..N)
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: size
+          in: query
+          description: Page size (1..N)
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          description: "Property to sort by (e.g., id)"
+          required: false
+          schema:
+            type: string
+        - name: direction
+          in: query
+          description: "Sort direction (asc, desc)"
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: "200"
@@ -308,22 +308,75 @@ paths:
                 GetPaginatedTriggerPolicies:
                   value: |-
                     {
-                      "content" : [ ],
-                      "pageable" : {
-                        "pageNumber" : 0,
-                        "pageSize" : 1,
-                        "sort" : {
-                          "sorted" : false,
-                          "empty" : true,
-                          "unsorted" : true
+                      "rs_code" : "0000",
+                      "rs_msg" : "success",
+                      "data" : {
+                        "content" : [ {
+                          "id" : 4,
+                          "title" : "string",
+                          "description" : "string",
+                          "thresholdCondition" : {
+                            "info" : 10.0,
+                            "warning" : 20.0,
+                            "critical" : 30.0
+                          },
+                          "resourceType" : "cpu",
+                          "aggregationType" : "last",
+                          "holdDuration" : "0s",
+                          "repeatInterval" : "1h",
+                          "vms" : [ {
+                            "id" : 8,
+                            "uuid" : "a0c1eec0-9074-4517-ad83-4876bc23fb2a",
+                            "namespaceId" : "test01",
+                            "targetScope" : "vm",
+                            "targetId" : "vm-1",
+                            "isActive" : true
+                          } ],
+                          "notiChannels" : [ {
+                            "id" : 1,
+                            "name" : "email_smtp.gmail.com",
+                            "type" : "email",
+                            "provider" : "smtp.gmail.com",
+                            "baseUrl" : null,
+                            "isActive" : true,
+                            "recipients" : [ "example@gmail.com" ]
+                          }, {
+                            "id" : 2,
+                            "name" : "slack",
+                            "type" : "slack",
+                            "provider" : "slack",
+                            "baseUrl" : "https://slack.com",
+                            "isActive" : true,
+                            "recipients" : [ "C09M4LBEN68" ]
+                          }, {
+                            "id" : 3,
+                            "name" : "kakao_naver-cloud",
+                            "type" : "kakao",
+                            "provider" : "naver-cloud",
+                            "baseUrl" : "https://sens.apigw.ntruss.com",
+                            "isActive" : true,
+                            "recipients" : [ "01012345678" ]
+                          } ],
+                          "createdAt" : "2025-10-17T03:26:05.442633",
+                          "updatedAt" : "2025-10-17T03:26:05.442646"
+                        } ],
+                        "pageable" : {
+                          "pageNumber" : 0,
+                          "pageSize" : 10,
+                          "sort" : {
+                            "empty" : false,
+                            "sorted" : true,
+                            "unsorted" : false
+                          },
+                          "offset" : 0,
+                          "paged" : true,
+                          "unpaged" : false
                         },
-                        "offset" : 0,
-                        "paged" : true,
-                        "unpaged" : false
+                        "totalPages" : 1,
+                        "totalElements" : 1,
+                        "numberOfElements" : 1
                       },
-                      "totalPages" : 1,
-                      "totalElements" : 0,
-                      "numberOfElements" : 0
+                      "error_message" : ""
                     }
     post:
       tags:
@@ -832,13 +885,13 @@ paths:
               UpdateTriggerPolicyNotificationChannels:
                 value: |-
                   [ {
-                    "channelName" : "kakao_naver-cloud",
-                    "recipients" : [ "+82-10-1234-5678" ]
+                    "channelName" : "kakao",
+                    "recipients" : [ "01012345678" ]
                   }, {
-                    "channelName" : "sms_naver-cloud",
-                    "recipients" : [ "+82-10-1234-5678" ]
+                    "channelName" : "sms",
+                    "recipients" : [ "01012345678" ]
                   }, {
-                    "channelName" : "email_smtp.gmail.com",
+                    "channelName" : "email",
                     "recipients" : [ "admin@example.com" ]
                   }, {
                     "channelName" : "slack",
