@@ -827,8 +827,8 @@ paths:
           application/json;charset=UTF-8: |-
             {
               "namespaceId" : "first-ns",
-              "vmScope" : "mci",
-              "vmId" : "test01"
+              "targetScope" : "mci",
+              "targetId" : "test01"
             }
       responses:
         "202":
@@ -857,57 +857,124 @@ paths:
           application/json;charset=UTF-8: |-
             {
               "namespaceId" : "namespace-1",
-              "vmScope" : "vm",
-              "vmId" : "vm-1"
+              "targetScope" : "vm",
+              "targetId" : "vm-1"
             }
       responses:
         "202":
           description: ""
           examples: {}
+  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}/{vmId}:
+    post:
+      tags:
+        - "[Manager] Monitoring Metric"
+      summary: GetMetricsByVMId
+      description: Retrieve InfluxDB metrics
+      operationId: GetMetricsByVMId
+      consumes:
+        - application/json;charset=UTF-8
+      produces:
+        - application/json
+      parameters:
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "vmId (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MetricRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "measurement" : "cpu",
+                "range" : "1h",
+                "group_time" : "12m",
+                "group_by" : [ "vm_id" ],
+                "limit" : 0,
+                "fields" : [ {
+                  "function" : "mean",
+                  "field" : "usage_idle"
+                } ],
+                "conditions" : [ {
+                  "key" : "cpu",
+                  "value" : "cpu-total"
+                } ]
+              }
+      responses:
+        "200":
+          description: ""
+          examples:
+            application/json: |-
+              {
+                "rs_code" : "0000",
+                "rs_msg" : "success",
+                "data" : [ {
+                  "name" : "cpu",
+                  "columns" : [ "cpu", "vm_id" ],
+                  "tags" : null,
+                  "values" : [ [ "string", 0 ] ]
+                } ],
+                "error_message" : ""
+              }
+          schema:
+            $ref: '#/definitions/MetricDTO'
   /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
     post:
       tags:
-      - "[Manager] Monitoring Metric"
-      summary: QueryMetrics
+        - "[Manager] Monitoring Metric"
+      summary: GetMetricsByNsIdAndMciId
       description: Retrieve InfluxDB metrics
-      operationId: QueryMetrics
+      operationId: GetMetricsByNsIdAndMciId
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/MetricRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "measurement" : "cpu",
-              "range" : "1h",
-              "group_time" : "12m",
-              "group_by" : [ "ns_id" ],
-              "limit" : 0,
-              "fields" : [ {
-                "function" : "mean",
-                "field" : "usage_idle"
-              } ],
-              "conditions" : [ {
-                "key" : "cpu",
-                "value" : "cpu-total"
-              } ]
-            }
+        - name: nsId
+          in: path
+          description: "nsId (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "mciId (e.g., mci-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/MetricRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "measurement" : "cpu",
+                "range" : "1h",
+                "group_time" : "12m",
+                "group_by" : [ "vm_id" ],
+                "limit" : 0,
+                "fields" : [ {
+                  "function" : "mean",
+                  "field" : "usage_idle"
+                } ],
+                "conditions" : [ {
+                  "key" : "cpu",
+                  "value" : "cpu-total"
+                } ]
+              }
       responses:
         "200":
           description: ""
@@ -976,41 +1043,41 @@ paths:
             $ref: '#/definitions/VMDTO'
     post:
       tags:
-      - "[Manager] Monitoring VM Management"
+        - "[Manager] Monitoring VM Management"
       summary: PostVM
-      description: Create target
+      description: Create target (VM)
       operationId: PostVM
       consumes:
-      - application/json;charset=UTF-8
+        - application/json;charset=UTF-8
       produces:
-      - application/json
+        - application/json
       parameters:
-      - name: nsId
-        in: path
-        description: "nsId (e.g., ns-1)"
-        required: true
-        type: string
-      - name: mciId
-        in: path
-        description: "mciId (e.g., mci-1)"
-        required: true
-        type: string
-      - name: vmId
-        in: path
-        description: "vmId (e.g., vm-1)"
-        required: true
-        type: string
-      - in: body
-        name: ""
-        required: false
-        schema:
-          $ref: '#/definitions/VMRequestDTO'
-        x-examples:
-          application/json;charset=UTF-8: |-
-            {
-              "name" : "mcmp-vm",
-              "description" : "string"
-            }
+        - name: nsId
+          in: path
+          description: "Namespace ID (e.g., ns-1)"
+          required: true
+          type: string
+        - name: mciId
+          in: path
+          description: "MCI ID (e.g., mci-1)"
+          required: true
+          type: string
+        - name: vmId
+          in: path
+          description: "VM ID (e.g., vm-1)"
+          required: true
+          type: string
+        - in: body
+          name: ""
+          required: false
+          schema:
+            $ref: '#/definitions/VMRequestDTO'
+          x-examples:
+            application/json;charset=UTF-8: |-
+              {
+                "name" : "mcmp-vm",
+                "description" : "string"
+              }
       responses:
         "200":
           description: ""
@@ -1019,21 +1086,11 @@ paths:
               {
                 "rs_code" : "0000",
                 "rs_msg" : "success",
-                "data" : {
-                  "name" : "mcmp-vm",
-                  "description" : "string",
-                  "vm_id" : "vm-1",
-                  "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
-                  "ns_id" : "ns-1",
-                  "mci_id" : "mci-1"
-                },
+                "data" : null,
                 "error_message" : ""
               }
           schema:
-            $ref: '#/definitions/VMDTO'
+            $ref: '#/definitions/ResBody'
     put:
       tags:
       - "[Manager] Monitoring VM Management"
@@ -1686,21 +1743,25 @@ definitions:
         description: "Response message (e.g., Success)"
   TriggerVMAddRequest:
     type: object
+    required:
+      - namespaceId
+      - targetId
+      - targetScope
     properties:
-      vmScope:
+      targetId:
         type: string
-        description: "vm scope (vm, mci)"
-      vmId:
-        type: string
-        description: vm id
+        description: "Target ID (e.g., vm_id, mci_id)"
       namespaceId:
         type: string
-        description: namespace id
+        description: Namespace ID
+      targetScope:
+        type: string
+        description: "Target scope (e.g., vm, mci)"
     example: |-
       {
         "namespaceId" : "first-ns",
-        "vmScope" : "mci",
-        "vmId" : "test01"
+        "targetScope" : "mci",
+        "targetId" : "test01"
       }
   FieldDTO:
     type: object
@@ -1818,21 +1879,25 @@ definitions:
       } ]
   TriggerVMRemoveRequest:
     type: object
+    required:
+      - namespaceId
+      - targetId
+      - targetScope
     properties:
-      vmScope:
+      targetId:
         type: string
-        description: "vm scope (vm, mci)"
-      vmId:
-        type: string
-        description: vm id
+        description: "Target ID (e.g., vm_id, mci_id)"
       namespaceId:
         type: string
-        description: namespace id
+        description: Namespace ID
+      targetScope:
+        type: string
+        description: "Target scope (e.g., vm, mci)"
     example: |-
       {
         "namespaceId" : "namespace-1",
-        "vmScope" : "vm",
-        "vmId" : "vm-1"
+        "targetScope" : "vm",
+        "targetId" : "vm-1"
       }
   TriggerHistoryPageResponse:
     type: object
