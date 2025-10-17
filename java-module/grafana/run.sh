@@ -177,8 +177,17 @@ RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
     -H 'Accept: */*' \
     -H 'Content-Type: application/json' \
     -H 'Origin: http://127.0.0.1:3000')
-DATA_SOURCE_INFLUXDB_UID=$(echo $RESPONSE | sed -n 's/.*"uid":"\([^"]*\)".*/\1/p')
-echo DATA_SOURCE_INFLUXDB_UID=$DATA_SOURCE_INFLUXDB_UID >> ~/env.grafana
+INFLUX1_UID=$(echo $RESPONSE | sed -n 's/.*"uid":"\([^"]*\)".*/\1/p')
+echo "INFLUX1_UID=$INFLUX1_UID" >> ~/env.grafana
+
+
+RESPONSE=$(curl -s -b ~/grafana-cookie -XGET \
+    "http://127.0.0.1:3000/api/datasources/name/InfluxDB-2" \
+    -H 'Accept: */*' \
+    -H 'Content-Type: application/json' \
+    -H 'Origin: http://127.0.0.1:3000')
+INFLUX2_UID=$(echo $RESPONSE | sed -n 's/.*"uid":"\([^"]*\)".*/\1/p')
+echo "INFLUX2_UID=$INFLUX2_UID" >> ~/env.grafana
 
 echo "[*] Deleting cookie..."
 rm -f ~/grafana-cookie

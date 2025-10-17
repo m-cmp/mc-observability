@@ -1674,14 +1674,14 @@ definitions:
         description: Result limit count
       group_by:
         type: array
-        description: "List of group-by fields, for example: ns_id, mci_id"
+        description: "List of group-by fields (e.g., vm_id)"
         items: {}
       range:
         type: string
         description: "Query range (e.g., 1h)"
       conditions:
         type: array
-        description: List of condition filters
+        description: "List of condition filters (excluding default keys: ns_id, mci_id)"
         items:
           type: object
           properties:
@@ -1690,7 +1690,8 @@ definitions:
               description: "Condition value (e.g., cpu-total)"
             key:
               type: string
-              description: "Condition key (e.g., cpu)"
+              description: "Condition key (e.g., cpu) — omit ns_id, mci_id since they\
+                \ are added by default"
       fields:
         type: array
         description: List of fields to query
