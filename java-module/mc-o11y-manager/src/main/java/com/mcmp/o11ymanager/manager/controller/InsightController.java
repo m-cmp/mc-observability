@@ -28,8 +28,8 @@ public class InsightController {
     }
 
     @PostMapping("/anomaly-detection/{settingSeq}")
-    public Object predictAnomalyDetection(@PathVariable int settingSeq, @RequestBody Object body) {
-        return insightPort.predictAnomaly(settingSeq, body);
+    public Object predictAnomalyDetection(@PathVariable int settingSeq) {
+        return insightPort.predictAnomaly(settingSeq);
     }
 
     @GetMapping("/anomaly-detection/settings")
@@ -52,14 +52,39 @@ public class InsightController {
         return insightPort.deleteAnomalySetting(settingSeq);
     }
 
-    @GetMapping("/anomaly-detection/nsId/{nsId}/target/{targetId}/history")
-    public Object getAnomalyHistory(
+    @GetMapping("/anomaly-detection/settings/ns/{nsId}/mci/{mciId}")
+    public Object getAnomalySettingsForMci(@PathVariable String nsId, @PathVariable String mciId) {
+        return insightPort.getAnomalySettingsForMci(nsId, mciId);
+    }
+
+    @GetMapping("/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}")
+    public Object getAnomalySettingsForVm(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String mciId,
+            @PathVariable String vmId) {
+        return insightPort.getAnomalySettingsForVm(nsId, mciId, vmId);
+    }
+
+    @GetMapping("/anomaly-detection/ns/{nsId}/mci/{mciId}/history")
+    public Object getAnomalyHistoryForMci(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getAnomalyHistory(nsId, targetId, measurement, startTime, endTime);
+        return insightPort.getAnomalyHistoryForMci(nsId, mciId, measurement, startTime, endTime);
+    }
+
+    @GetMapping("/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
+    public Object getAnomalyHistoryForVm(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @PathVariable String vmId,
+            @RequestParam String measurement,
+            @RequestParam(value = "start_time", required = false) String startTime,
+            @RequestParam(value = "end_time", required = false) String endTime) {
+        return insightPort.getAnomalyHistoryForVm(
+                nsId, mciId, vmId, measurement, startTime, endTime);
     }
 
     /* ===================== ALERT ===================== */
@@ -136,19 +161,41 @@ public class InsightController {
         return insightPort.getPredictionOptions();
     }
 
-    @PostMapping("/predictions/nsId/{nsId}/target/{targetId}")
-    public Object predictMonitoringData(
-            @PathVariable String nsId, @PathVariable String targetId, @RequestBody Object body) {
-        return insightPort.predictMonitoringData(nsId, targetId, body);
+    @PostMapping("/predictions/ns/{nsId}/mci/{mciId}")
+    public Object predictMonitoringDataForMci(
+            @PathVariable String nsId, @PathVariable String mciId, @RequestBody Object body) {
+        return insightPort.predictMonitoringDataForMci(nsId, mciId, body);
     }
 
-    @GetMapping("/predictions/nsId/{nsId}/target/{targetId}/history")
-    public Object getPredictionHistory(
+    @PostMapping("/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}")
+    public Object predictMonitoringDataForVm(
             @PathVariable String nsId,
-            @PathVariable String targetId,
+            @PathVariable String mciId,
+            @PathVariable String vmId,
+            @RequestBody Object body) {
+        return insightPort.predictMonitoringDataForVm(nsId, mciId, vmId, body);
+    }
+
+    @GetMapping("/predictions/ns/{nsId}/mci/{mciId}/history")
+    public Object getPredictionHistoryForMci(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getPredictionHistory(nsId, targetId, measurement, startTime, endTime);
+        return insightPort.getPredictionHistoryForMci(
+                nsId, mciId, measurement, startTime, endTime);
+    }
+
+    @GetMapping("/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
+    public Object getPredictionHistoryForVm(
+            @PathVariable String nsId,
+            @PathVariable String mciId,
+            @PathVariable String vmId,
+            @RequestParam String measurement,
+            @RequestParam(value = "start_time", required = false) String startTime,
+            @RequestParam(value = "end_time", required = false) String endTime) {
+        return insightPort.getPredictionHistoryForVm(
+                nsId, mciId, vmId, measurement, startTime, endTime);
     }
 }

@@ -13,7 +13,7 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
                                                    `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
                                                    `NAMESPACE_ID` varchar(100) NOT NULL,
                                                    `MCI_ID` varchar(100) NOT NULL,
-                                                   `VM_ID` varchar(100) NOT NULL,
+                                                   `VM_ID` varchar(100) DEFAULT NULL,
                                                    `MEASUREMENT` varchar(100) NOT NULL,
                                                    `EXECUTION_INTERVAL` varchar(100) NOT NULL,
                                                    `LAST_EXECUTION` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),

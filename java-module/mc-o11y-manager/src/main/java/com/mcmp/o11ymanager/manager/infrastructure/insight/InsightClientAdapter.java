@@ -28,14 +28,32 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictMonitoringData(String nsId, String vmId, Object body) {
-        return insightClient.predictMonitoringData(body);
+    public Object predictMonitoringDataForMci(String nsId, String mciId, Object body) {
+        return insightClient.predictMonitoringDataForMci(nsId, mciId, body);
     }
 
     @Override
-    public Object getPredictionHistory(
-            String nsId, String vmId, String measurement, String startTime, String endTime) {
-        return insightClient.getPredictionHistory(nsId, vmId, measurement, startTime, endTime);
+    public Object predictMonitoringDataForVm(String nsId, String mciId, String vmId, Object body) {
+        return insightClient.predictMonitoringDataForVm(nsId, mciId, vmId, body);
+    }
+
+    @Override
+    public Object getPredictionHistoryForMci(
+            String nsId, String mciId, String measurement, String startTime, String endTime) {
+        return insightClient.getPredictionHistoryForMci(
+                nsId, mciId, measurement, startTime, endTime);
+    }
+
+    @Override
+    public Object getPredictionHistoryForVm(
+            String nsId,
+            String mciId,
+            String vmId,
+            String measurement,
+            String startTime,
+            String endTime) {
+        return insightClient.getPredictionHistoryForVm(
+                nsId, mciId, vmId, measurement, startTime, endTime);
     }
 
     /* ===================== Anomaly Detection ===================== */
@@ -55,8 +73,8 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictAnomaly(int settingSeq, Object body) {
-        return insightClient.predictMetric(settingSeq, body); // Feign 호출 연결
+    public Object predictAnomaly(int settingSeq) {
+        return insightClient.predictMetric(settingSeq);
     }
 
     @Override
@@ -80,9 +98,32 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object getAnomalyHistory(
-            String nsId, String targetId, String measurement, String startTime, String endTime) {
-        return insightClient.getAnomalyHistory(nsId, targetId, measurement, startTime, endTime);
+    public Object getAnomalySettingsForMci(String nsId, String mciId) {
+        return insightClient.getAnomalySettingsForMci(nsId, mciId);
+    }
+
+    @Override
+    public Object getAnomalySettingsForVm(String nsId, String mciId, String vmId) {
+        return insightClient.getAnomalySettingsForVm(nsId, mciId, vmId);
+    }
+
+    @Override
+    public Object getAnomalyHistoryForMci(
+            String nsId, String mciId, String measurement, String startTime, String endTime) {
+        return insightClient.getAnomalyHistoryForMci(
+                nsId, mciId, measurement, startTime, endTime);
+    }
+
+    @Override
+    public Object getAnomalyHistoryForVm(
+            String nsId,
+            String mciId,
+            String vmId,
+            String measurement,
+            String startTime,
+            String endTime) {
+        return insightClient.getAnomalyHistoryForVm(
+                nsId, mciId, vmId, measurement, startTime, endTime);
     }
 
     /* ===================== LLM ===================== */
@@ -113,7 +154,7 @@ public class InsightClientAdapter implements InsightPort {
 
     @Override
     public Object getLLMSessionHistory(String sessionId) {
-        return insightClient.getLLMSessionHistory();
+        return insightClient.getLLMSessionHistory(sessionId);
     }
 
     @Override
@@ -140,6 +181,6 @@ public class InsightClientAdapter implements InsightPort {
     /* ===================== Log Analysis ===================== */
     @Override
     public Object queryLogAnalysis(Object body) {
-        return insightClient.queryLogAnalysis();
+        return insightClient.queryLogAnalysis(body);
     }
 }
