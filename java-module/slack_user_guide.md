@@ -47,4 +47,14 @@ to receive mc-o11y events and alarms within a Slack workspace.
 
 ## Step 6: Use Token
 
-1. After that, when using the mc-o11y event/alarm slack user registration API(POST /api/o11y/trigger/policy/{policySeq}/alert/slack), you can enter the pre-generated **Bot User OAuth token**.
+1. After that, when using the mc-o11y event/alarm slack user registration API(POST /api/o11y/trigger/policy/{id}/channel, you can enter the pre-generated **Bot User OAuth token**.
+2. This token is required for mc-o11y to send messages through your Slack bot. If the Slack Bot User OAuth Token is changed or reissued, make sure to **update the token value in the .env file of the mc-observability-manager** accordingly.
+
+## Step 7: Use Channel ID
+
+1. When sending messages to Slack via the API, you must use the Channel ID of a public channel where the app has been added.
+The Channel ID can be found in the Slack channel URL.
+
+2. You need to copy this value and use it as the value of the **recipients** field.
+   https://app.slack.com/client/<WORKSPACE_ID>/**<CHANNEL_ID>**
+
