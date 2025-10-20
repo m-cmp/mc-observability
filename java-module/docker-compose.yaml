@@ -32,8 +32,8 @@ services:
     environment:
       # - O11Y_EXTERNAL_IP=111.111.111.111 # External IP will be set automatically. Set this value if you want to change.
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
-      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
-      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
+#      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
+#      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
