@@ -27,6 +27,8 @@ services:
         condition: service_healthy
       mc-observability-rabbitmq:
         condition: service_healthy
+      mc-observability-tempo:
+        condition: service_healthy
     env_file:
       - mc-o11y-manager/config/manager/manager.env
     environment:
@@ -570,7 +572,6 @@ services:
       retries: 3
       start_period: 10s
 
-
   mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-observability-insight-scheduler:edge
     container_name: mc-observability-insight-scheduler
@@ -751,6 +752,11 @@ services:
       - "3200:3200"
       - "4317:4317"
       - "4318:4318"
+    depends_on:
+      mc-observability-tempo-init-volumes:
+        condition: service_completed_successfully
+      mc-observability-minio:
+        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     command: [ "-config.file=/etc/tempo-config.yaml" ]
