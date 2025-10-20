@@ -24,8 +24,6 @@ allprojects {
     }
 }
 
-
-
 subprojects {
 
     apply plugin: 'java'
@@ -44,9 +42,7 @@ subprojects {
     }
 
     configurations {
-        compileOnly {
-            extendsFrom annotationProcessor
-        }
+        annotationProcessor.extendsFrom compileOnly
     }
 
     repositories {
