@@ -1220,11 +1220,10 @@ paths:
                   "description" : "string",
                   "vm_id" : "vm-1",
                   "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
                   "ns_id" : "ns-1",
-                  "mci_id" : "mci-1"
+                  "mci_id" : "mci-1",
+                  "monitoring_agent_status" : "SUCCESS",
+                  "log_agent_status" : "SUCCESS"
                 },
                 "error_message" : ""
               }
