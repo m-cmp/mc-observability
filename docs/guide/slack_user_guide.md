@@ -16,26 +16,26 @@ to receive mc-o11y events and alarms within a Slack workspace.
 
 1. Visit [https://api.slack.com/apps](https://api.slack.com/apps).
 2. Click **Create New App**.  
-![img.png](images/img.png)
+![img.png](docs/image/slack/img.png)
 3. Choose **From scratch**.  
-![img.png](images/img2.png)
+![img.png](docs/image/slack/img2.png)
 4. Provide a name for your app and select the workspace where it will be used.  
-![img.png](images/img3.png)
+![img.png](docs/image/slack/img3.png)
 
 ## Step 3: Configure OAuth & Permissions
 
 1. Go to **OAuth & Permissions** in your app's settings. (OAuth & Permissions > Scopes > Add an OAuth Scope)
 2. Under the **Scopes** > **Bot Token Scopes** section, click **Add an OAuth Scope**.  
-![img.png](images/img4.png)
+![img.png](docs/image/slack/img4.png)
 3. Ensure that the scope `chat:write` is included, as this is required to send messages from the bot.
 
 ## Step 4: Install the App in Slack
-![img.png](images/img7.png)
+![img.png](docs/image/slack/img7.png)
 1. In the app settings, navigate to the **Install App** section. (OAuth & Permissions > OAuth Tokens)
 2. Click **Install** (or **Reinstall**, if applicable).
 3. After installation, review and approve the required permissions.
 4. Upon successful installation, return to the **OAuth & Permissions** page and copy the **Bot User OAuth Token** for later use.
-![img.png](images/img5.png)
+![img.png](docs/image/slack/img5.png)
 
 ## Step 5: Create and Configure a Slack Channel
 
@@ -43,7 +43,7 @@ to receive mc-o11y events and alarms within a Slack workspace.
 2. Create the channel where your bot will operate (e.g., `trigger-bot`).
 3. Right-click the app you created > Click 'View App Details' > Click 'Add this app to a channel' > Select the channel to receive the alarm > Add the app you created
 4. After completing the above course, you are ready to use the mc-o11y event/alarm function.
-![img.png](images/img6.png)
+![img.png](docs/image/slack/img.png)
 
 ## Step 6: Use Token
 
