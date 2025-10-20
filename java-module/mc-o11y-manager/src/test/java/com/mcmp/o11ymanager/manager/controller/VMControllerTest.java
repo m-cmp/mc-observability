@@ -8,9 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
-import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
+import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.facade.VMFacadeService;
-import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.util.ApiDocumentation;
 import com.mcmp.o11ymanager.util.JsonConverter;
 import java.util.List;
@@ -48,9 +47,8 @@ class VMControllerTest {
                         .influxSeq(0L)
                         .nsId("ns-1")
                         .mciId("mci-1")
-                        .vmStatus(VMStatus.RUNNING)
-                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .monitoringAgentStatus(AgentStatus.SUCCESS)
+                        .logAgentStatus(AgentStatus.SUCCESS)
                         .build();
 
         when(vmFacadeService.getVM(any(), any(), any())).thenReturn(dto);
@@ -81,17 +79,15 @@ class VMControllerTest {
                                         fieldString("data.vm_id", "VM ID (e.g., vm-1)"),
                                         fieldNumber("data.influx_seq", "Influx sequence")
                                                 .optional(),
-                                        fieldEnum("data.vm_status", "Target status", VMStatus.class)
+                                        fieldEnum(
+                                                        "data.monitoring_agent_status",
+                                                        "Monitoring agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldEnum(
-                                                        "data.monitoring_service_status",
-                                                        "Monitoring agent service status",
-                                                        AgentServiceStatus.class)
-                                                .optional(),
-                                        fieldEnum(
-                                                        "data.log_service_status",
-                                                        "Log agent service status",
-                                                        AgentServiceStatus.class)
+                                                        "data.log_agent_status",
+                                                        "Log agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldString("data.ns_id", "Namespace ID (e.g., ns-1)"),
                                         fieldString("data.mci_id", "MCI ID (e.g., mci-1)"),
@@ -113,9 +109,8 @@ class VMControllerTest {
                         .influxSeq(0L)
                         .nsId("ns-1")
                         .mciId("mci-1")
-                        .vmStatus(VMStatus.RUNNING)
-                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .monitoringAgentStatus(AgentStatus.SUCCESS)
+                        .logAgentStatus(AgentStatus.SUCCESS)
                         .build();
 
         when(vmFacadeService.postVM(any(), any(), any(), any())).thenReturn(dto);
@@ -165,9 +160,8 @@ class VMControllerTest {
                         .influxSeq(0L)
                         .nsId("ns-1")
                         .mciId("mci-1")
-                        .vmStatus(VMStatus.RUNNING)
-                        .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                        .logServiceStatus(AgentServiceStatus.ACTIVE)
+                        .monitoringAgentStatus(AgentStatus.SUCCESS)
+                        .logAgentStatus(AgentStatus.SUCCESS)
                         .build();
         when(vmFacadeService.putVM(any(), any(), any(), any())).thenReturn(dto);
 
@@ -203,17 +197,15 @@ class VMControllerTest {
                                         fieldString("data.description", "Description").optional(),
                                         fieldNumber("data.influx_seq", "Influx sequence")
                                                 .optional(),
-                                        fieldEnum("data.vm_status", "Target status", VMStatus.class)
+                                        fieldEnum(
+                                                        "data.monitoring_agent_status",
+                                                        "Monitoring agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldEnum(
-                                                        "data.monitoring_service_status",
-                                                        "Monitoring agent service status",
-                                                        AgentServiceStatus.class)
-                                                .optional(),
-                                        fieldEnum(
-                                                        "data.log_service_status",
-                                                        "Log agent service status",
-                                                        AgentServiceStatus.class)
+                                                        "data.log_agent_status",
+                                                        "Log agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldString("data.ns_id", "nsId (e.g., ns-1)"),
                                         fieldString("data.mci_id", "mciId (e.g., mci-1)"),
@@ -260,9 +252,8 @@ class VMControllerTest {
                                 .influxSeq(0L)
                                 .nsId("ns-1")
                                 .mciId("mci-1")
-                                .vmStatus(VMStatus.RUNNING)
-                                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                                .logServiceStatus(AgentServiceStatus.ACTIVE)
+                                .monitoringAgentStatus(AgentStatus.SUCCESS)
+                                .logAgentStatus(AgentStatus.SUCCESS)
                                 .build());
         when(vmFacadeService.getVMsNsMci(any(), any())).thenReturn(list);
 
@@ -289,19 +280,14 @@ class VMControllerTest {
                                         fieldNumber("data[].influx_seq", "Influx sequence")
                                                 .optional(),
                                         fieldEnum(
-                                                        "data[].vm_status",
-                                                        "Target status",
-                                                        VMStatus.class)
+                                                        "data[].monitoring_agent_status",
+                                                        "Monitoring agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldEnum(
-                                                        "data[].monitoring_service_status",
-                                                        "Monitoring agent service status",
-                                                        AgentServiceStatus.class)
-                                                .optional(),
-                                        fieldEnum(
-                                                        "data[].log_service_status",
-                                                        "Log agent service status",
-                                                        AgentServiceStatus.class)
+                                                        "data[].log_agent_status",
+                                                        "Log agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldString("data[].ns_id", "nsId (e.g., ns-1)"),
                                         fieldString("data[].mci_id", "mciId (e.g., mci-1)"),
@@ -321,9 +307,8 @@ class VMControllerTest {
                                 .influxSeq(0L)
                                 .nsId("ns-1")
                                 .mciId("mci-1")
-                                .vmStatus(VMStatus.RUNNING)
-                                .monitoringServiceStatus(AgentServiceStatus.ACTIVE)
-                                .logServiceStatus(AgentServiceStatus.ACTIVE)
+                                .monitoringAgentStatus(AgentStatus.SUCCESS)
+                                .logAgentStatus(AgentStatus.SUCCESS)
                                 .build());
         when(vmFacadeService.getVMs()).thenReturn(list);
 
@@ -345,19 +330,14 @@ class VMControllerTest {
                                         fieldNumber("data[].influx_seq", "Influx sequence")
                                                 .optional(),
                                         fieldEnum(
-                                                        "data[].vm_status",
-                                                        "Target status",
-                                                        VMStatus.class)
+                                                        "data[].monitoring_agent_status",
+                                                        "Monitoring agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldEnum(
-                                                        "data[].monitoring_service_status",
-                                                        "Monitoring agent service status",
-                                                        AgentServiceStatus.class)
-                                                .optional(),
-                                        fieldEnum(
-                                                        "data[].log_service_status",
-                                                        "Log agent service status",
-                                                        AgentServiceStatus.class)
+                                                        "data[].log_agent_status",
+                                                        "Log agent status",
+                                                        AgentStatus.class)
                                                 .optional(),
                                         fieldString("data[].ns_id", "nsId (e.g., ns-1)"),
                                         fieldString("data[].mci_id", "mciId (e.g.,  ci-1)"),

@@ -3,9 +3,6 @@ package com.mcmp.o11ymanager.manager.service;
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.entity.VMEntity;
-import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
-import com.mcmp.o11ymanager.manager.exception.agent.LogAgentNotInstalled;
-import com.mcmp.o11ymanager.manager.exception.agent.MonitoringAgentNotInstalled;
 import com.mcmp.o11ymanager.manager.exception.vm.VMAgentTaskProcessingException;
 import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.manager.global.error.ResourceNotExistsException;
@@ -128,6 +125,30 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
+    public VMAgentTaskStatus getMonitoringAgentTaskStatus(String nsId, String mciId, String vmId) {
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+        return vm.getMonitoringAgentTaskStatus();
+    }
+
+    @Override
+    public VMAgentTaskStatus getLogAgentTaskStatus(String nsId, String mciId, String vmId) {
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+        return vm.getLogAgentTaskStatus();
+    }
+
+    @Override
     public void isIdleMonitoringAgent(String nsId, String mciId, String vmId) {
         VMEntity vm =
                 vmJpaRepository
@@ -163,36 +184,6 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
-    public void isLogAgentInstalled(String nsId, String mciId, String vmId) {
-        VMEntity vm =
-                vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
-
-        if (vm.getLogServiceStatus().equals(AgentServiceStatus.NOT_EXIST.toString())) {
-            throw new LogAgentNotInstalled(requestInfo.getRequestId(), vmId);
-        }
-    }
-
-    @Override
-    public void isMonitoringAgentInstalled(String nsId, String mciId, String vmId) {
-        VMEntity vm =
-                vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
-                        .orElseThrow(
-                                () ->
-                                        new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
-
-        if (vm.getMonitoringServiceStatus().equals(AgentServiceStatus.NOT_EXIST.toString())) {
-            throw new MonitoringAgentNotInstalled(requestInfo.getRequestId(), vmId);
-        }
-    }
-
-    @Override
     public void updateMonitoringAgentTaskStatus(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status) {
         VMEntity vm =
@@ -205,7 +196,6 @@ public class VMServiceImpl implements VMService {
 
         vm.setMonitoringAgentTaskStatus(status);
 
-        // TODO 다른 방법 고민할 것
         if (status.equals(VMAgentTaskStatus.IDLE)) {
             vm.setVmMonitoringAgentTaskId("");
         }
@@ -230,7 +220,6 @@ public class VMServiceImpl implements VMService {
 
         vm.setLogAgentTaskStatus(status);
 
-        // TODO 다른 방법 고민할 것
         if (status.equals(VMAgentTaskStatus.IDLE)) {
             vm.setVmLogAgentTaskId("");
         }

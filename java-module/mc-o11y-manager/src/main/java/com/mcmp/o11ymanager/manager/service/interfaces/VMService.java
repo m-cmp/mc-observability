@@ -2,8 +2,6 @@ package com.mcmp.o11ymanager.manager.service.interfaces;
 
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
-import com.mcmp.o11ymanager.manager.exception.agent.LogAgentNotInstalled;
-import com.mcmp.o11ymanager.manager.exception.agent.MonitoringAgentNotInstalled;
 import com.mcmp.o11ymanager.manager.exception.host.HostAgentTaskProcessingException;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
@@ -37,10 +35,9 @@ public interface VMService {
     void isIdleLogAgent(String nsId, String mciId, String vmId)
             throws HostAgentTaskProcessingException;
 
-    void isLogAgentInstalled(String nsId, String mciId, String vmId) throws LogAgentNotInstalled;
+    VMAgentTaskStatus getMonitoringAgentTaskStatus(String nsId, String mciId, String vmId);
 
-    void isMonitoringAgentInstalled(String nsId, String mciId, String vmId)
-            throws MonitoringAgentNotInstalled;
+    VMAgentTaskStatus getLogAgentTaskStatus(String nsId, String mciId, String vmId);
 
     void updateMonitoringAgentTaskStatus(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status);

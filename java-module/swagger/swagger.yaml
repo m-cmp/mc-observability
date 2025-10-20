@@ -192,11 +192,10 @@ paths:
                   "description" : "string",
                   "vm_id" : "vm-1",
                   "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
                   "ns_id" : "ns-1",
-                  "mci_id" : "mci-1"
+                  "mci_id" : "mci-1",
+                  "monitoring_agent_status" : "SUCCESS",
+                  "log_agent_status" : "SUCCESS"
                 } ],
                 "error_message" : ""
               }
@@ -774,11 +773,10 @@ paths:
                   "description" : "string",
                   "vm_id" : "vm-1",
                   "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
                   "ns_id" : "ns-1",
-                  "mci_id" : "mci-1"
+                  "mci_id" : "mci-1",
+                  "monitoring_agent_status" : "SUCCESS",
+                  "log_agent_status" : "SUCCESS"
                 } ],
                 "error_message" : ""
               }
@@ -1080,24 +1078,24 @@ paths:
       tags:
         - "[Manager] Monitoring VM Management"
       summary: GetVM
-      description: Retrieve single target
+      description: Get target (VM)
       operationId: GetVM
       produces:
         - application/json
       parameters:
         - name: nsId
           in: path
-          description: "nsId (e.g., ns-1)"
+          description: "Namespace ID (e.g., ns-1)"
           required: true
           type: string
         - name: mciId
           in: path
-          description: "mciId (e.g., mci-1)"
+          description: "MCI ID (e.g., mci-1)"
           required: true
           type: string
         - name: vmId
           in: path
-          description: "vmId (e.g., vm-1)"
+          description: "VM ID (e.g., vm-1)"
           required: true
           type: string
       responses:
@@ -1113,11 +1111,10 @@ paths:
                   "description" : "string",
                   "vm_id" : "vm-1",
                   "influx_seq" : 0,
-                  "vm_status" : "RUNNING",
-                  "monitoring_service_status" : "ACTIVE",
-                  "log_service_status" : "ACTIVE",
                   "ns_id" : "ns-1",
-                  "mci_id" : "mci-1"
+                  "mci_id" : "mci-1",
+                  "monitoring_agent_status" : "SUCCESS",
+                  "log_agent_status" : "SUCCESS"
                 },
                 "error_message" : ""
               }
@@ -3015,6 +3012,11 @@ definitions:
             description: datasource is set up correctly
   VMDTO:
     type: object
+    required:
+      - data
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
       error_message:
         type: string
@@ -3028,49 +3030,42 @@ definitions:
             influx_seq:
               type: number
               description: Influx sequence
+            monitoring_agent_status:
+              type: string
+              description: Monitoring agent status
+              enum:
+                - INSTALLING
+                - SERVICE_INACTIVE
+                - SUCCESS
+                - FAILED
             vm_id:
               type: string
               description: vmId
             mci_id:
               type: string
-              description: "mciId (e.g.,  ci-1)"
-            vm_status:
+              description: "mciId (e.g., mci-1)"
+            log_agent_status:
               type: string
-              description: Target status
+              description: Log agent status
               enum:
-                - RUNNING
-                - FAILED
-            log_service_status:
-              type: string
-              description: Log agent service status
-              enum:
-                - ACTIVE
-                - INACTIVE
-                - ACTIVATING
-                - DEACTIVATING
-                - RELOADING
-                - NOT_EXIST
+                - INSTALLING
+                - SERVICE_INACTIVE
+                - SUCCESS
                 - FAILED
             ns_id:
               type: string
               description: "nsId (e.g., ns-1)"
-            monitoring_service_status:
-              type: string
-              description: Monitoring agent service status
-              enum:
-                - ACTIVE
-                - INACTIVE
-                - ACTIVATING
-                - DEACTIVATING
-                - RELOADING
-                - NOT_EXIST
-                - FAILED
             name:
               type: string
-              description: "Target name (e.g., mcmp-vm)"
+              description: "Target name(e.g., mcmp-vm)"
             description:
               type: string
               description: Description
+          required:
+            - mci_id
+            - name
+            - ns_id
+            - vm_id
       rs_code:
         type: string
         description: "Response code (e.g., 0000)"
