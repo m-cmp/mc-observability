@@ -34,13 +34,13 @@ spring:
     password: ${RABBITMQ_PASSWORD:mc-agent}
     virtual-host: ${RABBITMQ_VHOST:/test}
     alert:
-      queueName: ${RABBIT_ALERT_QUEUE:alert.queue}
-      exchangeName: ${RABBIT_ALERT_EXCHANGE:alert.exchange}
-      routingKey: ${RABBIT_ALERT_ROUTING_KEY:alert}
-      deadLetterQueueName: ${RABBIT_DLQ:alert.dlq}
-      deadLetterExchangeName: ${RABBIT_DLX:alert.dlx}
-      deadLetterRoutingKey: ${RABBIT_DLQ_ROUTING_KEY:alert.dlq}
-      mqttExchangeName: ${RABBIT_MQTT_EXCHANGE:mqtt.topic}
+      queueName: alert.queue
+      exchangeName: alert.exchange
+      routingKey: alert
+      deadLetterQueueName: alert.dlq
+      deadLetterExchangeName: alert.dlx
+      deadLetterRoutingKey: alert.dlq
+      mqttExchangeName: mqtt.topic
 
 springdoc:
   packages-to-scan: com.mcmp.o11ymanager
