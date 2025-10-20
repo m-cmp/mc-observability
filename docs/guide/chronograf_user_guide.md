@@ -8,7 +8,7 @@
 
 ## 2. 초기 InfluxDB 연결 설정
 - 초기 접속 시 influxdb 연결이 필요할 수 있습니다.
-![img.png](images/chronograf/img.png)
+![img.png](docs/image/chronograf/img.png)
 ### a. 설정 값 입력
 - **Connection URL:** `http://{mc-o11y-server url}:8086`
 - **Connection Name:** 임의 값 (예: Influx 1)
@@ -23,12 +23,12 @@
 
 ### b. 추가 설정
 - 다음 화면에서 별도 설정 없이 **Next** 클릭.
-![img.png](images/chronograf/img_1.png)
+![img.png](docs/image/chronograf/img_1.png)
 
 ---
 
 ### c. Kapacitor Connection
-![img.png](images/chronograf/img_2.png)
+![img.png](docs/image/chronograf/img_2.png)
 - **SKIP** 버튼 클릭.
 
 ---
@@ -40,7 +40,7 @@
 
 ## 3. 데이터 조회
 - DB 연결이 완료되면 좌측 메뉴 중 **'Explore'** 에서 데이터 조회가 가능합니다.  
-![img.png](images/chronograf/img_3.png)
+![img.png](docs/image/chronograf/img_3.png)
 
 ---
 
@@ -52,34 +52,34 @@
 ## 5. DB 및 Measurement 선택
 - **DB:** `mc-observability.autogen`
 - **Measurement:** `cpu`
-![img.png](images/chronograf/img_4.png)
+![img.png](docs/image/chronograf/img_4.png)
 
 ---
 
 ## 6. Tag 정보 확인
 - **cpu** 클릭 시 Tag 정보가 표시됩니다.
 - Tag 중 조회하고자 하는 VM의 ID 정보 (`ns`, `mci`, `target ID`)를 클릭합니다.
-![img.png](images/chronograf/img_5.png)
+![img.png](docs/image/chronograf/img_5.png)
 - 추가로 우측 필드 항목에서 모니터링 필드 항목을 확인할 수 있습니다.
-![img.png](images/chronograf/img_6.png)
+![img.png](docs/image/chronograf/img_6.png)
 
 ---
 
 ## 7. 데이터 확인
 - 데이터가 정상적으로 수집된 경우, 아래 이미지와 같이 상단 그래프 영역에서 값을 확인할 수 있습니다.
-![img.png](images/chronograf/img_7.png)
+![img.png](docs/image/chronograf/img_7.png)
 ---
 
 ## 8. 데이터 조회 범위 설정
 - 데이터 조회 범위는 우측 상단 UI에서 설정 가능합니다.
-![img.png](images/chronograf/img_8.png)
+![img.png](docs/image/chronograf/img_8.png)
 ---
 
 ## 9. 데이터 간격 설정
 - 데이터 간격은 우측 중간 **group by** 메뉴에서 선택 가능합니다.
-![img.png](images/chronograf/img_9.png)
+![img.png](docs/image/chronograf/img_9.png)
 ---
 
 ## 10. 조회 결과 예시
 - `ns01/mci01/g1-1-1`의 `cpu:usage_idle`을 1분 간격으로 총 1시간 조회한 결과는 아래와 같은 전체 화면으로 확인할 수 있습니다.
-![img.png](images/chronograf/img_10.png)
+![img.png](docs/image/chronograf/img_10.png)
