@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB-2
+    type: influxdb
+    access: proxy
+    url: http://mc-observability-influx-2:8086
+    version: 1
+    editable: false
+    basicAuth: true
+    basicAuthUser: mc-agent
+    user: mc-agent
+    secureJsonData:
+      basicAuthPassword: mc-agent
+      password: mc-agent
+    jsonData:
+      dbName: mc-observability-2
+      defaultBucket: mc-observability-2/autogen
+      httpMode: POST
+      organization: mc-agent
+      version: Flux

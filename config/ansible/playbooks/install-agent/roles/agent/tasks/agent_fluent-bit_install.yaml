@@ -1,0 +1,139 @@
+- name: Check required variables for install
+  fail:
+    msg: "Required variable not found: {{ item }}"
+  when: vars[item] is not defined or vars[item] == ''
+  loop:
+    - config_content
+
+- name: Begin Agent Common Tasks
+  include_tasks: agent_common_begin.yaml
+
+- name: Compress agent files
+  shell:
+    cmd: "sudo rm -f cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo ../busybox tar cvfz cmp-fluent-bit_{{ request_id }}.tar.gz fluent-bit/ && sudo chmod 644 cmp-fluent-bit_{{ request_id }}.tar.gz"
+    chdir: "{{ role_path }}/agent-install-files/cmp-agent"
+  delegate_to: 127.0.0.1
+
+- name: Copy Compressed Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
+    output_file_path: "/tmp/cmp-fluent-bit-{{ site_code }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Decompress agent files
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "/tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-fluent-bit-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
+
+- name: Remove Remote Compressed Agent Install File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /tmp/cmp-fluent-bit-{{ site_code }}.tar.gz"
+
+- name: Remove Local Compressed Agent Install File
+  shell:
+    cmd: "sudo rm -f {{ role_path }}/agent-install-files/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
+    chdir: "{{ role_path }}/agent-install-files"
+  delegate_to: 127.0.0.1
+
+- name: Copy Fluent Bit Image File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/images/fluent-bit_3.2.4-amd64.tar.gz"
+    output_file_path: "/tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Load Fluent Bit Image file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "/cmp-agent/common/podman/bin/run-podman load -i /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+
+- name: Remove Remote Fluent Bit Image File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+
+- name: End Agent Common Tasks
+  include_tasks: agent_common_end.yaml
+
+- name: Copy CMP Fluent Bit service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "cp -f /cmp-agent/sites/{{ site_code }}/fluent-bit/cmp-fluent-bit.service /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && sed -i 's@SITE_CODE@{{ site_code }}@g' /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && chown root:root /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service && chmod 644 /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service"
+
+- name: Fix SELinux permission for CMP Fluent Bit service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service"
+  ignore_errors: true
+
+- name: Reload systemctl daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload"
+
+- name: Enable CMP Fluent Bit service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl enable cmp-fluent-bit-{{ site_code }}"

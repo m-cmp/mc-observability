@@ -1,0 +1,72 @@
+#!/bin/bash
+
+## $1 = site_code
+
+if [ -d "/cmp-agent/fluent-bit" ]; then
+  echo "[*] Moving old fluent-bit files..."
+  mv -f /cmp-agent/fluent-bit /cmp-agent/sites/$1
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to move old fluent-bit files!"
+    exit 1;
+  fi
+fi
+
+echo "[*] Unmounting remained podman mounts..."
+mount | grep /cmp-agent/fluent-bit/ | awk '{print $3}' | sort -r | while read mountpoint; do echo Unmounting: $mountpoint; umount $mountpoint; done
+
+echo "[*] Remove old common files..."
+rm -rf /cmp-agent/sites/$1/fluent-bit/bin && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/include && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/lib && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/sbin && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/share && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/var | true && \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/etc/containers \
+  rm -rf /cmp-agent/sites/$1/fluent-bit/etc/ethertypes
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to remove old common files!"
+  exit 1;
+fi
+
+if [ -d "/cmp-agent/sites/$1/fluent-bit/etc/fluent-bit" ]; then
+  echo "[*] Moving old fluent-bit config files..."
+  mv -f /cmp-agent/sites/$1/fluent-bit/etc/fluent-bit/* /cmp-agent/sites/$1/fluent-bit/etc && \
+    rmdir /cmp-agent/sites/$1/fluent-bit/etc/fluent-bit | true
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to move old fluent-bit config files!"
+    exit 1;
+  fi
+fi
+
+FLUENT_BIT_CONFIG_FILE="/cmp-agent/sites/$1/fluent-bit/etc/fluent-bit.conf"
+
+if [ ! -f "$FLUENT_BIT_CONFIG_FILE" ]; then
+    echo "[!] ERROR: fluent-bit config file not found: $FLUENT_BIT_CONFIG_FILE"
+    exit 1
+fi
+
+echo "[*] Checking for existing FILTER configuration..."
+if ! (grep -q "Call add_timestamp" "$FLUENT_BIT_CONFIG_FILE" && grep -q "Match syslog" "$FLUENT_BIT_CONFIG_FILE"); then
+    echo "[*] Adding FILTER configuration to fluent-bit.conf..."
+    cat >> "$FLUENT_BIT_CONFIG_FILE" << 'EOF'
+
+[FILTER]
+    Name lua
+    Match syslog
+    Script /fluent-bit/etc/add-timestamp.lua
+    Call add_timestamp
+EOF
+
+    STATUS=$?
+    if [ "$STATUS" != 0 ]; then
+        echo "[!] ERROR: Failed to add FILTER configuration!"
+        exit 1;
+    fi
+
+    echo "[*] FILTER configuration added successfully!"
+else
+    echo "[*] FILTER configuration already exists, skipping..."
+fi

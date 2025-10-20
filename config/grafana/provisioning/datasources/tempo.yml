@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://mc-observability-tempo:3200
+    version: 1
+    basicAuth: false

@@ -1,0 +1,299 @@
+- name: Stop old CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl stop cmp-telegraf 2>&1 | true"
+
+- name: Disable old CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl disable cmp-telegraf 2>&1 | true"
+  ignore_errors: true
+
+- name: Run old CMP Telegraf status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-telegraf"
+  register: cmp_telegraf_status
+  ignore_errors: true
+
+- name: Display old CMP Telegraf status
+  debug:
+    var: cmp_telegraf_status
+
+- name: Remove old CMP Telegraf service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /lib/systemd/system/cmp-telegraf.service"
+  ignore_errors: true
+
+- name: Reload systemctl daemon for old CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload && systemctl reset-failed cmp-telegraf > /dev/null 2>&1 | true"
+
+- name: Stop CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl stop cmp-telegraf-{{ site_code }} 2>&1 | true"
+  ignore_errors: true
+
+- name: Disable CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl disable cmp-telegraf-{{ site_code }} 2>&1 | true"
+  ignore_errors: true
+
+- name: Run CMP Telegraf status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
+  register: cmp_telegraf_status
+  failed_when: cmp_telegraf_status.rc not in [3, 4]
+
+- name: Display CMP Telegraf status
+  debug:
+    var: cmp_telegraf_status
+
+- name: Begin Agent Common Tasks
+  include_tasks: agent_common_begin.yaml
+
+- name: Copy old CMP Telegraf Migration Script File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/cmp_old_telegraf_migration"
+    output_file_path: "/tmp/cmp_old_telegraf_migration_{{ request_id }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "755"
+
+- name: Run old CMP Telegraf Migration Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "flock -x /tmp/cmp_old_telegraf_migration.lock /tmp/cmp_old_telegraf_migration_{{ request_id }} {{ site_code }}"
+
+- name: Remove old CMP Telegraf Migration Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -rf /tmp/cmp_old_telegraf_migration.lock /tmp/cmp_old_telegraf_migration_{{ request_id }}"
+
+- name: Compress agent files
+  shell:
+    cmd: "sudo rm -f cmp-telegraf_{{ request_id }}.tar.gz && sudo chown -R root:root telegraf/ && sudo ../busybox tar cvfz cmp-telegraf_{{ request_id }}.tar.gz --exclude=telegraf/etc telegraf/ && sudo chmod 644 cmp-telegraf_{{ request_id }}.tar.gz"
+    chdir: "{{ role_path }}/agent-install-files/cmp-agent"
+  delegate_to: 127.0.0.1
+
+- name: Copy Compressed Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
+    output_file_path: "/tmp/cmp-telegraf-{{ site_code }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Decompress agent files
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p /cmp-agent/sites/{{ site_code }} && /tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-telegraf-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
+
+- name: Decompress telegraf binary
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "cat $(find /cmp-agent/sites/{{ site_code }}/telegraf/bin -maxdepth 1 -name 'cmp-telegraf.tar.gz_*' | sort -n) > /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz && /tmp/busybox_{{ request_id }} tar xvf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz -C /cmp-agent/sites/{{ site_code }}/telegraf/bin/ && rm -rf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz"
+
+- name: Remove Remote Compressed Agent Install File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /tmp/cmp-telegraf-{{ site_code }}.tar.gz"
+
+- name: Remove Local Compressed Agent Install File
+  shell:
+    cmd: "sudo rm -f {{ role_path }}/agent-install-files/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
+    chdir: "{{ role_path }}/agent-install-files"
+  delegate_to: 127.0.0.1
+
+- name: End Agent Common Tasks
+  include_tasks: agent_common_end.yaml
+
+- name: Copy CMP Telegraf service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "cp -f /cmp-agent/sites/{{ site_code }}/telegraf/cmp-telegraf.service /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && sed -i 's@SITE_CODE@{{ site_code }}@g' /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && chown root:root /lib/systemd/system/cmp-telegraf-{{ site_code }}.service && chmod 644 /lib/systemd/system/cmp-telegraf-{{ site_code }}.service"
+
+- name: Fix SELinux permission for CMP Telegraf service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-telegraf-{{ site_code }}.service"
+  ignore_errors: true
+
+- name: Fix SELinux permission for /cmp-agent/sites/{{ site_code }}/telegraf/bin/
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon -Rt bin_t /cmp-agent/sites/{{ site_code }}/telegraf/bin/"
+  ignore_errors: true
+
+- name: Reload systemctl daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload"
+
+- name: Enable CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl enable cmp-telegraf-{{ site_code }}"
+
+- name: Restart CMP Telegraf service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl restart cmp-telegraf-{{ site_code }}"
+
+- name: Run CMP Telegraf status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
+  register: cmp_telegraf_status
+  failed_when: cmp_telegraf_status.rc not in [0, 3]
+
+- name: Display CMP Telegraf status
+  debug:
+    var: cmp_telegraf_status
