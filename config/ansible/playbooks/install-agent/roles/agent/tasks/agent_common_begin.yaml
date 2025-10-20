@@ -1,0 +1,139 @@
+- name: Copy temporary busybox
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/busybox"
+    output_file_path: "/tmp/busybox_{{ request_id }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "755"
+
+- name: Copy Common Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent-common.tar.gz"
+    output_file_path: "/tmp/cmp-agent-common_{{ request_id }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Copy Common Agent Install Script File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent_install_common"
+    output_file_path: "/tmp/cmp-agent_install_common_{{ request_id }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "755"
+
+- name: Run Common Agent Install Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "flock -x /tmp/cmp-agent_install_common.lock /tmp/cmp-agent_install_common_{{ request_id }} {{ request_id }}"
+
+- name: Remove Common Agent Install Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -rf /tmp/agent_install_common.lock /tmp/cmp-agent_install_common_{{ request_id }}"
+
+- name: Run rsyslog status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager rsyslog"
+  register: rsyslog_status
+  failed_when: rsyslog_status.rc not in [0, 3]
+
+- name: Display rsyslog status
+  debug:
+    var: rsyslog_status
+
+- name: Get local time before SSH
+  delegate_to: 127.0.0.1
+  raw: "date +%s"
+  register: before_time
+
+- name: Get remote server time
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "date +%s"
+  register: remote_time
+
+- name: Get local time after SSH
+  delegate_to: 127.0.0.1
+  raw: "date +%s"
+  register: after_time
+
+- name: Calculate network delay
+  set_fact:
+    network_delay: "{{ ((after_time.stdout | int) - (before_time.stdout | int)) // 2 }}"
+
+- name: Calculate time difference
+  set_fact:
+    time_diff_seconds: "{{ (before_time.stdout | int) - ((remote_time.stdout | int) - (network_delay | int)) }}"
+
+- name: Generate time.env file
+  shell: |
+    bash -c 'echo TIME_DIFF_SECONDS=\"{{ time_diff_seconds }}\" > /tmp/time.env_{{ request_id }}'
+  delegate_to: 127.0.0.1
+
+- name: Create site directory
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p /cmp-agent/sites/{{ site_code }}"
+
+- name: Copy time.env file
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/time.env_{{ request_id }}"
+    output_file_path: "/cmp-agent/sites/{{ site_code }}/time.env"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Remove local generated time.env file
+  raw: "rm -f /tmp/time.env_{{ request_id }}"
+  delegate_to: 127.0.0.1
+
+- name: Fix SELinux permission for time.env file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /cmp-agent/sites/{{ site_code }}/time.env"
+  ignore_errors: true
