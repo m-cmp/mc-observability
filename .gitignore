@@ -5,11 +5,12 @@ __pycache__/
 venv/
 .conda/
 *.log
-.env
 tests/
 .vscode/
 tests/
 
+python/insight/.env
+python/insight/config/dev_config.yaml
 python/scheduler/airflow-home/logs/
 python/scheduler/airflow-home/airflow-webserver.pid
 python/scheduler/airflow-home/dags/__pycache__/

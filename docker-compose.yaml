@@ -126,8 +126,8 @@ services:
       mc-infra-manager-postgres:
         condition: service_healthy
     volumes:
-      - ./conf/mc-infra-manager/setup.env:/app/conf/setup.env
-      - ./conf/mc-infra-manager/cloud_conf.yaml:/app/conf/cloud_conf.yaml
+      - ./config/mc-infra-manager/setup.env:/app/conf/setup.env
+      - ./config/mc-infra-manager/cloud_conf.yaml:/app/conf/cloud_conf.yaml
       - ~/.cloud-barista/credentials.yaml.enc:/app/conf/credentials.yaml.enc
       - /docker/mc-infra-manager-container/meta_db/:/app/meta_db/
       - /docker/mc-infra-manager-container/log/:/app/log/
