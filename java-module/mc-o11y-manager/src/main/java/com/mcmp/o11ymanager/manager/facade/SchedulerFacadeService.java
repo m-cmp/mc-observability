@@ -11,6 +11,7 @@ import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -91,7 +92,7 @@ public class SchedulerFacadeService {
                                         currentTask.getId(),
                                         currentTask.getStatus());
 
-                                if ("waiting".equals(currentTask.getStatus())) {
+                                if ("waiting".equalsIgnoreCase(currentTask.getStatus())) {
                                     startTime.set(System.currentTimeMillis());
                                     return;
                                 }
@@ -99,7 +100,7 @@ public class SchedulerFacadeService {
                                 // case of timeout
                                 if (currentTime - startTime.get()
                                         > TimeUnit.MINUTES.toMillis(maxWaitMinutes)) {
-                                    log.warn(
+                                    log.debug(
                                             "Task timed out after {} minutes. Resetting status to IDLE. VM: {}/{}/{}, Agent: {}",
                                             maxWaitMinutes,
                                             nsId,
@@ -122,11 +123,11 @@ public class SchedulerFacadeService {
                                 }
 
                                 // case of success
-                                if ("success".equals(currentTask.getStatus())) {
+                                if ("success".equalsIgnoreCase(currentTask.getStatus())) {
                                     action = getAgentActionFinished(method, agent);
                                     log.debug(action.toString());
                                     log.debug("Task successful");
-                                } else if ("error".equals(currentTask.getStatus())) {
+                                } else if ("error".equalsIgnoreCase(currentTask.getStatus())) {
                                     action = getAgentActionFailed(method, agent);
                                     log.debug("Task failed");
                                 } else {
@@ -142,13 +143,45 @@ public class SchedulerFacadeService {
                                             vmId,
                                             agent,
                                             action);
-                                    if (agent == Agent.TELEGRAF) {
-                                        vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
-                                    } else if (agent == Agent.FLUENT_BIT) {
-                                        vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                    String status =
+                                            Optional.ofNullable(currentTask.getStatus())
+                                                    .orElse("")
+                                                    .toLowerCase();
+
+                                    if ("success".equalsIgnoreCase(status)) {
+
+                                        if (agent == Agent.TELEGRAF) {
+                                            vmService.updateMonitoringAgentTaskStatus(
+                                                    nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                        } else if (agent == Agent.FLUENT_BIT) {
+                                            vmService.updateLogAgentTaskStatus(
+                                                    nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                        }
+                                    } else if ("error".equalsIgnoreCase(status)
+                                            || "failed".equalsIgnoreCase(status)
+                                            || "stopped".equalsIgnoreCase(status)) {
+
+                                        if (agent == Agent.TELEGRAF) {
+                                            vmService.updateMonitoringAgentTaskStatus(
+                                                    nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
+                                        } else if (agent == Agent.FLUENT_BIT) {
+                                            vmService.updateLogAgentTaskStatus(
+                                                    nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
+                                        }
                                     }
+                                    //                                    if (agent ==
+                                    // Agent.TELEGRAF) {
+                                    //
+                                    // vmService.updateMonitoringAgentTaskStatus(
+                                    //                                                nsId, mciId,
+                                    // vmId, VMAgentTaskStatus.FINISHED);
+                                    //                                    } else if (agent ==
+                                    // Agent.FLUENT_BIT) {
+                                    //
+                                    // vmService.updateLogAgentTaskStatus(
+                                    //                                                nsId, mciId,
+                                    // vmId, VMAgentTaskStatus.FINISHED);
+                                    //                                    }
                                 }
 
                                 ScheduledFuture<?> scheduledFuture = futureRef.get();

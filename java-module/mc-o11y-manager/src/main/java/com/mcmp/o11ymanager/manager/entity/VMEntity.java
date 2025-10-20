@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.manager.entity;
 
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
+import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import jakarta.persistence.*;
@@ -19,6 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @IdClass(VmId.class)
 @EntityListeners(AuditingEntityListener.class)
 public class VMEntity {
+
     @Id private String nsId;
 
     @Id private String mciId;
@@ -49,4 +51,10 @@ public class VMEntity {
     private AgentServiceStatus monitoringServiceStatus;
 
     private AgentServiceStatus logServiceStatus;
+
+    @Enumerated(EnumType.STRING)
+    private AgentStatus monitoringAgentStatus;
+
+    @Enumerated(EnumType.STRING)
+    private AgentStatus logAgentStatus;
 }

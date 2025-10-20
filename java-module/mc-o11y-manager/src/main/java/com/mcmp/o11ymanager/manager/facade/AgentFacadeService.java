@@ -9,10 +9,13 @@ import com.mcmp.o11ymanager.manager.dto.vm.AccessInfoDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
+import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.enums.ResponseStatus;
 import com.mcmp.o11ymanager.manager.global.annotation.Base64Decode;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.port.TumblebugPort;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
+import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +43,7 @@ public class AgentFacadeService {
     private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks =
             new ConcurrentHashMap<>();
     private final TumblebugService tumblebugService;
+    private final VMService vmService;
 
     private ReentrantLock getAgentLock(String nsId, String mciId, String vmId) {
         String lockKey = nsId + "-" + mciId + "-" + vmId;
@@ -192,6 +196,33 @@ public class AgentFacadeService {
         semaphoreConfigUpdateTemplateCurrentCount++;
 
         return semaphoreConfigUpdateTemplateCurrentCount;
+    }
+
+    public AgentStatus getAgentStatus(String nsId, String mciId, String vmId, Agent agent) {
+        VMAgentTaskStatus taskStatus;
+
+        if (agent == Agent.TELEGRAF) {
+            taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, mciId, vmId);
+        } else if (agent == Agent.FLUENT_BIT) {
+            taskStatus = vmService.getLogAgentTaskStatus(nsId, mciId, vmId);
+        } else {
+            throw new IllegalArgumentException("Unknown agent type: " + agent);
+        }
+
+        if (taskStatus == VMAgentTaskStatus.INSTALLING) {
+            return AgentStatus.INSTALLING;
+        }
+        if (taskStatus == VMAgentTaskStatus.FAILED) {
+            return AgentStatus.FAILED;
+        }
+
+        AgentServiceStatus serviceStatus = getAgentServiceStatus(nsId, mciId, vmId, agent);
+
+        if (serviceStatus == AgentServiceStatus.ACTIVE) {
+            return AgentStatus.SUCCESS;
+        } else {
+            return AgentStatus.SERVICE_INACTIVE;
+        }
     }
 
     @Transactional

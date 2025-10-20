@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mcmp.o11ymanager.manager.entity.VMEntity;
 import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
+import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import lombok.AllArgsConstructor;
@@ -63,6 +64,12 @@ public class VMDTO {
     @JsonProperty("mci_id")
     private String mciId;
 
+    @JsonProperty("monitoring_agent_status")
+    private AgentStatus monitoringAgentStatus;
+
+    @JsonProperty("log_agent_status")
+    private AgentStatus logAgentStatus;
+
     public static VMDTO fromEntity(VMEntity entity) {
         return VMDTO.builder()
                 .vmId(entity.getVmId())
@@ -75,6 +82,8 @@ public class VMDTO {
                 .vmLogAgentTaskId(entity.getVmLogAgentTaskId())
                 .monitoringServiceStatus(entity.getMonitoringServiceStatus())
                 .logServiceStatus(entity.getLogServiceStatus())
+                .monitoringAgentStatus(entity.getMonitoringAgentStatus())
+                .logAgentStatus(entity.getLogAgentStatus())
                 .nsId(entity.getNsId())
                 .mciId(entity.getMciId())
                 .build();
@@ -93,6 +102,8 @@ public class VMDTO {
                 .vmLogAgentTaskId(this.vmLogAgentTaskId)
                 .monitoringServiceStatus(this.monitoringServiceStatus)
                 .logServiceStatus(this.logServiceStatus)
+                .monitoringAgentStatus(this.monitoringAgentStatus)
+                .logAgentStatus(this.logAgentStatus)
                 .nsId(this.nsId)
                 .mciId(this.mciId)
                 .build();

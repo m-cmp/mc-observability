@@ -4,7 +4,7 @@ import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
-import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
+import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
@@ -68,18 +68,6 @@ public class VMFacadeService {
 
         agentFacadeService.install(nsId, mciId, vmId);
 
-        //        log.info(">>> start checking monitoring agent status");
-        //        AgentServiceStatus monitoringStatus =
-        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
-        // Agent.TELEGRAF);
-        //        log.info(">>> start checking log agent status");
-        //        AgentServiceStatus logStatus =
-        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
-        // Agent.FLUENT_BIT);
-
-        //        savedVM.setMonitoringServiceStatus(monitoringStatus);
-        //        savedVM.setLogServiceStatus(logStatus);
-
         return savedVM;
     }
 
@@ -104,12 +92,20 @@ public class VMFacadeService {
             throw e;
         }
 
-        log.info(">>> start checking monitoring agent status");
-        AgentServiceStatus monitoringStatus =
-                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId, Agent.TELEGRAF);
-        log.info(">>> start checking log agent status");
-        AgentServiceStatus logStatus =
-                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
+        //        log.info(">>> start checking monitoring agent status");
+        //        AgentServiceStatus monitoringStatus =
+        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+        // Agent.TELEGRAF);
+        //        log.info(">>> start checking log agent status");
+        //        AgentServiceStatus logStatus =
+        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+        // Agent.FLUENT_BIT);
+
+        AgentStatus monitoringAgentStatus =
+                agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.TELEGRAF);
+
+        AgentStatus logAgentStatus =
+                agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
 
         return VMDTO.builder()
                 .vmId(vm.getId())
@@ -117,8 +113,8 @@ public class VMFacadeService {
                 .description(vm.getDescription())
                 .nsId(nsId)
                 .mciId(mciId)
-                .monitoringServiceStatus(monitoringStatus)
-                .logServiceStatus(logStatus)
+                .monitoringAgentStatus(monitoringAgentStatus)
+                .logAgentStatus(logAgentStatus)
                 .build();
     }
 
