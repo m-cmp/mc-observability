@@ -28,11 +28,11 @@ spring:
   banner:
     location: classpath:banner.txt
   rabbitmq:
-    host: ${RABBITMQ_HOST:mc-observability-rabbitmq}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:mc-agent}
-    password: ${RABBITMQ_PASSWORD:mc-agent}
-    virtual-host: ${RABBITMQ_VHOST:/test}
+    host: mc-observability-rabbitmq
+    port: 5672
+    username: mc-agent
+    password: mc-agent
+    virtual-host: /test
     alert:
       queueName: alert.queue
       exchangeName: alert.exchange
