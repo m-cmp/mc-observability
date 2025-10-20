@@ -18,7 +18,7 @@ on:
       - "v*.*.*"
     paths:
       - "java-module/influxdb-conf"
-      - "java-module/influxdb-init"
+      - "../../docker/config/influxdb-init"
       - "java-module/Dockerfile.influx"
   workflow_dispatch:
 

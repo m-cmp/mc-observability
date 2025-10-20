@@ -1,0 +1,16 @@
+[Unit]
+Description=CMP Telegraf Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=root
+EnvironmentFile=/cmp-agent/sites/SITE_CODE/time.env
+ExecStart=/cmp-agent/sites/SITE_CODE/telegraf/bin/cmp-telegraf --config /cmp-agent/sites/SITE_CODE/telegraf/etc/telegraf.conf --config-directory /cmp-agent/sites/SITE_CODE/telegraf/etc/telegraf.d
+ExecStop=/usr/bin/killall cmp-telegraf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

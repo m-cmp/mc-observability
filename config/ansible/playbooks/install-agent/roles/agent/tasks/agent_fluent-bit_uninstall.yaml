@@ -1,0 +1,89 @@
+- name: Stop CMP Fluent Bit service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl stop cmp-fluent-bit-{{ site_code }} 2>&1 | true"
+
+- name: Disable CMP Fluent Bit service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl disable cmp-fluent-bit-{{ site_code }} 2>&1 | true"
+
+- name: Run CMP Fluent Bit status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-fluent-bit-{{ site_code }}"
+  register: cmp_fluent_bit_status
+  failed_when: cmp_fluent_bit_status.rc not in [3, 4]
+
+- name: Display Fluent Bit status
+  debug:
+    var: cmp_fluent_bit_status
+
+- name: Unmount remained podman mounts
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mount | grep /cmp-agent/sites/{{ site_code }}/fluent-bit/ | awk '{print $3}' | sort -r | while read mountpoint; do echo Unmounting: $mountpoint; umount $mountpoint; done"
+
+- name: Remove CMP Agent Fluent Bit folder
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -rf /cmp-agent/sites/{{ site_code }}/fluent-bit/"
+
+- name: Remove CMP Fluent Bit service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /lib/systemd/system/cmp-fluent-bit-{{ site_code }}.service"
+
+- name: Reload systemctl daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload && systemctl reset-failed cmp-fluent-bit-{{ site_code }} > /dev/null 2>&1 | true"
