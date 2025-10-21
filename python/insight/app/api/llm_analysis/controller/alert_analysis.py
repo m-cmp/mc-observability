@@ -4,7 +4,7 @@ from app.api.llm_analysis.request.req import PostQueryBody
 from app.api.llm_analysis.response.res import ResBodyQuery
 from app.api.llm_analysis.description.alert_analysis import post_alert_analysis_query_description
 from app.api.llm_analysis.utils.alert_analysis import AlertQueryService
-from app.core.dependencies.mcp import get_mcp_context
+from app.core.dependencies.mcp import get_alert_analysis_context
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 
@@ -19,7 +19,7 @@ router = APIRouter()
     operation_id="PostAlertAnalysisQuery",
 )
 async def query_alert_analysis(body_params: PostQueryBody, db: Session = Depends(get_db),
-                               mcp_context=Depends(get_mcp_context)):
+                               mcp_context=Depends(get_alert_analysis_context)):
     """
     Submit a query to the alert analysis chat session.
     """

@@ -13,7 +13,7 @@ from app.api.llm_analysis.description.llm_session import (
     get_llm_session_history_description,
 )
 from app.api.llm_analysis.utils.session import CommonSessionService
-from app.core.dependencies.mcp import get_mcp_context
+from app.core.dependencies.mcp import get_log_analysis_context
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 
@@ -92,7 +92,7 @@ async def delete_all_llm_chat_sessions(db: Session = Depends(get_db)):
     operation_id="GetLLMSessionHistory",
 )
 async def get_llm_session_history(path_params: SessionIdPath = Depends(), db: Session = Depends(get_db),
-                                  mcp_context=Depends(get_mcp_context)):
+                                  mcp_context=Depends(get_log_analysis_context)):
     """
     Get chat session history.
     """

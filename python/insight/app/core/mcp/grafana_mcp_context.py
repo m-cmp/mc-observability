@@ -20,18 +20,11 @@ class GrafanaMCPContext:
         try:
             self._sse = sse_client(self.mcp_url)
             self._read, self._write = await self._sse.__aenter__()
-            logger.info("SSE connection established")
-
             self.session = ClientSession(self._read, self._write)
             await self.session.__aenter__()
-            logger.info("MCP session created")
-
             await self.session.initialize()
             logger.info("MCP session initialized")
 
-            # Load tool list
-            self.tools = await self.session.list_tools()
-            logger.info(f"Successfully loaded {len(self.tools.tools)} Grafana MCP tools")
             return self.session
 
         except Exception as e:
@@ -40,26 +33,15 @@ class GrafanaMCPContext:
             raise
 
     async def astop(self):
-        try:
-            if self.session:
-                await self.session.__aexit__(None, None, None)
-        except Exception as e:
-            logger.error(f"Error closing Grafana MCP session: {e}")
+        if self.session:
+            await self.session.__aexit__(None, None, None)
 
-        try:
-            if self._sse:
-                await self._sse.__aexit__(None, None, None)
-        except Exception as e:
-            logger.error(f"Error closing Grafana MCP SSE: {e}")
+        if self._sse:
+            await self._sse.__aexit__(None, None, None)
+
 
     async def get_tools(self):
-        if self.tools is None:
-            self.tools = await self.session.list_tools()
+        self.tools = await self.session.list_tools()
+        logger.info(f"Successfully loaded {len(self.tools.tools)} Grafana MCP tools")
+
         return self.tools
-
-    async def call_tool(self, tool_name, arguments=None):
-        if arguments is None:
-            arguments = {}
-
-        result = await self.session.call_tool(tool_name, arguments)
-        return result

@@ -4,7 +4,7 @@ from app.api.llm_analysis.request.req import PostQueryBody
 from app.api.llm_analysis.response.res import ResBodyQuery
 from app.api.llm_analysis.description.log_analysis import post_log_analysis_query_description
 from app.api.llm_analysis.utils.log_analysis import LogQueryService
-from app.core.dependencies.mcp import get_mcp_context
+from app.core.dependencies.mcp import get_log_analysis_context
 from app.core.dependencies.db import get_db
 from sqlalchemy.orm import Session
 
@@ -19,7 +19,7 @@ router = APIRouter()
     operation_id="PostLogAnalysisQuery",
 )
 async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db),
-                             mcp_context=Depends(get_mcp_context)):
+                             mcp_context=Depends(get_log_analysis_context)):
     """
     Submit a query to the log analysis chat session.
     """
