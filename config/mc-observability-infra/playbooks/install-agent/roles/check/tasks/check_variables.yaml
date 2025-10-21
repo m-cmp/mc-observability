@@ -1,0 +1,12 @@
+- name: Check required variables
+  fail:
+    msg: "Required variable not found: {{ item }}"
+  when: vars[item] is not defined or vars[item] == ''
+  loop:
+    - agent
+    - site_code
+    - request_id
+    - target_host
+    - target_port
+    - target_user
+    - target_sshkey
