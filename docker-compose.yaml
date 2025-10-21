@@ -75,7 +75,7 @@ services:
       SEMAPHORE_MAX_TASKS_PER_TEMPLATE: 10
       ANSIBLE_HOST_KEY_CHECKING: False
     volumes:
-      - ./config/mc-observability-infra:/ansible
+      - ./config/mc-observability-infra/ansible:/ansible
     healthcheck:
       start_period: 120s
       test: 'curl -s http://127.0.0.1:3000/api/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
@@ -586,6 +586,7 @@ services:
     stdin_open: true
     ports:
       - "8000:8000"
+
     environment:
       - GRAFANA_URL=${GRAFANA_URL:-}
       - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
