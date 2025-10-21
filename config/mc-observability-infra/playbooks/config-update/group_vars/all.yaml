@@ -1,0 +1,4 @@
+target_host: "10.0.0.164"
+target_port: 22
+target_user: "root"
+target_sshkey: "xxxx"
