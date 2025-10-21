@@ -1,0 +1,16 @@
+- name: Copy file to remote
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  copy:
+    src: "{{ input_file_path }}"
+    dest: "{{ output_file_path }}"
+    mode: "{{ output_file_chmod }}"
+    owner: "{{ output_file_owner }}"
+    group: "{{ output_file_group }}"

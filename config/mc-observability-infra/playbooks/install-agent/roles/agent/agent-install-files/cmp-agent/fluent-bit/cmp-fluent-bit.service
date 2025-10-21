@@ -1,0 +1,35 @@
+[Unit]
+Description=CMP Fluent Bit Service (site_code: SITE_CODE)
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=%t/containers
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=root
+EnvironmentFile=/cmp-agent/sites/SITE_CODE/time.env
+ExecStart=/cmp-agent/common/podman/bin/run-podman run \
+    --cgroups=no-conmon \
+    --env-file=/cmp-agent/sites/SITE_CODE/fluent-bit/etc/variables \
+    --env TIME_DIFF_SECONDS \
+    --env HOSTNAME=%H \
+    --sdnotify=conmon \
+    --replace \
+    -d \
+    --restart=always \
+    --tz=Asia/Seoul \
+    --network=host \
+    -v /var/log:/var/log:ro \
+    -v /cmp-agent/sites/SITE_CODE/fluent-bit/etc:/fluent-bit/etc:rw \
+    --name cmp-fluent-bit-SITE_CODE fluent/fluent-bit:3.2.4-amd64
+
+ExecStop=/cmp-agent/common/podman/bin/run-podman stop --ignore -t 10 cmp-fluent-bit-SITE_CODE
+
+Restart=on-failure
+RestartPreventExitStatus=100
+Environment=PODMAN_SYSTEMD_UNIT=%n
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
