@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 
 import uvicorn
 from app.api.anomaly import anomaly
@@ -12,7 +11,6 @@ from app.api.llm_analysis import (
 )
 from app.api.prediction import prediction
 from app.api.readyz import readyz
-from app.core.mcp.registry import init_global_mcp, stop_global_mcp
 from app.core.otel.trace import init_otel_trace
 from app.core.otel.log import init_otel_logger
 from config.ConfigManager import ConfigManager
@@ -22,29 +20,9 @@ from fastapi.middleware.cors import CORSMiddleware
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Initialize Multi-MCP environment on startup
-    logger.info("Observability Insight start")
-    try:
-        await init_global_mcp()
-        logger.info("Application startup: Multi-MCP environment initialized")
-    except Exception as e:
-        logger.error(f"Failed to initialize Multi-MCP environment: {e}")
-
-    yield
-
-    # Clean up MCP environment on shutdown
-    try:
-        await stop_global_mcp()
-        logger.info("Application shutdown: Multi-MCP environment stopped")
-    except Exception as e:
-        logger.error(f"Error stopping Multi-MCP environment: {e}")
-
-
 config = ConfigManager()
 
-app = FastAPI(title="Insight Module DOCS", description="mc-observability insight module", lifespan=lifespan)
+app = FastAPI(title="Insight Module DOCS", description="mc-observability insight module")
 
 origins = ["*"]
 
