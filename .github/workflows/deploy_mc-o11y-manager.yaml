@@ -26,8 +26,12 @@ on:
       - "**.md"
       - "LICENSE"
       - ".gitignore"
+      - "config/**"
+      - "docs/**"
       - "go/**"
       - "python/**"
+      - "swagger/**"
+      - "docker-compose.yaml"
   workflow_dispatch:
 
 env:
