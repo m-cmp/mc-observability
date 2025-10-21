@@ -588,11 +588,11 @@ services:
       - "8000:8000"
 
     environment:
-      - GRAFANA_URL=${GRAFANA_URL:-}
+      - GRAFANA_URL=http://mc-observability-grafana:3000
       - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
     command:
       - --enabled-tools
-      - '["list_datasources", "list_loki_label_names", "list_loki_label_values", "query_loki_logs", "query_loki_stats"]'
+      - "loki,datasource"
     networks:
       - internal_network
       - external_network
@@ -625,7 +625,7 @@ services:
     container_name: mc-observability-mcp-influx
     restart: always
     ports:
-      - "8002:8000"
+      - "8002:8002"
     depends_on:
       mc-observability-influx:
         condition: service_started
