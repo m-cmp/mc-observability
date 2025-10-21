@@ -17,8 +17,7 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "java-module/grafana/**"
-      - "java-module/Dockerfile.grafana"
+      - "config/grafana/**"
   workflow_dispatch:
 
 env:
@@ -32,7 +31,7 @@ jobs:
     # Job name is "Publish a container image"
     name: Publish a container image
 
-#    if: github.repository_owner == 'cloud-barista'
+    # if: github.repository_owner == 'cloud-barista'
 
     # This job runs on Ubuntu-latest (Ubuntu 20.04 LTS checked on 2022-09-06)
     # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
@@ -108,15 +107,15 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build
-        run: cd java-module && docker build . --file Dockerfile.grafana --tag $IMAGE_NAME
+        run: cd config/grafana && docker build . --file Dockerfile --tag $IMAGE_NAME
 
       - name: Publish image
         id: docker_build_1
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
-          context: ./java-module
-          file: ./java-module/Dockerfile.grafana
+          context: ./config/grafana
+          file: ./config/grafana/Dockerfile
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

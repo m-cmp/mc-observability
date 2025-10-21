@@ -40,63 +40,13 @@ services:
     environment:
       # - O11Y_EXTERNAL_IP=111.111.111.111 # External IP will be set automatically. Set this value if you want to change.
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
-      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://mc-infra-manager:1323}
-      - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
-      - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
-      - SPIDER_URL=${SPIDER_URL:-http://mc-infra-connector:1024}
-      - SPIDER_ID=${SPIDER_ID:-}
-      - SPIDER_PW=${SPIDER_PW:-}
-      - INSIGHT_URL=http://mc-observability-insight:9001
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mc-observability-maria:3306/mc_observability
-      - SPRING_DATASOURCE_USERNAME=mc-agent
-      - SPRING_DATASOURCE_PASSWORD=mc-agent
-      # --- otel options ---
-      # ===== include/exclude span  =====
-      - OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
-      #      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
-      # ===== service options =====
-      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-manager}
-      - OTEL_METRICS_EXPORTER=none
-      - OTEL_LOGS_EXPORTER=none
-      - OTEL_TRACES_EXPORTER=otlp
-      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
-      #      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
-      #      - OTEL_EXPORTER_OTLP_PROTOCOL=${OTEL_EXPORTER_OTLP_PROTOCOL}
-      # ===== disable auto otel instrumentation =====
-      #      - OTEL_INSTRUMENTATION_KAFKA_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_RABBITMQ_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_LETTUCE_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_JEDIS_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_REDISSON_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_MONGO_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_GRPC_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED=false
-      #      - OTEL_INSTRUMENTATION_EXECUTOR_ENABLED=false
-      - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
-      - MAX_FILE_SIZE=200MB
-      #      - OTEL_INSTRUMENTATION_AWS_SDK_ENABLED=false
-      # --- RabbitMQ connection ---
-      - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
-      - SPRING_RABBITMQ_PORT=5672
-      - SPRING_RABBITMQ_USERNAME=mc-agent
-      - SPRING_RABBITMQ_PASSWORD=mc-agent
-      - SPRING_RABBITMQ_VIRTUAL_HOST=/test
-
-      # --- Custom alert config ---
-      - SPRING_RABBITMQ_ALERT_QUEUENAME=alert.queue
-      - SPRING_RABBITMQ_ALERT_EXCHANGENAME=alert.exchange
-      - SPRING_RABBITMQ_ALERT_ROUTINGKEY=alert
-      - SPRING_RABBITMQ_ALERT_DEADLETTERQUEUENAME=alert.dlq
-      - SPRING_RABBITMQ_ALERT_DEADLETTEREXCHANGENAME=alert.dlx
-      - SPRING_RABBITMQ_ALERT_DEADLETTERROUTINGKEY=alert.dlq
-      - SPRING_RABBITMQ_ALERT_MQTTEXCHANGENAME=mqtt.topic
+#      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
+#      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
     volumes:
       - ./mc-o11y-manager/config:/config
       - ./mc-o11y-manager/applog:/applog
       - shared_logs:/applog/mc-o11y-manager:rw
       - grafana_shared_config:/grafana_config:ro
-      # - ./manager-conf:/etc/mc-observability-agent/conf:rw
     healthcheck:
       start_period: 120s
       test: 'curl -s http://127.0.0.1:18080/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'

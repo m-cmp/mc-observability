@@ -1,0 +1,43 @@
+auth_enabled: false
+server:
+  http_listen_port: 3100
+  log_level: info
+  grpc_listen_port: 9095
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: memberlist
+schema_config:
+  configs:
+    - from: 2025-01-01
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
+storage_config:
+  aws:
+    endpoint: mc-observability-minio:9000
+    bucketnames: loki-data
+    access_key_id: YmQYMMfCAPenMclY1WR1
+    secret_access_key: iXjthlJdpI0fKpz015yMgBKuNPBtSrIvDOED1a3P
+    insecure: true
+    s3forcepathstyle: true
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/cache
+memberlist:
+  join_members: []
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 90d
+limits_config:
+  discover_service_name: []
+  discover_log_levels: false
