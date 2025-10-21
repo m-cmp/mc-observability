@@ -6,6 +6,8 @@ RUN apk --no-cache add bash curl tzdata
 RUN echo "Asia/Seoul" >  /etc/timezone
 RUN cp -f /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 
+WORKDIR /minio
+
 COPY ./run.sh /minio/run.sh
 COPY --from=minio ./usr/bin/minio /minio/bin/minio
 RUN chmod +x /minio/run.sh
