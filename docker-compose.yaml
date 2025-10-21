@@ -639,7 +639,7 @@ services:
       - external_network
 
   mc-observability-rabbitmq:
-    image: rabbitmq:4-management-alpine
+    image: rabbitmq:4.1.4-management-alpine
     container_name: mc-observability-rabbitmq
     restart: always
     ports:
@@ -683,7 +683,7 @@ services:
           tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
         fi && \
         chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
-        chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
+        chown -R 132:141 /var/lib/rabbitmq /var/log/rabbitmq
     volumes:
       - /docker/rabbitmq_data:/var/lib/rabbitmq
     user: root
