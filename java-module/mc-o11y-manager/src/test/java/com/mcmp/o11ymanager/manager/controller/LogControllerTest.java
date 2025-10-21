@@ -83,6 +83,10 @@ class LogControllerTest {
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
                                 .param("limit", "10")
+                                .param("direction", "FORWARD")
+                                .param("interval", "1m")
+                                .param("step", "30s")
+                                .param("since", "1h")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
@@ -91,39 +95,57 @@ class LogControllerTest {
                                 .summary("LogRangeQuery")
                                 .description(
                                         "Retrieve log data for a specific query within a given time range.")
+                                .queryParameters(
+                                        paramString(
+                                                "query", "Query string (e.g., {NS_ID=\"test01\"})"),
+                                        paramString(
+                                                "start",
+                                                "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"),
+                                        paramString(
+                                                "end",
+                                                "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"),
+                                        paramString("limit", "Maximum number of entries"),
+                                        paramString("direction", "Direction (FORWARD/BACKWARD)")
+                                                .optional(),
+                                        paramString("interval", "Interval (e.g. 1m) ").optional(),
+                                        paramString("step", "Step (e.g. 30s) ").optional(),
+                                        paramString("since", "Since duration (e.g. 1h) ")
+                                                .optional())
                                 .responseFields(
-                                        fieldString("timestamp", "Response timestamp"),
-                                        fieldString("status", "Response status"),
-                                        fieldString("code", "Response code"),
-                                        fieldString("message", "Response message"),
-                                        fieldString("requestId", "Request ID"),
-                                        fieldObject("data.result", "Log result object").optional(),
-                                        fieldString("data.result.status", "Log status").optional(),
-                                        fieldObject("data.result.data[].labels", "Log labels")
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"),
+                                        fieldObject("data", "Log result object").optional(),
+                                        fieldString("data.status", "Log status (e.g., 'string')")
+                                                .optional(),
+                                        fieldObject("data.data[].labels", "Log labels").optional(),
+                                        fieldString(
+                                                        "data.data[].labels.*",
+                                                        "Label key-value (dynamic, e.g., app:'nginx')")
+                                                .optional(),
+                                        fieldNumber("data.data[].timestamp", "Timestamp (e.g., 0)")
                                                 .optional(),
                                         fieldString(
-                                                        "data.result.data[].labels.*",
-                                                        "Label key-value (dynamic)")
-                                                .optional(),
-                                        fieldNumber("data.result.data[].timestamp", "Timestamp")
-                                                .optional(),
-                                        fieldString("data.result.data[].value", "Log value")
+                                                        "data.data[].value",
+                                                        "Log value (e.g., 'message')")
                                                 .optional(),
                                         fieldNumber(
-                                                        "data.result.stats.totalBytesProcessed",
-                                                        "Total bytes processed")
+                                                        "data.stats.totalBytesProcessed",
+                                                        "Total bytes processed (e.g., 0)")
                                                 .optional(),
                                         fieldNumber(
-                                                        "data.result.stats.totalLinesProcessed",
-                                                        "Total lines processed")
+                                                        "data.stats.totalLinesProcessed",
+                                                        "Total lines processed (e.g., 0)")
                                                 .optional(),
                                         fieldNumber(
-                                                        "data.result.stats.execTime",
-                                                        "Execution time (ms)")
+                                                        "data.stats.execTime",
+                                                        "Execution time (ms) (e.g., 0.0)")
                                                 .optional(),
                                         fieldNumber(
-                                                        "data.result.stats.totalEntriesReturned",
-                                                        "Total entries returned")
+                                                        "data.stats.totalEntriesReturned",
+                                                        "Total entries returned (e.g., 0)")
                                                 .optional())
                                 .build());
     }
@@ -156,6 +178,7 @@ class LogControllerTest {
                                 .param("query", "test-query")
                                 .param("start", "2025-09-01T00:00:00Z")
                                 .param("end", "2025-09-02T00:00:00Z")
+                                .param("limit", "5")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
@@ -164,24 +187,32 @@ class LogControllerTest {
                                 .summary("LogVolumeQuery")
                                 .description(
                                         "Retrieve log volumes (metric time series data) for the given period.")
+                                .queryParameters(
+                                        paramString(
+                                                "query", "Query string (e.g., {NS_ID=\"test01\"})"),
+                                        paramString(
+                                                "start",
+                                                "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"),
+                                        paramString(
+                                                "end",
+                                                "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"),
+                                        paramString("limit", "Maximum series returned").optional())
                                 .responseFields(
-                                        fieldString("timestamp", "Response timestamp"),
-                                        fieldString("status", "Response status"),
-                                        fieldString("code", "Response code"),
-                                        fieldString("message", "Response message"),
-                                        fieldString("requestId", "Request ID"),
-                                        fieldObject(
-                                                "data.result.data[].metric",
-                                                "Metric key-value map"),
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
                                         fieldString(
-                                                "data.result.data[].metric.*",
-                                                "Metric dynamic fields (e.g., app, env)"),
+                                                "error_message",
+                                                "Error message (empty if success)"),
+                                        fieldObject("data.data[].metric", "Metric key-value map"),
+                                        fieldString(
+                                                "data.data[].metric.*",
+                                                "Metric dynamic fields (e.g., app:'string')"),
                                         fieldNumber(
-                                                "data.result.data[].values[].timestamp",
-                                                "Timestamp"),
+                                                "data.data[].values[].timestamp",
+                                                "Timestamp (e.g., 0)"),
                                         fieldString(
-                                                "data.result.data[].values[].value",
-                                                "Measured value"))
+                                                "data.data[].values[].value",
+                                                "Measured value (e.g., 'string')"))
                                 .build());
     }
 
@@ -198,20 +229,40 @@ class LogControllerTest {
         when(logFacadeService.getLabelResult(any(), any(), any())).thenReturn(mockResult);
         when(requestInfo.getRequestId()).thenReturn("string");
 
-        mockMvc.perform(get("/api/o11y/log/labels").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(
+                        get("/api/o11y/log/labels")
+                                .param("start", "2025-09-01T00:00:00Z")
+                                .param("end", "2025-09-02T00:00:00Z")
+                                .param("query", "test-query")
+                                .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
                         ApiDocumentation.builder()
                                 .tag(TAG)
                                 .summary("LogLabelsQuery")
                                 .description("Retrieve the list of label keys provided by Loki.")
+                                .queryParameters(
+                                        paramString(
+                                                        "start",
+                                                        "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)")
+                                                .optional(),
+                                        paramString(
+                                                        "end",
+                                                        "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)")
+                                                .optional(),
+                                        paramString(
+                                                        "query",
+                                                        "Query string (e.g., {NS_ID=\"test01\"})")
+                                                .optional())
                                 .responseFields(
-                                        fieldString("timestamp", "Response timestamp"),
-                                        fieldString("status", "Response status"),
-                                        fieldString("code", "Response code"),
-                                        fieldString("message", "Response message"),
-                                        fieldString("requestId", "Request ID"),
-                                        fieldArray("data.result.labels", "List of labels"))
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"),
+                                        fieldArray(
+                                                "data.labels",
+                                                "List of labels (e.g., ['app','env'])"))
                                 .build());
     }
 
@@ -231,6 +282,10 @@ class LogControllerTest {
 
         mockMvc.perform(
                         get("/api/o11y/log/labels/{label}/values", "app")
+                                .param("start", "2025-09-01T00:00:00Z")
+                                .param("end", "2025-09-02T00:00:00Z")
+                                .param("since", "1h")
+                                .param("query", "test-query")
                                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(
@@ -239,14 +294,37 @@ class LogControllerTest {
                                 .summary("LabelValueQuery")
                                 .description(
                                         "Retrieve the list of values for a specific label key.")
-                                .pathParameters(paramString("label", "Label key (e.g., app, env)"))
+                                .pathParameters(
+                                        paramString(
+                                                "label",
+                                                "Label key (e.g., NS_ID, MCI_ID, service)"))
+                                .queryParameters(
+                                        paramString(
+                                                        "start",
+                                                        "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)")
+                                                .optional()
+                                                .optional(),
+                                        paramString(
+                                                        "end",
+                                                        "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)")
+                                                .optional()
+                                                .optional(),
+                                        paramString("since", "Since duration (e.g., 1h)")
+                                                .optional(),
+                                        paramString(
+                                                        "query",
+                                                        "Query string (e.g., {NS_ID=\"test01\"})")
+                                                .optional()
+                                                .optional())
                                 .responseFields(
-                                        fieldString("timestamp", "Response timestamp"),
-                                        fieldString("status", "Response status"),
-                                        fieldString("code", "Response code"),
-                                        fieldString("message", "Response message"),
-                                        fieldString("requestId", "Request ID"),
-                                        fieldArray("data.result.data", "List of label values"))
+                                        fieldString("rs_code", "Response code (e.g., 0000)"),
+                                        fieldString("rs_msg", "Response message (e.g., success)"),
+                                        fieldString(
+                                                "error_message",
+                                                "Error message (empty if success)"),
+                                        fieldArray(
+                                                "data.data",
+                                                "List of label values (e.g., ['string','string'])"))
                                 .build());
     }
 }
