@@ -27,6 +27,12 @@ services:
         condition: service_healthy
       mc-observability-rabbitmq:
         condition: service_healthy
+      mc-observability-influx:
+        condition: service_healthy
+      mc-observability-influx-2:
+        condition: service_healthy
+      mc-observability-loki:
+        condition: service_healthy
       mc-observability-tempo:
         condition: service_healthy
     env_file:
