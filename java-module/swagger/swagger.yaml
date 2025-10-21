@@ -23,22 +23,34 @@ paths:
       operationId: LogLabelsQuery
       produces:
         - application/json
+      parameters:
+        - name: start
+          in: query
+          description: "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"
+          required: false
+          type: string
+        - name: end
+          in: query
+          description: "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"
+          required: false
+          type: string
+        - name: query
+          in: query
+          description: "Query string (e.g., {NS_ID=\"test01\"})"
+          required: false
+          type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-13T06:34:07",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "Successfully retrieved label list.",
-                "requestId" : "string",
+                "rs_code" : "0000",
+                "rs_msg" : "success",
                 "data" : {
-                  "result" : {
-                    "labels" : [ "string", "string" ]
-                  }
-                }
+                  "labels" : [ "string", "string" ]
+                },
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/api_o11y_log_labels-1630941350'
@@ -51,31 +63,48 @@ paths:
       operationId: LogVolumeQuery
       produces:
         - application/json
+      parameters:
+        - name: query
+          in: query
+          description: "Query string (e.g., {NS_ID=\"test01\"})"
+          required: true
+          type: string
+        - name: start
+          in: query
+          description: "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"
+          required: true
+          type: string
+        - name: end
+          in: query
+          description: "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"
+          required: true
+          type: string
+        - name: limit
+          in: query
+          description: Maximum series returned
+          required: false
+          type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-13T06:34:07",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "Successfully retrieved log volume data.",
-                "requestId" : "string",
+                "rs_code" : "0000",
+                "rs_msg" : "success",
                 "data" : {
-                  "result" : {
-                    "data" : [ {
-                      "metric" : {
-                        "env" : "string",
-                        "app" : "string"
-                      },
-                      "values" : [ {
-                        "timestamp" : 0,
-                        "value" : "string"
-                      } ]
+                  "data" : [ {
+                    "metric" : {
+                      "app" : "string",
+                      "env" : "string"
+                    },
+                    "values" : [ {
+                      "timestamp" : 0,
+                      "value" : "string"
                     } ]
-                  }
-                }
+                  } ]
+                },
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/api_o11y_log_log_volumes1332534490'
@@ -88,20 +117,73 @@ paths:
       operationId: LogRangeQuery
       produces:
         - application/json
+      parameters:
+        - name: query
+          in: query
+          description: "Query string (e.g., {NS_ID=\"test01\"})"
+          required: true
+          type: string
+        - name: start
+          in: query
+          description: "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"
+          required: true
+          type: string
+        - name: end
+          in: query
+          description: "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"
+          required: true
+          type: string
+        - name: limit
+          in: query
+          description: Maximum number of entries
+          required: true
+          type: string
+        - name: direction
+          in: query
+          description: Direction (FORWARD/BACKWARD)
+          required: false
+          type: string
+        - name: interval
+          in: query
+          description: 'Interval (e.g. 1m) '
+          required: false
+          type: string
+        - name: step
+          in: query
+          description: 'Step (e.g. 30s) '
+          required: false
+          type: string
+        - name: since
+          in: query
+          description: 'Since duration (e.g. 1h) '
+          required: false
+          type: string
       responses:
         "200":
           description: ""
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-13T06:34:07",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "Successfully retrieved log range data.",
-                "requestId" : "string",
+                "rs_code" : "0000",
+                "rs_msg" : "success",
                 "data" : {
-                  "result" : null
-                }
+                  "status" : "string",
+                  "data" : [ {
+                    "labels" : {
+                      "app" : "string",
+                      "env" : "string"
+                    },
+                    "timestamp" : 0.0,
+                    "value" : "string"
+                  } ],
+                  "stats" : {
+                    "totalBytesProcessed" : 0,
+                    "totalLinesProcessed" : 0,
+                    "execTime" : 0.0,
+                    "totalEntriesReturned" : 0
+                  }
+                },
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/api_o11y_log_query_range-1819803082'
@@ -718,8 +800,28 @@ paths:
       parameters:
         - name: label
           in: path
-          description: "Label key (e.g., app, env)"
+          description: "Label key (e.g., NS_ID, MCI_ID, service)"
           required: true
+          type: string
+        - name: start
+          in: query
+          description: "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)"
+          required: false
+          type: string
+        - name: end
+          in: query
+          description: "End timestamp (RFC3339) (e.g., 2025-09-02T00:00:00Z)"
+          required: false
+          type: string
+        - name: since
+          in: query
+          description: "Since duration (e.g., 1h)"
+          required: false
+          type: string
+        - name: query
+          in: query
+          description: "Query string (e.g., {NS_ID=\"test01\"})"
+          required: false
           type: string
       responses:
         "200":
@@ -727,16 +829,12 @@ paths:
           examples:
             application/json: |-
               {
-                "timestamp" : "2025-10-13T06:34:07",
-                "status" : "SUCCESS",
-                "code" : "OK",
-                "message" : "Successfully retrieved label value list.",
-                "requestId" : "string",
+                "rs_code" : "0000",
+                "rs_msg" : "success",
                 "data" : {
-                  "result" : {
-                    "data" : [ "string", "string" ]
-                  }
-                }
+                  "data" : [ "string", "string" ]
+                },
+                "error_message" : ""
               }
           schema:
             $ref: '#/definitions/api_o11y_log_labels_label_values-389755828'
@@ -2944,32 +3042,29 @@ definitions:
         description: "Response message (e.g., Success)"
   api_o11y_log_labels_label_values-389755828:
     type: object
+    required:
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      code:
+      error_message:
         type: string
-        description: Response code
+        description: Error message (empty if success)
       data:
         type: object
         properties:
-          result:
-            type: object
-            properties:
-              data:
-                type: array
-                description: List of label values
-                items: { }
-      requestId:
+          data:
+            type: array
+            description: "List of label values (e.g., ['string','string'])"
+            items: { }
+        required:
+          - data
+      rs_code:
         type: string
-        description: Request ID
-      message:
+        description: "Response code (e.g., 0000)"
+      rs_msg:
         type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
+        description: "Response message (e.g., success)"
   api_o11y_monitoring_nsId_mciId_vm_vmId-1790047999:
     type: object
     properties:
@@ -3073,32 +3168,29 @@ definitions:
         description: "Response message (e.g., Success)"
   api_o11y_log_labels-1630941350:
     type: object
+    required:
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      code:
+      error_message:
         type: string
-        description: Response code
+        description: Error message (empty if success)
       data:
         type: object
         properties:
-          result:
-            type: object
-            properties:
-              labels:
-                type: array
-                description: List of labels
-                items: { }
-      requestId:
+          labels:
+            type: array
+            description: "List of labels (e.g., ['app','env'])"
+            items: { }
+        required:
+          - labels
+      rs_code:
         type: string
-        description: Request ID
-      message:
+        description: "Response code (e.g., 0000)"
+      rs_msg:
         type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
+        description: "Response message (e.g., success)"
   MetricRequestDTO:
     type: object
     properties:
@@ -3591,51 +3683,53 @@ definitions:
     items: { }
   api_o11y_log_log_volumes1332534490:
     type: object
+    required:
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      code:
+      error_message:
         type: string
-        description: Response code
+        description: Error message (empty if success)
       data:
         type: object
         properties:
-          result:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                metric:
                   type: object
+                  description: Metric key-value map
                   properties:
-                    metric:
-                      type: object
-                      description: Metric key-value map
-                      properties:
-                        '*':
-                          type: string
-                          description: "Metric dynamic fields (e.g., app, env)"
-                    values:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                            description: Measured value
-                          timestamp:
-                            type: number
-                            description: Timestamp
-      requestId:
+                    '*':
+                      type: string
+                      description: "Metric dynamic fields (e.g., app:'string')"
+                  required:
+                    - '*'
+                values:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      value:
+                        type: string
+                        description: "Measured value (e.g., 'string')"
+                      timestamp:
+                        type: number
+                        description: "Timestamp (e.g., 0)"
+                    required:
+                      - timestamp
+                      - value
+              required:
+                - metric
+      rs_code:
         type: string
-        description: Request ID
-      message:
+        description: "Response code (e.g., 0000)"
+      rs_msg:
         type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
+        description: "Response message (e.g., success)"
   InfluxDTO:
     type: object
     properties:
@@ -3677,65 +3771,60 @@ definitions:
         description: "Response message (e.g., Success)"
   api_o11y_log_query_range-1819803082:
     type: object
+    required:
+      - error_message
+      - rs_code
+      - rs_msg
     properties:
-      code:
+      error_message:
         type: string
-        description: Response code
+        description: Error message (empty if success)
       data:
         type: object
+        description: Log result object
         properties:
-          result:
-            type: object
-            description: Log result object
-            properties:
-              data:
-                type: array
-                items:
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                value:
+                  type: string
+                  description: "Log value (e.g., 'message')"
+                timestamp:
+                  type: number
+                  description: "Timestamp (e.g., 0)"
+                labels:
                   type: object
+                  description: Log labels
                   properties:
-                    value:
+                    '*':
                       type: string
-                      description: Log value
-                    timestamp:
-                      type: number
-                      description: Timestamp
-                    labels:
-                      type: object
-                      description: Log labels
-                      properties:
-                        '*':
-                          type: string
-                          description: Label key-value (dynamic)
-              stats:
-                type: object
-                properties:
-                  execTime:
-                    type: number
-                    description: Execution time (ms)
-                  totalLinesProcessed:
-                    type: number
-                    description: Total lines processed
-                  totalEntriesReturned:
-                    type: number
-                    description: Total entries returned
-                  totalBytesProcessed:
-                    type: number
-                    description: Total bytes processed
-              status:
-                type: string
-                description: Log status
-      requestId:
+                      description: "Label key-value (dynamic, e.g., app:'nginx')"
+          stats:
+            type: object
+            properties:
+              execTime:
+                type: number
+                description: "Execution time (ms) (e.g., 0.0)"
+              totalLinesProcessed:
+                type: number
+                description: "Total lines processed (e.g., 0)"
+              totalEntriesReturned:
+                type: number
+                description: "Total entries returned (e.g., 0)"
+              totalBytesProcessed:
+                type: number
+                description: "Total bytes processed (e.g., 0)"
+          status:
+            type: string
+            description: "Log status (e.g., 'string')"
+      rs_code:
         type: string
-        description: Request ID
-      message:
+        description: "Response code (e.g., 0000)"
+      rs_msg:
         type: string
-        description: Response message
-      status:
-        type: string
-        description: Response status
-      timestamp:
-        type: string
-        description: Response timestamp
+        description: "Response message (e.g., success)"
   PluginDefDTO:
     type: object
     description: Plugin definition object
