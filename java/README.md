@@ -123,12 +123,12 @@ git clone https://github.com/m-cmp/mc-observability.git
 ### 2. Run manager install script
 ```
 cd mc-observability
-./java-module/scripts/install-manager.sh
+./java/scripts/install-manager.sh
 ```
 
 ### 3. (Optional) Configure .env file if you want to use other cb-spider or cb-tumblebug etc...
 ```
-cd java-module/
+cd java/
 sudo docker compose down
 vi .env ## Edit this file
 sudo docker compose up -d
@@ -950,7 +950,7 @@ curl --location 'http://observability_VM_PUBLIC_IP:18080/api/o11y/monitoring/ns0
     </details>
 
 ### Swagger Docs
-#### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java-module/swagger/index.html)
+#### [v0.3.0 swagger api](https://m-cmp.github.io/mc-observability/java/swagger/index.html)
 
 ### API Use guide (swagger docs linked mermaid contents)
 #### Observability Monitoring target setting guide

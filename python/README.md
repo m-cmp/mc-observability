@@ -21,9 +21,9 @@ A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to dep
   - Apache Airflow (2.8.4)
 
 ### 1. Install & Run Services
-[Initialize mc-observability](https://github.com/m-cmp/mc-observability/tree/main/java-module#how-to-use)
+[Initialize mc-observability](https://github.com/m-cmp/mc-observability/tree/main/java#how-to-use)
 The installation process of the Insight module is included in the installation process of the mc-observability
-java-module (No. 1 to No. 7). Therefore, there is no need for a separate installation process.
+java (No. 1 to No. 7). Therefore, there is no need for a separate installation process.
 
 **Note**: In order to use the Insight function, data collection of monitoring items used in the Insight function is required in advance. Therefore, the process of installing the mc-observability agent and adding the plug-in must be preceded.
 

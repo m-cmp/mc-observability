@@ -39,5 +39,7 @@ table_manager:
   retention_deletes_enabled: true
   retention_period: 90d
 limits_config:
+  max_query_length: 24h
+  max_query_lookback: 168h
   discover_service_name: []
   discover_log_levels: false
