@@ -19,10 +19,10 @@ on:
       - "v*.*.*"
     paths-ignore:
       - ".github/**"
-      - "java-module/**.md"
-      - "java-module/conf/**"
-      - "java-module/.env.sample"
-      - "java-module/swagger/**"
+      - "java/**.md"
+      - "java/conf/**"
+      - "java/.env.sample"
+      - "java/swagger/**"
       - "**.md"
       - "LICENSE"
       - ".gitignore"
@@ -109,11 +109,11 @@ jobs:
           distribution: 'temurin'
 
       - name: grant execute permission for gradlew
-        run: chmod +x java-module/gradlew
+        run: chmod +x java/gradlew
         shell: bash
 
       - name: Build with Gradle Wrapper
-        run: cd java-module && make
+        run: cd java && make
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -134,8 +134,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
-          context: ./java-module
-          file: ./java-module/Dockerfile
+          context: ./java
+          file: ./java/Dockerfile
 #          target: prod
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
@@ -149,7 +149,7 @@ jobs:
 #        with:
 #          builder: ${{ steps.buildx.outputs.name }}
 #          context: ./
-#          file: ./java-module/mc-o11y-agent/Dockerfile
+#          file: ./java/mc-o11y-agent/Dockerfile
 ##          target: prod
 #          platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
 #          push: ${{ github.event_name != 'pull_request' }}

@@ -36,9 +36,15 @@ services:
       mc-observability-tempo:
         condition: service_healthy
     env_file:
-      - ./config/manager/.env
+      - mc-o11y-manager/config/manager/manager.env
+    environment:
+      # - O11Y_EXTERNAL_IP=111.111.111.111 # External IP will be set automatically. Set this value if you want to change.
+      - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
+#      - OTEL_INSTRUMENTATION_METHODS_INCLUDE=${OTEL_METHODS_INCLUDE}
+#      - OTEL_INSTRUMENTATION_METHODS_EXCLUDE=${OTEL_METHODS_EXCLUDE}
     volumes:
-      - ./config/manager/otel:/config/otel
+      - ./mc-o11y-manager/config:/config
+      - ./mc-o11y-manager/applog:/applog
       - shared_logs:/applog/mc-o11y-manager:rw
       - grafana_shared_config:/grafana_config:ro
     healthcheck:
@@ -75,7 +81,7 @@ services:
       SEMAPHORE_MAX_TASKS_PER_TEMPLATE: 10
       ANSIBLE_HOST_KEY_CHECKING: False
     volumes:
-      - ./config/mc-observability-infra:/ansible
+      - ./ansible:/ansible
     healthcheck:
       start_period: 120s
       test: 'curl -s http://127.0.0.1:3000/api/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
@@ -93,11 +99,11 @@ services:
     ports:
       - 3306:3306
     volumes:
-      - ./config/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
-      - ./config/mariadb/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
       - /docker/mariadb/etc/mysql/conf.d:/etc/mysql/conf.d:ro
       - /docker/mariadb/var/lib/mysql:/var/lib/mysql
       - /docker/mariadb/var/log/maria:/var/log/maria
+      - ./maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
+      - ./mariadb-conf/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no
@@ -129,8 +135,8 @@ services:
       mc-infra-manager-postgres:
         condition: service_healthy
     volumes:
-      - ./config/mc-infra-manager/setup.env:/app/conf/setup.env
-      - ./config/mc-infra-manager/cloud_conf.yaml:/app/conf/cloud_conf.yaml
+      - ./conf/setup.env:/app/conf/setup.env
+      - ./conf/cloud_conf.yaml:/app/conf/cloud_conf.yaml
       - ~/.cloud-barista/credentials.yaml.enc:/app/conf/credentials.yaml.enc
       - /docker/mc-infra-manager-container/meta_db/:/app/meta_db/
       - /docker/mc-infra-manager-container/log/:/app/log/
@@ -295,8 +301,8 @@ services:
       - INFLUXDB_ADMIN_PASSWORD=mc-agent
       - INFLUXDB_DB="mc-observability"
     volumes:
-      - ./config/influxdb/influxdb-init:/docker-entrypoint-initdb.d
       - /docker/influxdb_data:/var/lib/influxdb
+      - ./influxdb-init:/docker-entrypoint-initdb.d
     healthcheck:
       start_period: 120s
       test: 'curl -s http://127.0.0.1:8086/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
@@ -372,7 +378,7 @@ services:
       - TZ=Asia/Seoul
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./config/loki/config.yml:/etc/loki/local-config.yaml
+      - ./loki-conf/config.yml:/etc/loki/local-config.yaml
       - /docker/loki_data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
@@ -440,8 +446,8 @@ services:
       - ALARM_END_POINT_PASSWORD=mc-agent
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - /docker/grafana_data/data:/var/lib/grafana
       - /docker/grafana_data/log:/var/log/grafana
       - grafana_shared_config:/grafana_config
@@ -505,6 +511,7 @@ services:
       - MODE=${MODE:-otlp-http}
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://mc-observability-tempo:4318/v1/traces}
     volumes:
+      - ../python/insight/log:/mc-insight/log
       - shared_logs:/mc-insight/log:rw
     networks:
       - internal_network
@@ -520,7 +527,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-
 
   mc-observability-insight-scheduler:
     image: cloudbaristaorg/mc-observability-insight-scheduler:edge
@@ -655,8 +661,10 @@ services:
       - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/enabled_plugins
       - RABBITMQ_LOAD_DEFINITIONS=/etc/rabbitmq/definitions.json
     volumes:
-      - ./config/rabbitmq:/etc/rabbitmq
+      - ./rabbitmq/etc:/etc/rabbitmq
       - /docker/rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    #     - /docker/rabbitmq_log:/var/log/rabbitmq
     networks:
       - internal_network
       - external_network
@@ -709,8 +717,8 @@ services:
     command: [ "-config.file=/etc/tempo-config.yaml" ]
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ./config/tempo/config.yaml:/etc/tempo-config.yaml
       - /docker/tempo_data:/etc/tempo
+      - ./tempo-conf/config.yaml:/etc/tempo-config.yaml
     networks:
       - internal_network
       - external_network
@@ -748,10 +756,10 @@ services:
       - LOKI_HOST=mc-observability-loki
       - LOKI_PORT=3100
     volumes:
-      - ./config/log-collector/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
-      - ./config/log-collector/parsers.conf:/fluent-bit/etc/parsers.conf:ro
-      - ./config/log-collector/extract_component.lua:/fluent-bit/etc/extract_component.lua:ro
       - shared_logs:/logs:ro
+      - ./log-conf/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./log-conf/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./log-conf/extract_component.lua:/fluent-bit/etc/extract_component.lua:ro
     command:
       - /fluent-bit/bin/fluent-bit
       - -c
