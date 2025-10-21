@@ -586,13 +586,17 @@ services:
     stdin_open: true
     ports:
       - "8000:8000"
-
+    depends_on:
+      mc-observability-grafana:
+        condition: service_healthy
     environment:
       - GRAFANA_URL=http://mc-observability-grafana:3000
       - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
-    command:
-      - --enabled-tools
-      - "loki,datasource"
+    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
+    command: ["/bin/bash", "-c", "chmod +x /app/docker-entrypoint.sh"]
+    volumes:
+      - ./config/mcp-grafana/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+      - grafana_shared_config:/grafana_config
     networks:
       - internal_network
       - external_network
