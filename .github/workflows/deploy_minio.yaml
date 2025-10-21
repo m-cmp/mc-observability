@@ -17,8 +17,8 @@ on:
     tags:
       - "v*.*.*"
     paths:
-      - "java-module/minio/**"
-      - "java-module/Dockerfile.minio"
+      - "config/minio/**"
+      - "config/Dockerfile.minio"
 
   workflow_dispatch:
 
@@ -109,15 +109,15 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build
-        run: cd java-module && docker build . --file Dockerfile.minio --tag $IMAGE_NAME
+        run: cd config/minio && docker build . --file Dockerfile --tag $IMAGE_NAME
 
       - name: Publish image
         id: docker_build_1
         uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
-          context: ./java-module
-          file: ./java-module/Dockerfile.minio
+          context: ./config/minio
+          file: ./config/minio/Dockerfile
           platforms: linux/amd64 # linux/arm/v7,linux/arm64,linux/386,linux/ppc64le,linux/s390x,linux/arm/v6
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
