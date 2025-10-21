@@ -5,7 +5,7 @@
 mkdir -p /cmp-agent/
 
 echo "[*] Extracting agent common files..."
-tar xvf /tmp/cmp-agent-common_"$1.tar.gz" -C /cmp-agent/
+/tmp/busybox_"$1" tar xvf /tmp/cmp-agent-common_"$1.tar.gz" -C /cmp-agent/
 STATUS=`echo $?`
 if [ "$STATUS" != 0 ]; then
   echo "[!] ERROR: Failed to extract agent common files!"
