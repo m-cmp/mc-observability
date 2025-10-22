@@ -399,26 +399,23 @@ services:
   mc-observability-insight:
     image: cloudbaristaorg/mc-observability-insight:edge
     container_name: mc-observability-insight
-    restart: always
+    restart: on-failure
+    networks:
+      - internal_network
+      - external_network
     ports:
       - 9001:9001
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
-      - OTEL_SERVICE_NAME=mc-observability-insight
-      - MODE=otlp-http
-      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://mc-observability-tempo:4318/v1/traces
     volumes:
       - shared_logs:/mc-insight/log:rw
-    networks:
-      - internal_network
-      - external_network
     depends_on:
       mc-observability-maria:
         condition: service_healthy
       mc-observability-influx:
         condition: service_healthy
-    healthcheck: # for CB-Tumblebug
+    healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9001/readyz" ]
       interval: 1m
       timeout: 5s
