@@ -146,7 +146,7 @@
 
 - name: Compress agent files
   shell:
-    cmd: "sudo rm -f cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo ../busybox tar cvfz cmp-fluent-bit_{{ request_id }}.tar.gz --exclude=fluent-bit/etc/fluent-bit.conf --exclude=fluent-bit/etc/parsers.conf --exclude=fluent-bit/etc/variables fluent-bit/ && sudo chmod 644 cmp-fluent-bit_{{ request_id }}.tar.gz"
+    cmd: "sudo rm -f cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo chmod +x ../busybox && sudo ../busybox tar cvfz cmp-fluent-bit_{{ request_id }}.tar.gz --exclude=fluent-bit/etc/fluent-bit.conf --exclude=fluent-bit/etc/parsers.conf --exclude=fluent-bit/etc/variables fluent-bit/ && sudo chmod 644 cmp-fluent-bit_{{ request_id }}.tar.gz"
     chdir: "{{ role_path }}/agent-install-files/cmp-agent"
   delegate_to: 127.0.0.1
 
