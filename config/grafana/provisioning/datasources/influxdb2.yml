@@ -14,8 +14,8 @@ datasources:
       basicAuthPassword: mc-agent
       password: mc-agent
     jsonData:
-      dbName: mc-observability-2
-      defaultBucket: mc-observability-2/autogen
+      dbName: mc-observability
+      defaultBucket: mc-observability/autogen
       httpMode: POST
       organization: mc-agent
       version: Flux
