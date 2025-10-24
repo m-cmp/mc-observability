@@ -285,8 +285,8 @@ class TriggerControllerTest {
                                                 "data.content[].notiChannels[].isActive",
                                                 "Indicates whether the channel is active (true/false)"),
                                         fieldArray(
-                                                "data.content[].notiChannels[].recipients",
-                                                "List of recipients (e.g., ['C09M4LBEN68'])"),
+                                                "data.content[].notiChanΩnels[].recipients",
+                                                "List of recipients. For 'kakao' and 'sms' channels, parameters must contain digits only (special characters are not allowed). (e.g., ['C09M4LBEN68'])"),
                                         fieldString(
                                                 "data.content[].createdAt",
                                                 "Creation timestamp (e.g., '2025-10-17T03:26:05.442633')"),
@@ -405,7 +405,9 @@ class TriggerControllerTest {
                                         fieldString(
                                                 "[].channelName",
                                                 "Notification channel name (e.g., kakao, sms, email, slack)"),
-                                        fieldArray("[].recipients", "List of recipients"))
+                                        fieldArray(
+                                                "[].recipients",
+                                                "List of recipients. For 'kakao' and 'sms' channels, parameters must contain digits only (special characters are not allowed)."))
                                 .responseFields(
                                         fieldString("rs_code", "Response code (e.g., 0000)"),
                                         fieldString("rs_msg", "Response message (e.g., success)"),

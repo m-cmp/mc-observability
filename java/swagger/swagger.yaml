@@ -966,10 +966,10 @@ paths:
             application/json;charset=UTF-8: |-
               [ {
                 "channelName" : "kakao_naver-cloud",
-                "recipients" : [ "+82-10-1234-5678" ]
+                "recipients" : [ "01012345678" ]
               }, {
                 "channelName" : "sms_naver-cloud",
-                "recipients" : [ "+82-10-1234-5678" ]
+                "recipients" : [ "01012345678" ]
               }, {
                 "channelName" : "email_smtp.gmail.com",
                 "recipients" : [ "admin@example.com" ]
@@ -2860,7 +2860,9 @@ definitions:
                           \ slack)"
                       recipients:
                         type: array
-                        description: "List of recipients (e.g., ['C09M4LBEN68'])"
+                        description: "List of recipients. For 'kakao' and 'sms' channels,\
+                                                  \ parameters must contain digits only (special characters\
+                                                  \ are not allowed). (e.g., ['C09M4LBEN68'])"
                         items: { }
                       name:
                         type: string
@@ -3383,7 +3385,8 @@ definitions:
       properties:
         recipients:
           type: array
-          description: list of recipients
+          description: "List of recipients. For 'kakao' and 'sms' channels, parameters\
+                      \ must contain digits only (special characters are not allowed)."
           items: { }
         channelName:
           type: string
@@ -3391,10 +3394,10 @@ definitions:
     example: |-
       [ {
         "channelName" : "kakao_naver-cloud",
-        "recipients" : [ "+82-10-1234-5678" ]
+        "recipients" : [ "01012345678" ]
       }, {
         "channelName" : "sms_naver-cloud",
-        "recipients" : [ "+82-10-1234-5678" ]
+        "recipients" : [ "01012345678" ]
       }, {
         "channelName" : "email_smtp.gmail.com",
         "recipients" : [ "admin@example.com" ]
