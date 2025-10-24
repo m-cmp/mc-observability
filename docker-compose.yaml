@@ -219,7 +219,7 @@ services:
       - INFLUXDB_HTTP_AUTH_ENABLED=true
       - INFLUXDB_ADMIN_USER=mc-agent
       - INFLUXDB_ADMIN_PASSWORD=mc-agent
-      - INFLUXDB_DB="mc-observability-2"
+      - INFLUXDB_DB="mc-observability"
     volumes:
       - /docker/influxdb2_data:/var/lib/influxdb
     healthcheck:

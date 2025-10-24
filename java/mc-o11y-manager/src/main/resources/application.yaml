@@ -60,16 +60,14 @@ loki:
     range: /loki/api/v1/query_range
 
 influxdb:
+  database: ${INFLUX_DATABASE:mc-observability}
+  retention-policy: ${INFLUX_RETENTION_POLICY:autogen}
   servers:
     - url: ${INFLUX1_URL:http://mc-observability-influx:8086}
-      database: ${INFLUX1_DATABASE:mc-observability}
-      retention-policy: ${INFLUX1_RETENTION_POLICY:autogen}
       username: ${INFLUX1_USERNAME:mc-agent}
       password: ${INFLUX1_PASSWORD:mc-agent}
       uid: ${INFLUX1_UID:P951FEA4DE68E13C5}
     - url: ${INFLUX2_URL:http://mc-observability-influx-2:8087}
-      database: ${INFLUX2_DATABASE:mc-observability-2}
-      retention-policy: ${INFLUX2_RETENTION_POLICY:autogen}
       username: ${INFLUX2_USERNAME:mc-agent}
       password: ${INFLUX2_PASSWORD:mc-agent}
       uid: ${INFLUX2_UID:P951FEA4DE68E13C52}
