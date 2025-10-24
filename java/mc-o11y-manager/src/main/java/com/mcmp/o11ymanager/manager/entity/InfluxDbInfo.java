@@ -5,12 +5,10 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "influxdb")
-public record InfluxDbInfo(List<Server> servers) {
+public record InfluxDbInfo(String database, String retentionPolicy, List<Server> servers) {
 
     public record Server(
             String url,
-            String database,
-            String retentionPolicy,
             String username,
             @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) String password,
             String uid) {
