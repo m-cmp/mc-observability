@@ -8,8 +8,8 @@ import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
 import com.mcmp.o11ymanager.manager.entity.InfluxDbInfo;
 import com.mcmp.o11ymanager.manager.entity.InfluxEntity;
 import com.mcmp.o11ymanager.manager.global.vm.ResBody;
-import com.mcmp.o11ymanager.manager.mapper.Influx.InfluxMapper;
-import com.mcmp.o11ymanager.manager.mapper.Influx.QueryMapper;
+import com.mcmp.o11ymanager.manager.mapper.influx.InfluxMapper;
+import com.mcmp.o11ymanager.manager.mapper.influx.QueryMapper;
 import com.mcmp.o11ymanager.manager.model.influx.InfluxQl;
 import com.mcmp.o11ymanager.manager.repository.InfluxJpaRepository;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
@@ -72,7 +72,13 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             return List.of();
         }
 
-        var entities = servers.stream().map(s -> influxMapper.toEntity(s)).toList();
+        String defaultDatabase = influxDbInfo.database();
+        String defaultRetentionPolicy = influxDbInfo.retentionPolicy();
+
+        var entities =
+                servers.stream()
+                        .map(s -> influxMapper.toEntity(s, defaultDatabase, defaultRetentionPolicy))
+                        .toList();
 
         list = influxJpaRepository.saveAll(entities);
         log.info("[INF-BOOTSTRAP] seeded {} rows from YAML", list.size());

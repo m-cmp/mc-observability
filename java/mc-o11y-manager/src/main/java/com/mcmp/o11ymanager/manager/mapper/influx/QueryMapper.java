@@ -1,4 +1,4 @@
-package com.mcmp.o11ymanager.manager.mapper.Influx;
+package com.mcmp.o11ymanager.manager.mapper.influx;
 
 import com.mcmp.o11ymanager.manager.dto.influx.FieldDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
