@@ -3,14 +3,35 @@ package com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.query;
 import com.influxdb.query.dsl.Flux;
 import com.influxdb.query.dsl.functions.restriction.Restrictions;
 import com.mcmp.o11ymanager.trigger.adapter.external.alert.dto.AlertRuleCreateDto;
+import jakarta.annotation.PostConstruct;
 import java.time.temporal.ChronoUnit;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * Factory class for generating FluxQL queries for different resource types Creates InfluxDB Flux
  * queries for monitoring CPU, memory, and disk metrics. Queries are used with Grafana alert rules
  * to evaluate resource thresholds.
  */
+@Slf4j
+@Component
+@RequiredArgsConstructor
 public class QueryFactory {
+    @Value("${influxdb.database}")
+    private String influxDatabase;
+
+    @Value("${influxdb.retention-policy}")
+    private String influxRetentionPolicy;
+
+    private static QueryFactory instance;
+
+    @PostConstruct
+    private void init() {
+        instance = this;
+    }
+
     /**
      * Generates FluxQL query string based on resource type Routes to appropriate query method based
      * on the resource type specified in the DTO.
@@ -62,7 +83,8 @@ public class QueryFactory {
      * @return FluxQL query string for memory usage monitoring
      */
     private static String memoryQuery(AlertRuleCreateDto dto, String tagName) {
-        return Flux.from("mc-observability/autogen")
+
+        return Flux.from(instance.influxDatabase + "/" + instance.influxRetentionPolicy)
                 .range(-3L, -1L, ChronoUnit.MINUTES)
                 .filter(
                         Restrictions.and(
@@ -85,7 +107,7 @@ public class QueryFactory {
      * @return FluxQL query string for disk usage monitoring
      */
     private static String diskQuery(AlertRuleCreateDto dto, String tagName) {
-        return Flux.from("mc-observability/autogen")
+        return Flux.from(instance.influxDatabase + "/" + instance.influxRetentionPolicy)
                 .range(-3L, -1L, ChronoUnit.MINUTES)
                 .filter(
                         Restrictions.and(
