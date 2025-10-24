@@ -1,6 +1,6 @@
 swagger: '2.0'
 info:
-  version: 0.4.2
+  version: 0.4.3
   title: MC-Observability API Documentation
   description: API documentation for MC-Observability
   contact: { }
@@ -3216,12 +3216,12 @@ definitions:
             value:
               type: string
               description: "Condition value (e.g., cpu-total)"
-              nullable: true
+              x-nullable: true
             key:
               type: string
               description: "Condition key (e.g., cpu) — omit ns_id, mci_id or vm_id since\
                 \ they are added by default"
-              nullable: true
+              x-nullable: true
       fields:
         type: array
         description: List of fields to query
@@ -4110,18 +4110,18 @@ definitions:
     properties:
       ns_id:
         type: string
-      target_id:
+      mci_id:
         type: string
-      target_type:
-        $ref: '#/definitions/TargetType'
+      vm_id:
+        type: string
+        x-nullable: true
       measurement:
         $ref: '#/definitions/MetricType'
       execution_interval:
         $ref: '#/definitions/ExecutionInterval'
     required:
       - ns_id
-      - target_id
-      - target_type
+      - mci_id
       - measurement
       - execution_interval
   AnomalyDetectionTargetUpdate:
@@ -4271,10 +4271,6 @@ definitions:
     title: PredictionBody
     type: object
     properties:
-      target_type:
-        description: The type of the target (vm or mci).
-        example: vm
-        type: string
       measurement:
         $ref: '#/definitions/PredictionMetricType'
       prediction_range:
@@ -4619,12 +4615,6 @@ definitions:
       - provider
       - model_name
       - regdate
-  TargetType:
-    title: TargetType
-    type: string
-    enum:
-      - vm
-      - mci
   ValidationError:
     title: ValidationError
     type: object
