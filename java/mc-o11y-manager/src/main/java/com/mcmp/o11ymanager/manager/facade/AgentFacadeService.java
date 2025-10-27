@@ -246,7 +246,6 @@ public class AgentFacadeService {
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
-
         }
 
         return results;

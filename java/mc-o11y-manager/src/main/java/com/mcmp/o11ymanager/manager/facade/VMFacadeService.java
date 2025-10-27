@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -214,6 +213,7 @@ public class VMFacadeService {
             hostLock.lock();
 
             vmService.delete(nsId, mciId, vmId);
+            agentFacadeService.uninstall(nsId, mciId, vmId);
         } finally {
             hostLock.unlock();
         }
