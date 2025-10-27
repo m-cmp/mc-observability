@@ -13,7 +13,6 @@ import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,17 +38,9 @@ public class VMFacadeService {
     private final TumblebugService tumblebugService;
     private final InfluxDbService influxDbService;
 
-    private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks =
-            new ConcurrentHashMap<>();
-
-    private ReentrantLock getHostLock(String nsId, String mciId, String vmId) {
-        String lockKey = nsId + "-" + mciId + "-" + vmId;
-        return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
-    }
-
     public VMDTO postVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
 
-        ReentrantLock hostLock = getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
         try {
             hostLock.lock();
@@ -92,7 +83,7 @@ public class VMFacadeService {
 
         log.info(">>> getVM() called with nsId: {}, mciId: {}, vmId: {}", nsId, mciId, vmId);
 
-        ReentrantLock hostLock = getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
         try {
             hostLock.lock();
@@ -194,7 +185,7 @@ public class VMFacadeService {
 
     public VMDTO putVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
 
-        ReentrantLock hostLock = getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
         try {
             hostLock.lock();
@@ -207,7 +198,7 @@ public class VMFacadeService {
 
     public void deleteVM(String nsId, String mciId, String vmId) {
 
-        ReentrantLock hostLock = getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
         try {
             hostLock.lock();

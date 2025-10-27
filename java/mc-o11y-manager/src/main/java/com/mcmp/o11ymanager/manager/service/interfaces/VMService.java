@@ -6,8 +6,11 @@ import com.mcmp.o11ymanager.manager.exception.host.HostAgentTaskProcessingExcept
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public interface VMService {
+
+    ReentrantLock getHostLock(String nsId, String mciId, String vmId);
 
     VMDTO get(String nsId, String mciId, String vmId);
 

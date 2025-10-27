@@ -11,9 +11,10 @@ import com.mcmp.o11ymanager.manager.model.host.VMStatus;
 import com.mcmp.o11ymanager.manager.repository.VMJpaRepository;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,14 @@ public class VMServiceImpl implements VMService {
 
     private final VMJpaRepository vmJpaRepository;
     private final RequestInfo requestInfo;
-    private final ApplicationEventPublisher event;
+
+    private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks =
+            new ConcurrentHashMap<>();
+
+    public ReentrantLock getHostLock(String nsId, String mciId, String vmId) {
+        String lockKey = nsId + "-" + mciId + "-" + vmId;
+        return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
+    }
 
     @Override
     public VMDTO get(String nsId, String mciId, String vmId) {
