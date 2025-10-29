@@ -42,8 +42,6 @@ public class TelegrafConfigFacadeService {
             new ClassPathResource("telegraf_inputs_swap");
     private final ClassPathResource telegrafConfigInputsSystem =
             new ClassPathResource("telegraf_inputs_system");
-    private final ClassPathResource telegrafConfigInputsNVIDIASMI =
-            new ClassPathResource("telegraf_inputs_nvidia_smi");
     private final ClassPathResource telegrafConfigOutputsInfluxDB =
             new ClassPathResource("telegraf_outputs_influxdb");
 
@@ -56,7 +54,6 @@ public class TelegrafConfigFacadeService {
     public static final String CONFIG_METRIC_PROCSTAT = "procstat";
     public static final String CONFIG_METRIC_SWAP = "swap";
     public static final String CONFIG_METRIC_SYSTEM = "system";
-    public static final String CONFIG_METRIC_GPU = "gpu";
 
     public static final String CONFIG_DEFAULT_METRICS =
             CONFIG_METRIC_CPU
@@ -156,12 +153,6 @@ public class TelegrafConfigFacadeService {
             throw new RuntimeException(errMsg);
         }
 
-        if (!telegrafConfigInputsNVIDIASMI.exists()) {
-            errMsg = "Invalid filePath : telegrafConfigInputsNVIDIASMI";
-            log.error(errMsg);
-            throw new RuntimeException(errMsg);
-        }
-
         if (!telegrafConfigOutputsInfluxDB.exists()) {
             errMsg = "Invalid filePath : telegrafConfigOutputsInfluxDB";
             log.error(errMsg);
@@ -208,9 +199,6 @@ public class TelegrafConfigFacadeService {
                     break;
                 case CONFIG_METRIC_SYSTEM:
                     fileService.appendConfig(telegrafConfigInputsSystem, sb);
-                    break;
-                case CONFIG_METRIC_GPU:
-                    fileService.appendConfig(telegrafConfigInputsNVIDIASMI, sb);
                     break;
                 default:
                     throw new RuntimeException("Invalid metric: " + metric);
