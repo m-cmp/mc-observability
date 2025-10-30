@@ -48,8 +48,20 @@ public class LogFacadeService {
             String interval,
             String step,
             String since) {
-        LogCriteria criteria =
-                LogCriteria.ofRange(query, start, end, limit, direction, interval, step, since);
+        LogCriteria criteria;
+
+        if ((start == null || start.isEmpty())
+                && (end == null || end.isEmpty())
+                && (direction == null || direction.isEmpty())
+                && (interval == null || interval.isEmpty())
+                && (step == null || step.isEmpty())
+                && (since == null || since.isEmpty())) {
+            criteria = LogCriteria.of(query, limit);
+        } else {
+            criteria =
+                    LogCriteria.ofRange(query, start, end, limit, direction, interval, step, since);
+        }
+
         Log log = lokiService.getRangeLogs(criteria);
         LogResponseDto responseDto = LogResponseMapper.toDto(log);
         return LogSummaryMapper.toResultDto(responseDto, direction);
