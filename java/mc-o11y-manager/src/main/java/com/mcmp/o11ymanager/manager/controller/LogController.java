@@ -18,8 +18,8 @@ public class LogController {
     @GetMapping("/query_range")
     public ResBody<LogSummaryDto.ResultDto> queryRangeLogs(
             @RequestParam String query,
-            @RequestParam String start,
-            @RequestParam String end,
+            @RequestParam(required = false) String start,
+            @RequestParam(required = false) String end,
             @RequestParam int limit,
             @RequestParam(required = false) String direction,
             @RequestParam(required = false) String interval,

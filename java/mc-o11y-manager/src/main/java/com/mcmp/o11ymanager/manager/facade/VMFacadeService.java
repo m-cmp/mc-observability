@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,86 +40,97 @@ public class VMFacadeService {
 
     public VMDTO postVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
 
-        VMDTO savedVM;
-        VMStatus status =
-                tumblebugService.isConnectedVM(nsId, mciId, vmId)
-                        ? VMStatus.RUNNING
-                        : VMStatus.FAILED;
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
-        if (status != VMStatus.RUNNING) {
-            throw new RuntimeException("FAILED TO CONNECT VM");
+        try {
+            hostLock.lock();
+
+            VMStatus status =
+                    tumblebugService.isConnectedVM(nsId, mciId, vmId)
+                            ? VMStatus.RUNNING
+                            : VMStatus.FAILED;
+
+            if (status != VMStatus.RUNNING) {
+                throw new RuntimeException("FAILED TO CONNECT VM");
+            }
+
+            Long influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
+
+            VMDTO savedVM = vmService.post(nsId, mciId, vmId, status, dto, influxSeq);
+
+            vmService.updateMonitoringAgentTaskStatusAndTaskId(
+                    savedVM.getNsId(),
+                    savedVM.getMciId(),
+                    savedVM.getVmId(),
+                    VMAgentTaskStatus.IDLE,
+                    "");
+            vmService.updateLogAgentTaskStatusAndTaskId(
+                    savedVM.getNsId(),
+                    savedVM.getMciId(),
+                    savedVM.getVmId(),
+                    VMAgentTaskStatus.IDLE,
+                    "");
+
+            agentFacadeService.install(nsId, mciId, vmId);
+
+            return savedVM;
+        } finally {
+            hostLock.unlock();
         }
-
-        Long influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
-
-        savedVM = vmService.post(nsId, mciId, vmId, status, dto, influxSeq);
-
-        vmService.updateMonitoringAgentTaskStatusAndTaskId(
-                savedVM.getNsId(),
-                savedVM.getMciId(),
-                savedVM.getVmId(),
-                VMAgentTaskStatus.IDLE,
-                "");
-        vmService.updateLogAgentTaskStatusAndTaskId(
-                savedVM.getNsId(),
-                savedVM.getMciId(),
-                savedVM.getVmId(),
-                VMAgentTaskStatus.IDLE,
-                "");
-
-        agentFacadeService.install(nsId, mciId, vmId);
-
-        return savedVM;
     }
 
     public VMDTO getVM(String nsId, String mciId, String vmId) {
+
         log.info(">>> getVM() called with nsId: {}, mciId: {}, vmId: {}", nsId, mciId, vmId);
 
-        TumblebugMCI.Vm vm;
-        String userName;
-
-        VMDTO savedVM = vmService.get(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
 
         try {
-            vm = tumblebugService.getVm(nsId, mciId, vmId);
-            userName = vm.getVmUserName();
+            hostLock.lock();
+
+            VMDTO savedVM = vmService.get(nsId, mciId, vmId);
+            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
+            String userName = vm.getVmUserName();
             log.info(
                     ">>> VM fetched: id={}, name={} userName={}",
                     vm.getId(),
                     vm.getName(),
                     userName);
+
+            //        log.info(">>> start checking monitoring agent status");
+            //        AgentServiceStatus monitoringStatus =
+            //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+            // Agent.TELEGRAF);
+            //        log.info(">>> start checking log agent status");
+            //        AgentServiceStatus logStatus =
+            //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+            // Agent.FLUENT_BIT);
+
+            AgentStatus monitoringAgentStatus =
+                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.TELEGRAF);
+
+            AgentStatus logAgentStatus =
+                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
+
+            return VMDTO.builder()
+                    .vmId(vm.getId())
+                    .name(savedVM.getName())
+                    .description(vm.getDescription())
+                    .nsId(nsId)
+                    .mciId(mciId)
+                    .monitoringAgentStatus(monitoringAgentStatus)
+                    .logAgentStatus(logAgentStatus)
+                    .build();
         } catch (Exception e) {
-            log.error(">>> getVm() failed", e);
+            log.error(">>> getVM() failed", e);
             throw e;
+        } finally {
+            hostLock.unlock();
         }
-
-        //        log.info(">>> start checking monitoring agent status");
-        //        AgentServiceStatus monitoringStatus =
-        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
-        // Agent.TELEGRAF);
-        //        log.info(">>> start checking log agent status");
-        //        AgentServiceStatus logStatus =
-        //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
-        // Agent.FLUENT_BIT);
-
-        AgentStatus monitoringAgentStatus =
-                agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.TELEGRAF);
-
-        AgentStatus logAgentStatus =
-                agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
-
-        return VMDTO.builder()
-                .vmId(vm.getId())
-                .name(savedVM.getName())
-                .description(vm.getDescription())
-                .nsId(nsId)
-                .mciId(mciId)
-                .monitoringAgentStatus(monitoringAgentStatus)
-                .logAgentStatus(logAgentStatus)
-                .build();
     }
 
     private List<VMDTO> fetchVM(List<VMDTO> rawList) {
+
         List<Future<VMDTO>> futures = new ArrayList<>();
 
         for (VMDTO baseDto : rawList) {
@@ -165,15 +177,36 @@ public class VMFacadeService {
     }
 
     public List<VMDTO> getVMs() {
+
         List<VMDTO> rawList = vmService.list();
+
         return fetchVM(rawList);
     }
 
     public VMDTO putVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
-        return vmService.put(nsId, mciId, vmId, dto);
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
+        try {
+            hostLock.lock();
+
+            return vmService.put(nsId, mciId, vmId, dto);
+        } finally {
+            hostLock.unlock();
+        }
     }
 
     public void deleteVM(String nsId, String mciId, String vmId) {
-        vmService.delete(nsId, mciId, vmId);
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
+        try {
+            hostLock.lock();
+
+            vmService.delete(nsId, mciId, vmId);
+            agentFacadeService.uninstall(nsId, mciId, vmId);
+        } finally {
+            hostLock.unlock();
+        }
     }
 }

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,7 +49,12 @@ public class ItemFacadeService {
 
     public void addTelegrafPlugin(
             String nsId, String mciId, String vmId, MonitoringItemRequestDTO dto) {
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
         try {
+            hostLock.lock();
+
             TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
@@ -112,12 +118,19 @@ public class ItemFacadeService {
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
+        } finally {
+            hostLock.unlock();
         }
     }
 
     public void updateTelegrafPlugin(
             String nsId, String mciId, String vmId, MonitoringItemUpdateDTO dto) {
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
         try {
+            hostLock.lock();
+
             TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
@@ -178,11 +191,18 @@ public class ItemFacadeService {
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
+        } finally {
+            hostLock.unlock();
         }
     }
 
     public void deleteTelegrafPlugin(String nsId, String mciId, String vmId, Long itemSeq) {
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
         try {
+            hostLock.lock();
+
             TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
             if (vm == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
@@ -229,7 +249,6 @@ public class ItemFacadeService {
             tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
             telegrafFacadeService.restart(nsId, mciId, vmId);
-
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {
@@ -239,6 +258,8 @@ public class ItemFacadeService {
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
+        } finally {
+            hostLock.unlock();
         }
     }
 
@@ -247,7 +268,11 @@ public class ItemFacadeService {
     }
 
     public List<MonitoringItemDTO> getTelegrafItems(String nsId, String mciId, String vmId) {
+
+        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+
         try {
+            hostLock.lock();
 
             if (!tumblebugService.isConnectedVM(nsId, mciId, vmId)) {
                 String errorMsg =
@@ -315,6 +340,8 @@ public class ItemFacadeService {
             log.error(errorMsg, e);
             throw new TelegrafConfigException(
                     ResponseCode.INTERNAL_SERVER_ERROR, errorMsg + ": " + e.getMessage());
+        } finally {
+            hostLock.unlock();
         }
     }
 

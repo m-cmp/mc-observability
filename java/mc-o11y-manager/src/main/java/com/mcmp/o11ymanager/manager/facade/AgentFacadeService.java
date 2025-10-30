@@ -18,7 +18,6 @@ import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.RequiredArgsConstructor;
@@ -40,17 +39,11 @@ public class AgentFacadeService {
 
     private final FluentBitFacadeService fluentBitFacadeService;
     private final TelegrafFacadeService telegrafFacadeService;
-    private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks =
-            new ConcurrentHashMap<>();
     private final TumblebugService tumblebugService;
     private final VMService vmService;
 
-    private ReentrantLock getAgentLock(String nsId, String mciId, String vmId) {
-        String lockKey = nsId + "-" + mciId + "-" + vmId;
-        return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
-    }
-
     private AccessInfoDTO getAccessInfo(String nsId, String mciId, String vmId) {
+
         TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, vmId);
         TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
 
@@ -82,7 +75,6 @@ public class AgentFacadeService {
                 vmId);
 
         List<ResultDTO> results = new ArrayList<>();
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
 
         try {
             AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
@@ -98,7 +90,6 @@ public class AgentFacadeService {
 
             // 2) Install agent
             // 2-1) Install Telegraf
-            agentLock.lock();
             telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 2-2) Install FluentBit
@@ -121,10 +112,6 @@ public class AgentFacadeService {
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
-        } finally {
-            if (agentLock.isLocked()) {
-                agentLock.unlock();
-            }
         }
 
         return results;
@@ -133,7 +120,6 @@ public class AgentFacadeService {
     @Transactional
     public List<ResultDTO> update(String nsId, String mciId, String vmId) {
         List<ResultDTO> results = new ArrayList<>();
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
 
         try {
             AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
@@ -149,7 +135,6 @@ public class AgentFacadeService {
 
             // 2 ) 에이전트 업데이트
             // 2-1 ) Telegraf 업데이트
-            agentLock.lock();
             telegrafFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 2-1 ) FluentBit 업데이트
@@ -171,10 +156,6 @@ public class AgentFacadeService {
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
-        } finally {
-            if (agentLock.isLocked()) {
-                agentLock.unlock();
-            }
         }
 
         return results;
@@ -231,7 +212,6 @@ public class AgentFacadeService {
 
         List<ResultDTO> results = new ArrayList<>();
 
-        ReentrantLock agentLock = getAgentLock(nsId, mciId, vmId);
         AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
 
         try {
@@ -245,7 +225,6 @@ public class AgentFacadeService {
 
             // 4 ) 에이전트 제거
             // 4-1 ) Telegraf 제거
-            agentLock.lock();
             telegrafFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
 
             // 4-1 ) FluentBit 제거
@@ -267,11 +246,6 @@ public class AgentFacadeService {
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
-
-        } finally {
-            if (agentLock.isLocked()) {
-                agentLock.unlock();
-            }
         }
 
         return results;
