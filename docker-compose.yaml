@@ -575,7 +575,7 @@ services:
 
   # CB-Tumblebug
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.13
+    image: cloudbaristaorg/cb-tumblebug:0.11.16
     container_name: mc-infra-manager
     networks:
       - internal_network
