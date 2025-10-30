@@ -1,6 +1,6 @@
-commit b3316c335dd243d8afd93e8c8a8ceaf9fefc9332
+commit 8c4186f3c8d7e4794bbdae958f94d8295cca3473
 Author: 임수현 <ish@innogrid.com>
-Date:   Tue Sep 30 16:22:41 2025 +0900
+Date:   Thu Oct 30 19:16:41 2025 +0900
 
     Add Azure Monitoring PoC
 
@@ -206,10 +206,10 @@ index 00000000..51ca7aaf
 +	return &info, nil
 +}
 diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
-index 58bfa6e7..33d750a5 100644
+index 662b59e6..ada841fa 100644
 --- a/api-runtime/rest-runtime/CBSpiderRuntime.go
 +++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
-@@ -467,6 +467,10 @@ func RunServer() {
+@@ -490,6 +490,10 @@ func getRoutes() []route {
  		{"GET", "/filesystem/:Name/accesssubnet", ListAccessSubnet},
  		{"DELETE", "/filesystem/:Name/accesssubnet", RemoveAccessSubnet},
  
@@ -455,10 +455,10 @@ index d69ab865..2b006229 100644
 +	return nil, errors.New("GCP Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-index 075e67e5..08b99a91 100644
+index 70483940..1281e93b 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-@@ -269,3 +269,21 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
+@@ -275,3 +275,21 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
  	return &tagHandler, nil
  	// return nil, errors.New("Azure Driver: not implemented")
  }
