@@ -98,14 +98,14 @@ public class AlertEventConsumer {
         }
     }
 
-    @RabbitListener(queues = "direct.queue", errorHandler = "jsonParseErrorHandler")
+    @RabbitListener(queues = "alert-manual.queue", errorHandler = "jsonParseErrorHandler")
     public void consumeDirectAlert(
             @Payload DirectAlert directAlert,
             @Header(AmqpHeaders.DELIVERY_TAG) long tag,
             Channel channel)
             throws IOException {
 
-        log.info("Consume Direct alert message from direct.queue");
+        log.info("Consume Direct alert message from alert-manual.queue");
         log.debug("Raw message: {}", objectMapper.writeValueAsString(directAlert));
 
         try {
