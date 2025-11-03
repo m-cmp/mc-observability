@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults;
 
 import com.mcmp.o11ymanager.trigger.application.common.exception.InvalidNotificationTypeException;
+import com.mcmp.o11ymanager.trigger.application.persistence.model.DirectAlert;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyNotiChannelDto;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
@@ -86,6 +87,44 @@ public class DefaultNotiFactory implements NotiFactory {
                     alertEvent, (SlackProperties) notiProperty, notiChannelDto.recipients());
             case KAKAO -> KakaoNoti.from(
                     alertEvent, (KakaoProperties) notiProperty, notiChannelDto.recipients());
+        };
+    }
+
+    public Noti createDirectNoti(DirectAlert directAlert) {
+        NotificationType type =
+                NotificationType.valueOf(directAlert.getChannelName().toUpperCase());
+
+        if (!notiChannelProps.containsKey(type)) {
+            throw new InvalidNotificationTypeException(
+                    "Notification type " + type + " is not configured");
+        }
+
+        NotiProperty property = notiChannelProps.get(type);
+
+        return switch (type) {
+            case SMS -> SmsNoti.direct(
+                    (SmsProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case EMAIL -> MailNoti.direct(
+                    (MailProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case SLACK -> SlackNoti.direct(
+                    (SlackProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case KAKAO -> KakaoNoti.direct(
+                    (KakaoProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
         };
     }
 

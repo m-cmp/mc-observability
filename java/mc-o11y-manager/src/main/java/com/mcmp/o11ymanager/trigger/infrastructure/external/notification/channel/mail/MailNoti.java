@@ -18,6 +18,7 @@ import org.thymeleaf.context.Context;
 @Getter
 @Builder
 public class MailNoti implements Noti {
+
     private static final NotificationType notiType = EMAIL;
     private String subject;
     private String content;
@@ -42,6 +43,34 @@ public class MailNoti implements Noti {
                 .to(recipients)
                 .contentType(MimeTypeUtils.TEXT_HTML_VALUE)
                 .build();
+    }
+
+    public static MailNoti direct(
+            MailProperties mailProperties, List<String> recipients, String title, String message) {
+
+        return MailNoti.builder()
+                .subject(buildDirectSubject(title))
+                .content(buildDirectContent(title, message))
+                .from(mailProperties.getUsername())
+                .to(recipients)
+                .contentType(MimeTypeUtils.TEXT_HTML_VALUE)
+                .build();
+    }
+
+    private static String buildDirectSubject(String title) {
+        return "[M-CMP] " + title;
+    }
+
+    private static String buildDirectContent(String title, String message) {
+        return """
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height:1.6;">
+            <p><strong>Title :</strong> %s</p>
+            <p><strong>Message :</strong> <span style="white-space:pre-wrap;">%s</span></p>
+        </body>
+        </html>
+        """
+                .formatted(title, message);
     }
 
     /**

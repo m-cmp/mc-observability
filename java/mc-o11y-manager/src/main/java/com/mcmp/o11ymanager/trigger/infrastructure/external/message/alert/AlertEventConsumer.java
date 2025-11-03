@@ -2,9 +2,16 @@ package com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcmp.o11ymanager.trigger.application.common.dto.ThresholdCondition;
+import com.mcmp.o11ymanager.trigger.application.persistence.model.DirectAlert;
+import com.mcmp.o11ymanager.trigger.application.service.NotiService;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.message.GrafanaAlertMessage;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiFactory;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiResult;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiSender;
 import com.rabbitmq.client.Channel;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -24,6 +31,9 @@ public class AlertEventConsumer {
 
     private final AlertEventService alertEventService;
     private final ObjectMapper objectMapper;
+    private final NotiSender notiSender;
+    private final NotiFactory notiFactory;
+    private final NotiService notiService;
 
     /**
      * Constructor for AlertEventConsumer.
@@ -31,9 +41,17 @@ public class AlertEventConsumer {
      * @param alertEventService service for processing alert events
      * @param objectMapper Jackson ObjectMapper for JSON serialization/logging
      */
-    public AlertEventConsumer(AlertEventService alertEventService, ObjectMapper objectMapper) {
+    public AlertEventConsumer(
+            AlertEventService alertEventService,
+            ObjectMapper objectMapper,
+            NotiSender notiSender,
+            NotiFactory notiFactory,
+            NotiService notiService) {
         this.alertEventService = alertEventService;
         this.objectMapper = objectMapper;
+        this.notiSender = notiSender;
+        this.notiFactory = notiFactory;
+        this.notiService = notiService;
     }
 
     /**
@@ -76,6 +94,30 @@ public class AlertEventConsumer {
             channel.basicAck(tag, false);
         } catch (Exception e) {
             log.error("Error while send alert", e);
+            channel.basicNack(tag, false, false);
+        }
+    }
+
+    @RabbitListener(queues = "direct.queue", errorHandler = "jsonParseErrorHandler")
+    public void consumeDirectAlert(
+            @Payload DirectAlert directAlert,
+            @Header(AmqpHeaders.DELIVERY_TAG) long tag,
+            Channel channel)
+            throws IOException {
+
+        log.info("Consume Direct alert message from direct.queue");
+        log.debug("Raw message: {}", objectMapper.writeValueAsString(directAlert));
+
+        try {
+            Noti noti = notiFactory.createDirectNoti(directAlert);
+            NotiResult result = notiSender.send(noti);
+            result.setChannel(directAlert.getChannelName());
+            notiService.createNotiHistory(List.of(result));
+            channel.basicAck(tag, false);
+        } catch (Exception e) {
+            log.info(
+                    "=================================Error while processing Direct alert=================================",
+                    e);
             channel.basicNack(tag, false, false);
         }
     }

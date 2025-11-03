@@ -51,6 +51,24 @@ public class RabbitMQConfig {
     @Value("${spring.rabbitmq.alert.mqttExchangeName}")
     private String mqttExchangeName;
 
+    @Value("${spring.rabbitmq.direct.queueName}")
+    private String directQueueName;
+
+    @Value("${spring.rabbitmq.direct.exchangeName}")
+    private String directExchangeName;
+
+    @Value("${spring.rabbitmq.direct.routingKey}")
+    private String directRoutingKey;
+
+    @Value("${spring.rabbitmq.direct.deadLetterQueueName}")
+    private String directDeadLetterQueueName;
+
+    @Value("${spring.rabbitmq.direct.deadLetterExchangeName}")
+    private String directDeadLetterExchangeName;
+
+    @Value("${spring.rabbitmq.direct.deadLetterRoutingKey}")
+    private String directDeadLetterRoutingKey;
+
     /**
      * Creates a topic exchange for MQTT messages.
      *
@@ -191,5 +209,40 @@ public class RabbitMQConfig {
             }
             throw exception;
         };
+    }
+
+    @Bean
+    public DirectExchange directExchange() {
+        return new DirectExchange(directExchangeName);
+    }
+
+    @Bean
+    public Queue directQueue() {
+        return QueueBuilder.durable(directQueueName)
+                .withArgument("x-dead-letter-exchange", directDeadLetterExchangeName)
+                .withArgument("x-dead-letter-routing-key", directDeadLetterRoutingKey)
+                .build();
+    }
+
+    @Bean
+    public Binding directBinding() {
+        return BindingBuilder.bind(directQueue()).to(directExchange()).with(directRoutingKey);
+    }
+
+    @Bean
+    public Queue directDeadLetterQueue() {
+        return QueueBuilder.durable(directDeadLetterQueueName).build();
+    }
+
+    @Bean
+    public DirectExchange directDeadLetterExchange() {
+        return new DirectExchange(directDeadLetterExchangeName);
+    }
+
+    @Bean
+    public Binding directDeadLetterBinding() {
+        return BindingBuilder.bind(directDeadLetterQueue())
+                .to(directDeadLetterExchange())
+                .with(directDeadLetterRoutingKey);
     }
 }

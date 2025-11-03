@@ -15,6 +15,7 @@ import org.springframework.util.MimeTypeUtils;
  */
 @Getter
 public class KakaoNoti implements Noti {
+
     private static final NotificationType notiType = KAKAO;
     private RequestHeader header;
     private RequestBody body;
@@ -33,6 +34,40 @@ public class KakaoNoti implements Noti {
         notification.header = buildHeader(kakaoProperties);
         notification.body = buildBody(event, kakaoProperties, recipients);
         return notification;
+    }
+
+    public static KakaoNoti direct(
+            KakaoProperties kakaoProperties,
+            List<String> recipients,
+            String title,
+            String message) {
+
+        KakaoNoti notification = new KakaoNoti();
+        notification.header = buildHeader(kakaoProperties);
+        notification.body = buildDirectBody(kakaoProperties, recipients, title, message);
+        return notification;
+    }
+
+    private static RequestBody buildDirectBody(
+            KakaoProperties kakaoProperties,
+            List<String> recipients,
+            String title,
+            String message) {
+
+        RequestBody requestBody = new RequestBody();
+        requestBody.plusFriendId = kakaoProperties.getChannelId();
+
+        String content =
+                """
+        [M-CMP]
+        %s
+        %s
+        """.formatted(title, message);
+
+        requestBody.messages =
+                recipients.stream().map(recipient -> new Message(recipient, content)).toList();
+
+        return requestBody;
     }
 
     /**
@@ -56,13 +91,13 @@ public class KakaoNoti implements Noti {
         requestBody.plusFriendId = kakaoProperties.getChannelId();
         String content =
                 """
-				[M-CMP] %s alerts triggered.
+            [M-CMP] %s alerts triggered.
 
-				%s
-				- info: %s
-				- warning: %s
-				- critical: %s
-				"""
+            %s
+            - info: %s
+            - warning: %s
+            - critical: %s
+            """
                         .formatted(
                                 event.getAlertsCount(),
                                 event.getTitle(),
@@ -82,6 +117,7 @@ public class KakaoNoti implements Noti {
 
     @Getter
     public static class RequestHeader {
+
         private static final String contentType = MimeTypeUtils.APPLICATION_JSON.toString();
         private String url;
         private String timestamp;
@@ -95,12 +131,14 @@ public class KakaoNoti implements Noti {
 
     @Getter
     public static class RequestBody {
+
         private String plusFriendId;
         private List<Message> messages;
     }
 
     @Getter
     public static class Message {
+
         private final String to;
         private final String content;
 

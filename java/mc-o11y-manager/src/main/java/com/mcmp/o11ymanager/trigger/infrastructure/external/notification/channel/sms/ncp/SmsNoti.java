@@ -4,6 +4,7 @@ import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackNoti.RequestBody;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 import java.util.List;
 import lombok.Getter;
@@ -33,6 +34,32 @@ public class SmsNoti implements Noti {
         notification.header = buildHeader(smsProperties);
         notification.body = buildBody(event, smsProperties, recipients);
         return notification;
+    }
+
+    public static SmsNoti direct(
+            SmsProperties smsProperties, List<String> recipients, String title, String message) {
+        SmsNoti notification = new SmsNoti();
+        notification.header = buildHeader(smsProperties);
+        notification.body = buildDirectBody(smsProperties, recipients, title, message);
+        return notification;
+    }
+
+    private static RequestBody buildDirectBody(
+            SmsProperties smsProperties, List<String> recipients, String title, String message) {
+
+        String content =
+                """
+        [M-CMP]
+        %s
+        %s
+        """.formatted(title, message);
+
+        RequestBody requestBody = new RequestBody();
+        requestBody.from = smsProperties.getFrom();
+        requestBody.content = content;
+        requestBody.messages = recipients.stream().map(Message::new).toList();
+
+        return requestBody;
     }
 
     /**

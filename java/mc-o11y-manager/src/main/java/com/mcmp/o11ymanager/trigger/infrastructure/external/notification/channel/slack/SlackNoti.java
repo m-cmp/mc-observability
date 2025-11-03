@@ -40,6 +40,27 @@ public class SlackNoti implements Noti {
         return notification;
     }
 
+    public static SlackNoti direct(
+            SlackProperties props, List<String> channels, String title, String message) {
+        SlackNoti notification = new SlackNoti();
+        notification.recipients = channels;
+        notification.header = buildHeader(props);
+        notification.body = buildDirectBody(channels, title, message);
+        return notification;
+    }
+
+    private static RequestBody buildDirectBody(
+            List<String> channels, String title, String message) {
+        RequestBody requestBody = new RequestBody();
+        requestBody.channel = channels.get(0);
+        Attachment attachment = new Attachment();
+        attachment.pretext = "[M-CMP]";
+        attachment.text = "*" + title + "*\n" + message;
+        attachment.ts = String.valueOf(System.currentTimeMillis());
+        requestBody.attachments = List.of(attachment);
+        return requestBody;
+    }
+
     /**
      * Builds request header for Slack API call.
      *
@@ -174,9 +195,8 @@ public class SlackNoti implements Noti {
     public static class Attachment {
 
         private final String color = "#3AA3E3";
-        private final String fallback = "(Fallback) Failed to send message.";
         private String pretext = "[M-CMP] ";
-        private final String title = "Trigger Detail";
+        private String title;
         private String text;
         private List<Field> fields;
         private String ts;
