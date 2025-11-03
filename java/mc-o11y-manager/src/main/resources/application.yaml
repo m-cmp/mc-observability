@@ -41,7 +41,7 @@ spring:
       deadLetterExchangeName: alert.dlx
       deadLetterRoutingKey: alert.dlq
       mqttExchangeName: mqtt.topic
-    alert-manual:
+    direct:
       queueName: alert-manual.queue
       exchangeName: alert-manual.exchange
       routingKey: alert-manual.queue
