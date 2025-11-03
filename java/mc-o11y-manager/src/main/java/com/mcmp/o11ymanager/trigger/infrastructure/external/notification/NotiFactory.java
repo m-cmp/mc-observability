@@ -8,21 +8,21 @@ import java.util.List;
 
 public interface NotiFactory {
 
-  /**
-   * Gets all configured notification channel properties.
-   *
-   * @return list of notification channel properties
-   */
-  List<NotiProperty> getNotiChannelProps();
+    /**
+     * Gets all configured notification channel properties.
+     *
+     * @return list of notification channel properties
+     */
+    List<NotiProperty> getNotiChannelProps();
 
-  /**
-   * Creates a notification object based on channel configuration and alert event.
-   *
-   * @param notiChannelDto notification channel configuration
-   * @param alertEvent     alert event information
-   * @return created notification object
-   */
-  Noti createNoti(TriggerPolicyNotiChannelDto notiChannelDto, AlertEvent alertEvent);
+    /**
+     * Creates a notification object based on channel configuration and alert event.
+     *
+     * @param notiChannelDto notification channel configuration
+     * @param alertEvent alert event information
+     * @return created notification object
+     */
+    Noti createNoti(TriggerPolicyNotiChannelDto notiChannelDto, AlertEvent alertEvent);
 
-  Noti createDirectNoti(DirectAlert directAlert);
+    Noti createDirectNoti(DirectAlert directAlert);
 }

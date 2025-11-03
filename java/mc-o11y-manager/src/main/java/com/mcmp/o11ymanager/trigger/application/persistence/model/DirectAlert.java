@@ -12,9 +12,8 @@ import lombok.Setter;
 @Setter
 public class DirectAlert {
 
-  private String title;
-  private String message;
-  private String channelName;
-  private List<String> recipients;
-
+    private String title;
+    private String message;
+    private String channelName;
+    private List<String> recipients;
 }

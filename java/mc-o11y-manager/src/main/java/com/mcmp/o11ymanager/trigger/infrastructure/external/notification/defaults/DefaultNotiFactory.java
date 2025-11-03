@@ -90,47 +90,45 @@ public class DefaultNotiFactory implements NotiFactory {
         };
     }
 
+    public Noti createDirectNoti(DirectAlert directAlert) {
+        NotificationType type =
+                NotificationType.valueOf(directAlert.getChannelName().toUpperCase());
 
-  public Noti createDirectNoti(DirectAlert directAlert) {
-    NotificationType type = NotificationType.valueOf(directAlert.getChannelName().toUpperCase());
+        if (!notiChannelProps.containsKey(type)) {
+            throw new InvalidNotificationTypeException(
+                    "Notification type " + type + " is not configured");
+        }
 
-    if (!notiChannelProps.containsKey(type)) {
-      throw new InvalidNotificationTypeException("Notification type " + type + " is not configured");
+        NotiProperty property = notiChannelProps.get(type);
+
+        return switch (type) {
+            case SMS -> SmsNoti.direct(
+                    (SmsProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case EMAIL -> MailNoti.direct(
+                    (MailProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case SLACK -> SlackNoti.direct(
+                    (SlackProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case KAKAO -> KakaoNoti.direct(
+                    (KakaoProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+        };
     }
 
-    NotiProperty property = notiChannelProps.get(type);
-
-    return switch (type) {
-      case SMS -> SmsNoti.direct(
-          (SmsProperties) property,
-          directAlert.getRecipients(),
-          directAlert.getTitle(),
-          directAlert.getMessage());
-
-      case EMAIL -> MailNoti.direct(
-          (MailProperties) property,
-          directAlert.getRecipients(),
-          directAlert.getTitle(),
-          directAlert.getMessage());
-
-      case SLACK -> SlackNoti.direct(
-          (SlackProperties) property,
-          directAlert.getRecipients(),
-          directAlert.getTitle(),
-          directAlert.getMessage());
-
-      case KAKAO -> KakaoNoti.direct(
-          (KakaoProperties) property,
-          directAlert.getRecipients(),
-          directAlert.getTitle(),
-          directAlert.getMessage());
-    };
-  }
-
-
-
-
-  /**
+    /**
      * Marker interface for notification properties All notification channel properties should
      * implement this interface.
      */

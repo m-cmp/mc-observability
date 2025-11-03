@@ -2,17 +2,13 @@ package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channe
 
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;
 
-import com.mcmp.o11ymanager.trigger.application.persistence.model.DirectAlert;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent.AlertDetail;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.util.MimeTypeUtils;
 
 /**
@@ -44,31 +40,28 @@ public class SlackNoti implements Noti {
         return notification;
     }
 
+    public static SlackNoti direct(
+            SlackProperties props, List<String> channels, String title, String message) {
+        SlackNoti notification = new SlackNoti();
+        notification.recipients = channels;
+        notification.header = buildHeader(props);
+        notification.body = buildDirectBody(channels, title, message);
+        return notification;
+    }
 
-  public static SlackNoti direct(SlackProperties props, List<String> channels, String title, String message) {
-    SlackNoti notification = new SlackNoti();
-    notification.recipients = channels;
-    notification.header = buildHeader(props);
-    notification.body = buildDirectBody(channels, title, message);
-    return notification;
-  }
+    private static RequestBody buildDirectBody(
+            List<String> channels, String title, String message) {
+        RequestBody requestBody = new RequestBody();
+        requestBody.channel = channels.get(0);
+        Attachment attachment = new Attachment();
+        attachment.pretext = "[M-CMP]";
+        attachment.text = "*" + title + "*\n" + message;
+        attachment.ts = String.valueOf(System.currentTimeMillis());
+        requestBody.attachments = List.of(attachment);
+        return requestBody;
+    }
 
-
-
-  private static RequestBody buildDirectBody(List<String> channels, String title, String message) {
-    RequestBody requestBody = new RequestBody();
-    requestBody.channel = channels.get(0);
-    Attachment attachment = new Attachment();
-    attachment.pretext = "[M-CMP]";
-    attachment.text = "*" + title + "*\n" + message;
-    attachment.ts = String.valueOf(System.currentTimeMillis());
-    requestBody.attachments = List.of(attachment);
-    return requestBody;
-  }
-
-
-
-  /**
+    /**
      * Builds request header for Slack API call.
      *
      * @param slackProperties Slack configuration properties
@@ -81,18 +74,13 @@ public class SlackNoti implements Noti {
         return requestHeader;
     }
 
-
     /**
      * Builds request body with alert attachments for Slack message.
      *
      * @param event the alert event
      * @return RequestBody with formatted attachments
      */
-
-
-
-
-  private static RequestBody buildBody(AlertEvent event) {
+    private static RequestBody buildBody(AlertEvent event) {
         RequestBody requestBody = new RequestBody();
         requestBody.attachments = buildAttachments(event);
         return requestBody;

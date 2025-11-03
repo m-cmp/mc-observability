@@ -71,7 +71,9 @@ public class SlackNotifier implements Notifier {
                                             StreamUtils.copyToString(
                                                     response.getBody(), StandardCharsets.UTF_8);
                                     log.error(
-                                            "Failed to send slack, status={}, body={}", status, body);
+                                            "Failed to send slack, status={}, body={}",
+                                            status,
+                                            body);
                                     exceptions.add(
                                             new NotificationDeliveryException(
                                                     "Slack", status.value(), body));
