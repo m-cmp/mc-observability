@@ -41,6 +41,14 @@ spring:
       deadLetterExchangeName: alert.dlx
       deadLetterRoutingKey: alert.dlq
       mqttExchangeName: mqtt.topic
+    alert-manual:
+      queueName: alert-manual.queue
+      exchangeName: alert-manual.exchange
+      routingKey: alert-manual.queue
+      deadLetterQueueName: alert-manual.dlq
+      deadLetterExchangeName: alert-manual.dlx
+      deadLetterRoutingKey: alert-manual.dlq
+
 
 springdoc:
   packages-to-scan: com.mcmp.o11ymanager
