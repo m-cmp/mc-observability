@@ -1,11 +1,12 @@
 import logging
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
-from sqlalchemy import text
 from influxdb import InfluxDBClient
+from sqlalchemy import text
+
 from app.core.dependencies.db import engine
 from config.ConfigManager import ConfigManager
-
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -32,7 +33,7 @@ async def health_check():
             host=influx_config["host"],
             port=int(influx_config["port"]),
             username=influx_config["username"],
-            password=influx_config["password"]
+            password=influx_config["password"],
         )
         influx_client.ping()
         influx_client.close()
@@ -42,6 +43,5 @@ async def health_check():
     except Exception as e:
         logger.error(f"Readiness check failed: {e}")
         return JSONResponse(
-            status_code=503,
-            content={"status": "Service Unavailable", "message": f"System not ready: {str(e)}"}
+            status_code=503, content={"status": "Service Unavailable", "message": f"System not ready: {e!s}"}
         )

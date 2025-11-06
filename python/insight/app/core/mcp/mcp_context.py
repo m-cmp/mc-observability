@@ -1,24 +1,22 @@
 import logging
-import json
 import re
 import time
 
 # from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
-from datetime import UTC, datetime
-
 import aiosqlite
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+
+from app.core.graph import create_conversation_graph
 from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
-from app.core.graph import create_conversation_graph
 from app.core.prompts.prompt_factory import PromptFactory
 from config.ConfigManager import ConfigManager
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 logger = logging.getLogger(__name__)
 
 
 class MCPContext:
-    def __init__(self, mcp_manager, analysis_type: str = None):
+    def __init__(self, mcp_manager, analysis_type: str | None = None):
         self.config = ConfigManager()
         self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
         self.mcp_manager = mcp_manager
@@ -27,7 +25,12 @@ class MCPContext:
         self.llm_with_tools = None
         self.tools = None
         self.agent = None
-        self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
+        self.query_metadata = {
+            "queries_executed": [],
+            "total_execution_time": 0.0,
+            "tool_calls_count": 0,
+            "databases_accessed": set(),
+        }
         if analysis_type is not None:
             self.prompt_service = PromptFactory.create_prompt_service(analysis_type, self.config)
 
@@ -38,9 +41,14 @@ class MCPContext:
 
     def reset_metadata(self):
         """Initialize metadata when starting a new query"""
-        self.query_metadata = {"queries_executed": [], "total_execution_time": 0.0, "tool_calls_count": 0, "databases_accessed": set()}
+        self.query_metadata = {
+            "queries_executed": [],
+            "total_execution_time": 0.0,
+            "tool_calls_count": 0,
+            "databases_accessed": set(),
+        }
 
-    def track_query_execution(self, query: str, execution_time: float, database: str = None):
+    def track_query_execution(self, query: str, execution_time: float, database: str | None = None):
         """Track query execution information"""
         self.query_metadata["queries_executed"].append(query)
         self.query_metadata["total_execution_time"] += execution_time
@@ -70,7 +78,9 @@ class MCPContext:
             elif provider == "openai":
                 self.llm_client = OpenAIClient(provider_credential)
             elif provider == "google":
-                self.llm_client = OpenAIClient(provider_credential, base_url="https://generativelanguage.googleapis.com/v1beta/openai")
+                self.llm_client = OpenAIClient(
+                    provider_credential, base_url="https://generativelanguage.googleapis.com/v1beta/openai"
+                )
             elif provider == "anthropic":
                 self.llm_client = OpenAIClient(provider_credential, base_url="https://api.anthropic.com/v1/")
             else:
@@ -83,10 +93,12 @@ class MCPContext:
             if self.analysis_type == "log":
                 self.llm_client.setup_graph_llm(model=model_name)
                 self.llm_with_tools = self.llm_client.llm.bind_tools(tools=self.tools)
-                self.agent = await create_conversation_graph(llm=self.llm_with_tools, tools=self.tools, config=self.config)
+                self.agent = await create_conversation_graph(
+                    llm=self.llm_with_tools, tools=self.tools, config=self.config
+                )
             else:
                 # Pass streaming parameter only to OpenAI-based clients
-                if hasattr(self.llm_client, 'setup'):
+                if hasattr(self.llm_client, "setup"):
                     if provider in ["openai", "google", "anthropic"]:
                         self.llm_client.setup(model=model_name, streaming=streaming)
                     else:
@@ -268,7 +280,7 @@ class MCPContext:
                                     if isinstance(fn, dict):
                                         args_dict = fn.get("arguments")
                             elif hasattr(tool_call, "args"):
-                                args_val = getattr(tool_call, "args")
+                                args_val = tool_call.args
                                 if args_val is not None:
                                     args_dict = args_val
 
@@ -285,7 +297,12 @@ class MCPContext:
                             if isinstance(args_dict, dict):
                                 captured_any_query_for_call = False
                                 for key, value in args_dict.items():
-                                    if key and isinstance(key, str) and key.lower() in ("query", "influxql_query", "sql_query") and isinstance(value, str):
+                                    if (
+                                        key
+                                        and isinstance(key, str)
+                                        and key.lower() in ("query", "influxql_query", "sql_query")
+                                        and isinstance(value, str)
+                                    ):
                                         q = value.strip()
                                         q = re.sub(r"\s+", " ", q)
                                         if q and q not in self.query_metadata["queries_executed"]:

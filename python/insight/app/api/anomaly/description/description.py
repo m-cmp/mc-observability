@@ -7,73 +7,60 @@ get_options_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "target_types": [
-                                "vm",
-                                "mci"
-                            ],
-                            "measurements": [
-                                "cpu",
-                                "mem"
-                            ],
-                            "execution_intervals": [
-                                "5m",
-                                "10m",
-                                "30m"
-                            ]
+                            "target_types": ["vm", "mci"],
+                            "measurements": ["cpu", "mem"],
+                            "execution_intervals": ["5m", "10m", "30m"],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_settings_description = {
     "api_description": "Fetch the current settings for all anomaly detection targets.",
-    "response": {}
+    "response": {},
 }
 
 post_settings_description = {
     "api_description": "Register a target for anomaly detection and automatically schedule detection tasks.",
-    "response": {}
+    "response": {},
 }
 
 put_settings_description = {
     "api_description": "Modify the settings for a specific anomaly detection target, including the monitoring metric and interval.",
-    "response": {}
+    "response": {},
 }
 
 delete_settings_description = {
     "api_description": "Remove a target from anomaly detection, stopping and removing any scheduled tasks.",
-    "response": {}
+    "response": {},
 }
 
 get_specific_settings_mci_description = {
     "api_description": "Fetch the current anomaly detection settings for a specific mci group.",
-    "response": {}
+    "response": {},
 }
 
 get_specific_settings_vm_description = {
     "api_description": "Fetch the current anomaly detection settings for a specific vm.",
-    "response": {}
+    "response": {},
 }
 
 get_history_mci_description = {
     "api_description": "Fetch the results of anomaly detection for mci group within a given time range.",
-    "response": {}
+    "response": {},
 }
 
 get_history_vm_description = {
     "api_description": "Fetch the results of anomaly detection for a specific vm within a given time range.",
-    "response": {}
+    "response": {},
 }
 
-post_anomaly_detection_description = {
-    "api_description": "Request anomaly detection",
-    "response": {}
-}
+post_anomaly_detection_description = {"api_description": "Request anomaly detection", "response": {}}
 
 get_anomaly_detection_measurements_description = {
     "api_description": "Get measurements, field lists available for the feature",
@@ -87,31 +74,21 @@ get_anomaly_detection_measurements_description = {
                             {
                                 "plugin_seq": 1,
                                 "measurement": "cpu",
-                                "fields": [
-                                    {
-                                        "field_key": "usage_idle",
-                                        "unit": "percent"
-                                    }
-                                ]
+                                "fields": [{"field_key": "usage_idle", "unit": "percent"}],
                             },
                             {
                                 "plugin_seq": 4,
                                 "measurement": "mem",
-                                "fields": [
-                                    {
-                                        "field_key": "used_percent",
-                                        "unit": "percent"
-                                    }
-                                ]
-                            }
+                                "fields": [{"field_key": "used_percent", "unit": "percent"}],
+                            },
                         ],
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_specific_measurement_description = {
@@ -125,18 +102,13 @@ get_specific_measurement_description = {
                         "data": {
                             "plugin_seq": 1,
                             "measurement": "cpu",
-                            "fields": [
-                                {
-                                    "field_key": "usage_idle",
-                                    "unit": "percent"
-                                }
-                            ]
+                            "fields": [{"field_key": "usage_idle", "unit": "percent"}],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }

@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
 
 
 class AnomalyDetectionMeasurement(BaseModel):
@@ -7,16 +6,18 @@ class AnomalyDetectionMeasurement(BaseModel):
     measurement: str
     fields: list[dict[str, str]]
 
+
 class ResBodyAnomalyDetectionMeasurement(BaseModel):
     data: list[AnomalyDetectionMeasurement]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 class ResBodyAnomalyDetectionSpecificMeasurement(BaseModel):
     data: AnomalyDetectionMeasurement
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 class AnomalyDetectionOptions(BaseModel):
     target_types: list[str]
@@ -34,21 +35,25 @@ class AnomalyDetectionSettings(BaseModel):
     seq: int
     ns_id: str
     mci_id: str
-    vm_id: Optional[str]
+    vm_id: str | None
     measurement: str
     execution_interval: str
-    last_execution: Optional[str] = Field(
+    last_execution: str | None = Field(
         None,
         description="The timestamp for the anomaly detection last run.",
         format="date-time",
-        example="2024-10-08T06:50:37Z"
+        example="2024-10-08T06:50:37Z",
     )
-    create_at: str = Field(..., description="The timestamp for the registration for anomaly detection target.",
-                           format="date-time", example="2024-10-08T06:50:37Z")
+    create_at: str = Field(
+        ...,
+        description="The timestamp for the registration for anomaly detection target.",
+        format="date-time",
+        example="2024-10-08T06:50:37Z",
+    )
 
 
 class ResBodyAnomalyDetectionSettings(BaseModel):
-    data: List[AnomalyDetectionSettings]
+    data: list[AnomalyDetectionSettings]
     rs_code: str = "200"
     rs_msg: str = "Success"
 
@@ -59,18 +64,29 @@ class ResBodyVoid(BaseModel):
 
 
 class AnomalyDetectionHistoryValue(BaseModel):
-    timestamp: str = Field(..., description="The timestamp for the anomaly detection result.", format="date-time", example="2024-10-08T06:50:37Z")
-    anomaly_score: Optional[float] = Field(..., description="The anomaly score for the corresponding timestamp.")
-    is_anomaly: Optional[float] = Field(..., description="Whether the data point is considered an anomaly (1) or normal (0).")
-    value: Optional[float] = Field(..., description="The original monitoring data value for the corresponding timestamp.")
+    timestamp: str = Field(
+        ...,
+        description="The timestamp for the anomaly detection result.",
+        format="date-time",
+        example="2024-10-08T06:50:37Z",
+    )
+    anomaly_score: float | None = Field(..., description="The anomaly score for the corresponding timestamp.")
+    is_anomaly: float | None = Field(
+        ..., description="Whether the data point is considered an anomaly (1) or normal (0)."
+    )
+    value: float | None = Field(..., description="The original monitoring data value for the corresponding timestamp.")
 
 
 class AnomalyDetectionHistoryResponse(BaseModel):
     ns_id: str = Field(..., description="The Namespace ID.")
     mci_id: str = Field(..., description="The ID of the mci group.")
-    vm_id: Optional[str] = Field(..., description="The ID of the vm.")
-    measurement: str = Field(..., description="The type of metric being monitored for anomalies (e.g., cpu, mem).", example="cpu")
-    values: List[AnomalyDetectionHistoryValue] = Field(..., description="List of anomaly detection results for the given time range.")
+    vm_id: str | None = Field(..., description="The ID of the vm.")
+    measurement: str = Field(
+        ..., description="The type of metric being monitored for anomalies (e.g., cpu, mem).", example="cpu"
+    )
+    values: list[AnomalyDetectionHistoryValue] = Field(
+        ..., description="List of anomaly detection results for the given time range."
+    )
 
 
 class ResBodyAnomalyDetectionHistoryResponse(BaseModel):

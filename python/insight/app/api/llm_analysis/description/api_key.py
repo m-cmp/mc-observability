@@ -9,18 +9,12 @@ get_api_key_description = {
                     "example": {
                         "rs_code": "200",
                         "rs_msg": "Success",
-                        "data": [
-                            {
-                              "seq": 1,
-                              "provider": "openai",
-                              "api_key": "api_key"
-                            }
-                        ]
+                        "data": [{"seq": 1, "provider": "openai", "api_key": "api_key"}],
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 post_api_key_description = {
@@ -33,16 +27,12 @@ post_api_key_description = {
                     "example": {
                         "rs_code": "200",
                         "rs_msg": "Success",
-                        "data": {
-                            "seq": 2,
-                            "provider": "openai",
-                            "api_key": "api_key"
-                        }
+                        "data": {"seq": 2, "provider": "openai", "api_key": "api_key"},
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 delete_api_key_description = {
@@ -55,14 +45,10 @@ delete_api_key_description = {
                     "example": {
                         "rs_code": "200",
                         "rs_msg": "Success",
-                        "data": {
-                            "seq": 3,
-                            "provider": "openai",
-                            "api_key": "api_key"
-                        }
+                        "data": {"seq": 3, "provider": "openai", "api_key": "api_key"},
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }

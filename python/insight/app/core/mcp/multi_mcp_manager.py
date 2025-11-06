@@ -1,11 +1,11 @@
 import logging
-from typing import Dict, List
 
+from langchain_mcp_adapters.tools import load_mcp_tools
+
+from app.core.mcp.grafana_mcp_context import GrafanaMCPContext
 from app.core.mcp.influxdb_mcp_context import InfluxDBMCPContext
 from app.core.mcp.mariadb_mcp_context import MariaDBMCPContext
-from app.core.mcp.grafana_mcp_context import GrafanaMCPContext
 from app.core.mcp.mcp_context import MCPContext
-from langchain_mcp_adapters.tools import load_mcp_tools
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 class MCPManager:
     def __init__(self):
-        self.mcp_clients: Dict[str, object] = {}
-        self.mcp_contexts: Dict[str, MCPContext] = {}
-        self.all_tools: List = []
+        self.mcp_clients: dict[str, object] = {}
+        self.mcp_contexts: dict[str, MCPContext] = {}
+        self.all_tools: list = []
 
     def add_mariadb_mcp(self, name: str, mcp_url: str):
         """Add MariaDB MCP client."""
@@ -82,7 +82,7 @@ class MCPManager:
 
     def get_client_by_tool(self, tool_name: str):
         """Find and return client that has specific tool."""
-        for name, client in self.mcp_clients.items():
+        for _, client in self.mcp_clients.items():
             if hasattr(client, "tools") and client.tools:
                 for tool in client.tools.tools:
                     if tool.name == tool_name:

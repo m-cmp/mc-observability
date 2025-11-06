@@ -7,28 +7,17 @@ get_options_description = {
                 "application/json": {
                     "example": {
                         "data": {
-                            "target_types": [
-                                "vm",
-                                "mci"
-                            ],
-                            "measurements": [
-                                "cpu",
-                                "mem",
-                                "disk",
-                                "system"
-                            ],
-                            "prediction_ranges": {
-                                "min": "1h",
-                                "max": "2160h"
-                            }
+                            "target_types": ["vm", "mci"],
+                            "measurements": ["cpu", "mem", "disk", "system"],
+                            "prediction_ranges": {"min": "1h", "max": "2160h"},
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 post_prediction_mci_description = {
@@ -44,27 +33,18 @@ post_prediction_mci_description = {
                             "mci_id": "string",
                             "measurement": "cpu",
                             "values": [
-                                {
-                                    "timestamp": "2024-08-22T00:00:00Z",
-                                    "value": 75
-                                },
-                                {
-                                    "timestamp": "2024-08-22T01:00:00Z",
-                                    "value": 78
-                                },
-                                {
-                                    "timestamp": "2024-08-22T02:00:00Z",
-                                    "value": 80
-                                }
-                            ]
+                                {"timestamp": "2024-08-22T00:00:00Z", "value": 75},
+                                {"timestamp": "2024-08-22T01:00:00Z", "value": 78},
+                                {"timestamp": "2024-08-22T02:00:00Z", "value": 80},
+                            ],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 post_prediction_vm_description = {
@@ -81,27 +61,18 @@ post_prediction_vm_description = {
                             "vm_id": "string",
                             "measurement": "cpu",
                             "values": [
-                                {
-                                    "timestamp": "2024-08-22T00:00:00Z",
-                                    "value": 75
-                                },
-                                {
-                                    "timestamp": "2024-08-22T01:00:00Z",
-                                    "value": 78
-                                },
-                                {
-                                    "timestamp": "2024-08-22T02:00:00Z",
-                                    "value": 80
-                                }
-                            ]
+                                {"timestamp": "2024-08-22T00:00:00Z", "value": 75},
+                                {"timestamp": "2024-08-22T01:00:00Z", "value": 78},
+                                {"timestamp": "2024-08-22T02:00:00Z", "value": 80},
+                            ],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_history_mci_description = {
@@ -117,27 +88,18 @@ get_history_mci_description = {
                             "mci_id": "string",
                             "measurement": "cpu",
                             "values": [
-                                {
-                                    "timestamp": "2024-08-22T00:00:00Z",
-                                    "value": 50
-                                },
-                                {
-                                    "timestamp": "2024-08-22T01:00:00Z",
-                                    "value": 55
-                                },
-                                {
-                                    "timestamp": "2024-08-22T02:00:00Z",
-                                    "value": 60
-                                }
-                            ]
+                                {"timestamp": "2024-08-22T00:00:00Z", "value": 50},
+                                {"timestamp": "2024-08-22T01:00:00Z", "value": 55},
+                                {"timestamp": "2024-08-22T02:00:00Z", "value": 60},
+                            ],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_history_vm_description = {
@@ -154,27 +116,18 @@ get_history_vm_description = {
                             "vm_id": "string",
                             "measurement": "cpu",
                             "values": [
-                                {
-                                    "timestamp": "2024-08-22T00:00:00Z",
-                                    "value": 50
-                                },
-                                {
-                                    "timestamp": "2024-08-22T01:00:00Z",
-                                    "value": 55
-                                },
-                                {
-                                    "timestamp": "2024-08-22T02:00:00Z",
-                                    "value": 60
-                                }
-                            ]
+                                {"timestamp": "2024-08-22T00:00:00Z", "value": 50},
+                                {"timestamp": "2024-08-22T01:00:00Z", "value": 55},
+                                {"timestamp": "2024-08-22T02:00:00Z", "value": 60},
+                            ],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_prediction_measurements_description = {
@@ -189,51 +142,31 @@ get_prediction_measurements_description = {
                             {
                                 "plugin_seq": 1,
                                 "measurement": "cpu",
-                                "fields": [
-                                    {
-                                        "field_key": "usage_idle",
-                                        "unit": "percent"
-                                    }
-                                ]
+                                "fields": [{"field_key": "usage_idle", "unit": "percent"}],
                             },
                             {
                                 "plugin_seq": 2,
                                 "measurement": "disk",
-                                "fields": [
-                                    {
-                                        "field_key": "used_percent",
-                                        "unit": "percent"
-                                    }
-                                ]
+                                "fields": [{"field_key": "used_percent", "unit": "percent"}],
                             },
                             {
                                 "plugin_seq": 4,
                                 "measurement": "mem",
-                                "fields": [
-                                    {
-                                        "field_key": "used_percent",
-                                        "unit": "percent"
-                                    }
-                                ]
+                                "fields": [{"field_key": "used_percent", "unit": "percent"}],
                             },
                             {
                                 "plugin_seq": 8,
                                 "measurement": "system",
-                                "fields": [
-                                    {
-                                        "field_key": "load1",
-                                        "unit": "percent"
-                                    }
-                                ]
-                            }
+                                "fields": [{"field_key": "load1", "unit": "percent"}],
+                            },
                         ],
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 get_specific_measurement_description = {
@@ -247,18 +180,13 @@ get_specific_measurement_description = {
                         "data": {
                             "plugin_seq": 1,
                             "measurement": "cpu",
-                            "fields": [
-                                {
-                                    "field_key": "usage_idle",
-                                    "unit": "percent"
-                                }
-                            ]
+                            "fields": [{"field_key": "usage_idle", "unit": "percent"}],
                         },
                         "rs_code": "200",
-                        "rs_msg": "Success"
+                        "rs_msg": "Success",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }

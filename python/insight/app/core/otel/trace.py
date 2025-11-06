@@ -1,38 +1,33 @@
-from app.core.dependencies.db import engine
-from opentelemetry import trace
+import os
+import platform
+
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter as OTLPSpanExporterHTTP
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.sdk.trace import TracerProvider, ReadableSpan
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter
 from opentelemetry.trace import SpanKind
-from fastapi import FastAPI
-import platform
-import os
 
+from app.core.dependencies.db import engine
 
-SERVICE_NAME = os.environ.get('OTEL_SERVICE_NAME', 'mc-observability-insight')
-MODE = os.environ.get('MODE', 'otlp-http')
-OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = os.environ.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-                                                    'http://mc-observability-tempo:4318/v1/traces')
+SERVICE_NAME = os.environ.get("OTEL_SERVICE_NAME", "mc-observability-insight")
+MODE = os.environ.get("MODE", "otlp-http")
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = os.environ.get(
+    "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://mc-observability-tempo:4318/v1/traces"
+)
 
 
 class MySpanProcessor(BatchSpanProcessor):
     def __init__(self, span_exporter: SpanExporter):
         super().__init__(span_exporter)
-        self.exclude_type = ['http.request', 'http.response.start', 'http.response.body']
+        self.exclude_type = ["http.request", "http.response.start", "http.response.body"]
 
     def on_end(self, span: ReadableSpan) -> None:
         if span.kind == SpanKind.INTERNAL and (
-                span.attributes.get('type', None) in ('http.request',
-                                                      'http.response.start',
-                                                      'http.response.body')
-                or span.attributes.get('asgi.event.type', None) in ('http.request'
-                                                                    'http.response.start',
-                                                                    'http.response.body')
+            span.attributes.get("type", None) in ("http.request", "http.response.start", "http.response.body")
+            or span.attributes.get("asgi.event.type", None) in ("http.requesthttp.response.start", "http.response.body")
         ):
             return
         super().on_end(span=span)
@@ -44,9 +39,7 @@ def init_otel_trace(app) -> None:
     )
 
     if MODE == "otlp-http":
-        tracer.add_span_processor(
-            MySpanProcessor(OTLPSpanExporterHTTP(endpoint=OTEL_EXPORTER_OTLP_TRACES_ENDPOINT))
-        )
+        tracer.add_span_processor(MySpanProcessor(OTLPSpanExporterHTTP(endpoint=OTEL_EXPORTER_OTLP_TRACES_ENDPOINT)))
 
     LoggingInstrumentor().instrument()
     SQLAlchemyInstrumentor().instrument(engine=engine, tracer_provider=tracer)

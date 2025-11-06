@@ -1,31 +1,33 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
+
+from app.api.llm_analysis.description.log_analysis import post_log_analysis_query_description
 from app.api.llm_analysis.request.req import PostQueryBody
 from app.api.llm_analysis.response.res import ResBodyQuery
-from app.api.llm_analysis.description.log_analysis import post_log_analysis_query_description
 from app.api.llm_analysis.utils.log_analysis import LogQueryService
-from app.core.dependencies.mcp import get_log_analysis_context
 from app.core.dependencies.db import get_db
-from sqlalchemy.orm import Session
+from app.core.dependencies.mcp import get_log_analysis_context
 
 router = APIRouter()
 
 
 @router.post(
     path="/log-analysis/query",
-    description=post_log_analysis_query_description['api_description'],
-    responses=post_log_analysis_query_description['response'],
+    description=post_log_analysis_query_description["api_description"],
+    responses=post_log_analysis_query_description["response"],
     response_model=ResBodyQuery,
     operation_id="PostLogAnalysisQuery",
 )
-async def query_log_analysis(body_params: PostQueryBody, db: Session = Depends(get_db),
-                             mcp_context=Depends(get_log_analysis_context)):
+async def query_log_analysis(
+    body_params: PostQueryBody, db: Session = Depends(get_db), mcp_context=Depends(get_log_analysis_context)
+):
     """
     Submit a query to the log analysis chat session.
     """
     log_query_service = LogQueryService(db=db, mcp_context=mcp_context)
     result = await log_query_service.query(body=body_params)
     return ResBodyQuery(data=result)
+
 
 # @router.post(
 #     path="/log-analysis/query/stream",

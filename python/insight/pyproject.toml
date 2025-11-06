@@ -42,4 +42,89 @@ members = [
 ]
 
 [tool.uv.sources]
-langgraph-checkpoint-sqlite = { workspace = true, editable = true }
+langgraph-checkpoint-sqlite = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "ruff>=0.13.2",
+]
+
+[tool.ruff]
+# Line length setting (Black default)
+line-length = 120
+indent-width = 4
+
+# Python version
+target-version = "py312"
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    "external/",
+    "checkpoints/",
+]
+
+[tool.ruff.lint]
+# Enabled rule sets
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort (import sorting)
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade (latest syntax by Python version)
+    "C90",    # mccabe (complexity check)
+    "N",      # pep8-naming
+    "RUF",    # Ruff-specific rules
+]
+
+# Ignored rules
+ignore = [
+    "E501",   # Line too long (controlled by line-length)
+    "B008",   # Function call in argument defaults
+    "C901",   # Too complex (adjust per function if needed)
+    "N802",   # Function name should be lowercase
+    "N803",   # Argument name should be lowercase
+    "N806",   # Variable in function should be lowercase
+    "N805",   # First argument of a method should be named self
+    "N815",   # Variable in class scope should not be mixedCase
+]
+
+# Auto-fixable rules
+fixable = ["ALL"]
+unfixable = []
+
+# Per-file ignores
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]  # unused import, import *
+"tests/**/*.py" = ["S101"]         # Allow assert usage
+"**/models.py" = ["N805"]          # Allow pydantic/sqlalchemy model names
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "config"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.format]
+# Quote style
+quote-style = "double"
+
+# Indentation
+indent-style = "space"
+
+# Line ending style
+line-ending = "auto"
+
+# Docstring code formatting
+docstring-code-format = true

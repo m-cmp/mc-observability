@@ -15,7 +15,7 @@ get_llm_sessions_description = {
                                 "session_id": "986ef65f-e425-478a-b84c-03fa80682f36",
                                 "provider": "openai",
                                 "model_name": "gpt-5-mini",
-                                "regdate": "2025-09-17T14:12:36"
+                                "regdate": "2025-09-17T14:12:36",
                             },
                             {
                                 "seq": 2,
@@ -23,14 +23,14 @@ get_llm_sessions_description = {
                                 "session_id": "40dadcfa-98d6-4d5b-9745-669928c496b7",
                                 "provider": "ollama",
                                 "model_name": "llama3.1:8b",
-                                "regdate": "2025-09-18T11:46:49"
-                            }
-                        ]
+                                "regdate": "2025-09-18T11:46:49",
+                            },
+                        ],
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 post_llm_session_description = {
@@ -49,13 +49,13 @@ post_llm_session_description = {
                             "session_id": "5e0f421b-7f88-4c1d-9132-f468ec9c557b",
                             "provider": "openai",
                             "model_name": "gpt-5-mini",
-                            "regdate": "2025-09-18T14:54:04"
-                        }
+                            "regdate": "2025-09-18T14:54:04",
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 delete_llm_session_description = {
@@ -74,13 +74,13 @@ delete_llm_session_description = {
                             "session_id": "5e0f421b-7f88-4c1d-9132-f468ec9c557b",
                             "provider": "openai",
                             "model_name": "gpt-5-mini",
-                            "regdate": "2025-09-18T14:54:04"
-                        }
+                            "regdate": "2025-09-18T14:54:04",
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
 
 delete_all_llm_sessions_description = {
@@ -88,17 +88,9 @@ delete_all_llm_sessions_description = {
     "response": {
         "200": {
             "description": "Successful Response",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "rs_code": "200",
-                        "rs_msg": "Success",
-                        "data": []
-                    }
-                }
-            }
+            "content": {"application/json": {"example": {"rs_code": "200", "rs_msg": "Success", "data": []}}},
         }
-    }
+    },
 }
 
 get_llm_session_history_description = {
@@ -119,19 +111,19 @@ get_llm_session_history_description = {
                                 },
                                 {
                                     "message_type": "ai",
-                                    "message": "I’ll find the actual error logs (and some context)...",
-                                }
+                                    "message": "I'll find the actual error logs (and some context)...",
+                                },
                             ],
                             "seq": 41,
                             "user_id": "1",
                             "session_id": "fa746359-ab1b-4755-a1cc-630e373135ff",
                             "provider": "openai",
                             "model_name": "gpt-5-mini",
-                            "regdate": "2025-09-18T14:59:37"
-                        }
+                            "regdate": "2025-09-18T14:59:37",
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }

@@ -1,8 +1,6 @@
-from app.api.llm_analysis.model.models import (
-    LogAnalysisChatSession,
-    LLMAPIKey
-)
 from sqlalchemy.orm import Session
+
+from app.api.llm_analysis.model.models import LLMAPIKey, LogAnalysisChatSession
 
 
 class LogAnalysisRepository:
@@ -20,14 +18,10 @@ class LogAnalysisRepository:
         return new_session
 
     def get_session_by_id(self, session_id: str):
-        return self.db.query(LogAnalysisChatSession).filter_by(
-            SESSION_ID=session_id
-        ).first()
+        return self.db.query(LogAnalysisChatSession).filter_by(SESSION_ID=session_id).first()
 
     def delete_session_by_id(self, session_id: str):
-        session = self.db.query(LogAnalysisChatSession).filter_by(
-            SESSION_ID=session_id
-        ).first()
+        session = self.db.query(LogAnalysisChatSession).filter_by(SESSION_ID=session_id).first()
         if session:
             self.db.delete(session)
             self.db.commit()
@@ -40,16 +34,12 @@ class LogAnalysisRepository:
 
     def get_api_key(self, provider=None):
         if provider:
-            return self.db.query(LLMAPIKey).filter_by(
-                PROVIDER=provider
-            ).first()
+            return self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
         else:
             return self.db.query(LLMAPIKey).all()
 
     def post_api_key(self, provider: str, api_key: str):
-        record = self.db.query(LLMAPIKey).filter_by(
-            PROVIDER=provider
-        ).first()
+        record = self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
         if record:
             record.API_KEY = api_key
         else:
@@ -59,9 +49,7 @@ class LogAnalysisRepository:
         return record
 
     def delete_api_key(self, provider: str):
-        session = self.db.query(LLMAPIKey).filter_by(
-            PROVIDER=provider
-        ).first()
+        session = self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
         if session:
             self.db.delete(session)
             self.db.commit()

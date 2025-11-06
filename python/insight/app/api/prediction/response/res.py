@@ -1,8 +1,4 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
-from typing import Union
-
-
+from pydantic import BaseModel
 
 
 # GET /predictions/measurement
@@ -11,15 +7,17 @@ class PredictionMeasurement(BaseModel):
     measurement: str
     fields: list[dict[str, str]]
 
+
 class ResBodyPredictionMeasurement(BaseModel):
     data: list[PredictionMeasurement]
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 class ResBodyPredictionSpecificMeasurement(BaseModel):
     data: PredictionMeasurement
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # GET /predictions/options
@@ -31,14 +29,14 @@ class PredictionOptions(BaseModel):
 
 class ResBodyPredictionOptions(BaseModel):
     data: PredictionOptions
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # POST /predictions/ns/{nsId}/mci/{mciId}
 class PredictValue(BaseModel):
     timestamp: str
-    value: Union[float, None]
+    value: float | None
 
 
 class PredictionMCIResult(BaseModel):
@@ -46,6 +44,7 @@ class PredictionMCIResult(BaseModel):
     mci_id: str
     measurement: str
     values: list[PredictValue]
+
 
 # POST /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}
 class PredictionVMResult(BaseModel):
@@ -55,21 +54,24 @@ class PredictionVMResult(BaseModel):
     measurement: str
     values: list[PredictValue]
 
+
 class ResBodyPredictionVMResult(BaseModel):
     data: PredictionVMResult
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 class ResBodyPredictionMCIResult(BaseModel):
     data: PredictionMCIResult
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
 
 
 # GET /predictions/ns/{nsId}/mci/{mciId}/history
 class HistoryValue(BaseModel):
     timestamp: str
-    value: Union[float, None]
+    value: float | None
+
 
 class PredictionMCIHistory(BaseModel):
     ns_id: str
@@ -77,10 +79,12 @@ class PredictionMCIHistory(BaseModel):
     measurement: str
     values: list[HistoryValue]
 
+
 class ResBodyPredictionMCIHistory(BaseModel):
     data: PredictionMCIHistory
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"
+
 
 # GET /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}history
 class PredictionVMHistory(BaseModel):
@@ -90,7 +94,8 @@ class PredictionVMHistory(BaseModel):
     measurement: str
     values: list[HistoryValue]
 
+
 class ResBodyPredictionVMHistory(BaseModel):
     data: PredictionVMHistory
-    rs_code: str = '200'
-    rs_msg: str = 'Success'
+    rs_code: str = "200"
+    rs_msg: str = "Success"

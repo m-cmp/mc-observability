@@ -1,11 +1,13 @@
-from app.api.llm_analysis.response.res import LLMChatSession, SessionHistory, Message
+import uuid
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
 from app.api.llm_analysis.repo.repo import LogAnalysisRepository
 from app.api.llm_analysis.request.req import PostSessionBody, SessionIdPath
+from app.api.llm_analysis.response.res import LLMChatSession, Message, SessionHistory
 from app.core.mcp.mcp_context import MCPContext
 from app.core.mcp.multi_mcp_manager import MCPManager
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-import uuid
 
 
 class CommonSessionService:
@@ -35,7 +37,12 @@ class CommonSessionService:
     @staticmethod
     def map_session_to_res(session):
         return LLMChatSession(
-            seq=session.SEQ, user_id=session.USER_ID, session_id=session.SESSION_ID, provider=session.PROVIDER, model_name=session.MODEL_NAME, regdate=session.REGDATE
+            seq=session.SEQ,
+            user_id=session.USER_ID,
+            session_id=session.SESSION_ID,
+            provider=session.PROVIDER,
+            model_name=session.MODEL_NAME,
+            regdate=session.REGDATE,
         )
 
     def delete_chat_session(self, path: SessionIdPath):
