@@ -1,7 +1,8 @@
+from config.ConfigManager import ConfigManager
+
+from .alert_prompt_service import AlertPromptService
 from .base_prompt_service import BasePromptService
 from .log_prompt_service import LogPromptService
-from .alert_prompt_service import AlertPromptService
-from config.ConfigManager import ConfigManager
 
 
 class PromptFactory:
@@ -24,15 +25,11 @@ class PromptFactory:
         """
         analysis_type = analysis_type.lower()
 
-        service_map = {
-            "log": LogPromptService,
-            "alert": AlertPromptService
-        }
+        service_map = {"log": LogPromptService, "alert": AlertPromptService}
 
         service_class = service_map.get(analysis_type)
         if not service_class:
             supported_types = list(service_map.keys())
-            raise ValueError(f"Unsupported analysis type: {analysis_type}. "
-                             f"Supported types: {supported_types}")
+            raise ValueError(f"Unsupported analysis type: {analysis_type}. Supported types: {supported_types}")
 
         return service_class(config_manager)

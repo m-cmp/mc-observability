@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import List, Dict
+
 from config.ConfigManager import ConfigManager
 
 
@@ -11,12 +11,12 @@ class BasePromptService(ABC):
         self.config = config_manager or ConfigManager()
 
     @abstractmethod
-    def get_system_prompt_config(self) -> Dict[str, str]:
+    def get_system_prompt_config(self) -> dict[str, str]:
         """Get system prompt configuration for the specific analysis type."""
         pass
 
     @abstractmethod
-    def build_prompt(self, session_id: str, messages: str, msg_count: int = 0) -> List[Dict[str, str]]:
+    def build_prompt(self, session_id: str, messages: str, msg_count: int = 0) -> list[dict[str, str]]:
         """Build the complete prompt for the analysis."""
         pass
 
@@ -38,9 +38,6 @@ class BasePromptService(ABC):
         return system_prompt_template.format(current_time=current_time)
 
     @staticmethod
-    def _create_prompt_messages(system_prompt: str, user_message: str) -> List[Dict[str, str]]:
+    def _create_prompt_messages(system_prompt: str, user_message: str) -> list[dict[str, str]]:
         """Create the final prompt message structure."""
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
+        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_message}]

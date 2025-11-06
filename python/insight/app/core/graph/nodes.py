@@ -1,5 +1,7 @@
 import logging
+
 from langchain_core.messages import SystemMessage
+
 from .state import State
 from .utils.summarization import ConversationSummarizer
 
@@ -18,7 +20,7 @@ def _get_latest_human_ai_pair(messages):
     # Find the last AI message
     last_ai_idx = -1
     for i in range(len(messages) - 1, -1, -1):
-        if hasattr(messages[i], 'type') and messages[i].type == 'ai':
+        if hasattr(messages[i], "type") and messages[i].type == "ai":
             last_ai_idx = i
             break
 
@@ -29,7 +31,7 @@ def _get_latest_human_ai_pair(messages):
     # Find the Human message that precedes this AI message
     human_idx = -1
     for i in range(last_ai_idx - 1, -1, -1):
-        if hasattr(messages[i], 'type') and messages[i].type == 'human':
+        if hasattr(messages[i], "type") and messages[i].type == "human":
             human_idx = i
             break
 
@@ -45,15 +47,15 @@ async def call_model(state: State, llm=None) -> dict:
     """
     Main LLM call node that processes messages and generates responses.
     Always uses llm_input_messages for queries and updates responses back to it.
-    
+
     Args:
         state: Current graph state containing messages and context
         llm: LLM client instance for generating responses
-        
+
     Returns:
         dict: Updated state with new messages in both messages and llm_input_messages
     """
-    messages = (state["llm_input_messages"] if state.get("is_summarized", False) else state["messages"])
+    messages = state["llm_input_messages"] if state.get("is_summarized", False) else state["messages"]
 
     # LLM call
     response = await llm.ainvoke(messages)
@@ -72,12 +74,12 @@ async def call_model(state: State, llm=None) -> dict:
 async def summary_node(state: State, llm=None, config_manager=None) -> dict:
     """
     Summarization node that processes conversation history using RunningSummary.
-    
+
     Args:
         state: Current graph state containing messages and context
         llm: LLM client for generating summaries
         config_manager: Configuration manager instance
-        
+
     Returns:
         dict: Updated state with summarized messages
     """
@@ -106,13 +108,13 @@ async def summary_node(state: State, llm=None, config_manager=None) -> dict:
             # Convert summary to SystemMessage object with unique ID
             summary_system_message = SystemMessage(
                 content=f"Previous conversation summary:\n{updated_summary.summary}",
-                id=f"summary_{updated_summary.last_summarized_message_id}"
+                id=f"summary_{updated_summary.last_summarized_message_id}",
             )
 
             # Configure LLM input messages: latest Human-AI pair + summary_system_message + last 2 messages
             latest_pair = _get_latest_human_ai_pair(messages)
             last_two_messages = messages[-2:]
-            llm_input_messages = latest_pair + [summary_system_message] + last_two_messages
+            llm_input_messages = [*latest_pair, summary_system_message, *last_two_messages]
 
             updated_context = context.copy()
             updated_context["default"] = updated_summary
@@ -121,7 +123,7 @@ async def summary_node(state: State, llm=None, config_manager=None) -> dict:
                 "messages": [summary_system_message],
                 "llm_input_messages": llm_input_messages,
                 "is_summarized": True,
-                "context": updated_context
+                "context": updated_context,
             }
         elif updated_summary and updated_summary == current_summary:
             logger.info("llm_input_messages updated")
@@ -132,24 +134,20 @@ async def summary_node(state: State, llm=None, config_manager=None) -> dict:
             }
         else:
             logger.debug("No summarization needed")
-            return {
-                "is_summarized": is_summarized
-            }
+            return {"is_summarized": is_summarized}
 
     except Exception as e:
         logger.error(f"Error during summarization: {type(e).__name__}: {e}")
-        return {
-            "is_summarized": False
-        }
+        return {"is_summarized": False}
 
 
 async def tool_node(state: State) -> dict:
     """
     Tool execution node that handles function calls.
-    
+
     Args:
         state: Current graph state containing messages and context
-        
+
     Returns:
         dict: Updated state with tool results
     """

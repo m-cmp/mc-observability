@@ -1,18 +1,18 @@
-import os
 import json
 import logging
+import os
 import platform
-from datetime import datetime
+from datetime import UTC, datetime
+
 from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, LogExporter
 from opentelemetry.sdk.resources import Resource
-from datetime import timezone
 
-SERVICE_NAME = os.environ.get('OTEL_SERVICE_NAME', 'mc-observability-insight')
+SERVICE_NAME = os.environ.get("OTEL_SERVICE_NAME", "mc-observability-insight")
 
 
 class FileLogExporter(LogExporter):
-    def __init__(self, filepath='./log/mc-observability-insight.log'):
+    def __init__(self, filepath="./log/mc-observability-insight.log"):
         self._file = open(filepath, "a", encoding="utf-8")
 
     def export(self, batch):
@@ -50,24 +50,24 @@ class FileLogExporter(LogExporter):
             "attributes": {
                 "component": SERVICE_NAME,
             },
-            "body": body
+            "body": body,
         }
 
     @staticmethod
     def _format_timestamp(timestamp_ns):
         """Convert nanosecond timestamp to ISO format in UTC with milliseconds"""
-        dt = datetime.fromtimestamp(timestamp_ns / 1e9, tz=timezone.utc)
-        return dt.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+        dt = datetime.fromtimestamp(timestamp_ns / 1e9, tz=UTC)
+        return dt.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
     @staticmethod
     def _format_trace_id(trace_id):
         """Format trace ID as 32-character hex string"""
-        return format(trace_id, '032x') if trace_id else ""
+        return format(trace_id, "032x") if trace_id else ""
 
     @staticmethod
     def _format_span_id(span_id):
         """Format span ID as 16-character hex string"""
-        return format(span_id, '016x') if span_id else ""
+        return format(span_id, "016x") if span_id else ""
 
     @staticmethod
     def _add_code_location_attributes(custom_log, attributes):

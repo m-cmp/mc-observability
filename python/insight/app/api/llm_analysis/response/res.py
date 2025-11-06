@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Literal
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class BaseResponse(BaseModel):
@@ -37,24 +38,24 @@ class ResBodyLLMChatSessions(BaseResponse):
 class QueryMetadata(BaseModel):
     """Query execution metadata"""
 
-    queries_executed: List[str] = Field(default_factory=list, description="List of executed queries")
+    queries_executed: list[str] = Field(default_factory=list, description="List of executed queries")
     total_execution_time: float = Field(default=0.0, description="Total execution time (seconds)")
     tool_calls_count: int = Field(default=0, description="Number of tool calls")
-    databases_accessed: List[str] = Field(default_factory=list, description="List of accessed databases")
+    databases_accessed: list[str] = Field(default_factory=list, description="List of accessed databases")
 
 
 class Message(BaseModel):
     message_type: str
     message: str
     # Query execution metadata (optional, may not be present)
-    metadata: Optional[QueryMetadata] = Field(default=None, description="Query execution metadata")
+    metadata: QueryMetadata | None = Field(default=None, description="Query execution metadata")
 
     # Pydantic v2 configuration: Enable validation on field assignment
     model_config = {"validate_assignment": True}
 
 
 class SessionHistory(BaseModel):
-    messages: List[Message]
+    messages: list[Message]
     seq: int
     user_id: str
     session_id: str
@@ -76,8 +77,10 @@ class LLMAPIKey(BaseModel):
     provider: str
     api_key: str
 
+
 class ResBodyLLMAPIKey(BaseResponse):
     data: LLMAPIKey
+
 
 class ResBodyLLMAPIKeys(BaseResponse):
     data: list[LLMAPIKey]

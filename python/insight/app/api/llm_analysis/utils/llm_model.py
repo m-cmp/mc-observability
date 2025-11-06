@@ -1,11 +1,14 @@
-from app.api.llm_analysis.response.res import LLMModel
-from app.api.llm_analysis.repo.repo import LogAnalysisRepository
-from sqlalchemy.orm import Session
 import os
+from typing import ClassVar
+
+from sqlalchemy.orm import Session
+
+from app.api.llm_analysis.repo.repo import LogAnalysisRepository
+from app.api.llm_analysis.response.res import LLMModel
 
 
 class CommonModelService:
-    PROVIDER_ENV_MAP = {
+    PROVIDER_ENV_MAP: ClassVar[dict[str, str]] = {
         "ollama": "OLLAMA_BASE_URL",
         "openai": "OPENAI_API_KEY",
         "google": "GOOGLE_API_KEY",

@@ -1,8 +1,7 @@
-from config.ConfigManager import ConfigManager
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from config.ConfigManager import ConfigManager
 
 config = ConfigManager()
 db_info = config.get_db_config()

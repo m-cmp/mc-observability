@@ -7,7 +7,7 @@ class ConfigManager:
 
     @staticmethod
     def _read_yaml(file_path: str):
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             return yaml.safe_load(file)
 
     def get_anomaly_config(self):
@@ -42,8 +42,12 @@ class ConfigManager:
 
     def get_db_config(self):
         db = self.config.get("common", {}).get("DB", {})
-        return {"url": db.get("URL", "localhost"), "user": db.get("USERNAME", "mcmp"), "pw": db.get("PASSWORD", "1234"),
-                "db": db.get("DATABASE", "mcmp")}
+        return {
+            "url": db.get("URL", "localhost"),
+            "user": db.get("USERNAME", "mcmp"),
+            "pw": db.get("PASSWORD", "1234"),
+            "db": db.get("DATABASE", "mcmp"),
+        }
 
     def get_influxdb_config(self):
         influxdb = self.config.get("common", {}).get("InfluxDB", {})
@@ -76,31 +80,40 @@ class ConfigManager:
 
     def get_mcp_config(self):
         mcp = self.config.get("llm", {}).get("mcp", {})
-        return {"mcp_grafana_url": mcp.get("mcp_grafana_url", ""),
-                "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
-                "mcp_influxdb_url": mcp.get("mcp_influxdb_url", "")}
+        return {
+            "mcp_grafana_url": mcp.get("mcp_grafana_url", ""),
+            "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
+            "mcp_influxdb_url": mcp.get("mcp_influxdb_url", ""),
+        }
 
     def get_log_system_prompt_config(self):
         log_analysis = self.config.get("log_analysis", {})
-        return {"system_prompt_first": log_analysis.get("system_prompt_first", ""),
-                "system_prompt_default": log_analysis.get("system_prompt_default", "")}
+        return {
+            "system_prompt_first": log_analysis.get("system_prompt_first", ""),
+            "system_prompt_default": log_analysis.get("system_prompt_default", ""),
+        }
 
     def get_alarm_mcp_config(self):
         mcp = self.config.get("alarm_analysis", {}).get("mcp", {})
-        return {"mcp_grafana_url": mcp.get("mcp_grafana_url", ""), "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
-                "mcp_influxdb_url": mcp.get("mcp_influxdb_url", "")}
+        return {
+            "mcp_grafana_url": mcp.get("mcp_grafana_url", ""),
+            "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
+            "mcp_influxdb_url": mcp.get("mcp_influxdb_url", ""),
+        }
 
     def get_alarm_system_prompt_config(self):
         alarm_analysis = self.config.get("alarm_analysis", {})
         system_prompt_first = alarm_analysis.get("system_prompt_first")
         if not system_prompt_first:
             system_prompt_first = alarm_analysis.get("mcp", {}).get("system_prompt_first", "")
-        return {"system_prompt_first": system_prompt_first,
-                "system_prompt_default": alarm_analysis.get("system_prompt_default", "")}
+        return {
+            "system_prompt_first": system_prompt_first,
+            "system_prompt_default": alarm_analysis.get("system_prompt_default", ""),
+        }
 
     def get_chat_summarization_config(self):
-        chat_summarization = self.config.get('llm', {}).get('chat_summarization', {})
+        chat_summarization = self.config.get("llm", {}).get("chat_summarization", {})
         return {
-            "max_tokens_before_summary": chat_summarization.get('max_tokens_before_summary', 1024),
-            "summary_prompt": chat_summarization.get('summary_prompt', '')
+            "max_tokens_before_summary": chat_summarization.get("max_tokens_before_summary", 1024),
+            "summary_prompt": chat_summarization.get("summary_prompt", ""),
         }

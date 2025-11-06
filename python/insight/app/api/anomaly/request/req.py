@@ -1,21 +1,20 @@
-from configparser import ConfigParser
-from config.ConfigManager import ConfigManager
 from datetime import datetime, timedelta
 from enum import Enum
-from fastapi import Query, Path
-from pydantic import BaseModel, validator, Field
-from typing import Optional
-import pytz
+
+from fastapi import Path, Query
+from pydantic import BaseModel, Field, validator
+
+from config.ConfigManager import ConfigManager
 
 
 def set_time_delta(delta=0) -> str:
     utc_now = datetime.utcnow().replace(microsecond=0)
     new_time_utc = utc_now - timedelta(hours=delta)
-    return new_time_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+    return new_time_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def generate_enum_from_config(path: str, enum_name: str):
-    keys = path.split('.')
+    keys = path.split(".")
     data = ConfigManager().config
     for key in keys:
         data = data.get(key, {})
@@ -27,55 +26,69 @@ def generate_enum_from_config(path: str, enum_name: str):
         raise ValueError(f"Invalid path '{path}' or data is not a list.")
 
 
-TargetType = generate_enum_from_config('anomaly.target_types.types', 'TargetType')
-AnomalyMetricType = generate_enum_from_config('anomaly.measurements.types', 'MetricType')
-ExecutionInterval = generate_enum_from_config('anomaly.execution_intervals.intervals', 'ExecutionInterval')
+TargetType = generate_enum_from_config("anomaly.target_types.types", "TargetType")
+AnomalyMetricType = generate_enum_from_config("anomaly.measurements.types", "MetricType")
+ExecutionInterval = generate_enum_from_config("anomaly.execution_intervals.intervals", "ExecutionInterval")
+
 
 class GetMeasurementPath(BaseModel):
-    measurement: str = Field(Path(description='Specific Measurement.'))
+    measurement: str = Field(Path(description="Specific Measurement."))
+
 
 class AnomalyDetectionTargetRegistration(BaseModel):
     ns_id: str
     mci_id: str
-    vm_id: Optional[str] = None
-    measurement: AnomalyMetricType = Field(..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu")
-    execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
+    vm_id: str | None = None
+    measurement: AnomalyMetricType = Field(
+        ..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu"
+    )
+    execution_interval: ExecutionInterval = Field(
+        ..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m"
+    )
 
 
 class AnomalyDetectionTargetUpdate(BaseModel):
-    execution_interval: ExecutionInterval = Field(..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m")
+    execution_interval: ExecutionInterval = Field(
+        ..., description="The interval at which anomaly detection runs (5m, 10m, 30m)", example="5m"
+    )
 
 
 class GetHistoryMCIPath(BaseModel):
-    nsId: str = Field(Path(description='The Namespace ID for anomaly detection.'))
-    mciId: str = Field(Path(description='The MCI ID for anomaly detection.'))
+    nsId: str = Field(Path(description="The Namespace ID for anomaly detection."))
+    mciId: str = Field(Path(description="The MCI ID for anomaly detection."))
+
 
 class GetHistoryVMPath(BaseModel):
-    nsId: str = Field(Path(description='The Namespace ID for anomaly detection.'))
-    mciId: str = Field(Path(description='The MCI ID for anomaly detection.'))
-    vmId: str = Field(Path(description='The VM ID for anomaly detection'))
+    nsId: str = Field(Path(description="The Namespace ID for anomaly detection."))
+    mciId: str = Field(Path(description="The MCI ID for anomaly detection."))
+    vmId: str = Field(Path(description="The VM ID for anomaly detection"))
+
 
 class GetAnomalyHistoryFilter(BaseModel):
-    measurement: AnomalyMetricType = Field(Query(description='The type of metric to retrieve.'))
-    start_time: str = Field(Query(
-        default=None,
-        description='The start timestamp for the range of Anomaly data to retrieve. '
-                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
-                    'Defaults to 12 hours before the current time if not provided.',
-        example='2024-10-08T12:00:00Z'
-    ))
-    end_time: str = Field(Query(
-        default=None,
-        description='The end timestamp for the range of Anomaly data to retrieve. '
-                    '**Format**: \'YYYY-MM-DDTHH:MM:SSZ\'.'
-                    'Defaults to the current time if not provided.',
-        example='2024-10-09T00:00:00Z'
-    ))
+    measurement: AnomalyMetricType = Field(Query(description="The type of metric to retrieve."))
+    start_time: str = Field(
+        Query(
+            default=None,
+            description="The start timestamp for the range of Anomaly data to retrieve. "
+            "**Format**: 'YYYY-MM-DDTHH:MM:SSZ'."
+            "Defaults to 12 hours before the current time if not provided.",
+            example="2024-10-08T12:00:00Z",
+        )
+    )
+    end_time: str = Field(
+        Query(
+            default=None,
+            description="The end timestamp for the range of Anomaly data to retrieve. "
+            "**Format**: 'YYYY-MM-DDTHH:MM:SSZ'."
+            "Defaults to the current time if not provided.",
+            example="2024-10-09T00:00:00Z",
+        )
+    )
 
-    @validator('start_time', pre=True, always=True)
+    @validator("start_time", pre=True, always=True)
     def set_start_time(cls, v):
         return v or set_time_delta(12)
 
-    @validator('end_time', pre=True, always=True)
+    @validator("end_time", pre=True, always=True)
     def set_end_time(cls, v):
         return v or set_time_delta()

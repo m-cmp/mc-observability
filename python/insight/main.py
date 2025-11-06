@@ -1,21 +1,22 @@
 import logging
 
 import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.anomaly import anomaly
 from app.api.llm_analysis import (
-    session_router,
+    alert_analysis_router,
     api_key_router,
-    model_router,
     log_analysis_router,
-    alert_analysis_router
+    model_router,
+    session_router,
 )
 from app.api.prediction import prediction
 from app.api.readyz import readyz
-from app.core.otel.trace import init_otel_trace
 from app.core.otel.log import init_otel_logger
+from app.core.otel.trace import init_otel_trace
 from config.ConfigManager import ConfigManager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,9 @@ app = FastAPI(title="Insight Module DOCS", description="mc-observability insight
 
 origins = ["*"]
 
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"],
-                   allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+)
 
 init_otel_trace(app)
 init_otel_logger()

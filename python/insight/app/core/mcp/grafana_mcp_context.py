@@ -39,7 +39,6 @@ class GrafanaMCPContext:
         if self._sse:
             await self._sse.__aexit__(None, None, None)
 
-
     async def get_tools(self):
         self.tools = await self.session.list_tools()
         logger.info(f"Successfully loaded {len(self.tools.tools)} Grafana MCP tools")

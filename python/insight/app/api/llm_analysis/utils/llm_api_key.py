@@ -1,9 +1,11 @@
-from app.api.llm_analysis.response.res import LLMAPIKey
-from app.api.llm_analysis.repo.repo import LogAnalysisRepository
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
-from typing import Callable
 import os
+from collections.abc import Callable
+
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.api.llm_analysis.repo.repo import LogAnalysisRepository
+from app.api.llm_analysis.response.res import LLMAPIKey
 
 
 class CredentialService:
@@ -53,7 +55,7 @@ class CommonAPIKeyService:
     def map_key_to_res(key):
         return LLMAPIKey(seq=key.SEQ, provider=key.PROVIDER, api_key=key.API_KEY)
 
-    def get_api_key(self, provider: str = None):
+    def get_api_key(self, provider: str | None = None):
         keys = self.repo.get_api_key(provider=provider)
         if not keys:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No API key found")
@@ -62,7 +64,6 @@ class CommonAPIKeyService:
             return [self.map_key_to_res(key) for key in keys]
         else:
             return [self.map_key_to_res(keys)]
-
 
     def post_api_key(self, provider: str, api_key: str):
         result = self.repo.post_api_key(provider=provider, api_key=api_key)

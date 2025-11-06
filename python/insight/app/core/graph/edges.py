@@ -4,10 +4,10 @@ from .state import State
 def should_continue(state: State) -> str:
     """
     Determines whether to continue with tool execution or end the conversation.
-    
+
     Args:
         state: Current graph state containing messages and context
-        
+
     Returns:
         str: 'continue' to execute tools, 'end' to finish conversation
     """
@@ -21,7 +21,7 @@ def should_continue(state: State) -> str:
 
     last_message = messages[-1]
 
-    if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "continue"
     else:
         return "end"
@@ -30,10 +30,10 @@ def should_continue(state: State) -> str:
 def should_summarize(state: State) -> str:
     """
     Determines whether summarization is needed based on message count/tokens.
-    
+
     Args:
         state: Current graph state containing messages and context
-        
+
     Returns:
         str: 'summarize' to run summarization, 'proceed' to continue
     """

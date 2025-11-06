@@ -1,13 +1,14 @@
-from app.api.anomaly.repo.repo import InfluxDBRepository, AnomalyServiceRepository
-from config.ConfigManager import ConfigManager
 from datetime import timedelta
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-import requests
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 import pytz
+import requests
 import rrcf
+from sqlalchemy.orm import Session
+
+from app.api.anomaly.repo.repo import AnomalyServiceRepository, InfluxDBRepository
+from config.ConfigManager import ConfigManager
 
 
 class AnomalyService:
@@ -15,11 +16,9 @@ class AnomalyService:
         config = ConfigManager()
         self.seq = seq
         self.repo = AnomalyServiceRepository(db=db)
-        self.o11y_url = config.get_o11y_config()['url']
-        self.o11y_port = config.get_o11y_config()['port']
-        self.headers = {
-            "Content-Type": "application/json"
-        }
+        self.o11y_url = config.get_o11y_config()["url"]
+        self.o11y_port = config.get_o11y_config()["port"]
+        self.headers = {"Content-Type": "application/json"}
 
     def anomaly_detection(self):
         setting = self.repo.get_anomaly_setting_info(seq=self.seq)
@@ -39,15 +38,15 @@ class AnomalyService:
         url = self._build_url(path="influxdb")
         response = self._send_request(method="GET", url=url)
         data_list = response.json().get("data", [])
-        seq_list = [item['seq'] for item in data_list]
+        seq_list = [item["seq"] for item in data_list]
 
         return seq_list
 
     def get_raw_data(self, setting: object):
         if setting.VM_ID:
-            url = self._build_url(f'influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}/{setting.VM_ID}')
+            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}/{setting.VM_ID}")
         else:
-            url = self._build_url(f'influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}')
+            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}")
         body = self._build_body(setting)
 
         response = self._send_request(method="POST", url=url, json=body)
@@ -80,30 +79,25 @@ class AnomalyService:
         field_value = field_mapping.get(setting.MEASUREMENT)
 
         return {
-            "fields": [
-                {
-                    "function": "mean",
-                    "field": field_value
-                }
-            ],
+            "fields": [{"function": "mean", "field": field_value}],
             "group_time": "1m",
             "measurement": setting.MEASUREMENT.lower(),
-            "range": "12h"
+            "range": "12h",
         }
 
     def make_preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
-        df['timestamp'] = df['timestamp'].dt.tz_localize(None) + timedelta(hours=9)
-        df['resource_pct'] = pd.to_numeric(df['resource_pct'], errors='coerce')
+        df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
+        df["timestamp"] = df["timestamp"].dt.tz_localize(None) + timedelta(hours=9)
+        df["resource_pct"] = pd.to_numeric(df["resource_pct"], errors="coerce")
         df = self.null_ratio_preprocessing(df=df)
         df = self.data_interpolation(df=df)
-        df = df.sort_values(by='timestamp')
+        df = df.sort_values(by="timestamp")
 
         return df
 
     @staticmethod
     def null_ratio_preprocessing(df: pd.DataFrame) -> pd.DataFrame:
-        null_ratio = df['resource_pct'].isnull().mean()
+        null_ratio = df["resource_pct"].isnull().mean()
         if null_ratio > 0.8:
             raise ValueError("More than 80% of the data is missing. Unable to proceed.")
 
@@ -119,14 +113,14 @@ class AnomalyService:
 
     @staticmethod
     def data_interpolation(df: pd.DataFrame) -> pd.DataFrame:
-        df['resource_pct'] = df['resource_pct'].interpolate(method='linear', limit_direction='both')
+        df["resource_pct"] = df["resource_pct"].interpolate(method="linear", limit_direction="both")
         return df
 
 
 class AnomalyDetector:
     def __init__(self, measurement: str):
         config = ConfigManager()
-        self.kst = pytz.timezone('Asia/Seoul')
+        self.kst = pytz.timezone("Asia/Seoul")
         self.measurement = measurement
         self.rrcf_config = config.get_rrcf_config()
 
@@ -143,16 +137,16 @@ class AnomalyDetector:
         return mean_score + anomaly_range_size * std_dev
 
     def run_rrcf(self, df, shingle_size: int):
-        forest = [rrcf.RCTree() for _ in range(self.rrcf_config['num_trees'])]
-        data = df['resource_pct']
+        forest = [rrcf.RCTree() for _ in range(self.rrcf_config["num_trees"])]
+        data = df["resource_pct"]
         shingled_data = rrcf.shingle(data, size=shingle_size)
         shingled_data = np.vstack([point for point in shingled_data])
         rrcf_scores = []
 
         for index, point in enumerate(shingled_data):
             for tree in forest:
-                if len(tree.leaves) > self.rrcf_config['tree_size']:
-                    tree.forget_point(index - self.rrcf_config['tree_size'])
+                if len(tree.leaves) > self.rrcf_config["tree_size"]:
+                    tree.forget_point(index - self.rrcf_config["tree_size"])
                 tree.insert_point(point, index=index)
 
             avg_codisp = np.mean([tree.codisp(index) for tree in forest])
@@ -161,18 +155,20 @@ class AnomalyDetector:
         normalized_scores = self.normalize_scores(np.array(rrcf_scores))
         initial_scores = np.full(shingle_size - 1, normalized_scores[0])
         complete_scores = np.concatenate([initial_scores, normalized_scores])
-        anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, self.rrcf_config['anomaly_range_size'])
+        anomaly_threshold = self.calculate_anomaly_threshold(complete_scores, self.rrcf_config["anomaly_range_size"])
         anomalies = complete_scores > anomaly_threshold
-        results = pd.DataFrame({
-            'timestamp': df['timestamp'],
-            'anomaly_score': complete_scores.round(4),
-            'isAnomaly': anomalies.astype(int)
-        })
+        results = pd.DataFrame(
+            {
+                "timestamp": df["timestamp"],
+                "anomaly_score": complete_scores.round(4),
+                "isAnomaly": anomalies.astype(int),
+            }
+        )
         return results, anomaly_threshold
 
     def calculate_anomaly_score(self, df: pd.DataFrame):
-        shingle_size = int(len(df) * self.rrcf_config['shingle_ratio'])
-        results, thr = self.run_rrcf(df=df, shingle_size=shingle_size)
-        results['timestamp'] = pd.to_datetime(results['timestamp'])
-        results['timestamp'] = results['timestamp'] - pd.to_timedelta(9, unit='h')
+        shingle_size = int(len(df) * self.rrcf_config["shingle_ratio"])
+        results, _ = self.run_rrcf(df=df, shingle_size=shingle_size)
+        results["timestamp"] = pd.to_datetime(results["timestamp"])
+        results["timestamp"] = results["timestamp"] - pd.to_timedelta(9, unit="h")
         return results

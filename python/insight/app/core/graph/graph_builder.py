@@ -1,7 +1,8 @@
 import aiosqlite
-from langgraph.graph import StateGraph, START, END
-from langgraph.prebuilt import ToolNode
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.prebuilt import ToolNode
+
 from .edges import should_continue
 from .nodes import call_model, summary_node
 from .state import State
@@ -13,7 +14,7 @@ class GraphBuilder:
     def __init__(self, llm=None, tools=None, config=None):
         """
         Initialize the graph builder with dependencies.
-        
+
         Args:
             llm_client: LLM client instance (OpenAI/Ollama)
             tools: List of available tools
@@ -28,7 +29,7 @@ class GraphBuilder:
     async def initialize(self, checkpoint_path: str = "checkpoints/checkpoints.sqlite"):
         """
         Initialize the graph builder with checkpointing.
-        
+
         Args:
             checkpoint_path: Path to SQLite checkpoint database
         """
@@ -48,7 +49,7 @@ class GraphBuilder:
         """Create tool node with injected dependencies."""
 
         async def tool_node_with_deps(state: State):
-            messages = (state["llm_input_messages"] if state.get("is_summarized", False) else state["messages"])
+            messages = state["llm_input_messages"] if state.get("is_summarized", False) else state["messages"]
 
             tool_node = ToolNode(self.tools)
             result = await tool_node.ainvoke({"messages": messages})
@@ -89,7 +90,7 @@ class GraphBuilder:
             {
                 "continue": "tools",
                 "end": END,
-            }
+            },
         )
 
         # tools → call_model (loop back)
@@ -98,7 +99,7 @@ class GraphBuilder:
     async def compile(self):
         """
         Compile the graph with checkpointing enabled.
-        
+
         Returns:
             Compiled graph ready for execution
         """
@@ -107,10 +108,10 @@ class GraphBuilder:
     async def build_graph(self, checkpoint_path: str = "checkpoints/checkpoints.sqlite"):
         """
         Build complete conversation graph with all nodes and edges.
-        
+
         Args:
             checkpoint_path: Path to SQLite checkpoint database
-            
+
         Returns:
             Compiled graph ready for execution
         """
@@ -123,13 +124,13 @@ class GraphBuilder:
 async def create_conversation_graph(llm, tools, config, checkpoint_path: str = "checkpoints/checkpoints.sqlite"):
     """
     Convenience function to create a complete conversation graph.
-    
+
     Args:
         llm: LLM client instance (OpenAI/Ollama/etc)
         tools: List of available tools
         config: Configuration manager instance
         checkpoint_path: Path to SQLite checkpoint database
-        
+
     Returns:
         Compiled graph ready for execution
     """

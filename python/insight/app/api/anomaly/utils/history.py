@@ -1,13 +1,15 @@
-from app.api.anomaly.repo.repo import InfluxDBRepository
-from app.api.anomaly.response.res import AnomalyDetectionHistoryValue, AnomalyDetectionHistoryResponse
-from app.api.anomaly.request.req import GetAnomalyHistoryFilter
-from config.ConfigManager import ConfigManager
-import requests
-import pandas as pd
-import numpy as np
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 import pytz
+import requests
 from fastapi import HTTPException
+
+from app.api.anomaly.repo.repo import InfluxDBRepository
+from app.api.anomaly.request.req import GetAnomalyHistoryFilter
+from app.api.anomaly.response.res import AnomalyDetectionHistoryResponse, AnomalyDetectionHistoryValue
+from config.ConfigManager import ConfigManager
 
 
 class AnomalyHistoryService:
@@ -16,14 +18,14 @@ class AnomalyHistoryService:
         self.repo = InfluxDBRepository()
         self.path_params = path_params
         self.query_params = query_params
-        self.o11y_url = config.get_o11y_config()['url']
-        self.o11y_port = config.get_o11y_config()['port']
-        self.headers = {
-            "Content-Type": "application/json"
-        }
+        self.o11y_url = config.get_o11y_config()["url"]
+        self.o11y_port = config.get_o11y_config()["port"]
+        self.headers = {"Content-Type": "application/json"}
 
     def get_anomaly_detection_results(self):
-        results = self.repo.query_anomaly_detection_results(path_params=self.path_params, query_params=self.query_params)
+        results = self.repo.query_anomaly_detection_results(
+            path_params=self.path_params, query_params=self.query_params
+        )
         # storage_seq_list = self.get_storage_seq_list()
         raw_data = self.get_raw_data()
         data = self.create_res_data(results=results, raw_data=raw_data)
@@ -34,17 +36,17 @@ class AnomalyHistoryService:
         url = self._build_url("influxdb")
         response = self._send_request("GET", url)
         data_list = response.json().get("data", [])
-        seq_list = [item['seq'] for item in data_list]
+        seq_list = [item["seq"] for item in data_list]
 
         return seq_list
 
     def get_raw_data(self):
         all_data = []
-        vm_id = getattr(self.path_params, 'vmId', None)
+        vm_id = getattr(self.path_params, "vmId", None)
         if vm_id:
-            url = self._build_url(f'influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}/{vm_id}')
+            url = self._build_url(f"influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}/{vm_id}")
         else:
-            url = self._build_url(f'influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}')
+            url = self._build_url(f"influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}")
         body = self._build_body()
 
         response = self._send_request("POST", url, json=body)
@@ -52,7 +54,7 @@ class AnomalyHistoryService:
         all_data.extend(data)
 
         if not data:
-            raise HTTPException(status_code=500, detail=f"No data retrieved from mc-o11y.")
+            raise HTTPException(status_code=500, detail="No data retrieved from mc-o11y.")
 
         df_cleaned = pd.DataFrame(data[0]["values"], columns=["timestamp", "resource_pct"])
 
@@ -82,15 +84,10 @@ class AnomalyHistoryService:
             range_value = f"{hours_diff}h"
 
         return {
-            "fields": [
-                {
-                    "function": "mean",
-                    "field": field_value
-                }
-            ],
+            "fields": [{"function": "mean", "field": field_value}],
             "group_time": "1m",
             "measurement": self.query_params.measurement.value.lower(),
-            "range": range_value
+            "range": range_value,
         }
 
     def _send_request(self, method: str, url: str, **kwargs):
@@ -103,34 +100,34 @@ class AnomalyHistoryService:
 
     def create_res_data(self, results, raw_data):
         values = []
-        raw_data['timestamp'] = pd.to_datetime(raw_data['timestamp'])
+        raw_data["timestamp"] = pd.to_datetime(raw_data["timestamp"])
         raw_data.replace([np.inf, -np.inf, np.nan], None, inplace=True)
 
         for entry in results:
-            entry_timestamp = pd.to_datetime(entry['timestamp']).strftime('%Y-%m-%dT%H:%M:%SZ')
-            matching_row = raw_data.loc[raw_data['timestamp'] == entry_timestamp]
+            entry_timestamp = pd.to_datetime(entry["timestamp"]).strftime("%Y-%m-%dT%H:%M:%SZ")
+            matching_row = raw_data.loc[raw_data["timestamp"] == entry_timestamp]
 
             if not matching_row.empty:
-                resource_pct_value = matching_row['resource_pct'].values[0]
+                resource_pct_value = matching_row["resource_pct"].values[0]
                 resource_pct_value = round(resource_pct_value, 4) if resource_pct_value is not None else None
             else:
                 resource_pct_value = None
 
             value = AnomalyDetectionHistoryValue(
-                timestamp=entry['timestamp'],
-                anomaly_score=entry.get('anomaly_score'),
-                is_anomaly=entry.get('isAnomaly'),
-                value=resource_pct_value
+                timestamp=entry["timestamp"],
+                anomaly_score=entry.get("anomaly_score"),
+                is_anomaly=entry.get("isAnomaly"),
+                value=resource_pct_value,
             )
             values.append(value)
 
-        vm_id = getattr(self.path_params, 'vmId', None)
+        vm_id = getattr(self.path_params, "vmId", None)
         data = AnomalyDetectionHistoryResponse(
             ns_id=self.path_params.nsId,
             mci_id=self.path_params.mciId,
             vm_id=vm_id,
             measurement=self.query_params.measurement.value,
-            values=values
+            values=values,
         )
 
         return data

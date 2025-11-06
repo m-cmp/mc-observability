@@ -14,16 +14,16 @@ post_alert_analysis_query_description = {
                             "metadata": {
                                 "queries_executed": [
                                     "SELECT * FROM alerts WHERE severity='HIGH' AND timestamp > NOW() - INTERVAL 1 HOUR",
-                                    "SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR"
+                                    "SELECT avg(cpu_usage) FROM metrics WHERE timestamp > NOW() - INTERVAL 2 HOUR",
                                 ],
                                 "total_execution_time": 2.3,
                                 "tool_calls_count": 3,
-                                "databases_accessed": ["mariadb", "influxdb"]
-                            }
-                        }
+                                "databases_accessed": ["mariadb", "influxdb"],
+                            },
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 }
