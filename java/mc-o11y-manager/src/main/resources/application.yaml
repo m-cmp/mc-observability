@@ -88,6 +88,9 @@ ssh:
   connection-timeout: 10000
   ssh-connection-cache-timeout: 120000
 
+winrm:
+  connection-timeout: ${WINRM_CONNECTION_TIMEOUT:30000}
+
 feign:
   okhttp:
     enabled: true

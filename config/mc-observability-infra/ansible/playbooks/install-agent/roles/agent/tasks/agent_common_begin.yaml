@@ -1,7 +1,7 @@
 - name: Copy temporary busybox
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/busybox"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/busybox"
     output_file_path: "/tmp/busybox_{{ request_id }}"
     output_file_owner: "root"
     output_file_group: "root"
@@ -10,7 +10,7 @@
 - name: Copy Common Agent Install File
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent-common.tar.gz"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent-common.tar.gz"
     output_file_path: "/tmp/cmp-agent-common_{{ request_id }}.tar.gz"
     output_file_owner: "root"
     output_file_group: "root"
@@ -19,7 +19,7 @@
 - name: Copy Common Agent Install Script File
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent_install_common"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent_install_common"
     output_file_path: "/tmp/cmp-agent_install_common_{{ request_id }}"
     output_file_owner: "root"
     output_file_group: "root"
