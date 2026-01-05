@@ -9,15 +9,13 @@
   include_tasks: agent_common_begin.yaml
 
 - name: Compress agent files
-  shell:
-    cmd: "sudo rm -f cmp-telegraf_{{ request_id }}.tar.gz && sudo chown -R root:root telegraf/ && sudo chmod +x ../busybox && sudo ../busybox tar cvfz cmp-telegraf_{{ request_id }}.tar.gz telegraf/ && sudo chmod 644 cmp-telegraf_{{ request_id }}.tar.gz"
-    chdir: "{{ role_path }}/agent-install-files/cmp-agent"
+  raw: "cd {{ role_path }}/agent-install-files/{{ arch }} && sudo rm -f cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz && sudo chown -R root:root telegraf/ && sudo ../amd64/busybox tar cvfz cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz telegraf/ && sudo chmod 644 cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1
 
 - name: Copy Compressed Agent Install File
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
     output_file_path: "/tmp/cmp-telegraf-{{ site_code }}.tar.gz"
     output_file_owner: "root"
     output_file_group: "root"
@@ -35,7 +33,7 @@
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "mkdir -p /cmp-agent/sites/{{ site_code }} && /tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-telegraf-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
 
-- name: Decompress telegraf binary
+- name: Merge and extract split telegraf binary
   become: true
   become_method: sudo
   become_user: root
@@ -45,7 +43,7 @@
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  raw: "cat $(find /cmp-agent/sites/{{ site_code }}/telegraf/bin -maxdepth 1 -name 'cmp-telegraf.tar.gz_*' | sort -n) > /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz && /tmp/busybox_{{ request_id }} tar xvf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz -C /cmp-agent/sites/{{ site_code }}/telegraf/bin/ && rm -rf /cmp-agent/sites/{{ site_code }}/telegraf/bin/cmp-telegraf.tar.gz"
+  raw: "cd /cmp-agent/sites/{{ site_code }}/telegraf/bin && cat cmp-telegraf.tar.gz_* > cmp-telegraf.tar.gz && /tmp/busybox_{{ request_id }} tar xzf cmp-telegraf.tar.gz && rm -f cmp-telegraf.tar.gz cmp-telegraf.tar.gz_* && chmod 755 cmp-telegraf"
 
 - name: Remove Remote Compressed Agent Install File
   become: true
@@ -60,13 +58,23 @@
   raw: "rm -f /tmp/cmp-telegraf-{{ site_code }}.tar.gz"
 
 - name: Remove Local Compressed Agent Install File
-  shell:
-    cmd: "sudo rm -f {{ role_path }}/agent-install-files/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
-    chdir: "{{ role_path }}/agent-install-files"
+  raw: "sudo rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1
 
 - name: End Agent Common Tasks
   include_tasks: agent_common_end.yaml
+
+- name: Replace SITE_CODE in telegraf config
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "sed -i 's@SITE_CODE@{{ site_code }}@g' /cmp-agent/sites/{{ site_code }}/telegraf/etc/telegraf.conf"
 
 - name: Copy CMP Telegraf service file
   become: true

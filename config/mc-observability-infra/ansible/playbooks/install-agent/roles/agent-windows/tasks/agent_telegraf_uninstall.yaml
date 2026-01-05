@@ -1,0 +1,98 @@
+- name: Get Windows System Drive
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $env:SystemDrive
+  register: system_drive_result
+
+- name: Set system_drive variable
+  set_fact:
+    system_drive: "{{ system_drive_result.stdout | trim }}"
+
+- name: Stop CMP Telegraf service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-telegraf-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+    }
+  ignore_errors: true
+
+- name: Run CMP Telegraf status command
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-telegraf-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      Write-Output "Service Status: $($service.Status)"
+      if ($service.Status -ne 'Stopped') {
+        exit 1
+      }
+    } else {
+      Write-Output "Service not found (already removed)"
+    }
+  register: cmp_telegraf_status
+  failed_when: false
+
+- name: Display CMP Telegraf status
+  debug:
+    var: cmp_telegraf_status
+
+- name: Remove CMP Telegraf service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-telegraf-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      sc.exe delete $serviceName
+      Start-Sleep -Seconds 2
+    }
+  ignore_errors: true
+
+- name: Remove CMP Agent Telegraf folder
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $telegrafPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\telegraf"
+    if (Test-Path $telegrafPath) {
+      Remove-Item $telegrafPath -Recurse -Force
+    }

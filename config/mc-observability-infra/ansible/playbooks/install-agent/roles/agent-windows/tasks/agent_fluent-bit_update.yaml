@@ -1,0 +1,279 @@
+- name: Check required variables for update
+  fail:
+    msg: "Required variable not found: {{ item }}"
+  when: vars[item] is not defined or vars[item] == ''
+  loop:
+    - config_content
+
+- name: Begin Agent Common Tasks
+  include_tasks: agent_common_begin.yaml
+
+- name: Copy fluent-bit folder to temp directory
+  raw: "cp -r {{ role_path }}/agent-install-files/{{ arch }}/fluent-bit /tmp/fluent-bit_{{ request_id }}"
+  delegate_to: 127.0.0.1
+
+- name: Replace SYSTEM_DRIVE and SITE_CODE in temp fluent-bit.conf
+  raw: |
+    sed -i 's|SYSTEM_DRIVE|{{ system_drive }}|g' /tmp/fluent-bit_{{ request_id }}/etc/fluent-bit.conf
+    sed -i 's|SITE_CODE|{{ site_code }}|g' /tmp/fluent-bit_{{ request_id }}/etc/fluent-bit.conf
+  delegate_to: 127.0.0.1
+
+- name: Compress temp fluent-bit files
+  raw: "cd /tmp/fluent-bit_{{ request_id }} && rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.zip && zip -r {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.zip ."
+  delegate_to: 127.0.0.1
+
+- name: Remove temp fluent-bit folder
+  raw: "rm -rf /tmp/fluent-bit_{{ request_id }}"
+  delegate_to: 127.0.0.1
+
+- name: Get Windows Temp directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $env:TEMP
+  register: windows_temp_result
+
+- name: Set windows_temp variable
+  set_fact:
+    windows_temp: "{{ windows_temp_result.stdout | trim }}"
+
+- name: Copy Compressed Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.zip"
+    output_file_path: "{{ windows_temp }}\\cmp-fluent-bit-{{ site_code }}.zip"
+
+- name: Update Fluent Bit agent
+  block:
+    - name: Stop existing CMP Fluent Bit service if exists
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $serviceName = "cmp-fluent-bit-{{ site_code }}"
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if ($service) {
+          Write-Output "Stopping existing service: $serviceName"
+          Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+          # Wait for service to fully stop
+          $timeout = 30
+          $elapsed = 0
+          while ((Get-Service -Name $serviceName).Status -ne 'Stopped' -and $elapsed -lt $timeout) {
+            Start-Sleep -Seconds 1
+            $elapsed++
+          }
+          Write-Output "Service stopped"
+        } else {
+          Write-Output "No existing service found"
+        }
+      ignore_errors: true
+
+    - name: Backup existing config before update
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}"
+        $fluentbitPath = "$sitePath\fluent-bit"
+        $variablesPath = "$fluentbitPath\etc\variables"
+        $backupPath = "$env:TEMP\cmp-fluent-bit-{{ site_code }}-variables.bak"
+
+        # Backup variables file if exists
+        if (Test-Path $variablesPath) {
+          Copy-Item -Path $variablesPath -Destination $backupPath -Force
+          Write-Output "Backed up variables file to $backupPath"
+        }
+      ignore_errors: true
+
+    - name: Decompress agent files
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+        $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}"
+        $fluentbitPath = "$sitePath\fluent-bit"
+
+        # Remove existing fluent-bit directory if exists
+        if (Test-Path $fluentbitPath) {
+          Remove-Item -Path $fluentbitPath -Recurse -Force
+        }
+
+        # Create site directory if not exists
+        if (-not (Test-Path $sitePath)) {
+          New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
+        }
+
+        # Create fluent-bit directory
+        New-Item -ItemType Directory -Path $fluentbitPath -Force | Out-Null
+
+        $tempFile = "$env:TEMP\cmp-fluent-bit-{{ site_code }}.zip"
+        Expand-Archive -Path $tempFile -DestinationPath $fluentbitPath -Force
+
+    - name: Restore variables config after update
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}"
+        $fluentbitPath = "$sitePath\fluent-bit"
+        $variablesPath = "$fluentbitPath\etc\variables"
+        $backupPath = "$env:TEMP\cmp-fluent-bit-{{ site_code }}-variables.bak"
+
+        # Restore variables file if backup exists
+        if (Test-Path $backupPath) {
+          Copy-Item -Path $backupPath -Destination $variablesPath -Force
+          Remove-Item -Path $backupPath -Force
+          Write-Output "Restored variables file from backup"
+        }
+      ignore_errors: true
+
+    - name: End Agent Common Tasks
+      include_tasks: agent_common_end.yaml
+
+    - name: Check if service exists and recreate if needed
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+        $serviceName = "cmp-fluent-bit-{{ site_code }}"
+        $binPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\fluent-bit\bin\fluent-bit.exe -c `"{{ system_drive }}\cmp-agent\sites\{{ site_code }}\fluent-bit\etc\fluent-bit.conf`""
+
+        # Check if service exists
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if (-not $service) {
+          # Create new service if it doesn't exist
+          New-Service -Name $serviceName -BinaryPathName $binPath -DisplayName "CMP Fluent Bit Service ({{ site_code }})" -Description "CMP Fluent Bit log agent for site {{ site_code }}" -StartupType Automatic
+          # Configure service to restart on failure
+          sc.exe failure $serviceName reset= 86400 actions= restart/60000/restart/60000/restart/60000
+          Write-Output "Service created"
+        } else {
+          Write-Output "Service already exists"
+        }
+
+    - name: Set environment variables for Fluent Bit service
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+        $variablesPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\fluent-bit\etc\variables"
+
+        # Read variables file and set as machine environment variables
+        if (Test-Path $variablesPath) {
+          $content = Get-Content $variablesPath
+          foreach ($line in $content) {
+            if ($line -match '^([^=]+)=(.*)$') {
+              $varName = $matches[1].Trim()
+              $varValue = $matches[2].Trim()
+              [Environment]::SetEnvironmentVariable($varName, $varValue, [EnvironmentVariableTarget]::Machine)
+              Write-Output "Set environment variable: $varName"
+            }
+          }
+        }
+
+        # Set HOSTNAME environment variable
+        [Environment]::SetEnvironmentVariable("HOSTNAME", $env:COMPUTERNAME, [EnvironmentVariableTarget]::Machine)
+        Write-Output "Set environment variable: HOSTNAME=$env:COMPUTERNAME"
+
+    - name: Start CMP Fluent Bit service
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $serviceName = "cmp-fluent-bit-{{ site_code }}"
+        Start-Service -Name $serviceName
+
+    - name: Verify service status
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $serviceName = "cmp-fluent-bit-{{ site_code }}"
+        Start-Sleep -Seconds 3
+        $service = Get-Service -Name $serviceName
+        if ($service.Status -eq 'Running') {
+          Write-Output "Service is running"
+        } else {
+          Write-Output "Service status: $($service.Status)"
+          exit 1
+        }
+
+  always:
+    - name: Remove Remote Compressed Agent Install File
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $tempFile = "$env:TEMP\cmp-fluent-bit-{{ site_code }}.zip"
+        if (Test-Path $tempFile) {
+          Remove-Item $tempFile -Force
+        }
+      ignore_errors: true
+
+    - name: Remove Local Compressed Agent Install File
+      raw: "rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.zip"
+      delegate_to: 127.0.0.1
+      ignore_errors: true

@@ -1,9 +1,9 @@
-FROM openjdk:17-slim AS builder
+FROM eclipse-temurin:17-jdk AS builder
 
 RUN apt-get update \
     && apt-get install -y git make \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* \
-    apt-get clean
+    && apt-get clean
 
 WORKDIR /java
 

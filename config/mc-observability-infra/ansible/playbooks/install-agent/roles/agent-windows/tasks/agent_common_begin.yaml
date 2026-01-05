@@ -1,0 +1,80 @@
+- name: Get Windows System Drive
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $env:SystemDrive
+  register: system_drive_result
+
+- name: Set system_drive variable
+  set_fact:
+    system_drive: "{{ system_drive_result.stdout | trim }}"
+
+- name: Get local time before WinRM
+  delegate_to: 127.0.0.1
+  raw: "date +%s"
+  register: before_time
+
+- name: Get remote server time
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    [int]([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())
+  register: remote_time
+
+- name: Get local time after WinRM
+  delegate_to: 127.0.0.1
+  raw: "date +%s"
+  register: after_time
+
+- name: Calculate network delay
+  set_fact:
+    network_delay: "{{ ((after_time.stdout | int) - (before_time.stdout | int)) // 2 }}"
+
+- name: Calculate time difference
+  set_fact:
+    time_diff_seconds: "{{ (before_time.stdout | int) - ((remote_time.stdout | int) - (network_delay | int)) }}"
+
+- name: Generate time.env file
+  raw: |
+    bash -c 'echo TIME_DIFF_SECONDS=\"{{ time_diff_seconds }}\" > /tmp/time.env_{{ request_id }}'
+  delegate_to: 127.0.0.1
+
+- name: Create site directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}"
+    if (-not (Test-Path $sitePath)) {
+      New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
+    }
+
+- name: Copy time.env file
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/time.env_{{ request_id }}"
+    output_file_path: "{{ system_drive }}\\cmp-agent\\sites\\{{ site_code }}\\time.env"
+
+- name: Remove local generated time.env file
+  raw: "rm -f /tmp/time.env_{{ request_id }}"
+  delegate_to: 127.0.0.1

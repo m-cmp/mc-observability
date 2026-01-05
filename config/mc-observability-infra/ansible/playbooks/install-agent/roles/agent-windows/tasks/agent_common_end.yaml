@@ -1,0 +1,6 @@
+# Windows does not require cleanup of busybox or common agent files
+# This file is kept for consistency with the agent-linux role structure
+
+- name: Cleanup completed
+  debug:
+    msg: "Windows agent common tasks cleanup completed"

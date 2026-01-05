@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.manager.service;
 
+import static com.mcmp.o11ymanager.manager.constants.WinRmConstants.isWinRmPort;
+
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.exception.agent.AgentStatusException;
 import com.mcmp.o11ymanager.manager.exception.agent.SshConnectionException;
@@ -10,11 +12,15 @@ import com.mcmp.o11ymanager.manager.model.agentHealth.AgentCommandResult;
 import com.mcmp.o11ymanager.manager.model.agentHealth.SshConnection;
 import com.mcmp.o11ymanager.manager.port.SshPort;
 import com.mcmp.o11ymanager.manager.service.interfaces.SshService;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.util.security.SecurityUtils;
 import org.apache.sshd.sftp.client.SftpClient;
 import org.apache.sshd.sftp.client.SftpClientFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,13 +74,35 @@ public class SshServiceImpl implements SshService {
         connectionCache
                 .entrySet()
                 .removeIf(
-                        entry ->
-                                currentTime - entry.getValue().getLastUsedTime()
-                                        > sshConnectionCacheTimeout);
+                        entry -> {
+                            if (currentTime - entry.getValue().getLastUsedTime()
+                                    > sshConnectionCacheTimeout) {
+                                try {
+                                    entry.getValue().close();
+                                    log.debug("Closed expired SSH connection: {}", entry.getKey());
+                                } catch (Exception e) {
+                                    log.warn(
+                                            "Failed to close SSH connection: {}",
+                                            entry.getKey(),
+                                            e);
+                                }
+                                return true;
+                            }
+                            return false;
+                        });
     }
 
     @Override
-    public SshConnection getConnection(String ip, int port, String user, String password) {
+    public SshConnection getConnectionWithPrivateKey(
+            String ip, int port, String user, Path privateKeyPath) {
+        if (isWinRmPort(port)) {
+            log.debug(
+                    "Windows host detected (WinRM port {}), skipping SSH connection for {}",
+                    port,
+                    ip);
+            return null;
+        }
+
         String cacheKey = ip + ":" + port + ":" + user;
         SshConnection connection = connectionCache.get(cacheKey);
 
@@ -85,43 +114,91 @@ public class SshServiceImpl implements SshService {
                     connection.close();
                 } catch (IOException e) {
                     log.error("Error closing stale connection: {}", e.getMessage());
-                    throw new SshConnectionException(
-                            "Failed to disconnect SSH connection" + ip, user);
+                    throw new SshConnectionException(requestInfo.getRequestId(), ip);
                 }
             }
         }
 
         try {
-            connection = sshPort.openSession(user, ip, port, password);
+            connection = sshPort.openSessionWithPrivateKey(user, ip, port, privateKeyPath);
             connectionCache.put(cacheKey, connection);
             connection.updateLastUsedTime();
 
             return connection;
         } catch (Exception e) {
-            log.error("Error establishing SSH connection to {}: {}", ip, e.getMessage());
-            throw new SshConnectionException(
-                    requestInfo.getRequestId(), "Failed to connect via SSH" + ip);
+            log.error(
+                    "Error establishing SSH connection with private key to {}: {}",
+                    ip,
+                    e.getMessage());
+            throw new SshConnectionException(requestInfo.getRequestId(), ip);
         }
     }
 
     @Override
-    public void updateConnection(String ip, int port, String user, String password) {
-        removeConnection(ip, port, user);
-        getConnection(ip, port, user, password);
+    public SshConnection getConnectionWithPrivateKeyString(
+            String ip, int port, String user, String privateKeyContent) {
+        if (isWinRmPort(port)) {
+            log.debug(
+                    "Windows host detected (WinRM port {}), skipping SSH connection for {}",
+                    port,
+                    ip);
+            return null;
+        }
+
+        String cacheKey = ip + ":" + port + ":" + user;
+        SshConnection connection = connectionCache.get(cacheKey);
+
+        if (connection != null) {
+            if (connection.isActive()) {
+                return connection;
+            } else {
+                try {
+                    connection.close();
+                } catch (IOException e) {
+                    log.error("Error closing stale connection: {}", e.getMessage());
+                    throw new SshConnectionException(requestInfo.getRequestId(), ip);
+                }
+            }
+        }
+
+        try {
+            connection = sshPort.openSessionWithPrivateKeyString(user, ip, port, privateKeyContent);
+            connectionCache.put(cacheKey, connection);
+            connection.updateLastUsedTime();
+
+            return connection;
+        } catch (Exception e) {
+            log.debug(
+                    "Error establishing SSH connection with private key string to {}: {}",
+                    ip,
+                    e.getMessage());
+            throw new SshConnectionException(requestInfo.getRequestId(), ip);
+        }
     }
 
-    public String runCommand(String ip, int port, String user, String password, String command) {
+    @Override
+    public String runCommandWithPrivateKey(
+            String ip, int port, String user, Path privateKeyPath, String command) {
+        if (isWinRmPort(port)) {
+            log.debug(
+                    "Windows host (WinRM port {}), skipping SSH command execution for {}",
+                    port,
+                    ip);
+            return "";
+        }
+
         int retryCount = 0;
 
         while (retryCount < MAX_RETRIES) {
-            SshConnection sshConnection = getConnection(ip, port, user, password);
-
-            if (sshConnection == null) {
-                retryCount++;
-                continue;
-            }
-
             try {
+                SshConnection sshConnection =
+                        getConnectionWithPrivateKey(ip, port, user, privateKeyPath);
+
+                if (sshConnection == null) {
+                    retryCount++;
+                    continue;
+                }
+
                 AgentCommandResult agentCommandResult =
                         sshPort.executeCommand(sshConnection, command);
                 String output = agentCommandResult.getOutput();
@@ -147,26 +224,47 @@ public class SshServiceImpl implements SshService {
             }
         }
 
-        log.error("Error executing command on host {}: {}", ip, command);
+        log.debug(
+                "Failed to execute command with private key on host {} after {} retries",
+                ip,
+                MAX_RETRIES);
 
         return "";
     }
 
     @Override
-    public AgentCommandResult runCommandWithResult(
-            String ip, int port, String user, String password, String command) {
+    public String runCommandWithPrivateKeyString(
+            String ip, int port, String user, String privateKeyContent, String command) {
+        if (isWinRmPort(port)) {
+            log.debug(
+                    "Windows host (WinRM port {}), skipping SSH command execution for {}",
+                    port,
+                    ip);
+            return "";
+        }
+
         int retryCount = 0;
 
         while (retryCount < MAX_RETRIES) {
-            SshConnection sshConnection = getConnection(ip, port, user, password);
-
-            if (sshConnection == null) {
-                retryCount++;
-                continue;
-            }
-
             try {
-                return sshPort.executeCommand(sshConnection, command);
+                SshConnection sshConnection =
+                        getConnectionWithPrivateKeyString(ip, port, user, privateKeyContent);
+
+                if (sshConnection == null) {
+                    retryCount++;
+                    continue;
+                }
+
+                AgentCommandResult agentCommandResult =
+                        sshPort.executeCommand(sshConnection, command);
+                String output = agentCommandResult.getOutput();
+                Integer exitCode = agentCommandResult.getExitCode();
+
+                if (exitCode.equals(0)) {
+                    return output;
+                }
+
+                retryCount++;
             } catch (Exception e) {
                 removeConnection(ip, port, user);
                 retryCount++;
@@ -177,46 +275,39 @@ public class SshServiceImpl implements SshService {
                     Thread.sleep(RETRY_DELAY_MS);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
+                    return "";
                 }
             }
         }
 
-        log.error("Error executing command on host {}: {}", ip, command);
+        log.debug(
+                "Failed to execute command with private key string on host {} after {} retries",
+                ip,
+                MAX_RETRIES);
 
-        return AgentCommandResult.builder()
-                .output("")
-                .exitCode(SSH_COMMAND_EXECUTE_FAILED_CODE)
-                .build();
+        return "";
     }
 
     @Override
     public boolean isEnable(
-            Agent agent,
-            String ip,
-            int port,
-            String user,
-            String password,
-            SshConnection sshConnection) {
+            Agent agent, String ip, int port, String user, SshConnection sshConnection) {
+        if (isWinRmPort(port)) {
+            log.debug("Windows host (WinRM port {}), skipping SSH agent check for {}", port, ip);
+            return false;
+        }
+
         if (sshConnection == null) {
             return false;
         }
 
         String command = "";
         if (agent.equals(Agent.TELEGRAF)) {
-            command =
-                    "echo '"
-                            + password
-                            + "' | sudo -S -p '' systemctl is-enabled "
-                            + getTelegrafServiceName();
+            command = "sudo -n systemctl is-enabled " + getTelegrafServiceName();
         } else if (agent.equals(Agent.FLUENT_BIT)) {
-            command =
-                    "echo '"
-                            + password
-                            + "' | sudo -S -p '' systemctl is-enabled "
-                            + getFluentBitServiceName();
+            command = "sudo -n systemctl is-enabled " + getFluentBitServiceName();
         }
         try {
-            AgentCommandResult result = runCommandWithResult(ip, port, user, password, command);
+            AgentCommandResult result = sshPort.executeCommand(sshConnection, command);
             String response = result.getOutput().trim();
             return response.equalsIgnoreCase("enabled");
         } catch (Exception e) {
@@ -241,6 +332,10 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public boolean existDirectory(SshConnection connection, String path) {
+        if (connection == null) {
+            log.debug("SSH connection is null (likely Windows host), skipping directory check");
+            return false;
+        }
 
         try {
             String command = "test -d " + path + " && echo EXISTS || echo NOT_EXISTS";
@@ -256,6 +351,11 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public boolean checkDirectoryExistsFromRemote(SshConnection connection, String dirPath) {
+        if (connection == null) {
+            log.debug("SSH connection is null (likely Windows host), skipping directory check");
+            return false;
+        }
+
         try {
             String command = "test -d " + dirPath + " && echo 'EXISTS' || echo 'NOT_EXISTS'";
             AgentCommandResult agentCommandResult = sshPort.executeCommand(connection, command);
@@ -269,6 +369,12 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public boolean checkFluentBitDirectoryExistsFromRemote(SshConnection connection) {
+        if (connection == null) {
+            log.debug(
+                    "SSH connection is null (likely Windows host), skipping fluent-bit directory check");
+            return false;
+        }
+
         try {
             String command =
                     "test -d "
@@ -285,6 +391,12 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public boolean isExistTelegrafConfigDirectory(SshConnection connection) {
+        if (connection == null) {
+            log.debug(
+                    "SSH connection is null (likely Windows host), skipping telegraf config check");
+            return false;
+        }
+
         try {
             String command =
                     "test -d "
@@ -302,6 +414,12 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public boolean isExistFluentbitConfigDirectory(SshConnection connection) {
+        if (connection == null) {
+            log.debug(
+                    "SSH connection is null (likely Windows host), skipping fluent-bit config check");
+            return false;
+        }
+
         try {
             String command =
                     "test -d "
@@ -320,6 +438,11 @@ public class SshServiceImpl implements SshService {
     @Override
     public List<String> listDirectory(SshConnection connection, String directoryPath)
             throws IOException {
+        if (connection == null) {
+            log.debug("SSH connection is null (likely Windows host), skipping directory list");
+            return List.of();
+        }
+
         String listCmd = "ls -1p " + directoryPath;
         AgentCommandResult listRes;
         try {
@@ -336,6 +459,11 @@ public class SshServiceImpl implements SshService {
 
     @Override
     public String readFileContent(SshConnection connection, String filePath) throws IOException {
+        if (connection == null) {
+            log.debug("SSH connection is null (likely Windows host), skipping file read");
+            return "";
+        }
+
         String catCmd = "cat " + filePath;
         AgentCommandResult catRes;
         try {
@@ -355,15 +483,19 @@ public class SshServiceImpl implements SshService {
             String username,
             String ip,
             int port,
-            String password)
+            String privateKeyContent)
             throws IOException {
 
-        // Check if the local path is a directory, and create it if it doesn't exist
+        if (connection == null) {
+            log.debug("SSH connection is null (likely Windows host), skipping file download");
+            return;
+        }
+
         if (!Files.exists(localPath)) {
             Files.createDirectories(localPath);
-            log.info("The specified local path is not a directory: {}", localPath);
+            log.info("Local directory created: {}", localPath);
         } else if (!Files.isDirectory(localPath)) {
-            log.error("지정된 로컬 경로가 디렉토리가 아닙니다: {}", localPath);
+            log.error("The specified local path is not a directory: {}", localPath);
             return;
         }
 
@@ -373,12 +505,22 @@ public class SshServiceImpl implements SshService {
             try (ClientSession session =
                     client.connect(username, ip, port).verify(15, TimeUnit.SECONDS).getSession()) {
 
-                session.addPasswordIdentity(password); // 비밀번호 인증
+                Iterable<KeyPair> keyPairs;
+                try {
+                    keyPairs =
+                            SecurityUtils.loadKeyPairIdentities(
+                                    null,
+                                    null,
+                                    new ByteArrayInputStream(
+                                            privateKeyContent.getBytes(StandardCharsets.UTF_8)),
+                                    null);
+                } catch (GeneralSecurityException e) {
+                    throw new IOException("Failed to load private key: " + e.getMessage(), e);
+                }
 
-                // To use public key authentication:
-                // session.addPublicKeyIdentity(UserInteraction.loadKeyIdentity("path/to/your/private_key_file", null, null));
-
-                // Attempt authentication and set timeout
+                for (KeyPair keyPair : keyPairs) {
+                    session.addPublicKeyIdentity(keyPair);
+                }
 
                 if (session.auth().verify(15, TimeUnit.SECONDS).isFailure()) {
                     throw new IOException("SSH server authentication failed: " + ip);
@@ -403,7 +545,6 @@ public class SshServiceImpl implements SshService {
             SftpClient sftpClient, String currentRemotePath, Path currentLocalPath)
             throws IOException {
 
-        // Read entries from the remote directory
         Iterable<SftpClient.DirEntry> entries;
         try {
             entries = sftpClient.readDir(currentRemotePath);
@@ -412,13 +553,11 @@ public class SshServiceImpl implements SshService {
                     "Error: Failed to read remote directory {} : {}",
                     currentRemotePath,
                     e.getMessage());
-            // The directory may be skipped due to incorrect path or insufficient permissions.
             return;
         }
 
         for (SftpClient.DirEntry entry : entries) {
             String entryName = entry.getFilename();
-            // Skip current (.) and parent (..) directories
             if (entryName.equals(".") || entryName.equals("..")) {
                 continue;
             }
@@ -428,13 +567,12 @@ public class SshServiceImpl implements SshService {
             SftpClient.Attributes attrs = entry.getAttributes();
 
             if (attrs.isDirectory()) {
-                // Create the corresponding local directory if it doesn't exist
                 if (!Files.exists(nextLocalPath)) {
                     Files.createDirectories(nextLocalPath);
                     log.info("Directory created: {}", nextLocalPath);
                 }
                 log.info("Entering directory: {}", nextRemotePath);
-                recursiveDownload(sftpClient, nextRemotePath, nextLocalPath); // Recursive call
+                recursiveDownload(sftpClient, nextRemotePath, nextLocalPath);
             } else if (attrs.isRegularFile()) {
                 log.info("Downloading file: {} -> {}", nextRemotePath, nextLocalPath);
                 try (InputStream inputStream = sftpClient.read(nextRemotePath)) {
@@ -444,11 +582,9 @@ public class SshServiceImpl implements SshService {
                             "Error: Failed to download file {} : {}",
                             nextRemotePath,
                             e.getMessage());
-                    // Continue execution even if a file download fails
                 }
             } else if (attrs.isSymbolicLink()) {
                 log.info("Skipping symbolic link: {}", nextRemotePath);
-                // Add symbolic link handling logic if necessary
             } else {
                 log.info("Skipping unsupported file type: {}", nextRemotePath);
             }
@@ -456,22 +592,16 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    // fluent-bit enable function
-    public void enableFluentBit(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void enableFluentBit(SshConnection connection, String ip, int port, String user) {
 
-        String enableCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl enable --now "
-                        + getFluentBitServiceName();
+        String enableCommand = "sudo -n systemctl enable --now " + getFluentBitServiceName();
 
         AgentCommandResult enableRes;
 
         boolean isAlreadyEnabled;
 
         try {
-            isAlreadyEnabled = isEnable(Agent.FLUENT_BIT, ip, port, user, password, connection);
+            isAlreadyEnabled = isEnable(Agent.FLUENT_BIT, ip, port, user, connection);
 
             if (isAlreadyEnabled) {
                 log.info("Fluent Bit service is already enabled. No need to enable.");
@@ -500,15 +630,9 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    // fluent-bit disable function
-    public void disableFluentBit(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void disableFluentBit(SshConnection connection, String ip, int port, String user) {
 
-        String disableCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl disable --now "
-                        + getFluentBitServiceName();
+        String disableCommand = "sudo -n systemctl disable --now " + getFluentBitServiceName();
 
         AgentCommandResult disableRes;
 
@@ -534,27 +658,19 @@ public class SshServiceImpl implements SshService {
         }
     }
 
-    // fluent-bit restart function
     @Override
-    public void restartFluentBit(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void restartFluentBit(SshConnection connection, String ip, int port, String user) {
 
-        String restartCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl restart "
-                        + getFluentBitServiceName();
+        String restartCommand = "sudo -n systemctl restart " + getFluentBitServiceName();
 
         try {
-            // 1) If not enabled, cannot restart
-            if (!isEnable(Agent.FLUENT_BIT, ip, port, user, password, connection)) {
+            if (!isEnable(Agent.FLUENT_BIT, ip, port, user, connection)) {
                 throw new AgentStatusException(
                         requestInfo.getRequestId(),
                         "Fluent Bit is not enabled. Cannot restart.",
                         Agent.FLUENT_BIT);
             }
 
-            // 2) Execute restart command
             AgentCommandResult restartRes = sshPort.executeCommand(connection, restartCommand);
 
             if (restartRes.getExitCode() != 0) {
@@ -575,21 +691,16 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    public void enableTelegraf(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void enableTelegraf(SshConnection connection, String ip, int port, String user) {
 
-        String enableCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl enable --now "
-                        + getTelegrafServiceName();
+        String enableCommand = "sudo -n systemctl enable --now " + getTelegrafServiceName();
 
         AgentCommandResult enableRes;
 
         boolean isAlreadyEnabled;
 
         try {
-            isAlreadyEnabled = isEnable(Agent.TELEGRAF, ip, port, user, password, connection);
+            isAlreadyEnabled = isEnable(Agent.TELEGRAF, ip, port, user, connection);
 
             if (isAlreadyEnabled) {
                 log.info("Telegraf service is already enabled. No need to enable.");
@@ -618,15 +729,9 @@ public class SshServiceImpl implements SshService {
     }
 
     @Override
-    // telegraf disable function
-    public void disableTelgraf(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void disableTelegraf(SshConnection connection, String ip, int port, String user) {
 
-        String disableCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl disable --now "
-                        + getTelegrafServiceName();
+        String disableCommand = "sudo -n systemctl disable --now " + getTelegrafServiceName();
 
         AgentCommandResult disableRes;
 
@@ -652,27 +757,19 @@ public class SshServiceImpl implements SshService {
         }
     }
 
-    // telegraf restart function
     @Override
-    public void restartTelegraf(
-            SshConnection connection, String ip, int port, String user, String password) {
+    public void restartTelegraf(SshConnection connection, String ip, int port, String user) {
 
-        String restartCommand =
-                "echo '"
-                        + password
-                        + "' | sudo -S -p '' systemctl restart "
-                        + getTelegrafServiceName();
+        String restartCommand = "sudo -n systemctl restart " + getTelegrafServiceName();
 
         try {
-            // 1) If not enabled, cannot restart
-            if (!isEnable(Agent.TELEGRAF, ip, port, user, password, connection)) {
+            if (!isEnable(Agent.TELEGRAF, ip, port, user, connection)) {
                 throw new AgentStatusException(
                         requestInfo.getRequestId(),
                         "Telegraf is not enabled. Cannot restart.",
                         Agent.TELEGRAF);
             }
 
-            // 2) Execute restart command
             AgentCommandResult restartRes = sshPort.executeCommand(connection, restartCommand);
 
             if (restartRes.getExitCode() != 0) {

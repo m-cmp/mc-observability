@@ -1,0 +1,6 @@
+- name: Set architecture variable
+  set_fact:
+    arch: "amd64"
+
+- name: Run Agent task based on install method
+  include_tasks: "agent_{{ agent }}_{{ install_method | default('install') }}.yaml"

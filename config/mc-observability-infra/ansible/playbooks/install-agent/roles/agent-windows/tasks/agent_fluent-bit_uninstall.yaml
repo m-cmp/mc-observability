@@ -1,0 +1,106 @@
+- name: Get Windows System Drive
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $env:SystemDrive
+  register: system_drive_result
+
+- name: Set system_drive variable
+  set_fact:
+    system_drive: "{{ system_drive_result.stdout | trim }}"
+
+- name: Stop CMP Fluent Bit service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-fluent-bit-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      Write-Output "Stopping service: $serviceName"
+      Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+      # Wait for service to fully stop
+      $timeout = 30
+      $elapsed = 0
+      while ((Get-Service -Name $serviceName -ErrorAction SilentlyContinue).Status -ne 'Stopped' -and $elapsed -lt $timeout) {
+        Start-Sleep -Seconds 1
+        $elapsed++
+      }
+      Write-Output "Service stopped"
+    } else {
+      Write-Output "Service not found"
+    }
+  ignore_errors: true
+
+- name: Remove CMP Fluent Bit service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-fluent-bit-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      sc.exe delete $serviceName
+      Start-Sleep -Seconds 2
+      Write-Output "Service deleted"
+    } else {
+      Write-Output "Service not found"
+    }
+  ignore_errors: true
+
+- name: Remove Fluent Bit directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $fluentbitPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\fluent-bit"
+    if (Test-Path $fluentbitPath) {
+      Remove-Item -Path $fluentbitPath -Recurse -Force
+      Write-Output "Removed fluent-bit directory: $fluentbitPath"
+    } else {
+      Write-Output "Fluent-bit directory not found"
+    }
+
+- name: Clean up environment variables
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    # Remove Fluent Bit specific environment variables
+    $varsToRemove = @("UUID", "LOKI_HOST", "credential_id", "cloud_service", "type")
+    foreach ($var in $varsToRemove) {
+      [Environment]::SetEnvironmentVariable($var, $null, [EnvironmentVariableTarget]::Machine)
+      Write-Output "Removed environment variable: $var"
+    }
+  ignore_errors: true

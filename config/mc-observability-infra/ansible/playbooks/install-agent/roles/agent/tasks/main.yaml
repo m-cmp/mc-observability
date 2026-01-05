@@ -1,2 +1,22 @@
+- name: Detect Remote's architecture
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: uname -m
+  register: arch_raw
+  changed_when: false
+  failed_when: false
+
+- name: Set architecture variable
+  set_fact:
+    arch: "{{ 'amd64' if arch_raw.stdout | trim == 'x86_64' else 'arm64' if arch_raw.stdout | trim == 'aarch64' else arch_raw.stdout | trim }}"
+
+- name: Debug architecture
+  debug:
+    msg: "Architecture is {{ arch }}"
+
 - name: Run Agent task based on install method
   include_tasks: "agent_{{ agent }}_{{ install_method | default('install') }}.yaml"

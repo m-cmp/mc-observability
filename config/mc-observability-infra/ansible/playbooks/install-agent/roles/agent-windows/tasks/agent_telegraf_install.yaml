@@ -1,0 +1,187 @@
+- name: Check required variables for install
+  fail:
+    msg: "Required variable not found: {{ item }}"
+  when: vars[item] is not defined or vars[item] == ''
+  loop:
+    - config_content
+
+- name: Begin Agent Common Tasks
+  include_tasks: agent_common_begin.yaml
+
+- name: Copy telegraf folder to temp directory
+  raw: "cp -r {{ role_path }}/agent-install-files/{{ arch }}/telegraf /tmp/telegraf_{{ request_id }}"
+  delegate_to: 127.0.0.1
+
+- name: Merge and extract split telegraf binary
+  raw: "cd /tmp/telegraf_{{ request_id }}/bin && cat cmp-telegraf.exe.tar.gz_* > cmp-telegraf.exe.tar.gz && tar xzf cmp-telegraf.exe.tar.gz && rm -f cmp-telegraf.exe.tar.gz cmp-telegraf.exe.tar.gz_* && chmod 755 cmp-telegraf.exe"
+  delegate_to: 127.0.0.1
+
+- name: Replace SYSTEM_DRIVE and SITE_CODE in temp telegraf.conf
+  raw: |
+    sed -i 's|SYSTEM_DRIVE|{{ system_drive }}|g' /tmp/telegraf_{{ request_id }}/etc/telegraf.conf
+    sed -i 's|SITE_CODE|{{ site_code }}|g' /tmp/telegraf_{{ request_id }}/etc/telegraf.conf
+  delegate_to: 127.0.0.1
+
+- name: Compress temp telegraf files
+  raw: "cd /tmp/telegraf_{{ request_id }} && rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.zip && zip -r {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.zip ."
+  delegate_to: 127.0.0.1
+
+- name: Remove temp telegraf folder
+  raw: "rm -rf /tmp/telegraf_{{ request_id }}"
+  delegate_to: 127.0.0.1
+
+- name: Get Windows Temp directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $env:TEMP
+  register: windows_temp_result
+
+- name: Set windows_temp variable
+  set_fact:
+    windows_temp: "{{ windows_temp_result.stdout | trim }}"
+
+- name: Copy Compressed Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.zip"
+    output_file_path: "{{ windows_temp }}\\cmp-telegraf-{{ site_code }}.zip"
+
+- name: Install Telegraf agent
+  block:
+    - name: Stop existing CMP Telegraf service if exists
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $serviceName = "cmp-telegraf-{{ site_code }}"
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if ($service) {
+          Write-Output "Stopping existing service: $serviceName"
+          Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+          # Wait for service to fully stop
+          $timeout = 30
+          $elapsed = 0
+          while ((Get-Service -Name $serviceName).Status -ne 'Stopped' -and $elapsed -lt $timeout) {
+            Start-Sleep -Seconds 1
+            $elapsed++
+          }
+          Write-Output "Service stopped"
+        } else {
+          Write-Output "No existing service found"
+        }
+      ignore_errors: true
+
+    - name: Decompress agent files
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+        $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}"
+        $telegrafPath = "$sitePath\telegraf"
+
+        # Remove existing telegraf directory if exists
+        if (Test-Path $telegrafPath) {
+          Remove-Item -Path $telegrafPath -Recurse -Force
+        }
+
+        # Create site directory if not exists
+        if (-not (Test-Path $sitePath)) {
+          New-Item -ItemType Directory -Path $sitePath -Force | Out-Null
+        }
+
+        # Create telegraf directory
+        New-Item -ItemType Directory -Path $telegrafPath -Force | Out-Null
+
+        $tempFile = "$env:TEMP\cmp-telegraf-{{ site_code }}.zip"
+        Expand-Archive -Path $tempFile -DestinationPath $telegrafPath -Force
+
+    - name: End Agent Common Tasks
+      include_tasks: agent_common_end.yaml
+
+    - name: Create Windows service for CMP Telegraf
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $ErrorActionPreference = 'Stop'
+        $serviceName = "cmp-telegraf-{{ site_code }}"
+        $binPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\telegraf\bin\cmp-telegraf.exe --config `"{{ system_drive }}\cmp-agent\sites\{{ site_code }}\telegraf\etc\telegraf.conf`" --config-directory `"{{ system_drive }}\cmp-agent\sites\{{ site_code }}\telegraf\etc\telegraf.d`""
+
+        # Check if service exists
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        if ($service) {
+          # Stop and remove existing service
+          Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
+          sc.exe delete $serviceName
+          Start-Sleep -Seconds 2
+        }
+
+        # Create new service
+        New-Service -Name $serviceName -BinaryPathName $binPath -DisplayName "CMP Telegraf Service ({{ site_code }})" -Description "CMP Telegraf monitoring agent for site {{ site_code }}" -StartupType Automatic
+
+        # Configure service to restart on failure
+        sc.exe failure $serviceName reset= 86400 actions= restart/60000/restart/60000/restart/60000
+
+    - name: Start CMP Telegraf service
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $serviceName = "cmp-telegraf-{{ site_code }}"
+        Start-Service -Name $serviceName
+
+  always:
+    - name: Remove Remote Compressed Agent Install File
+      vars:
+        ansible_connection: winrm
+        ansible_host: "{{ target_host }}"
+        ansible_port: "{{ target_port }}"
+        ansible_user: "{{ target_user }}"
+        ansible_password: "{{ target_password }}"
+        ansible_winrm_transport: basic
+        ansible_winrm_server_cert_validation: ignore
+        ansible_winrm_scheme: https
+      win_shell: |
+        $tempFile = "$env:TEMP\cmp-telegraf-{{ site_code }}.zip"
+        if (Test-Path $tempFile) {
+          Remove-Item $tempFile -Force
+        }
+      ignore_errors: true
+
+    - name: Remove Local Compressed Agent Install File
+      raw: "rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-telegraf_{{ request_id }}.zip"
+      delegate_to: 127.0.0.1
+      ignore_errors: true
