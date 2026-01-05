@@ -1,0 +1,82 @@
+#!/bin/bash
+
+## $1 = site_code
+
+if [ -d "/cmp-agent/telegraf" ]; then
+  echo "[*] Moving old telegraf files..."
+  mv -f /cmp-agent/telegraf /cmp-agent/sites/$1
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to move old telegraf files!"
+    exit 1;
+  fi
+fi
+
+TELEGRAF_CONFIG_FILE="/cmp-agent/sites/$1/telegraf/etc/telegraf.conf"
+
+if [ ! -f "$TELEGRAF_CONFIG_FILE" ]; then
+    echo "[!] ERROR: Telegraf config file not found: $TELEGRAF_CONFIG_FILE"
+    exit 1
+fi
+
+echo "[*] Checking telegraf config for collection_type..."
+if sed -n '/^\[global_tags\]/,/^\[/p' "$TELEGRAF_CONFIG_FILE" | grep -q "collection_type"; then
+    echo "[*] collection_type already exists in [global_tags] section"
+else
+    echo "[*] Adding collection_type to telegraf config..."
+
+    cp "$TELEGRAF_CONFIG_FILE" "$TELEGRAF_CONFIG_FILE.backup"
+    STATUS=`echo $?`
+    if [ "$STATUS" != 0 ]; then
+        echo "[!] ERROR: Failed to create backup file!"
+        exit 1
+    fi
+
+    SECTION_START=$(grep -n "^\[global_tags\]" "$TELEGRAF_CONFIG_FILE" | cut -d: -f1)
+    LAST_CONFIG=$(sed -n "${SECTION_START},\$p" "$TELEGRAF_CONFIG_FILE" | grep -n "=" | tail -n 1 | cut -d: -f1)
+    LAST_LINE_NUM=$((SECTION_START + LAST_CONFIG - 1))
+
+    sed -i "${LAST_LINE_NUM}a\\  collection_type = \"agent\"" "$TELEGRAF_CONFIG_FILE"
+    STATUS=`echo $?`
+    if [ "$STATUS" != 0 ]; then
+        echo "[!] ERROR: Failed to update telegraf config!"
+        mv "$TELEGRAF_CONFIG_FILE.backup" "$TELEGRAF_CONFIG_FILE"
+        exit 1
+    fi
+
+    echo "[*] Successfully added collection_type to telegraf config"
+fi
+
+echo "[*] Updating [agent] section configuration..."
+
+echo "[*] Setting interval to 10s..."
+sed -i '/^\[agent\]/,/^\[/{
+    s/interval[[:space:]]*=[[:space:]]*"[^"]*"/interval = "10s"/
+}' "$TELEGRAF_CONFIG_FILE"
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to update interval in [agent] section!"
+    exit 1
+fi
+
+echo "[*] Setting flush_interval to 60s..."
+sed -i '/^\[agent\]/,/^\[/{
+    s/flush_interval[[:space:]]*=[[:space:]]*"[^"]*"/flush_interval = "60s"/
+}' "$TELEGRAF_CONFIG_FILE"
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to update flush_interval in [agent] section!"
+    exit 1
+fi
+
+echo "[*] Updating logfile path with site code..."
+sed -i '/^\[agent\]/,/^\[/{
+    s|logfile[[:space:]]*=[[:space:]]*"[^"]*"|logfile = "/cmp-agent/sites/'$1'/telegraf/log/telegraf.log"|
+}' "$TELEGRAF_CONFIG_FILE"
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to update logfile path in [agent] section!"
+    exit 1
+fi
+
+echo "[*] Successfully updated [agent] section configuration"

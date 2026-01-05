@@ -9,15 +9,13 @@
   include_tasks: agent_common_begin.yaml
 
 - name: Compress agent files
-  shell:
-    cmd: "sudo rm -f cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo chmod +x ../busybox && sudo ../busybox tar cvfz cmp-fluent-bit_{{ request_id }}.tar.gz fluent-bit/ && sudo chmod 644 cmp-fluent-bit_{{ request_id }}.tar.gz"
-    chdir: "{{ role_path }}/agent-install-files/cmp-agent"
+  raw: "cd {{ role_path }}/agent-install-files/{{ arch }} && sudo rm -f cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo ../amd64/busybox tar cvfz cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz fluent-bit/ && sudo chmod 644 cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1
 
 - name: Copy Compressed Agent Install File
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
     output_file_path: "/tmp/cmp-fluent-bit-{{ site_code }}.tar.gz"
     output_file_owner: "root"
     output_file_group: "root"
@@ -48,16 +46,14 @@
   raw: "rm -f /tmp/cmp-fluent-bit-{{ site_code }}.tar.gz"
 
 - name: Remove Local Compressed Agent Install File
-  shell:
-    cmd: "sudo rm -f {{ role_path }}/agent-install-files/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
-    chdir: "{{ role_path }}/agent-install-files"
+  raw: "sudo rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1
 
 - name: Copy Fluent Bit Image File
   include_tasks: send_file.yaml
   vars:
-    input_file_path: "{{ role_path }}/agent-install-files/images/fluent-bit_3.2.4-amd64.tar.gz"
-    output_file_path: "/tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/images/fluent-bit_4.2.2-{{ arch }}.tar.gz"
+    output_file_path: "/tmp/fluent-bit_4.2.2-{{ arch }}-{{ site_code }}.tar.gz"
     output_file_owner: "root"
     output_file_group: "root"
     output_file_chmod: "644"
@@ -72,7 +68,7 @@
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  raw: "/cmp-agent/common/podman/bin/run-podman load -i /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+  raw: "/cmp-agent/common/podman/bin/run-podman load -i /tmp/fluent-bit_4.2.2-{{ arch }}-{{ site_code }}.tar.gz"
 
 - name: Remove Remote Fluent Bit Image File
   become: true
@@ -84,7 +80,7 @@
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  raw: "rm -f /tmp/fluent-bit_3.2.4-amd64-{{ site_code }}.tar.gz"
+  raw: "rm -f /tmp/fluent-bit_4.2.2-{{ arch }}-{{ site_code }}.tar.gz"
 
 - name: End Agent Common Tasks
   include_tasks: agent_common_end.yaml

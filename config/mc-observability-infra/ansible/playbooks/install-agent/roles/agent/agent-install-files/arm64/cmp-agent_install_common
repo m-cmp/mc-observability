@@ -1,0 +1,75 @@
+#!/bin/bash
+
+## $1 = request_id
+
+mkdir -p /cmp-agent/
+
+echo "[*] Extracting agent common files..."
+/tmp/busybox_"$1" tar xvf /tmp/cmp-agent-common_"$1.tar.gz" -C /cmp-agent/
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to extract agent common files!"
+  exit 1;
+fi
+
+echo "[*] Fixing SELinux permission for Podman..."
+chcon -Rt bin_t /cmp-agent/common/podman/bin/
+
+echo "[*] Fixing permission for '/cmp-agent/common/iptables/bin/'..."
+chcon -Rt bin_t /cmp-agent/common/iptables/bin/
+
+echo "[*] Fixing permission for '/cmp-agent/common/iptables/sbin/'..."
+chcon -Rt bin_t /cmp-agent/common/iptables/sbin/
+
+echo "[*] Getting rsyslog service configuration path..."
+RSYSLOG_PATH=`systemctl show rsyslog -p FragmentPath | cut -d= -f2`
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to get rsyslog service configuration path."
+  exit 1;
+fi
+
+echo "[*] Removing existing TZ environment variable if exists in rsyslog.service..."
+TZ_EXISTS=`grep -c "Environment=TZ" $RSYSLOG_PATH`
+if [ "$TZ_EXISTS" != "" ]; then
+  sed -i '/^Environment=TZ.*/d' $RSYSLOG_PATH | true
+fi
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to remove existing TZ environment variable if exists in rsyslog.service."
+  exit 1;
+fi
+
+echo "[*] Adding new TZ environment variable to rsyslog.service..."
+sed -i '/^\[Service\]/a Environment=TZ=Asia/Seoul' $RSYSLOG_PATH
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to add new TZ environment variable to rsyslog.service."
+  exit 1;
+fi
+
+echo "[*] Reloading systemctl daemon..."
+systemctl daemon-reload
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to reload systemctl daemon."
+  exit 1;
+fi
+
+echo "[*] Restarting rsyslog service..."
+systemctl restart rsyslog
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to restart rsyslog service."
+  exit 1;
+fi
+
+echo "[*] Creating syslog symbolic link file for RHEL based OS..."
+if [[ -f /var/log/messages && ! -f /var/log/syslog ]]; then
+  ln -sf /var/log/messages /var/log/syslog;
+fi
+STATUS=`echo $?`
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to create syslog symbolic link file for RHEL based OS."
+  exit 1;
+fi

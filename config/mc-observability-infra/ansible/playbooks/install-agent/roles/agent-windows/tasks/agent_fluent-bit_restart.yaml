@@ -1,0 +1,41 @@
+- name: Restart CMP Fluent Bit service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-fluent-bit-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      Restart-Service -Name $serviceName -Force
+      Write-Output "Service restarted"
+    } else {
+      Write-Output "Service not found"
+      exit 1
+    }
+
+- name: Verify service status
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-fluent-bit-{{ site_code }}"
+    Start-Sleep -Seconds 3
+    $service = Get-Service -Name $serviceName
+    if ($service.Status -eq 'Running') {
+      Write-Output "Service is running"
+    } else {
+      Write-Output "Service status: $($service.Status)"
+      exit 1
+    }

@@ -39,8 +39,6 @@ public class SshConnection implements AutoCloseable {
         if (session != null) {
             session.close();
         }
-        if (client != null) {
-            client.stop();
-        }
+        // SshClient is shared as singleton, so do not stop it here
     }
 }

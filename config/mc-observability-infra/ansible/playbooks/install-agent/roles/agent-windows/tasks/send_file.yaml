@@ -1,0 +1,13 @@
+- name: Copy file to remote Windows location
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_copy:
+    src: "{{ input_file_path }}"
+    dest: "{{ output_file_path }}"

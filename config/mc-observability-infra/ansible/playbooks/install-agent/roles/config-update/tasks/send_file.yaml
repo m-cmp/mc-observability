@@ -1,4 +1,16 @@
-- name: Copy file to remote
+- name: Copy file to remote temp location (with password)
+  raw: |
+    sshpass -p '{{ target_password }}' scp -r -o StrictHostKeyChecking=no -P {{ target_port }} {{ input_file_path }} {{ target_user }}@{{ target_host }}:/tmp/temp_file_{{ request_id }}
+  delegate_to: 127.0.0.1
+  when: target_password | default('') | length > 0
+
+- name: Copy file to remote temp location (with SSH key)
+  raw: |
+    scp -r -o StrictHostKeyChecking=no -P {{ target_port }} {% if target_sshkey_path | default('') | length > 0 %}-i {{ target_sshkey_path }} {% endif %}{{ input_file_path }} {{ target_user }}@{{ target_host }}:/tmp/temp_file_{{ request_id }}
+  delegate_to: 127.0.0.1
+  when: target_password | default('') | length == 0
+
+- name: Move file to final location with proper permissions
   become: true
   become_method: sudo
   become_user: root
@@ -7,10 +19,10 @@
     ansible_host: "{{ target_host }}"
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
-    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  copy:
-    src: "{{ input_file_path }}"
-    dest: "{{ output_file_path }}"
-    mode: "{{ output_file_chmod }}"
-    owner: "{{ output_file_owner }}"
-    group: "{{ output_file_group }}"
+    ansible_password: "{{ target_password if target_password | default('') | length > 0 else omit }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path if target_password | default('') | length == 0 else omit }}"
+    ansible_become_password: "{{ target_password if target_password | default('') | length > 0 else omit }}"
+  raw: |
+    mv -f /tmp/temp_file_{{ request_id }} {{ output_file_path }}
+    chmod {{ output_file_chmod }} {{ output_file_path }}
+    chown {{ output_file_owner }}:{{ output_file_group }} {{ output_file_path }}

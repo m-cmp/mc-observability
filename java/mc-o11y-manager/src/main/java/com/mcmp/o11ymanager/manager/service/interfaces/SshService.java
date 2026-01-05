@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.manager.service.interfaces;
 
 import com.mcmp.o11ymanager.manager.enums.Agent;
-import com.mcmp.o11ymanager.manager.model.agentHealth.AgentCommandResult;
 import com.mcmp.o11ymanager.manager.model.agentHealth.SshConnection;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -9,22 +8,19 @@ import java.util.List;
 
 public interface SshService {
 
-    SshConnection getConnection(String ip, int port, String user, String password);
+    SshConnection getConnectionWithPrivateKey(
+            String ip, int port, String user, Path privateKeyPath);
 
-    void updateConnection(String ip, int port, String user, String password);
+    SshConnection getConnectionWithPrivateKeyString(
+            String ip, int port, String user, String privateKeyContent);
 
-    String runCommand(String ip, int port, String user, String password, String command);
+    String runCommandWithPrivateKey(
+            String ip, int port, String user, Path privateKeyPath, String command);
 
-    AgentCommandResult runCommandWithResult(
-            String ip, int port, String password, String user, String command);
+    String runCommandWithPrivateKeyString(
+            String ip, int port, String user, String privateKeyContent, String command);
 
-    boolean isEnable(
-            Agent agent,
-            String ip,
-            int port,
-            String user,
-            String password,
-            SshConnection sshConnection);
+    boolean isEnable(Agent agent, String ip, int port, String user, SshConnection sshConnection);
 
     void removeConnection(String ip, int port, String user);
 
@@ -47,26 +43,20 @@ public interface SshService {
             String username,
             String host,
             int port,
-            String password)
+            String privateKeyContent)
             throws IOException;
 
     boolean isExistFluentbitConfigDirectory(SshConnection connection);
 
-    void enableFluentBit(
-            SshConnection connection, String ip, int port, String user, String password);
+    void enableFluentBit(SshConnection connection, String ip, int port, String user);
 
-    void disableFluentBit(
-            SshConnection connection, String ip, int port, String user, String password);
+    void disableFluentBit(SshConnection connection, String ip, int port, String user);
 
-    void restartFluentBit(
-            SshConnection connection, String ip, int port, String user, String password);
+    void restartFluentBit(SshConnection connection, String ip, int port, String user);
 
-    void enableTelegraf(
-            SshConnection connection, String ip, int port, String user, String password);
+    void enableTelegraf(SshConnection connection, String ip, int port, String user);
 
-    void disableTelgraf(
-            SshConnection connection, String ip, int port, String user, String password);
+    void disableTelegraf(SshConnection connection, String ip, int port, String user);
 
-    void restartTelegraf(
-            SshConnection connection, String ip, int port, String user, String password);
+    void restartTelegraf(SshConnection connection, String ip, int port, String user);
 }

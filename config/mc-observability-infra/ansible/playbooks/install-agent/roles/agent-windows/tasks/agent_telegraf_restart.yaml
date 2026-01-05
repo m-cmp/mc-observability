@@ -1,0 +1,42 @@
+- name: Restart CMP Telegraf service
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-telegraf-{{ site_code }}"
+    Restart-Service -Name $serviceName -Force
+
+- name: Run CMP Telegraf status command
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: https
+  win_shell: |
+    $serviceName = "cmp-telegraf-{{ site_code }}"
+    $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+    if ($service) {
+      Write-Output "Service Name: $($service.Name)"
+      Write-Output "Display Name: $($service.DisplayName)"
+      Write-Output "Status: $($service.Status)"
+      Write-Output "Start Type: $($service.StartType)"
+    } else {
+      Write-Error "Service not found"
+      exit 1
+    }
+  register: cmp_telegraf_status
+  failed_when: false
+
+- name: Display CMP Telegraf status
+  debug:
+    var: cmp_telegraf_status
