@@ -59,6 +59,11 @@ public class SshServiceImpl implements SshService {
     public static final int SSH_COMMAND_EXECUTE_FAILED_CODE = -999;
 
     private final Map<String, SshConnection> connectionCache = new ConcurrentHashMap<>();
+    private final Map<String, Object> connectionLocks = new ConcurrentHashMap<>();
+
+    private Object getConnectionLock(String cacheKey) {
+        return connectionLocks.computeIfAbsent(cacheKey, k -> new Object());
+    }
 
     private String getTelegrafServiceName() {
         return "cmp-telegraf-" + deploySiteCode + ".service";
@@ -104,33 +109,45 @@ public class SshServiceImpl implements SshService {
         }
 
         String cacheKey = ip + ":" + port + ":" + user;
-        SshConnection connection = connectionCache.get(cacheKey);
 
-        if (connection != null) {
-            if (connection.isActive()) {
+        // Check cache for active connection first (without lock)
+        SshConnection connection = connectionCache.get(cacheKey);
+        if (connection != null && connection.isActive()) {
+            connection.updateLastUsedTime();
+            return connection;
+        }
+
+        // Synchronize with host-based lock to prevent concurrent connection attempts
+        synchronized (getConnectionLock(cacheKey)) {
+            // Double-check (another thread may have already connected)
+            connection = connectionCache.get(cacheKey);
+            if (connection != null && connection.isActive()) {
+                connection.updateLastUsedTime();
                 return connection;
-            } else {
+            }
+
+            // Clean up inactive connection
+            if (connection != null) {
                 try {
                     connection.close();
                 } catch (IOException e) {
-                    log.error("Error closing stale connection: {}", e.getMessage());
-                    throw new SshConnectionException(requestInfo.getRequestId(), ip);
+                    log.debug("Error closing stale connection: {}", e.getMessage());
                 }
+                connectionCache.remove(cacheKey);
             }
-        }
 
-        try {
-            connection = sshPort.openSessionWithPrivateKey(user, ip, port, privateKeyPath);
-            connectionCache.put(cacheKey, connection);
-            connection.updateLastUsedTime();
-
-            return connection;
-        } catch (Exception e) {
-            log.error(
-                    "Error establishing SSH connection with private key to {}: {}",
-                    ip,
-                    e.getMessage());
-            throw new SshConnectionException(requestInfo.getRequestId(), ip);
+            try {
+                connection = sshPort.openSessionWithPrivateKey(user, ip, port, privateKeyPath);
+                connectionCache.put(cacheKey, connection);
+                connection.updateLastUsedTime();
+                return connection;
+            } catch (Exception e) {
+                log.error(
+                        "Error establishing SSH connection with private key to {}: {}",
+                        ip,
+                        e.getMessage());
+                throw new SshConnectionException(requestInfo.getRequestId(), ip);
+            }
         }
     }
 
@@ -146,33 +163,46 @@ public class SshServiceImpl implements SshService {
         }
 
         String cacheKey = ip + ":" + port + ":" + user;
-        SshConnection connection = connectionCache.get(cacheKey);
 
-        if (connection != null) {
-            if (connection.isActive()) {
+        // Check cache for active connection first (without lock)
+        SshConnection connection = connectionCache.get(cacheKey);
+        if (connection != null && connection.isActive()) {
+            connection.updateLastUsedTime();
+            return connection;
+        }
+
+        // Synchronize with host-based lock to prevent concurrent connection attempts
+        synchronized (getConnectionLock(cacheKey)) {
+            // Double-check (another thread may have already connected)
+            connection = connectionCache.get(cacheKey);
+            if (connection != null && connection.isActive()) {
+                connection.updateLastUsedTime();
                 return connection;
-            } else {
+            }
+
+            // Clean up inactive connection
+            if (connection != null) {
                 try {
                     connection.close();
                 } catch (IOException e) {
-                    log.error("Error closing stale connection: {}", e.getMessage());
-                    throw new SshConnectionException(requestInfo.getRequestId(), ip);
+                    log.debug("Error closing stale connection: {}", e.getMessage());
                 }
+                connectionCache.remove(cacheKey);
             }
-        }
 
-        try {
-            connection = sshPort.openSessionWithPrivateKeyString(user, ip, port, privateKeyContent);
-            connectionCache.put(cacheKey, connection);
-            connection.updateLastUsedTime();
-
-            return connection;
-        } catch (Exception e) {
-            log.debug(
-                    "Error establishing SSH connection with private key string to {}: {}",
-                    ip,
-                    e.getMessage());
-            throw new SshConnectionException(requestInfo.getRequestId(), ip);
+            try {
+                connection =
+                        sshPort.openSessionWithPrivateKeyString(user, ip, port, privateKeyContent);
+                connectionCache.put(cacheKey, connection);
+                connection.updateLastUsedTime();
+                return connection;
+            } catch (Exception e) {
+                log.debug(
+                        "Error establishing SSH connection with private key string to {}: {}",
+                        ip,
+                        e.getMessage());
+                throw new SshConnectionException(requestInfo.getRequestId(), ip);
+            }
         }
     }
 
