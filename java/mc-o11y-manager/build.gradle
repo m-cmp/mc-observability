@@ -110,11 +110,15 @@ openapi3 {
 }
 
 tasks.register('runSpringBootInBackground') {
+    def jarFile = layout.buildDirectory.file("libs/mc-o11y-manager.jar").get().asFile
+    def logFile = layout.buildDirectory.file("mc-o11y-manager.log").get().asFile
+    def errorLogFile = layout.buildDirectory.file("mc-o11y-manager-error.log").get().asFile
+
     doLast {
         println 'Starting mc-o11y-manager in the background...'
-        def processBuilder = new ProcessBuilder('java', '-jar', 'build/libs/mc-o11y-manager.jar')
-        processBuilder.redirectOutput(new File("build/mc-o11y-manager.log"))
-        processBuilder.redirectError(new File("build/mc-o11y-manager-error.log"))
+        def processBuilder = new ProcessBuilder('java', '-jar', jarFile.absolutePath)
+        processBuilder.redirectOutput(logFile)
+        processBuilder.redirectError(errorLogFile)
         processBuilder.start()
         println 'mc-o11y-manager started in the background (logs in build/mc-o11y-manager.log).'
 
@@ -124,9 +128,10 @@ tasks.register('runSpringBootInBackground') {
 }
 
 tasks.register('stopSpringBoot') {
+    def pidFile = layout.projectDirectory.file("../mc-o11y-manager.pid").asFile
+
     doLast {
         println 'Stopping mc-o11y-manager...'
-        def pidFile = file("../mc-o11y-manager.pid")
         println pidFile.path
         if (pidFile.exists()) {
             def pid = pidFile.text.trim()

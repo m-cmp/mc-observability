@@ -42,7 +42,9 @@ subprojects {
     }
 
     configurations {
-        annotationProcessor.extendsFrom compileOnly
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
     }
 
     repositories {
