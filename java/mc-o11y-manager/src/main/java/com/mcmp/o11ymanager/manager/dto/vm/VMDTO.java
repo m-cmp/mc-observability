@@ -9,6 +9,7 @@ import com.mcmp.o11ymanager.manager.enums.AgentServiceStatus;
 import com.mcmp.o11ymanager.manager.enums.AgentStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,11 +24,14 @@ import lombok.Setter;
 @JsonInclude(Include.NON_NULL)
 public class VMDTO {
 
+    @Schema(description = "VM ID", example = "vm-1")
     @JsonProperty("vm_id")
     private String vmId;
 
+    @Schema(description = "VM name", example = "mcmp-vm")
     private String name;
 
+    @Schema(description = "VM description", example = "string")
     private String description;
 
     @JsonProperty("influx_seq")
@@ -58,15 +62,19 @@ public class VMDTO {
     @JsonProperty("log_service_status")
     private AgentServiceStatus logServiceStatus;
 
+    @Schema(description = "Namespace ID", example = "ns-1")
     @JsonProperty("ns_id")
     private String nsId;
 
+    @Schema(description = "MCI ID", example = "mci-1")
     @JsonProperty("mci_id")
     private String mciId;
 
+    @Schema(description = "Monitoring agent status", example = "SUCCESS")
     @JsonProperty("monitoring_agent_status")
     private AgentStatus monitoringAgentStatus;
 
+    @Schema(description = "Log agent status", example = "SUCCESS")
     @JsonProperty("log_agent_status")
     private AgentStatus logAgentStatus;
 

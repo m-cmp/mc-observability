@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.manager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.mcmp.o11ymanager.manager.service.HealthServiceImpl;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y")
+@Tag(name = "[Manager] System Management")
 public class HealthController {
     private final HealthServiceImpl healthService;
 
     @GetMapping("/readyz")
+    @Operation(summary = "ReadyzCheck", description = "Check API health status")
     public ResponseEntity<Map<String, Object>> readyz() {
         Map<String, Object> healthStatus = healthService.checkApiHealth();
         String status = (String) healthStatus.get("status");

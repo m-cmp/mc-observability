@@ -6,6 +6,9 @@ import com.mcmp.o11ymanager.trigger.application.controller.dto.response.TriggerH
 import com.mcmp.o11ymanager.trigger.application.service.TriggerHistoryService;
 import com.mcmp.o11ymanager.trigger.application.service.dto.CustomPageDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerHistoryDetailDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  * REST API controller for trigger history management Provides functionality for retrieving trigger
  * histories and updating comments.
  */
+@Tag(name = "[Trigger] Monitoring Measurement Trigger")
 @RestController
 @RequestMapping("/api/o11y/trigger/history")
 public class TriggerHistoryController {
@@ -46,12 +50,13 @@ public class TriggerHistoryController {
      * @param sortDirection Sort direction (default: desc)
      * @return Trigger history list with paging information
      */
+    @Operation(summary = "GetPaginatedTriggerHistories", description = "Get paginated trigger histories", operationId = "GetPaginatedTriggerHistories")
     @GetMapping
     public ResBody<TriggerHistoryPageResponse> getTriggerHistories(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
+            @Parameter(description = "Page number (1 .. N)") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Page size (1 .. N)") @RequestParam(defaultValue = "20") int size,
+            @Parameter(description = "Property to sort by (e.g., createdAt)") @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction (asc, desc)") @RequestParam(defaultValue = "desc") String sortDirection) {
 
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
@@ -63,9 +68,10 @@ public class TriggerHistoryController {
     }
 
     /** Updates comment for the specified trigger history. */
+    @Operation(summary = "UpdateTriggerHistoryComment", description = "Update trigger history comment", operationId = "UpdateTriggerHistoryComment")
     @PutMapping("/{id}/comment")
     public ResBody<Void> updateComment(
-            @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
+            @Parameter(name = "id", description = "trigger history id") @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
 
         triggerHistoryService.updateComment(id, request.toDto());
 

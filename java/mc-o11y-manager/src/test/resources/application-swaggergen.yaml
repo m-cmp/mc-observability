@@ -1,0 +1,160 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: mc-o11y-manager
+  datasource:
+    url: jdbc:h2:mem:swaggergen;DB_CLOSE_DELAY=-1;MODE=MariaDB
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    show-sql: false
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    alert:
+      queueName: test.queue
+      exchangeName: test.exchange
+      routingKey: test
+      deadLetterQueueName: test.dlq
+      deadLetterExchangeName: test.dlx
+      deadLetterRoutingKey: test.dlq
+      mqttExchangeName: test.topic
+    direct:
+      queueName: test-manual.queue
+      exchangeName: test-manual.exchange
+      routingKey: test-manual.queue
+      deadLetterQueueName: test-manual.dlq
+      deadLetterExchangeName: test-manual.dlx
+      deadLetterRoutingKey: test-manual.dlq
+
+springdoc:
+  packages-to-scan: com.mcmp.o11ymanager
+  paths-to-match: "/**"
+  paths-to-exclude:
+    - "/api/**/test/**"
+  api-docs:
+    enabled: true
+  default-produces-media-type: application/json
+
+influxdb:
+  servers:
+    - url: http://localhost:8086
+      database: testdb
+      retention-policy: autogen
+      username: test
+      password: test
+      uid: test-uid
+
+health:
+  check-interval: 999999999
+  host-connection-check-timeout: 5000
+
+feign:
+  okhttp:
+    enabled: true
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 30000
+        loggerLevel: NONE
+      LokiFeignClient:
+        loggerLevel: NONE
+  semaphore:
+    url: http://localhost:33000
+    username: test
+    password: test
+    project-name: test
+    init-max-parallel-tasks: 1
+    template-names:
+      agent-install: test
+      agent-config-update: test
+    task-check-scheduler:
+      check-interval-sec: 9999
+      max-wait-minutes: 1
+  agent-manager:
+    url: http://localhost:18081
+  cb-tumblebug:
+    connect-timeout: 5000
+    read-timeout: 5000
+    url: http://localhost:1323
+    id: test
+    pw: test
+  cb-spider:
+    url: http://localhost:1024
+    id: test
+    pw: test
+  insight:
+    url: http://localhost:9001
+
+loki:
+  url: http://localhost:3100
+  endpoints:
+    query: /loki/api/v1/query
+    range: /loki/api/v1/query_range
+
+ssh:
+  connection-timeout: 10000
+  ssh-connection-cache-timeout: 120000
+
+winrm:
+  connection-timeout: 30000
+
+notification:
+  mail:
+    host: localhost
+    port: 587
+    username: test@test.com
+    password: test
+    smtpAuth: false
+    tlsRequired: false
+    tlsEnable: false
+  sms:
+    from: "01000000000"
+    serviceId: test
+    accessKey: test
+    secretKey: test
+    provider: test
+    baseUrl: https://localhost
+  kakao:
+    channelId: test
+    templateCode: test
+    serviceId: test
+    accessKey: test
+    secretKey: test
+    provider: test
+    baseUrl: https://localhost
+  slack:
+    token: test
+    baseUrl: https://localhost
+    apiPath: /api/chat.postMessage
+
+grafana:
+  alert:
+    protocol: http
+    ip: localhost
+    port: 3000
+    apiKey: test
+    orgId: 1
+    folder:
+      name: test
+      uid: test
+    ruleGroup:
+      metric: test
+    receiver: test
+    noDataState: NoData
+    execErrState: Error
+
+logging:
+  level:
+    root: WARN
