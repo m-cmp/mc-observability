@@ -10,6 +10,9 @@ import com.mcmp.o11ymanager.trigger.application.service.TriggerService;
 import com.mcmp.o11ymanager.trigger.application.service.dto.CustomPageDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyDetailDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyNotiChannelUpdateDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
  * REST API controller for trigger policy management Provides functionality for creating, deleting,
  * retrieving trigger policies, updating notification channels, and adding/removing vms.
  */
+@Tag(name = "[Trigger] Monitoring Measurement Trigger")
 @RestController
 @RequestMapping("/api/o11y/trigger/policy")
 public class TriggerController {
@@ -42,6 +46,7 @@ public class TriggerController {
         this.triggerService = triggerService;
     }
 
+    @Operation(summary = "CreateTriggerPolicy", description = "Create trigger policy", operationId = "CreateTriggerPolicy")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResBody<Map<String, Long>> createTriggerPolicy(
@@ -52,19 +57,21 @@ public class TriggerController {
         return new ResBody<>(responseData);
     }
 
+    @Operation(summary = "DeleteTriggerPolicy", description = "Delete trigger policy", operationId = "DeleteTriggerPolicy")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResBody<Void> deleteTriggerPolicy(@PathVariable long id) {
+    public ResBody<Void> deleteTriggerPolicy(@Parameter(name = "id", description = "trigger policy id") @PathVariable long id) {
         triggerService.deleteTriggerPolicy(id);
         return new ResBody<>();
     }
 
+    @Operation(summary = "GetPaginatedTriggerPolicies", description = "Get paginated trigger policies", operationId = "GetPaginatedTriggerPolicies")
     @GetMapping
     public ResBody<TriggerPolicyPageResponse> getTriggerPolicies(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @Parameter(description = "Page number (1..N)") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "Page size (1..N)") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Property to sort by (e.g., id)") @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "Sort direction (asc, desc)") @RequestParam(defaultValue = "desc") String direction) {
 
         Sort.Direction sortDirection =
                 "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -76,10 +83,11 @@ public class TriggerController {
         return new ResBody<>(TriggerPolicyPageResponse.from(triggerPolicies));
     }
 
+    @Operation(summary = "UpdateTriggerPolicyNotificationChannels", description = "Update trigger policy notification channels", operationId = "UpdateTriggerPolicyNotificationChannels")
     @PutMapping("/{id}/channel")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ResBody<Void> updateTriggerChannelByName(
-            @PathVariable long id,
+            @Parameter(name = "id", description = "trigger policy id") @PathVariable long id,
             @Valid @RequestBody List<TriggerPolicyNotiChannelUpdateRequest> request) {
 
         List<TriggerPolicyNotiChannelUpdateDto> dtos =
@@ -88,18 +96,20 @@ public class TriggerController {
         return new ResBody<>();
     }
 
+    @Operation(summary = "AddTriggerVM", description = "Add trigger vm", operationId = "AddTriggerVM")
     @PostMapping("/{id}/vm")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ResBody<Void> addTriggerVM(
-            @PathVariable long id, @Valid @RequestBody TriggerVMAddRequest request) {
+            @Parameter(name = "id", description = "trigger policy id") @PathVariable long id, @Valid @RequestBody TriggerVMAddRequest request) {
         triggerService.addTriggerVM(id, request.toDto());
         return new ResBody<>();
     }
 
+    @Operation(summary = "RemoveTriggerVM", description = "Remove trigger vm", operationId = "RemoveTriggerVM")
     @DeleteMapping("/{id}/vm")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ResBody<Void> removeTriggerVM(
-            @PathVariable long id, @Valid @RequestBody TriggerVMRemoveRequest request) {
+            @Parameter(name = "id", description = "trigger policy id") @PathVariable long id, @Valid @RequestBody TriggerVMRemoveRequest request) {
         triggerService.removeTriggerVM(id, request.toDto());
         return new ResBody<>();
     }

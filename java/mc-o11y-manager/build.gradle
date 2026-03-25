@@ -2,8 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.12'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'org.asciidoctor.jvm.convert' version '4.0.5'
-    id 'com.epages.restdocs-api-spec' version '0.19.4'
     id 'com.diffplug.spotless' version '7.1.0'
 }
 
@@ -43,9 +41,8 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework:spring-test:6.1.3'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
-    testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
-    testImplementation 'com.epages:restdocs-api-spec-mockmvc:0.18.2'
     testImplementation 'com.h2database:h2'
+    testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
 }
 
@@ -91,68 +88,13 @@ bootJar {
     archiveVersion = "0.3.1"
 }
 
-openapi {
-    setHost('localhost:18080')
-    title = 'MC-Observability API Documentation'
-    version = '0.4.1'
-    description = 'API documentation for MC-Observability'
-    format = 'yaml'
-    outputFileNamePrefix = 'MC-Observability Swagger(OpenAPI 2.0)'
-}
-
-openapi3 {
-    setServer('localhost:18080')
-    title = 'MC-Observability API Documentation'
-    description = 'API documentation for MC-Observability'
-    version = '0.4.1'
-    format = 'yaml'
-    outputFileNamePrefix = 'MC-Observability Swagger(OpenAPI 3.0)'
-}
-
-tasks.register('runSpringBootInBackground') {
-    def jarFile = layout.buildDirectory.file("libs/mc-o11y-manager.jar").get().asFile
-    def logFile = layout.buildDirectory.file("mc-o11y-manager.log").get().asFile
-    def errorLogFile = layout.buildDirectory.file("mc-o11y-manager-error.log").get().asFile
-
-    doLast {
-        println 'Starting mc-o11y-manager in the background...'
-        def processBuilder = new ProcessBuilder('java', '-jar', jarFile.absolutePath)
-        processBuilder.redirectOutput(logFile)
-        processBuilder.redirectError(errorLogFile)
-        processBuilder.start()
-        println 'mc-o11y-manager started in the background (logs in build/mc-o11y-manager.log).'
-
-        println 'Waiting for 20 seconds before generating Swagger documentation...'
-        Thread.sleep(20000)
+tasks.register('generateSwaggerYaml', Test) {
+    description = 'Generate Swagger YAML without running the full application'
+    group = 'documentation'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform()
+    filter {
+        includeTestsMatching 'com.mcmp.o11ymanager.SwaggerGeneratorTest'
     }
 }
-
-tasks.register('stopSpringBoot') {
-    def pidFile = layout.projectDirectory.file("../mc-o11y-manager.pid").asFile
-
-    doLast {
-        println 'Stopping mc-o11y-manager...'
-        println pidFile.path
-        if (pidFile.exists()) {
-            def pid = pidFile.text.trim()
-            exec {
-                commandLine 'kill', '-9', pid
-            }
-            println "mc-o11y-manager stopped (PID: ${pid})"
-            pidFile.delete()
-        } else {
-            println "PID file not found, mc-o11y-manager might not be running."
-        }
-    }
-}
-
-tasks.register('generateSwaggerYaml', Exec) {
-    println 'Generating Swagger documentation...'
-    commandLine 'curl', '-o', 'swagger/swagger.yaml', 'http://127.0.0.1:18080/v3/api-docs.yaml'
-    doLast {
-        println 'Swagger YAML file has been generated.'
-    }
-}
-
-generateSwaggerYaml.dependsOn runSpringBootInBackground
-stopSpringBoot.mustRunAfter generateSwaggerYaml

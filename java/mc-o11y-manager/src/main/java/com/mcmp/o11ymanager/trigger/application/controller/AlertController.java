@@ -7,6 +7,9 @@ import com.mcmp.o11ymanager.trigger.application.service.AlertService;
 import com.mcmp.o11ymanager.trigger.application.service.dto.AlertTestHistoryDetailDto;
 import com.mcmp.o11ymanager.trigger.application.service.dto.CustomPageDto;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.grafana.model.contact.AlertConfig.GrafanaManagedReceiverConfig;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
  * REST API controller for alert management Provides integration with Grafana alert system, manages
  * alert rules, contact points, and testing functionalities.
  */
+@Tag(name = "[Trigger - Only Developer] Monitoring Trigger Event Handler")
 @RestController
 @RequestMapping("/api/o11y/trigger/alert")
 @RequiredArgsConstructor
@@ -36,6 +40,7 @@ public class AlertController {
      *
      * @return Grafana server health status information
      */
+    @Operation(summary = "CheckGrafanaHealthStatus", description = "Check grafana health status", operationId = "CheckGrafanaHealthStatus")
     @GetMapping("/health")
     public ResponseEntity<GrafanaHealthCheckResponse> checkGrafanaHealth() {
         GrafanaHealthCheckResponse healthStatus = alertManager.checkGrafanaHealth();
@@ -47,6 +52,7 @@ public class AlertController {
      *
      * @return List of alerts
      */
+    @Operation(summary = "GetAllAlerts", description = "Get all alerts", operationId = "GetAllAlerts")
     @GetMapping("/alerts")
     public ResponseEntity<Object> getAllAlerts() {
         Object alerts = alertManager.getAllAlerts();
@@ -59,8 +65,9 @@ public class AlertController {
      * @param title Title of the alert to search
      * @return Found alert information
      */
+    @Operation(summary = "SearchAlertsByTitle", description = "Search alerts by title", operationId = "SearchAlertsByTitle")
     @GetMapping("/alerts/search")
-    public ResponseEntity<Object> getAlertBy(@RequestParam String title) {
+    public ResponseEntity<Object> getAlertBy(@Parameter(name = "title", description = "alert title to search") @RequestParam String title) {
         Object alert = alertManager.getAlertBy(title);
         return ResponseEntity.ok(alert);
     }
@@ -70,6 +77,7 @@ public class AlertController {
      *
      * @return List of alert rules
      */
+    @Operation(summary = "GetAllAlertRules", description = "Get all alert rules", operationId = "GetAllAlertRules")
     @GetMapping("/alert-rules")
     public ResponseEntity<Object> getAllAlertRules() {
         Object alertRules = alertManager.getAllAlertRules();
@@ -81,6 +89,7 @@ public class AlertController {
      *
      * @return List of contact points
      */
+    @Operation(summary = "GetAllContactPoints", description = "Get all contact points", operationId = "GetAllContactPoints")
     @GetMapping("/contact-points")
     public ResponseEntity<List<GrafanaManagedReceiverConfig>> getAllContactPoints() {
         List<GrafanaManagedReceiverConfig> contactPoints = alertManager.getAllContactPoints();
@@ -92,6 +101,7 @@ public class AlertController {
      *
      * @return Test completion response
      */
+    @Operation(summary = "TestAlertReceiverConnection", description = "Test alert receiver connection", operationId = "TestAlertReceiverConnection")
     @PostMapping("/alert-receiver/test")
     public ResponseEntity<Void> testAlertReceiver() {
         alertManager.testAlertReceiver();
@@ -107,12 +117,13 @@ public class AlertController {
      * @param direction Sort direction (default: desc)
      * @return Alert test history list with paging information
      */
+    @Operation(summary = "GetPaginatedAlertTestHistories", description = "Get paginated alert test histories", operationId = "GetPaginatedAlertTestHistories")
     @GetMapping("/test-history")
     public ResponseEntity<AlertTestHistoryPageResponse> getAlertTestHistories(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction) {
+            @Parameter(description = "page number (1 .. N)") @RequestParam(defaultValue = "1") int page,
+            @Parameter(description = "size of page (1 .. N)") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "sort by properties (id..)") @RequestParam(defaultValue = "id") String sortBy,
+            @Parameter(description = "sort direction (asc, desc)") @RequestParam(defaultValue = "desc") String direction) {
         Sort.Direction sortDirection =
                 "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(sortDirection, sortBy));
