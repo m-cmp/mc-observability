@@ -45,7 +45,10 @@ public class NotiController {
      *
      * @return List of notification channels
      */
-    @Operation(summary = "GetSupportedNotificationChannels", description = "Get supported notification channels", operationId = "GetSupportedNotificationChannels")
+    @Operation(
+            summary = "GetSupportedNotificationChannels",
+            description = "Get supported notification channels",
+            operationId = "GetSupportedNotificationChannels")
     @GetMapping("/channel")
     public ResBody<NotiChannelAllResponse> getNotiChannels() {
         List<NotiChannelDetailDto> notiChannels = notiService.getNotiChannels();
@@ -61,13 +64,22 @@ public class NotiController {
      * @param sortDirection Sort direction (default: desc)
      * @return Notification delivery history list with paging information
      */
-    @Operation(summary = "GetPaginatedNotificationHistories", description = "Get paginated notification histories", operationId = "GetPaginatedNotificationHistories")
+    @Operation(
+            summary = "GetPaginatedNotificationHistories",
+            description = "Get paginated notification histories",
+            operationId = "GetPaginatedNotificationHistories")
     @GetMapping("/history")
     public ResBody<NotiHistoryPageResponse> getNotiHistories(
-            @Parameter(description = "page number (1 .. N)") @RequestParam(defaultValue = "1") int page,
-            @Parameter(description = "size of page (1 .. N)") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "sort by properties(id..)") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "sort direction (asc, desc)") @RequestParam(defaultValue = "desc") String sortDirection) {
+            @Parameter(description = "page number (1 .. N)") @RequestParam(defaultValue = "1")
+                    int page,
+            @Parameter(description = "size of page (1 .. N)") @RequestParam(defaultValue = "20")
+                    int size,
+            @Parameter(description = "sort by properties(id..)")
+                    @RequestParam(defaultValue = "createdAt")
+                    String sortBy,
+            @Parameter(description = "sort direction (asc, desc)")
+                    @RequestParam(defaultValue = "desc")
+                    String sortDirection) {
 
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
