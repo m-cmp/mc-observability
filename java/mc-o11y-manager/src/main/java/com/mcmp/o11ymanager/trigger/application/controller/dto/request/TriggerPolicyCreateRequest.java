@@ -13,15 +13,12 @@ import lombok.Builder;
 
 @Builder
 public record TriggerPolicyCreateRequest(
-        @Schema(description = "Policy title", example = "CPU Alert Policy")
-                @NotNull @NotBlank String title,
+        @Schema(description = "Policy title", example = "CPU Alert Policy") @NotNull @NotBlank String title,
         @Schema(description = "Policy description", example = "Alert when CPU usage is high")
                 @NotNull @NotBlank String description,
         @NotNull @Valid ThresholdCondition thresholdCondition,
-        @Schema(description = "Resource type", example = "CPU")
-                @NotNull ResourceType resourceType,
-        @Schema(description = "Aggregation type", example = "LAST")
-                @NotNull AggregationType aggregationType,
+        @Schema(description = "Resource type", example = "CPU") @NotNull ResourceType resourceType,
+        @Schema(description = "Aggregation type", example = "LAST") @NotNull AggregationType aggregationType,
         @Schema(description = "Hold duration", example = "0m")
                 @NotNull @NotBlank @Pattern(
                         regexp = "^([0-9]|[1-5][0-9]|60)[sm]$",

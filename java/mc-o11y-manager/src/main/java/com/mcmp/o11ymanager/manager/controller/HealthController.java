@@ -1,8 +1,8 @@
 package com.mcmp.o11ymanager.manager.controller;
 
+import com.mcmp.o11ymanager.manager.service.HealthServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.mcmp.o11ymanager.manager.service.HealthServiceImpl;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

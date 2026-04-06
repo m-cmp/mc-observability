@@ -32,18 +32,24 @@ public class VMController {
     @GetMapping("/{nsId}/{mciId}/vm/{vmId}")
     @Operation(summary = "GetVM", operationId = "GetVM", description = "Get target (VM)")
     public ResBody<VMDTO> getVM(
-            @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable
+                    String nsId,
+            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable
+                    String mciId,
+            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable
+                    String vmId) {
         return new ResBody<>(vmFacadeService.getVM(nsId, mciId, vmId));
     }
 
     @PostMapping("/{nsId}/{mciId}/vm/{vmId}")
     @Operation(summary = "PostVM", operationId = "PostVM", description = "Create target (VM)")
     public ResBody<Void> postVM(
-            @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable String vmId,
+            @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable
+                    String nsId,
+            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable
+                    String mciId,
+            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable
+                    String vmId,
             @RequestBody @Valid VMRequestDTO dto) {
         vmFacadeService.postVM(nsId, mciId, vmId, dto);
         return new ResBody<>();
@@ -52,9 +58,12 @@ public class VMController {
     @PutMapping("/{nsId}/{mciId}/vm/{vmId}")
     @Operation(summary = "PutVM", operationId = "PutVM", description = "Update target")
     public ResBody<VMDTO> putVM(
-            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable String vmId,
+            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
+                    String nsId,
+            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
+                    String mciId,
+            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
+                    String vmId,
             @RequestBody VMRequestDTO dto) {
         return new ResBody<>(vmFacadeService.putVM(nsId, mciId, vmId, dto));
     }
@@ -62,23 +71,34 @@ public class VMController {
     @DeleteMapping("/{nsId}/{mciId}/vm/{vmId}")
     @Operation(summary = "DeleteVM", operationId = "DeleteVM", description = "Delete target")
     public ResBody<Void> deleteVM(
-            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
+                    String nsId,
+            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
+                    String mciId,
+            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
+                    String vmId) {
         vmFacadeService.deleteVM(nsId, mciId, vmId);
         return new ResBody<>();
     }
 
     @GetMapping("/{nsId}/{mciId}/vm")
-    @Operation(summary = "GetVMByNsMci", operationId = "GetVMByNsMci", description = "Retrieve target list by NS/MCI")
+    @Operation(
+            summary = "GetVMByNsMci",
+            operationId = "GetVMByNsMci",
+            description = "Retrieve target list by NS/MCI")
     public ResBody<List<VMDTO>> getVMByNsMci(
-            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable String mciId) {
+            @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
+                    String nsId,
+            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
+                    String mciId) {
         return new ResBody<>(vmFacadeService.getVMsNsMci(nsId, mciId));
     }
 
     @GetMapping("/vm")
-    @Operation(summary = "GetAllVMs", operationId = "GetAllVMs", description = "Retrieve all targets")
+    @Operation(
+            summary = "GetAllVMs",
+            operationId = "GetAllVMs",
+            description = "Retrieve all targets")
     public ResBody<List<VMDTO>> getAllVMs() {
         return new ResBody<>(vmFacadeService.getVMs());
     }

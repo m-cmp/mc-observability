@@ -50,13 +50,22 @@ public class TriggerHistoryController {
      * @param sortDirection Sort direction (default: desc)
      * @return Trigger history list with paging information
      */
-    @Operation(summary = "GetPaginatedTriggerHistories", description = "Get paginated trigger histories", operationId = "GetPaginatedTriggerHistories")
+    @Operation(
+            summary = "GetPaginatedTriggerHistories",
+            description = "Get paginated trigger histories",
+            operationId = "GetPaginatedTriggerHistories")
     @GetMapping
     public ResBody<TriggerHistoryPageResponse> getTriggerHistories(
-            @Parameter(description = "Page number (1 .. N)") @RequestParam(defaultValue = "1") int page,
-            @Parameter(description = "Page size (1 .. N)") @RequestParam(defaultValue = "20") int size,
-            @Parameter(description = "Property to sort by (e.g., createdAt)") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction (asc, desc)") @RequestParam(defaultValue = "desc") String sortDirection) {
+            @Parameter(description = "Page number (1 .. N)") @RequestParam(defaultValue = "1")
+                    int page,
+            @Parameter(description = "Page size (1 .. N)") @RequestParam(defaultValue = "20")
+                    int size,
+            @Parameter(description = "Property to sort by (e.g., createdAt)")
+                    @RequestParam(defaultValue = "createdAt")
+                    String sortBy,
+            @Parameter(description = "Sort direction (asc, desc)")
+                    @RequestParam(defaultValue = "desc")
+                    String sortDirection) {
 
         Sort.Direction direction = Sort.Direction.fromString(sortDirection);
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortBy));
@@ -68,10 +77,14 @@ public class TriggerHistoryController {
     }
 
     /** Updates comment for the specified trigger history. */
-    @Operation(summary = "UpdateTriggerHistoryComment", description = "Update trigger history comment", operationId = "UpdateTriggerHistoryComment")
+    @Operation(
+            summary = "UpdateTriggerHistoryComment",
+            description = "Update trigger history comment",
+            operationId = "UpdateTriggerHistoryComment")
     @PutMapping("/{id}/comment")
     public ResBody<Void> updateComment(
-            @Parameter(name = "id", description = "trigger history id") @PathVariable long id, @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
+            @Parameter(name = "id", description = "trigger history id") @PathVariable long id,
+            @Valid @RequestBody TriggerHistoryCommentUpdateRequest request) {
 
         triggerHistoryService.updateComment(id, request.toDto());
 
