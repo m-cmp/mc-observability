@@ -221,6 +221,7 @@ services:
       - INFLUXDB_ADMIN_PASSWORD=mc-agent
       - INFLUXDB_DB="mc-observability"
     volumes:
+      - ./config/influxdb/influxdb-init:/docker-entrypoint-initdb.d
       - /docker/influxdb2_data:/var/lib/influxdb
     healthcheck:
       start_period: 120s
