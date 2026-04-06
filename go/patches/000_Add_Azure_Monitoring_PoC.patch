@@ -1,9 +1,3 @@
-commit 8c4186f3c8d7e4794bbdae958f94d8295cca3473
-Author: 임수현 <ish@innogrid.com>
-Date:   Thu Oct 30 19:16:41 2025 +0900
-
-    Add Azure Monitoring PoC
-
 diff --git a/api-runtime/common-runtime/MonitoringManager.go b/api-runtime/common-runtime/MonitoringManager.go
 new file mode 100644
 index 00000000..51ca7aaf
@@ -206,10 +200,10 @@ index 00000000..51ca7aaf
 +	return &info, nil
 +}
 diff --git a/api-runtime/rest-runtime/CBSpiderRuntime.go b/api-runtime/rest-runtime/CBSpiderRuntime.go
-index 662b59e6..ada841fa 100644
+index 3335129d..ef25e46a 100644
 --- a/api-runtime/rest-runtime/CBSpiderRuntime.go
 +++ b/api-runtime/rest-runtime/CBSpiderRuntime.go
-@@ -490,6 +490,10 @@ func getRoutes() []route {
+@@ -515,6 +515,10 @@ func getRoutes() []route {
  		{"GET", "/filesystem/:Name/accesssubnet", ListAccessSubnet},
  		{"DELETE", "/filesystem/:Name/accesssubnet", RemoveAccessSubnet},
  
@@ -342,10 +336,10 @@ index 00000000..b44940f7
 +	return c.JSON(http.StatusOK, result)
 +}
 diff --git a/api/docs.go b/api/docs.go
-index 47f04a30..078a6de7 100644
+index b7ab62e5..64c49a83 100644
 --- a/api/docs.go
 +++ b/api/docs.go
-@@ -10365,6 +10365,7 @@ const docTemplate = `{
+@@ -12558,6 +12558,7 @@ const docTemplate = `{
                  "sg",
                  "keypair",
                  "vm",
@@ -353,7 +347,7 @@ index 47f04a30..078a6de7 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -10380,6 +10381,7 @@ const docTemplate = `{
+@@ -12573,6 +12574,7 @@ const docTemplate = `{
                  "SG",
                  "KEY",
                  "VM",
@@ -362,10 +356,10 @@ index 47f04a30..078a6de7 100644
                  "DISK",
                  "MYIMAGE",
 diff --git a/api/swagger.json b/api/swagger.json
-index a7ccafc9..d16d079c 100644
+index 70da829e..62ff9be6 100644
 --- a/api/swagger.json
 +++ b/api/swagger.json
-@@ -10362,6 +10362,7 @@
+@@ -12555,6 +12555,7 @@
                  "sg",
                  "keypair",
                  "vm",
@@ -373,7 +367,7 @@ index a7ccafc9..d16d079c 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -10377,6 +10378,7 @@
+@@ -12570,6 +12571,7 @@
                  "SG",
                  "KEY",
                  "VM",
@@ -382,10 +376,10 @@ index a7ccafc9..d16d079c 100644
                  "DISK",
                  "MYIMAGE",
 diff --git a/api/swagger.yaml b/api/swagger.yaml
-index cd5d60ce..7f01eafd 100644
+index 8ed27a71..7df0c7dc 100644
 --- a/api/swagger.yaml
 +++ b/api/swagger.yaml
-@@ -1044,6 +1044,7 @@ definitions:
+@@ -1163,6 +1163,7 @@ definitions:
      - sg
      - keypair
      - vm
@@ -393,7 +387,7 @@ index cd5d60ce..7f01eafd 100644
      - nlb
      - disk
      - myimage
-@@ -1059,6 +1060,7 @@ definitions:
+@@ -1178,6 +1179,7 @@ definitions:
      - SG
      - KEY
      - VM
@@ -402,7 +396,7 @@ index cd5d60ce..7f01eafd 100644
      - DISK
      - MYIMAGE
 diff --git a/cloud-control-manager/cloud-driver/call-log/calllogger.go b/cloud-control-manager/cloud-driver/call-log/calllogger.go
-index a86bb428..295bf9e6 100644
+index 9c9875d7..231a1da4 100644
 --- a/cloud-control-manager/cloud-driver/call-log/calllogger.go
 +++ b/cloud-control-manager/cloud-driver/call-log/calllogger.go
 @@ -59,6 +59,7 @@ const (
@@ -414,10 +408,10 @@ index a86bb428..295bf9e6 100644
  	//=========== PMKS: Provider-Managed K8S
  	CLUSTER RES_TYPE = "CLUSTER"
 diff --git a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
-index b1df8d8a..bff34bbd 100644
+index 8bb1da5a..58f3bbb4 100644
 --- a/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/alibaba/connect/AlibabaCloudConnection.go
-@@ -24,6 +24,8 @@ import (
+@@ -25,6 +25,8 @@ import (
  	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
  	irs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces/resources"
  	"github.com/sirupsen/logrus"
@@ -426,16 +420,16 @@ index b1df8d8a..bff34bbd 100644
  )
  
  var cblogger *logrus.Logger
-@@ -188,3 +190,7 @@ func (cloudConn *AlibabaCloudConnection) CreateTagHandler() (irs.TagHandler, err
- 	handler := alirs.AlibabaTagHandler{cloudConn.Region, cloudConn.VMClient, cloudConn.Cs2015Client, cloudConn.VpcClient, cloudConn.NLBClient, cloudConn.NasClient}
- 	return &handler, nil
+@@ -196,3 +198,7 @@ func (cloudConn *AlibabaCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfo
+ 	quotaInfoHandler := alirs.AlibabaQuotaInfoHandler{Region: cloudConn.Region, QuotaClient: cloudConn.QuotaClient}
+ 	return &quotaInfoHandler, nil
  }
 +
 +func (cloudConn *AlibabaCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("Alibaba Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
-index d69ab865..2b006229 100644
+index a6d1c211..d10944b5 100644
 --- a/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/aws/connect/AwsCloudConnection.go
 @@ -11,6 +11,7 @@
@@ -446,8 +440,8 @@ index d69ab865..2b006229 100644
  	cblog "github.com/cloud-barista/cb-log"
  	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
  
-@@ -217,3 +218,7 @@ func (cloudConn *AwsCloudConnection) CreatePriceInfoHandler() (irs.PriceInfoHand
- 	handler := ars.AwsPriceInfoHandler{Region: cloudConn.Region, Client: cloudConn.PriceInfoClient}
+@@ -224,3 +225,7 @@ func (cloudConn *AwsCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHand
+ 	handler := ars.AwsQuotaInfoHandler{Region: cloudConn.Region, Client: cloudConn.ServiceQuotasClient, CwClient: cloudConn.CloudWatchClient}
  	return &handler, nil
  }
 +
@@ -455,12 +449,12 @@ index d69ab865..2b006229 100644
 +	return nil, errors.New("GCP Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-index 70483940..1281e93b 100644
+index 479edc9a..9af00411 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-@@ -275,3 +275,21 @@ func (cloudConn *AzureCloudConnection) CreateTagHandler() (irs.TagHandler, error
- 	return &tagHandler, nil
- 	// return nil, errors.New("Azure Driver: not implemented")
+@@ -287,3 +287,21 @@ func (cloudConn *AzureCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHa
+ 	}
+ 	return &quotaInfoHandler, nil
  }
 +
 +func (cloudConn *AzureCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
@@ -1043,7 +1037,7 @@ index 00000000..4cda7b34
 +	return vmMonitoringInfo, nil
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
-index a2b48357..9deab67e 100644
+index d6aea8f2..a6aa67cf 100644
 --- a/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/gcp/connect/GCP_CloudConnection.go
 @@ -12,6 +12,7 @@ package connect
@@ -1054,40 +1048,40 @@ index a2b48357..9deab67e 100644
  
  	filestore "cloud.google.com/go/filestore/apiv1"
  	cblog "github.com/cloud-barista/cb-log"
-@@ -191,3 +192,7 @@ func (cloudConn *GCPCloudConnection) CreateTagHandler() (irs.TagHandler, error)
- 
- 	return &tagHandler, nil
+@@ -201,3 +202,7 @@ func (cloudConn *GCPCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHand
+ 	}
+ 	return &quotaInfoHandler, nil
  }
 +
 +func (cloudConn *GCPCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("GCP Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/ibm/connect/Ibm_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ibm/connect/Ibm_CloudConnection.go
-index a137d428..8b5d887d 100644
+index ed577a98..3e108418 100644
 --- a/cloud-control-manager/cloud-driver/drivers/ibm/connect/Ibm_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/ibm/connect/Ibm_CloudConnection.go
-@@ -217,3 +217,7 @@ func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error)
- 	}
- 	return &TagHandler, nil
+@@ -221,3 +221,7 @@ func (cloudConn *IbmCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ func (cloudConn *IbmCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	return nil, errors.New("IBM Cloud does not provide a Quota API: not implemented")
  }
 +
 +func (cloudConn *IbmCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("Ibm Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/kt/connect/KT_Connection.go b/cloud-control-manager/cloud-driver/drivers/kt/connect/KT_Connection.go
-index 7f6894c4..ad7abca0 100644
+index 42e7aad7..fbf20120 100644
 --- a/cloud-control-manager/cloud-driver/drivers/kt/connect/KT_Connection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/kt/connect/KT_Connection.go
-@@ -136,3 +136,7 @@ func (cloudConn *KTCloudVpcConnection) Close() error {
- func (cloudConn *KTCloudVpcConnection) CreateTagHandler() (irs.TagHandler, error) {
- 	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
+@@ -141,3 +141,7 @@ func (cloudConn *KTCloudVpcConnection) CreateTagHandler() (irs.TagHandler, error
+ func (cloudConn *KTCloudVpcConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	return nil, fmt.Errorf("KT Cloud VPC Driver: QuotaInfoHandler not supported")
  }
 +
 +func (cloudConn *KTCloudVpcConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, fmt.Errorf("KT Cloud VPC Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/ktclassic/connect/KTClassic_Connection.go b/cloud-control-manager/cloud-driver/drivers/ktclassic/connect/KTClassic_Connection.go
-index b219780c..dfa5ada3 100644
+index efc03518..05c500d1 100644
 --- a/cloud-control-manager/cloud-driver/drivers/ktclassic/connect/KTClassic_Connection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/ktclassic/connect/KTClassic_Connection.go
 @@ -12,6 +12,7 @@
@@ -1096,9 +1090,9 @@ index b219780c..dfa5ada3 100644
  import (
 +	"errors"
  	"fmt"
- 	"github.com/sirupsen/logrus"
  
-@@ -146,3 +147,7 @@ func (cloudConn *KtCloudConnection) Close() error {
+ 	"github.com/sirupsen/logrus"
+@@ -152,3 +153,7 @@ func (cloudConn *KtCloudConnection) Close() error {
  	cblogger.Info("KT Cloud Driver: called Close()!")
  	return nil
  }
@@ -1107,7 +1101,7 @@ index b219780c..dfa5ada3 100644
 +	return nil, errors.New("KT Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
-index ad6c9a4e..62eef661 100644
+index fa66ad2c..209deed5 100644
 --- a/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/mock/connect/MockCloudConnection.go
 @@ -1,6 +1,7 @@
@@ -1118,64 +1112,64 @@ index ad6c9a4e..62eef661 100644
  	cblog "github.com/cloud-barista/cb-log"
  	mkrs "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/drivers/mock/resources"
  	idrv "github.com/cloud-barista/cb-spider/cloud-control-manager/cloud-driver/interfaces"
-@@ -123,3 +124,7 @@ func (cloudConn *MockConnection) CreateTagHandler() (irs.TagHandler, error) {
- 	handler := mkrs.MockTagHandler{MockName: cloudConn.MockName}
- 	return &handler, nil
+@@ -128,3 +129,7 @@ func (cloudConn *MockConnection) CreateTagHandler() (irs.TagHandler, error) {
+ func (cloudConn *MockConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	panic("unimplemented")
  }
 +
 +func (cloudConn *MockConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("Mock Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpVpcCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpVpcCloudConnection.go
-index 478afb8e..62c8aa0a 100644
+index 7466b57f..6495cdf2 100644
 --- a/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpVpcCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/ncp/connect/NcpVpcCloudConnection.go
-@@ -183,3 +183,7 @@ func (cloudConn *NcpVpcCloudConnection) CreateFileSystemHandler() (irs.FileSyste
- 	cblogger.Info("NCP VPC Cloud Driver: called CreateFileSystemHandler()!")
- 	return nil, fmt.Errorf("NCP VPC Cloud Driver: CreateFileSystemHandler is not implemented")
+@@ -194,3 +194,7 @@ func (cloudConn *NcpVpcCloudConnection) CreateFileSystemHandler() (irs.FileSyste
+ func (cloudConn *NcpVpcCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	return nil, fmt.Errorf("NCP VPC Cloud Driver: QuotaInfoHandler not supported")
  }
 +
 +func (cloudConn *NcpVpcCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, fmt.Errorf("NCP VPC Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/nhn/connect/NHN_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/nhn/connect/NHN_CloudConnection.go
-index bb6bc668..bb1fd640 100644
+index 8f7c747c..17f2650e 100644
 --- a/cloud-control-manager/cloud-driver/drivers/nhn/connect/NHN_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/nhn/connect/NHN_CloudConnection.go
-@@ -166,3 +166,7 @@ func (cloudConn *NhnCloudConnection) Close() error {
- func (cloudConn *NhnCloudConnection) CreateTagHandler() (irs.TagHandler, error) {
- 	return nil, errors.New("NHN Cloud Driver: not implemented")
+@@ -171,3 +171,7 @@ func (cloudConn *NhnCloudConnection) CreateTagHandler() (irs.TagHandler, error)
+ func (cloudConn *NhnCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	return nil, errors.New("NHN Cloud Driver: QuotaInfoHandler not supported")
  }
 +
 +func (cloudConn *NhnCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, fmt.Errorf("NHN Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
-index 2e578268..113ca5d4 100644
+index a121f6b0..7d0ae958 100644
 --- a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
-@@ -203,3 +203,7 @@ func (cloudConn *OpenStackCloudConnection) CreateFileSystemHandler() (irs.FileSy
- 	}
- 	return &fileSystemHandler, nil
+@@ -211,3 +211,7 @@ func (cloudConn *OpenStackCloudConnection) CreateQuotaInfoHandler() (irs.QuotaIn
+ 	cblogger.Info("OpenStack Driver: called CreateQuotaInfoHandler()!")
+ 	return nil, errors.New("OpenStack Driver: QuotaInfoHandler not supported")
  }
 +
 +func (cloudConn *OpenStackCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("OpenStack Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
-index bfb02d47..ba99dae6 100644
+index 30c724ee..cc520d49 100644
 --- a/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/tencent/connect/TencentCloudConnection.go
-@@ -170,3 +170,7 @@ func (cloudConn *TencentCloudConnection) CreateTagHandler() (irs.TagHandler, err
- 	}
- 	return &handler, nil
+@@ -175,3 +175,7 @@ func (cloudConn *TencentCloudConnection) CreateTagHandler() (irs.TagHandler, err
+ func (cloudConn *TencentCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHandler, error) {
+ 	return nil, errors.New("Tencent Cloud Driver: QuotaInfoHandler not supported")
  }
 +
 +func (cloudConn *TencentCloudConnection) CreateMonitoringHandler() (irs.MonitoringHandler, error) {
 +	return nil, errors.New("Tencent Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
-index c00dec51..717713a6 100644
+index af01e215..e8a5ba67 100644
 --- a/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
 +++ b/cloud-control-manager/cloud-driver/interfaces/connect/CloudConnect.go
 @@ -23,6 +23,7 @@ type CloudConnection interface {
@@ -1278,7 +1272,7 @@ index 00000000..e32a3061
 +	GetClusterNodeMetricData(clusterMonitoringReqInfo ClusterNodeMonitoringReqInfo) (MetricData, error)
 +}
 diff --git a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
-index 5639ddad..09b27c42 100644
+index 8554bb8a..07d75586 100644
 --- a/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
 +++ b/cloud-control-manager/cloud-driver/interfaces/resources/ResourceType.go
 @@ -18,18 +18,19 @@ import (
