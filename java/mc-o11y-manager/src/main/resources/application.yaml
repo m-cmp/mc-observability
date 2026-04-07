@@ -95,13 +95,11 @@ monitoring:
         thread-pool-size: ${MONITORING_CACHE_WARM_REALTIME_THREADS:10}
         range: ${MONITORING_CACHE_WARM_REALTIME_RANGE:1h}
         group-time: ${MONITORING_CACHE_WARM_REALTIME_GROUP_TIME:1m}
-        measurements: ${MONITORING_CACHE_WARM_REALTIME_MEASUREMENTS:cpu,mem,disk,net}
       downsampling:
         cron: ${MONITORING_CACHE_WARM_DOWNSAMPLING_CRON:0 5 * * * *}
         thread-pool-size: ${MONITORING_CACHE_WARM_DOWNSAMPLING_THREADS:10}
         range: ${MONITORING_CACHE_WARM_DOWNSAMPLING_RANGE:7d}
         group-time: ${MONITORING_CACHE_WARM_DOWNSAMPLING_GROUP_TIME:1h}
-        measurements: ${MONITORING_CACHE_WARM_DOWNSAMPLING_MEASUREMENTS:cpu,mem,disk,net}
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}
