@@ -1,6 +1,5 @@
 package com.mcmp.o11ymanager.manager.config;
 
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -46,12 +45,10 @@ public class MonitoringCacheProperties {
         private int topN = 10;
 
         /** Realtime warming — short-range queries refreshed every minute. */
-        private Job realtime =
-                new Job("0 * * * * *", 10, List.of("cpu", "mem", "disk", "net"), "1h", "1m");
+        private Job realtime = new Job("0 * * * * *", 10, "1h", "1m");
 
         /** Downsampling warming — long-range queries refreshed on the hourly DAG cycle. */
-        private Job downsampling =
-                new Job("0 5 * * * *", 10, List.of("cpu", "mem", "disk", "net"), "7d", "1h");
+        private Job downsampling = new Job("0 5 * * * *", 10, "7d", "1h");
     }
 
     @Getter
@@ -63,9 +60,6 @@ public class MonitoringCacheProperties {
         /** Number of worker threads for parallel warming. */
         private int threadPoolSize;
 
-        /** Measurements to pre-load. */
-        private List<String> measurements;
-
         /** Time range string passed to the warming query (e.g. {@code 1h}, {@code 7d}). */
         private String range;
 
@@ -74,15 +68,9 @@ public class MonitoringCacheProperties {
 
         public Job() {}
 
-        public Job(
-                String cron,
-                int threadPoolSize,
-                List<String> measurements,
-                String range,
-                String groupTime) {
+        public Job(String cron, int threadPoolSize, String range, String groupTime) {
             this.cron = cron;
             this.threadPoolSize = threadPoolSize;
-            this.measurements = measurements;
             this.range = range;
             this.groupTime = groupTime;
         }

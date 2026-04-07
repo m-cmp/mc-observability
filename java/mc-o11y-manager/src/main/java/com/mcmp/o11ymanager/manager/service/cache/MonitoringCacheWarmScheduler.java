@@ -108,29 +108,60 @@ public class MonitoringCacheWarmScheduler {
             return 0;
         }
 
+        List<String> measurements = discoverMeasurements();
+        if (measurements.isEmpty()) {
+            log.info("[CACHE-WARM:{}] no measurements discovered", jobName);
+            return 0;
+        }
+
         AtomicInteger ok = new AtomicInteger();
         AtomicInteger fail = new AtomicInteger();
         List<CompletableFuture<Void>> futures = new ArrayList<>(top.size());
         for (VmWithCreatedAt entry : top) {
             futures.add(
                     CompletableFuture.runAsync(
-                            () -> warmOneVm(jobName, job, entry.vm(), ok, fail), executor));
+                            () -> warmOneVm(jobName, job, entry.vm(), measurements, ok, fail),
+                            executor));
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
         log.info(
-                "[CACHE-WARM:{}] vms={}, ok={}, fail={}, took={}ms",
+                "[CACHE-WARM:{}] vms={}, measurements={}, ok={}, fail={}, took={}ms",
                 jobName,
                 top.size(),
+                measurements.size(),
                 ok.get(),
                 fail.get(),
                 System.currentTimeMillis() - started);
         return top.size();
     }
 
+    /** Discover all measurement names known to any configured InfluxDB instance. */
+    private List<String> discoverMeasurements() {
+        try {
+            var body = influxDbService.getFields();
+            if (body == null || body.getData() == null) {
+                return List.of();
+            }
+            return body.getData().stream()
+                    .map(f -> f.getMeasurement())
+                    .filter(m -> m != null && !m.isBlank())
+                    .distinct()
+                    .toList();
+        } catch (Exception e) {
+            log.warn("[CACHE-WARM] discover measurements failed: {}", e.toString());
+            return List.of();
+        }
+    }
+
     private void warmOneVm(
-            String jobName, Job job, VmRef vm, AtomicInteger ok, AtomicInteger fail) {
-        for (String measurement : job.getMeasurements()) {
+            String jobName,
+            Job job,
+            VmRef vm,
+            List<String> measurements,
+            AtomicInteger ok,
+            AtomicInteger fail) {
+        for (String measurement : measurements) {
             try {
                 influxDbService.getMetricsByVM(
                         vm.nsId(), vm.mciId(), vm.vmId(), buildRequest(job, measurement));
