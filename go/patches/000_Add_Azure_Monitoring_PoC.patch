@@ -336,10 +336,26 @@ index 00000000..b44940f7
 +	return c.JSON(http.StatusOK, result)
 +}
 diff --git a/api/docs.go b/api/docs.go
-index b7ab62e5..64c49a83 100644
+index b7ab62e5..7108589d 100644
 --- a/api/docs.go
 +++ b/api/docs.go
-@@ -12558,6 +12558,7 @@ const docTemplate = `{
+@@ -11236,13 +11236,11 @@ const docTemplate = `{
+                 },
+                 "avgCreationTime": {
+                     "description": "Average VM creation time in seconds",
+-                    "type": "number",
+-                    "format": "float64"
++                    "type": "number"
+                 },
+                 "creationCount": {
+                     "description": "Number of successful VM creations",
+-                    "type": "integer",
+-                    "format": "int64"
++                    "type": "integer"
+                 },
+                 "csp": {
+                     "type": "string"
+@@ -12558,6 +12556,7 @@ const docTemplate = `{
                  "sg",
                  "keypair",
                  "vm",
@@ -347,7 +363,7 @@ index b7ab62e5..64c49a83 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -12573,6 +12574,7 @@ const docTemplate = `{
+@@ -12573,6 +12572,7 @@ const docTemplate = `{
                  "SG",
                  "KEY",
                  "VM",
@@ -355,11 +371,46 @@ index b7ab62e5..64c49a83 100644
                  "NLB",
                  "DISK",
                  "MYIMAGE",
+@@ -13075,18 +13075,6 @@ const docTemplate = `{
+                 "Suspending": "from running to suspended",
+                 "Terminating": "from running, suspended to terminated"
+             },
+-            "x-enum-descriptions": [
+-                "from launch to running",
+-                "",
+-                "from running to suspended",
+-                "",
+-                "from suspended to running",
+-                "from running to running",
+-                "from running, suspended to terminated",
+-                "",
+-                "VM does not exist",
+-                ""
+-            ],
+             "x-enum-varnames": [
+                 "Creating",
+                 "Running",
 diff --git a/api/swagger.json b/api/swagger.json
-index 70da829e..62ff9be6 100644
+index 70da829e..2b4ecc9c 100644
 --- a/api/swagger.json
 +++ b/api/swagger.json
-@@ -12555,6 +12555,7 @@
+@@ -11233,13 +11233,11 @@
+                 },
+                 "avgCreationTime": {
+                     "description": "Average VM creation time in seconds",
+-                    "type": "number",
+-                    "format": "float64"
++                    "type": "number"
+                 },
+                 "creationCount": {
+                     "description": "Number of successful VM creations",
+-                    "type": "integer",
+-                    "format": "int64"
++                    "type": "integer"
+                 },
+                 "csp": {
+                     "type": "string"
+@@ -12555,6 +12553,7 @@
                  "sg",
                  "keypair",
                  "vm",
@@ -367,7 +418,7 @@ index 70da829e..62ff9be6 100644
                  "nlb",
                  "disk",
                  "myimage",
-@@ -12570,6 +12571,7 @@
+@@ -12570,6 +12569,7 @@
                  "SG",
                  "KEY",
                  "VM",
@@ -375,11 +426,42 @@ index 70da829e..62ff9be6 100644
                  "NLB",
                  "DISK",
                  "MYIMAGE",
+@@ -13072,18 +13072,6 @@
+                 "Suspending": "from running to suspended",
+                 "Terminating": "from running, suspended to terminated"
+             },
+-            "x-enum-descriptions": [
+-                "from launch to running",
+-                "",
+-                "from running to suspended",
+-                "",
+-                "from suspended to running",
+-                "from running to running",
+-                "from running, suspended to terminated",
+-                "",
+-                "VM does not exist",
+-                ""
+-            ],
+             "x-enum-varnames": [
+                 "Creating",
+                 "Running",
 diff --git a/api/swagger.yaml b/api/swagger.yaml
-index 8ed27a71..7df0c7dc 100644
+index 8ed27a71..381c9da7 100644
 --- a/api/swagger.yaml
 +++ b/api/swagger.yaml
-@@ -1163,6 +1163,7 @@ definitions:
+@@ -202,11 +202,9 @@ definitions:
+         type: string
+       avgCreationTime:
+         description: Average VM creation time in seconds
+-        format: float64
+         type: number
+       creationCount:
+         description: Number of successful VM creations
+-        format: int64
+         type: integer
+       csp:
+         type: string
+@@ -1163,6 +1161,7 @@ definitions:
      - sg
      - keypair
      - vm
@@ -387,7 +469,7 @@ index 8ed27a71..7df0c7dc 100644
      - nlb
      - disk
      - myimage
-@@ -1178,6 +1179,7 @@ definitions:
+@@ -1178,6 +1177,7 @@ definitions:
      - SG
      - KEY
      - VM
@@ -395,6 +477,24 @@ index 8ed27a71..7df0c7dc 100644
      - NLB
      - DISK
      - MYIMAGE
+@@ -1534,17 +1534,6 @@ definitions:
+       Resuming: from suspended to running
+       Suspending: from running to suspended
+       Terminating: from running, suspended to terminated
+-    x-enum-descriptions:
+-    - from launch to running
+-    - ""
+-    - from running to suspended
+-    - ""
+-    - from suspended to running
+-    - from running to running
+-    - from running, suspended to terminated
+-    - ""
+-    - VM does not exist
+-    - ""
+     x-enum-varnames:
+     - Creating
+     - Running
 diff --git a/cloud-control-manager/cloud-driver/call-log/calllogger.go b/cloud-control-manager/cloud-driver/call-log/calllogger.go
 index 9c9875d7..231a1da4 100644
 --- a/cloud-control-manager/cloud-driver/call-log/calllogger.go
@@ -1145,10 +1245,10 @@ index 8f7c747c..17f2650e 100644
 +	return nil, fmt.Errorf("NHN Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
-index a121f6b0..7d0ae958 100644
+index 07b56504..1fe8214c 100644
 --- a/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/openstack/connect/OpenStack_CloudConnection.go
-@@ -211,3 +211,7 @@ func (cloudConn *OpenStackCloudConnection) CreateQuotaInfoHandler() (irs.QuotaIn
+@@ -215,3 +215,7 @@ func (cloudConn *OpenStackCloudConnection) CreateQuotaInfoHandler() (irs.QuotaIn
  	cblogger.Info("OpenStack Driver: called CreateQuotaInfoHandler()!")
  	return nil, errors.New("OpenStack Driver: QuotaInfoHandler not supported")
  }
