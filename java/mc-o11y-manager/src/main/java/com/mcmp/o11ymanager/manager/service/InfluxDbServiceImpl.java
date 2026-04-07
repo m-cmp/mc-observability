@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
 import com.mcmp.o11ymanager.manager.entity.InfluxDbInfo;
 import com.mcmp.o11ymanager.manager.entity.InfluxEntity;
 import com.mcmp.o11ymanager.manager.global.vm.ResBody;
@@ -12,6 +13,7 @@ import com.mcmp.o11ymanager.manager.mapper.influx.InfluxMapper;
 import com.mcmp.o11ymanager.manager.mapper.influx.QueryMapper;
 import com.mcmp.o11ymanager.manager.model.influx.InfluxQl;
 import com.mcmp.o11ymanager.manager.repository.InfluxJpaRepository;
+import com.mcmp.o11ymanager.manager.service.cache.MonitoringCacheService;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -19,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,6 +42,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private final InfluxJpaRepository influxJpaRepository;
     private final InfluxDbInfo influxDbInfo;
     private final InfluxMapper influxMapper;
+    private final MonitoringCacheService monitoringCacheService;
 
     private static final String NS_ID = "ns_id";
     private static final String MCI_ID = "mci_id";
@@ -215,6 +219,11 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         req.setConditions(conditions);
 
+        return monitoringCacheService.getOrLoad(
+                nsId, mciId, null, req, () -> loadMetricsByNsMci(nsId, mciId, req));
+    }
+
+    private List<MetricDTO> loadMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req) {
         Long influxId = resolveInfluxDb(nsId, mciId);
         InfluxEntity entity =
                 influxJpaRepository
@@ -294,6 +303,12 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         req.setConditions(conditions);
 
+        return monitoringCacheService.getOrLoad(
+                nsId, mciId, vmId, req, () -> loadMetricsByVM(nsId, mciId, vmId, req));
+    }
+
+    private List<MetricDTO> loadMetricsByVM(
+            String nsId, String mciId, String vmId, MetricRequestDTO req) {
         Long influxId = resolveInfluxDb(nsId, mciId);
         InfluxEntity entity =
                 influxJpaRepository
@@ -616,6 +631,57 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                         + MCI_ID
                         + "\"";
         return resCount(influxDTO, q);
+    }
+
+    // ------------------------------------discoverActiveVms--------------------------------------------------//
+
+    @Override
+    public List<VmRef> discoverActiveVms() {
+        Set<VmRef> seen = new LinkedHashSet<>();
+        String q =
+                "SELECT count(*) FROM \"cpu\" WHERE time > now() - 7d "
+                        + "GROUP BY \"ns_id\", \"mci_id\", \"vm_id\"";
+        for (var entity : rawEntities()) {
+            var s = toDTO(entity);
+            if (!isConnectedDb(s)) {
+                continue;
+            }
+            try {
+                var qrOpt = exec(s, q);
+                if (qrOpt.isEmpty()) {
+                    continue;
+                }
+                var results = qrOpt.get().getResults();
+                if (results == null) {
+                    continue;
+                }
+                for (var r : results) {
+                    if (r == null || r.getSeries() == null) {
+                        continue;
+                    }
+                    for (var series : r.getSeries()) {
+                        Map<String, String> tags = series.getTags();
+                        if (tags == null) {
+                            continue;
+                        }
+                        String ns = tags.get(NS_ID);
+                        String mci = tags.get(MCI_ID);
+                        String vm = tags.get("vm_id");
+                        if (ns == null || mci == null || vm == null) {
+                            continue;
+                        }
+                        seen.add(new VmRef(ns, mci, vm));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn(
+                        "[DISCOVER-VMS] failed url={}, err={}",
+                        s.getUrl(),
+                        Objects.toString(e.getMessage(), e.toString()));
+            }
+        }
+        log.info("[DISCOVER-VMS] discovered {} active VM tuples", seen.size());
+        return new ArrayList<>(seen);
     }
 
     // ------------------------------------helper--------------------------------------------------//
