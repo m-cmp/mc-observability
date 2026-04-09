@@ -236,7 +236,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         InfluxDTO s =
                 InfluxDTO.builder()
                         .url(entity.getUrl())
-                        .database(entity.getDatabase())
+                        .database(pickDatabase(entity, req))
                         .username(entity.getUsername())
                         .password(entity.getPassword())
                         .build();
@@ -321,7 +321,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         InfluxDTO s =
                 InfluxDTO.builder()
                         .url(entity.getUrl())
-                        .database(entity.getDatabase())
+                        .database(pickDatabase(entity, req))
                         .username(entity.getUsername())
                         .password(entity.getPassword())
                         .build();
@@ -682,6 +682,61 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         }
         log.info("[DISCOVER-VMS] discovered {} active VM tuples", seen.size());
         return new ArrayList<>(seen);
+    }
+
+    // ------------------------------------db
+    // routing--------------------------------------------------//
+
+    /** Threshold (in seconds) above which metric requests are routed to the downsampling DB. */
+    private static final long DOWNSAMPLING_THRESHOLD_SECONDS = 24L * 3600L;
+
+    /**
+     * Returns the InfluxDB database name to query for the given request: the configured
+     * downsampling DB when the requested range is at least 1 day, otherwise the entity's default
+     * (raw) DB.
+     */
+    private String pickDatabase(InfluxEntity entity, MetricRequestDTO req) {
+        long rangeSec = parseRangeSeconds(req == null ? null : req.getRange());
+        if (rangeSec >= DOWNSAMPLING_THRESHOLD_SECONDS) {
+            String dsDb = influxDbInfo.downsamplingDatabase();
+            if (dsDb != null && !dsDb.isBlank()) {
+                return dsDb;
+            }
+        }
+        return entity.getDatabase();
+    }
+
+    /**
+     * Parses an InfluxQL-style relative range like {@code "1h"}, {@code "30m"}, {@code "2d"} into
+     * seconds. Returns 0 for null or unparseable inputs.
+     */
+    private static long parseRangeSeconds(String range) {
+        if (range == null || range.isBlank()) {
+            return 0L;
+        }
+        String s = range.trim().toLowerCase();
+        int i = 0;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) {
+            i++;
+        }
+        if (i == 0 || i == s.length()) {
+            return 0L;
+        }
+        long n;
+        try {
+            n = Long.parseLong(s.substring(0, i));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+        String unit = s.substring(i);
+        return switch (unit) {
+            case "s" -> n;
+            case "m" -> n * 60L;
+            case "h" -> n * 3600L;
+            case "d" -> n * 86400L;
+            case "w" -> n * 7L * 86400L;
+            default -> 0L;
+        };
     }
 
     // ------------------------------------helper--------------------------------------------------//

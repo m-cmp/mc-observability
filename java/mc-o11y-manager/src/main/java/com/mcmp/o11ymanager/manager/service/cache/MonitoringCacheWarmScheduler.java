@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.manager.service.cache;
 
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties;
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.Job;
+import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.RangeSpec;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
@@ -29,13 +30,16 @@ import org.springframework.stereotype.Component;
  * <p>Two independent jobs run on separate fixed thread pools:
  *
  * <ul>
- *   <li><b>realtime</b> — short-range queries (e.g. {@code 1h / 1m}) refreshed every minute.
- *   <li><b>downsampling</b> — long-range queries (e.g. {@code 7d / 1h}) refreshed on the hourly
- *       Airflow downsampling DAG cycle.
+ *   <li><b>realtime</b> — short-range queries (e.g. {@code 1h/1m, 6h/5m, 12h/5m}) refreshed every
+ *       minute. These hit the raw mc-observability InfluxDB.
+ *   <li><b>longrange</b> — long-range queries (e.g. {@code 1d/5m, 3d/15m, 5d/30m, 7d/1h}) refreshed
+ *       on the hourly Airflow downsampling DAG cycle. These automatically route to the downsampling
+ *       InfluxDB via {@code InfluxDbServiceImpl#pickDatabase}.
  * </ul>
  *
  * For each tick the scheduler discovers active VMs in InfluxDB, sorts by Tumblebug createdTime,
- * keeps the top-N most recently created, and submits per-VM warming tasks to the job's executor.
+ * keeps the top-N most recently created, and submits per-VM warming tasks (one per measurement ×
+ * range combo) to the job's executor.
  */
 @Slf4j
 @Component
@@ -52,18 +56,18 @@ public class MonitoringCacheWarmScheduler {
     private final VmCreatedTimeResolver vmCreatedTimeResolver;
 
     private ExecutorService realtimeExecutor;
-    private ExecutorService downsamplingExecutor;
+    private ExecutorService longrangeExecutor;
 
     @PostConstruct
     void init() {
         realtimeExecutor =
                 newFixedPool("mon-cache-warm-realtime", properties.getWarm().getRealtime());
-        downsamplingExecutor =
-                newFixedPool("mon-cache-warm-down", properties.getWarm().getDownsampling());
+        longrangeExecutor =
+                newFixedPool("mon-cache-warm-longrange", properties.getWarm().getLongrange());
         log.info(
-                "[CACHE-WARM] initialized realtimeThreads={}, downsamplingThreads={}",
+                "[CACHE-WARM] initialized realtimeThreads={}, longrangeThreads={}",
                 properties.getWarm().getRealtime().getThreadPoolSize(),
-                properties.getWarm().getDownsampling().getThreadPoolSize());
+                properties.getWarm().getLongrange().getThreadPoolSize());
     }
 
     @PreDestroy
@@ -71,8 +75,8 @@ public class MonitoringCacheWarmScheduler {
         if (realtimeExecutor != null) {
             realtimeExecutor.shutdownNow();
         }
-        if (downsamplingExecutor != null) {
-            downsamplingExecutor.shutdownNow();
+        if (longrangeExecutor != null) {
+            longrangeExecutor.shutdownNow();
         }
     }
 
@@ -81,24 +85,23 @@ public class MonitoringCacheWarmScheduler {
         runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor);
     }
 
-    @Scheduled(cron = "${monitoring.cache.warm.downsampling.cron:0 5 * * * *}")
-    public void scheduledDownsampling() {
-        runJob("downsampling", properties.getWarm().getDownsampling(), downsamplingExecutor);
+    @Scheduled(cron = "${monitoring.cache.warm.longrange.cron:0 5 * * * *}")
+    public void scheduledLongrange() {
+        runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
     }
 
     /** Triggers both warming jobs immediately (admin endpoint). */
     public int warmNow() {
         int realtime = runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor);
-        int downsampling =
-                runJob(
-                        "downsampling",
-                        properties.getWarm().getDownsampling(),
-                        downsamplingExecutor);
-        return realtime + downsampling;
+        int longrange = runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
+        return realtime + longrange;
     }
 
     private int runJob(String jobName, Job job, ExecutorService executor) {
-        if (job == null || executor == null) {
+        if (job == null
+                || executor == null
+                || job.getRanges() == null
+                || job.getRanges().isEmpty()) {
             return 0;
         }
         long started = System.currentTimeMillis();
@@ -120,16 +123,24 @@ public class MonitoringCacheWarmScheduler {
         for (VmWithCreatedAt entry : top) {
             futures.add(
                     CompletableFuture.runAsync(
-                            () -> warmOneVm(jobName, job, entry.vm(), measurements, ok, fail),
+                            () ->
+                                    warmOneVm(
+                                            jobName,
+                                            job.getRanges(),
+                                            entry.vm(),
+                                            measurements,
+                                            ok,
+                                            fail),
                             executor));
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
         log.info(
-                "[CACHE-WARM:{}] vms={}, measurements={}, ok={}, fail={}, took={}ms",
+                "[CACHE-WARM:{}] vms={}, measurements={}, ranges={}, ok={}, fail={}, took={}ms",
                 jobName,
                 top.size(),
                 measurements.size(),
+                job.getRanges().size(),
                 ok.get(),
                 fail.get(),
                 System.currentTimeMillis() - started);
@@ -156,26 +167,29 @@ public class MonitoringCacheWarmScheduler {
 
     private void warmOneVm(
             String jobName,
-            Job job,
+            List<RangeSpec> ranges,
             VmRef vm,
             List<String> measurements,
             AtomicInteger ok,
             AtomicInteger fail) {
         for (String measurement : measurements) {
-            try {
-                influxDbService.getMetricsByVM(
-                        vm.nsId(), vm.mciId(), vm.vmId(), buildRequest(job, measurement));
-                ok.incrementAndGet();
-            } catch (Exception e) {
-                fail.incrementAndGet();
-                log.debug(
-                        "[CACHE-WARM:{}] failed ns={}, mci={}, vm={}, m={}, err={}",
-                        jobName,
-                        vm.nsId(),
-                        vm.mciId(),
-                        vm.vmId(),
-                        measurement,
-                        e.toString());
+            for (RangeSpec spec : ranges) {
+                try {
+                    influxDbService.getMetricsByVM(
+                            vm.nsId(), vm.mciId(), vm.vmId(), buildRequest(spec, measurement));
+                    ok.incrementAndGet();
+                } catch (Exception e) {
+                    fail.incrementAndGet();
+                    log.debug(
+                            "[CACHE-WARM:{}] failed ns={}, mci={}, vm={}, m={}, range={}, err={}",
+                            jobName,
+                            vm.nsId(),
+                            vm.mciId(),
+                            vm.vmId(),
+                            measurement,
+                            spec.getRange(),
+                            e.toString());
+                }
             }
         }
     }
@@ -206,11 +220,11 @@ public class MonitoringCacheWarmScheduler {
         return new ArrayList<>(withTime.subList(0, Math.min(topN, withTime.size())));
     }
 
-    private MetricRequestDTO buildRequest(Job job, String measurement) {
+    private MetricRequestDTO buildRequest(RangeSpec spec, String measurement) {
         MetricRequestDTO req = new MetricRequestDTO();
         req.setMeasurement(measurement);
-        req.setRange(job.getRange());
-        req.setGroupTime(job.getGroupTime());
+        req.setRange(spec.getRange());
+        req.setGroupTime(spec.getGroupTime());
         req.setFields(new ArrayList<>());
         req.setConditions(new ArrayList<>());
         return req;
