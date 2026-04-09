@@ -69,6 +69,7 @@ loki:
 
 influxdb:
   database: ${INFLUX_DATABASE:mc-observability}
+  downsampling-database: ${INFLUX_DOWNSAMPLING_DATABASE:downsampling}
   retention-policy: ${INFLUX_RETENTION_POLICY:autogen}
   servers:
     - url: ${INFLUX1_URL:http://mc-observability-influx:8086}
@@ -93,13 +94,18 @@ monitoring:
       realtime:
         cron: ${MONITORING_CACHE_WARM_REALTIME_CRON:0 * * * * *}
         thread-pool-size: ${MONITORING_CACHE_WARM_REALTIME_THREADS:10}
-        range: ${MONITORING_CACHE_WARM_REALTIME_RANGE:1h}
-        group-time: ${MONITORING_CACHE_WARM_REALTIME_GROUP_TIME:1m}
-      downsampling:
-        cron: ${MONITORING_CACHE_WARM_DOWNSAMPLING_CRON:0 5 * * * *}
-        thread-pool-size: ${MONITORING_CACHE_WARM_DOWNSAMPLING_THREADS:10}
-        range: ${MONITORING_CACHE_WARM_DOWNSAMPLING_RANGE:7d}
-        group-time: ${MONITORING_CACHE_WARM_DOWNSAMPLING_GROUP_TIME:1h}
+        ranges:
+          - { range: 1h,  group-time: 1m }
+          - { range: 6h,  group-time: 5m }
+          - { range: 12h, group-time: 5m }
+      longrange:
+        cron: ${MONITORING_CACHE_WARM_LONGRANGE_CRON:0 5 * * * *}
+        thread-pool-size: ${MONITORING_CACHE_WARM_LONGRANGE_THREADS:10}
+        ranges:
+          - { range: 1d, group-time: 5m }
+          - { range: 3d, group-time: 15m }
+          - { range: 5d, group-time: 30m }
+          - { range: 7d, group-time: 1h }
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}

@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.manager.config;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -44,11 +45,29 @@ public class MonitoringCacheProperties {
         /** Maximum number of recently-created VMs to warm per run. */
         private int topN = 10;
 
-        /** Realtime warming — short-range queries refreshed every minute. */
-        private Job realtime = new Job("0 * * * * *", 10, "1h", "1m");
+        /** Realtime warming — short-range queries (raw DB) refreshed every minute. */
+        private Job realtime =
+                new Job(
+                        "0 * * * * *",
+                        10,
+                        List.of(
+                                new RangeSpec("1h", "1m"),
+                                new RangeSpec("6h", "5m"),
+                                new RangeSpec("12h", "5m")));
 
-        /** Downsampling warming — long-range queries refreshed on the hourly DAG cycle. */
-        private Job downsampling = new Job("0 5 * * * *", 10, "7d", "1h");
+        /**
+         * Long-range warming — queries that route to the downsampling DB. Refreshed on the hourly
+         * Airflow DAG cycle.
+         */
+        private Job longrange =
+                new Job(
+                        "0 5 * * * *",
+                        10,
+                        List.of(
+                                new RangeSpec("1d", "5m"),
+                                new RangeSpec("3d", "15m"),
+                                new RangeSpec("5d", "30m"),
+                                new RangeSpec("7d", "1h")));
     }
 
     @Getter
@@ -60,17 +79,27 @@ public class MonitoringCacheProperties {
         /** Number of worker threads for parallel warming. */
         private int threadPoolSize;
 
-        /** Time range string passed to the warming query (e.g. {@code 1h}, {@code 7d}). */
-        private String range;
-
-        /** Group-by-time interval for the warming query. */
-        private String groupTime;
+        /** (range, group_time) combinations to pre-load on each tick. */
+        private List<RangeSpec> ranges;
 
         public Job() {}
 
-        public Job(String cron, int threadPoolSize, String range, String groupTime) {
+        public Job(String cron, int threadPoolSize, List<RangeSpec> ranges) {
             this.cron = cron;
             this.threadPoolSize = threadPoolSize;
+            this.ranges = ranges;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class RangeSpec {
+        private String range;
+        private String groupTime;
+
+        public RangeSpec() {}
+
+        public RangeSpec(String range, String groupTime) {
             this.range = range;
             this.groupTime = groupTime;
         }
