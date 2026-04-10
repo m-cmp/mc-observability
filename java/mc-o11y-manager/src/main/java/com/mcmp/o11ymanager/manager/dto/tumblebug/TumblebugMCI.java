@@ -42,6 +42,8 @@ public class TumblebugMCI {
 
         private String sshKeyId;
 
-        private String state;
+        private String status;
+
+        private String createdTime; // example: "2022-11-10 23:00:00"
     }
 }

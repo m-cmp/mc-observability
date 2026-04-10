@@ -69,6 +69,7 @@ loki:
 
 influxdb:
   database: ${INFLUX_DATABASE:mc-observability}
+  downsampling-database: ${INFLUX_DOWNSAMPLING_DATABASE:downsampling}
   retention-policy: ${INFLUX_RETENTION_POLICY:autogen}
   servers:
     - url: ${INFLUX1_URL:http://mc-observability-influx:8086}
@@ -79,6 +80,32 @@ influxdb:
       username: ${INFLUX2_USERNAME:mc-agent}
       password: ${INFLUX2_PASSWORD:mc-agent}
       uid: ${INFLUX2_UID:P951FEA4DE68E13C52}
+
+monitoring:
+  cache:
+    enabled: ${MONITORING_CACHE_ENABLED:true}
+    block-period-seconds: ${MONITORING_CACHE_BLOCK_PERIOD_SECONDS:3600}
+    max-weight-mb: ${MONITORING_CACHE_MAX_WEIGHT_MB:512}
+    expire-after-write-seconds: ${MONITORING_CACHE_EXPIRE_SECONDS:604800}
+    estimated-bytes-per-point: ${MONITORING_CACHE_BYTES_PER_POINT:200}
+    warm:
+      enabled: ${MONITORING_CACHE_WARM_ENABLED:true}
+      top-n: ${MONITORING_CACHE_WARM_TOP_N:10}
+      realtime:
+        cron: ${MONITORING_CACHE_WARM_REALTIME_CRON:0 * * * * *}
+        thread-pool-size: ${MONITORING_CACHE_WARM_REALTIME_THREADS:10}
+        ranges:
+          - { range: 1h,  group-time: 1m }
+          - { range: 6h,  group-time: 5m }
+          - { range: 12h, group-time: 5m }
+      longrange:
+        cron: ${MONITORING_CACHE_WARM_LONGRANGE_CRON:0 5 * * * *}
+        thread-pool-size: ${MONITORING_CACHE_WARM_LONGRANGE_THREADS:10}
+        ranges:
+          - { range: 1d, group-time: 5m }
+          - { range: 3d, group-time: 15m }
+          - { range: 5d, group-time: 30m }
+          - { range: 7d, group-time: 1h }
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}

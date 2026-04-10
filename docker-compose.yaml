@@ -221,6 +221,7 @@ services:
       - INFLUXDB_ADMIN_PASSWORD=mc-agent
       - INFLUXDB_DB="mc-observability"
     volumes:
+      - ./config/influxdb/influxdb-init:/docker-entrypoint-initdb.d
       - /docker/influxdb2_data:/var/lib/influxdb
     healthcheck:
       start_period: 120s
@@ -399,7 +400,7 @@ services:
   mc-observability-insight:
     image: cloudbaristaorg/mc-observability-insight:edge
     container_name: mc-observability-insight
-    restart: on-failure
+    restart: always
     networks:
       - internal_network
       - external_network
@@ -459,8 +460,6 @@ services:
 
         airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
-
         # Reload & Run dags
         airflow dags reserialize
         airflow dags unpause anomaly_detection
@@ -482,7 +481,7 @@ services:
   mc-observability-mcp-grafana:
     image: mcp/grafana:latest
     container_name: mc-observability-mcp-grafana
-    restart: on-failure
+    restart: always
     tty: true
     stdin_open: true
     ports:
@@ -505,7 +504,7 @@ services:
   mc-observability-mcp-maria:
     image: cloudbaristaorg/mc-observability-mcp-mariadb:edge
     container_name: mc-observability-mcp-maria
-    restart: on-failure
+    restart: always
     networks:
       - internal_network
       - external_network
@@ -575,8 +574,9 @@ services:
 
   # CB-Tumblebug
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.16
+    image: cloudbaristaorg/cb-tumblebug:0.12.5
     container_name: mc-infra-manager
+    restart: always
     networks:
       - internal_network
       - external_network
@@ -642,6 +642,7 @@ services:
   mc-infra-manager-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.21
     container_name: mc-infra-manager-etcd
+    restart: always
     networks:
       - internal_network
     ports:
@@ -714,6 +715,7 @@ services:
   mc-infra-connector:
     image: cloudbaristaorg/cb-spider_azure_monitoring:edge
     container_name: mc-infra-connector
+    restart: always
     networks:
       - internal_network
       - external_network # for outbound access (not ideal for security)
@@ -726,8 +728,8 @@ services:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
-      # - API_USERNAME=
-      # - API_PASSWORD=
+      - SPIDER_USERNAME=default
+      - SPIDER_PASSWORD=default
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF

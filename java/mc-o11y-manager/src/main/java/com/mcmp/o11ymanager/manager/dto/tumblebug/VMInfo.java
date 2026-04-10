@@ -27,6 +27,6 @@ public class VMInfo {
     @JsonProperty("description")
     private String description;
 
-    @JsonProperty("state")
-    private String state;
+    @JsonProperty("status")
+    private String status;
 }

@@ -5,7 +5,11 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "influxdb")
-public record InfluxDbInfo(String database, String retentionPolicy, List<Server> servers) {
+public record InfluxDbInfo(
+        String database,
+        String downsamplingDatabase,
+        String retentionPolicy,
+        List<Server> servers) {
 
     public record Server(
             String url,

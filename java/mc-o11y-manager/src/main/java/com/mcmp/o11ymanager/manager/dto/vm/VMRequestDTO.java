@@ -16,8 +16,7 @@ import lombok.Setter;
 public class VMRequestDTO {
 
     @Schema(description = "VM name", example = "mcmp-vm")
-    @NotBlank(message = "VM name is required")
-    private String name;
+    @NotBlank(message = "VM name is required") private String name;
 
     @Schema(description = "VM description", example = "string")
     private String description;

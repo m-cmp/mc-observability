@@ -27,16 +27,13 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @ActiveProfiles("swaggergen")
 class SwaggerGeneratorTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Autowired private MockMvc mockMvc;
 
-    @MockBean
-    private ConnectionFactory connectionFactory;
+    @MockBean private ConnectionFactory connectionFactory;
 
     @Test
     void generateSwaggerYaml() throws Exception {
-        MvcResult result =
-                mockMvc.perform(MockMvcRequestBuilders.get("/v3/api-docs")).andReturn();
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/v3/api-docs")).andReturn();
 
         String json = result.getResponse().getContentAsString();
 
@@ -55,8 +52,7 @@ class SwaggerGeneratorTest {
                         .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES);
         ObjectMapper yamlMapper = new ObjectMapper(yamlFactory);
 
-        try (FileWriter writer =
-                new FileWriter(outputDir.resolve("java-swagger.yaml").toFile())) {
+        try (FileWriter writer = new FileWriter(outputDir.resolve("java-swagger.yaml").toFile())) {
             yamlMapper.writerWithDefaultPrettyPrinter().writeValue(writer, swagger2);
         }
 
@@ -84,8 +80,7 @@ class SwaggerGeneratorTest {
         swagger2.put("consumes", List.of("application/json"));
         swagger2.put("produces", List.of("application/json"));
 
-        Map<String, Object> paths =
-                (Map<String, Object>) openapi3.getOrDefault("paths", Map.of());
+        Map<String, Object> paths = (Map<String, Object>) openapi3.getOrDefault("paths", Map.of());
         Map<String, Object> swagger2Paths = new LinkedHashMap<>();
 
         for (Map.Entry<String, Object> pathEntry : paths.entrySet()) {
@@ -144,8 +139,7 @@ class SwaggerGeneratorTest {
             params.add(param);
         }
 
-        Map<String, Object> requestBody =
-                (Map<String, Object>) operation.get("requestBody");
+        Map<String, Object> requestBody = (Map<String, Object>) operation.get("requestBody");
         if (requestBody != null) {
             Map<String, Object> content =
                     (Map<String, Object>) requestBody.getOrDefault("content", Map.of());
@@ -174,14 +168,12 @@ class SwaggerGeneratorTest {
             Map<String, Object> swagger2Resp = new LinkedHashMap<>();
             swagger2Resp.put("description", "");
 
-            Map<String, Object> respContent =
-                    (Map<String, Object>) resp.get("content");
+            Map<String, Object> respContent = (Map<String, Object>) resp.get("content");
             if (respContent != null) {
                 for (Map.Entry<String, Object> ct : respContent.entrySet()) {
                     Map<String, Object> mt = (Map<String, Object>) ct.getValue();
                     if (mt.containsKey("example")) {
-                        swagger2Resp.put("examples",
-                                Map.of("application/json", mt.get("example")));
+                        swagger2Resp.put("examples", Map.of("application/json", mt.get("example")));
                     }
                     if (mt.containsKey("schema")) {
                         swagger2Resp.put("schema", convertSchemaRef(mt.get("schema")));

@@ -6,7 +6,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record TriggerHistoryCommentUpdateRequest(
-        @Schema(description = "Comment for trigger history", example = "Alert resolved - false positive")
+        @Schema(
+                        description = "Comment for trigger history",
+                        example = "Alert resolved - false positive")
                 @NotNull @NotBlank String comment) {
 
     public TriggerHistoryCommentUpdateDto toDto() {

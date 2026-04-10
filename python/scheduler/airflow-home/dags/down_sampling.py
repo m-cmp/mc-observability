@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
-from airflow.hooks.base_hook import BaseHook
 from airflow.models import Variable
 from datetime import datetime
 from downsampling_utils.multi import DataProcessor
@@ -27,9 +26,7 @@ def data_down_sampling():
     response_data = response.json()
     metric_info_list = response_data.get('data', [])
 
-    influxdb = BaseHook.get_connection('influxdb')
-
-    data_processor = DataProcessor(api_base_url=api_base_url, influxdb=influxdb, metric_info_list=metric_info_list)
+    data_processor = DataProcessor(api_base_url=api_base_url, metric_info_list=metric_info_list)
     data_processor.process_measurements()
 
 
