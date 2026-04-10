@@ -1,0 +1,174 @@
+- name: Begin Agent Common Tasks
+  include_tasks: agent_common_begin.yaml
+
+- name: Create Beyla directory structure
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p /cmp-agent/sites/{{ site_code }}/beyla/bin /cmp-agent/sites/{{ site_code }}/beyla/etc"
+
+- name: Compress Beyla agent files
+  raw: "cd {{ role_path }}/agent-install-files/{{ arch }} && sudo rm -f cmp-agent/cmp-beyla_{{ request_id }}.tar.gz && sudo chown -R root:root beyla/ && sudo ../amd64/busybox tar cvfz cmp-agent/cmp-beyla_{{ request_id }}.tar.gz beyla/ && sudo chmod 644 cmp-agent/cmp-beyla_{{ request_id }}.tar.gz"
+  delegate_to: 127.0.0.1
+
+- name: Copy Compressed Beyla Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-beyla_{{ request_id }}.tar.gz"
+    output_file_path: "/tmp/cmp-beyla-{{ site_code }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Decompress Beyla agent files
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "/tmp/busybox_{{ request_id }} tar xvf /tmp/cmp-beyla-{{ site_code }}.tar.gz -C /cmp-agent/sites/{{ site_code }}"
+
+- name: Set Beyla binary permissions
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chmod 755 /cmp-agent/sites/{{ site_code }}/beyla/bin/beyla"
+
+- name: Remove Remote Compressed Beyla Agent Install File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /tmp/cmp-beyla-{{ site_code }}.tar.gz"
+
+- name: Remove Local Compressed Beyla Agent Install File
+  raw: "sudo rm -f {{ role_path }}/agent-install-files/{{ arch }}/cmp-agent/cmp-beyla_{{ request_id }}.tar.gz"
+  delegate_to: 127.0.0.1
+
+- name: End Agent Common Tasks
+  include_tasks: agent_common_end.yaml
+
+- name: Replace SITE_CODE in Beyla config
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "sed -i 's@SITE_CODE@{{ site_code }}@g' /cmp-agent/sites/{{ site_code }}/beyla/etc/beyla.yaml"
+
+- name: Copy CMP Beyla service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "cp -f /cmp-agent/sites/{{ site_code }}/beyla/cmp-beyla.service /lib/systemd/system/cmp-beyla-{{ site_code }}.service && sed -i 's@SITE_CODE@{{ site_code }}@g' /lib/systemd/system/cmp-beyla-{{ site_code }}.service && chown root:root /lib/systemd/system/cmp-beyla-{{ site_code }}.service && chmod 644 /lib/systemd/system/cmp-beyla-{{ site_code }}.service"
+
+- name: Fix SELinux permission for CMP Beyla service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-beyla-{{ site_code }}.service"
+  ignore_errors: true
+
+- name: Fix SELinux permission for Beyla binary
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon -Rt bin_t /cmp-agent/sites/{{ site_code }}/beyla/bin/"
+  ignore_errors: true
+
+- name: Reload systemctl daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload"
+
+- name: Enable CMP Beyla service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl enable cmp-beyla-{{ site_code }}"
+
+- name: Start CMP Beyla service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl start cmp-beyla-{{ site_code }}"
+
+- name: Run CMP Beyla status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-beyla-{{ site_code }}"
+  register: cmp_beyla_status
+  failed_when: cmp_beyla_status.rc not in [0, 3]
+
+- name: Display CMP Beyla status
+  debug:
+    var: cmp_beyla_status
