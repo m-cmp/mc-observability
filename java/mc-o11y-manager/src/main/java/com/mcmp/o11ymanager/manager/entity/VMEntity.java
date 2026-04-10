@@ -44,17 +44,27 @@ public class VMEntity {
     @Enumerated(EnumType.STRING)
     private VMAgentTaskStatus logAgentTaskStatus;
 
+    @Enumerated(EnumType.STRING)
+    private VMAgentTaskStatus traceAgentTaskStatus;
+
     private String vmMonitoringAgentTaskId;
 
     private String vmLogAgentTaskId;
 
+    private String vmTraceAgentTaskId;
+
     private AgentServiceStatus monitoringServiceStatus;
 
     private AgentServiceStatus logServiceStatus;
+
+    private AgentServiceStatus traceServiceStatus;
 
     @Enumerated(EnumType.STRING)
     private AgentStatus monitoringAgentStatus;
 
     @Enumerated(EnumType.STRING)
     private AgentStatus logAgentStatus;
+
+    @Enumerated(EnumType.STRING)
+    private AgentStatus traceAgentStatus;
 }

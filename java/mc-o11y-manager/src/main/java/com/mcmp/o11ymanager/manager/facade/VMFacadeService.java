@@ -70,6 +70,12 @@ public class VMFacadeService {
                     savedVM.getVmId(),
                     VMAgentTaskStatus.IDLE,
                     "");
+            vmService.updateTraceAgentTaskStatusAndTaskId(
+                    savedVM.getNsId(),
+                    savedVM.getMciId(),
+                    savedVM.getVmId(),
+                    VMAgentTaskStatus.IDLE,
+                    "");
 
             agentFacadeService.install(nsId, mciId, vmId);
 
@@ -112,6 +118,9 @@ public class VMFacadeService {
             AgentStatus logAgentStatus =
                     agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
 
+            AgentStatus traceAgentStatus =
+                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.BEYLA);
+
             return VMDTO.builder()
                     .vmId(vm.getId())
                     .name(savedVM.getName())
@@ -120,6 +129,7 @@ public class VMFacadeService {
                     .mciId(mciId)
                     .monitoringAgentStatus(monitoringAgentStatus)
                     .logAgentStatus(logAgentStatus)
+                    .traceAgentStatus(traceAgentStatus)
                     .build();
         } catch (Exception e) {
             log.error(">>> getVM() failed", e);
