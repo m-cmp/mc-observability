@@ -1,0 +1,48 @@
+# CMP Beyla Configuration
+# SITE_CODE will be replaced during installation
+
+# Service identification
+service:
+  name: "cmp-beyla-SITE_CODE"
+
+# Attribute settings for trace/metric identification
+attributes:
+  kubernetes:
+    enable: false
+  instance_id:
+    override_hostname: ""
+
+# Log settings
+log_level: INFO
+
+# Discovery settings - which processes to trace
+discovery:
+  services:
+    - open_ports: 80,443,8080,8443,3000,5000,8000,9000
+
+# OTEL Metrics export configuration
+otel_metrics_export:
+  endpoint: http://mc-o11y-otel-collector:4317
+  protocol: grpc
+  insecure: true
+  interval: 30s
+
+# OTEL Traces export configuration
+otel_traces_export:
+  endpoint: http://mc-o11y-otel-collector:4317
+  protocol: grpc
+  insecure: true
+
+# Internal metrics (optional - for Beyla self-monitoring)
+internal_metrics:
+  prometheus:
+    port: 0
+
+# Network metrics settings
+network:
+  enable: false
+
+# eBPF specific settings
+ebpf:
+  wakeup_len: 100
+  track_request_headers: false

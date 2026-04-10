@@ -1,0 +1,29 @@
+- name: Restart CMP Beyla service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl restart cmp-beyla-{{ site_code }}"
+
+- name: Run CMP Beyla status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-beyla-{{ site_code }}"
+  register: cmp_beyla_status
+  failed_when: cmp_beyla_status.rc not in [0, 3]
+
+- name: Display CMP Beyla status
+  debug:
+    var: cmp_beyla_status

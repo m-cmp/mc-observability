@@ -1,0 +1,22 @@
+[Unit]
+Description=CMP Beyla Service (site_code: SITE_CODE)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+EnvironmentFile=/cmp-agent/sites/SITE_CODE/time.env
+Environment=BEYLA_CONFIG_PATH=/cmp-agent/sites/SITE_CODE/beyla/etc/beyla.yaml
+ExecStart=/cmp-agent/sites/SITE_CODE/beyla/bin/beyla
+ExecStop=/usr/bin/killall beyla
+
+# eBPF 동작에 필요한 권한
+AmbientCapabilities=CAP_SYS_ADMIN CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_PERFMON CAP_BPF CAP_NET_RAW CAP_CHECKPOINT_RESTORE
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_PERFMON CAP_BPF CAP_NET_RAW CAP_CHECKPOINT_RESTORE
+
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
