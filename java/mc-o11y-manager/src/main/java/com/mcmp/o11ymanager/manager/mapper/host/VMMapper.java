@@ -22,10 +22,13 @@ public class VMMapper {
                 .description(dto.getDescription())
                 .monitoringAgentTaskStatus(dto.getMonitoringAgentTaskStatus())
                 .logAgentTaskStatus(dto.getLogAgentTaskStatus())
+                .traceAgentTaskStatus(dto.getTraceAgentTaskStatus())
                 .vmMonitoringAgentTaskId(dto.getVmMonitoringAgentTaskId())
                 .vmLogAgentTaskId(dto.getVmLogAgentTaskId())
+                .vmTraceAgentTaskId(dto.getVmTraceAgentTaskId())
                 .monitoringServiceStatus(dto.getMonitoringServiceStatus())
                 .logServiceStatus(dto.getLogServiceStatus())
+                .traceServiceStatus(dto.getTraceServiceStatus())
                 .nsId(dto.getNsId())
                 .mciId(dto.getMciId())
                 .build();

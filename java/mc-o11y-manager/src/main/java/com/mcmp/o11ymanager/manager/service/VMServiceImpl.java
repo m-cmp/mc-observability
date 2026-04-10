@@ -157,6 +157,18 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
+    public VMAgentTaskStatus getTraceAgentTaskStatus(String nsId, String mciId, String vmId) {
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+        return vm.getTraceAgentTaskStatus();
+    }
+
+    @Override
     public void isIdleMonitoringAgent(String nsId, String mciId, String vmId) {
         VMEntity vm =
                 vmJpaRepository
@@ -188,6 +200,26 @@ public class VMServiceImpl implements VMService {
         if (vm.getLogAgentTaskStatus() != VMAgentTaskStatus.IDLE) {
             throw new VMAgentTaskProcessingException(
                     requestInfo.getRequestId(), vmId, "로그", vm.getLogAgentTaskStatus());
+        }
+    }
+
+    @Override
+    public void isIdleTraceAgent(String nsId, String mciId, String vmId) {
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+
+        VMAgentTaskStatus status = vm.getTraceAgentTaskStatus();
+        // NULL은 아직 Beyla 작업이 한 번도 없었던 상태로 간주하고 IDLE과 동일하게 취급.
+        // ddl-auto:update로 trace_agent_task_status 컬럼이 새로 추가되면서
+        // 기존 VM 레코드들이 NULL로 남아있는 경우를 대응.
+        if (status != null && status != VMAgentTaskStatus.IDLE) {
+            throw new VMAgentTaskProcessingException(
+                    requestInfo.getRequestId(), vmId, "traceAgent", status);
         }
     }
 
@@ -240,6 +272,32 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
+    public void updateTraceAgentTaskStatus(
+            String nsId, String mciId, String vmId, VMAgentTaskStatus status) {
+        // 특정 VM의 Beyla 작업 상태를 DB에 업데이트
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)     // nsId + mciId + vmId 복합키로 VMEntity 조회
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+
+        vm.setTraceAgentTaskStatus(status);  // traceAgentTaskStatus 필드에 새 상태 세팅
+
+        if (status.equals(VMAgentTaskStatus.IDLE)) {
+            // 상태가 IDEL 이면  vmTraceAgentTaskId를 빈문자로 초기화 (작업 종료를 의미)
+            vm.setVmTraceAgentTaskId("");
+        }
+
+        vmJpaRepository.save(vm);
+        log.info(
+                "[VMService] Trace Agent Status {}: {}",
+                vm.getVmTraceAgentTaskId(),
+                vm.getTraceAgentTaskStatus());
+    }
+
+    @Override
     public void updateMonitoringAgentTaskStatusAndTaskId(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId) {
         VMEntity vm =
@@ -276,6 +334,25 @@ public class VMServiceImpl implements VMService {
         vmJpaRepository.save(vm);
 
         log.info("[VMService] Log Service Status {}", vm);
+    }
+
+    @Override
+    public void updateTraceAgentTaskStatusAndTaskId(
+            String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId) {
+        VMEntity vm =
+                vmJpaRepository
+                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotExistsException(
+                                                requestInfo.getRequestId(), "VMEntity", vmId));
+
+        vm.setTraceAgentTaskStatus(status);
+        vm.setVmTraceAgentTaskId(taskId);
+
+        vmJpaRepository.save(vm);
+
+        log.info("[VMService] Trace Agent Status {}", vm);
     }
 
     @Override

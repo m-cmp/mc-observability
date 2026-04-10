@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 public enum Agent {
     TELEGRAF("Telegraf"),
-    FLUENT_BIT("Fluent-Bit");
+    FLUENT_BIT("Fluent-Bit"),
+    BEYLA("Beyla");
 
     private final String name;
 
