@@ -47,6 +47,21 @@ services:
       timeout: 10s
       retries: 30
 
+  mc-observability-front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: mc-observability-front
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 18081:18081
+    depends_on:
+      mc-observability-manager:
+        condition: service_healthy
+
   mc-observability-infra:
     image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
