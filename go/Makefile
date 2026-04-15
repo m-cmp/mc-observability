@@ -29,7 +29,9 @@ default:
 		patch_files=$$(find ../patches -type f -name '*.patch' | sort) && \
 		for patch_file in $${patch_files[@]}; do \
 		  patch -p1 < $$patch_file; \
-		done
+		done && \
+		head -n -1 cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go > /tmp/_az_fix.go && \
+		mv /tmp/_az_fix.go cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 	@echo "[*] Building cb-spider..."
 	@make -C cb-spider
 
