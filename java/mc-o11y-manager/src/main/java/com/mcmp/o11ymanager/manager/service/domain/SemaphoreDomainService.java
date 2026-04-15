@@ -89,6 +89,11 @@ public class SemaphoreDomainService {
                     fileFacadeService.getHostConfigFluentBitRemotePath()
                             + "/"
                             + ConfigDefinition.HOST_CONFIG_NAME_FLUENTBIT_VARIABLES);
+            env.addVariable(
+                    "beyla_config_path",
+                    fileFacadeService.getHostConfigBeylaRemotePath()
+                            + "/"
+                            + ConfigDefinition.HOST_CONFIG_NAME_BEYLA_MAIN_CONFIG);
             if (method == SemaphoreInstallMethod.INSTALL && configContent != null) {
                 env.addVariable(
                         "config_content",
