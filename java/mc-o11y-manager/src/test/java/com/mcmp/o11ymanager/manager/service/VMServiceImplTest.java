@@ -15,7 +15,6 @@ import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.repository.VMJpaRepository;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

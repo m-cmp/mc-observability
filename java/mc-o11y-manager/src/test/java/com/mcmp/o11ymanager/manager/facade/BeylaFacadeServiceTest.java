@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -88,8 +87,7 @@ class BeylaFacadeServiceTest {
             verify(vmService).isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
             verify(beylaSystemRequirementValidator).validateAndThrow(NS_ID, MCI_ID, VM_ID);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
                             NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING, "42");
@@ -107,7 +105,9 @@ class BeylaFacadeServiceTest {
         @Test
         @DisplayName("이미 처리 중이면 VMAgentTaskProcessingException")
         void alreadyProcessing_throwsException() throws Exception {
-            doThrow(new VMAgentTaskProcessingException("req-1", VM_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
+            doThrow(
+                            new VMAgentTaskProcessingException(
+                                    "req-1", VM_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
                     .when(vmService)
                     .isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
 
@@ -117,7 +117,8 @@ class BeylaFacadeServiceTest {
                                             NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(VMAgentTaskProcessingException.class);
 
-            verify(vmService, never()).updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), any());
+            verify(vmService, never())
+                    .updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), any());
         }
 
         @Test
@@ -133,14 +134,14 @@ class BeylaFacadeServiceTest {
                                             NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(BeylaSystemRequirementException.class);
 
-            verify(vmService, never()).updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), any());
+            verify(vmService, never())
+                    .updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), any());
         }
 
         @Test
         @DisplayName("Semaphore 호출 실패 시 IDLE로 롤백")
         void semaphoreFails_rollbackToIdle() throws Exception {
-            when(semaphoreDomainService.install(
-                            any(), any(), any(), any(), anyInt()))
+            when(semaphoreDomainService.install(any(), any(), any(), any(), anyInt()))
                     .thenThrow(new RuntimeException("Semaphore connection failed"));
 
             assertThatThrownBy(
@@ -151,8 +152,7 @@ class BeylaFacadeServiceTest {
                     .hasMessageContaining("Semaphore connection failed");
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
                     .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.IDLE);
         }
@@ -167,7 +167,11 @@ class BeylaFacadeServiceTest {
         void normalFlow_updatesSuccessfully() throws Exception {
             Task mockTask = Task.builder().id(55).status("waiting").build();
             when(semaphoreDomainService.install(
-                            any(), eq(SemaphoreInstallMethod.UPDATE), any(), eq(Agent.BEYLA), anyInt()))
+                            any(),
+                            eq(SemaphoreInstallMethod.UPDATE),
+                            any(),
+                            eq(Agent.BEYLA),
+                            anyInt()))
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-456");
 
@@ -190,7 +194,11 @@ class BeylaFacadeServiceTest {
         void normalFlow_uninstallsSuccessfully() {
             Task mockTask = Task.builder().id(77).status("waiting").build();
             when(semaphoreDomainService.install(
-                            any(), eq(SemaphoreInstallMethod.UNINSTALL), any(), eq(Agent.BEYLA), anyInt()))
+                            any(),
+                            eq(SemaphoreInstallMethod.UNINSTALL),
+                            any(),
+                            eq(Agent.BEYLA),
+                            anyInt()))
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-789");
 
@@ -218,8 +226,7 @@ class BeylaFacadeServiceTest {
             assertThat(results).hasSize(1);
             assertThat(results.get(0).getStatus()).isEqualTo(ResponseStatus.SUCCESS);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.RESTARTING);
+                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.RESTARTING);
             verify(vmService)
                     .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.IDLE);
         }

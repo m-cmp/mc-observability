@@ -34,7 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring")
-@Tag(name = "[Manager] Beyla Agent Management", description = "Beyla APM/Trace Agent management APIs")
+@Tag(
+        name = "[Manager] Beyla Agent Management",
+        description = "Beyla APM/Trace Agent management APIs")
 public class BeylaController {
 
     private static final Lock semaphoreInstallTemplateCurrentCountLock = new ReentrantLock();
@@ -135,7 +137,8 @@ public class BeylaController {
     @Operation(
             summary = "Check Beyla System Requirements",
             operationId = "CheckBeylaSystemRequirements",
-            description = "Check if the target VM meets Beyla system requirements (kernel version, BTF support)")
+            description =
+                    "Check if the target VM meets Beyla system requirements (kernel version, BTF support)")
     public ResBody<BeylaSystemCheckResult> checkSystemRequirements(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
             @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,

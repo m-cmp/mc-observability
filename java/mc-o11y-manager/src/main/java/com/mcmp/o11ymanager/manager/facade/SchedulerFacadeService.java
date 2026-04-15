@@ -1,7 +1,6 @@
 package com.mcmp.o11ymanager.manager.facade;
 
 import com.mcmp.o11ymanager.manager.enums.Agent;
-import com.mcmp.o11ymanager.manager.enums.AgentAction;
 import com.mcmp.o11ymanager.manager.enums.SemaphoreInstallMethod;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.semaphore.Project;
@@ -28,7 +27,8 @@ import org.springframework.stereotype.Service;
 @Transactional
 public class SchedulerFacadeService {
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);  // 동시에 풀링 가능한 태스트 최대 10개
+    private final ScheduledExecutorService scheduler =
+            Executors.newScheduledThreadPool(10); // 동시에 풀링 가능한 태스트 최대 10개
 
     @PostConstruct
     void debugSchedulerBean() {
@@ -68,7 +68,7 @@ public class SchedulerFacadeService {
             SemaphoreInstallMethod method,
             Agent agent) {
 
-        AtomicLong startTime = new AtomicLong(System.currentTimeMillis());        // 타임아웃 측정 기준점
+        AtomicLong startTime = new AtomicLong(System.currentTimeMillis()); // 타임아웃 측정 기준점
         AtomicReference<ScheduledFuture<?>> futureRef = new AtomicReference<>();
         // 람다 내부에서 자기 자신(ScheduledFuture)을 cancel()하기 위한 self-reference 트릭.
         // 람다가 정의될 때는 아직 future가 없으므로 AtomicReference로 forward-declaration.
@@ -80,7 +80,10 @@ public class SchedulerFacadeService {
                             try {
                                 long currentTime = System.currentTimeMillis();
 
-                                Project project = semaphorePort.getProjectByName(projectName);       // Ansible Semaphore API로 프로젝트 호출 후 projectName과 같은 프로젝트를 찾음
+                                Project project =
+                                        semaphorePort.getProjectByName(
+                                                projectName); // Ansible Semaphore API로 프로젝트 호출 후
+                                // projectName과 같은 프로젝트를 찾음
                                 Task currentTask = semaphorePort.getTask(project.getId(), taskId);
                                 String status =
                                         Optional.ofNullable(currentTask.getStatus())
@@ -99,7 +102,8 @@ public class SchedulerFacadeService {
                                         status);
 
                                 // waiting: reset start time and keep checking
-                                // Semaphore 큐에서 대기 중. startTime을 현재 시각으로 리셋 -> 타임아웃 카운트 연기. 즉, 태스크가 실제로 시작되지 않은 동안은 타임아웃 안잡힘
+                                // Semaphore 큐에서 대기 중. startTime을 현재 시각으로 리셋 -> 타임아웃 카운트 연기. 즉, 태스크가
+                                // 실제로 시작되지 않은 동안은 타임아웃 안잡힘
                                 if ("waiting".equals(status)) {
                                     startTime.set(System.currentTimeMillis());
                                     return;
@@ -192,8 +196,8 @@ public class SchedulerFacadeService {
                                         e.getMessage());
                             }
                         },
-                        0,                  // initialDelay : 즉시 첫 실행
-                        checkIntervalSec,             // 주기
+                        0, // initialDelay : 즉시 첫 실행
+                        checkIntervalSec, // 주기
                         TimeUnit.SECONDS);
 
         futureRef.set(future);

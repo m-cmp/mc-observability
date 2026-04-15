@@ -118,7 +118,8 @@ public class SemaphoreDomainService {
             Task task = createTask(template.getId(), env);
 
             log.info("📌 step5: call semaphorePort.createTask()");
-            return semaphorePort.createTask(project.getId(), task);        // SemaphoreClient에서 Ansible REST API 호출
+            return semaphorePort.createTask(
+                    project.getId(), task); // SemaphoreClient에서 Ansible REST API 호출
         } catch (Exception e) {
             throw new SemaphoreException("Failed to " + methodStr + " agent", e);
         }

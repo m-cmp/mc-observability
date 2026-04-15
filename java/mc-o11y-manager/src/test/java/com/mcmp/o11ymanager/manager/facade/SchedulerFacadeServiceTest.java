@@ -14,8 +14,6 @@ import com.mcmp.o11ymanager.manager.model.semaphore.Project;
 import com.mcmp.o11ymanager.manager.model.semaphore.Task;
 import com.mcmp.o11ymanager.manager.port.SemaphorePort;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -158,8 +156,7 @@ class SchedulerFacadeServiceTest {
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateMonitoringAgentTaskStatus(
-                        NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FINISHED);
+                .updateMonitoringAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FINISHED);
     }
 
     @Test
@@ -203,7 +200,11 @@ class SchedulerFacadeServiceTest {
         Thread.sleep(3000);
 
         verify(semaphorePort, atLeastOnce()).getProjectByName(PROJECT_NAME);
-        verify(vmService, never()).updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), eq(VMAgentTaskStatus.FINISHED));
-        verify(vmService, never()).updateTraceAgentTaskStatus(anyString(), anyString(), anyString(), eq(VMAgentTaskStatus.FAILED));
+        verify(vmService, never())
+                .updateTraceAgentTaskStatus(
+                        anyString(), anyString(), anyString(), eq(VMAgentTaskStatus.FINISHED));
+        verify(vmService, never())
+                .updateTraceAgentTaskStatus(
+                        anyString(), anyString(), anyString(), eq(VMAgentTaskStatus.FAILED));
     }
 }

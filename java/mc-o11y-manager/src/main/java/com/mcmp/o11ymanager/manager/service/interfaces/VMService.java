@@ -52,7 +52,8 @@ public interface VMService {
 
     void updateLogAgentTaskStatus(String nsId, String mciId, String vmId, VMAgentTaskStatus status);
 
-    void updateTraceAgentTaskStatus(String nsId, String mciId, String vmId, VMAgentTaskStatus status);
+    void updateTraceAgentTaskStatus(
+            String nsId, String mciId, String vmId, VMAgentTaskStatus status);
 
     void updateMonitoringAgentTaskStatusAndTaskId(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId);
