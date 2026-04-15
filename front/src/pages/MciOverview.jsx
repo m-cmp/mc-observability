@@ -84,7 +84,8 @@ export default function MciOverview() {
     await Promise.allSettled(
       vmList.map(async (vm) => {
         if (!vm.connectionName || !vm.cspResourceName) return;
-        const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1');
+        const memGiB = vm.spec?.memoryGiB || 0;
+        const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1', memGiB);
         data[vm.id] = cspData;
       })
     );
