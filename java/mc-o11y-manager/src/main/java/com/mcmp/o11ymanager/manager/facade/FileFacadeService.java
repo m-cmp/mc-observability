@@ -67,6 +67,16 @@ public class FileFacadeService {
                 + "/etc";
     }
 
+    public String getHostConfigBeylaRemotePath() {
+        return ConfigDefinition.CMP_AGENT_ROOT_PATH
+                + "/"
+                + "sites/"
+                + deploySiteCode
+                + "/"
+                + ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_BEYLA
+                + "/etc";
+    }
+
     // agent remote path
     public String getAgentRemotePath(Agent agent) {
         return switch (agent) {

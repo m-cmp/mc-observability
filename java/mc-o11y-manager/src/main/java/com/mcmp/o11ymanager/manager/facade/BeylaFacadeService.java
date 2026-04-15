@@ -34,6 +34,7 @@ public class BeylaFacadeService {
     private final SchedulerFacadeService schedulerFacadeService;
     private final TumblebugService tumblebugService;
     private final BeylaSystemRequirementValidator beylaSystemRequirementValidator;
+    private final BeylaConfigFacadeService beylaConfigFacadeService;
 
     public void install(
             String nsId,
@@ -61,13 +62,19 @@ public class BeylaFacadeService {
         log.info(
                 "========================= START BEYLA INSTALL REQUEST============================");
 
+        // BeylaConfigFacadeService에서 ClassPath의 beyla_template.yaml + application.yaml의
+        // beyla.otel-endpoint를 합쳐 최종 yaml 생성. install 직후 chained config-update가
+        // 이 conf로 원격의 정적 placeholder yaml을 덮어씀.
+        String configContent = beylaConfigFacadeService.initBeylaConfig(nsId, mciId, vmId);
+        log.info("Beyla config: {}", configContent);
+
         Task task;
         try {
             task =
                     semaphoreDomainService.install(
                             accessInfo,
                             SemaphoreInstallMethod.INSTALL,
-                            null,
+                            configContent,
                             Agent.BEYLA,
                             templateCount);
         } catch (Exception e) {

@@ -67,6 +67,12 @@ loki:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
 
+beyla:
+  # Beyla agent가 trace/metric을 송신할 OTEL 엔드포인트.
+  # 기본값은 사내 docker network의 Tempo OTLP receiver. 사이트별로 BEYLA_OTEL_ENDPOINT
+  # 환경변수만 override하면 다른 사이트(외부 endpoint)에 배포 가능.
+  otel-endpoint: ${BEYLA_OTEL_ENDPOINT:http://mc-observability-tempo:4317}
+
 influxdb:
   database: ${INFLUX_DATABASE:mc-observability}
   downsampling-database: ${INFLUX_DOWNSAMPLING_DATABASE:downsampling}
