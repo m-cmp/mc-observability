@@ -13,6 +13,20 @@
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
   raw: "mkdir -p /cmp-agent/sites/{{ site_code }}/beyla/bin /cmp-agent/sites/{{ site_code }}/beyla/etc"
 
+# tar.gz 안에는 평탄 구조(beyla, LICENSE, NOTICE, ...)로만 들어 있어서
+# 캐시된 binary가 없으면 첫 실행 때 풀어서 bin/beyla 위치에 둔다.
+# (binary는 git에 올리지 않고 .gitignore 처리. tar.gz만 commit)
+- name: Extract Beyla binary from tarball if not cached
+  raw: |
+    set -e
+    BIN_DIR={{ role_path }}/agent-install-files/{{ arch }}/beyla/bin
+    if [ ! -f $BIN_DIR/beyla ]; then
+      cd $BIN_DIR
+      sudo tar xzf beyla-linux-*.tar.gz beyla
+      sudo chmod +x beyla
+    fi
+  delegate_to: 127.0.0.1
+
 - name: Compress Beyla agent files
   raw: "cd {{ role_path }}/agent-install-files/{{ arch }} && sudo rm -f cmp-agent/cmp-beyla_{{ request_id }}.tar.gz && sudo chown -R root:root beyla/ && sudo ../amd64/busybox tar cvfz cmp-agent/cmp-beyla_{{ request_id }}.tar.gz beyla/ && sudo chmod 644 cmp-agent/cmp-beyla_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1
