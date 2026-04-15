@@ -3,14 +3,12 @@ package com.mcmp.o11ymanager.manager.service.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.mcmp.o11ymanager.manager.exception.agent.BeylaSystemRequirementException;
 import com.mcmp.o11ymanager.manager.service.domain.BeylaSystemRequirementValidator.BeylaSystemCheckResult;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -118,8 +116,7 @@ class BeylaSystemRequirementValidatorTest {
         @Test
         @DisplayName("uname -r 실패 시 unknown 반환, kernel invalid")
         void unameFails_unknown() {
-            when(tumblebugService.executeCommand(
-                            eq(NS_ID), eq(MCI_ID), eq(VM_ID), eq("uname -r")))
+            when(tumblebugService.executeCommand(eq(NS_ID), eq(MCI_ID), eq(VM_ID), eq("uname -r")))
                     .thenThrow(new RuntimeException("SSH connection failed"));
             mockBtfSupport("true");
 
