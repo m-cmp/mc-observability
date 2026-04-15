@@ -57,7 +57,7 @@ services:
       - internal_network
       - external_network
     ports:
-      - 3001:3001
+      - 18081:18081
     depends_on:
       mc-observability-manager:
         condition: service_healthy
