@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMci } from '../api/tumblebug';
 import { getMetricsByVM } from '../api/monitoring';
-import { getAllCspMetrics, isCspSupported } from '../api/csp';
+import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import MetricChart from '../components/MetricChart';
 
 const AGENT_METRICS = [
@@ -84,7 +84,8 @@ export default function MciOverview() {
     await Promise.allSettled(
       vmList.map(async (vm) => {
         if (!vm.connectionName || !vm.cspResourceName) return;
-        const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1');
+        const memGiB = vm.spec?.memoryGiB || 0;
+        const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1', memGiB);
         data[vm.id] = cspData;
       })
     );
@@ -185,7 +186,8 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
     );
   }
 
-  const cspKeys = Object.keys(metrics);
+  // Maintain consistent order matching CSP_METRICS definition
+  const cspKeys = CSP_METRICS.map(m => m.key).filter(k => metrics[k]);
   const activeKey = cspKeys.includes(selectedChart) ? selectedChart : (cspKeys[0] || 'cpu_usage');
   const activeData = metrics[activeKey];
 

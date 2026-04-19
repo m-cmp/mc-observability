@@ -245,24 +245,6 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:edge
-    container_name: mc-observability-minio
-    restart: always
-    networks:
-      - internal_network
-    environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=mc-agent
-    volumes:
-      - /docker/minio_data:/minio/data
-    healthcheck:
-      start_period: 120s
-      test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
-      interval: 10s
-      timeout: 10s
-      retries: 30
-
   mc-observability-loki-init-volumes:
     image: busybox:stable
     container_name: mc-observability-loki-init-volumes
@@ -287,8 +269,6 @@ services:
     depends_on:
       mc-observability-loki-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     volumes:
@@ -326,8 +306,6 @@ services:
     depends_on:
       mc-observability-tempo-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     command: [ "-config.file=/etc/tempo-config.yaml" ]

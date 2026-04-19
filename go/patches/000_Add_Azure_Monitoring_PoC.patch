@@ -549,10 +549,10 @@ index a6d1c211..d10944b5 100644
 +	return nil, errors.New("GCP Cloud Driver: not implemented")
 +}
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-index 479edc9a..9af00411 100644
+index 479edc9a..837db0b1 100644
 --- a/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/connect/Azure_CloudConnection.go
-@@ -287,3 +287,21 @@ func (cloudConn *AzureCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHa
+@@ -287,3 +287,22 @@ func (cloudConn *AzureCloudConnection) CreateQuotaInfoHandler() (irs.QuotaInfoHa
  	}
  	return &quotaInfoHandler, nil
  }
@@ -570,6 +570,7 @@ index 479edc9a..9af00411 100644
 +		AgentPoolsClient:                cloudConn.AgentPoolsClient,
 +		VirtualMachineScaleSetsClient:   cloudConn.VirtualMachineScaleSetsClient,
 +		VirtualMachineScaleSetVMsClient: cloudConn.VirtualMachineScaleSetVMsClient,
++		VMSizeClient:                    cloudConn.VmSpecClient,
 +		MetricClient:                    cloudConn.MetricClient,
 +	}
 +	return &monitoringHandler, nil
@@ -800,10 +801,10 @@ index 2c7b5668..23dbfec5 100644
  	config := readConfigFile()
 diff --git a/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
 new file mode 100644
-index 00000000..4cda7b34
+index 00000000..d5d38e1f
 --- /dev/null
 +++ b/cloud-control-manager/cloud-driver/drivers/azure/resources/MonitoringHandler.go
-@@ -0,0 +1,332 @@
+@@ -0,0 +1,369 @@
 +// Proof of Concepts of CB-Spider.
 +// The CB-Spider is a sub-Framework of the Cloud-Barista Multi-Cloud Project.
 +// The CB-Spider Mission is to connect all the clouds with a single interface.
@@ -843,6 +844,7 @@ index 00000000..4cda7b34
 +	AgentPoolsClient                *armcontainerservice.AgentPoolsClient
 +	VirtualMachineScaleSetsClient   *armcompute.VirtualMachineScaleSetsClient
 +	VirtualMachineScaleSetVMsClient *armcompute.VirtualMachineScaleSetVMsClient
++	VMSizeClient                    *armcompute.VirtualMachineSizesClient
 +	MetricClient                    *azquery.MetricsClient
 +}
 +
@@ -974,6 +976,22 @@ index 00000000..4cda7b34
 +
 +	vmMonitoringInfo.TimestampValues = timestampValues
 +
++	// Normalize metric names
++	switch vmMonitoringInfo.MetricName {
++	case "Percentage CPU":
++		vmMonitoringInfo.MetricName = "CPU Usage"
++	case "Available Memory Bytes":
++		vmMonitoringInfo.MetricName = "Memory Available"
++	case "Disk Read Bytes":
++		vmMonitoringInfo.MetricName = "Disk Read"
++	case "Disk Write Bytes":
++		vmMonitoringInfo.MetricName = "Disk Write"
++	case "Disk Read Operations/Sec":
++		vmMonitoringInfo.MetricName = "Disk Read Ops"
++	case "Disk Write Operations/Sec":
++		vmMonitoringInfo.MetricName = "Disk Write Ops"
++	}
++
 +	return vmMonitoringInfo, nil
 +}
 +
@@ -1041,6 +1059,26 @@ index 00000000..4cda7b34
 +	LoggingInfo(hiscallInfo, start)
 +
 +	return vmMonitoringInfo, nil
++}
++
++
++func (monitoringHandler *AzureMonitoringHandler) getVMTotalMemoryBytes(vmSizeName string) int64 {
++	pager := monitoringHandler.VMSizeClient.NewListPager(monitoringHandler.Region.Region, nil)
++	for pager.More() {
++		page, err := pager.NextPage(context.Background())
++		if err != nil {
++			cblogger.Error(fmt.Sprintf("Failed to list VM sizes: %s", err))
++			return 0
++		}
++		for _, size := range page.Value {
++			if size.Name != nil && string(*size.Name) == vmSizeName {
++				if size.MemoryInMB != nil {
++					return int64(*size.MemoryInMB) * 1024 * 1024
++				}
++			}
++		}
++	}
++	return 0
 +}
 +
 +func (monitoringHandler *AzureMonitoringHandler) GetClusterNodeMetricData(clusterNodeMonitoringReqInfo irs.ClusterNodeMonitoringReqInfo) (irs.MetricData, error) {
