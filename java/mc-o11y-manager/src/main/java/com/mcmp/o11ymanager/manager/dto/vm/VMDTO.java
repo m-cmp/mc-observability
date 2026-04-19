@@ -48,6 +48,10 @@ public class VMDTO {
     @JsonIgnore
     private VMAgentTaskStatus logAgentTaskStatus;
 
+    @JsonProperty("trace_agent_task_status")
+    @JsonIgnore
+    private VMAgentTaskStatus traceAgentTaskStatus;
+
     @JsonProperty("vm_monitoring_agent_task_id")
     @JsonIgnore
     private String vmMonitoringAgentTaskId;
@@ -56,11 +60,18 @@ public class VMDTO {
     @JsonIgnore
     private String vmLogAgentTaskId;
 
+    @JsonProperty("vm_trace_agent_task_id")
+    @JsonIgnore
+    private String vmTraceAgentTaskId;
+
     @JsonProperty("monitoring_service_status")
     private AgentServiceStatus monitoringServiceStatus;
 
     @JsonProperty("log_service_status")
     private AgentServiceStatus logServiceStatus;
+
+    @JsonProperty("trace_service_status")
+    private AgentServiceStatus traceServiceStatus;
 
     @Schema(description = "Namespace ID", example = "ns-1")
     @JsonProperty("ns_id")
@@ -78,6 +89,10 @@ public class VMDTO {
     @JsonProperty("log_agent_status")
     private AgentStatus logAgentStatus;
 
+    @Schema(description = "Trace agent status", example = "SUCCESS")
+    @JsonProperty("trace_agent_status")
+    private AgentStatus traceAgentStatus;
+
     public static VMDTO fromEntity(VMEntity entity) {
         return VMDTO.builder()
                 .vmId(entity.getVmId())
@@ -88,10 +103,13 @@ public class VMDTO {
                 .description(entity.getDescription())
                 .vmMonitoringAgentTaskId(entity.getVmMonitoringAgentTaskId())
                 .vmLogAgentTaskId(entity.getVmLogAgentTaskId())
+                .vmTraceAgentTaskId(entity.getVmTraceAgentTaskId())
                 .monitoringServiceStatus(entity.getMonitoringServiceStatus())
                 .logServiceStatus(entity.getLogServiceStatus())
+                .traceServiceStatus(entity.getTraceServiceStatus())
                 .monitoringAgentStatus(entity.getMonitoringAgentStatus())
                 .logAgentStatus(entity.getLogAgentStatus())
+                .traceAgentStatus(entity.getTraceAgentStatus())
                 .nsId(entity.getNsId())
                 .mciId(entity.getMciId())
                 .build();
@@ -106,12 +124,16 @@ public class VMDTO {
                 .description(this.description)
                 .monitoringAgentTaskStatus(this.monitoringAgentTaskStatus)
                 .logAgentTaskStatus(this.logAgentTaskStatus)
+                .traceAgentTaskStatus(this.traceAgentTaskStatus)
                 .vmMonitoringAgentTaskId(this.vmMonitoringAgentTaskId)
                 .vmLogAgentTaskId(this.vmLogAgentTaskId)
+                .vmTraceAgentTaskId(this.vmTraceAgentTaskId)
                 .monitoringServiceStatus(this.monitoringServiceStatus)
                 .logServiceStatus(this.logServiceStatus)
+                .traceServiceStatus(this.traceServiceStatus)
                 .monitoringAgentStatus(this.monitoringAgentStatus)
                 .logAgentStatus(this.logAgentStatus)
+                .traceAgentStatus(this.traceAgentStatus)
                 .nsId(this.nsId)
                 .mciId(this.mciId)
                 .build();

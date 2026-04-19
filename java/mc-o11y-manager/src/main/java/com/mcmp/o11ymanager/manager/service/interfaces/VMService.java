@@ -38,19 +38,30 @@ public interface VMService {
     void isIdleLogAgent(String nsId, String mciId, String vmId)
             throws HostAgentTaskProcessingException;
 
+    void isIdleTraceAgent(String nsId, String mciId, String vmId)
+            throws HostAgentTaskProcessingException;
+
     VMAgentTaskStatus getMonitoringAgentTaskStatus(String nsId, String mciId, String vmId);
 
     VMAgentTaskStatus getLogAgentTaskStatus(String nsId, String mciId, String vmId);
+
+    VMAgentTaskStatus getTraceAgentTaskStatus(String nsId, String mciId, String vmId);
 
     void updateMonitoringAgentTaskStatus(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status);
 
     void updateLogAgentTaskStatus(String nsId, String mciId, String vmId, VMAgentTaskStatus status);
 
+    void updateTraceAgentTaskStatus(
+            String nsId, String mciId, String vmId, VMAgentTaskStatus status);
+
     void updateMonitoringAgentTaskStatusAndTaskId(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId);
 
     void updateLogAgentTaskStatusAndTaskId(
+            String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId);
+
+    void updateTraceAgentTaskStatusAndTaskId(
             String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId);
 
     List<String> getVmIds(String nsId, String mciId);

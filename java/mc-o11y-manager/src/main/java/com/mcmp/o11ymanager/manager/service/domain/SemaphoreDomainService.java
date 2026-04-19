@@ -55,6 +55,7 @@ public class SemaphoreDomainService {
     @Value("${feign.semaphore.password}")
     private String password;
 
+    // Semaphore의 REST API를 호출해서 에이전트 설치 / 업데이트 / 언인스톨 태스크를 큐잉하는 도메인 서비스
     public Task install(
             AccessInfoDTO accessInfo,
             SemaphoreInstallMethod method,
@@ -68,6 +69,7 @@ public class SemaphoreDomainService {
 
         try {
             log.info("📌 step1: create env");
+            // Ansible playbook에 전달할 변수 묶음을 생성
             Environment env =
                     createEnvironment(
                             agent,
@@ -116,7 +118,8 @@ public class SemaphoreDomainService {
             Task task = createTask(template.getId(), env);
 
             log.info("📌 step5: call semaphorePort.createTask()");
-            return semaphorePort.createTask(project.getId(), task);
+            return semaphorePort.createTask(
+                    project.getId(), task); // SemaphoreClient에서 Ansible REST API 호출
         } catch (Exception e) {
             throw new SemaphoreException("Failed to " + methodStr + " agent", e);
         }

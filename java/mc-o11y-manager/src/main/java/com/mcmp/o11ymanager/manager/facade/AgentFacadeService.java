@@ -39,6 +39,7 @@ public class AgentFacadeService {
 
     private final FluentBitFacadeService fluentBitFacadeService;
     private final TelegrafFacadeService telegrafFacadeService;
+    private final BeylaFacadeService beylaFacadeService;
     private final TumblebugService tumblebugService;
     private final VMService vmService;
 
@@ -161,8 +162,11 @@ public class AgentFacadeService {
         return results;
     }
 
+    // 확인 필요: 기존에는 `> SEMAPHORE_MAX_PARALLEL_TASKS` 조건이라 카운터가 11까지 올라가
+    // `agent_install_11` 템플릿을 찾다가 NoSuchElementException이 발생할 수 있었음.
+    // `>=`로 바꿔 1~10 범위로만 순환하도록 수정. Telegraf/FluentBit 공용 경로라 영향 범위 주의.
     private int getSemaphoreInstallTemplateCurrentCount() {
-        if (semaphoreInstallTemplateCurrentCount > SEMAPHORE_MAX_PARALLEL_TASKS) {
+        if (semaphoreInstallTemplateCurrentCount >= SEMAPHORE_MAX_PARALLEL_TASKS) {
             semaphoreInstallTemplateCurrentCount = 0;
         }
         semaphoreInstallTemplateCurrentCount++;
@@ -170,8 +174,10 @@ public class AgentFacadeService {
         return semaphoreInstallTemplateCurrentCount;
     }
 
+    // 확인 필요: 위 getSemaphoreInstallTemplateCurrentCount와 동일 이슈.
+    // `>`를 `>=`로 바꿔 config update 템플릿 슬롯(1~10) 범위 밖을 참조하지 않도록 수정.
     private int getSemaphoreConfigUpdateTemplateCurrentCount() {
-        if (semaphoreConfigUpdateTemplateCurrentCount > SEMAPHORE_MAX_PARALLEL_TASKS) {
+        if (semaphoreConfigUpdateTemplateCurrentCount >= SEMAPHORE_MAX_PARALLEL_TASKS) {
             semaphoreConfigUpdateTemplateCurrentCount = 0;
         }
         semaphoreConfigUpdateTemplateCurrentCount++;
@@ -186,6 +192,8 @@ public class AgentFacadeService {
             taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, mciId, vmId);
         } else if (agent == Agent.FLUENT_BIT) {
             taskStatus = vmService.getLogAgentTaskStatus(nsId, mciId, vmId);
+        } else if (agent == Agent.BEYLA) {
+            taskStatus = vmService.getTraceAgentTaskStatus(nsId, mciId, vmId);
         } else {
             throw new IllegalArgumentException("Unknown agent type: " + agent);
         }

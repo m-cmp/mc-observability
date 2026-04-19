@@ -40,12 +40,31 @@ public enum AgentAction {
     LOG_AGENT_CONFIG_ROLLBACK_FINISHED("Log Agent Config Rollback Finished"),
     LOG_AGENT_CONFIG_ROLLBACK_FAILED("Log Agent Config Rollback Failed"),
 
+    TRACE_AGENT_INSTALL_STARTED("Trace Agent Install Started"),
+    TRACE_AGENT_INSTALL_FINISHED("Trace Agent Install Finished"),
+    TRACE_AGENT_INSTALL_FAILED("Trace Agent Install Failed"),
+    TRACE_AGENT_UPDATE_STARTED("Trace Agent Update Started"),
+    TRACE_AGENT_UPDATE_FINISHED("Trace Agent Update Finished"),
+    TRACE_AGENT_UPDATE_FAILED("Trace Agent Update Failed"),
+    TRACE_AGENT_UNINSTALL_STARTED("Trace Agent Uninstall Started"),
+    TRACE_AGENT_UNINSTALL_FINISHED("Trace Agent Uninstall Finished"),
+    TRACE_AGENT_UNINSTALL_FAILED("Trace Agent Uninstall Failed"),
+    TRACE_AGENT_CONFIG_UPDATE_STARTED("Trace Agent Config Update Started"),
+    TRACE_AGENT_CONFIG_UPDATE_FINISHED("Trace Agent Config Update Finished"),
+    TRACE_AGENT_CONFIG_UPDATE_FAILED("Trace Agent Config Update Failed"),
+    TRACE_AGENT_CONFIG_ROLLBACK_STARTED("Trace Agent Config Rollback Started"),
+    TRACE_AGENT_CONFIG_ROLLBACK_FINISHED("Trace Agent Config Rollback Finished"),
+    TRACE_AGENT_CONFIG_ROLLBACK_FAILED("Trace Agent Config Rollback Failed"),
+
     ENABLE_TELEGRAF("Fluent-Bit Enabled"),
     ENABLE_FLUENT_BIT("Fluent-Bit Enabled"),
     DISABLE_TELEGRAF("Telegraf Disabled"),
     DISABLE_FLUENT_BIT("Fluent-Bit Disabled"),
     RESTART_TELEGRAF("Telegraf Restarted"),
-    RESTART_FLUENT_BIT("Fluent-Bit Restarted");
+    RESTART_FLUENT_BIT("Fluent-Bit Restarted"),
+    ENABLE_BEYLA("Beyla Enabled"),
+    DISABLE_BEYLA("Beyla Disabled"),
+    RESTART_BEYLA("Beyla Restarted");
 
     private final String message;
 
