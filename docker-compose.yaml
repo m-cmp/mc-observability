@@ -287,8 +287,6 @@ services:
     depends_on:
       mc-observability-loki-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     volumes:
