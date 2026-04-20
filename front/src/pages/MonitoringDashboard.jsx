@@ -276,8 +276,8 @@ export default function MonitoringDashboard() {
             <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
               <button onClick={() => setDataSource('agent')}
                 className={`px-3 py-1 rounded-md ${dataSource === 'agent' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>Agent</button>
-              <button onClick={() => setDataSource('csp')}
-                className={`px-3 py-1 rounded-md ${dataSource === 'csp' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>CSP</button>
+              <button onClick={() => setDataSource('csp')} title="CSP API Based"
+                className={`px-3 py-1 rounded-md ${dataSource === 'csp' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>API</button>
             </div>
           )}
         </div>
@@ -384,7 +384,7 @@ export default function MonitoringDashboard() {
           {/* CSP metric selector */}
           {dataSource === 'csp' && selectedVmId && (
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">CSP Metric</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">API Metric</label>
               <div className="flex gap-1 flex-wrap">
                 {CSP_METRICS.map((m) => (
                   <button key={m.key} onClick={() => setSelectedCspMetric(m.key)}
@@ -401,10 +401,10 @@ export default function MonitoringDashboard() {
         {dataSource === 'csp' && selectedVmId && (
           <div className="p-4 border-t">
             <div className="mb-2 text-sm font-medium">
-              CSP: {vms.find(v => v.id === selectedVmId)?.name || selectedVmId}
+              API: {vms.find(v => v.id === selectedVmId)?.name || selectedVmId}
             </div>
             {(cspLoading || !cspMetrics) ? (
-              <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading CSP data...</div>
+              <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading API data...</div>
             ) : cspMetrics[selectedCspMetric]?.series ? (
               <div className="bg-white rounded border p-3">
                 <MetricChart

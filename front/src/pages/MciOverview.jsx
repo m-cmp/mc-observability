@@ -107,9 +107,9 @@ export default function MciOverview() {
                 className={`px-3 py-1 rounded-md ${dataSource === 'agent' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>
                 Agent
               </button>
-              <button onClick={() => setDataSource('csp')}
+              <button onClick={() => setDataSource('csp')} title="CSP API Based"
                 className={`px-3 py-1 rounded-md ${dataSource === 'csp' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>
-                CSP
+                API
               </button>
             </div>
           )}
@@ -180,7 +180,7 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
     return (
       <div className="bg-white rounded-lg shadow">
         <VmHeader vm={vm} showCspBadge={true} cspAvailable={false} />
-        <div className="p-8 text-center text-sm text-gray-400">CSP monitoring not supported for this provider</div>
+        <div className="p-8 text-center text-sm text-gray-400">API monitoring not supported for this provider</div>
       </div>
     );
   }
@@ -207,7 +207,7 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
         </div>
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
-            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP data...</div>
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading API data...</div>
           ) : activeData?.series ? (
             <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
           ) : (
@@ -225,8 +225,8 @@ function VmHeader({ vm, showCspBadge, cspAvailable }) {
       <div className="flex items-center gap-3">
         <span className="font-semibold text-sm">{vm.name || vm.id}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full ${vm.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{vm.status || '-'}</span>
-        {showCspBadge && cspAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">CSP</span>}
-        {cspAvailable && !showCspBadge && <span className="text-xs text-gray-400">(CSP available)</span>}
+        {showCspBadge && cspAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
+        {cspAvailable && !showCspBadge && <span className="text-xs text-gray-400" title="CSP API Based">(API available)</span>}
       </div>
       <div className="text-xs text-gray-400">{vm.connectionName} {vm.publicIP && <span className="ml-2 font-mono">{vm.publicIP}</span>}</div>
     </div>
