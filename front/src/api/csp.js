@@ -1,15 +1,16 @@
 import client from './client';
 
 // Based on cb-spider MonitoringHandler interface (MonitoringHandler.go)
+// Aligned with cb-spider MetricNameAndUnit() in MonitoringHandler.go
 const CSP_METRICS = [
-  { key: 'cpu_usage', label: 'CPU Usage', unit: '%' },
-  { key: 'memory_usage', label: 'Memory Usage', unit: '%' },
-  { key: 'disk_read', label: 'Disk Read', unit: 'bytes' },
-  { key: 'disk_write', label: 'Disk Write', unit: 'bytes' },
-  { key: 'disk_read_ops', label: 'Disk Read Ops', unit: 'count' },
-  { key: 'disk_write_ops', label: 'Disk Write Ops', unit: 'count' },
-  { key: 'network_in', label: 'Network In', unit: 'bytes' },
-  { key: 'network_out', label: 'Network Out', unit: 'bytes' },
+  { key: 'cpu_usage', label: 'CPU Usage Percent', unit: 'Percent' },
+  { key: 'memory_usage', label: 'Memory Usage Percent', unit: 'Percent' },
+  { key: 'disk_read', label: 'Disk Read Bytes', unit: 'Bytes' },
+  { key: 'disk_write', label: 'Disk Write Bytes', unit: 'Bytes' },
+  { key: 'disk_read_ops', label: 'Disk Read Operations/Sec', unit: 'CountPerSecond' },
+  { key: 'disk_write_ops', label: 'Disk Write Operations/Sec', unit: 'CountPerSecond' },
+  { key: 'network_in', label: 'Network In', unit: 'Bytes' },
+  { key: 'network_out', label: 'Network Out', unit: 'Bytes' },
 ];
 
 export { CSP_METRICS };
@@ -39,13 +40,13 @@ export async function getAllCspMetrics(connectionName, cspResourceName, timeBefo
         y: parseFloat(v.value),
       }));
 
-      // Convert "Available Memory Bytes" → "Memory Usage %"
+      // Fallback: if server returns raw "Available Memory Bytes" instead of percent, convert here
       if (m.key === 'memory_usage' && totalMemoryBytes > 0 && metricUnit === 'Bytes') {
         points = points.map((p) => ({
           ...p,
           y: Math.max(0, (1 - p.y / totalMemoryBytes) * 100),
         }));
-        metricName = 'Memory Usage';
+        metricName = 'Memory Usage Percent';
         metricUnit = 'Percent';
       }
 
