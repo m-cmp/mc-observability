@@ -144,7 +144,7 @@ export default function MonitoringDashboard() {
   useEffect(() => {
     const vm = vms.find((v) => v.id === selectedVmId);
     if (vm && vm.connectionName && vm.cspResourceName) {
-      setCspVmInfo({ connectionName: vm.connectionName, cspResourceName: vm.cspResourceName, memoryGiB: vm.spec?.memoryGiB || 0 });
+      setCspVmInfo({ connectionName: vm.connectionName, cspResourceName: vm.cspResourceName });
     } else {
       setCspVmInfo(null);
     }
@@ -157,7 +157,7 @@ export default function MonitoringDashboard() {
     setCspLoading(true);
     setCspMetrics(null);
     const hours = selectedRange.endsWith('d') ? parseInt(selectedRange) * 24 : parseInt(selectedRange);
-    getAllCspMetrics(cspVmInfo.connectionName, cspVmInfo.cspResourceName, String(hours || 1), cspVmInfo.memoryGiB || 0)
+    getAllCspMetrics(cspVmInfo.connectionName, cspVmInfo.cspResourceName, String(hours || 1))
       .then(setCspMetrics)
       .catch(() => setCspMetrics({}))
       .finally(() => setCspLoading(false));

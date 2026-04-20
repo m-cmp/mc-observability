@@ -22,34 +22,18 @@ export async function getCspMetric(connectionName, cspResourceName, metricType, 
   return res.data || {};
 }
 
-/**
- * Fetch all CSP metrics for a VM.
- * @param {number} totalMemoryGiB - VM total memory in GiB (from Tumblebug spec.memoryGiB). Used to convert Available Memory Bytes → %.
- */
-export async function getAllCspMetrics(connectionName, cspResourceName, timeBeforeHour = '1', totalMemoryGiB = 0) {
+/** Fetch all CSP metrics for a VM. */
+export async function getAllCspMetrics(connectionName, cspResourceName, timeBeforeHour = '1') {
   const results = {};
-  const totalMemoryBytes = totalMemoryGiB * 1024 * 1024 * 1024;
-
   await Promise.allSettled(
     CSP_METRICS.map(async (m) => {
       const data = await getCspMetric(connectionName, cspResourceName, m.key, '5', timeBeforeHour);
-      let metricName = data.metricName || m.label;
-      let metricUnit = data.metricUnit || m.unit;
-      let points = (data.timestampValues || []).map((v) => ({
+      const metricName = data.metricName || m.label;
+      const metricUnit = data.metricUnit || m.unit;
+      const points = (data.timestampValues || []).map((v) => ({
         x: new Date(v.timestamp).getTime(),
         y: parseFloat(v.value),
       }));
-
-      // Fallback: if server returns raw "Available Memory Bytes" instead of percent, convert here
-      if (m.key === 'memory_usage' && totalMemoryBytes > 0 && metricUnit === 'Bytes') {
-        points = points.map((p) => ({
-          ...p,
-          y: Math.max(0, (1 - p.y / totalMemoryBytes) * 100),
-        }));
-        metricName = 'Memory Usage Percent';
-        metricUnit = 'Percent';
-      }
-
       results[m.key] = {
         ...m,
         metricName,
