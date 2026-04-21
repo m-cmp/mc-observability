@@ -293,29 +293,32 @@ export default function MciOverview() {
         })
       )}
 
-      {/* VM Tab — grouped by MCI */}
+      {/* VM Tab — grouped by MCI (like K8s NodeGroup structure) */}
       {viewTab === 'vm' && allMcis.map((mci) => (
-        <div key={mci.id} className="space-y-3">
+        <div key={mci.id} className="bg-white rounded-lg shadow">
           {/* MCI group header */}
-          <div className="flex items-center gap-2 px-1">
-            <span className="text-sm font-semibold text-gray-700">{mci.name || mci.id}</span>
+          <div className="px-4 py-3 border-b flex items-center gap-3">
+            <span className="font-semibold text-sm">{mci.name || mci.id}</span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
               {mci.status || '-'}
             </span>
-            <span className="text-xs text-gray-400">{(mci.vm || []).length} VMs</span>
+            <span className="text-xs text-gray-400 ml-auto">{(mci.vm || []).length} VMs</span>
           </div>
-          {(mci.vm || []).map((vm) => (
-            <VmCard
-              key={vm.id}
-              vm={vm}
-              vmMetrics={vmData[vm.id] || {}}
-              dataSource={dataSource}
-              metricsLoading={metricsLoading}
-              selectedChart={selectedChart}
-              onSelectChart={setSelectedChart}
-              onClickChart={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
-            />
-          ))}
+          {/* VM cards inside */}
+          <div className="p-3 space-y-3">
+            {(mci.vm || []).map((vm) => (
+              <VmCard
+                key={vm.id}
+                vm={vm}
+                vmMetrics={vmData[vm.id] || {}}
+                dataSource={dataSource}
+                metricsLoading={metricsLoading}
+                selectedChart={selectedChart}
+                onSelectChart={setSelectedChart}
+                onClickChart={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
+              />
+            ))}
+          </div>
         </div>
       ))}
     </div>

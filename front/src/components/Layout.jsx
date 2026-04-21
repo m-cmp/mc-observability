@@ -69,7 +69,10 @@ export default function Layout() {
 
   // MCI 드롭다운 변경
   function handleMciChange(newMci) {
-    if (!newMci) return;
+    if (!newMci) {
+      navigate(`/${currentSection}/${nsId}`);
+      return;
+    }
     navigate(`/${currentSection}/${nsId}/${newMci}`);
   }
 
