@@ -91,14 +91,27 @@ csp:
   cache:
     enabled: ${CSP_CACHE_ENABLED:true}
     max-size: ${CSP_CACHE_MAX_SIZE:10000}
-    expire-after-write-seconds: ${CSP_CACHE_EXPIRE_SECONDS:60}
+    expire-after-write-seconds: ${CSP_CACHE_EXPIRE_SECONDS:300}
     warm:
       enabled: ${CSP_CACHE_WARM_ENABLED:true}
-      cron: ${CSP_CACHE_WARM_CRON:0 * * * * *}
-      thread-pool-size: ${CSP_CACHE_WARM_THREADS:10}
-      time-before-hour: ${CSP_CACHE_WARM_TIME_BEFORE_HOUR:1}
-      interval-minute: ${CSP_CACHE_WARM_INTERVAL_MINUTE:5}
+      thread-pool-size: ${CSP_CACHE_WARM_THREADS:30}
       top-n: ${CSP_CACHE_WARM_TOP_N:20}
+      realtime:
+        enabled: ${CSP_CACHE_WARM_REALTIME_ENABLED:true}
+        cron: ${CSP_CACHE_WARM_REALTIME_CRON:0 * * * * *}
+        # Covers what the UI sends by default (1h) plus short custom ranges in the VM detail view.
+        ranges:
+          - { time-before-hour: "1",  interval-minute: "5" }
+          - { time-before-hour: "6",  interval-minute: "5" }
+          - { time-before-hour: "12", interval-minute: "5" }
+      longrange:
+        enabled: ${CSP_CACHE_WARM_LONGRANGE_ENABLED:true}
+        cron: ${CSP_CACHE_WARM_LONGRANGE_CRON:0 */5 * * * *}
+        ranges:
+          - { time-before-hour: "24",  interval-minute: "5" }
+          - { time-before-hour: "72",  interval-minute: "5" }
+          - { time-before-hour: "120", interval-minute: "5" }
+          - { time-before-hour: "168", interval-minute: "5" }
 
 monitoring:
   cache:

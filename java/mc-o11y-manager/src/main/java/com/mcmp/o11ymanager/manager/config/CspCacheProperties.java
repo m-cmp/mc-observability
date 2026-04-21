@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.manager.config;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,10 +25,11 @@ public class CspCacheProperties {
     private long maxSize = 10_000L;
 
     /**
-     * Entry TTL after write. CSP providers typically publish metrics on a 1–5 minute cadence, so a
-     * 60-second TTL keeps results fresh while still absorbing tab-switch storms.
+     * Entry TTL after write. 5 minutes comfortably outlives the 1-minute warm cadence for the
+     * short-range spec set and the 5-minute cadence for the long-range set, so cached entries stay
+     * valid between refreshes.
      */
-    private long expireAfterWriteSeconds = 60L;
+    private long expireAfterWriteSeconds = 300L;
 
     /** Periodic cache warming. */
     private Warm warm = new Warm();
@@ -36,23 +38,72 @@ public class CspCacheProperties {
     @Setter
     public static class Warm {
         private boolean enabled = true;
-        private String cron = "0 * * * * *";
 
         /**
-         * Worker thread count for parallel warming. Since warm tasks are synchronous cb-spider
-         * calls, this also bounds concurrent outbound requests.
+         * Worker thread count for parallel warming. Each warm tick submits (VMs + K8s nodes) ×
+         * metric × range tasks that call cb-spider; bigger pool → faster overall warm, bounded
+         * cb-spider concurrency.
          */
-        private int threadPoolSize = 10;
-
-        /** Default query parameters for warm fetches. */
-        private String timeBeforeHour = "1";
-
-        private String intervalMinute = "5";
+        private int threadPoolSize = 30;
 
         /**
          * Maximum number of recently-created VMs (per namespace) to warm on each tick. Older VMs
          * are left to load on-demand.
          */
         private int topN = 20;
+
+        /**
+         * Short-range ({@code timeBeforeHour ≤ 12h}) warming — refreshed every minute so the
+         * default monitoring view is always close to live.
+         */
+        private Job realtime =
+                new Job(
+                        "0 * * * * *",
+                        List.of(new Range("1", "5"), new Range("6", "5"), new Range("12", "5")));
+
+        /**
+         * Long-range ({@code timeBeforeHour ≥ 24h}) warming — refreshed every 5 minutes since the
+         * data changes slowly and each call is expensive (more points, more CSP API round-trips).
+         */
+        private Job longrange =
+                new Job(
+                        "0 */5 * * * *",
+                        List.of(
+                                new Range("24", "5"),
+                                new Range("72", "5"),
+                                new Range("120", "5"),
+                                new Range("168", "5")));
+    }
+
+    @Getter
+    @Setter
+    public static class Job {
+        private boolean enabled = true;
+        private String cron;
+        private List<Range> ranges;
+
+        public Job() {}
+
+        public Job(String cron, List<Range> ranges) {
+            this.cron = cron;
+            this.ranges = ranges;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class Range {
+        /** {@code TimeBeforeHour} query param forwarded to cb-spider. */
+        private String timeBeforeHour;
+
+        /** {@code IntervalMinute} query param forwarded to cb-spider. */
+        private String intervalMinute;
+
+        public Range() {}
+
+        public Range(String timeBeforeHour, String intervalMinute) {
+            this.timeBeforeHour = timeBeforeHour;
+            this.intervalMinute = intervalMinute;
+        }
     }
 }
