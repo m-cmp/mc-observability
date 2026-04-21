@@ -44,6 +44,7 @@ class BeylaFacadeServiceTest {
     @Mock private SchedulerFacadeService schedulerFacadeService;
     @Mock private TumblebugService tumblebugService;
     @Mock private BeylaSystemRequirementValidator beylaSystemRequirementValidator;
+    @Mock private BeylaConfigFacadeService beylaConfigFacadeService;
 
     @InjectMocks private BeylaFacadeService beylaFacadeService;
 
@@ -70,13 +71,16 @@ class BeylaFacadeServiceTest {
     class InstallTests {
 
         @Test
-        @DisplayName("정상 설치: IDLE -> INSTALLING -> 스케줄러 등록")
+        @DisplayName("정상 설치: IDLE -> INSTALLING -> 스케줄러 등록 + configContent 전달")
         void normalFlow_installsSuccessfully() throws Exception {
             Task mockTask = Task.builder().id(42).status("waiting").build();
+            String generatedConfig = "service:\n  name: \"cmp-beyla-test\"\n";
+            when(beylaConfigFacadeService.initBeylaConfig(NS_ID, MCI_ID, VM_ID))
+                    .thenReturn(generatedConfig);
             when(semaphoreDomainService.install(
                             any(AccessInfoDTO.class),
                             eq(SemaphoreInstallMethod.INSTALL),
-                            any(),
+                            eq(generatedConfig), // configContent로 BeylaConfig 결과가 전달되어야 함
                             eq(Agent.BEYLA),
                             eq(TEMPLATE_COUNT)))
                     .thenReturn(mockTask);
@@ -86,6 +90,7 @@ class BeylaFacadeServiceTest {
 
             verify(vmService).isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
             verify(beylaSystemRequirementValidator).validateAndThrow(NS_ID, MCI_ID, VM_ID);
+            verify(beylaConfigFacadeService).initBeylaConfig(NS_ID, MCI_ID, VM_ID);
             verify(vmService)
                     .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
