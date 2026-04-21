@@ -23,8 +23,13 @@ export default function MciOverview() {
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [selectedChart, setSelectedChart] = useState('cpu');
   const [dataSource, setDataSource] = useState('agent');
-  const [viewTab, setViewTab] = useState(mciId ? 'vm' : 'k8s');
+  const [viewTab, setViewTab] = useState(mciId ? 'vm' : 'vm');
   const [clusters, setClusters] = useState([]);
+
+  // MCI 선택되면 VM 탭, MCI 없으면 유지
+  useEffect(() => {
+    if (mciId) setViewTab('vm');
+  }, [mciId]);
   const [clustersLoading, setClustersLoading] = useState(false);
   const [nodeData, setNodeData] = useState({});
   const [nodeMetricsLoading, setNodeMetricsLoading] = useState(false);
