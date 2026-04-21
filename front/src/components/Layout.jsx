@@ -82,7 +82,8 @@ export default function Layout() {
   }
 
   const buildPath = (base) => {
-    return `/${base}/${nsId}/${mciId}`;
+    if (mciId) return `/${base}/${nsId}/${mciId}`;
+    return `/${base}/${nsId}`;
   };
 
   return (
@@ -106,20 +107,30 @@ export default function Layout() {
             <option value="">NS</option>
             {nsList.map((ns) => <option key={ns.id} value={ns.id}>{ns.id}</option>)}
           </select>
-          <span className="text-gray-300">/</span>
-          {/* MCI */}
-          <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={mciId || ''}
-            onChange={(e) => handleMciChange(e.target.value)}>
-            <option value="">MCI</option>
-            {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
-          </select>
-          <span className="text-gray-300">/</span>
-          {/* VM */}
-          <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={vmId || ''}
-            onChange={(e) => handleVmChange(e.target.value)}>
-            <option value="">(MCI Overview)</option>
-            {vmList.map((vm) => <option key={vm.id} value={vm.id}>{vm.name || vm.id}</option>)}
-          </select>
+          {mciId && <>
+            <span className="text-gray-300">/</span>
+            {/* MCI */}
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={mciId || ''}
+              onChange={(e) => handleMciChange(e.target.value)}>
+              <option value="">MCI</option>
+              {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+            </select>
+            <span className="text-gray-300">/</span>
+            {/* VM */}
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={vmId || ''}
+              onChange={(e) => handleVmChange(e.target.value)}>
+              <option value="">(Overview)</option>
+              {vmList.map((vm) => <option key={vm.id} value={vm.id}>{vm.name || vm.id}</option>)}
+            </select>
+          </>}
+          {!mciId && mciList.length > 0 && <>
+            <span className="text-gray-300">/</span>
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
+              onChange={(e) => { if (e.target.value) navigate(`/${currentSection}/${nsId}/${e.target.value}`); }}>
+              <option value="">(NS Level)</option>
+              {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+            </select>
+          </>}
 
           <button onClick={() => setShowDevTools(!showDevTools)}
             className={`ml-2 text-xs border rounded px-2 py-1 ${showDevTools ? 'bg-gray-800 text-white border-gray-800' : 'text-gray-400 border-gray-200 hover:text-gray-600'}`}>

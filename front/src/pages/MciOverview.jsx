@@ -23,7 +23,7 @@ export default function MciOverview() {
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [selectedChart, setSelectedChart] = useState('cpu');
   const [dataSource, setDataSource] = useState('agent');
-  const [viewTab, setViewTab] = useState('vm'); // 'vm' | 'k8s'
+  const [viewTab, setViewTab] = useState(mciId ? 'vm' : 'k8s');
   const [clusters, setClusters] = useState([]);
   const [clustersLoading, setClustersLoading] = useState(false);
   const [nodeData, setNodeData] = useState({});
@@ -70,40 +70,32 @@ export default function MciOverview() {
   }, [dataSource]);
 
   async function loadAgentData(vmList) {
-    const data = {};
-    for (const vm of vmList) {
-      data[vm.id] = {};
-    }
-    await Promise.allSettled(
-      vmList.map(async (vm) => {
-        await Promise.allSettled(
-          AGENT_METRICS.map(async (m) => {
-            try {
-              const res = await getMetricsByVM(nsId, mciId, vm.id, {
-                measurement: m.measurement, range: '1h', groupTime: '1m',
-                fields: [{ function: 'mean', field: m.field }],
-              });
-              data[vm.id][m.key] = { res, ...m };
-            } catch (e) {
-              data[vm.id][m.key] = { res: [], ...m };
-            }
-          })
-        );
-      })
-    );
-    setVmData({ ...data });
+    // Find which MCI each VM belongs to
+    const vmMciMap = {};
+    allMcis.forEach(m => (m.vm || []).forEach(v => { vmMciMap[v.id] = m.id; }));
+
+    vmList.forEach(async (vm) => {
+      const vmMciId = vmMciMap[vm.id] || mciId;
+      await Promise.allSettled(
+        AGENT_METRICS.map(async (m) => {
+          try {
+            const res = await getMetricsByVM(nsId, vmMciId, vm.id, {
+              measurement: m.measurement, range: '1h', groupTime: '1m',
+              fields: [{ function: 'mean', field: m.field }],
+            });
+            setVmData(prev => ({ ...prev, [vm.id]: { ...(prev[vm.id] || {}), [m.key]: { res, ...m } } }));
+          } catch {}
+        })
+      );
+    });
   }
 
   async function loadCspData(vmList) {
-    const data = {};
-    await Promise.allSettled(
-      vmList.map(async (vm) => {
-        if (!vm.connectionName || !vm.cspResourceName) return;
-        const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1');
-        data[vm.id] = cspData;
-      })
-    );
-    setVmData({ ...data });
+    vmList.forEach(async (vm) => {
+      if (!vm.connectionName || !vm.cspResourceName) return;
+      const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1');
+      setVmData(prev => ({ ...prev, [vm.id]: cspData }));
+    });
   }
 
   // Load all MCIs in NS + K8s clusters when K8s tab switches
@@ -192,14 +184,14 @@ export default function MciOverview() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">{viewTab === 'k8s' ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
+          <h2 className="text-lg font-semibold">{viewTab === 'k8s' || !mciId ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
           {/* VM / K8s tab */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
-            <button onClick={() => setViewTab('vm')}
+            <button onClick={() => { setViewTab('vm'); if (!mciId && allMcis[0]) navigate(`/monitoring/${nsId}/${allMcis[0].id}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'vm' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
               VM
             </button>
-            <button onClick={() => setViewTab('k8s')}
+            <button onClick={() => { setViewTab('k8s'); navigate(`/monitoring/${nsId}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'k8s' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
               K8s
             </button>

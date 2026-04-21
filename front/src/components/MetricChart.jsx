@@ -1,4 +1,3 @@
-import { useRef, useEffect } from 'react';
 import Chart from 'react-apexcharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
@@ -21,7 +20,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
   const yTitle = unit.label ? `(${unit.label})` : '';
 
   const options = {
-    chart: { type: chartType, toolbar: { show: true }, zoom: { enabled: true, type: 'x', autoScaleYaxis: true }, animations: { enabled: false } },
+    chart: { type: chartType, toolbar: { show: true }, zoom: { enabled: true, type: 'x', autoScaleYaxis: true, allowMouseWheelZoom: false }, animations: { enabled: false } },
     title: { text: title + (yTitle ? ` ${yTitle}` : ''), align: 'center', style: { fontSize: '14px', fontWeight: 600 } },
     xaxis: { type: 'datetime', labels: { format: 'HH:mm:ss', style: { fontSize: '11px' }, datetimeUTC: false } },
     yaxis: {
@@ -41,20 +40,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
     dataLabels: { enabled: false },
   };
 
-  const containerRef = useRef(null);
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const handler = (e) => e.preventDefault();
-    el.addEventListener('wheel', handler, { passive: false });
-    return () => el.removeEventListener('wheel', handler);
-  }, []);
-
-  return (
-    <div ref={containerRef}>
-      <Chart options={options} series={series} type={chartType} height={height} />
-    </div>
-  );
+  return <Chart options={options} series={series} type={chartType} height={height} />;
 }
 
 // --- Unit detection ---

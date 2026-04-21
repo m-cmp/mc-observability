@@ -28,12 +28,17 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/monitoring/:nsId/:mciId/:vmId" element={<MonitoringDashboard />} />
         <Route path="/monitoring/:nsId/:mciId" element={<MciOverview />} />
+        <Route path="/monitoring/:nsId" element={<MciOverview />} />
         <Route path="/logs/:nsId/:mciId/:vmId" element={<LogViewer />} />
         <Route path="/logs/:nsId/:mciId" element={<LogViewer />} />
+        <Route path="/logs/:nsId" element={<LogViewer />} />
         <Route path="/config/:nsId/:mciId" element={<MonitoringConfig />} />
+        <Route path="/config/:nsId" element={<MonitoringConfig />} />
         <Route path="/insight/:nsId/:mciId/:vmId" element={<InsightDashboard />} />
         <Route path="/insight/:nsId/:mciId" element={<InsightDashboard />} />
+        <Route path="/insight/:nsId" element={<InsightDashboard />} />
         <Route path="/alerts/:nsId/:mciId" element={<AlertManager />} />
+        <Route path="/alerts/:nsId" element={<AlertManager />} />
       </Route>
 
       {/* Embed — no nav, for iframe */}
