@@ -69,6 +69,9 @@ public class MonitoringCacheService {
     /**
      * Returns the cached metric list for the given query, or computes it from InfluxDB via {@code
      * loader} on miss and stores the result.
+     *
+     * <p>An empty hit (cached but no data points) is treated as a miss so that once metrics
+     * actually start flowing the next call fills the cache with real data.
      */
     public List<MetricDTO> getOrLoad(
             String nsId,
@@ -83,7 +86,7 @@ public class MonitoringCacheService {
                 MonitoringCacheKey.of(nsId, mciId, vmId, req, properties.getBlockPeriodSeconds());
 
         List<MetricDTO> hit = cache.getIfPresent(key);
-        if (hit != null) {
+        if (hit != null && hasAnyDataPoint(hit)) {
             manualHitCount.incrementAndGet();
             log.debug(
                     "[MON-CACHE] HIT ns={}, mci={}, vm={}, bucket={}",
@@ -198,6 +201,19 @@ public class MonitoringCacheService {
                 return currentDuration;
             }
         };
+    }
+
+    /** True if at least one series in the list has at least one data point. */
+    private static boolean hasAnyDataPoint(List<MetricDTO> dtos) {
+        if (dtos == null || dtos.isEmpty()) {
+            return false;
+        }
+        for (MetricDTO m : dtos) {
+            if (m != null && m.values() != null && !m.values().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static int estimateWeight(

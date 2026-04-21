@@ -6,7 +6,10 @@ import com.mcmp.o11ymanager.manager.dto.SpiderClusterList;
 import com.mcmp.o11ymanager.manager.dto.SpiderMonitoringInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCIList;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
+import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import jakarta.annotation.PostConstruct;
@@ -67,6 +70,7 @@ public class CspCacheWarmScheduler {
     private final CspCacheService cspCacheService;
     private final SpiderClient spiderClient;
     private final TumblebugService tumblebugService;
+    private final TumblebugClient tumblebugClient;
     private final VmCreatedTimeResolver vmCreatedTimeResolver;
     private final InfluxDbService influxDbService;
 
@@ -111,7 +115,10 @@ public class CspCacheWarmScheduler {
         CspCacheProperties.Warm w = properties.getWarm();
 
         List<VmWithCsp> cspVms = collectCspVms();
-        Set<String> connectionNames = collectConnectionNames(cspVms);
+        // Connection names for cluster discovery come from ALL Tumblebug VMs in all NSs,
+        // not just InfluxDB-active VMs. K8s nodes don't report agent metrics so their
+        // connections would otherwise be missed.
+        Set<String> connectionNames = collectAllTumblebugConnections();
 
         AtomicInteger vmOk = new AtomicInteger();
         AtomicInteger vmFail = new AtomicInteger();
@@ -208,6 +215,57 @@ public class CspCacheWarmScheduler {
         for (VmWithCsp v : vms) {
             if (v.connectionName() != null && !v.connectionName().isBlank()) {
                 out.add(v.connectionName());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Walks every namespace and MCI in Tumblebug and collects unique connectionNames. K8s clusters
+     * often live in a connection that has no InfluxDB-active VM, so scanning all Tumblebug VMs is
+     * the only way to not miss their connections for warming.
+     */
+    private Set<String> collectAllTumblebugConnections() {
+        Set<String> out = new HashSet<>();
+        TumblebugNS nsList;
+        try {
+            nsList = tumblebugClient.getNSList();
+        } catch (Exception e) {
+            log.debug("[CSP-CACHE-WARM] getNSList failed: {}", e.toString());
+            return out;
+        }
+        if (nsList == null || nsList.getNs() == null) {
+            return out;
+        }
+        for (TumblebugNS.NS ns : nsList.getNs()) {
+            if (ns == null || ns.getId() == null) {
+                continue;
+            }
+            TumblebugMCIList mciList;
+            try {
+                mciList = tumblebugClient.getMCIList(ns.getId());
+            } catch (Exception e) {
+                log.debug(
+                        "[CSP-CACHE-WARM] getMCIList failed ns={}, err={}",
+                        ns.getId(),
+                        e.toString());
+                continue;
+            }
+            if (mciList == null || mciList.getMci() == null) {
+                continue;
+            }
+            for (TumblebugMCI mci : mciList.getMci()) {
+                if (mci == null || mci.getVm() == null) {
+                    continue;
+                }
+                for (TumblebugMCI.Vm vm : mci.getVm()) {
+                    if (vm != null
+                            && vm.getConnectionName() != null
+                            && !vm.getConnectionName().isBlank()
+                            && isCspSupported(vm.getConnectionName())) {
+                        out.add(vm.getConnectionName());
+                    }
+                }
             }
         }
         return out;

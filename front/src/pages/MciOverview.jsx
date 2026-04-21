@@ -58,7 +58,7 @@ export default function MciOverview() {
         setVms(allVms);
         if (allVms.length > 0) {
           setMetricsLoading(true);
-          if (dataSource === 'agent') await loadAgentData(allVms);
+          if (dataSource === 'agent') await loadAgentData(allVms, mcis);
           else await loadCspData(allVms);
           setMetricsLoading(false);
         }
@@ -76,10 +76,12 @@ export default function MciOverview() {
     load(vms).finally(() => setMetricsLoading(false));
   }, [dataSource]);
 
-  async function loadAgentData(vmList) {
-    // Find which MCI each VM belongs to
+  async function loadAgentData(vmList, mcisArg) {
+    // Find which MCI each VM belongs to. Caller must pass the current mcis
+    // since the allMcis state may still be stale (setState is async).
+    const mcis = mcisArg || allMcis;
     const vmMciMap = {};
-    allMcis.forEach(m => (m.vm || []).forEach(v => { vmMciMap[v.id] = m.id; }));
+    mcis.forEach(m => (m.vm || []).forEach(v => { vmMciMap[v.id] = m.id; }));
 
     vmList.forEach(async (vm) => {
       const vmMciId = vmMciMap[vm.id] || mciId;
