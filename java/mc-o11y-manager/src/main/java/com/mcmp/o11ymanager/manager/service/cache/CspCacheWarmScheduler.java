@@ -247,10 +247,6 @@ public class CspCacheWarmScheduler {
             return cached;
         }
         Set<String> out = new HashSet<>();
-        int nsSeen = 0;
-        int mciSeen = 0;
-        int vmSeen = 0;
-        int vmFiltered = 0;
         TumblebugNS nsList;
         try {
             nsList = tumblebugClient.getNSList();
@@ -260,55 +256,75 @@ public class CspCacheWarmScheduler {
             return out;
         }
         if (nsList == null || nsList.getNs() == null) {
-            log.info("[CSP-CACHE-WARM] getNSList returned null/empty");
             connectionDiscoveryCache.put("all", out);
             return out;
         }
+        boolean throttled = false;
         for (TumblebugNS.NS ns : nsList.getNs()) {
             if (ns == null || ns.getId() == null) {
                 continue;
             }
-            nsSeen++;
-            TumblebugMCIList mciList;
-            try {
-                mciList = tumblebugClient.getMCIList(ns.getId());
-            } catch (Exception e) {
-                log.warn(
-                        "[CSP-CACHE-WARM] getMCIList failed ns={}, err={}",
-                        ns.getId(),
-                        e.toString());
-                continue;
+            // Tumblebug rate-limits ~3 sequential calls; space them out.
+            if (throttled) {
+                try {
+                    Thread.sleep(400L);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
             }
+            throttled = true;
+            TumblebugMCIList mciList = getMCIListWithRetry(ns.getId());
             if (mciList == null || mciList.getMci() == null) {
                 continue;
             }
             for (TumblebugMCI mci : mciList.getMci()) {
-                mciSeen++;
                 if (mci == null || mci.getVm() == null) {
                     continue;
                 }
                 for (TumblebugMCI.Vm vm : mci.getVm()) {
-                    vmSeen++;
                     if (vm != null
                             && vm.getConnectionName() != null
                             && !vm.getConnectionName().isBlank()
                             && isCspSupported(vm.getConnectionName())) {
                         out.add(vm.getConnectionName());
-                    } else {
-                        vmFiltered++;
                     }
                 }
             }
         }
-        log.info(
-                "[CSP-CACHE-WARM] discovery: ns={}, mci={}, vm={}, filtered={}, connections={}",
-                nsSeen,
-                mciSeen,
-                vmSeen,
-                vmFiltered,
-                out);
         connectionDiscoveryCache.put("all", out);
         return out;
+    }
+
+    /**
+     * Wraps {@code tumblebugClient.getMCIList} with a single retry on 429. Tumblebug rate-limits
+     * aggressively (rejects 3rd call in quick succession); a short backoff lets the window reset
+     * without failing the whole discovery pass.
+     */
+    private TumblebugMCIList getMCIListWithRetry(String nsId) {
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                return tumblebugClient.getMCIList(nsId);
+            } catch (Exception e) {
+                String msg = e.toString();
+                boolean rateLimited = msg.contains("429") || msg.contains("TooManyRequests");
+                if (!rateLimited || attempt == 2) {
+                    log.warn(
+                            "[CSP-CACHE-WARM] getMCIList failed ns={}, attempt={}, err={}",
+                            nsId,
+                            attempt,
+                            msg);
+                    return null;
+                }
+                try {
+                    Thread.sleep(1500L);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     private void warmVmMetric(
@@ -381,7 +397,7 @@ public class CspCacheWarmScheduler {
         try {
             list = spiderClient.listClusters(connectionName);
         } catch (Exception e) {
-            log.debug(
+            log.warn(
                     "[CSP-CACHE-WARM] listClusters failed conn={}, err={}",
                     connectionName,
                     e.toString());
@@ -394,23 +410,24 @@ public class CspCacheWarmScheduler {
             if (c == null || c.getIId() == null || c.getIId().getNameId() == null) {
                 continue;
             }
+            String cName = c.getIId().getNameId();
             SpiderClusterInfo detail;
             try {
-                detail = spiderClient.getCluster(c.getIId().getNameId(), connectionName);
+                // Space out cb-spider calls — CSP provider APIs can rate-limit.
+                Thread.sleep(400L);
+                detail = spiderClient.getCluster(cName, connectionName);
             } catch (Exception e) {
-                log.debug(
-                        "[CSP-CACHE-WARM] getCluster failed cluster={}, err={}",
-                        c.getIId().getNameId(),
+                log.warn(
+                        "[CSP-CACHE-WARM] getCluster failed cluster={}, conn={}, err={}",
+                        cName,
+                        connectionName,
                         e.toString());
                 continue;
             }
             if (detail == null || detail.getNodeGroupList() == null) {
                 continue;
             }
-            String clusterName = detail.getIId() != null ? detail.getIId().getNameId() : null;
-            if (clusterName == null) {
-                continue;
-            }
+            String clusterName = detail.getIId() != null ? detail.getIId().getNameId() : cName;
             for (SpiderClusterInfo.NodeGroup ng : detail.getNodeGroupList()) {
                 if (ng == null
                         || ng.getIId() == null
