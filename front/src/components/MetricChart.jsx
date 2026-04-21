@@ -21,7 +21,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
 
   const options = {
     chart: { type: chartType, toolbar: { show: true }, zoom: { enabled: true, type: 'x', autoScaleYaxis: true, allowMouseWheelZoom: false }, animations: { enabled: false } },
-    title: { text: title + (yTitle ? ` ${yTitle}` : ''), align: 'center', style: { fontSize: '14px', fontWeight: 600 } },
+    title: { text: title + (yTitle ? ` ${yTitle}` : ''), align: 'left', style: { fontSize: '13px', fontWeight: 600 }, offsetY: 0 },
     xaxis: { type: 'datetime', labels: { format: 'HH:mm:ss', style: { fontSize: '11px' }, datetimeUTC: false } },
     yaxis: {
       labels: { formatter, style: { fontSize: '11px' } },
