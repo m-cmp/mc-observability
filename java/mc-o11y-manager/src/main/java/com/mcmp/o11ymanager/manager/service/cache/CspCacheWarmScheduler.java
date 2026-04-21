@@ -288,9 +288,10 @@ public class CspCacheWarmScheduler {
                 }
             }
         }
-        if (!out.isEmpty()) {
-            connectionDiscoveryCache.put("all", out);
-        }
+        // Always cache the result — even empty. Otherwise a transient Tumblebug 429 would cause
+        // us to retry discovery on every warm tick (every minute) and keep tripping the rate
+        // limiter. Better to stay empty for 5 minutes than to spam.
+        connectionDiscoveryCache.put("all", out);
         return out;
     }
 
@@ -409,9 +410,9 @@ public class CspCacheWarmScheduler {
                 }
             }
         }
-        if (!refs.isEmpty()) {
-            clusterDiscoveryCache.put(connectionName, refs);
-        }
+        // See collectAllTumblebugConnections — cache even when empty to avoid re-hitting
+        // cb-spider/CSP on every warm tick.
+        clusterDiscoveryCache.put(connectionName, refs);
         return refs;
     }
 
