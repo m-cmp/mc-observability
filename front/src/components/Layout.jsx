@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
+import useBasePath from '../hooks/useBasePath';
 import { setApiToken } from '../api/client';
 import { getNsList, getMciList, getMci } from '../api/tumblebug';
 
@@ -14,6 +15,7 @@ const navItems = [
 export default function Layout() {
   const { nsId, mciId, vmId } = useParams();
   const navigate = useNavigate();
+  const base = useBasePath();
   const location = useLocation();
 
   const currentSection = navItems.find((n) => location.pathname.includes(`/${n.path}/`))?.path || 'monitoring';
@@ -63,30 +65,30 @@ export default function Layout() {
     const mcis = await loadMciList(newNs);
     const firstMci = mcis[0]?.id;
     if (firstMci) {
-      navigate(`/${currentSection}/${newNs}/${firstMci}`);
+      navigate(`${base}/${currentSection}/${newNs}/${firstMci}`);
     }
   }
 
   // MCI 드롭다운 변경
   function handleMciChange(newMci) {
     if (!newMci) {
-      navigate(`/${currentSection}/${nsId}`);
+      navigate(`${base}/${currentSection}/${nsId}`);
       return;
     }
-    navigate(`/${currentSection}/${nsId}/${newMci}`);
+    navigate(`${base}/${currentSection}/${nsId}/${newMci}`);
   }
 
   // VM 드롭다운 변경
   function handleVmChange(newVm) {
     if (!nsId || !mciId) return;
-    let path = `/${currentSection}/${nsId}/${mciId}`;
+    let path = `${base}/${currentSection}/${nsId}/${mciId}`;
     if (newVm) path += `/${newVm}`;
     navigate(path);
   }
 
-  const buildPath = (base) => {
-    if (mciId) return `/${base}/${nsId}/${mciId}`;
-    return `/${base}/${nsId}`;
+  const buildNavPath = (section) => {
+    if (mciId) return `${base}/${section}/${nsId}/${mciId}`;
+    return `${base}/${section}/${nsId}`;
   };
 
   return (
@@ -95,7 +97,7 @@ export default function Layout() {
         <a href="/" className="font-semibold text-gray-700 mr-3 hover:text-blue-600">MC-Observability</a>
 
         {navItems.map((item) => (
-          <NavLink key={item.path} to={buildPath(item.path)}
+          <NavLink key={item.path} to={buildNavPath(item.path)}
             className={({ isActive }) =>
               `px-3 py-1.5 rounded-md transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`
             }>
@@ -129,7 +131,7 @@ export default function Layout() {
           {!mciId && mciList.length > 0 && <>
             <span className="text-gray-300">/</span>
             <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
-              onChange={(e) => { if (e.target.value) navigate(`/${currentSection}/${nsId}/${e.target.value}`); }}>
+              onChange={(e) => { if (e.target.value) navigate(`${base}/${currentSection}/${nsId}/${e.target.value}`); }}>
               <option value="">MCI</option>
               {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
             </select>

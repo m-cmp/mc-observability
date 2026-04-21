@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import useBasePath from '../hooks/useBasePath';
 import { getMci, getMciList } from '../api/tumblebug';
 import { getMetricsByVM } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
@@ -16,6 +17,7 @@ const AGENT_METRICS = [
 export default function MciOverview() {
   const { nsId, mciId } = useParams();
   const navigate = useNavigate();
+  const base = useBasePath();
   const [vms, setVms] = useState([]);
   const [allMcis, setAllMcis] = useState([]); // NS-level: all MCIs with VMs
   const [vmData, setVmData] = useState({});
@@ -192,11 +194,11 @@ export default function MciOverview() {
           <h2 className="text-lg font-semibold">{viewTab === 'k8s' || !mciId ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
           {/* VM / K8s tab */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
-            <button onClick={() => { setViewTab('vm'); if (mciId) navigate(`/monitoring/${nsId}`); }}
+            <button onClick={() => { setViewTab('vm'); if (mciId) navigate(`${base}/monitoring/${nsId}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'vm' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
               VM
             </button>
-            <button onClick={() => { setViewTab('k8s'); navigate(`/monitoring/${nsId}`); }}
+            <button onClick={() => { setViewTab('k8s'); navigate(`${base}/monitoring/${nsId}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'k8s' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
               K8s
             </button>
@@ -320,7 +322,7 @@ export default function MciOverview() {
                 metricsLoading={metricsLoading}
                 selectedChart={selectedChart}
                 onSelectChart={setSelectedChart}
-                onClickChart={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
+                onClickChart={() => navigate(`${base}/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
               />
             ))}
           </div>
