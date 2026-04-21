@@ -16,7 +16,7 @@ const CSP_METRICS = [
 export { CSP_METRICS };
 
 export async function getCspMetric(connectionName, cspResourceName, metricType, periodMinute = '5', timeBeforeHour = '1') {
-  const res = await client.get(`/spider/monitoring/vm/${cspResourceName}/${metricType}`, {
+  const res = await client.get(`/api/o11y/monitoring/csp/vm/${cspResourceName}/${metricType}`, {
     params: { ConnectionName: connectionName, periodMinute, timeBeforeHour },
   });
   return res.data || {};

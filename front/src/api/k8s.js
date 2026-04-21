@@ -14,7 +14,7 @@ export async function getCluster(connectionName, clusterName) {
 
 export async function getClusterNodeMetric(connectionName, clusterName, nodeGroupName, nodeNumber, metricType, periodMinute = '5', timeBeforeHour = '1') {
   const res = await client.get(
-    `/spider/monitoring/clusternode/${clusterName}/${nodeGroupName}/${nodeNumber}/${metricType}`,
+    `/api/o11y/monitoring/csp/cluster/${clusterName}/${nodeGroupName}/${nodeNumber}/${metricType}`,
     { params: { ConnectionName: connectionName, periodMinute, timeBeforeHour } }
   );
   return res.data || {};
