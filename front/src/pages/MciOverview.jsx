@@ -3,15 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getMci } from '../api/tumblebug';
 import { getMetricsByVM } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
+import { getClusters, getCluster } from '../api/k8s';
 import MetricChart from '../components/MetricChart';
+import ProviderBadge from '../components/ProviderBadge';
 
 const AGENT_METRICS = [
   { key: 'cpu', measurement: 'cpu', field: 'usage_idle', label: 'CPU Used', unit: '%', invert: true },
   { key: 'mem', measurement: 'mem', field: 'used_percent', label: 'Memory Used', unit: '%' },
   { key: 'disk', measurement: 'disk', field: 'used_percent', label: 'Disk Used', unit: '%' },
 ];
-
-const CSP_OVERVIEW_KEYS = ['cpu_usage', 'memory_usage', 'network_in'];
 
 export default function MciOverview() {
   const { nsId, mciId } = useParams();
@@ -21,7 +21,10 @@ export default function MciOverview() {
   const [loading, setLoading] = useState(true);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [selectedChart, setSelectedChart] = useState('cpu');
-  const [dataSource, setDataSource] = useState('agent'); // 'agent' | 'csp'
+  const [dataSource, setDataSource] = useState('agent');
+  const [viewTab, setViewTab] = useState('vm'); // 'vm' | 'k8s'
+  const [clusters, setClusters] = useState([]);
+  const [clustersLoading, setClustersLoading] = useState(false);
 
   useEffect(() => {
     if (!nsId || !mciId) return;
@@ -91,6 +94,21 @@ export default function MciOverview() {
     setVmData({ ...data });
   }
 
+  // Load K8s clusters when tab switches
+  useEffect(() => {
+    if (viewTab !== 'k8s' || vms.length === 0) return;
+    setClustersLoading(true);
+    const connNames = [...new Set(vms.map(v => v.connectionName).filter(Boolean))];
+    Promise.allSettled(connNames.map(async (conn) => {
+      const list = await getClusters(conn);
+      const detailed = await Promise.allSettled(list.map(c => getCluster(conn, c.IId?.NameId)));
+      return detailed.filter(r => r.status === 'fulfilled').map(r => ({ ...r.value, connectionName: conn }));
+    })).then(results => {
+      const all = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+      setClusters(all);
+    }).finally(() => setClustersLoading(false));
+  }, [viewTab, vms]);
+
   if (loading) return <p className="text-sm text-gray-400 p-4">Loading VMs...</p>;
   if (vms.length === 0) return <p className="text-sm text-gray-400 p-4">No VMs found</p>;
 
@@ -99,9 +117,22 @@ export default function MciOverview() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">MCI Overview — {mciId}</h2>
         <div className="flex items-center gap-3">
-          {hasCspVm && (
+          <h2 className="text-lg font-semibold">MCI Overview — {mciId}</h2>
+          {/* VM / K8s tab */}
+          <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
+            <button onClick={() => setViewTab('vm')}
+              className={`px-3 py-1.5 rounded-md ${viewTab === 'vm' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
+              VM
+            </button>
+            <button onClick={() => setViewTab('k8s')}
+              className={`px-3 py-1.5 rounded-md ${viewTab === 'k8s' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
+              K8s
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {viewTab === 'vm' && hasCspVm && (
             <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
               <button onClick={() => setDataSource('agent')}
                 className={`px-3 py-1 rounded-md ${dataSource === 'agent' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>
@@ -113,11 +144,45 @@ export default function MciOverview() {
               </button>
             </div>
           )}
-          <span className="text-xs text-gray-400">{vms.length} VMs</span>
+          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${vms.length} VMs` : `${clusters.length} Clusters`}</span>
         </div>
       </div>
 
-      {vms.map((vm) => (
+      {/* K8s Tab */}
+      {viewTab === 'k8s' && (
+        clustersLoading ? (
+          <div className="text-sm text-gray-400 animate-pulse p-4">Loading clusters...</div>
+        ) : clusters.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s clusters found</div>
+        ) : clusters.map((cluster, i) => (
+          <div key={i} className="bg-white rounded-lg shadow">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">{cluster.IId?.NameId}</span>
+                <ProviderBadge connectionName={cluster.connectionName} />
+                <span className={`text-xs px-2 py-0.5 rounded-full ${cluster.Status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{cluster.Status}</span>
+              </div>
+              <span className="text-xs text-gray-400">{cluster.connectionName}</span>
+            </div>
+            {(cluster.NodeGroupList || []).map((ng, j) => (
+              <div key={j} className="px-4 py-3 border-b last:border-b-0">
+                <div className="text-sm font-medium mb-2">NodeGroup: {ng.IId?.NameId}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {(ng.Nodes || []).map((node, k) => (
+                    <div key={k} className="flex items-center gap-2 text-sm bg-gray-50 rounded px-3 py-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="font-mono text-xs">{node.NameId || node.SystemId || `node-${k}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+
+      {/* VM Tab */}
+      {viewTab === 'vm' && vms.map((vm) => (
         <VmCard
           key={vm.id}
           vm={vm}
@@ -222,13 +287,14 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
 function VmHeader({ vm, showCspBadge, cspAvailable }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <ProviderBadge connectionName={vm.connectionName} />
         <span className="font-semibold text-sm">{vm.name || vm.id}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full ${vm.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{vm.status || '-'}</span>
         {showCspBadge && cspAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
         {cspAvailable && !showCspBadge && <span className="text-xs text-gray-400" title="CSP API Based">(API available)</span>}
       </div>
-      <div className="text-xs text-gray-400">{vm.connectionName} {vm.publicIP && <span className="ml-2 font-mono">{vm.publicIP}</span>}</div>
+      <div className="text-xs text-gray-400">{vm.publicIP && <span className="font-mono">{vm.publicIP}</span>}</div>
     </div>
   );
 }
