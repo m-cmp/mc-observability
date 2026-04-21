@@ -247,25 +247,33 @@ public class CspCacheWarmScheduler {
             return cached;
         }
         Set<String> out = new HashSet<>();
+        int nsSeen = 0;
+        int mciSeen = 0;
+        int vmSeen = 0;
+        int vmFiltered = 0;
         TumblebugNS nsList;
         try {
             nsList = tumblebugClient.getNSList();
         } catch (Exception e) {
-            log.debug("[CSP-CACHE-WARM] getNSList failed: {}", e.toString());
+            log.warn("[CSP-CACHE-WARM] getNSList failed: {}", e.toString());
+            connectionDiscoveryCache.put("all", out);
             return out;
         }
         if (nsList == null || nsList.getNs() == null) {
+            log.info("[CSP-CACHE-WARM] getNSList returned null/empty");
+            connectionDiscoveryCache.put("all", out);
             return out;
         }
         for (TumblebugNS.NS ns : nsList.getNs()) {
             if (ns == null || ns.getId() == null) {
                 continue;
             }
+            nsSeen++;
             TumblebugMCIList mciList;
             try {
                 mciList = tumblebugClient.getMCIList(ns.getId());
             } catch (Exception e) {
-                log.debug(
+                log.warn(
                         "[CSP-CACHE-WARM] getMCIList failed ns={}, err={}",
                         ns.getId(),
                         e.toString());
@@ -275,22 +283,30 @@ public class CspCacheWarmScheduler {
                 continue;
             }
             for (TumblebugMCI mci : mciList.getMci()) {
+                mciSeen++;
                 if (mci == null || mci.getVm() == null) {
                     continue;
                 }
                 for (TumblebugMCI.Vm vm : mci.getVm()) {
+                    vmSeen++;
                     if (vm != null
                             && vm.getConnectionName() != null
                             && !vm.getConnectionName().isBlank()
                             && isCspSupported(vm.getConnectionName())) {
                         out.add(vm.getConnectionName());
+                    } else {
+                        vmFiltered++;
                     }
                 }
             }
         }
-        // Always cache the result — even empty. Otherwise a transient Tumblebug 429 would cause
-        // us to retry discovery on every warm tick (every minute) and keep tripping the rate
-        // limiter. Better to stay empty for 5 minutes than to spam.
+        log.info(
+                "[CSP-CACHE-WARM] discovery: ns={}, mci={}, vm={}, filtered={}, connections={}",
+                nsSeen,
+                mciSeen,
+                vmSeen,
+                vmFiltered,
+                out);
         connectionDiscoveryCache.put("all", out);
         return out;
     }
