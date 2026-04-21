@@ -27,6 +27,7 @@ export default function MciOverview() {
   const [clustersLoading, setClustersLoading] = useState(false);
   const [nodeData, setNodeData] = useState({}); // keyed by node id -> CSP metrics shape
   const [nodeMetricsLoading, setNodeMetricsLoading] = useState(false);
+  const [hiddenNodeIds, setHiddenNodeIds] = useState(new Set()); // empty = all visible
 
   useEffect(() => {
     if (!nsId || !mciId) return;
@@ -111,10 +112,13 @@ export default function MciOverview() {
     }).finally(() => setClustersLoading(false));
   }, [viewTab, vms]);
 
-  // Flatten clusters into a per-node list (1-indexed nodeNumber within its NodeGroup, per cb-spider API)
-  const k8sNodes = clusters.flatMap((cluster) =>
-    (cluster.NodeGroupList || []).flatMap((ng) =>
-      (ng.Nodes || []).map((node, idx) => ({
+  // Group by cluster + NodeGroup, with per-node entries (1-indexed nodeNumber per cb-spider API)
+  const k8sGroups = clusters.flatMap((cluster) =>
+    (cluster.NodeGroupList || []).map((ng) => ({
+      key: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}`,
+      cluster,
+      nodeGroup: ng,
+      nodes: (ng.Nodes || []).map((node, idx) => ({
         id: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}/${idx + 1}`,
         node,
         nodeNumber: idx + 1,
@@ -122,9 +126,26 @@ export default function MciOverview() {
         clusterName: cluster.IId?.NameId,
         clusterStatus: cluster.Status,
         connectionName: cluster.connectionName,
-      }))
-    )
+      })),
+    }))
   );
+  const k8sNodes = k8sGroups.flatMap((g) => g.nodes);
+
+  function toggleNode(id) {
+    setHiddenNodeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  function toggleGroup(ids, show) {
+    setHiddenNodeIds((prev) => {
+      const next = new Set(prev);
+      if (show) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }
 
   // Load CSP (API) metrics for each K8s node when K8s tab is active + API mode
   useEffect(() => {
@@ -191,17 +212,63 @@ export default function MciOverview() {
           <div className="text-sm text-gray-400 animate-pulse p-4">Loading clusters...</div>
         ) : k8sNodes.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s nodes found</div>
-        ) : k8sNodes.map((n) => (
-          <K8sNodeCard
-            key={n.id}
-            info={n}
-            metrics={nodeData[n.id] || {}}
-            dataSource={dataSource}
-            metricsLoading={nodeMetricsLoading}
-            selectedChart={selectedChart}
-            onSelectChart={setSelectedChart}
-          />
-        ))
+        ) : k8sGroups.map((g) => {
+          const ids = g.nodes.map((n) => n.id);
+          const allVisible = ids.length > 0 && ids.every((id) => !hiddenNodeIds.has(id));
+          const anyVisible = ids.some((id) => !hiddenNodeIds.has(id));
+          const visibleNodes = g.nodes.filter((n) => !hiddenNodeIds.has(n.id));
+          return (
+            <div key={g.key} className="space-y-2">
+              <div className="bg-white rounded-lg shadow px-4 py-3 flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  <ProviderBadge connectionName={g.cluster.connectionName} />
+                  <span className="font-semibold text-sm truncate">{g.cluster.IId?.NameId}</span>
+                  <span className="text-xs text-gray-400">/</span>
+                  <span className="font-medium text-sm truncate">{g.nodeGroup.IId?.NameId}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${g.cluster.Status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{g.cluster.Status || '-'}</span>
+                  <span className="text-xs text-gray-400">{g.nodes.length} nodes</span>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap ml-auto">
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
+                      checked={allVisible}
+                      ref={(el) => { if (el) el.indeterminate = !allVisible && anyVisible; }}
+                      onChange={(e) => toggleGroup(ids, e.target.checked)}
+                    />
+                    <span className="font-semibold text-gray-700">All</span>
+                  </label>
+                  {g.nodes.map((n) => {
+                    const nodeName = n.node?.NameId || n.node?.SystemId || `node-${n.nodeNumber}`;
+                    return (
+                      <label key={n.id} className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
+                          checked={!hiddenNodeIds.has(n.id)}
+                          onChange={() => toggleNode(n.id)}
+                        />
+                        <span className="font-mono text-gray-600">{nodeName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              {visibleNodes.map((n) => (
+                <K8sNodeCard
+                  key={n.id}
+                  info={n}
+                  metrics={nodeData[n.id] || {}}
+                  dataSource={dataSource}
+                  metricsLoading={nodeMetricsLoading}
+                  selectedChart={selectedChart}
+                  onSelectChart={setSelectedChart}
+                />
+              ))}
+            </div>
+          );
+        })
       )}
 
       {/* VM Tab */}
@@ -233,11 +300,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
         <span className={`text-xs px-2 py-0.5 rounded-full ${info.clusterStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{info.clusterStatus || '-'}</span>
         {dataSource === 'csp' && cspSupported && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
       </div>
-      <div className="text-xs text-gray-400 flex items-center gap-2 shrink-0">
-        <span className="font-mono">{info.clusterName}</span>
-        <span>/</span>
-        <span className="font-mono">{info.nodeGroupName}</span>
-        <span>/</span>
+      <div className="text-xs text-gray-400 shrink-0">
         <span className="font-mono">#{info.nodeNumber}</span>
       </div>
     </div>
@@ -282,7 +345,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
         </div>
         <div className="flex-1 px-2 py-1 min-w-0">
           {metricsLoading ? (
-            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading API data...</div>
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP API data...</div>
           ) : activeData?.series ? (
             <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
           ) : (
@@ -326,7 +389,7 @@ function AgentVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart
         </div>
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
-            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading data...</div>
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading Agent data...</div>
           ) : (
             <MetricChart title={activeMetric.label} series={chartSeries} height={220} measurement={activeMetric.measurement} metric={activeMetric.field} />
           )}
@@ -368,7 +431,7 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
         </div>
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
-            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading API data...</div>
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP API data...</div>
           ) : activeData?.series ? (
             <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
           ) : (

@@ -404,7 +404,7 @@ export default function MonitoringDashboard() {
               API: {vms.find(v => v.id === selectedVmId)?.name || selectedVmId}
             </div>
             {(cspLoading || !cspMetrics) ? (
-              <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading API data...</div>
+              <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading CSP API data...</div>
             ) : cspMetrics[selectedCspMetric]?.series ? (
               <div className="bg-white rounded border p-3">
                 <MetricChart
