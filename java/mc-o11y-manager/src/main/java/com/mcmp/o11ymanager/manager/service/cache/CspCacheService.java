@@ -51,14 +51,19 @@ public class CspCacheService {
                 properties.getExpireAfterWriteSeconds());
     }
 
-    /** Returns cached monitoring data or loads it via {@code loader} on miss. */
+    /**
+     * Returns cached monitoring data or loads it via {@code loader} on miss.
+     *
+     * <p>A cached entry with no {@code timestampValues} is treated as a miss so warm passes that
+     * landed between CSP publish cycles don't lock an empty response into the TTL window.
+     */
     public SpiderMonitoringInfo.Data getOrLoad(
             CspCacheKey key, Supplier<SpiderMonitoringInfo.Data> loader) {
         if (cache == null) {
             return loader.get();
         }
         SpiderMonitoringInfo.Data hit = cache.getIfPresent(key);
-        if (hit != null) {
+        if (hit != null && hasAnyTimestampValue(hit)) {
             manualHitCount.incrementAndGet();
             return hit;
         }
@@ -70,9 +75,17 @@ public class CspCacheService {
         return loaded;
     }
 
-    /** Direct put — used by warmers that already hold a freshly-fetched response. */
+    private static boolean hasAnyTimestampValue(SpiderMonitoringInfo.Data d) {
+        return d != null && d.getTimestampValues() != null && !d.getTimestampValues().isEmpty();
+    }
+
+    /**
+     * Direct put — used by warmers that already hold a freshly-fetched response. Empty responses
+     * are skipped so we don't trample a previously-cached non-empty value with a transient empty
+     * fetch from the provider.
+     */
     public void put(CspCacheKey key, SpiderMonitoringInfo.Data value) {
-        if (cache != null && value != null) {
+        if (cache != null && hasAnyTimestampValue(value)) {
             cache.put(key, value);
         }
     }
