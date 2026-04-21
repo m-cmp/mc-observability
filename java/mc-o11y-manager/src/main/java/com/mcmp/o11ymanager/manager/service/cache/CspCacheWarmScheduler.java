@@ -104,11 +104,17 @@ public class CspCacheWarmScheduler {
                 };
         this.executor = Executors.newFixedThreadPool(size, factory);
         log.info(
-                "[CSP-CACHE-WARM] initialized threads={}, topN={}, tbh={}, interval={}",
+                "[CSP-CACHE-WARM] initialized threads={}, topN={}, realtimeRanges={}, longrangeRanges={}",
                 size,
                 properties.getWarm().getTopN(),
-                properties.getWarm().getTimeBeforeHour(),
-                properties.getWarm().getIntervalMinute());
+                properties.getWarm().getRealtime() == null
+                                || properties.getWarm().getRealtime().getRanges() == null
+                        ? 0
+                        : properties.getWarm().getRealtime().getRanges().size(),
+                properties.getWarm().getLongrange() == null
+                                || properties.getWarm().getLongrange().getRanges() == null
+                        ? 0
+                        : properties.getWarm().getLongrange().getRanges().size());
     }
 
     @PreDestroy
@@ -118,22 +124,43 @@ public class CspCacheWarmScheduler {
         }
     }
 
-    @Scheduled(cron = "${csp.cache.warm.cron:0 * * * * *}")
-    public void scheduled() {
-        warmNow();
+    @Scheduled(cron = "${csp.cache.warm.realtime.cron:0 * * * * *}")
+    public void scheduledRealtime() {
+        CspCacheProperties.Job job = properties.getWarm().getRealtime();
+        if (job != null && job.isEnabled()) {
+            runJob("realtime", job);
+        }
     }
 
+    @Scheduled(cron = "${csp.cache.warm.longrange.cron:0 */5 * * * *}")
+    public void scheduledLongrange() {
+        CspCacheProperties.Job job = properties.getWarm().getLongrange();
+        if (job != null && job.isEnabled()) {
+            runJob("longrange", job);
+        }
+    }
+
+    /** Triggers both jobs immediately (admin / test hook). */
     public int warmNow() {
-        if (executor == null || !properties.isEnabled()) {
+        CspCacheProperties.Warm w = properties.getWarm();
+        int r = runJob("realtime", w.getRealtime());
+        int l = runJob("longrange", w.getLongrange());
+        return r + l;
+    }
+
+    private int runJob(String jobName, CspCacheProperties.Job job) {
+        if (executor == null
+                || !properties.isEnabled()
+                || job == null
+                || job.getRanges() == null
+                || job.getRanges().isEmpty()) {
             return 0;
         }
         long started = System.currentTimeMillis();
-        CspCacheProperties.Warm w = properties.getWarm();
 
         List<VmWithCsp> cspVms = collectCspVms();
-        // Connection names for cluster discovery come from ALL Tumblebug VMs in all NSs,
-        // not just InfluxDB-active VMs. K8s nodes don't report agent metrics so their
-        // connections would otherwise be missed.
+        // K8s nodes don't report agent metrics, so scan all Tumblebug VMs for their connections
+        // rather than only InfluxDB-active ones.
         Set<String> connectionNames = collectAllTumblebugConnections();
 
         AtomicInteger vmOk = new AtomicInteger();
@@ -142,35 +169,46 @@ public class CspCacheWarmScheduler {
         AtomicInteger nodeFail = new AtomicInteger();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (VmWithCsp v : cspVms) {
-            for (String metric : VM_METRICS) {
-                futures.add(
-                        CompletableFuture.runAsync(
-                                () ->
-                                        warmVmMetric(
-                                                v,
-                                                metric,
-                                                w.getTimeBeforeHour(),
-                                                w.getIntervalMinute(),
-                                                vmOk,
-                                                vmFail),
-                                executor));
+        for (CspCacheProperties.Range r : job.getRanges()) {
+            if (r == null || r.getTimeBeforeHour() == null || r.getIntervalMinute() == null) {
+                continue;
             }
-        }
-        for (String conn : connectionNames) {
-            futures.addAll(
-                    warmClustersForConnection(
-                            conn, w.getTimeBeforeHour(), w.getIntervalMinute(), nodeOk, nodeFail));
+            for (VmWithCsp v : cspVms) {
+                for (String metric : VM_METRICS) {
+                    futures.add(
+                            CompletableFuture.runAsync(
+                                    () ->
+                                            warmVmMetric(
+                                                    v,
+                                                    metric,
+                                                    r.getTimeBeforeHour(),
+                                                    r.getIntervalMinute(),
+                                                    vmOk,
+                                                    vmFail),
+                                    executor));
+                }
+            }
+            for (String conn : connectionNames) {
+                futures.addAll(
+                        warmClustersForConnection(
+                                conn,
+                                r.getTimeBeforeHour(),
+                                r.getIntervalMinute(),
+                                nodeOk,
+                                nodeFail));
+            }
         }
 
         if (futures.isEmpty()) {
-            log.info("[CSP-CACHE-WARM] no CSP VMs or clusters to warm");
+            log.info("[CSP-CACHE-WARM:{}] no CSP VMs or clusters to warm", jobName);
             return 0;
         }
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
 
         log.info(
-                "[CSP-CACHE-WARM] vms={}, vmOk={}, vmFail={}, connections={}, nodeOk={}, nodeFail={}, took={}ms",
+                "[CSP-CACHE-WARM:{}] ranges={}, vms={}, vmOk={}, vmFail={}, connections={}, nodeOk={}, nodeFail={}, took={}ms",
+                jobName,
+                job.getRanges().size(),
                 cspVms.size(),
                 vmOk.get(),
                 vmFail.get(),
