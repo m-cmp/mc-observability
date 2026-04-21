@@ -31,24 +31,32 @@ export default function MciOverview() {
   const [hiddenNodeIds, setHiddenNodeIds] = useState(new Set()); // empty = all visible
 
   useEffect(() => {
-    if (!nsId || !mciId) return;
-    loadVms();
-  }, [nsId, mciId]);
+    if (!nsId) return;
+    loadData();
+  }, [nsId, mciId, viewTab]);
 
-  async function loadVms() {
+  async function loadData() {
     setLoading(true);
     try {
-      const mciData = await getMci(nsId, mciId);
-      const vmList = mciData.vm || [];
-      setVms(vmList);
-      // Load metrics right after we have VMs
-      if (vmList.length > 0) {
-        setMetricsLoading(true);
-        if (dataSource === 'agent') await loadAgentData(vmList);
-        else await loadCspData(vmList);
-        setMetricsLoading(false);
+      if (viewTab === 'k8s') {
+        // K8s: load all MCIs to find connections
+        const mcis = await getMciList(nsId);
+        setAllMcis(mcis);
+        setVms([]);
+      } else {
+        // VM: load all MCIs in NS, show grouped
+        const mcis = await getMciList(nsId);
+        setAllMcis(mcis);
+        const allVms = mcis.flatMap(m => m.vm || []);
+        setVms(allVms);
+        if (allVms.length > 0) {
+          setMetricsLoading(true);
+          if (dataSource === 'agent') await loadAgentData(allVms);
+          else await loadCspData(allVms);
+          setMetricsLoading(false);
+        }
       }
-    } catch { setVms([]); }
+    } catch { setVms([]); setAllMcis([]); }
     setLoading(false);
   }
 
@@ -173,11 +181,12 @@ export default function MciOverview() {
     }).finally(() => setNodeMetricsLoading(false));
   }, [viewTab, dataSource, clusters]);
 
-  if (loading) return <p className="text-sm text-gray-400 p-4">Loading VMs...</p>;
-  if (vms.length === 0) return <p className="text-sm text-gray-400 p-4">No VMs found</p>;
+  if (loading) return <p className="text-sm text-gray-400 p-4">Loading...</p>;
 
-  const hasCspVm = vms.some((vm) => isCspSupported(vm.connectionName));
+  const allVmsFlat = allMcis.flatMap(m => m.vm || []);
+  const hasCspVm = allVmsFlat.some((vm) => isCspSupported(vm.connectionName));
   const showDataSourceToggle = (viewTab === 'vm' && hasCspVm) || viewTab === 'k8s';
+  const totalVms = allVmsFlat.length;
 
   return (
     <div className="space-y-4">
@@ -209,7 +218,7 @@ export default function MciOverview() {
               </button>
             </div>
           )}
-          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${vms.length} VMs` : `${k8sNodes.length} Nodes`}</span>
+          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${totalVms} VMs / ${allMcis.length} MCIs` : `${k8sNodes.length} Nodes / ${clusters.length} Clusters`}</span>
         </div>
       </div>
 
@@ -292,48 +301,30 @@ export default function MciOverview() {
         })
       )}
 
-      {/* K8s Tab — VMs by MCI (like node groups) */}
-      {viewTab === 'k8s' && allMcis.length > 0 && (
-        <>
-          <h3 className="text-sm font-semibold text-gray-500 mt-4">VMs by MCI</h3>
-          {allMcis.map((mci) => (
-            <div key={mci.id} className="bg-white rounded-lg shadow">
-              <div className="px-4 py-3 border-b flex items-center gap-2">
-                <span className="font-semibold text-sm">{mci.name || mci.id}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {mci.status || '-'}
-                </span>
-                <span className="text-xs text-gray-400 ml-auto">{(mci.vm || []).length} VMs</span>
-              </div>
-              <div className="p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {(mci.vm || []).map((vm) => (
-                  <div key={vm.id} onClick={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}`)}
-                    className="flex items-center gap-2 px-3 py-2 rounded border hover:bg-blue-50 cursor-pointer">
-                    <ProviderBadge connectionName={vm.connectionName} showLabel={false} />
-                    <span className="text-sm font-medium">{vm.name || vm.id}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${vm.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {vm.status || '-'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* VM Tab — grouped by MCI */}
+      {viewTab === 'vm' && allMcis.map((mci) => (
+        <div key={mci.id} className="space-y-3">
+          {/* MCI group header */}
+          <div className="flex items-center gap-2 px-1">
+            <span className="text-sm font-semibold text-gray-700">{mci.name || mci.id}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+              {mci.status || '-'}
+            </span>
+            <span className="text-xs text-gray-400">{(mci.vm || []).length} VMs</span>
+          </div>
+          {(mci.vm || []).map((vm) => (
+            <VmCard
+              key={vm.id}
+              vm={vm}
+              vmMetrics={vmData[vm.id] || {}}
+              dataSource={dataSource}
+              metricsLoading={metricsLoading}
+              selectedChart={selectedChart}
+              onSelectChart={setSelectedChart}
+              onClickChart={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
+            />
           ))}
-        </>
-      )}
-
-      {/* VM Tab */}
-      {viewTab === 'vm' && vms.map((vm) => (
-        <VmCard
-          key={vm.id}
-          vm={vm}
-          vmMetrics={vmData[vm.id] || {}}
-          dataSource={dataSource}
-          metricsLoading={metricsLoading}
-          selectedChart={selectedChart}
-          onSelectChart={setSelectedChart}
-          onClickChart={() => navigate(`/monitoring/${nsId}/${mciId}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
-        />
+        </div>
       ))}
     </div>
   );
