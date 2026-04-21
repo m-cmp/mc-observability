@@ -81,6 +81,19 @@ influxdb:
       password: ${INFLUX2_PASSWORD:mc-agent}
       uid: ${INFLUX2_UID:P951FEA4DE68E13C52}
 
+csp:
+  cache:
+    enabled: ${CSP_CACHE_ENABLED:true}
+    max-size: ${CSP_CACHE_MAX_SIZE:10000}
+    expire-after-write-seconds: ${CSP_CACHE_EXPIRE_SECONDS:60}
+    warm:
+      enabled: ${CSP_CACHE_WARM_ENABLED:true}
+      cron: ${CSP_CACHE_WARM_CRON:0 * * * * *}
+      thread-pool-size: ${CSP_CACHE_WARM_THREADS:10}
+      time-before-hour: ${CSP_CACHE_WARM_TIME_BEFORE_HOUR:1}
+      interval-minute: ${CSP_CACHE_WARM_INTERVAL_MINUTE:5}
+      top-n: ${CSP_CACHE_WARM_TOP_N:20}
+
 monitoring:
   cache:
     enabled: ${MONITORING_CACHE_ENABLED:true}
@@ -106,6 +119,15 @@ monitoring:
           - { range: 3d, group-time: 15m }
           - { range: 5d, group-time: 30m }
           - { range: 7d, group-time: 1h }
+      overview:
+        enabled: ${MONITORING_CACHE_WARM_OVERVIEW_ENABLED:true}
+        cron: ${MONITORING_CACHE_WARM_OVERVIEW_CRON:0 * * * * *}
+        thread-pool-size: ${MONITORING_CACHE_WARM_OVERVIEW_THREADS:10}
+        # Matches the exact query shape the frontend NS/MCI overview sends.
+        queries:
+          - { measurement: cpu,  function: mean, field: usage_idle,   range: 1h, group-time: 1m, limit: 2000 }
+          - { measurement: mem,  function: mean, field: used_percent, range: 1h, group-time: 1m, limit: 2000 }
+          - { measurement: disk, function: mean, field: used_percent, range: 1h, group-time: 1m, limit: 2000 }
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}

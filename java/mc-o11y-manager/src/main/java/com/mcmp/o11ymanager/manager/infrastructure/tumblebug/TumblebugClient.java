@@ -22,6 +22,10 @@ public interface TumblebugClient {
     @GetMapping("/tumblebug/ns")
     TumblebugNS getNSList();
 
+    @GetMapping("/tumblebug/ns/{nsId}/mci")
+    com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCIList getMCIList(
+            @PathVariable String nsId);
+
     @GetMapping("/tumblebug/ns/{nsId}/mci/{mciId}")
     TumblebugMCI getMCIList(@PathVariable String nsId, @PathVariable String mciId);
 
