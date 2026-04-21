@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.manager.service.cache;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mcmp.o11ymanager.manager.config.CspCacheProperties;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterList;
@@ -14,6 +16,7 @@ import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,6 +78,19 @@ public class CspCacheWarmScheduler {
     private final InfluxDbService influxDbService;
 
     private ExecutorService executor;
+
+    /**
+     * Short-lived caches for Tumblebug/cb-spider discovery calls so the warm pass doesn't hammer
+     * Tumblebug's rate limiter on every tick (it returns 429 quickly under bursts).
+     *
+     * <p>TTL roughly covers 5 warm cycles — fresh enough to pick up new infrastructure within a few
+     * minutes, cheap enough to not re-discover on every minute.
+     */
+    private final Cache<String, Set<String>> connectionDiscoveryCache =
+            Caffeine.newBuilder().maximumSize(1).expireAfterWrite(Duration.ofMinutes(5)).build();
+
+    private final Cache<String, List<ClusterRef>> clusterDiscoveryCache =
+            Caffeine.newBuilder().maximumSize(64).expireAfterWrite(Duration.ofMinutes(5)).build();
 
     @PostConstruct
     void init() {
@@ -221,11 +237,15 @@ public class CspCacheWarmScheduler {
     }
 
     /**
-     * Walks every namespace and MCI in Tumblebug and collects unique connectionNames. K8s clusters
-     * often live in a connection that has no InfluxDB-active VM, so scanning all Tumblebug VMs is
-     * the only way to not miss their connections for warming.
+     * Walks every namespace and MCI in Tumblebug and collects unique connectionNames. Result is
+     * memoised for 5 minutes to avoid Tumblebug rate-limit bursts (429 Too Many Requests) when warm
+     * runs every minute.
      */
     private Set<String> collectAllTumblebugConnections() {
+        Set<String> cached = connectionDiscoveryCache.getIfPresent("all");
+        if (cached != null) {
+            return cached;
+        }
         Set<String> out = new HashSet<>();
         TumblebugNS nsList;
         try {
@@ -268,6 +288,9 @@ public class CspCacheWarmScheduler {
                 }
             }
         }
+        if (!out.isEmpty()) {
+            connectionDiscoveryCache.put("all", out);
+        }
         return out;
     }
 
@@ -305,6 +328,38 @@ public class CspCacheWarmScheduler {
             AtomicInteger ok,
             AtomicInteger fail) {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
+        List<ClusterRef> refs = discoverClusters(connectionName);
+        for (ClusterRef ref : refs) {
+            for (String metric : NODE_METRICS) {
+                futures.add(
+                        CompletableFuture.runAsync(
+                                () ->
+                                        warmClusterNodeMetric(
+                                                ref.connectionName(),
+                                                ref.clusterName(),
+                                                ref.nodeGroupName(),
+                                                ref.nodeNumber(),
+                                                metric,
+                                                tbh,
+                                                interval,
+                                                ok,
+                                                fail),
+                                executor));
+            }
+        }
+        return futures;
+    }
+
+    /**
+     * Enumerates (cluster, nodeGroup, nodeNumber) tuples for a connection. Result is cached for 5
+     * minutes to avoid hammering cb-spider (which itself talks to the CSP API) each warm tick.
+     */
+    private List<ClusterRef> discoverClusters(String connectionName) {
+        List<ClusterRef> cached = clusterDiscoveryCache.getIfPresent(connectionName);
+        if (cached != null) {
+            return cached;
+        }
+        List<ClusterRef> refs = new ArrayList<>();
         SpiderClusterList list;
         try {
             list = spiderClient.listClusters(connectionName);
@@ -313,10 +368,10 @@ public class CspCacheWarmScheduler {
                     "[CSP-CACHE-WARM] listClusters failed conn={}, err={}",
                     connectionName,
                     e.toString());
-            return futures;
+            return refs;
         }
         if (list == null || list.getCluster() == null) {
-            return futures;
+            return refs;
         }
         for (SpiderClusterInfo c : list.getCluster()) {
             if (c == null || c.getIId() == null || c.getIId().getNameId() == null) {
@@ -348,27 +403,16 @@ public class CspCacheWarmScheduler {
                 }
                 String ngName = ng.getIId().getNameId();
                 for (int idx = 0; idx < ng.getNodes().size(); idx++) {
-                    final String nodeNumber = String.valueOf(idx + 1);
-                    for (String metric : NODE_METRICS) {
-                        futures.add(
-                                CompletableFuture.runAsync(
-                                        () ->
-                                                warmClusterNodeMetric(
-                                                        connectionName,
-                                                        clusterName,
-                                                        ngName,
-                                                        nodeNumber,
-                                                        metric,
-                                                        tbh,
-                                                        interval,
-                                                        ok,
-                                                        fail),
-                                        executor));
-                    }
+                    refs.add(
+                            new ClusterRef(
+                                    connectionName, clusterName, ngName, String.valueOf(idx + 1)));
                 }
             }
         }
-        return futures;
+        if (!refs.isEmpty()) {
+            clusterDiscoveryCache.put(connectionName, refs);
+        }
+        return refs;
     }
 
     private void warmClusterNodeMetric(
@@ -429,4 +473,7 @@ public class CspCacheWarmScheduler {
 
     private record VmWithCsp(
             VmRef ref, String connectionName, String cspResourceName, Instant createdAt) {}
+
+    private record ClusterRef(
+            String connectionName, String clusterName, String nodeGroupName, String nodeNumber) {}
 }
