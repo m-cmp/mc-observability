@@ -171,8 +171,8 @@ feign:
     pw: ${TUMBLEBUG_PW:default}
   cb-spider:
     url: ${SPIDER_URL:http://mc-infra-connector:1024}
-    id: ${SPIDER_ID:-}
-    pw: ${SPIDER_PW:-}
+    id: ${SPIDER_ID:default}
+    pw: ${SPIDER_PW:default}
   insight:
     url: ${INSIGHT_URL:http://mc-observability-insight:9001}
 
