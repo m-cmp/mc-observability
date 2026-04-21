@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getMci } from '../api/tumblebug';
 import { getMetricsByVM } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
-import { getClusters, getCluster } from '../api/k8s';
+import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
 import MetricChart from '../components/MetricChart';
 import ProviderBadge from '../components/ProviderBadge';
 
@@ -25,6 +25,8 @@ export default function MciOverview() {
   const [viewTab, setViewTab] = useState('vm'); // 'vm' | 'k8s'
   const [clusters, setClusters] = useState([]);
   const [clustersLoading, setClustersLoading] = useState(false);
+  const [nodeData, setNodeData] = useState({}); // keyed by node id -> CSP metrics shape
+  const [nodeMetricsLoading, setNodeMetricsLoading] = useState(false);
 
   useEffect(() => {
     if (!nsId || !mciId) return;
@@ -109,10 +111,45 @@ export default function MciOverview() {
     }).finally(() => setClustersLoading(false));
   }, [viewTab, vms]);
 
+  // Flatten clusters into a per-node list (1-indexed nodeNumber within its NodeGroup, per cb-spider API)
+  const k8sNodes = clusters.flatMap((cluster) =>
+    (cluster.NodeGroupList || []).flatMap((ng) =>
+      (ng.Nodes || []).map((node, idx) => ({
+        id: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}/${idx + 1}`,
+        node,
+        nodeNumber: idx + 1,
+        nodeGroupName: ng.IId?.NameId,
+        clusterName: cluster.IId?.NameId,
+        clusterStatus: cluster.Status,
+        connectionName: cluster.connectionName,
+      }))
+    )
+  );
+
+  // Load CSP (API) metrics for each K8s node when K8s tab is active + API mode
+  useEffect(() => {
+    if (viewTab !== 'k8s' || dataSource !== 'csp' || k8sNodes.length === 0) {
+      setNodeData({});
+      return;
+    }
+    setNodeMetricsLoading(true);
+    const data = {};
+    Promise.allSettled(
+      k8sNodes.map(async (n) => {
+        if (!isCspSupported(n.connectionName)) return;
+        const m = await getAllClusterNodeMetrics(n.connectionName, n.clusterName, n.nodeGroupName, String(n.nodeNumber), '1');
+        data[n.id] = m;
+      })
+    ).then(() => {
+      setNodeData({ ...data });
+    }).finally(() => setNodeMetricsLoading(false));
+  }, [viewTab, dataSource, clusters]);
+
   if (loading) return <p className="text-sm text-gray-400 p-4">Loading VMs...</p>;
   if (vms.length === 0) return <p className="text-sm text-gray-400 p-4">No VMs found</p>;
 
   const hasCspVm = vms.some((vm) => isCspSupported(vm.connectionName));
+  const showDataSourceToggle = (viewTab === 'vm' && hasCspVm) || viewTab === 'k8s';
 
   return (
     <div className="space-y-4">
@@ -132,7 +169,7 @@ export default function MciOverview() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {viewTab === 'vm' && hasCspVm && (
+          {showDataSourceToggle && (
             <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
               <button onClick={() => setDataSource('agent')}
                 className={`px-3 py-1 rounded-md ${dataSource === 'agent' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>
@@ -144,7 +181,7 @@ export default function MciOverview() {
               </button>
             </div>
           )}
-          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${vms.length} VMs` : `${clusters.length} Clusters`}</span>
+          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${vms.length} VMs` : `${k8sNodes.length} Nodes`}</span>
         </div>
       </div>
 
@@ -152,32 +189,18 @@ export default function MciOverview() {
       {viewTab === 'k8s' && (
         clustersLoading ? (
           <div className="text-sm text-gray-400 animate-pulse p-4">Loading clusters...</div>
-        ) : clusters.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s clusters found</div>
-        ) : clusters.map((cluster, i) => (
-          <div key={i} className="bg-white rounded-lg shadow">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm">{cluster.IId?.NameId}</span>
-                <ProviderBadge connectionName={cluster.connectionName} />
-                <span className={`text-xs px-2 py-0.5 rounded-full ${cluster.Status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{cluster.Status}</span>
-              </div>
-              <span className="text-xs text-gray-400">{cluster.connectionName}</span>
-            </div>
-            {(cluster.NodeGroupList || []).map((ng, j) => (
-              <div key={j} className="px-4 py-3 border-b last:border-b-0">
-                <div className="text-sm font-medium mb-2">NodeGroup: {ng.IId?.NameId}</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {(ng.Nodes || []).map((node, k) => (
-                    <div key={k} className="flex items-center gap-2 text-sm bg-gray-50 rounded px-3 py-2">
-                      <span className="w-2 h-2 rounded-full bg-green-500" />
-                      <span className="font-mono text-xs">{node.NameId || node.SystemId || `node-${k}`}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        ) : k8sNodes.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s nodes found</div>
+        ) : k8sNodes.map((n) => (
+          <K8sNodeCard
+            key={n.id}
+            info={n}
+            metrics={nodeData[n.id] || {}}
+            dataSource={dataSource}
+            metricsLoading={nodeMetricsLoading}
+            selectedChart={selectedChart}
+            onSelectChart={setSelectedChart}
+          />
         ))
       )}
 
@@ -194,6 +217,79 @@ export default function MciOverview() {
           onClickChart={() => navigate(`/monitoring/${nsId}/${mciId}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
         />
       ))}
+    </div>
+  );
+}
+
+function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart, onSelectChart }) {
+  const cspSupported = isCspSupported(info.connectionName);
+  const nodeName = info.node?.NameId || info.node?.SystemId || `node-${info.nodeNumber}`;
+
+  const header = (
+    <div className="flex items-center justify-between px-4 py-3 border-b">
+      <div className="flex items-center gap-2 min-w-0">
+        <ProviderBadge connectionName={info.connectionName} />
+        <span className="font-semibold text-sm truncate">{nodeName}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${info.clusterStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{info.clusterStatus || '-'}</span>
+        {dataSource === 'csp' && cspSupported && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
+      </div>
+      <div className="text-xs text-gray-400 flex items-center gap-2 shrink-0">
+        <span className="font-mono">{info.clusterName}</span>
+        <span>/</span>
+        <span className="font-mono">{info.nodeGroupName}</span>
+        <span>/</span>
+        <span className="font-mono">#{info.nodeNumber}</span>
+      </div>
+    </div>
+  );
+
+  if (dataSource === 'agent') {
+    return (
+      <div className="bg-white rounded-lg shadow">
+        {header}
+        <div className="p-8 text-center text-sm text-gray-400">Agent monitoring for K8s nodes is not yet supported</div>
+      </div>
+    );
+  }
+
+  if (!cspSupported) {
+    return (
+      <div className="bg-white rounded-lg shadow">
+        {header}
+        <div className="p-8 text-center text-sm text-gray-400">API monitoring not supported for this provider</div>
+      </div>
+    );
+  }
+
+  const cspKeys = CSP_METRICS.map((m) => m.key).filter((k) => metrics[k]);
+  const activeKey = cspKeys.includes(selectedChart) ? selectedChart : (cspKeys[0] || 'cpu_usage');
+  const activeData = metrics[activeKey];
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      {header}
+      <div className="flex">
+        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
+          {cspKeys.map((key) => {
+            const m = metrics[key];
+            const lastVal = m?.series?.[0]?.data?.length > 0 ? m.series[0].data[m.series[0].data.length - 1].y : null;
+            const display = lastVal != null ? formatCspValue(lastVal, m.metricUnit) : '-';
+            return (
+              <GaugeItem key={key} g={{ key, label: m?.metricName || key, display }}
+                active={activeKey === key} onClick={() => onSelectChart(key)} noBar />
+            );
+          })}
+        </div>
+        <div className="flex-1 px-2 py-1 min-w-0">
+          {metricsLoading ? (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading API data...</div>
+          ) : activeData?.series ? (
+            <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
+          ) : (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">No data</div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
