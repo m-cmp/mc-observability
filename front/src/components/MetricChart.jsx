@@ -7,9 +7,10 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
  * @param {string} metric - e.g. "used", "used_percent", "usage_idle", "bytes_recv"
  */
 export default function MetricChart({ title, series, height = 240, chartType = 'area', measurement, metric }) {
-  if (!series || series.length === 0) {
+  const hasData = series && series.length > 0 && series.some(s => s.data && s.data.length > 0);
+  if (!hasData) {
     return (
-      <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+      <div style={{ height }} className="flex items-center justify-center text-gray-400 text-sm">
         No data
       </div>
     );
