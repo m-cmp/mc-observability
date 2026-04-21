@@ -45,12 +45,17 @@ export default function App() {
       <Route element={<EmbedLayout />}>
         <Route path="/embed/monitoring/:nsId/:mciId/:vmId" element={<MonitoringDashboard />} />
         <Route path="/embed/monitoring/:nsId/:mciId" element={<MciOverview />} />
+        <Route path="/embed/monitoring/:nsId" element={<MciOverview />} />
         <Route path="/embed/logs/:nsId/:mciId/:vmId" element={<LogViewer />} />
         <Route path="/embed/logs/:nsId/:mciId" element={<LogViewer />} />
+        <Route path="/embed/logs/:nsId" element={<LogViewer />} />
         <Route path="/embed/config/:nsId/:mciId" element={<MonitoringConfig />} />
+        <Route path="/embed/config/:nsId" element={<MonitoringConfig />} />
         <Route path="/embed/insight/:nsId/:mciId/:vmId" element={<InsightDashboard />} />
         <Route path="/embed/insight/:nsId/:mciId" element={<InsightDashboard />} />
+        <Route path="/embed/insight/:nsId" element={<InsightDashboard />} />
         <Route path="/embed/alerts/:nsId/:mciId" element={<AlertManager />} />
+        <Route path="/embed/alerts/:nsId" element={<AlertManager />} />
       </Route>
     </Routes>
     </ErrorBoundary>
