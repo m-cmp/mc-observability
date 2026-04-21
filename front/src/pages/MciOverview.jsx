@@ -187,7 +187,7 @@ export default function MciOverview() {
           <h2 className="text-lg font-semibold">{viewTab === 'k8s' || !mciId ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
           {/* VM / K8s tab */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
-            <button onClick={() => { setViewTab('vm'); if (!mciId && allMcis[0]) navigate(`/monitoring/${nsId}/${allMcis[0].id}`); }}
+            <button onClick={() => { setViewTab('vm'); if (mciId) navigate(`/monitoring/${nsId}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'vm' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
               VM
             </button>

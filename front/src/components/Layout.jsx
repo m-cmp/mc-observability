@@ -127,7 +127,7 @@ export default function Layout() {
             <span className="text-gray-300">/</span>
             <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
               onChange={(e) => { if (e.target.value) navigate(`/${currentSection}/${nsId}/${e.target.value}`); }}>
-              <option value="">(NS Level)</option>
+              <option value="">MCI</option>
               {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
             </select>
           </>}
