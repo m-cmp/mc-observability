@@ -11,6 +11,7 @@ import LogViewer from './pages/LogViewer';
 import MonitoringConfig from './pages/MonitoringConfig';
 import InsightDashboard from './pages/InsightDashboard';
 import AlertManager from './pages/AlertManager';
+import K8sNodeDashboard from './pages/K8sNodeDashboard';
 import HomePage from './pages/HomePage';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
       {/* Standalone — full nav + test console */}
       <Route path="/" element={<HomePage />} />
       <Route element={<Layout />}>
+        <Route path="/monitoring/:nsId/k8s/:connectionName/:clusterName/:nodeGroupName/:nodeNumber" element={<K8sNodeDashboard />} />
         <Route path="/monitoring/:nsId/:mciId/:vmId" element={<MonitoringDashboard />} />
         <Route path="/monitoring/:nsId/:mciId" element={<MciOverview />} />
         <Route path="/monitoring/:nsId" element={<MciOverview />} />
@@ -43,6 +45,7 @@ export default function App() {
 
       {/* Embed — no nav, for iframe */}
       <Route element={<EmbedLayout />}>
+        <Route path="/embed/monitoring/:nsId/k8s/:connectionName/:clusterName/:nodeGroupName/:nodeNumber" element={<K8sNodeDashboard />} />
         <Route path="/embed/monitoring/:nsId/:mciId/:vmId" element={<MonitoringDashboard />} />
         <Route path="/embed/monitoring/:nsId/:mciId" element={<MciOverview />} />
         <Route path="/embed/monitoring/:nsId" element={<MciOverview />} />
