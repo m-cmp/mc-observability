@@ -16,3 +16,9 @@ export async function getMci(nsId, mciId) {
   const res = await client.get(`${TB_BASE}/ns/${nsId}/mci/${mciId}`);
   return res.data || {};
 }
+
+/** Get all MCI list with VM details for a namespace */
+export async function getAllMcisWithVms(nsId) {
+  const mcis = await getMciList(nsId);
+  return mcis || [];
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMci } from '../api/tumblebug';
+import { getMci, getMciList } from '../api/tumblebug';
 import { getMetricsByVM } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
@@ -17,6 +17,7 @@ export default function MciOverview() {
   const { nsId, mciId } = useParams();
   const navigate = useNavigate();
   const [vms, setVms] = useState([]);
+  const [allMcis, setAllMcis] = useState([]); // NS-level: all MCIs with VMs
   const [vmData, setVmData] = useState({});
   const [loading, setLoading] = useState(true);
   const [metricsLoading, setMetricsLoading] = useState(false);
@@ -25,7 +26,7 @@ export default function MciOverview() {
   const [viewTab, setViewTab] = useState('vm'); // 'vm' | 'k8s'
   const [clusters, setClusters] = useState([]);
   const [clustersLoading, setClustersLoading] = useState(false);
-  const [nodeData, setNodeData] = useState({}); // keyed by node id -> CSP metrics shape
+  const [nodeData, setNodeData] = useState({});
   const [nodeMetricsLoading, setNodeMetricsLoading] = useState(false);
   const [hiddenNodeIds, setHiddenNodeIds] = useState(new Set()); // empty = all visible
 
@@ -97,20 +98,26 @@ export default function MciOverview() {
     setVmData({ ...data });
   }
 
-  // Load K8s clusters when tab switches
+  // Load all MCIs in NS + K8s clusters when K8s tab switches
   useEffect(() => {
-    if (viewTab !== 'k8s' || vms.length === 0) return;
+    if (viewTab !== 'k8s') return;
     setClustersLoading(true);
-    const connNames = [...new Set(vms.map(v => v.connectionName).filter(Boolean))];
-    Promise.allSettled(connNames.map(async (conn) => {
-      const list = await getClusters(conn);
-      const detailed = await Promise.allSettled(list.map(c => getCluster(conn, c.IId?.NameId)));
-      return detailed.filter(r => r.status === 'fulfilled').map(r => ({ ...r.value, connectionName: conn }));
-    })).then(results => {
-      const all = results.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
-      setClusters(all);
-    }).finally(() => setClustersLoading(false));
-  }, [viewTab, vms]);
+    (async () => {
+      // Get all MCIs in namespace to find all connections
+      let mcis = [];
+      try { mcis = await getMciList(nsId); } catch {}
+      setAllMcis(mcis);
+      const allVms = mcis.flatMap(m => m.vm || []);
+      const connNames = [...new Set(allVms.map(v => v.connectionName).filter(Boolean))];
+      // Search clusters across all connections
+      const results = await Promise.allSettled(connNames.map(async (conn) => {
+        const list = await getClusters(conn);
+        const detailed = await Promise.allSettled(list.map(c => getCluster(conn, c.IId?.NameId)));
+        return detailed.filter(r => r.status === 'fulfilled').map(r => ({ ...r.value, connectionName: conn }));
+      }));
+      setClusters(results.filter(r => r.status === 'fulfilled').flatMap(r => r.value));
+    })().finally(() => setClustersLoading(false));
+  }, [viewTab, nsId]);
 
   // Group by cluster + NodeGroup, with per-node entries (1-indexed nodeNumber per cb-spider API)
   const k8sGroups = clusters.flatMap((cluster) =>
@@ -176,7 +183,7 @@ export default function MciOverview() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">MCI Overview — {mciId}</h2>
+          <h2 className="text-lg font-semibold">{viewTab === 'k8s' ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
           {/* VM / K8s tab */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
             <button onClick={() => setViewTab('vm')}
@@ -218,57 +225,101 @@ export default function MciOverview() {
           const anyVisible = ids.some((id) => !hiddenNodeIds.has(id));
           const visibleNodes = g.nodes.filter((n) => !hiddenNodeIds.has(n.id));
           return (
-            <div key={g.key} className="space-y-2">
-              <div className="bg-white rounded-lg shadow px-4 py-3 flex items-center gap-4 flex-wrap">
-                <div className="flex items-center gap-2 min-w-0">
-                  <ProviderBadge connectionName={g.cluster.connectionName} />
+            <div key={g.key} className="bg-white rounded-lg shadow">
+              {/* Group header */}
+              <div className="px-4 py-3 border-b flex items-center gap-3 min-w-0 flex-wrap">
+                <ProviderBadge connectionName={g.cluster.connectionName} />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Cluster</span>
                   <span className="font-semibold text-sm truncate">{g.cluster.IId?.NameId}</span>
-                  <span className="text-xs text-gray-400">/</span>
+                </div>
+                <span className="text-gray-300">/</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">NodeGroup</span>
                   <span className="font-medium text-sm truncate">{g.nodeGroup.IId?.NameId}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${g.cluster.Status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{g.cluster.Status || '-'}</span>
-                  <span className="text-xs text-gray-400">{g.nodes.length} nodes</span>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap ml-auto">
-                  <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
-                      checked={allVisible}
-                      ref={(el) => { if (el) el.indeterminate = !allVisible && anyVisible; }}
-                      onChange={(e) => toggleGroup(ids, e.target.checked)}
-                    />
-                    <span className="font-semibold text-gray-700">All</span>
-                  </label>
-                  {g.nodes.map((n) => {
-                    const nodeName = n.node?.NameId || n.node?.SystemId || `node-${n.nodeNumber}`;
-                    return (
-                      <label key={n.id} className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
-                          checked={!hiddenNodeIds.has(n.id)}
-                          onChange={() => toggleNode(n.id)}
-                        />
-                        <span className="font-mono text-gray-600">{nodeName}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${g.cluster.Status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{g.cluster.Status || '-'}</span>
+                <span className="text-xs text-gray-400 ml-auto">{g.nodes.length} nodes</span>
               </div>
-              {visibleNodes.map((n) => (
-                <K8sNodeCard
-                  key={n.id}
-                  info={n}
-                  metrics={nodeData[n.id] || {}}
-                  dataSource={dataSource}
-                  metricsLoading={nodeMetricsLoading}
-                  selectedChart={selectedChart}
-                  onSelectChart={setSelectedChart}
-                />
-              ))}
+              {/* Left-aligned checkbox strip (nodes) */}
+              <div className="px-4 py-2 border-b bg-white flex items-center gap-4 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Nodes</span>
+                <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
+                    checked={allVisible}
+                    ref={(el) => { if (el) el.indeterminate = !allVisible && anyVisible; }}
+                    onChange={(e) => toggleGroup(ids, e.target.checked)}
+                  />
+                  <span className="font-semibold text-gray-700">All</span>
+                </label>
+                {g.nodes.map((n) => {
+                  const nodeName = n.node?.NameId || n.node?.SystemId || `node-${n.nodeNumber}`;
+                  return (
+                    <label key={n.id} className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
+                        checked={!hiddenNodeIds.has(n.id)}
+                        onChange={() => toggleNode(n.id)}
+                      />
+                      <span className="font-mono text-gray-600">{nodeName}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {/* Nested node cards */}
+              {visibleNodes.length === 0 ? (
+                <div className="p-6 text-center text-xs text-gray-400">No nodes selected</div>
+              ) : (
+                <div className="p-3 space-y-3 bg-white">
+                  {visibleNodes.map((n) => (
+                    <K8sNodeCard
+                      key={n.id}
+                      info={n}
+                      metrics={nodeData[n.id] || {}}
+                      dataSource={dataSource}
+                      metricsLoading={nodeMetricsLoading}
+                      selectedChart={selectedChart}
+                      onSelectChart={setSelectedChart}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })
+      )}
+
+      {/* K8s Tab — VMs by MCI (like node groups) */}
+      {viewTab === 'k8s' && allMcis.length > 0 && (
+        <>
+          <h3 className="text-sm font-semibold text-gray-500 mt-4">VMs by MCI</h3>
+          {allMcis.map((mci) => (
+            <div key={mci.id} className="bg-white rounded-lg shadow">
+              <div className="px-4 py-3 border-b flex items-center gap-2">
+                <span className="font-semibold text-sm">{mci.name || mci.id}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {mci.status || '-'}
+                </span>
+                <span className="text-xs text-gray-400 ml-auto">{(mci.vm || []).length} VMs</span>
+              </div>
+              <div className="p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {(mci.vm || []).map((vm) => (
+                  <div key={vm.id} onClick={() => navigate(`/monitoring/${nsId}/${mci.id}/${vm.id}`)}
+                    className="flex items-center gap-2 px-3 py-2 rounded border hover:bg-blue-50 cursor-pointer">
+                    <ProviderBadge connectionName={vm.connectionName} showLabel={false} />
+                    <span className="text-sm font-medium">{vm.name || vm.id}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ml-auto ${vm.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {vm.status || '-'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </>
       )}
 
       {/* VM Tab */}
@@ -293,10 +344,10 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
   const nodeName = info.node?.NameId || info.node?.SystemId || `node-${info.nodeNumber}`;
 
   const header = (
-    <div className="flex items-center justify-between px-4 py-3 border-b">
+    <div className="flex items-center justify-between px-4 py-2.5 border-b bg-white">
       <div className="flex items-center gap-2 min-w-0">
-        <ProviderBadge connectionName={info.connectionName} />
-        <span className="font-semibold text-sm truncate">{nodeName}</span>
+        <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Node</span>
+        <span className="font-semibold text-sm truncate font-mono">{nodeName}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full ${info.clusterStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{info.clusterStatus || '-'}</span>
         {dataSource === 'csp' && cspSupported && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
       </div>
@@ -308,7 +359,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
 
   if (dataSource === 'agent') {
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-md border border-gray-200">
         {header}
         <div className="p-8 text-center text-sm text-gray-400">Agent monitoring for K8s nodes is not yet supported</div>
       </div>
@@ -317,7 +368,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
 
   if (!cspSupported) {
     return (
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-md border border-gray-200">
         {header}
         <div className="p-8 text-center text-sm text-gray-400">API monitoring not supported for this provider</div>
       </div>
@@ -329,7 +380,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
   const activeData = metrics[activeKey];
 
   return (
-    <div className="bg-white rounded-lg shadow">
+    <div className="bg-white rounded-md border border-gray-200">
       {header}
       <div className="flex">
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
