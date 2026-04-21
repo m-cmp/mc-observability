@@ -182,6 +182,7 @@ public class ItemFacadeService {
                             updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
             tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
+            telegrafFacadeService.restart(nsId, mciId, vmId);
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {

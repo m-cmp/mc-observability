@@ -293,6 +293,7 @@ export default function MciOverview() {
                       metricsLoading={nodeMetricsLoading}
                       selectedChart={selectedChart}
                       onSelectChart={setSelectedChart}
+                      onClickChart={() => navigate(`${base}/monitoring/${nsId}/k8s/${n.connectionName}/${n.clusterName}/${n.nodeGroupName}/${n.nodeNumber}`)}
                     />
                   ))}
                 </div>
@@ -334,7 +335,7 @@ export default function MciOverview() {
   );
 }
 
-function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart, onSelectChart }) {
+function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart, onSelectChart, onClickChart }) {
   const cspSupported = isCspSupported(info.connectionName);
   const nodeName = info.node?.NameId || info.node?.SystemId || `node-${info.nodeNumber}`;
 
@@ -389,7 +390,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
             );
           })}
         </div>
-        <div className="flex-1 px-2 py-1 min-w-0">
+        <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP API data...</div>
           ) : activeData?.series ? (
@@ -538,10 +539,24 @@ function getLastValue(metricDTOs) {
   if (!metricDTOs || metricDTOs.length === 0) return null;
   const m = metricDTOs[0];
   if (!m.values || m.values.length === 0) return null;
-  const lastRow = m.values[m.values.length - 1];
   const timeIdx = (m.columns || []).indexOf('timestamp');
-  const valIdx = timeIdx === 0 ? 1 : 0;
-  return lastRow[valIdx] != null ? parseFloat(lastRow[valIdx]) : null;
+  const tIdx = timeIdx < 0 ? 0 : timeIdx;
+  const valIdx = tIdx === 0 ? 1 : 0;
+  // Server returns rows `order by time desc`, so values[0] is newest. Scan for
+  // the row with the max timestamp that has a non-null value — handles sparse
+  // series where the most recent bucket might still be null.
+  let bestTs = -Infinity;
+  let bestVal = null;
+  for (const row of m.values) {
+    if (row[valIdx] == null) continue;
+    const raw = row[tIdx];
+    const ts = typeof raw === 'string' ? new Date(raw).getTime() : Number(raw);
+    if (ts > bestTs) {
+      bestTs = ts;
+      bestVal = parseFloat(row[valIdx]);
+    }
+  }
+  return bestVal;
 }
 
 function toSeries(metricDTOs, name, invert) {
