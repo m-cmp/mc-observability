@@ -1,0 +1,81 @@
+# Windows OTel Java agent update.
+# 환경변수는 그대로 두고 jar만 재다운로드 (Java 측 OtelJavaFacadeService.update가 config_content를 null로 보냄).
+# OTEL_JAVA_AGENT_JAR_URL / OTEL_JAVA_AGENT_JAR_PATH는 기존 install 시 설정된 값을 호스트에서 그대로 가져와 사용.
+
+- name: Read JAR_URL and JAR_PATH from machine env
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $jarUrl = [Environment]::GetEnvironmentVariable('OTEL_JAVA_AGENT_JAR_URL', 'Machine')
+    $jarPath = [Environment]::GetEnvironmentVariable('OTEL_JAVA_AGENT_JAR_PATH', 'Machine')
+    Write-Output "JAR_URL=$jarUrl"
+    Write-Output "JAR_PATH=$jarPath"
+  register: jar_info_result
+
+- name: Parse JAR_URL and JAR_PATH
+  set_fact:
+    otel_jar_url: "{{ jar_info_result.stdout_lines | select('match', '^JAR_URL=') | first | regex_replace('^JAR_URL=', '') | trim }}"
+    otel_jar_path: "{{ jar_info_result.stdout_lines | select('match', '^JAR_PATH=') | first | regex_replace('^JAR_PATH=', '') | trim }}"
+
+- name: Fail if JAR_URL or JAR_PATH missing (install must run first)
+  fail:
+    msg: "OTEL_JAVA_AGENT_JAR_URL or OTEL_JAVA_AGENT_JAR_PATH missing on host. Run install before update."
+  when: otel_jar_url == '' or otel_jar_path == ''
+
+- name: Backup existing jar before re-download
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $jarPath = '{{ otel_jar_path }}'
+    if (Test-Path $jarPath) {
+      Copy-Item -Path $jarPath -Destination ($jarPath + ".bak") -Force
+      Write-Output "Backed up existing jar to $($jarPath).bak"
+    } else {
+      Write-Output "No existing jar at $jarPath - nothing to back up"
+    }
+  ignore_errors: true
+
+- name: Re-download OTel Java agent jar
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $jarPath = '{{ otel_jar_path }}'
+    $jarUrl = '{{ otel_jar_url }}'
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $jarUrl -OutFile $jarPath -UseBasicParsing
+    Write-Output "Re-downloaded $jarUrl -> $jarPath"
+    Write-Output ("Size: " + (Get-Item $jarPath).Length + " bytes")
+  register: jar_download_result
+
+- name: Display update result
+  debug:
+    var: jar_download_result.stdout_lines
+
+- name: Notify Java application restart requirement
+  debug:
+    msg:
+      - "OTel Java Auto-Instrumentation jar updated on Windows host {{ target_host }}."
+      - "Env vars unchanged."
+      - "IMPORTANT: existing Java processes must be restarted to pick up the new jar."

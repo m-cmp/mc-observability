@@ -127,7 +127,8 @@ public class SchedulerFacadeService {
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
-                                    } else if (agent == Agent.BEYLA) {
+                                    } else if (agent == Agent.BEYLA
+                                            || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
                                     }
@@ -151,7 +152,8 @@ public class SchedulerFacadeService {
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
-                                    } else if (agent == Agent.BEYLA) {
+                                    } else if (agent == Agent.BEYLA
+                                            || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
                                     }
@@ -175,7 +177,8 @@ public class SchedulerFacadeService {
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
-                                    } else if (agent == Agent.BEYLA) {
+                                    } else if (agent == Agent.BEYLA
+                                            || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
                                                 nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
                                     }

@@ -76,6 +76,19 @@ public class TumblebugServiceImpl implements TumblebugService {
                 nsId,
                 infraId,
                 agent);
+
+        // Windows OTel Java agent는 systemctl 대상이 아니다. JAVA_TOOL_OPTIONS 환경변수에
+        // -javaagent 옵션이 들어있는지 PowerShell로 확인하는 단순 로직으로 대체.
+        if (agent == Agent.OTEL_JAVA_AGENT) {
+            String winCommand =
+                    "powershell -Command \"if ([Environment]::GetEnvironmentVariable('JAVA_TOOL_OPTIONS','Machine') -match '-javaagent') { 'active' } else { 'inactive' }\"";
+            log.info("==================OTEL JAVA AGENT IS ACTIVE CMD : {}", winCommand);
+
+            String winResult = executeCommand(nsId, infraId, nodeId, winCommand).trim();
+            log.info("OTel Java agent active check result: '{}'", winResult);
+            return "active".equalsIgnoreCase(winResult);
+        }
+
         String command =
                 String.format(
                         "systemctl is-active cmp-%s-%s.service",
@@ -105,6 +118,16 @@ public class TumblebugServiceImpl implements TumblebugService {
     public String restart(String nsId, String infraId, String nodeId, Agent agent) {
 
         log.info("=================RESTART AGENT======================");
+
+        // Windows OTel Java agent는 호스트 단위 환경변수 주입 방식이라 별도 service 단위 restart가
+        // 의미 없다. POC에선 미지원으로 명확히 throw.
+        if (agent == Agent.OTEL_JAVA_AGENT) {
+            throw new AgentStatusException(
+                    "restart-unsupported",
+                    "Restart is not supported for OTel Java Agent (Windows). Restart the target"
+                            + " Java application instead.",
+                    agent);
+        }
 
         String command =
                 String.format(

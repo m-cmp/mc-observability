@@ -192,7 +192,8 @@ public class AgentFacadeService {
             taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, mciId, vmId);
         } else if (agent == Agent.FLUENT_BIT) {
             taskStatus = vmService.getLogAgentTaskStatus(nsId, mciId, vmId);
-        } else if (agent == Agent.BEYLA) {
+        } else if (agent == Agent.BEYLA || agent == Agent.OTEL_JAVA_AGENT) {
+            // 두 agent 모두 동일한 vmTraceAgentTaskStatus 컬럼을 공유한다 (Linux Beyla / Windows OTel Java).
             taskStatus = vmService.getTraceAgentTaskStatus(nsId, mciId, vmId);
         } else {
             throw new IllegalArgumentException("Unknown agent type: " + agent);

@@ -77,6 +77,16 @@ public class FileFacadeService {
                 + "/etc";
     }
 
+    public String getHostConfigOtelJavaRemotePath() {
+        return ConfigDefinition.CMP_AGENT_ROOT_PATH
+                + "/"
+                + "sites/"
+                + deploySiteCode
+                + "/"
+                + ConfigDefinition.HOST_CONFIG_SUB_FOLDER_NAME_OTEL_JAVA
+                + "/etc";
+    }
+
     // agent remote path
     public String getAgentRemotePath(Agent agent) {
         return switch (agent) {

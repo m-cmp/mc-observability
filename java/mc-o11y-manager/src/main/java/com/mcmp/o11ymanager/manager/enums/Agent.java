@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum Agent {
     TELEGRAF("Telegraf"),
     FLUENT_BIT("Fluent-Bit"),
-    BEYLA("Beyla");
+    BEYLA("Beyla"),
+    OTEL_JAVA_AGENT("Otel-Java-Agent");
 
     private final String name;
 

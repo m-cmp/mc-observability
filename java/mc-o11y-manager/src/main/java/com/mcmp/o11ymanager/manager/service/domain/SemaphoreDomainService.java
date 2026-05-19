@@ -79,6 +79,30 @@ public class SemaphoreDomainService {
                             accessInfo.getSshKey());
 
             env.addVariable("install_method", methodStr);
+
+            // os_type: Ansible playbook이 이 값으로 Linux용 `agent` role과 Windows용 `agent-windows`
+            // role을 분기. AccessInfoDTO.osType이 null이면 기존 호출자(Telegraf/FluentBit/Beyla
+            // Linux)와의 호환을 위해 "linux"로 처리.
+            String osType =
+                    accessInfo.getOsType() != null && !accessInfo.getOsType().isEmpty()
+                            ? accessInfo.getOsType()
+                            : "linux";
+            env.addVariable("os_type", osType);
+
+            // Windows VM은 winrm 인증을 쓰므로 password를 base64로 전달 (sshkey와 동일 패턴).
+            // Linux VM은 password가 null이라 이 분기 안 탐.
+            if (accessInfo.getPassword() != null && !accessInfo.getPassword().isEmpty()) {
+                env.addVariable(
+                        "target_password",
+                        Base64.getEncoder()
+                                .encodeToString(accessInfo.getPassword().getBytes()));
+            }
+
+            // Windows VM의 winrm scheme (http/https). Ansible task가 ansible_winrm_scheme로 참조.
+            if (accessInfo.getWinrmScheme() != null && !accessInfo.getWinrmScheme().isEmpty()) {
+                env.addVariable("winrm_scheme", accessInfo.getWinrmScheme());
+            }
+
             env.addVariable(
                     "telegraf_config_path",
                     fileFacadeService.getHostConfigTelegrafRemotePath()
@@ -94,6 +118,11 @@ public class SemaphoreDomainService {
                     fileFacadeService.getHostConfigBeylaRemotePath()
                             + "/"
                             + ConfigDefinition.HOST_CONFIG_NAME_BEYLA_MAIN_CONFIG);
+            env.addVariable(
+                    "otel_java_config_path",
+                    fileFacadeService.getHostConfigOtelJavaRemotePath()
+                            + "/"
+                            + ConfigDefinition.HOST_CONFIG_NAME_OTEL_JAVA_MAIN_CONFIG);
             if (method == SemaphoreInstallMethod.INSTALL && configContent != null) {
                 env.addVariable(
                         "config_content",
@@ -168,15 +197,23 @@ public class SemaphoreDomainService {
 
     private Environment createEnvironment(
             Agent agent, String ip, int port, String user, String sshkey) {
-        return new Environment()
-                .addVariable("agent", agent.getName().toLowerCase())
-                .addVariable("site_code", deploySiteCode)
-                .addVariable("request_id", requestInfo.getRequestId())
-                .addVariable("target_host", ip)
-                .addVariable("target_port", String.valueOf(port))
-                .addVariable("target_user", user)
-                .addVariable(
-                        "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+        Environment env =
+                new Environment()
+                        .addVariable("agent", agent.getName().toLowerCase())
+                        .addVariable("site_code", deploySiteCode)
+                        .addVariable("request_id", requestInfo.getRequestId())
+                        .addVariable("target_host", ip)
+                        .addVariable("target_port", String.valueOf(port))
+                        .addVariable("target_user", user);
+
+        // Windows VM은 sshkey가 비어 있다 (winrm + password로 인증).
+        // 이때 target_sshkey를 안 넣어야 Ansible check_variables에서 windows일 때 통과 가능.
+        if (sshkey != null && !sshkey.isEmpty()) {
+            env.addVariable(
+                    "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+        }
+
+        return env;
     }
 
     private Task createTask(Integer templateId, Environment environment)

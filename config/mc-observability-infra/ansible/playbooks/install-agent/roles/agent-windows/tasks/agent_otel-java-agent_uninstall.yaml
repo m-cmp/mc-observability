@@ -1,0 +1,131 @@
+# Windows OTel Java agent uninstall.
+# 절차:
+#  1) 호스트의 otel-java-agent.env 파일에서 set 했던 KEY 목록 추출 → 시스템 env에서 제거
+#  2) jar 파일 삭제 (JAR_PATH 환경변수 참조; env가 이미 지워지기 전에 캡처)
+#  3) /cmp-agent/sites/{site}/otel-java-agent 폴더 삭제
+#  4) Java 앱 재시작 안내
+
+- name: Get SystemDrive
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $env:SystemDrive
+  register: system_drive_result
+
+- name: Set system_drive variable
+  set_fact:
+    system_drive: "{{ system_drive_result.stdout | trim }}"
+
+# 1) env 파일 읽어서 set했던 KEY들 캡처. 동시에 JAR_PATH도 같이 출력해서 jar 삭제에 사용.
+- name: Capture configured env keys and JAR_PATH
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $envFile = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\otel-java-agent\etc\otel-java-agent.env"
+    $jarPath = [Environment]::GetEnvironmentVariable('OTEL_JAVA_AGENT_JAR_PATH', 'Machine')
+    Write-Output "JAR_PATH=$jarPath"
+    Write-Output "---KEYS---"
+    if (Test-Path $envFile) {
+      Get-Content $envFile | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -eq '' -or $line.StartsWith('#')) { return }
+        $idx = $line.IndexOf('=')
+        if ($idx -lt 1) { return }
+        Write-Output $line.Substring(0, $idx).Trim()
+      }
+    } else {
+      Write-Output "(env file not found, falling back to default key list)"
+    }
+  register: capture_result
+  ignore_errors: true
+
+- name: Parse captured info
+  set_fact:
+    otel_jar_path_uninstall: "{{ capture_result.stdout_lines | select('match', '^JAR_PATH=') | first | regex_replace('^JAR_PATH=', '') | trim }}"
+    captured_keys: "{{ capture_result.stdout_lines | reject('match', '^JAR_PATH=') | reject('equalto', '---KEYS---') | reject('match', '^\\(.*') | list }}"
+
+# 2) 환경변수 제거. 캡처된 KEY가 비어 있으면 안전망으로 알려진 default 리스트 사용.
+- name: Remove env vars from machine scope
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $keys = @({% if captured_keys | length > 0 %}{% for k in captured_keys %}'{{ k }}'{% if not loop.last %},{% endif %}{% endfor %}{% else %}'JAVA_TOOL_OPTIONS','OTEL_EXPORTER_OTLP_ENDPOINT','OTEL_EXPORTER_OTLP_PROTOCOL','OTEL_SERVICE_NAME','OTEL_RESOURCE_ATTRIBUTES','OTEL_METRICS_EXPORTER','OTEL_LOGS_EXPORTER','OTEL_TRACES_EXPORTER','OTEL_JAVA_AGENT_JAR_URL','OTEL_JAVA_AGENT_JAR_PATH'{% endif %})
+    foreach ($k in $keys) {
+      [Environment]::SetEnvironmentVariable($k, $null, 'Machine')
+      Write-Output "UNSET $k"
+    }
+  register: env_unset_result
+
+- name: Display env unset result
+  debug:
+    var: env_unset_result.stdout_lines
+
+# 3) jar 파일 + 사이트 폴더 삭제
+- name: Remove jar file
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $jarPath = '{{ otel_jar_path_uninstall }}'
+    if ($jarPath -ne '' -and (Test-Path $jarPath)) {
+      Remove-Item -Path $jarPath -Force
+      Write-Output "Removed $jarPath"
+    } else {
+      Write-Output "No jar to remove (path='$jarPath')"
+    }
+  ignore_errors: true
+
+- name: Remove site otel-java-agent directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $sitePath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\otel-java-agent"
+    if (Test-Path $sitePath) {
+      Remove-Item -Path $sitePath -Recurse -Force
+      Write-Output "Removed $sitePath"
+    } else {
+      Write-Output "No site path to remove: $sitePath"
+    }
+  ignore_errors: true
+
+- name: Notify Java application restart requirement
+  debug:
+    msg:
+      - "OTel Java Auto-Instrumentation uninstall complete on Windows host {{ target_host }}."
+      - "Machine-scope env vars unset, jar removed."
+      - "IMPORTANT: existing Java processes still hold the old env at startup time;"
+      - "  restart them to fully stop sending traces."

@@ -1,4 +1,6 @@
-- name: Check required variables
+# 모든 호출자(Java SemaphoreDomainService)가 항상 보내야 하는 공통 변수.
+# target_sshkey/target_password는 os_type에 따라 다른 변수가 필수가 되므로 아래에서 분기 검증.
+- name: Check required common variables
   fail:
     msg: "Required variable not found: {{ item }}"
   when: vars[item] is not defined or vars[item] == ''
@@ -9,4 +11,25 @@
     - target_host
     - target_port
     - target_user
-    - target_sshkey
+    - os_type
+
+- name: Validate os_type value
+  fail:
+    msg: "Invalid os_type '{{ os_type }}'. Must be 'linux' or 'windows'."
+  when: os_type not in ['linux', 'windows']
+
+# Linux 분기: SSH key 인증이 필수.
+- name: Check Linux-specific variables
+  fail:
+    msg: "Linux requires target_sshkey but it is missing or empty."
+  when:
+    - os_type == 'linux'
+    - vars['target_sshkey'] is not defined or vars['target_sshkey'] == ''
+
+# Windows 분기: winrm 인증을 위해 password가 필수.
+- name: Check Windows-specific variables
+  fail:
+    msg: "Windows requires target_password but it is missing or empty."
+  when:
+    - os_type == 'windows'
+    - vars['target_password'] is not defined or vars['target_password'] == ''
