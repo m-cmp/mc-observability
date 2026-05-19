@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.manager.infrastructure.spider;
 
+import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
+import com.mcmp.o11ymanager.manager.dto.SpiderClusterList;
 import com.mcmp.o11ymanager.manager.dto.SpiderMonitoringInfo;
 import com.mcmp.o11ymanager.manager.dto.SpiderVm;
 import lombok.RequiredArgsConstructor;

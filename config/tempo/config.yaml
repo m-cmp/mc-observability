@@ -27,13 +27,9 @@ ingester:
 
 storage:
   trace:
-    backend: s3
-    s3:
-      bucket: tempo-data
-      endpoint: mc-observability-minio:9000
-      access_key: YmQYMMfCAPenMclY1WR1
-      secret_key: iXjthlJdpI0fKpz015yMgBKuNPBtSrIvDOED1a3P
-      insecure: true
+    backend: local
+    local:
+      path: /etc/tempo/blocks
 
     pool:
       queue_depth: 2000

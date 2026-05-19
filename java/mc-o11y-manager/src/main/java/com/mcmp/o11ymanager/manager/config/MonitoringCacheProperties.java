@@ -68,6 +68,14 @@ public class MonitoringCacheProperties {
                                 new RangeSpec("3d", "15m"),
                                 new RangeSpec("5d", "30m"),
                                 new RangeSpec("7d", "1h")));
+
+        /**
+         * Overview warming — warms the exact query shape the NS/MCI overview in the frontend sends
+         * (specific measurement+field+aggregation, group_by=vm_id, limit=2000). Without this, the
+         * generic {@code realtime} job caches {@code SELECT *} responses whose cache key differs
+         * from what the UI requests, causing per-visit cache misses.
+         */
+        private OverviewJob overview = new OverviewJob();
     }
 
     @Getter
@@ -88,6 +96,49 @@ public class MonitoringCacheProperties {
             this.cron = cron;
             this.threadPoolSize = threadPoolSize;
             this.ranges = ranges;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class OverviewJob {
+        private boolean enabled = true;
+        private String cron = "0 * * * * *";
+        private int threadPoolSize = 10;
+
+        /** One entry per chart the overview renders. Defaults mirror the frontend NS/MCI view. */
+        private List<OverviewQuery> queries =
+                List.of(
+                        new OverviewQuery("cpu", "mean", "usage_idle", "1h", "1m", 2000L),
+                        new OverviewQuery("mem", "mean", "used_percent", "1h", "1m", 2000L),
+                        new OverviewQuery("disk", "mean", "used_percent", "1h", "1m", 2000L));
+    }
+
+    @Getter
+    @Setter
+    public static class OverviewQuery {
+        private String measurement;
+        private String function;
+        private String field;
+        private String range;
+        private String groupTime;
+        private Long limit;
+
+        public OverviewQuery() {}
+
+        public OverviewQuery(
+                String measurement,
+                String function,
+                String field,
+                String range,
+                String groupTime,
+                Long limit) {
+            this.measurement = measurement;
+            this.function = function;
+            this.field = field;
+            this.range = range;
+            this.groupTime = groupTime;
+            this.limit = limit;
         }
     }
 
