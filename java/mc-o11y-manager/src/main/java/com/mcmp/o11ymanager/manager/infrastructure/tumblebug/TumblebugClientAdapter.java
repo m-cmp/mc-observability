@@ -1,7 +1,7 @@
 package com.mcmp.o11ymanager.manager.infrastructure.tumblebug;
 
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugCmd;
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugSshKey;
 import com.mcmp.o11ymanager.manager.port.TumblebugPort;
@@ -17,8 +17,8 @@ public class TumblebugClientAdapter implements TumblebugPort {
     private final TumblebugClient tumblebugClient;
 
     @Override
-    public TumblebugMCI.Vm getVM(String nsId, String mciId, String vmId) {
-        return tumblebugClient.getVM(nsId, mciId, vmId);
+    public TumblebugInfra.Node getNode(String nsId, String infraId, String nodeId) {
+        return tumblebugClient.getNode(nsId, infraId, nodeId);
     }
 
     @Override
@@ -32,12 +32,12 @@ public class TumblebugClientAdapter implements TumblebugPort {
     }
 
     @Override
-    public TumblebugMCI getMCIList(String nsId, String mciId) {
-        return tumblebugClient.getMCIList(nsId, mciId);
+    public TumblebugInfra getInfra(String nsId, String infraId) {
+        return tumblebugClient.getInfra(nsId, infraId);
     }
 
     @Override
-    public Object sendCommand(String nsId, String mciId, String vmId, TumblebugCmd command) {
-        return tumblebugClient.sendCommand(nsId, mciId, vmId, command);
+    public Object sendCommand(String nsId, String infraId, String nodeId, TumblebugCmd command) {
+        return tumblebugClient.sendCommand(nsId, infraId, nodeId, command);
     }
 }

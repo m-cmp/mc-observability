@@ -11,6 +11,7 @@ public class ConfigDefinition {
     public static final String HOST_CONFIG_SUB_FOLDER_NAME_TELEGRAF = "telegraf";
     public static final String HOST_CONFIG_SUB_FOLDER_NAME_FLUENTBIT = "fluent-bit";
     public static final String HOST_CONFIG_SUB_FOLDER_NAME_BEYLA = "beyla";
+    public static final String HOST_CONFIG_SUB_FOLDER_NAME_OTEL_JAVA = "otel-java-agent";
     public static final String HOST_CONFIG_NAME_TELEGRAF_MAIN_CONFIG = "telegraf.conf";
     public static final String HOST_CONFIG_NAME_FLUENTBIT_MAIN_CONFIG = "fluent-bit.conf";
     public static final String HOST_CONFIG_NAME_FLUENTBIT_PARSERS_CONFIG = "parsers.conf";
@@ -18,4 +19,5 @@ public class ConfigDefinition {
     public static final String HOST_CONFIG_NAME_FLUENTBIT_ADD_TIMESTAMP_LUA = "add-timestamp.lua";
     public static final String HOST_CONFIG_NAME_FLUENTBIT_VARIABLES = "variables";
     public static final String HOST_CONFIG_NAME_BEYLA_MAIN_CONFIG = "beyla.yaml";
+    public static final String HOST_CONFIG_NAME_OTEL_JAVA_MAIN_CONFIG = "otel-java-agent.env";
 }

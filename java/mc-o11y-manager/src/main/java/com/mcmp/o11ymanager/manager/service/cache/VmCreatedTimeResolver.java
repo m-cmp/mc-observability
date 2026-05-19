@@ -2,7 +2,7 @@ package com.mcmp.o11ymanager.manager.service.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -57,11 +57,11 @@ public class VmCreatedTimeResolver {
 
     private Optional<Instant> fetchFromTumblebug(String nsId, String mciId, String vmId) {
         try {
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
-            if (vm == null || vm.getCreatedTime() == null || vm.getCreatedTime().isBlank()) {
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            if (node == null || node.getCreatedTime() == null || node.getCreatedTime().isBlank()) {
                 return Optional.empty();
             }
-            LocalDateTime ldt = LocalDateTime.parse(vm.getCreatedTime().trim(), TUMBLEBUG_FORMAT);
+            LocalDateTime ldt = LocalDateTime.parse(node.getCreatedTime().trim(), TUMBLEBUG_FORMAT);
             return Optional.of(ldt.atZone(ZoneId.systemDefault()).toInstant());
         } catch (Exception e) {
             log.debug(

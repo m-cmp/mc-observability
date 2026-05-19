@@ -3,7 +3,7 @@ package com.mcmp.o11ymanager.manager.facade;
 import static com.mcmp.o11ymanager.manager.service.domain.SemaphoreDomainService.SEMAPHORE_MAX_PARALLEL_TASKS;
 
 import com.mcmp.o11ymanager.manager.dto.host.ConfigDTO;
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugSshKey;
 import com.mcmp.o11ymanager.manager.dto.vm.AccessInfoDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
@@ -45,8 +45,8 @@ public class AgentFacadeService {
 
     private AccessInfoDTO getAccessInfo(String nsId, String mciId, String vmId) {
 
-        TumblebugMCI.Vm vm = tumblebugPort.getVM(nsId, mciId, vmId);
-        TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, vm.getSshKeyId());
+        TumblebugInfra.Node node = tumblebugPort.getNode(nsId, mciId, vmId);
+        TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, node.getSshKeyId());
 
         if (sshKey == null) {
             log.warn("SSH private key not found");
@@ -56,9 +56,9 @@ public class AgentFacadeService {
         }
 
         return AccessInfoDTO.builder()
-                .ip(vm.getPublicIP())
-                .port(Integer.parseInt(vm.getSshPort()))
-                .user(vm.getVmUserName())
+                .ip(node.getPublicIP())
+                .port(Integer.parseInt(node.getSshPort()))
+                .user(node.getNodeUserName())
                 .sshKey(sshKey.getPrivateKey())
                 .build();
     }
@@ -192,7 +192,8 @@ public class AgentFacadeService {
             taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, mciId, vmId);
         } else if (agent == Agent.FLUENT_BIT) {
             taskStatus = vmService.getLogAgentTaskStatus(nsId, mciId, vmId);
-        } else if (agent == Agent.BEYLA) {
+        } else if (agent == Agent.BEYLA || agent == Agent.OTEL_JAVA_AGENT) {
+            // 두 agent 모두 동일한 vmTraceAgentTaskStatus 컬럼을 공유한다 (Linux Beyla / Windows OTel Java).
             taskStatus = vmService.getTraceAgentTaskStatus(nsId, mciId, vmId);
         } else {
             throw new IllegalArgumentException("Unknown agent type: " + agent);

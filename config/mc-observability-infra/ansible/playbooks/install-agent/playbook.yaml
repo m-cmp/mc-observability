@@ -3,27 +3,52 @@
   vars:
     ansible_python_interpreter: python3
     install_method: "{{ install_method | default('install') }}"
+    # os_type: Java 측 SemaphoreDomainService에서 보내는 변수. Tumblebug VM의 osPlatform/osType을
+    # 보고 mc-o11y-manager가 "linux" / "windows" 둘 중 하나로 채움.
+    # default "linux" 로 두는 이유: 옛 호출자(직접 Semaphore template 호출 등)에 대한 호환 + Telegraf/FluentBit/Beyla 기존 케이스.
+    os_type: "{{ os_type | default('linux') }}"
   tasks:
     - name: Check variables
       include_role:
         name: check
 
-    - name: Create temporary SSH key file
+    # Linux 분기: SSH key를 임시 파일로 풀어두고 target_sshkey_path로 참조한다.
+    - name: Create temporary SSH key file (Linux only)
       copy:
         content: "{{ target_sshkey | b64decode }}"
         dest: /tmp/target_sshkey_{{ request_id }}
         mode: '0600'
       register: ssh_key_file
+      when: os_type == 'linux'
 
-    - name: Set SSH key path variable
+    - name: Set SSH key path variable (Linux only)
       set_fact:
         target_sshkey_path: "{{ ssh_key_file.dest }}"
+      when: os_type == 'linux'
 
-    - name: Agent Operation
+    # Windows 분기: Java 측 SemaphoreDomainService에서 target_password를 base64로 인코딩해 보낸다.
+    # agent-windows role의 모든 winrm task가 `ansible_password: "{{ target_password }}"` 패턴으로
+    # 변수를 참조하므로, set_fact로 같은 이름의 변수를 평문 디코딩 결과로 덮어쓴다.
+    # send_file.yaml 같은 기존 Telegraf/FluentBit 미완성 task와도 호환.
+    - name: Decode Windows administrator password (Windows only)
+      set_fact:
+        target_password: "{{ target_password | b64decode }}"
+      no_log: true
+      when: os_type == 'windows'
+
+    - name: Agent Operation (Linux)
       include_role:
         name: agent
+      when: os_type == 'linux'
 
+    - name: Agent Operation (Windows)
+      include_role:
+        name: agent-windows
+      when: os_type == 'windows'
+
+    # config-update role은 Linux Telegraf/FluentBit/Beyla 전용 (host filesystem에 yaml 파일 떨구는 흐름).
+    # Windows OTel Java는 install task 안에서 환경변수 직접 설정으로 끝나므로 config-update 불필요.
     - name: Config Update Operation
       include_role:
         name: config-update
-      when: install_method == 'install'
+      when: install_method == 'install' and os_type == 'linux'

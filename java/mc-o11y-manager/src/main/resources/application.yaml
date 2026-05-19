@@ -71,7 +71,20 @@ beyla:
   # Beyla agent가 trace/metric을 송신할 OTEL 엔드포인트.
   # 기본값은 사내 docker network의 Tempo OTLP receiver. 사이트별로 BEYLA_OTEL_ENDPOINT
   # 환경변수만 override하면 다른 사이트(외부 endpoint)에 배포 가능.
+  # 본 키는 Windows OTel Java agent에서도 그대로 재사용한다(POC 후 tracing.otel-endpoint로 일반화 예정).
   otel-endpoint: ${BEYLA_OTEL_ENDPOINT:http://mc-observability-tempo:4317}
+
+otel-java-agent:
+  # Windows VM 트레이싱용 OpenTelemetry Java Auto-Instrumentation jar 다운로드 URL.
+  # Ansible playbook이 이 URL에서 jar를 받아 호스트의 jar-path에 저장하고
+  # JAVA_TOOL_OPTIONS 환경변수로 -javaagent 옵션을 주입한다.
+  jar-url: ${OTEL_JAVA_AGENT_JAR_URL:https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar}
+  jar-path: ${OTEL_JAVA_AGENT_JAR_PATH:C:\\opentelemetry\\opentelemetry-javaagent.jar}
+  # Windows winrm 포트/scheme. Tumblebug 응답의 sshPort(22)는 무시하고 이 값으로 override.
+  # OpenStack 기본 Windows 이미지는 보통 HTTP(5985)로만 winrm 활성화. 운영에서 HTTPS(5986)
+  # 쓰려면 호스트에 cert 셋업 후 winrm-port=5986, winrm-scheme=https로 변경.
+  winrm-port: ${WINRM_PORT:5985}
+  winrm-scheme: ${WINRM_SCHEME:http}
 
 influxdb:
   database: ${INFLUX_DATABASE:mc-observability}

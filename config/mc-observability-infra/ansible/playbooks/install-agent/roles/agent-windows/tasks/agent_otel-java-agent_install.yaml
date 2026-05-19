@@ -1,0 +1,198 @@
+# Windows OTel Java Auto-Instrumentation agent 설치.
+#
+# 입력 변수 (Java SemaphoreDomainService에서 전달):
+# - target_host / target_port / target_user / target_password  : winrm 인증
+# - site_code / request_id                                    : 사이트/요청 식별
+# - config_content (base64)                                   : KEY=VALUE 환경변수 묶음 (otel-java-agent.env)
+#
+# 절차:
+#  1) Windows 호스트에서 $env:SystemDrive와 $env:TEMP 추출 (Q3-B: 호스트가 self-report)
+#  2) base64 config_content를 로컬에 디코드해 otel-java-agent.env로 저장
+#  3) 호스트의 사이트 디렉터리 생성 + .env 파일 복사
+#  4) .env 파일을 한 줄씩 읽어 [Environment]::SetEnvironmentVariable($k, $v, 'Machine')로 시스템 env에 set
+#  5) JAR_PATH의 디렉터리 생성 + JAR_URL에서 jar 다운로드
+#  6) 사용자에게 Java 앱 재시작 필요 안내 메시지
+
+- name: Check required variables for OTel Java install
+  fail:
+    msg: "Required variable not found: {{ item }}"
+  when: vars[item] is not defined or vars[item] == ''
+  loop:
+    - config_content
+
+# 1) 호스트의 SystemDrive / TEMP 추출
+- name: Get Windows SystemDrive
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $env:SystemDrive
+  register: system_drive_result
+
+- name: Set system_drive variable
+  set_fact:
+    system_drive: "{{ system_drive_result.stdout | trim }}"
+
+- name: Get Windows TEMP directory
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $env:TEMP
+  register: windows_temp_result
+
+- name: Set windows_temp variable
+  set_fact:
+    windows_temp: "{{ windows_temp_result.stdout | trim }}"
+
+# 2) config_content (base64) → 로컬 otel-java-agent.env 파일 생성
+- name: Decode config_content to local file
+  copy:
+    content: "{{ config_content | b64decode }}"
+    dest: "/tmp/otel-java-agent_{{ request_id }}.env"
+    mode: '0600'
+  delegate_to: 127.0.0.1
+
+# 3) 호스트 사이트 디렉터리 생성 (jar 저장 디렉터리 + config 보관 디렉터리)
+- name: Create OTel Java agent site directory on Windows host
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $etcPath = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\otel-java-agent\etc"
+    if (-not (Test-Path $etcPath)) {
+      New-Item -ItemType Directory -Path $etcPath -Force | Out-Null
+    }
+
+# .env 파일 전송 (디버깅 + 추후 재배포 시 참조용 — 호스트에 영속 보관)
+- name: Copy otel-java-agent.env to Windows host
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/otel-java-agent_{{ request_id }}.env"
+    output_file_path: "{{ system_drive }}\\cmp-agent\\sites\\{{ site_code }}\\otel-java-agent\\etc\\otel-java-agent.env"
+
+# 4) .env 파일을 파싱해 시스템 환경변수로 한 번에 set
+- name: Apply env vars from otel-java-agent.env to Windows machine scope
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $envFile = "{{ system_drive }}\cmp-agent\sites\{{ site_code }}\otel-java-agent\etc\otel-java-agent.env"
+    if (-not (Test-Path $envFile)) {
+      Write-Error "env file not found: $envFile"
+      exit 1
+    }
+    Get-Content $envFile | ForEach-Object {
+      $line = $_.Trim()
+      # 빈 줄 / 주석(#) skip
+      if ($line -eq '' -or $line.StartsWith('#')) { return }
+      $idx = $line.IndexOf('=')
+      if ($idx -lt 1) { return }
+      $key = $line.Substring(0, $idx).Trim()
+      $value = $line.Substring($idx + 1).Trim()
+      [Environment]::SetEnvironmentVariable($key, $value, 'Machine')
+      Write-Output "SET $key"
+    }
+  register: env_set_result
+
+- name: Display env set result
+  debug:
+    var: env_set_result.stdout_lines
+
+# 5) jar URL/PATH 추출 후 다운로드. otel-java-agent.env 에서 OTEL_JAVA_AGENT_JAR_URL / OTEL_JAVA_AGENT_JAR_PATH 두 줄을 다시 읽어와 사용한다.
+- name: Read JAR_URL and JAR_PATH from machine env
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $jarUrl = [Environment]::GetEnvironmentVariable('OTEL_JAVA_AGENT_JAR_URL', 'Machine')
+    $jarPath = [Environment]::GetEnvironmentVariable('OTEL_JAVA_AGENT_JAR_PATH', 'Machine')
+    Write-Output "JAR_URL=$jarUrl"
+    Write-Output "JAR_PATH=$jarPath"
+  register: jar_info_result
+
+- name: Parse JAR_URL and JAR_PATH
+  set_fact:
+    otel_jar_url: "{{ jar_info_result.stdout_lines | select('match', '^JAR_URL=') | first | regex_replace('^JAR_URL=', '') | trim }}"
+    otel_jar_path: "{{ jar_info_result.stdout_lines | select('match', '^JAR_PATH=') | first | regex_replace('^JAR_PATH=', '') | trim }}"
+
+- name: Fail if JAR_URL or JAR_PATH missing
+  fail:
+    msg: "OTEL_JAVA_AGENT_JAR_URL or OTEL_JAVA_AGENT_JAR_PATH missing in machine env (url='{{ otel_jar_url }}', path='{{ otel_jar_path }}')"
+  when: otel_jar_url == '' or otel_jar_path == ''
+
+- name: Download OTel Java agent jar to Windows host
+  vars:
+    ansible_connection: winrm
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_password: "{{ target_password }}"
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+    ansible_winrm_scheme: "{{ winrm_scheme | default('http') }}"
+  win_shell: |
+    $ErrorActionPreference = 'Stop'
+    $jarPath = '{{ otel_jar_path }}'
+    $jarUrl = '{{ otel_jar_url }}'
+    $jarDir = Split-Path -Parent $jarPath
+    if (-not (Test-Path $jarDir)) {
+      New-Item -ItemType Directory -Path $jarDir -Force | Out-Null
+    }
+    # TLS1.2 강제 (older Windows에서 GitHub 다운로드 시 필요)
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $jarUrl -OutFile $jarPath -UseBasicParsing
+    Write-Output "Downloaded $jarUrl -> $jarPath"
+    Write-Output ("Size: " + (Get-Item $jarPath).Length + " bytes")
+  register: jar_download_result
+
+- name: Display jar download result
+  debug:
+    var: jar_download_result.stdout_lines
+
+# 6) 안내. 시스템 env는 새로 시작되는 프로세스부터 적용되므로 기존 Java 앱은 재시작 필요.
+- name: Notify Java application restart requirement
+  debug:
+    msg:
+      - "OTel Java Auto-Instrumentation install complete on Windows host {{ target_host }}."
+      - "Machine-scope env vars (JAVA_TOOL_OPTIONS etc) have been set."
+      - "IMPORTANT: existing Java processes must be restarted to pick up the agent."
+
+# 로컬 임시 .env 정리
+- name: Remove local temp env file
+  file:
+    path: "/tmp/otel-java-agent_{{ request_id }}.env"
+    state: absent
+  delegate_to: 127.0.0.1

@@ -3,7 +3,7 @@ package com.mcmp.o11ymanager.manager.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugCmd;
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.exception.agent.AgentStatusException;
 import com.mcmp.o11ymanager.manager.port.TumblebugPort;
@@ -26,18 +26,18 @@ public class TumblebugServiceImpl implements TumblebugService {
     private String sitecode;
 
     @Override
-    public String executeCommand(String nsId, String mciId, String vmId, String command) {
+    public String executeCommand(String nsId, String infraId, String nodeId, String command) {
         TumblebugCmd cmd = new TumblebugCmd();
         cmd.setCommand(List.of(command));
 
-        TumblebugMCI.Vm vm = getVm(nsId, mciId, vmId);
-        if (vm == null) {
-            throw new RuntimeException("FAILED TO GET VM");
+        TumblebugInfra.Node node = getNode(nsId, infraId, nodeId);
+        if (node == null) {
+            throw new RuntimeException("FAILED TO GET NODE");
         }
 
-        cmd.setUserName(vm.getVmUserName());
+        cmd.setUserName(node.getNodeUserName());
 
-        Object response = tumblebugPort.sendCommand(nsId, mciId, vmId, cmd);
+        Object response = tumblebugPort.sendCommand(nsId, infraId, nodeId, cmd);
 
         try {
             JsonNode root = objectMapper.valueToTree(response);
@@ -55,9 +55,9 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public boolean isConnectedVM(String nsId, String mciId, String vmId) {
+    public boolean isConnectedVM(String nsId, String infraId, String nodeId) {
         try {
-            String output = executeCommand(nsId, mciId, vmId, "echo hello");
+            String output = executeCommand(nsId, infraId, nodeId, "echo hello");
             return "hello".equalsIgnoreCase(output.trim());
         } catch (Exception e) {
             return false;
@@ -65,17 +65,30 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public TumblebugMCI.Vm getVm(String nsId, String mciId, String vmId) {
-        return tumblebugPort.getVM(nsId, mciId, vmId);
+    public TumblebugInfra.Node getNode(String nsId, String infraId, String nodeId) {
+        return tumblebugPort.getNode(nsId, infraId, nodeId);
     }
 
     @Override
-    public boolean isServiceActive(String nsId, String mciId, String vmId, Agent agent) {
+    public boolean isServiceActive(String nsId, String infraId, String nodeId, Agent agent) {
         log.info(
-                ">>> isServiceActive called with nsId: {}, mciId: {}, agent: {}",
+                ">>> isServiceActive called with nsId: {}, infraId: {}, agent: {}",
                 nsId,
-                mciId,
+                infraId,
                 agent);
+
+        // Windows OTel Java agent는 systemctl 대상이 아니다. JAVA_TOOL_OPTIONS 환경변수에
+        // -javaagent 옵션이 들어있는지 PowerShell로 확인하는 단순 로직으로 대체.
+        if (agent == Agent.OTEL_JAVA_AGENT) {
+            String winCommand =
+                    "powershell -Command \"if ([Environment]::GetEnvironmentVariable('JAVA_TOOL_OPTIONS','Machine') -match '-javaagent') { 'active' } else { 'inactive' }\"";
+            log.info("==================OTEL JAVA AGENT IS ACTIVE CMD : {}", winCommand);
+
+            String winResult = executeCommand(nsId, infraId, nodeId, winCommand).trim();
+            log.info("OTel Java agent active check result: '{}'", winResult);
+            return "active".equalsIgnoreCase(winResult);
+        }
+
         String command =
                 String.format(
                         "systemctl is-active cmp-%s-%s.service",
@@ -83,7 +96,7 @@ public class TumblebugServiceImpl implements TumblebugService {
 
         log.info("==================IS ACTIVE ? INACTIVE CMD : {}", command);
 
-        String result = executeCommand(nsId, mciId, vmId, command);
+        String result = executeCommand(nsId, infraId, nodeId, command);
         String trimmed = result.trim();
 
         log.info(
@@ -102,16 +115,26 @@ public class TumblebugServiceImpl implements TumblebugService {
     }
 
     @Override
-    public String restart(String nsId, String mciId, String vmId, Agent agent) {
+    public String restart(String nsId, String infraId, String nodeId, Agent agent) {
 
         log.info("=================RESTART AGENT======================");
+
+        // Windows OTel Java agent는 호스트 단위 환경변수 주입 방식이라 별도 service 단위 restart가
+        // 의미 없다. POC에선 미지원으로 명확히 throw.
+        if (agent == Agent.OTEL_JAVA_AGENT) {
+            throw new AgentStatusException(
+                    "restart-unsupported",
+                    "Restart is not supported for OTel Java Agent (Windows). Restart the target"
+                            + " Java application instead.",
+                    agent);
+        }
 
         String command =
                 String.format(
                         "systemctl restart cmp-%s-%s.service",
                         agent.name().toLowerCase().replace("_", "-"), sitecode.toLowerCase());
 
-        String result = executeCommand(nsId, mciId, vmId, command).trim();
+        String result = executeCommand(nsId, infraId, nodeId, command).trim();
 
         if (!result.isEmpty()) {
             log.warn("❌ Agent Restart Failed - Agent: {}, Result: {}", agent, result);
