@@ -29,7 +29,7 @@ export default function LogTable({ logs }) {
               <tr className="bg-gray-100 sticky top-0">
                 <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">Timestamp</th>
                 <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">Level</th>
-                <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">VM</th>
+                <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">Node</th>
                 <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">Service</th>
                 <th className="text-left px-3 py-2 border-b text-sm font-medium text-gray-600">Message</th>
               </tr>
@@ -40,7 +40,7 @@ export default function LogTable({ logs }) {
                   className={`cursor-pointer hover:bg-blue-50 ${selected === log ? 'bg-blue-100' : ''}`}>
                   <td className="px-3 py-2 border-b whitespace-nowrap text-sm text-gray-500">{log.timestamp || '-'}</td>
                   <td className="px-3 py-2 border-b text-sm"><LevelBadge level={log.level} /></td>
-                  <td className="px-3 py-2 border-b whitespace-nowrap text-sm">{log.vm_id || '-'}</td>
+                  <td className="px-3 py-2 border-b whitespace-nowrap text-sm">{log.node_id || '-'}</td>
                   <td className="px-3 py-2 border-b whitespace-nowrap text-sm">{log.service || '-'}</td>
                   <td className="px-3 py-2 border-b text-sm truncate max-w-lg">{log.message || '-'}</td>
                 </tr>
@@ -56,7 +56,7 @@ export default function LogTable({ logs }) {
             <div className="space-y-1.5 mb-3">
               <Row label="Timestamp" value={selected.timestamp} />
               <Row label="Level" value={selected.level} />
-              <Row label="VM" value={selected.vm_id} />
+              <Row label="Node" value={selected.node_id} />
               <Row label="Host" value={selected.host} />
               <Row label="Service" value={selected.service} />
               <Row label="Source" value={selected.source} />

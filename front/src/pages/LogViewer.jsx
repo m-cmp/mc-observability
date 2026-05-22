@@ -5,50 +5,50 @@ import { getInfra, getInfraList } from '../api/tumblebug';
 import LogTable from '../components/LogTable';
 
 export default function LogViewer() {
-  const { nsId, mciId, vmId: routeVmId } = useParams();
+  const { nsId, infraId, nodeId: routeNodeId } = useParams();
 
-  const [mciList, setMciList] = useState([]);
-  const [selectedMciId, setSelectedMciId] = useState(mciId || '');
-  const [vms, setVms] = useState([]);
-  const [selectedVmId, setSelectedVmId] = useState(routeVmId || '');
+  const [infraList, setInfraList] = useState([]);
+  const [selectedInfraId, setSelectedInfraId] = useState(infraId || '');
+  const [nodes, setNodes] = useState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState(routeNodeId || '');
   const [keyword, setKeyword] = useState('');
   const [logs, setLogs] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // NS 레벨: MCI 목록 로드
+  // NS 레벨: Infra 목록 로드
   useEffect(() => {
     if (!nsId) return;
-    if (!mciId) {
-      getInfraList(nsId).then(setMciList).catch(() => setMciList([]));
+    if (!infraId) {
+      getInfraList(nsId).then(setInfraList).catch(() => setInfraList([]));
     } else {
-      setSelectedMciId(mciId);
+      setSelectedInfraId(infraId);
     }
-  }, [nsId, mciId]);
+  }, [nsId, infraId]);
 
-  // MCI 선택 시 VM 목록 로드
+  // Infra 선택 시 Node 목록 로드
   useEffect(() => {
-    if (!nsId || !selectedMciId) { setVms([]); return; }
-    getInfra(nsId, selectedMciId)
-      .then((data) => setVms(data.node || []))
-      .catch(() => setVms([]));
-  }, [nsId, selectedMciId]);
+    if (!nsId || !selectedInfraId) { setNodes([]); return; }
+    getInfra(nsId, selectedInfraId)
+      .then((data) => setNodes(data.node || []))
+      .catch(() => setNodes([]));
+  }, [nsId, selectedInfraId]);
 
   useEffect(() => {
-    if (routeVmId) setSelectedVmId(routeVmId);
-  }, [routeVmId]);
+    if (routeNodeId) setSelectedNodeId(routeNodeId);
+  }, [routeNodeId]);
 
   const search = useCallback(async () => {
-    if (!nsId || !selectedMciId) return;
+    if (!nsId || !selectedInfraId) return;
     setLoading(true);
     try {
-      const result = await queryLogs({ nsId, mciId: selectedMciId, vmId: selectedVmId, keyword });
+      const result = await queryLogs({ nsId, infraId: selectedInfraId, nodeId: selectedNodeId, keyword });
       setLogs(Array.isArray(result) ? result : []);
     } catch (e) {
       console.error('Log query failed', e);
       setLogs([]);
     }
     setLoading(false);
-  }, [nsId, selectedMciId, selectedVmId, keyword]);
+  }, [nsId, selectedInfraId, selectedNodeId, keyword]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') search();
@@ -63,21 +63,21 @@ export default function LogViewer() {
             {/* Workload */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Workload</label>
-              {mciId ? (
-                <input className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-50" value={mciId} readOnly />
+              {infraId ? (
+                <input className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-50" value={infraId} readOnly />
               ) : (
-                <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedMciId} onChange={(e) => { setSelectedMciId(e.target.value); setSelectedVmId(''); }}>
-                  <option value="">Select MCI</option>
-                  {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+                <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedInfraId} onChange={(e) => { setSelectedInfraId(e.target.value); setSelectedNodeId(''); }}>
+                  <option value="">Select Infra</option>
+                  {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
                 </select>
               )}
             </div>
             {/* Server */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Server</label>
-              <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedVmId} onChange={(e) => setSelectedVmId(e.target.value)}>
+              <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)}>
                 <option value="">All</option>
-                {vms.map((vm) => <option key={vm.id} value={vm.id}>{vm.name || vm.id}</option>)}
+                {nodes.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
               </select>
             </div>
             {/* Keyword */}
@@ -88,7 +88,7 @@ export default function LogViewer() {
             </div>
             {/* Search */}
             <div className="flex items-end">
-              <button onClick={search} disabled={loading || !selectedMciId}
+              <button onClick={search} disabled={loading || !selectedInfraId}
                 className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm">
                 {loading ? 'Searching...' : 'Search'}
               </button>

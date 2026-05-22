@@ -32,9 +32,9 @@ export default function K8sNodeDashboard() {
     if (!nsId) return;
     setClustersLoading(true);
     (async () => {
-      let mcis = [];
-      try { mcis = await getInfraList(nsId); } catch {}
-      const connNames = [...new Set(mcis.flatMap(m => (m.node || []).map(v => v.connectionName)).filter(Boolean))];
+      let infras = [];
+      try { infras = await getInfraList(nsId); } catch {}
+      const connNames = [...new Set(infras.flatMap(i => (i.node || []).map(n => n.connectionName)).filter(Boolean))];
       const results = await Promise.allSettled(connNames.map(async (conn) => {
         const list = await getClusters(conn);
         return list.map(c => ({ name: c.IId?.NameId, connectionName: conn }));

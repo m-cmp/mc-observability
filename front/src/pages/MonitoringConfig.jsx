@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getVmList, getVm, getVmItems, installAgent, uninstallAgent, createVmItem, deleteVmItem } from '../api/vm';
+import { getNodeList, getNode, getNodeItems, installAgent, uninstallAgent, createNodeItem, deleteNodeItem } from '../api/node';
 import { getPlugins } from '../api/monitoring';
 import { getInfra, getInfraList } from '../api/tumblebug';
 import ProviderBadge from '../components/ProviderBadge';
 
 export default function MonitoringConfig() {
-  const { nsId, mciId } = useParams();
-  const [allMcis, setAllMcis] = useState([]); // NS-level MCI list with merged VM data
-  const [vms, setVms] = useState([]); // flat VM list for single MCI mode
+  const { nsId, infraId } = useParams();
+  const [allInfras, setAllInfras] = useState([]); // NS-level Infra list with merged Node data
+  const [nodes, setNodes] = useState([]); // flat Node list for single Infra mode
   const [filter, setFilter] = useState('');
-  const [selectedVm, setSelectedVm] = useState(null);
-  const [selectedVmMciId, setSelectedVmMciId] = useState(mciId || '');
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedNodeInfraId, setSelectedNodeInfraId] = useState(infraId || '');
   const [items, setItems] = useState([]);
   const [plugins, setPlugins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,68 +21,68 @@ export default function MonitoringConfig() {
   const [globalBusy, setGlobalBusy] = useState(false);
   const pollRef = useRef(null);
 
-  const loadVms = useCallback(async () => {
+  const loadNodes = useCallback(async () => {
     if (!nsId) return;
     setLoading(true);
     try {
-      if (mciId) {
-        // Single MCI mode
-        const mciData = await getInfra(nsId, mciId);
-        const tbVms = mciData.node || [];
-        let o11yVms = [];
-        try { o11yVms = await getVmList(nsId, mciId); } catch {}
+      if (infraId) {
+        // Single Infra mode
+        const infraData = await getInfra(nsId, infraId);
+        const tbNodes = infraData.node || [];
+        let o11yNodes = [];
+        try { o11yNodes = await getNodeList(nsId, infraId); } catch {}
         const o11yMap = {};
-        o11yVms.forEach((v) => { o11yMap[v.vm_id || v.id] = v; });
-        const merged = tbVms.map((vm) => {
-          const o = o11yMap[vm.id] || {};
-          return { ...vm, mciId, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[vm.id] };
+        o11yNodes.forEach((n) => { o11yMap[n.vm_id || n.id] = n; });
+        const merged = tbNodes.map((node) => {
+          const o = o11yMap[node.id] || {};
+          return { ...node, infraId, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
         });
-        setVms(merged);
-        setAllMcis([{ id: mciId, name: mciId, node: merged, status: mciData.status }]);
+        setNodes(merged);
+        setAllInfras([{ id: infraId, name: infraId, node: merged, status: infraData.status }]);
       } else {
-        // NS level: all MCIs
-        const mcis = await getInfraList(nsId);
-        const enriched = await Promise.all(mcis.map(async (mci) => {
-          let o11yVms = [];
-          try { o11yVms = await getVmList(nsId, mci.id); } catch {}
+        // NS level: all Infras
+        const infras = await getInfraList(nsId);
+        const enriched = await Promise.all(infras.map(async (infra) => {
+          let o11yNodes = [];
+          try { o11yNodes = await getNodeList(nsId, infra.id); } catch {}
           const o11yMap = {};
-          o11yVms.forEach((v) => { o11yMap[v.vm_id || v.id] = v; });
-          const merged = (mci.node || []).map((vm) => {
-            const o = o11yMap[vm.id] || {};
-            return { ...vm, mciId: mci.id, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[vm.id] };
+          o11yNodes.forEach((n) => { o11yMap[n.vm_id || n.id] = n; });
+          const merged = (infra.node || []).map((node) => {
+            const o = o11yMap[node.id] || {};
+            return { ...node, infraId: infra.id, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
           });
-          return { ...mci, node: merged };
+          return { ...infra, node: merged };
         }));
-        setAllMcis(enriched);
-        setVms(enriched.flatMap(m => m.node || []));
+        setAllInfras(enriched);
+        setNodes(enriched.flatMap(i => i.node || []));
       }
-    } catch { setVms([]); setAllMcis([]); }
+    } catch { setNodes([]); setAllInfras([]); }
     setLoading(false);
-  }, [nsId, mciId]);
+  }, [nsId, infraId]);
 
-  useEffect(() => { loadVms(); return () => { if (pollRef.current) clearInterval(pollRef.current); }; }, [loadVms]);
+  useEffect(() => { loadNodes(); return () => { if (pollRef.current) clearInterval(pollRef.current); }; }, [loadNodes]);
   useEffect(() => { getPlugins().then(setPlugins).catch(() => setPlugins([])); }, []);
 
-  async function selectVm(vm) {
+  async function selectNode(node) {
     if (globalBusy) return;
-    setSelectedVm(vm);
-    setSelectedVmMciId(vm.mciId || mciId);
+    setSelectedNode(node);
+    setSelectedNodeInfraId(node.infraId || infraId);
     setItems([]);
-    if (!vm.registered) return;
+    if (!node.registered) return;
     setItemLoading(true);
-    try { setItems(await getVmItems(nsId, vm.mciId || mciId, vm.id)); } catch { setItems([]); }
+    try { setItems(await getNodeItems(nsId, node.infraId || infraId, node.id)); } catch { setItems([]); }
     setItemLoading(false);
   }
 
   // --- Install / Uninstall with polling ---
-  async function handleInstall(e, vm) {
+  async function handleInstall(e, node) {
     e.stopPropagation();
-    if (!confirm(`Install monitoring agent on "${vm.name || vm.id}"?`)) return;
+    if (!confirm(`Install monitoring agent on "${node.name || node.id}"?`)) return;
     setGlobalBusy(true);
-    setBusyMsg(`Installing agent on ${vm.name || vm.id}...`);
+    setBusyMsg(`Installing agent on ${node.name || node.id}...`);
     try {
-      await installAgent(nsId, vm.mciId || mciId, vm.id);
-      startPolling(vm.id);
+      await installAgent(nsId, node.infraId || infraId, node.id);
+      startPolling(node.id);
     } catch (err) {
       alert('Install failed: ' + (err.response?.data?.error_message || err.message));
       setGlobalBusy(false);
@@ -90,15 +90,15 @@ export default function MonitoringConfig() {
     }
   }
 
-  async function handleUninstall(e, vm) {
+  async function handleUninstall(e, node) {
     e.stopPropagation();
-    if (!confirm(`Uninstall monitoring agent from "${vm.name || vm.id}"?`)) return;
+    if (!confirm(`Uninstall monitoring agent from "${node.name || node.id}"?`)) return;
     setGlobalBusy(true);
-    setBusyMsg(`Uninstalling agent from ${vm.name || vm.id}...`);
+    setBusyMsg(`Uninstalling agent from ${node.name || node.id}...`);
     try {
-      await uninstallAgent(nsId, vm.mciId || mciId, vm.id);
-      await loadVms();
-      if (selectedVm?.id === vm.id) { setSelectedVm(null); setItems([]); }
+      await uninstallAgent(nsId, node.infraId || infraId, node.id);
+      await loadNodes();
+      if (selectedNode?.id === node.id) { setSelectedNode(null); setItems([]); }
     } catch (err) {
       alert('Uninstall failed: ' + (err.response?.data?.error_message || err.message));
     }
@@ -106,26 +106,26 @@ export default function MonitoringConfig() {
     setBusyMsg('');
   }
 
-  function startPolling(vmId) {
+  function startPolling(nodeId) {
     if (pollRef.current) clearInterval(pollRef.current);
     let count = 0;
     pollRef.current = setInterval(async () => {
       count++;
       try {
-        const vmData = await getVm(nsId, selectedVmMciId || mciId, vmId);
-        const status = vmData?.monitoring_agent_status || vmData?.monitoringAgentStatus;
+        const nodeData = await getNode(nsId, selectedNodeInfraId || infraId, nodeId);
+        const status = nodeData?.monitoring_agent_status || nodeData?.monitoringAgentStatus;
         setBusyMsg(`Installing agent... (${status || 'checking'}) [${count * 5}s]`);
         if (status === 'SUCCESS' || status === 'FAILED' || count > 60) {
           clearInterval(pollRef.current);
           pollRef.current = null;
           setGlobalBusy(false);
           setBusyMsg('');
-          await loadVms();
+          await loadNodes();
           if (status === 'SUCCESS') {
-            // Auto-select the VM to show items
-            const refreshedVms = await getVmList(nsId, mciId);
-            const found = refreshedVms.find(v => (v.vm_id || v.id) === vmId);
-            if (found) selectVm({ ...found, id: vmId, registered: true });
+            // Auto-select the Node to show items
+            const refreshedNodes = await getNodeList(nsId, infraId);
+            const found = refreshedNodes.find(n => (n.vm_id || n.id) === nodeId);
+            if (found) selectNode({ ...found, id: nodeId, registered: true });
           }
         }
       } catch {
@@ -136,20 +136,20 @@ export default function MonitoringConfig() {
 
   // --- Metric toggle with confirmation + overlay ---
   async function handleToggle(plugin, isActive) {
-    if (!selectedVm || busy) return;
+    if (!selectedNode || busy) return;
     const action = isActive ? 'Disable' : 'Enable';
-    if (!confirm(`${action} "${plugin.name}" monitoring metric on ${selectedVm.name || selectedVm.id}?`)) return;
+    if (!confirm(`${action} "${plugin.name}" monitoring metric on ${selectedNode.name || selectedNode.id}?`)) return;
 
     setBusy(true);
     setBusyMsg(`${action === 'Enable' ? 'Enabling' : 'Disabling'} ${plugin.name} metric...`);
     try {
       if (isActive) {
         const item = items.find((it) => it.pluginSeq === plugin.seq);
-        if (item) await deleteVmItem(nsId, selectedVmMciId || mciId, selectedVm.id, item.seq);
+        if (item) await deleteNodeItem(nsId, selectedNodeInfraId || infraId, selectedNode.id, item.seq);
       } else {
-        await createVmItem(nsId, selectedVmMciId || mciId, selectedVm.id, { pluginSeq: plugin.seq });
+        await createNodeItem(nsId, selectedNodeInfraId || infraId, selectedNode.id, { pluginSeq: plugin.seq });
       }
-      setItems(await getVmItems(nsId, selectedVmMciId || mciId, selectedVm.id));
+      setItems(await getNodeItems(nsId, selectedNodeInfraId || infraId, selectedNode.id));
     } catch (err) {
       alert('Failed: ' + (err.response?.data?.error_message || err.message));
     }
@@ -157,7 +157,7 @@ export default function MonitoringConfig() {
     setBusyMsg('');
   }
 
-  const filteredVms = filter ? vms.filter((vm) => (vm.name || vm.id || '').toLowerCase().includes(filter.toLowerCase())) : vms;
+  const filteredNodes = filter ? nodes.filter((node) => (node.name || node.id || '').toLowerCase().includes(filter.toLowerCase())) : nodes;
   const inputPlugins = plugins.filter((p) => p.pluginType === 'INPUT');
   const activeSeqs = new Set(items.map((it) => it.pluginSeq));
 
@@ -178,50 +178,50 @@ export default function MonitoringConfig() {
       <div className="bg-white rounded-lg shadow">
         <div className="px-4 py-3 border-b font-semibold">Monitor Setting</div>
         <div className="p-4 flex items-center gap-4">
-          <span className="text-sm text-gray-600">{mciId ? 'Workload:' : 'Namespace:'}</span>
-          <span className="font-medium">{mciId || nsId}</span>
-          <button onClick={loadVms} className="ml-auto text-sm text-gray-500 hover:text-gray-700">Refresh</button>
+          <span className="text-sm text-gray-600">{infraId ? 'Workload:' : 'Namespace:'}</span>
+          <span className="font-medium">{infraId || nsId}</span>
+          <button onClick={loadNodes} className="ml-auto text-sm text-gray-500 hover:text-gray-700">Refresh</button>
         </div>
       </div>
 
-      {/* Server list — grouped by MCI */}
+      {/* Server list — grouped by Infra */}
       {loading ? <div className="text-sm text-gray-400 p-4 animate-pulse">Loading...</div>
-      : allMcis.map((mci) => {
-        const mciVms = filter ? (mci.node || []).filter((vm) => (vm.name || vm.id || '').toLowerCase().includes(filter.toLowerCase())) : (mci.node || []);
+      : allInfras.map((infra) => {
+        const infraNodes = filter ? (infra.node || []).filter((node) => (node.name || node.id || '').toLowerCase().includes(filter.toLowerCase())) : (infra.node || []);
         return (
-        <div key={mci.id} className="bg-white rounded-lg shadow">
+        <div key={infra.id} className="bg-white rounded-lg shadow">
           <div className="px-4 py-3 border-b flex items-center gap-3">
-            <span className="font-semibold text-sm">{mci.name || mci.id}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{mci.status || '-'}</span>
-            <span className="text-xs text-gray-400">{(mci.node || []).length} VMs</span>
+            <span className="font-semibold text-sm">{infra.name || infra.id}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${(infra.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{infra.status || '-'}</span>
+            <span className="text-xs text-gray-400">{(infra.node || []).length} Nodes</span>
             <input type="text" placeholder="Filter..." value={filter} onChange={(e) => setFilter(e.target.value)} className="ml-auto border rounded px-2 py-1 text-xs w-32" />
           </div>
           <div className="overflow-auto">
             <table className="w-full text-sm">
               <thead><tr className="bg-gray-50 text-left">
                 <th className="px-4 py-2.5 border-b text-gray-500">Name</th>
-                <th className="px-4 py-2.5 border-b text-gray-500">VM ID</th>
+                <th className="px-4 py-2.5 border-b text-gray-500">Node ID</th>
                 <th className="px-4 py-2.5 border-b text-gray-500">Status</th>
                 <th className="px-4 py-2.5 border-b text-gray-500">Monitoring Agent</th>
                 <th className="px-4 py-2.5 border-b text-gray-500">Log Agent</th>
                 <th className="px-4 py-2.5 border-b text-gray-500 text-right">Actions</th>
               </tr></thead>
               <tbody>
-                {mciVms.length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
-                : mciVms.map((vm) => (
-                  <tr key={vm.id} onClick={() => selectVm(vm)}
-                    className={`cursor-pointer hover:bg-blue-50 ${selectedVm?.id === vm.id ? 'bg-blue-100' : ''}`}>
-                    <td className="px-4 py-2.5 border-b font-medium"><span className="inline-flex items-center gap-1.5"><ProviderBadge connectionName={vm.connectionName} showLabel={false} />{vm.name || vm.id}</span></td>
-                    <td className="px-4 py-2.5 border-b text-gray-500">{vm.id}</td>
-                    <td className="px-4 py-2.5 border-b"><Badge status={vm.status} /></td>
-                    <td className="px-4 py-2.5 border-b"><AgentBadge status={vm.monitoring_agent_status} /></td>
-                    <td className="px-4 py-2.5 border-b"><AgentBadge status={vm.log_agent_status} /></td>
+                {infraNodes.length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
+                : infraNodes.map((node) => (
+                  <tr key={node.id} onClick={() => selectNode(node)}
+                    className={`cursor-pointer hover:bg-blue-50 ${selectedNode?.id === node.id ? 'bg-blue-100' : ''}`}>
+                    <td className="px-4 py-2.5 border-b font-medium"><span className="inline-flex items-center gap-1.5"><ProviderBadge connectionName={node.connectionName} showLabel={false} />{node.name || node.id}</span></td>
+                    <td className="px-4 py-2.5 border-b text-gray-500">{node.id}</td>
+                    <td className="px-4 py-2.5 border-b"><Badge status={node.status} /></td>
+                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.monitoring_agent_status} /></td>
+                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.log_agent_status} /></td>
                     <td className="px-4 py-2.5 border-b text-right">
-                      {!vm.registered
-                        ? <button onClick={(e) => handleInstall(e, vm)} disabled={busy} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install Agent</button>
-                        : vm.monitoring_agent_status === 'INSTALLING'
+                      {!node.registered
+                        ? <button onClick={(e) => handleInstall(e, node)} disabled={busy} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install Agent</button>
+                        : node.monitoring_agent_status === 'INSTALLING'
                         ? <span className="text-sm text-yellow-600 animate-pulse">Installing...</span>
-                        : <button onClick={(e) => handleUninstall(e, vm)} disabled={busy} className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                        : <button onClick={(e) => handleUninstall(e, node)} disabled={busy} className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
                     </td>
                   </tr>
                 ))}
@@ -233,9 +233,9 @@ export default function MonitoringConfig() {
       })}
 
       {/* Metric toggle table */}
-      {selectedVm && (
+      {selectedNode && (
         <div className="bg-white rounded-lg shadow">
-          <div className="px-4 py-3 border-b font-semibold">Monitoring Metrics — {selectedVm.name || selectedVm.id}</div>
+          <div className="px-4 py-3 border-b font-semibold">Monitoring Metrics — {selectedNode.name || selectedNode.id}</div>
           <div className="p-4 relative">
             {/* Metric toggle busy overlay */}
             {busy && (
@@ -246,10 +246,10 @@ export default function MonitoringConfig() {
                 </div>
               </div>
             )}
-            {!selectedVm.registered ? (
+            {!selectedNode.registered ? (
               <div className="text-center py-6">
                 <p className="text-sm text-gray-500 mb-3">Agent not installed.</p>
-                <button onClick={(e) => handleInstall(e, selectedVm)} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">Install Agent</button>
+                <button onClick={(e) => handleInstall(e, selectedNode)} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">Install Agent</button>
               </div>
             ) : itemLoading ? (
               <p className="text-sm text-gray-400 animate-pulse">Loading metrics...</p>

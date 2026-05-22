@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { getMeasurementFields, getMetricsByVM } from '../api/monitoring';
+import { getMeasurementFields, getMetricsByNode } from '../api/monitoring';
 import { getInfra } from '../api/tumblebug';
 import { getPlugins, getPrediction, getDetectionHistory } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
-import { getVmItems } from '../api/vm';
+import { getNodeItems } from '../api/node';
 import MetricChart from '../components/MetricChart';
 
 const RANGE_OPTIONS = [
@@ -36,13 +36,13 @@ const AGG_OPTIONS = [
 ];
 
 export default function MonitoringDashboard() {
-  const { nsId, mciId, vmId: routeVmId } = useParams();
+  const { nsId, infraId, nodeId: routeNodeId } = useParams();
   const [searchParams] = useSearchParams();
   const initialSource = searchParams.get('source') || 'agent';
 
   // Cascade selectors
-  const [vms, setVms] = useState([]);
-  const [selectedVmId, setSelectedVmId] = useState(routeVmId || '');
+  const [nodes, setNodes] = useState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState(routeNodeId || '');
   const [measurements, setMeasurements] = useState([]);
   const [selectedMeasurement, setSelectedMeasurement] = useState('');
   const [metrics, setMetrics] = useState([]);
@@ -63,7 +63,7 @@ export default function MonitoringDashboard() {
   const [dataSource, setDataSource] = useState(initialSource);
   const [cspMetrics, setCspMetrics] = useState(null);
   const [selectedCspMetric, setSelectedCspMetric] = useState('cpu_usage');
-  const [cspVmInfo, setCspVmInfo] = useState(null); // { connectionName, cspResourceName }
+  const [cspNodeInfo, setCspNodeInfo] = useState(null); // { connectionName, cspResourceName }
 
   // Chart data
   const [chartSeries, setChartSeries] = useState([]);
@@ -73,21 +73,21 @@ export default function MonitoringDashboard() {
   const [detectionSeries, setDetectionSeries] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Auto-loaded overview charts (always shown when VM is selected). null = not loaded yet
+  // Auto-loaded overview charts (always shown when Node is selected). null = not loaded yet
   const [overviewCharts, setOverviewCharts] = useState(null);
 
   // All measurement fields (for metric dropdown)
   const [allFields, setAllFields] = useState([]);
 
-  // Load VMs from Tumblebug
-  const [vmsLoaded, setVmsLoaded] = useState(false);
+  // Load Nodes from Tumblebug
+  const [nodesLoaded, setNodesLoaded] = useState(false);
   useEffect(() => {
-    if (!nsId || !mciId) return;
-    setVmsLoaded(false);
-    getInfra(nsId, mciId)
-      .then((data) => { setVms(data.node || []); setVmsLoaded(true); })
-      .catch(() => { setVms([]); setVmsLoaded(true); });
-  }, [nsId, mciId]);
+    if (!nsId || !infraId) return;
+    setNodesLoaded(false);
+    getInfra(nsId, infraId)
+      .then((data) => { setNodes(data.node || []); setNodesLoaded(true); })
+      .catch(() => { setNodes([]); setNodesLoaded(true); });
+  }, [nsId, infraId]);
 
   // Load all measurement fields (for metric dropdown options)
   const [activeItemNames, setActiveItemNames] = useState(null); // null = not loaded, Set = loaded
@@ -95,18 +95,18 @@ export default function MonitoringDashboard() {
     getMeasurementFields().then(setAllFields).catch(() => setAllFields([]));
   }, []);
 
-  // Load active items for selected VM → filter measurements
+  // Load active items for selected Node → filter measurements
   useEffect(() => {
-    if (!nsId || !mciId || !selectedVmId) { setActiveItemNames(null); setMeasurements([]); return; }
-    getVmItems(nsId, mciId, selectedVmId)
+    if (!nsId || !infraId || !selectedNodeId) { setActiveItemNames(null); setMeasurements([]); return; }
+    getNodeItems(nsId, infraId, selectedNodeId)
       .then((items) => {
         const names = new Set(items.map((it) => it.pluginName || it.name));
         setActiveItemNames(names);
       })
       .catch(() => setActiveItemNames(null));
-  }, [nsId, mciId, selectedVmId]);
+  }, [nsId, infraId, selectedNodeId]);
 
-  // Filter measurements to only those active on the VM
+  // Filter measurements to only those active on the Node
   useEffect(() => {
     if (!activeItemNames) {
       // Fallback: show all plugins if items not loaded
@@ -135,38 +135,38 @@ export default function MonitoringDashboard() {
     setSelectedMetric('');
   }, [selectedMeasurement, allFields]);
 
-  // Set route vmId
+  // Set route nodeId
   useEffect(() => {
-    if (routeVmId) setSelectedVmId(routeVmId);
-  }, [routeVmId]);
+    if (routeNodeId) setSelectedNodeId(routeNodeId);
+  }, [routeNodeId]);
 
-  // Track CSP info for selected VM
+  // Track CSP info for selected Node
   useEffect(() => {
-    const vm = vms.find((v) => v.id === selectedVmId);
-    if (vm && vm.connectionName && vm.cspResourceName) {
-      setCspVmInfo({ connectionName: vm.connectionName, cspResourceName: vm.cspResourceName });
+    const node = nodes.find((n) => n.id === selectedNodeId);
+    if (node && node.connectionName && node.cspResourceName) {
+      setCspNodeInfo({ connectionName: node.connectionName, cspResourceName: node.cspResourceName });
     } else {
-      setCspVmInfo(null);
+      setCspNodeInfo(null);
     }
-  }, [selectedVmId, vms]);
+  }, [selectedNodeId, nodes]);
 
-  // Load CSP metrics when dataSource=csp (wait for vms to load first)
+  // Load CSP metrics when dataSource=csp (wait for nodes to load first)
   const [cspLoading, setCspLoading] = useState(false);
   useEffect(() => {
-    if (!vmsLoaded || dataSource !== 'csp' || !cspVmInfo) { setCspMetrics(null); return; }
+    if (!nodesLoaded || dataSource !== 'csp' || !cspNodeInfo) { setCspMetrics(null); return; }
     setCspLoading(true);
     setCspMetrics(null);
     const hours = selectedRange.endsWith('d') ? parseInt(selectedRange) * 24 : parseInt(selectedRange);
-    getAllCspMetrics(cspVmInfo.connectionName, cspVmInfo.cspResourceName, String(hours || 1))
+    getAllCspMetrics(cspNodeInfo.connectionName, cspNodeInfo.cspResourceName, String(hours || 1))
       .then(setCspMetrics)
       .catch(() => setCspMetrics({}))
       .finally(() => setCspLoading(false));
-  }, [dataSource, cspVmInfo, selectedRange, vmsLoaded]);
+  }, [dataSource, cspNodeInfo, selectedRange, nodesLoaded]);
 
   // Overview loader
   const [overviewLoading, setOverviewLoading] = useState(false);
   const loadOverview = useCallback(async () => {
-    if (!nsId || !mciId || !selectedVmId) { setOverviewCharts(null); return; }
+    if (!nsId || !infraId || !selectedNodeId) { setOverviewCharts(null); return; }
     setOverviewLoading(true);
     const overviewMetrics = [
       { measurement: 'cpu', field: 'usage_idle', title: 'CPU Used', unit: '%', invert: true },
@@ -175,7 +175,7 @@ export default function MonitoringDashboard() {
     ];
     const results = await Promise.allSettled(
       overviewMetrics.map(async (m) => {
-        const data = await getMetricsByVM(nsId, mciId, selectedVmId, {
+        const data = await getMetricsByNode(nsId, infraId, selectedNodeId, {
           measurement: m.measurement, range: selectedRange, groupTime: selectedPeriod,
           fields: [{ function: 'mean', field: m.field }],
         });
@@ -188,21 +188,21 @@ export default function MonitoringDashboard() {
     );
     setOverviewCharts(results.filter((r) => r.status === 'fulfilled').map((r) => r.value));
     setOverviewLoading(false);
-  }, [nsId, mciId, selectedVmId, selectedRange, selectedPeriod]);
+  }, [nsId, infraId, selectedNodeId, selectedRange, selectedPeriod]);
 
   // Load on mount + when params change
   useEffect(() => { loadOverview(); }, [loadOverview]);
 
   // Auto-refresh timer
   useEffect(() => {
-    if (!autoRefresh || !selectedVmId) return;
+    if (!autoRefresh || !selectedNodeId) return;
     const id = setInterval(() => { loadOverview(); }, refreshInterval * 1000);
     return () => clearInterval(id);
-  }, [autoRefresh, refreshInterval, loadOverview, selectedVmId]);
+  }, [autoRefresh, refreshInterval, loadOverview, selectedNodeId]);
 
   const startMonitoring = useCallback(async () => {
-    if (!selectedVmId || !selectedMeasurement || !selectedMetric) {
-      alert('Please select VM, Measurement, and Metric.');
+    if (!selectedNodeId || !selectedMeasurement || !selectedMetric) {
+      alert('Please select Node, Measurement, and Metric.');
       return;
     }
     setLoading(true);
@@ -211,7 +211,7 @@ export default function MonitoringDashboard() {
       const actualField = isVirtualPercent ? 'usage_idle' : selectedMetric;
       const displayMetric = isVirtualPercent ? 'usage_percent' : selectedMetric;
 
-      const data = await getMetricsByVM(nsId, mciId, selectedVmId, {
+      const data = await getMetricsByNode(nsId, infraId, selectedNodeId, {
         measurement: selectedMeasurement,
         range: selectedRange,
         groupTime: selectedPeriod,
@@ -233,7 +233,7 @@ export default function MonitoringDashboard() {
       // Prediction overlay
       if (predictionEnabled) {
         try {
-          const pred = await getPrediction(nsId, mciId, selectedVmId, selectedMeasurement);
+          const pred = await getPrediction(nsId, infraId, selectedNodeId, selectedMeasurement);
           if (pred && pred.values && pred.values.length > 0) {
             const predSeries = {
               name: `${selectedMetric} (Predicted)`,
@@ -247,7 +247,7 @@ export default function MonitoringDashboard() {
       // Detection chart
       if (detectionEnabled) {
         try {
-          const det = await getDetectionHistory(nsId, mciId, selectedVmId, selectedMeasurement);
+          const det = await getDetectionHistory(nsId, infraId, selectedNodeId, selectedMeasurement);
           if (det && det.values && det.values.length > 0) {
             setDetectionSeries([{
               name: 'Anomaly Score',
@@ -264,7 +264,7 @@ export default function MonitoringDashboard() {
       console.error('startMonitoring failed', e);
     }
     setLoading(false);
-  }, [nsId, mciId, selectedVmId, selectedMeasurement, selectedMetric, selectedAgg, selectedRange, selectedPeriod, predictionEnabled, detectionEnabled]);
+  }, [nsId, infraId, selectedNodeId, selectedMeasurement, selectedMetric, selectedAgg, selectedRange, selectedPeriod, predictionEnabled, detectionEnabled]);
 
   return (
     <div className="space-y-4">
@@ -272,7 +272,7 @@ export default function MonitoringDashboard() {
       <div className="bg-white rounded-lg shadow">
         <div className="px-4 py-3 border-b flex items-center justify-between">
           <span className="font-semibold text-sm">Monitoring Trend / Workload</span>
-          {cspVmInfo && (
+          {cspNodeInfo && (
             <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
               <button onClick={() => setDataSource('agent')}
                 className={`px-3 py-1 rounded-md ${dataSource === 'agent' ? 'bg-white shadow text-blue-600 font-medium' : 'text-gray-500'}`}>Agent</button>
@@ -286,15 +286,15 @@ export default function MonitoringDashboard() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Workload</label>
-              <input className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-50" value={mciId || ''} readOnly />
+              <input className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-50" value={infraId || ''} readOnly />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Server</label>
-              <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedVmId} onChange={(e) => setSelectedVmId(e.target.value)}>
+              <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)}>
                 <option value="">Select</option>
-                {vms.map((vm) => {
-                  const id = vm.id || vm.vm_id || vm.name;
-                  return <option key={id} value={id}>{vm.name || id}</option>;
+                {nodes.map((node) => {
+                  const id = node.id || node.vm_id || node.name;
+                  return <option key={id} value={id}>{node.name || id}</option>;
                 })}
               </select>
             </div>
@@ -382,7 +382,7 @@ export default function MonitoringDashboard() {
           </>}
 
           {/* CSP metric selector */}
-          {dataSource === 'csp' && selectedVmId && (
+          {dataSource === 'csp' && selectedNodeId && (
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">API Metric</label>
               <div className="flex gap-1 flex-wrap">
@@ -398,10 +398,10 @@ export default function MonitoringDashboard() {
         </div>
 
         {/* CSP chart */}
-        {dataSource === 'csp' && selectedVmId && (
+        {dataSource === 'csp' && selectedNodeId && (
           <div className="p-4 border-t">
             <div className="mb-2 text-sm font-medium">
-              API: {vms.find(v => v.id === selectedVmId)?.name || selectedVmId}
+              API: {nodes.find(n => n.id === selectedNodeId)?.name || selectedNodeId}
             </div>
             {(cspLoading || !cspMetrics) ? (
               <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading CSP API data...</div>
@@ -419,11 +419,11 @@ export default function MonitoringDashboard() {
           </div>
         )}
 
-        {/* Overview charts — always shown when VM selected (agent mode only) */}
-        {dataSource === 'agent' && selectedVmId && (
+        {/* Overview charts — always shown when Node selected (agent mode only) */}
+        {dataSource === 'agent' && selectedNodeId && (
           <div className="p-4 border-t">
             <div className="mb-2 text-sm font-medium">
-              VM: {vms.find(v => v.id === selectedVmId)?.name || selectedVmId}
+              Node: {nodes.find(n => n.id === selectedNodeId)?.name || selectedNodeId}
             </div>
             {(overviewLoading || !overviewCharts) ? (
               <div className="flex items-center justify-center h-[160px] text-gray-400 animate-pulse">Loading metrics...</div>

@@ -14,13 +14,13 @@ export default function HomePage() {
   // Tumblebug cascade
   const [nsList, setNsList] = useState([]);
   const [nsId, setNsId] = useState('');
-  const [mciList, setMciList] = useState([]);
-  const [mciId, setMciId] = useState('');
-  const [vmList, setVmList] = useState([]);
-  const [vmId, setVmId] = useState('');
+  const [infraList, setInfraList] = useState([]);
+  const [infraId, setInfraId] = useState('');
+  const [nodeList, setNodeList] = useState([]);
+  const [nodeId, setNodeId] = useState('');
   const [loadingNs, setLoadingNs] = useState(false);
-  const [loadingMci, setLoadingMci] = useState(false);
-  const [loadingVm, setLoadingVm] = useState(false);
+  const [loadingInfra, setLoadingInfra] = useState(false);
+  const [loadingNode, setLoadingNode] = useState(false);
 
   useEffect(() => {
     if (token) setManualToken(token);
@@ -41,31 +41,31 @@ export default function HomePage() {
       .finally(() => setLoadingNs(false));
   }, [bypassAuth]);
 
-  // Load MCI when NS changes
+  // Load Infra when NS changes
   useEffect(() => {
-    setMciList([]);
-    setMciId('');
-    setVmList([]);
-    setVmId('');
+    setInfraList([]);
+    setInfraId('');
+    setNodeList([]);
+    setNodeId('');
     if (!nsId) return;
-    setLoadingMci(true);
+    setLoadingInfra(true);
     getInfraList(nsId)
-      .then((list) => setMciList(Array.isArray(list) ? list : []))
-      .catch(() => setMciList([]))
-      .finally(() => setLoadingMci(false));
+      .then((list) => setInfraList(Array.isArray(list) ? list : []))
+      .catch(() => setInfraList([]))
+      .finally(() => setLoadingInfra(false));
   }, [nsId]);
 
-  // Load VMs when MCI changes
+  // Load Nodes when Infra changes
   useEffect(() => {
-    setVmList([]);
-    setVmId('');
-    if (!nsId || !mciId) return;
-    setLoadingVm(true);
-    getInfra(nsId, mciId)
-      .then((data) => setVmList(data.node || []))
-      .catch(() => setVmList([]))
-      .finally(() => setLoadingVm(false));
-  }, [nsId, mciId]);
+    setNodeList([]);
+    setNodeId('');
+    if (!nsId || !infraId) return;
+    setLoadingNode(true);
+    getInfra(nsId, infraId)
+      .then((data) => setNodeList(data.node || []))
+      .catch(() => setNodeList([]))
+      .finally(() => setLoadingNode(false));
+  }, [nsId, infraId]);
 
   function go(page) {
     if (bypassAuth) {
@@ -73,12 +73,12 @@ export default function HomePage() {
     } else if (manualToken) {
       setApiToken(manualToken);
     }
-    if (!nsId || !mciId) {
-      alert('Namespace and MCI are required.');
+    if (!nsId || !infraId) {
+      alert('Namespace and Infra are required.');
       return;
     }
-    let path = `/${page}/${nsId}/${mciId}`;
-    if (vmId) path += `/${vmId}`;
+    let path = `/${page}/${nsId}/${infraId}`;
+    if (nodeId) path += `/${nodeId}`;
     navigate(path);
   }
 
@@ -110,17 +110,17 @@ export default function HomePage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">MCI (mci_id) *</label>
-            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm" value={mciId} onChange={(e) => setMciId(e.target.value)} disabled={!nsId || loadingMci}>
-              <option value="">{loadingMci ? 'Loading...' : 'Select MCI'}</option>
-              {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+            <label className="block text-xs font-medium text-gray-600 mb-1">Infra (infra_id) *</label>
+            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm" value={infraId} onChange={(e) => setInfraId(e.target.value)} disabled={!nsId || loadingInfra}>
+              <option value="">{loadingInfra ? 'Loading...' : 'Select Infra'}</option>
+              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">VM (vm_id) — optional</label>
-            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm" value={vmId} onChange={(e) => setVmId(e.target.value)} disabled={!mciId || loadingVm}>
-              <option value="">{loadingVm ? 'Loading...' : 'All VMs'}</option>
-              {vmList.map((vm) => <option key={vm.id} value={vm.id}>{vm.name || vm.id} ({vm.status})</option>)}
+            <label className="block text-xs font-medium text-gray-600 mb-1">Node (node_id) — optional</label>
+            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm" value={nodeId} onChange={(e) => setNodeId(e.target.value)} disabled={!infraId || loadingNode}>
+              <option value="">{loadingNode ? 'Loading...' : 'All Nodes'}</option>
+              {nodeList.map((node) => <option key={node.id} value={node.id}>{node.name || node.id} ({node.status})</option>)}
             </select>
           </div>
         </div>
@@ -143,14 +143,14 @@ export default function HomePage() {
             Alerts
           </button>
           <button onClick={() => {
-            if (!nsId || !mciId) { alert('Select NS and MCI first'); return; }
-            window.open(vmId ? `/embed/monitoring/${nsId}/${mciId}/${vmId}` : `/embed/monitoring/${nsId}/${mciId}`, '_blank');
+            if (!nsId || !infraId) { alert('Select NS and Infra first'); return; }
+            window.open(nodeId ? `/embed/monitoring/${nsId}/${infraId}/${nodeId}` : `/embed/monitoring/${nsId}/${infraId}`, '_blank');
           }} className="bg-gray-600 text-white rounded py-2.5 text-sm font-medium hover:bg-gray-700">
             Embed Preview
           </button>
         </div>
 
-        <p className="mt-4 text-xs text-gray-400">NS/MCI/VM are loaded from Tumblebug. /embed/* routes have no nav (iframe mode).</p>
+        <p className="mt-4 text-xs text-gray-400">NS/Infra/Node are loaded from Tumblebug. /embed/* routes have no nav (iframe mode).</p>
       </div>
     </div>
   );

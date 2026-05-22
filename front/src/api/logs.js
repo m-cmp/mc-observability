@@ -1,8 +1,11 @@
 import client from './client';
 
-export async function queryLogs({ nsId, mciId, vmId, keyword, limit = 50, rangeHours = 24 }) {
-  let logql = `{NS_ID="${nsId}", MCI_ID="${mciId}"`;
-  if (vmId) logql += `, VM_ID="${vmId}"`;
+// NOTE: Loki labels (NS_ID / MCI_ID / VM_ID) stay as-is — backend label rename
+// pending. JS identifiers reflect Tumblebug Infra/Node naming.
+
+export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, rangeHours = 24 }) {
+  let logql = `{NS_ID="${nsId}", MCI_ID="${infraId}"`;
+  if (nodeId) logql += `, VM_ID="${nodeId}"`;
   logql += '}';
   if (keyword) logql += ` |~ "(?i)${keyword}"`;
 
@@ -18,7 +21,7 @@ export async function queryLogs({ nsId, mciId, vmId, keyword, limit = 50, rangeH
     },
   });
   const body = res.data?.data || res.data || {};
-  // Normalize: API returns { status, data: [...] } where each entry has { labels, timestamp, value(json string) }
+  // API returns { status, data: [...] } where each entry has { labels, timestamp, value(json string) }
   const entries = body.data || body || [];
   if (!Array.isArray(entries)) return [];
   return entries.map((e) => {
@@ -28,7 +31,7 @@ export async function queryLogs({ nsId, mciId, vmId, keyword, limit = 50, rangeH
       timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
       message: parsed.message || '',
       level: e.labels?.level || parsed.level || '',
-      vm_id: e.labels?.VM_ID || '',
+      node_id: e.labels?.VM_ID || '',
       host: e.labels?.host || parsed.host || '',
       service: parsed.service || e.labels?.service || '',
       source: parsed.source || e.labels?.source || '',

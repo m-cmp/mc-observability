@@ -1,5 +1,9 @@
 import client from './client';
 
+// NOTE: backend URL path still uses /mci/{}/vm/{} literals (Tumblebug renamed
+// to Infra/Node but mc-observability backend URL not yet). JS identifiers
+// reflect the new naming.
+
 // Anomaly Detection
 export async function getAnomalySettings() {
   const res = await client.get('/api/o11y/insight/anomaly-detection/settings');
@@ -25,13 +29,13 @@ export async function getAnomalyMeasurements() {
   return res.data?.data || [];
 }
 
-export async function getAnomalyHistory(nsId, mciId, vmId, measurement, startTime, endTime) {
+export async function getAnomalyHistory(nsId, infraId, nodeId, measurement, startTime, endTime) {
   const params = { measurement };
   if (startTime) params.start_time = startTime;
   if (endTime) params.end_time = endTime;
-  const path = vmId
-    ? `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${mciId}/vm/${vmId}/history`
-    : `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${mciId}/history`;
+  const path = nodeId
+    ? `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${infraId}/vm/${nodeId}/history`
+    : `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${infraId}/history`;
   const res = await client.get(path, { params });
   return res.data?.data || res.data?.responseData || {};
 }
@@ -42,21 +46,21 @@ export async function getPredictionOptions() {
   return res.data?.data || {};
 }
 
-export async function getPredictionHistory(nsId, mciId, vmId, measurement, startTime, endTime) {
+export async function getPredictionHistory(nsId, infraId, nodeId, measurement, startTime, endTime) {
   const params = { measurement };
   if (startTime) params.start_time = startTime;
   if (endTime) params.end_time = endTime;
-  const path = vmId
-    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${mciId}/vm/${vmId}/history`
-    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${mciId}/history`;
+  const path = nodeId
+    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/vm/${nodeId}/history`
+    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/history`;
   const res = await client.get(path, { params });
   return res.data?.data || res.data?.responseData || {};
 }
 
-export async function runPrediction(nsId, mciId, vmId, body) {
-  const path = vmId
-    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${mciId}/vm/${vmId}`
-    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${mciId}`;
+export async function runPrediction(nsId, infraId, nodeId, body) {
+  const path = nodeId
+    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/vm/${nodeId}`
+    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}`;
   const res = await client.post(path, body);
   return res.data?.data || res.data?.responseData || {};
 }

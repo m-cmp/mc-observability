@@ -22,7 +22,7 @@ export async function getCspMetric(connectionName, cspResourceName, metricType, 
   return res.data || {};
 }
 
-/** Fetch all CSP metrics for a VM. */
+/** Fetch all CSP metrics for a Node. */
 export async function getAllCspMetrics(connectionName, cspResourceName, timeBeforeHour = '1') {
   const results = {};
   await Promise.allSettled(

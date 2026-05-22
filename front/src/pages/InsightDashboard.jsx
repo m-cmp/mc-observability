@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getAnomalySettings, createAnomalySetting, deleteAnomalySetting, getAnomalyHistory, getAnomalyMeasurements } from '../api/insight';
 import { getPredictionHistory, runPrediction } from '../api/insight';
-import { getVmList } from '../api/vm';
 import MetricChart from '../components/MetricChart';
 
 const TABS = ['Anomaly Detection', 'Prediction'];
 
 export default function InsightDashboard() {
-  const { nsId, mciId, vmId } = useParams();
+  const { nsId, infraId, nodeId } = useParams();
   const [tab, setTab] = useState(0);
 
   return (
@@ -22,13 +21,13 @@ export default function InsightDashboard() {
           </button>
         ))}
       </div>
-      {tab === 0 && <AnomalyTab nsId={nsId} mciId={mciId} vmId={vmId} />}
-      {tab === 1 && <PredictionTab nsId={nsId} mciId={mciId} vmId={vmId} />}
+      {tab === 0 && <AnomalyTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
+      {tab === 1 && <PredictionTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
     </div>
   );
 }
 
-function AnomalyTab({ nsId, mciId, vmId }) {
+function AnomalyTab({ nsId, infraId, nodeId }) {
   const [settings, setSettings] = useState([]);
   const [measurements, setMeasurements] = useState([]);
   const [selectedMeasurement, setSelectedMeasurement] = useState('');
@@ -47,7 +46,7 @@ function AnomalyTab({ nsId, mciId, vmId }) {
     if (!selectedMeasurement) return;
     setLoading(true);
     try {
-      const data = await getAnomalyHistory(nsId, mciId, vmId, selectedMeasurement);
+      const data = await getAnomalyHistory(nsId, infraId, nodeId, selectedMeasurement);
       setHistory(data.values || []);
     } catch { setHistory([]); }
     setLoading(false);
@@ -75,7 +74,7 @@ function AnomalyTab({ nsId, mciId, vmId }) {
             <table className="w-full text-sm">
               <thead><tr className="bg-gray-50 text-left">
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Seq</th>
-                <th className="px-3 py-2 border-b text-xs text-gray-500">NS / MCI / VM</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">NS / Infra / Node</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Measurement</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500 text-right">Actions</th>
               </tr></thead>
@@ -116,7 +115,7 @@ function AnomalyTab({ nsId, mciId, vmId }) {
   );
 }
 
-function PredictionTab({ nsId, mciId, vmId }) {
+function PredictionTab({ nsId, infraId, nodeId }) {
   const [measurements, setMeasurements] = useState([]);
   const [selectedMeasurement, setSelectedMeasurement] = useState('');
   const [history, setHistory] = useState([]);
@@ -133,7 +132,7 @@ function PredictionTab({ nsId, mciId, vmId }) {
     if (!selectedMeasurement) return;
     setLoading(true);
     try {
-      const data = await getPredictionHistory(nsId, mciId, vmId, selectedMeasurement);
+      const data = await getPredictionHistory(nsId, infraId, nodeId, selectedMeasurement);
       setHistory(data.values || []);
     } catch { setHistory([]); }
     setLoading(false);
@@ -143,7 +142,7 @@ function PredictionTab({ nsId, mciId, vmId }) {
     if (!selectedMeasurement) return;
     setLoading(true);
     try {
-      await runPrediction(nsId, mciId, vmId, { measurement: selectedMeasurement });
+      await runPrediction(nsId, infraId, nodeId, { measurement: selectedMeasurement });
       await loadHistory();
     } catch (e) {
       console.error('Prediction failed', e);

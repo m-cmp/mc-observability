@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPolicies, createPolicy, deletePolicy, addVmToPolicy } from '../api/trigger';
+import { getPolicies, createPolicy, deletePolicy, addNodeToPolicy } from '../api/trigger';
 import { getNotiChannels, getNotiHistory } from '../api/trigger';
 import { useParams } from 'react-router-dom';
 
@@ -8,7 +8,7 @@ const RESOURCE_TYPES = ['CPU', 'MEMORY', 'DISK'];
 const AGG_TYPES = ['AVG', 'MAX', 'MIN', 'LAST'];
 
 export default function AlertManager() {
-  const { nsId, mciId } = useParams();
+  const { nsId, infraId } = useParams();
   const [tab, setTab] = useState(0);
 
   return (
@@ -21,13 +21,13 @@ export default function AlertManager() {
           </button>
         ))}
       </div>
-      {tab === 0 && <PoliciesTab nsId={nsId} mciId={mciId} />}
+      {tab === 0 && <PoliciesTab nsId={nsId} infraId={infraId} />}
       {tab === 1 && <NotiHistoryTab />}
     </div>
   );
 }
 
-function PoliciesTab({ nsId, mciId }) {
+function PoliciesTab({ nsId, infraId }) {
   const [policies, setPolicies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -45,9 +45,10 @@ function PoliciesTab({ nsId, mciId }) {
     load();
   }
 
-  async function handleAddVm(policyId) {
-    if (!nsId || !mciId) { alert('NS/MCI not set'); return; }
-    await addVmToPolicy(policyId, { namespaceId: nsId, targetScope: 'mci', targetId: mciId });
+  async function handleAddInfra(policyId) {
+    if (!nsId || !infraId) { alert('NS/Infra not set'); return; }
+    // NOTE: targetScope literal stays "mci" — backend enum not yet renamed
+    await addNodeToPolicy(policyId, { namespaceId: nsId, targetScope: 'mci', targetId: infraId });
     load();
   }
 
@@ -71,7 +72,7 @@ function PoliciesTab({ nsId, mciId }) {
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Title</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Resource</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Thresholds</th>
-                <th className="px-3 py-2 border-b text-xs text-gray-500">VMs</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">Nodes</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500 text-right">Actions</th>
               </tr></thead>
               <tbody>
@@ -85,7 +86,7 @@ function PoliciesTab({ nsId, mciId }) {
                     </td>
                     <td className="px-3 py-2 border-b text-xs">{p.vms?.length || 0}</td>
                     <td className="px-3 py-2 border-b text-right space-x-2">
-                      <button onClick={() => handleAddVm(p.id)} className="text-xs text-blue-500 hover:text-blue-700">+MCI</button>
+                      <button onClick={() => handleAddInfra(p.id)} className="text-xs text-blue-500 hover:text-blue-700">+Infra</button>
                       <button onClick={() => handleDelete(p.id)} className="text-xs text-red-500 hover:text-red-700">Delete</button>
                     </td>
                   </tr>
