@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const { nsId, mciId, vmId } = useParams();
+  const { nsId, infraId, nodeId } = useParams();
   const navigate = useNavigate();
   const base = useBasePath();
   const location = useLocation();
@@ -24,8 +24,8 @@ export default function Layout() {
   const [bypassAuth, setBypassAuth] = useState(true);
 
   const [nsList, setNsList] = useState([]);
-  const [mciList, setMciList] = useState([]);
-  const [vmList, setVmList] = useState([]);
+  const [infraList, setInfraList] = useState([]);
+  const [nodeList, setNodeList] = useState([]);
 
   useEffect(() => {
     if (bypassAuth) setApiToken('bypass');
@@ -36,58 +36,58 @@ export default function Layout() {
     getNsList().then(setNsList).catch(() => setNsList([]));
   }, []);
 
-  // NS 변경 → MCI 목록 갱신
-  const loadMciList = useCallback(async (ns) => {
-    if (!ns) { setMciList([]); return []; }
+  // NS 변경 → Infra 목록 갱신
+  const loadInfraList = useCallback(async (ns) => {
+    if (!ns) { setInfraList([]); return []; }
     try {
       const list = await getInfraList(ns);
       const arr = Array.isArray(list) ? list : [];
-      setMciList(arr);
+      setInfraList(arr);
       return arr;
-    } catch { setMciList([]); return []; }
+    } catch { setInfraList([]); return []; }
   }, []);
 
-  // MCI 변경 → VM 목록 갱신
-  const loadVmList = useCallback(async (ns, mci) => {
-    if (!ns || !mci) { setVmList([]); return; }
+  // Infra 변경 → Node 목록 갱신
+  const loadNodeList = useCallback(async (ns, infra) => {
+    if (!ns || !infra) { setNodeList([]); return; }
     try {
-      const data = await getInfra(ns, mci);
-      setVmList(data.node || []);
-    } catch { setVmList([]); }
+      const data = await getInfra(ns, infra);
+      setNodeList(data.node || []);
+    } catch { setNodeList([]); }
   }, []);
 
-  // URL의 nsId/mciId 가 바뀔 때마다 목록 갱신
-  useEffect(() => { loadMciList(nsId); }, [nsId, loadMciList]);
-  useEffect(() => { loadVmList(nsId, mciId); }, [nsId, mciId, loadVmList]);
+  // URL의 nsId/infraId 가 바뀔 때마다 목록 갱신
+  useEffect(() => { loadInfraList(nsId); }, [nsId, loadInfraList]);
+  useEffect(() => { loadNodeList(nsId, infraId); }, [nsId, infraId, loadNodeList]);
 
   // NS 드롭다운 변경
   async function handleNsChange(newNs) {
-    const mcis = await loadMciList(newNs);
-    const firstMci = mcis[0]?.id;
-    if (firstMci) {
-      navigate(`${base}/${currentSection}/${newNs}/${firstMci}`);
+    const infras = await loadInfraList(newNs);
+    const firstInfra = infras[0]?.id;
+    if (firstInfra) {
+      navigate(`${base}/${currentSection}/${newNs}/${firstInfra}`);
     }
   }
 
-  // MCI 드롭다운 변경
-  function handleMciChange(newMci) {
-    if (!newMci) {
+  // Infra 드롭다운 변경
+  function handleInfraChange(newInfra) {
+    if (!newInfra) {
       navigate(`${base}/${currentSection}/${nsId}`);
       return;
     }
-    navigate(`${base}/${currentSection}/${nsId}/${newMci}`);
+    navigate(`${base}/${currentSection}/${nsId}/${newInfra}`);
   }
 
-  // VM 드롭다운 변경
-  function handleVmChange(newVm) {
-    if (!nsId || !mciId) return;
-    let path = `${base}/${currentSection}/${nsId}/${mciId}`;
-    if (newVm) path += `/${newVm}`;
+  // Node 드롭다운 변경
+  function handleNodeChange(newNode) {
+    if (!nsId || !infraId) return;
+    let path = `${base}/${currentSection}/${nsId}/${infraId}`;
+    if (newNode) path += `/${newNode}`;
     navigate(path);
   }
 
   const buildNavPath = (section) => {
-    if (mciId) return `${base}/${section}/${nsId}/${mciId}`;
+    if (infraId) return `${base}/${section}/${nsId}/${infraId}`;
     return `${base}/${section}/${nsId}`;
   };
 
@@ -112,28 +112,28 @@ export default function Layout() {
             <option value="">NS</option>
             {nsList.map((ns) => <option key={ns.id} value={ns.id}>{ns.id}</option>)}
           </select>
-          {mciId && <>
+          {infraId && <>
             <span className="text-gray-300">/</span>
-            {/* MCI */}
-            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={mciId || ''}
-              onChange={(e) => handleMciChange(e.target.value)}>
-              <option value="">MCI</option>
-              {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+            {/* Infra */}
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={infraId || ''}
+              onChange={(e) => handleInfraChange(e.target.value)}>
+              <option value="">Infra</option>
+              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
             </select>
             <span className="text-gray-300">/</span>
-            {/* VM */}
-            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={vmId || ''}
-              onChange={(e) => handleVmChange(e.target.value)}>
+            {/* Node */}
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={nodeId || ''}
+              onChange={(e) => handleNodeChange(e.target.value)}>
               <option value="">(Overview)</option>
-              {vmList.map((vm) => <option key={vm.id} value={vm.id}>{vm.name || vm.id}</option>)}
+              {nodeList.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
             </select>
           </>}
-          {!mciId && mciList.length > 0 && <>
+          {!infraId && infraList.length > 0 && <>
             <span className="text-gray-300">/</span>
             <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
               onChange={(e) => { if (e.target.value) navigate(`${base}/${currentSection}/${nsId}/${e.target.value}`); }}>
-              <option value="">MCI</option>
-              {mciList.map((m) => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
+              <option value="">Infra</option>
+              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
             </select>
           </>}
 
@@ -152,11 +152,11 @@ export default function Layout() {
               Token Bypass
             </label>
             <span className="text-gray-500">|</span>
-            <span>Path: <code className="text-green-400">/{currentSection}/{nsId}/{mciId}{vmId ? '/' + vmId : ''}</code></span>
+            <span>Path: <code className="text-green-400">/{currentSection}/{nsId}/{infraId}{nodeId ? '/' + nodeId : ''}</code></span>
           </div>
           <div className="border-t border-gray-700 pt-2">
             <p className="text-yellow-300 font-semibold mb-1">iframe Integration</p>
-            <code className="block bg-gray-900 p-2 rounded text-green-300 whitespace-pre-wrap">{`<iframe src="${window.location.origin}/embed/${currentSection}/${nsId || '{nsId}'}/${mciId || '{mciId}'}${vmId ? '/' + vmId : ''}" />
+            <code className="block bg-gray-900 p-2 rounded text-green-300 whitespace-pre-wrap">{`<iframe src="${window.location.origin}/embed/${currentSection}/${nsId || '{nsId}'}/${infraId || '{infraId}'}${nodeId ? '/' + nodeId : ''}" />
 
 <script>
 iframe.onload = () => iframe.contentWindow.postMessage({

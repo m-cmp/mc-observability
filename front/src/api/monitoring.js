@@ -1,5 +1,8 @@
 import client from './client';
 
+// NOTE: backend URL path still uses /mci/{}/vm/{} literals and InfluxDB tag `vm_id`.
+// Only JS identifiers reflect the Tumblebug rename (MCI→Infra, VM→Node).
+
 export async function getMeasurementFields() {
   const res = await client.get('/api/o11y/monitoring/influxdb/measurement');
   return res.data?.data || [];
@@ -10,8 +13,8 @@ export async function getPlugins() {
   return res.data?.data || [];
 }
 
-export async function getMetricsByVM(nsId, mciId, vmId, { measurement, range, groupTime, fields, conditions }) {
-  const res = await client.post(`/api/o11y/monitoring/influxdb/metric/${nsId}/${mciId}/${vmId}`, {
+export async function getMetricsByNode(nsId, infraId, nodeId, { measurement, range, groupTime, fields, conditions }) {
+  const res = await client.post(`/api/o11y/monitoring/influxdb/metric/${nsId}/${infraId}/${nodeId}`, {
     measurement,
     range,
     group_time: groupTime,
@@ -23,8 +26,8 @@ export async function getMetricsByVM(nsId, mciId, vmId, { measurement, range, gr
   return res.data?.data || [];
 }
 
-export async function getMetricsByNsMci(nsId, mciId, { measurement, range, groupTime, fields, conditions }) {
-  const res = await client.post(`/api/o11y/monitoring/influxdb/metric/${nsId}/${mciId}`, {
+export async function getMetricsByNsInfra(nsId, infraId, { measurement, range, groupTime, fields, conditions }) {
+  const res = await client.post(`/api/o11y/monitoring/influxdb/metric/${nsId}/${infraId}`, {
     measurement,
     range,
     group_time: groupTime,
@@ -36,11 +39,11 @@ export async function getMetricsByNsMci(nsId, mciId, { measurement, range, group
   return res.data?.data || [];
 }
 
-export async function getPrediction(nsId, mciId, vmId, measurement) {
+export async function getPrediction(nsId, infraId, nodeId, measurement) {
   const now = new Date();
   const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
   const endTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const res = await client.post(`/api/o11y/insight/predictions/ns/${nsId}/mci/${mciId}/vm/${vmId}`, {
+  const res = await client.post(`/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/vm/${nodeId}`, {
     measurement,
     start_time: startTime,
     end_time: endTime,
@@ -48,12 +51,12 @@ export async function getPrediction(nsId, mciId, vmId, measurement) {
   return res.data?.data || res.data?.responseData || {};
 }
 
-export async function getDetectionHistory(nsId, mciId, vmId, measurement) {
+export async function getDetectionHistory(nsId, infraId, nodeId, measurement) {
   const now = new Date();
   const startTime = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
   const endTime = now.toISOString();
   const res = await client.get(
-    `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${mciId}/vm/${vmId}/history`,
+    `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${infraId}/vm/${nodeId}/history`,
     { params: { measurement, start_time: startTime, end_time: endTime } }
   );
   return res.data?.data || res.data?.responseData || {};

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import useBasePath from '../hooks/useBasePath';
 import { getInfraList } from '../api/tumblebug';
-import { getMetricsByVM } from '../api/monitoring';
+import { getMetricsByNode } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
 import MetricChart from '../components/MetricChart';
@@ -14,110 +14,110 @@ const AGENT_METRICS = [
   { key: 'disk', measurement: 'disk', field: 'used_percent', label: 'Disk Used', unit: '%' },
 ];
 
-export default function MciOverview() {
-  const { nsId, mciId } = useParams();
+export default function InfraOverview() {
+  const { nsId, infraId } = useParams();
   const navigate = useNavigate();
   const base = useBasePath();
-  const [vms, setVms] = useState([]);
-  const [allMcis, setAllMcis] = useState([]); // NS-level: all MCIs with VMs
-  const [vmData, setVmData] = useState({});
+  const [nodes, setNodes] = useState([]);
+  const [allInfras, setAllInfras] = useState([]); // NS-level: all Infras with Nodes
+  const [nodeData, setNodeData] = useState({});
   const [loading, setLoading] = useState(true);
   const [metricsLoading, setMetricsLoading] = useState(false);
   const [selectedChart, setSelectedChart] = useState('cpu');
   const [dataSource, setDataSource] = useState('agent');
-  const [viewTab, setViewTab] = useState(mciId ? 'vm' : 'vm');
+  const [viewTab, setViewTab] = useState(infraId ? 'node' : 'node');
   const [clusters, setClusters] = useState([]);
 
-  // MCI 선택되면 VM 탭, MCI 없으면 유지
+  // Infra 선택되면 Node 탭, Infra 없으면 유지
   useEffect(() => {
-    if (mciId) setViewTab('vm');
-  }, [mciId]);
+    if (infraId) setViewTab('node');
+  }, [infraId]);
   const [clustersLoading, setClustersLoading] = useState(false);
-  const [nodeData, setNodeData] = useState({});
-  const [nodeMetricsLoading, setNodeMetricsLoading] = useState(false);
-  const [hiddenNodeIds, setHiddenNodeIds] = useState(new Set()); // empty = all visible
+  const [k8sNodeData, setK8sNodeData] = useState({});
+  const [k8sNodeMetricsLoading, setK8sNodeMetricsLoading] = useState(false);
+  const [hiddenK8sNodeIds, setHiddenK8sNodeIds] = useState(new Set()); // empty = all visible
 
   useEffect(() => {
     if (!nsId) return;
     loadData();
-  }, [nsId, mciId, viewTab]);
+  }, [nsId, infraId, viewTab]);
 
   async function loadData() {
     setLoading(true);
     try {
       if (viewTab === 'k8s') {
-        // K8s: load all MCIs to find connections
-        const mcis = await getInfraList(nsId);
-        setAllMcis(mcis);
-        setVms([]);
+        // K8s: load all Infras to find connections
+        const infras = await getInfraList(nsId);
+        setAllInfras(infras);
+        setNodes([]);
       } else {
-        // VM: load all MCIs in NS, show grouped
-        const mcis = await getInfraList(nsId);
-        setAllMcis(mcis);
-        const allVms = mcis.flatMap(m => m.node || []);
-        setVms(allVms);
-        if (allVms.length > 0) {
+        // Node: load all Infras in NS, show grouped
+        const infras = await getInfraList(nsId);
+        setAllInfras(infras);
+        const allNodes = infras.flatMap(i => i.node || []);
+        setNodes(allNodes);
+        if (allNodes.length > 0) {
           setMetricsLoading(true);
-          if (dataSource === 'agent') await loadAgentData(allVms, mcis);
-          else await loadCspData(allVms);
+          if (dataSource === 'agent') await loadAgentData(allNodes, infras);
+          else await loadCspData(allNodes);
           setMetricsLoading(false);
         }
       }
-    } catch { setVms([]); setAllMcis([]); }
+    } catch { setNodes([]); setAllInfras([]); }
     setLoading(false);
   }
 
   // Reload when dataSource changes
   useEffect(() => {
-    if (vms.length === 0) return;
-    setVmData({});
+    if (nodes.length === 0) return;
+    setNodeData({});
     setMetricsLoading(true);
     const load = dataSource === 'agent' ? loadAgentData : loadCspData;
-    load(vms).finally(() => setMetricsLoading(false));
+    load(nodes).finally(() => setMetricsLoading(false));
   }, [dataSource]);
 
-  async function loadAgentData(vmList, mcisArg) {
-    // Find which MCI each VM belongs to. Caller must pass the current mcis
-    // since the allMcis state may still be stale (setState is async).
-    const mcis = mcisArg || allMcis;
-    const vmMciMap = {};
-    mcis.forEach(m => (m.node || []).forEach(v => { vmMciMap[v.id] = m.id; }));
+  async function loadAgentData(nodeList, infrasArg) {
+    // Find which Infra each Node belongs to. Caller must pass the current infras
+    // since the allInfras state may still be stale (setState is async).
+    const infras = infrasArg || allInfras;
+    const nodeInfraMap = {};
+    infras.forEach(i => (i.node || []).forEach(n => { nodeInfraMap[n.id] = i.id; }));
 
-    vmList.forEach(async (vm) => {
-      const vmMciId = vmMciMap[vm.id] || mciId;
+    nodeList.forEach(async (node) => {
+      const nodeInfraId = nodeInfraMap[node.id] || infraId;
       await Promise.allSettled(
         AGENT_METRICS.map(async (m) => {
           try {
-            const res = await getMetricsByVM(nsId, vmMciId, vm.id, {
+            const res = await getMetricsByNode(nsId, nodeInfraId, node.id, {
               measurement: m.measurement, range: '1h', groupTime: '1m',
               fields: [{ function: 'mean', field: m.field }],
             });
-            setVmData(prev => ({ ...prev, [vm.id]: { ...(prev[vm.id] || {}), [m.key]: { res, ...m } } }));
+            setNodeData(prev => ({ ...prev, [node.id]: { ...(prev[node.id] || {}), [m.key]: { res, ...m } } }));
           } catch {}
         })
       );
     });
   }
 
-  async function loadCspData(vmList) {
-    vmList.forEach(async (vm) => {
-      if (!vm.connectionName || !vm.cspResourceName) return;
-      const cspData = await getAllCspMetrics(vm.connectionName, vm.cspResourceName, '1');
-      setVmData(prev => ({ ...prev, [vm.id]: cspData }));
+  async function loadCspData(nodeList) {
+    nodeList.forEach(async (node) => {
+      if (!node.connectionName || !node.cspResourceName) return;
+      const cspData = await getAllCspMetrics(node.connectionName, node.cspResourceName, '1');
+      setNodeData(prev => ({ ...prev, [node.id]: cspData }));
     });
   }
 
-  // Load all MCIs in NS + K8s clusters when K8s tab switches
+  // Load all Infras in NS + K8s clusters when K8s tab switches
   useEffect(() => {
     if (viewTab !== 'k8s') return;
     setClustersLoading(true);
     (async () => {
-      // Get all MCIs in namespace to find all connections
-      let mcis = [];
-      try { mcis = await getInfraList(nsId); } catch {}
-      setAllMcis(mcis);
-      const allVms = mcis.flatMap(m => m.node || []);
-      const connNames = [...new Set(allVms.map(v => v.connectionName).filter(Boolean))];
+      // Get all Infras in namespace to find all connections
+      let infras = [];
+      try { infras = await getInfraList(nsId); } catch {}
+      setAllInfras(infras);
+      const allNodes = infras.flatMap(i => i.node || []);
+      const connNames = [...new Set(allNodes.map(n => n.connectionName).filter(Boolean))];
       // Search clusters across all connections
       const results = await Promise.allSettled(connNames.map(async (conn) => {
         const list = await getClusters(conn);
@@ -147,15 +147,15 @@ export default function MciOverview() {
   );
   const k8sNodes = k8sGroups.flatMap((g) => g.nodes);
 
-  function toggleNode(id) {
-    setHiddenNodeIds((prev) => {
+  function toggleK8sNode(id) {
+    setHiddenK8sNodeIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   }
-  function toggleGroup(ids, show) {
-    setHiddenNodeIds((prev) => {
+  function toggleK8sGroup(ids, show) {
+    setHiddenK8sNodeIds((prev) => {
       const next = new Set(prev);
       if (show) ids.forEach((id) => next.delete(id));
       else ids.forEach((id) => next.add(id));
@@ -166,10 +166,10 @@ export default function MciOverview() {
   // Load CSP (API) metrics for each K8s node when K8s tab is active + API mode
   useEffect(() => {
     if (viewTab !== 'k8s' || dataSource !== 'csp' || k8sNodes.length === 0) {
-      setNodeData({});
+      setK8sNodeData({});
       return;
     }
-    setNodeMetricsLoading(true);
+    setK8sNodeMetricsLoading(true);
     const data = {};
     Promise.allSettled(
       k8sNodes.map(async (n) => {
@@ -178,27 +178,27 @@ export default function MciOverview() {
         data[n.id] = m;
       })
     ).then(() => {
-      setNodeData({ ...data });
-    }).finally(() => setNodeMetricsLoading(false));
+      setK8sNodeData({ ...data });
+    }).finally(() => setK8sNodeMetricsLoading(false));
   }, [viewTab, dataSource, clusters]);
 
   if (loading) return <p className="text-sm text-gray-400 p-4">Loading...</p>;
 
-  const allVmsFlat = allMcis.flatMap(m => m.node || []);
-  const hasCspVm = allVmsFlat.some((vm) => isCspSupported(vm.connectionName));
-  const showDataSourceToggle = (viewTab === 'vm' && hasCspVm) || viewTab === 'k8s';
-  const totalVms = allVmsFlat.length;
+  const allNodesFlat = allInfras.flatMap(i => i.node || []);
+  const hasCspNode = allNodesFlat.some((node) => isCspSupported(node.connectionName));
+  const showDataSourceToggle = (viewTab === 'node' && hasCspNode) || viewTab === 'k8s';
+  const totalNodes = allNodesFlat.length;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold">{viewTab === 'k8s' || !mciId ? `Namespace — ${nsId}` : `MCI Overview — ${mciId}`}</h2>
-          {/* VM / K8s tab */}
+          <h2 className="text-lg font-semibold">{viewTab === 'k8s' || !infraId ? `Namespace — ${nsId}` : `Infra Overview — ${infraId}`}</h2>
+          {/* Node / K8s tab */}
           <div className="flex bg-gray-100 rounded-lg p-0.5 text-xs">
-            <button onClick={() => { setViewTab('vm'); if (mciId) navigate(`${base}/monitoring/${nsId}`); }}
-              className={`px-3 py-1.5 rounded-md ${viewTab === 'vm' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
-              VM
+            <button onClick={() => { setViewTab('node'); if (infraId) navigate(`${base}/monitoring/${nsId}`); }}
+              className={`px-3 py-1.5 rounded-md ${viewTab === 'node' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
+              Node
             </button>
             <button onClick={() => { setViewTab('k8s'); navigate(`${base}/monitoring/${nsId}`); }}
               className={`px-3 py-1.5 rounded-md ${viewTab === 'k8s' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-500'}`}>
@@ -219,7 +219,7 @@ export default function MciOverview() {
               </button>
             </div>
           )}
-          <span className="text-xs text-gray-400">{viewTab === 'vm' ? `${totalVms} VMs / ${allMcis.length} MCIs` : `${k8sNodes.length} Nodes / ${clusters.length} Clusters`}</span>
+          <span className="text-xs text-gray-400">{viewTab === 'node' ? `${totalNodes} Nodes / ${allInfras.length} Infras` : `${k8sNodes.length} Nodes / ${clusters.length} Clusters`}</span>
         </div>
       </div>
 
@@ -231,9 +231,9 @@ export default function MciOverview() {
           <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s nodes found</div>
         ) : k8sGroups.map((g) => {
           const ids = g.nodes.map((n) => n.id);
-          const allVisible = ids.length > 0 && ids.every((id) => !hiddenNodeIds.has(id));
-          const anyVisible = ids.some((id) => !hiddenNodeIds.has(id));
-          const visibleNodes = g.nodes.filter((n) => !hiddenNodeIds.has(n.id));
+          const allVisible = ids.length > 0 && ids.every((id) => !hiddenK8sNodeIds.has(id));
+          const anyVisible = ids.some((id) => !hiddenK8sNodeIds.has(id));
+          const visibleNodes = g.nodes.filter((n) => !hiddenK8sNodeIds.has(n.id));
           return (
             <div key={g.key} className="bg-white rounded-lg shadow">
               {/* Group header */}
@@ -260,7 +260,7 @@ export default function MciOverview() {
                     className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
                     checked={allVisible}
                     ref={(el) => { if (el) el.indeterminate = !allVisible && anyVisible; }}
-                    onChange={(e) => toggleGroup(ids, e.target.checked)}
+                    onChange={(e) => toggleK8sGroup(ids, e.target.checked)}
                   />
                   <span className="font-semibold text-gray-700">All</span>
                 </label>
@@ -271,8 +271,8 @@ export default function MciOverview() {
                       <input
                         type="checkbox"
                         className="h-3.5 w-3.5 cursor-pointer accent-blue-600"
-                        checked={!hiddenNodeIds.has(n.id)}
-                        onChange={() => toggleNode(n.id)}
+                        checked={!hiddenK8sNodeIds.has(n.id)}
+                        onChange={() => toggleK8sNode(n.id)}
                       />
                       <span className="font-mono text-gray-600">{nodeName}</span>
                     </label>
@@ -288,9 +288,9 @@ export default function MciOverview() {
                     <K8sNodeCard
                       key={n.id}
                       info={n}
-                      metrics={nodeData[n.id] || {}}
+                      metrics={k8sNodeData[n.id] || {}}
                       dataSource={dataSource}
-                      metricsLoading={nodeMetricsLoading}
+                      metricsLoading={k8sNodeMetricsLoading}
                       selectedChart={selectedChart}
                       onSelectChart={setSelectedChart}
                       onClickChart={() => navigate(`${base}/monitoring/${nsId}/k8s/${n.connectionName}/${n.clusterName}/${n.nodeGroupName}/${n.nodeNumber}`)}
@@ -303,30 +303,30 @@ export default function MciOverview() {
         })
       )}
 
-      {/* VM Tab — grouped by MCI. When a specific mciId is selected via the
-          URL/dropdown, narrow to that one; otherwise show every MCI in the NS. */}
-      {viewTab === 'vm' && (mciId ? allMcis.filter(m => m.id === mciId || m.name === mciId) : allMcis).map((mci) => (
-        <div key={mci.id} className="bg-white rounded-lg shadow">
-          {/* MCI group header */}
+      {/* Node Tab — grouped by Infra. When a specific infraId is selected via the
+          URL/dropdown, narrow to that one; otherwise show every Infra in the NS. */}
+      {viewTab === 'node' && (infraId ? allInfras.filter(i => i.id === infraId || i.name === infraId) : allInfras).map((infra) => (
+        <div key={infra.id} className="bg-white rounded-lg shadow">
+          {/* Infra group header */}
           <div className="px-4 py-3 border-b flex items-center gap-3">
-            <span className="font-semibold text-sm">{mci.name || mci.id}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${(mci.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-              {mci.status || '-'}
+            <span className="font-semibold text-sm">{infra.name || infra.id}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${(infra.status || '').includes('Running') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+              {infra.status || '-'}
             </span>
-            <span className="text-xs text-gray-400 ml-auto">{(mci.node || []).length} VMs</span>
+            <span className="text-xs text-gray-400 ml-auto">{(infra.node || []).length} Nodes</span>
           </div>
-          {/* VM cards inside */}
+          {/* Node cards inside */}
           <div className="p-3 space-y-3">
-            {(mci.node || []).map((vm) => (
-              <VmCard
-                key={vm.id}
-                vm={vm}
-                vmMetrics={vmData[vm.id] || {}}
+            {(infra.node || []).map((node) => (
+              <NodeCard
+                key={node.id}
+                node={node}
+                nodeMetrics={nodeData[node.id] || {}}
                 dataSource={dataSource}
                 metricsLoading={metricsLoading}
                 selectedChart={selectedChart}
                 onSelectChart={setSelectedChart}
-                onClickChart={() => navigate(`${base}/monitoring/${nsId}/${mci.id}/${vm.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
+                onClickChart={() => navigate(`${base}/monitoring/${nsId}/${infra.id}/${node.id}${dataSource === 'csp' ? '?source=csp' : ''}`)}
               />
             ))}
           </div>
@@ -405,16 +405,16 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
   );
 }
 
-function VmCard({ vm, vmMetrics, dataSource, metricsLoading, selectedChart, onSelectChart, onClickChart }) {
-  const cspSupported = isCspSupported(vm.connectionName);
+function NodeCard({ node, nodeMetrics, dataSource, metricsLoading, selectedChart, onSelectChart, onClickChart }) {
+  const cspSupported = isCspSupported(node.connectionName);
 
   if (dataSource === 'csp') {
-    return <CspVmCard vm={vm} metrics={vmMetrics} metricsLoading={metricsLoading} selectedChart={selectedChart} onSelectChart={onSelectChart} onClickChart={onClickChart} cspSupported={cspSupported} />;
+    return <CspNodeCard node={node} metrics={nodeMetrics} metricsLoading={metricsLoading} selectedChart={selectedChart} onSelectChart={onSelectChart} onClickChart={onClickChart} cspSupported={cspSupported} />;
   }
-  return <AgentVmCard vm={vm} metrics={vmMetrics} metricsLoading={metricsLoading} selectedChart={selectedChart} onSelectChart={onSelectChart} onClickChart={onClickChart} cspSupported={cspSupported} />;
+  return <AgentNodeCard node={node} metrics={nodeMetrics} metricsLoading={metricsLoading} selectedChart={selectedChart} onSelectChart={onSelectChart} onClickChart={onClickChart} cspSupported={cspSupported} />;
 }
 
-function AgentVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
+function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
   const gauges = AGENT_METRICS.map((m) => {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
@@ -428,7 +428,7 @@ function AgentVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <VmHeader vm={vm} showCspBadge={false} cspAvailable={cspSupported} />
+      <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
       <div className="flex">
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {gauges.map((g) => (
@@ -447,11 +447,11 @@ function AgentVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart
   );
 }
 
-function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
+function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
   if (!cspSupported) {
     return (
       <div className="bg-white rounded-lg shadow">
-        <VmHeader vm={vm} showCspBadge={true} cspAvailable={false} />
+        <NodeHeader node={node} showCspBadge={true} cspAvailable={false} />
         <div className="p-8 text-center text-sm text-gray-400">API monitoring not supported for this provider</div>
       </div>
     );
@@ -464,7 +464,7 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <VmHeader vm={vm} showCspBadge={true} cspAvailable={true} />
+      <NodeHeader node={node} showCspBadge={true} cspAvailable={true} />
       <div className="flex">
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {cspKeys.map((key) => {
@@ -491,17 +491,17 @@ function CspVmCard({ vm, metrics, metricsLoading, selectedChart, onSelectChart, 
   );
 }
 
-function VmHeader({ vm, showCspBadge, cspAvailable }) {
+function NodeHeader({ node, showCspBadge, cspAvailable }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b">
       <div className="flex items-center gap-2">
-        <ProviderBadge connectionName={vm.connectionName} />
-        <span className="font-semibold text-sm">{vm.name || vm.id}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${vm.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{vm.status || '-'}</span>
+        <ProviderBadge connectionName={node.connectionName} />
+        <span className="font-semibold text-sm">{node.name || node.id}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${node.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{node.status || '-'}</span>
         {showCspBadge && cspAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
         {cspAvailable && !showCspBadge && <span className="text-xs text-gray-400" title="CSP API Based">(API available)</span>}
       </div>
-      <div className="text-xs text-gray-400">{vm.publicIP && <span className="font-mono">{vm.publicIP}</span>}</div>
+      <div className="text-xs text-gray-400">{node.publicIP && <span className="font-mono">{node.publicIP}</span>}</div>
     </div>
   );
 }

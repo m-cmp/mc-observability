@@ -1,5 +1,9 @@
 import client from './client';
 
+// NOTE: backend URL path still uses /vm (e.g. /trigger/policy/{id}/vm) and
+// payload field `targetScope` accepts "vm"|"mci" literals. JS function names
+// reflect Tumblebug Infra/Node naming.
+
 // Trigger policies
 export async function getPolicies(page = 1, size = 20) {
   const res = await client.get('/api/o11y/trigger/policy', { params: { page, size } });
@@ -15,11 +19,11 @@ export async function deletePolicy(id) {
   return client.delete(`/api/o11y/trigger/policy/${id}`);
 }
 
-export async function addVmToPolicy(policyId, body) {
+export async function addNodeToPolicy(policyId, body) {
   return client.post(`/api/o11y/trigger/policy/${policyId}/vm`, body);
 }
 
-export async function removeVmFromPolicy(policyId, body) {
+export async function removeNodeFromPolicy(policyId, body) {
   return client.delete(`/api/o11y/trigger/policy/${policyId}/vm`, { data: body });
 }
 
