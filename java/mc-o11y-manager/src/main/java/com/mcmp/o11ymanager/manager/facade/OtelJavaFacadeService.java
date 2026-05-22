@@ -24,14 +24,14 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Windows VM 대상 OpenTelemetry Java Auto-Instrumentation 설치/업데이트/제거/재시작 담당 Facade.
  *
- * <p>{@link BeylaFacadeService}를 본뜬 구조로, 동일한 trace agent 상태 컬럼
- * ({@code vmTraceAgentTaskStatus}/{@code vmTraceAgentTaskId})을 공유한다. Beyla와 다른 점:
+ * <p>{@link BeylaFacadeService}를 본뜬 구조로, 동일한 trace agent 상태 컬럼 ({@code
+ * vmTraceAgentTaskStatus}/{@code vmTraceAgentTaskId})을 공유한다. Beyla와 다른 점:
  *
  * <ul>
  *   <li>System requirement validator 미사용 (BTF/커널 체크는 Linux 한정 — POC에선 OS=Windows 분기 자체로 충분).
  *   <li>config payload는 yaml 대신 OTel KEY=VALUE 환경변수 묶음 ({@link OtelJavaConfigFacadeService}).
- *   <li>{@code Agent.OTEL_JAVA_AGENT}로 Semaphore에 큐잉되어, Ansible playbook은 이를 보고 Windows
- *       호스트 대상 처리 (jar 다운로드 + setx /M 환경변수 set).
+ *   <li>{@code Agent.OTEL_JAVA_AGENT}로 Semaphore에 큐잉되어, Ansible playbook은 이를 보고 Windows 호스트 대상 처리
+ *       (jar 다운로드 + setx /M 환경변수 set).
  * </ul>
  */
 @Slf4j

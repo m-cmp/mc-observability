@@ -37,8 +37,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * BeylaController는 Linux 전용 endpoint 모음으로 슬림화됐다. Windows 라우팅은 {@code OtelJavaController}로
- * 이동했으니 본 테스트는 (1) 정상 Linux 호출 (2) Windows VM이 들어왔을 때의 가드만 검증한다.
+ * BeylaController는 Linux 전용 endpoint 모음으로 슬림화됐다. Windows 라우팅은 {@code OtelJavaController}로 이동했으니 본
+ * 테스트는 (1) 정상 Linux 호출 (2) Windows VM이 들어왔을 때의 가드만 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -164,7 +164,6 @@ class BeylaControllerTest {
         when(vmAccessInfoResolver.isWindowsNode("ns-1", "mci-1", "vm-1")).thenReturn(true);
 
         // standalone MockMvc는 controller throw를 500으로 매핑. 메시지에 안내 문구 포함되는지만 확인.
-        mockMvc.perform(post(BASE_PATH + "/install"))
-                .andExpect(status().is4xxClientError());
+        mockMvc.perform(post(BASE_PATH + "/install")).andExpect(status().is4xxClientError());
     }
 }

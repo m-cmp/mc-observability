@@ -24,8 +24,7 @@ class OtelJavaConfigFacadeServiceTest {
 
     private static final String SITE_CODE = "test-site";
     private static final String OTEL_ENDPOINT = "http://test-collector:14317";
-    private static final String JAR_URL =
-            "https://example.com/opentelemetry-javaagent.jar";
+    private static final String JAR_URL = "https://example.com/opentelemetry-javaagent.jar";
     private static final String JAR_PATH = "C:\\opentelemetry\\opentelemetry-javaagent.jar";
     private static final String NS_ID = "ns-1";
     private static final String MCI_ID = "mci-1";

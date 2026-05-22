@@ -17,22 +17,22 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Linux VM 대상 Beyla(eBPF) trace agent 관리 API.
  *
- * <p>Windows VM 대상은 {@link OtelJavaController}(URL prefix {@code /windows-trace-agent})를 사용.
- * 두 controller가 동일한 trace agent 상태 컬럼을 공유하므로 한 VM에 대해 동시 호출은
- * BeylaFacadeService / OtelJavaFacadeService 내부의 lock으로 직렬화된다.
+ * <p>Windows VM 대상은 {@link OtelJavaController}(URL prefix {@code /windows-trace-agent})를 사용. 두
+ * controller가 동일한 trace agent 상태 컬럼을 공유하므로 한 VM에 대해 동시 호출은 BeylaFacadeService /
+ * OtelJavaFacadeService 내부의 lock으로 직렬화된다.
  *
  * <p>Windows VM에 본 endpoint를 호출하면 명시적으로 throw하여 caller가 올바른 endpoint로 안내한다.
  */
@@ -72,9 +72,7 @@ public class BeylaController {
     }
 
     @PutMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/update")
-    @Operation(
-            summary = "Update Beyla trace agent (Linux only)",
-            operationId = "UpdateTraceAgent")
+    @Operation(summary = "Update Beyla trace agent (Linux only)", operationId = "UpdateTraceAgent")
     public ResBody<Void> update(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
             @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,

@@ -47,8 +47,8 @@ public interface SpiderClient {
             @RequestParam("ConnectionName") String connectionName);
 
     /**
-     * Spider raw VM 조회. Tumblebug 응답의 publicIP가 빈 문자열로 오는 경우(OpenStack 등)에 fallback
-     * 소스로 사용. {@code vmName}은 CSP의 cspResourceName 또는 Spider 측 NameId.
+     * Spider raw VM 조회. Tumblebug 응답의 publicIP가 빈 문자열로 오는 경우(OpenStack 등)에 fallback 소스로 사용. {@code
+     * vmName}은 CSP의 cspResourceName 또는 Spider 측 NameId.
      */
     @GetMapping(value = "/spider/vm/{vmName}", produces = "application/json")
     SpiderVm getVm(

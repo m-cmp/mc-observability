@@ -68,7 +68,8 @@ class OtelJavaFacadeServiceTest {
     class InstallTests {
 
         @Test
-        @DisplayName("정상 설치: IDLE -> INSTALLING -> 스케줄러 등록 + configContent 전달 (Agent.OTEL_JAVA_AGENT)")
+        @DisplayName(
+                "정상 설치: IDLE -> INSTALLING -> 스케줄러 등록 + configContent 전달 (Agent.OTEL_JAVA_AGENT)")
         void normalFlow_installsSuccessfully() throws Exception {
             Task mockTask = Task.builder().id(101).status("waiting").build();
             String generatedConfig = "JAVA_TOOL_OPTIONS=-javaagent:C:\\opentelemetry\\jar\n";

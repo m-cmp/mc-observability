@@ -10,16 +10,16 @@ import org.springframework.stereotype.Service;
 /**
  * Windows OTel Java Auto-Instrumentation 환경변수 묶음 생성 담당.
  *
- * <p>{@link BeylaConfigFacadeService} 패턴을 그대로 본떠, ClassPath의
- * {@code otel_java_template.properties}를 읽어 placeholder를 치환한 결과를 반환한다. Ansible playbook은 이 결과를
- * Windows 호스트에 배포하고 KEY=VALUE 줄을 시스템 환경변수로 설정한다.
+ * <p>{@link BeylaConfigFacadeService} 패턴을 그대로 본떠, ClassPath의 {@code otel_java_template.properties}를
+ * 읽어 placeholder를 치환한 결과를 반환한다. Ansible playbook은 이 결과를 Windows 호스트에 배포하고 KEY=VALUE 줄을 시스템 환경변수로
+ * 설정한다.
  *
  * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @MCI_ID}, {@code @VM_ID},
  * {@code @OTEL_ENDPOINT}, {@code @JAR_URL}, {@code @JAR_PATH}.
  *
- * <p>OTEL endpoint는 Beyla와 공용으로 application.yaml의 {@code beyla.otel-endpoint}를 재사용한다 (POC 후
- * {@code tracing.otel-endpoint}로 일반화 예정). jar URL/path는 {@code otel-java-agent.jar-url} /
- * {@code otel-java-agent.jar-path}에서 주입.
+ * <p>OTEL endpoint는 Beyla와 공용으로 application.yaml의 {@code beyla.otel-endpoint}를 재사용한다 (POC 후 {@code
+ * tracing.otel-endpoint}로 일반화 예정). jar URL/path는 {@code otel-java-agent.jar-url} / {@code
+ * otel-java-agent.jar-path}에서 주입.
  */
 @Service
 @Slf4j

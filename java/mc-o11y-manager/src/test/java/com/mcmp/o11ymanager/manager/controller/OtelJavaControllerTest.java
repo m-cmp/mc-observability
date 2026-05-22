@@ -60,7 +60,8 @@ class OtelJavaControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(otelJavaController).build();
 
         // default로 Windows VM 가정. Linux 가드 케이스에서만 별도 override.
-        when(vmAccessInfoResolver.isWindowsNode("testns01", "win2019-os01", "win-1")).thenReturn(true);
+        when(vmAccessInfoResolver.isWindowsNode("testns01", "win2019-os01", "win-1"))
+                .thenReturn(true);
         when(vmAccessInfoResolver.resolve("testns01", "win2019-os01", "win-1"))
                 .thenReturn(
                         AccessInfoDTO.builder()
@@ -147,9 +148,9 @@ class OtelJavaControllerTest {
     @Test
     @DisplayName("POST install - Linux VM이면 가드 throw (5xx)")
     void install_linuxVm_throwsGuard() throws Exception {
-        when(vmAccessInfoResolver.isWindowsNode("testns01", "win2019-os01", "win-1")).thenReturn(false);
+        when(vmAccessInfoResolver.isWindowsNode("testns01", "win2019-os01", "win-1"))
+                .thenReturn(false);
 
-        mockMvc.perform(post(BASE_PATH + "/install"))
-                .andExpect(status().is4xxClientError());
+        mockMvc.perform(post(BASE_PATH + "/install")).andExpect(status().is4xxClientError());
     }
 }

@@ -94,8 +94,7 @@ public class SemaphoreDomainService {
             if (accessInfo.getPassword() != null && !accessInfo.getPassword().isEmpty()) {
                 env.addVariable(
                         "target_password",
-                        Base64.getEncoder()
-                                .encodeToString(accessInfo.getPassword().getBytes()));
+                        Base64.getEncoder().encodeToString(accessInfo.getPassword().getBytes()));
             }
 
             // Windows VM의 winrm scheme (http/https). Ansible task가 ansible_winrm_scheme로 참조.
@@ -209,8 +208,7 @@ public class SemaphoreDomainService {
         // Windows VM은 sshkey가 비어 있다 (winrm + password로 인증).
         // 이때 target_sshkey를 안 넣어야 Ansible check_variables에서 windows일 때 통과 가능.
         if (sshkey != null && !sshkey.isEmpty()) {
-            env.addVariable(
-                    "target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
+            env.addVariable("target_sshkey", Base64.getEncoder().encodeToString(sshkey.getBytes()));
         }
 
         return env;

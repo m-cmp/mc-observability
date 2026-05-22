@@ -15,24 +15,23 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Windows VM 대상 OpenTelemetry Java Auto-Instrumentation agent 관리 API.
  *
- * <p>{@link BeylaController}(Linux 전용)와 별도 endpoint prefix({@code /windows-trace-agent})를 사용해
- * URL만 봐도 어떤 agent가 설치되는지 명확하게 한다. 두 controller 모두 동일한 trace agent 상태 컬럼
- * ({@code vmTraceAgentTaskStatus}/{@code vmTraceAgentTaskId})을 공유하므로 한 VM에 대해 동시 호출이
- * 들어오면 {@code BeylaFacadeService}/{@code OtelJavaFacadeService} 내부의 {@code
- * agentTaskStatusLock}으로 직렬화된다.
+ * <p>{@link BeylaController}(Linux 전용)와 별도 endpoint prefix({@code /windows-trace-agent})를 사용해 URL만
+ * 봐도 어떤 agent가 설치되는지 명확하게 한다. 두 controller 모두 동일한 trace agent 상태 컬럼 ({@code
+ * vmTraceAgentTaskStatus}/{@code vmTraceAgentTaskId})을 공유하므로 한 VM에 대해 동시 호출이 들어오면 {@code
+ * BeylaFacadeService}/{@code OtelJavaFacadeService} 내부의 {@code agentTaskStatusLock}으로 직렬화된다.
  *
  * <p>Windows VM이 아닌 곳에 호출하면 명시적으로 throw하여 잘못된 endpoint 사용을 빠르게 알린다.
  */
@@ -94,8 +93,7 @@ public class OtelJavaController {
     @Operation(
             summary = "Uninstall Windows OTel Java agent",
             operationId = "UninstallWindowsTraceAgent",
-            description =
-                    "환경변수 제거 + jar 삭제 + 사이트 폴더 정리. 호스트의 Java 앱은 재시작해야 trace 송신이 완전히 중지된다.")
+            description = "환경변수 제거 + jar 삭제 + 사이트 폴더 정리. 호스트의 Java 앱은 재시작해야 trace 송신이 완전히 중지된다.")
     public ResBody<Void> uninstall(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
@@ -110,9 +108,8 @@ public class OtelJavaController {
     }
 
     /**
-     * Windows OTel Java agent는 호스트 단위 환경변수 주입 방식이라 service 단위 restart 의미 없음.
-     * {@link OtelJavaFacadeService#restart} 내부에서 미지원 throw하지만 caller에 명확하게 ERROR 결과로
-     * 응답한다.
+     * Windows OTel Java agent는 호스트 단위 환경변수 주입 방식이라 service 단위 restart 의미 없음. {@link
+     * OtelJavaFacadeService#restart} 내부에서 미지원 throw하지만 caller에 명확하게 ERROR 결과로 응답한다.
      */
     @PostMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/restart")
     @Operation(
@@ -145,10 +142,7 @@ public class OtelJavaController {
         return new ResBody<>(status);
     }
 
-    /**
-     * 잘못된 endpoint 사용 가드. Windows node가 아니면 명시적으로 throw해서 caller가 /beyla/...로 가도록
-     * 안내.
-     */
+    /** 잘못된 endpoint 사용 가드. Windows node가 아니면 명시적으로 throw해서 caller가 /beyla/...로 가도록 안내. */
     private void ensureWindows(String nsId, String mciId, String vmId) {
         if (!vmAccessInfoResolver.isWindowsNode(nsId, mciId, vmId)) {
             throw new ResponseStatusException(
