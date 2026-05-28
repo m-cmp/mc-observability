@@ -227,5 +227,9 @@ notification:
     token: ${SLACK_OAUTH_TOKEN:xoxb-xxxx}
     baseUrl: ${SLACK_BASEURL:https://slack.com}
     apiPath: ${SLACK_API_PATH:/api/chat.postMessage}
+  discord:
+    baseUrl: ${DISCORD_WEBHOOK_BASEURL:https://discord.com/api/webhooks}
+    username: ${DISCORD_USERNAME:MC-Observability}
+    avatarUrl: ${DISCORD_AVATAR_URL:}
 
 
