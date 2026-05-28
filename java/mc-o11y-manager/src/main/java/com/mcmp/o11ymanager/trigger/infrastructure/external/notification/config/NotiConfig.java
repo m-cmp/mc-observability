@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.config;
 
+import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.DISCORD;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.EMAIL;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.KAKAO;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;
@@ -7,6 +8,8 @@ import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiFactory;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiSender;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordNotifier;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoNotifier;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailNotifier;
@@ -82,6 +85,17 @@ public class NotiConfig {
     }
 
     /**
+     * Creates Discord properties bean for Discord notifications.
+     *
+     * @return DiscordProperties configured from application properties
+     */
+    @Bean
+    @ConfigurationProperties(prefix = "notification.discord")
+    public DiscordProperties discordProperties() {
+        return new DiscordProperties();
+    }
+
+    /**
      * Creates a notification factory registry with all notification types.
      *
      * @param mailProperties mail configuration properties
@@ -98,7 +112,8 @@ public class NotiConfig {
                 .put(EMAIL, mailProperties)
                 .put(SMS, smsProperties)
                 .put(SLACK, slackProperties())
-                .put(KAKAO, kakaoProperties);
+                .put(KAKAO, kakaoProperties)
+                .put(DISCORD, discordProperties());
     }
 
     /**
@@ -108,6 +123,7 @@ public class NotiConfig {
      * @param smsNotifier SMS notification sender
      * @param slackNotifier Slack notification sender
      * @param kakaoNotifier Kakao notification sender
+     * @param discordNotifier Discord notification sender
      * @return NotiSender with all notification channel implementations
      */
     @Bean
@@ -115,12 +131,14 @@ public class NotiConfig {
             MailNotifier mailNotifier,
             SmsNotifier smsNotifier,
             SlackNotifier slackNotifier,
-            KakaoNotifier kakaoNotifier) {
+            KakaoNotifier kakaoNotifier,
+            DiscordNotifier discordNotifier) {
         return DefaultNotiSender.newInstance()
                 .put(EMAIL, mailNotifier)
                 .put(SMS, smsNotifier)
                 .put(SLACK, slackNotifier)
-                .put(KAKAO, kakaoNotifier);
+                .put(KAKAO, kakaoNotifier)
+                .put(DISCORD, discordNotifier);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.trigger.adapter.internal.notification.dto;
 
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackProperties;
@@ -48,6 +49,14 @@ public record NotiChannelCreateDto(
                     .type(slackProperties.getType().name().toLowerCase())
                     .provider(slackProperties.getType().name().toLowerCase())
                     .baseUrl(slackProperties.getBaseUrl())
+                    .isActive(true)
+                    .build();
+        } else if (channel instanceof DiscordProperties discordProperties) {
+            return NotiChannelCreateDto.builder()
+                    .name(discordProperties.getType().name().toLowerCase())
+                    .type(discordProperties.getType().name().toLowerCase())
+                    .provider(discordProperties.getType().name().toLowerCase())
+                    .baseUrl(discordProperties.getBaseUrl())
                     .isActive(true)
                     .build();
         } else {
