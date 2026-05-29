@@ -16,6 +16,8 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsNoti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsNoti;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 import java.util.HashMap;
 import java.util.List;
@@ -91,6 +93,8 @@ public class DefaultNotiFactory implements NotiFactory {
                     alertEvent, (KakaoProperties) notiProperty, notiChannelDto.recipients());
             case DISCORD -> DiscordNoti.from(
                     alertEvent, (DiscordProperties) notiProperty, notiChannelDto.recipients());
+            case TEAMS -> TeamsNoti.from(
+                    alertEvent, (TeamsProperties) notiProperty, notiChannelDto.recipients());
         };
     }
 
@@ -132,6 +136,12 @@ public class DefaultNotiFactory implements NotiFactory {
 
             case DISCORD -> DiscordNoti.direct(
                     (DiscordProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case TEAMS -> TeamsNoti.direct(
+                    (TeamsProperties) property,
                     directAlert.getRecipients(),
                     directAlert.getTitle(),
                     directAlert.getMessage());

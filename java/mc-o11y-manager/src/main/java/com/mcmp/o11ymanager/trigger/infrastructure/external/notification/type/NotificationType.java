@@ -5,5 +5,6 @@ public enum NotificationType {
     EMAIL,
     SLACK,
     KAKAO,
-    DISCORD
+    DISCORD,
+    TEAMS
 }
