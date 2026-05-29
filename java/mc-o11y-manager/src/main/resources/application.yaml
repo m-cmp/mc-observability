@@ -231,5 +231,7 @@ notification:
     baseUrl: ${DISCORD_WEBHOOK_BASEURL:https://discord.com/api/webhooks}
     username: ${DISCORD_USERNAME:MC-Observability}
     avatarUrl: ${DISCORD_AVATAR_URL:}
+  teams:
+    baseUrl: ${TEAMS_WEBHOOK_BASEURL:https://}
 
 
