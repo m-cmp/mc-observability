@@ -4,7 +4,7 @@ import com.mcmp.o11ymanager.manager.dto.item.MonitoringItemDTO;
 import com.mcmp.o11ymanager.manager.dto.item.MonitoringItemRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.item.MonitoringItemUpdateDTO;
 import com.mcmp.o11ymanager.manager.dto.plugin.PluginDefDTO;
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.enums.ResponseCode;
 import com.mcmp.o11ymanager.manager.exception.config.TelegrafConfigException;
 import com.mcmp.o11ymanager.manager.service.interfaces.AgentPluginDefService;
@@ -55,8 +55,8 @@ public class ItemFacadeService {
         try {
             hostLock.lock();
 
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
-            if (vm == null) {
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            if (node == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
@@ -131,8 +131,8 @@ public class ItemFacadeService {
         try {
             hostLock.lock();
 
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
-            if (vm == null) {
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            if (node == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);
@@ -182,6 +182,7 @@ public class ItemFacadeService {
                             updatedConfig.replace("'", "'\"'\"'"), getTelegrafConfigPath());
             tumblebugService.executeCommand(nsId, mciId, vmId, updateCommand);
 
+            telegrafFacadeService.restart(nsId, mciId, vmId);
         } catch (TelegrafConfigException e) {
             throw e;
         } catch (Exception e) {
@@ -203,8 +204,8 @@ public class ItemFacadeService {
         try {
             hostLock.lock();
 
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
-            if (vm == null) {
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            if (node == null) {
                 String errorMsg = String.format("VM not found for vm: %s/%s/%s", nsId, mciId, vmId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.NOT_FOUND, errorMsg);

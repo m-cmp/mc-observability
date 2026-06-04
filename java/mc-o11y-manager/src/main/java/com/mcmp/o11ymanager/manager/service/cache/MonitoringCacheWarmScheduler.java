@@ -2,6 +2,8 @@ package com.mcmp.o11ymanager.manager.service.cache;
 
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties;
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.Job;
+import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.OverviewJob;
+import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.OverviewQuery;
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties.RangeSpec;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
@@ -57,6 +59,7 @@ public class MonitoringCacheWarmScheduler {
 
     private ExecutorService realtimeExecutor;
     private ExecutorService longrangeExecutor;
+    private ExecutorService overviewExecutor;
 
     @PostConstruct
     void init() {
@@ -64,10 +67,16 @@ public class MonitoringCacheWarmScheduler {
                 newFixedPool("mon-cache-warm-realtime", properties.getWarm().getRealtime());
         longrangeExecutor =
                 newFixedPool("mon-cache-warm-longrange", properties.getWarm().getLongrange());
+        OverviewJob overview = properties.getWarm().getOverview();
+        overviewExecutor =
+                newFixedPoolFromSize(
+                        "mon-cache-warm-overview",
+                        overview == null ? 10 : overview.getThreadPoolSize());
         log.info(
-                "[CACHE-WARM] initialized realtimeThreads={}, longrangeThreads={}",
+                "[CACHE-WARM] initialized realtimeThreads={}, longrangeThreads={}, overviewThreads={}",
                 properties.getWarm().getRealtime().getThreadPoolSize(),
-                properties.getWarm().getLongrange().getThreadPoolSize());
+                properties.getWarm().getLongrange().getThreadPoolSize(),
+                overview == null ? 0 : overview.getThreadPoolSize());
     }
 
     @PreDestroy
@@ -77,6 +86,9 @@ public class MonitoringCacheWarmScheduler {
         }
         if (longrangeExecutor != null) {
             longrangeExecutor.shutdownNow();
+        }
+        if (overviewExecutor != null) {
+            overviewExecutor.shutdownNow();
         }
     }
 
@@ -90,11 +102,17 @@ public class MonitoringCacheWarmScheduler {
         runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
     }
 
-    /** Triggers both warming jobs immediately (admin endpoint). */
+    @Scheduled(cron = "${monitoring.cache.warm.overview.cron:0 * * * * *}")
+    public void scheduledOverview() {
+        runOverviewJob();
+    }
+
+    /** Triggers all warming jobs immediately (admin endpoint). */
     public int warmNow() {
         int realtime = runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor);
         int longrange = runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
-        return realtime + longrange;
+        int overview = runOverviewJob();
+        return realtime + longrange + overview;
     }
 
     private int runJob(String jobName, Job job, ExecutorService executor) {
@@ -194,6 +212,82 @@ public class MonitoringCacheWarmScheduler {
         }
     }
 
+    private int runOverviewJob() {
+        OverviewJob job = properties.getWarm().getOverview();
+        if (job == null
+                || !job.isEnabled()
+                || overviewExecutor == null
+                || job.getQueries() == null
+                || job.getQueries().isEmpty()) {
+            return 0;
+        }
+        long started = System.currentTimeMillis();
+        List<VmWithCreatedAt> top = pickTopVms();
+        if (top.isEmpty()) {
+            log.info("[CACHE-WARM:overview] no eligible VMs");
+            return 0;
+        }
+
+        AtomicInteger ok = new AtomicInteger();
+        AtomicInteger fail = new AtomicInteger();
+        List<CompletableFuture<Void>> futures = new ArrayList<>(top.size());
+        for (VmWithCreatedAt entry : top) {
+            futures.add(
+                    CompletableFuture.runAsync(
+                            () -> warmOneVmOverview(entry.vm(), job.getQueries(), ok, fail),
+                            overviewExecutor));
+        }
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+
+        log.info(
+                "[CACHE-WARM:overview] vms={}, queries={}, ok={}, fail={}, took={}ms",
+                top.size(),
+                job.getQueries().size(),
+                ok.get(),
+                fail.get(),
+                System.currentTimeMillis() - started);
+        return top.size();
+    }
+
+    private void warmOneVmOverview(
+            VmRef vm, List<OverviewQuery> queries, AtomicInteger ok, AtomicInteger fail) {
+        for (OverviewQuery q : queries) {
+            try {
+                influxDbService.getMetricsByVM(
+                        vm.nsId(), vm.mciId(), vm.vmId(), buildOverviewRequest(q));
+                ok.incrementAndGet();
+            } catch (Exception e) {
+                fail.incrementAndGet();
+                log.debug(
+                        "[CACHE-WARM:overview] failed ns={}, mci={}, vm={}, m={}, fn={}, fd={}, err={}",
+                        vm.nsId(),
+                        vm.mciId(),
+                        vm.vmId(),
+                        q.getMeasurement(),
+                        q.getFunction(),
+                        q.getField(),
+                        e.toString());
+            }
+        }
+    }
+
+    private MetricRequestDTO buildOverviewRequest(OverviewQuery q) {
+        MetricRequestDTO req = new MetricRequestDTO();
+        req.setMeasurement(q.getMeasurement());
+        req.setRange(q.getRange());
+        req.setGroupTime(q.getGroupTime());
+        req.setLimit(q.getLimit());
+        req.setGroupBy(new ArrayList<>(List.of("vm_id")));
+        MetricRequestDTO.FieldInfo f = new MetricRequestDTO.FieldInfo();
+        f.setFunction(q.getFunction());
+        f.setField(q.getField());
+        List<MetricRequestDTO.FieldInfo> fields = new ArrayList<>();
+        fields.add(f);
+        req.setFields(fields);
+        req.setConditions(new ArrayList<>());
+        return req;
+    }
+
     /** Discover active VMs and return the {@code topN} sorted by createdTime descending. */
     private List<VmWithCreatedAt> pickTopVms() {
         List<VmRef> active;
@@ -231,7 +325,11 @@ public class MonitoringCacheWarmScheduler {
     }
 
     private static ExecutorService newFixedPool(String namePrefix, Job job) {
-        int size = Math.max(1, job.getThreadPoolSize());
+        return newFixedPoolFromSize(namePrefix, job.getThreadPoolSize());
+    }
+
+    private static ExecutorService newFixedPoolFromSize(String namePrefix, int size) {
+        int bounded = Math.max(1, size);
         AtomicInteger counter = new AtomicInteger();
         ThreadFactory factory =
                 r -> {
@@ -239,7 +337,7 @@ public class MonitoringCacheWarmScheduler {
                     t.setDaemon(true);
                     return t;
                 };
-        return Executors.newFixedThreadPool(size, factory);
+        return Executors.newFixedThreadPool(bounded, factory);
     }
 
     private record VmWithCreatedAt(VmRef vm, Instant createdAt) {}

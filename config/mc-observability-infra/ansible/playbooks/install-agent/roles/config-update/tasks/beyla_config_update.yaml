@@ -1,0 +1,108 @@
+- name: Create temporary beyla config content
+  copy:
+    content: "{{ config_content | b64decode }}"
+    dest: "/tmp/new_beyla_config_{{ request_id }}"
+    mode: "0644"
+  delegate_to: 127.0.0.1
+
+- name: Get current beyla config file hash
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "md5sum {{ beyla_config_path }} | awk '{print $1}'"
+  register: current_beyla_config_hash
+  ignore_errors: true
+
+- name: Get new beyla config file hash
+  raw: "md5sum /tmp/new_beyla_config_{{ request_id }} | awk '{print $1}'"
+  delegate_to: 127.0.0.1
+  register: new_beyla_config_hash
+
+- name: Set beyla config update required flag
+  set_fact:
+    update_required: "{{ current_beyla_config_hash.rc != 0 or current_beyla_config_hash.stdout | trim != new_beyla_config_hash.stdout | trim }}"
+
+- name: Display beyla config update status
+  debug:
+    msg: "Configuration update is {{ 'required' if update_required else 'not required' }}"
+
+- name: Get beyla config directory path
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  set_fact:
+    config_directory_path: "{{ beyla_config_path | dirname }}"
+  when: update_required
+
+- name: Create beyla config directory if not exist
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p {{ config_directory_path }}"
+  when: update_required
+
+- name: Copy new beyla config to target
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/new_beyla_config_{{ request_id }}"
+    output_file_path: "{{ beyla_config_path }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+  when: update_required
+
+- name: Restart CMP Beyla service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  shell: "systemctl restart cmp-beyla-{{ site_code }}"
+  when: update_required
+
+- name: Run CMP Beyla status command
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl status --no-pager cmp-beyla-{{ site_code }}"
+  register: cmp_beyla_status
+  failed_when: cmp_beyla_status.rc not in [0, 3]
+  when: update_required
+
+- name: Display CMP Beyla status
+  debug:
+    var: cmp_beyla_status
+
+- name: Cleanup temporary beyla config file
+  file:
+    path: "/tmp/new_beyla_config_{{ request_id }}"
+    state: absent
+  delegate_to: 127.0.0.1

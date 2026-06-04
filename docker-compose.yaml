@@ -47,6 +47,21 @@ services:
       timeout: 10s
       retries: 30
 
+  mc-observability-front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: mc-observability-front
+    restart: always
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - 18081:18081
+    depends_on:
+      mc-observability-manager:
+        condition: service_healthy
+
   mc-observability-infra:
     image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
@@ -230,24 +245,6 @@ services:
       timeout: 10s
       retries: 30
 
-  mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:edge
-    container_name: mc-observability-minio
-    restart: always
-    networks:
-      - internal_network
-    environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=mc-agent
-    volumes:
-      - /docker/minio_data:/minio/data
-    healthcheck:
-      start_period: 120s
-      test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
-      interval: 10s
-      timeout: 10s
-      retries: 30
-
   mc-observability-loki-init-volumes:
     image: busybox:stable
     container_name: mc-observability-loki-init-volumes
@@ -272,8 +269,6 @@ services:
     depends_on:
       mc-observability-loki-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     volumes:
@@ -311,8 +306,6 @@ services:
     depends_on:
       mc-observability-tempo-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     command: [ "-config.file=/etc/tempo-config.yaml" ]
@@ -574,7 +567,7 @@ services:
 
   # CB-Tumblebug
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.5
+    image: cloudbaristaorg/cb-tumblebug:0.12.12
     container_name: mc-infra-manager
     restart: always
     networks:
@@ -713,7 +706,7 @@ services:
 
   # CB-Spider
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider_azure_monitoring:edge
+    image: cloudbaristaorg/cb-spider:0.12.24
     container_name: mc-infra-connector
     restart: always
     networks:
@@ -722,8 +715,8 @@ services:
     ports:
       - 1024:1024
     volumes:
-      - /docker/cb-spider_azure_monitoring/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
-      - /docker/cb-spider_azure_monitoring/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      - /docker/cb-spider/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - /docker/cb-spider/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024

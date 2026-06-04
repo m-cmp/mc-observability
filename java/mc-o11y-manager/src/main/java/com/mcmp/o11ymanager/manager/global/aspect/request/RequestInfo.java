@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.RequestScope;
 
 @Component
-@RequestScope  // HTTP 요청 하나당 새 인스턴스 생성
+@RequestScope // HTTP 요청 하나당 새 인스턴스 생성
 @Getter
 @Setter
 @NoArgsConstructor

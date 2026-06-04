@@ -17,3 +17,6 @@ python/scheduler/airflow-home/webserver_config.py
 
 swagger/java-swagger.yaml
 swagger/python-swagger.yaml
+
+# Beyla binary는 tar.gz에서 ansible task가 추출하므로 git 추적 제외
+config/mc-observability-infra/ansible/playbooks/install-agent/roles/agent/agent-install-files/*/beyla/bin/beyla

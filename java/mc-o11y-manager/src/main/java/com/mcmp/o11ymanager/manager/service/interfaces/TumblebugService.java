@@ -1,17 +1,17 @@
 package com.mcmp.o11ymanager.manager.service.interfaces;
 
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 
 public interface TumblebugService {
 
-    String executeCommand(String nsId, String mciId, String vmId, String command);
+    String executeCommand(String nsId, String infraId, String nodeId, String command);
 
-    boolean isConnectedVM(String nsId, String mciId, String vmId);
+    boolean isConnectedVM(String nsId, String infraId, String nodeId);
 
-    TumblebugMCI.Vm getVm(String nsId, String mciId, String vmId);
+    TumblebugInfra.Node getNode(String nsId, String infraId, String nodeId);
 
-    boolean isServiceActive(String nsId, String mciId, String vmId, Agent agent);
+    boolean isServiceActive(String nsId, String infraId, String nodeId, Agent agent);
 
-    String restart(String nsId, String mciId, String vmId, Agent agent);
+    String restart(String nsId, String infraId, String nodeId, Agent agent);
 }

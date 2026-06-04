@@ -1,6 +1,6 @@
 package com.mcmp.o11ymanager.manager.facade;
 
-import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugMCI;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
@@ -95,12 +95,12 @@ public class VMFacadeService {
             hostLock.lock();
 
             VMDTO savedVM = vmService.get(nsId, mciId, vmId);
-            TumblebugMCI.Vm vm = tumblebugService.getVm(nsId, mciId, vmId);
-            String userName = vm.getVmUserName();
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            String userName = node.getNodeUserName();
             log.info(
                     ">>> VM fetched: id={}, name={} userName={}",
-                    vm.getId(),
-                    vm.getName(),
+                    node.getId(),
+                    node.getName(),
                     userName);
 
             //        log.info(">>> start checking monitoring agent status");
@@ -122,9 +122,9 @@ public class VMFacadeService {
                     agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.BEYLA);
 
             return VMDTO.builder()
-                    .vmId(vm.getId())
+                    .vmId(node.getId())
                     .name(savedVM.getName())
-                    .description(vm.getDescription())
+                    .description(node.getDescription())
                     .nsId(nsId)
                     .mciId(mciId)
                     .monitoringAgentStatus(monitoringAgentStatus)

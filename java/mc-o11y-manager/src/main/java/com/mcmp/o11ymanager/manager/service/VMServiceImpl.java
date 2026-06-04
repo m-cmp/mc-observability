@@ -277,13 +277,14 @@ public class VMServiceImpl implements VMService {
         // 특정 VM의 Beyla 작업 상태를 DB에 업데이트
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)     // nsId + mciId + vmId 복합키로 VMEntity 조회
+                        .findByNsIdAndMciIdAndVmId(
+                                nsId, mciId, vmId) // nsId + mciId + vmId 복합키로 VMEntity 조회
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
                                                 requestInfo.getRequestId(), "VMEntity", vmId));
 
-        vm.setTraceAgentTaskStatus(status);  // traceAgentTaskStatus 필드에 새 상태 세팅
+        vm.setTraceAgentTaskStatus(status); // traceAgentTaskStatus 필드에 새 상태 세팅
 
         if (status.equals(VMAgentTaskStatus.IDLE)) {
             // 상태가 IDEL 이면  vmTraceAgentTaskId를 빈문자로 초기화 (작업 종료를 의미)
