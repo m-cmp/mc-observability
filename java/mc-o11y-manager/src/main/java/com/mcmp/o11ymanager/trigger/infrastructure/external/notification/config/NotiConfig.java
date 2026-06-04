@@ -1,12 +1,16 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.config;
 
+import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.DISCORD;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.EMAIL;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.KAKAO;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SLACK;
 import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.SMS;
+import static com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType.TEAMS;
 
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiFactory;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiSender;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordNotifier;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoNotifier;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailNotifier;
@@ -15,6 +19,8 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsNotifier;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsNotifier;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiSender;
 import java.time.Duration;
@@ -82,6 +88,28 @@ public class NotiConfig {
     }
 
     /**
+     * Creates Discord properties bean for Discord notifications.
+     *
+     * @return DiscordProperties configured from application properties
+     */
+    @Bean
+    @ConfigurationProperties(prefix = "notification.discord")
+    public DiscordProperties discordProperties() {
+        return new DiscordProperties();
+    }
+
+    /**
+     * Creates Teams properties bean for Microsoft Teams notifications.
+     *
+     * @return TeamsProperties configured from application properties
+     */
+    @Bean
+    @ConfigurationProperties(prefix = "notification.teams")
+    public TeamsProperties teamsProperties() {
+        return new TeamsProperties();
+    }
+
+    /**
      * Creates a notification factory registry with all notification types.
      *
      * @param mailProperties mail configuration properties
@@ -98,7 +126,9 @@ public class NotiConfig {
                 .put(EMAIL, mailProperties)
                 .put(SMS, smsProperties)
                 .put(SLACK, slackProperties())
-                .put(KAKAO, kakaoProperties);
+                .put(KAKAO, kakaoProperties)
+                .put(DISCORD, discordProperties())
+                .put(TEAMS, teamsProperties());
     }
 
     /**
@@ -108,6 +138,8 @@ public class NotiConfig {
      * @param smsNotifier SMS notification sender
      * @param slackNotifier Slack notification sender
      * @param kakaoNotifier Kakao notification sender
+     * @param discordNotifier Discord notification sender
+     * @param teamsNotifier Teams notification sender
      * @return NotiSender with all notification channel implementations
      */
     @Bean
@@ -115,12 +147,16 @@ public class NotiConfig {
             MailNotifier mailNotifier,
             SmsNotifier smsNotifier,
             SlackNotifier slackNotifier,
-            KakaoNotifier kakaoNotifier) {
+            KakaoNotifier kakaoNotifier,
+            DiscordNotifier discordNotifier,
+            TeamsNotifier teamsNotifier) {
         return DefaultNotiSender.newInstance()
                 .put(EMAIL, mailNotifier)
                 .put(SMS, smsNotifier)
                 .put(SLACK, slackNotifier)
-                .put(KAKAO, kakaoNotifier);
+                .put(KAKAO, kakaoNotifier)
+                .put(DISCORD, discordNotifier)
+                .put(TEAMS, teamsNotifier);
     }
 
     /**

@@ -112,7 +112,9 @@ public class TriggerService implements TriggerServiceInternal {
                         "sms", "sms_naver-cloud",
                         "email", "email_smtp.gmail.com",
                         "kakao", "kakao_naver-cloud",
-                        "slack", "slack");
+                        "slack", "slack",
+                        "discord", "discord",
+                        "teams", "teams");
 
         Map<String, String> channelRecipientMap = new HashMap<>();
 
@@ -128,7 +130,7 @@ public class TriggerService implements TriggerServiceInternal {
                                         throw new InvalidNotificationTypeException(
                                                 "Unsupported notification channel: "
                                                         + simpleName
-                                                        + " (allowed values: kakao, sms, email, slack)");
+                                                        + " (allowed values: kakao, sms, email, slack, discord, teams)");
                                     }
 
                                     String recipients = String.join(", ", dto.recipients());

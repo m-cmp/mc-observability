@@ -1,9 +1,11 @@
 package com.mcmp.o11ymanager.trigger.adapter.internal.notification.dto;
 
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory.NotiProperty;
 import lombok.Builder;
 
@@ -48,6 +50,22 @@ public record NotiChannelCreateDto(
                     .type(slackProperties.getType().name().toLowerCase())
                     .provider(slackProperties.getType().name().toLowerCase())
                     .baseUrl(slackProperties.getBaseUrl())
+                    .isActive(true)
+                    .build();
+        } else if (channel instanceof DiscordProperties discordProperties) {
+            return NotiChannelCreateDto.builder()
+                    .name(discordProperties.getType().name().toLowerCase())
+                    .type(discordProperties.getType().name().toLowerCase())
+                    .provider(discordProperties.getType().name().toLowerCase())
+                    .baseUrl(discordProperties.getBaseUrl())
+                    .isActive(true)
+                    .build();
+        } else if (channel instanceof TeamsProperties teamsProperties) {
+            return NotiChannelCreateDto.builder()
+                    .name(teamsProperties.getType().name().toLowerCase())
+                    .type(teamsProperties.getType().name().toLowerCase())
+                    .provider(teamsProperties.getType().name().toLowerCase())
+                    .baseUrl(teamsProperties.getBaseUrl())
                     .isActive(true)
                     .build();
         } else {
