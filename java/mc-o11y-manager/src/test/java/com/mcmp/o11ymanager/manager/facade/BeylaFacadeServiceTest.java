@@ -49,8 +49,8 @@ class BeylaFacadeServiceTest {
     @InjectMocks private BeylaFacadeService beylaFacadeService;
 
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
     private static final int TEMPLATE_COUNT = 1;
 
     private AccessInfoDTO accessInfo;
@@ -75,7 +75,7 @@ class BeylaFacadeServiceTest {
         void normalFlow_installsSuccessfully() throws Exception {
             Task mockTask = Task.builder().id(42).status("waiting").build();
             String generatedConfig = "service:\n  name: \"cmp-beyla-test\"\n";
-            when(beylaConfigFacadeService.initBeylaConfig(NS_ID, MCI_ID, VM_ID))
+            when(beylaConfigFacadeService.initBeylaConfig(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(generatedConfig);
             when(semaphoreDomainService.install(
                             any(AccessInfoDTO.class),
@@ -86,23 +86,24 @@ class BeylaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
-            beylaFacadeService.install(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            beylaFacadeService.install(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
-            verify(vmService).isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
-            verify(beylaSystemRequirementValidator).validateAndThrow(NS_ID, MCI_ID, VM_ID);
-            verify(beylaConfigFacadeService).initBeylaConfig(NS_ID, MCI_ID, VM_ID);
+            verify(vmService).isIdleTraceAgent(NS_ID, INFRA_ID, NODE_ID);
+            verify(beylaSystemRequirementValidator).validateAndThrow(NS_ID, INFRA_ID, NODE_ID);
+            verify(beylaConfigFacadeService).initBeylaConfig(NS_ID, INFRA_ID, NODE_ID);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING, "42");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING, "42");
             verify(schedulerFacadeService)
                     .scheduleTaskStatusCheck(
                             eq("req-123"),
                             eq(42),
                             eq(NS_ID),
-                            eq(MCI_ID),
-                            eq(VM_ID),
+                            eq(INFRA_ID),
+                            eq(NODE_ID),
                             eq(SemaphoreInstallMethod.INSTALL),
                             eq(Agent.BEYLA));
         }
@@ -112,14 +113,14 @@ class BeylaFacadeServiceTest {
         void alreadyProcessing_throwsException() throws Exception {
             doThrow(
                             new VMAgentTaskProcessingException(
-                                    "req-1", VM_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
+                                    "req-1", NODE_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
                     .when(vmService)
-                    .isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
+                    .isIdleTraceAgent(NS_ID, INFRA_ID, NODE_ID);
 
             assertThatThrownBy(
                             () ->
                                     beylaFacadeService.install(
-                                            NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
+                                            NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(VMAgentTaskProcessingException.class);
 
             verify(vmService, never())
@@ -131,12 +132,12 @@ class BeylaFacadeServiceTest {
         void systemRequirementFailed_throwsException() throws Exception {
             doThrow(new BeylaSystemRequirementException("Kernel version too low"))
                     .when(beylaSystemRequirementValidator)
-                    .validateAndThrow(NS_ID, MCI_ID, VM_ID);
+                    .validateAndThrow(NS_ID, INFRA_ID, NODE_ID);
 
             assertThatThrownBy(
                             () ->
                                     beylaFacadeService.install(
-                                            NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
+                                            NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(BeylaSystemRequirementException.class);
 
             verify(vmService, never())
@@ -152,14 +153,15 @@ class BeylaFacadeServiceTest {
             assertThatThrownBy(
                             () ->
                                     beylaFacadeService.install(
-                                            NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
+                                            NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Semaphore connection failed");
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.IDLE);
+                    .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.IDLE);
         }
     }
 
@@ -180,13 +182,14 @@ class BeylaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-456");
 
-            beylaFacadeService.update(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            beylaFacadeService.update(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UPDATING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UPDATING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UPDATING, "55");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UPDATING, "55");
         }
     }
 
@@ -207,13 +210,14 @@ class BeylaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-789");
 
-            beylaFacadeService.uninstall(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            beylaFacadeService.uninstall(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.PREPARING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.PREPARING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UNINSTALLING, "77");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UNINSTALLING, "77");
         }
     }
 
@@ -224,25 +228,26 @@ class BeylaFacadeServiceTest {
         @Test
         @DisplayName("정상 재시작: RESTARTING -> IDLE 복귀, SUCCESS 반환")
         void normalFlow_restartsSuccessfully() {
-            when(tumblebugService.restart(NS_ID, MCI_ID, VM_ID, Agent.BEYLA)).thenReturn("ok");
+            when(tumblebugService.restart(NS_ID, INFRA_ID, NODE_ID, Agent.BEYLA)).thenReturn("ok");
 
-            List<ResultDTO> results = beylaFacadeService.restart(NS_ID, MCI_ID, VM_ID);
+            List<ResultDTO> results = beylaFacadeService.restart(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(results).hasSize(1);
             assertThat(results.get(0).getStatus()).isEqualTo(ResponseStatus.SUCCESS);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.RESTARTING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.RESTARTING);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.IDLE);
+                    .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.IDLE);
         }
 
         @Test
         @DisplayName("Tumblebug 실패 시 ERROR 반환, IDLE 복귀")
         void tumblebugFails_errorResult() {
-            when(tumblebugService.restart(NS_ID, MCI_ID, VM_ID, Agent.BEYLA))
+            when(tumblebugService.restart(NS_ID, INFRA_ID, NODE_ID, Agent.BEYLA))
                     .thenThrow(new RuntimeException("restart failed"));
 
-            List<ResultDTO> results = beylaFacadeService.restart(NS_ID, MCI_ID, VM_ID);
+            List<ResultDTO> results = beylaFacadeService.restart(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(results).hasSize(1);
             assertThat(results.get(0).getStatus()).isEqualTo(ResponseStatus.ERROR);

@@ -1,7 +1,7 @@
 import client from './client';
 
-// NOTE: backend URL path still uses /mci/{}/vm/{} literals and InfluxDB tag `vm_id`.
-// Only JS identifiers reflect the Tumblebug rename (MCI→Infra, VM→Node).
+// NOTE: backend URL path still uses /mci/{}/vm/{} literals (URL segments unchanged).
+// InfluxDB tags and JS identifiers follow the Tumblebug rename (MCI→Infra, VM→Node).
 
 export async function getMeasurementFields() {
   const res = await client.get('/api/o11y/monitoring/influxdb/measurement');
@@ -18,7 +18,7 @@ export async function getMetricsByNode(nsId, infraId, nodeId, { measurement, ran
     measurement,
     range,
     group_time: groupTime,
-    group_by: ['vm_id'],
+    group_by: ['node_id'],
     limit: 2000,
     fields: fields || [],
     conditions: conditions || [],
@@ -31,7 +31,7 @@ export async function getMetricsByNsInfra(nsId, infraId, { measurement, range, g
     measurement,
     range,
     group_time: groupTime,
-    group_by: ['vm_id'],
+    group_by: ['node_id'],
     limit: 2000,
     fields: fields || [],
     conditions: conditions || [],

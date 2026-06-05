@@ -32,7 +32,7 @@ export default function MonitoringConfig() {
         let o11yNodes = [];
         try { o11yNodes = await getNodeList(nsId, infraId); } catch {}
         const o11yMap = {};
-        o11yNodes.forEach((n) => { o11yMap[n.vm_id || n.id] = n; });
+        o11yNodes.forEach((n) => { o11yMap[n.node_id || n.id] = n; });
         const merged = tbNodes.map((node) => {
           const o = o11yMap[node.id] || {};
           return { ...node, infraId, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
@@ -46,7 +46,7 @@ export default function MonitoringConfig() {
           let o11yNodes = [];
           try { o11yNodes = await getNodeList(nsId, infra.id); } catch {}
           const o11yMap = {};
-          o11yNodes.forEach((n) => { o11yMap[n.vm_id || n.id] = n; });
+          o11yNodes.forEach((n) => { o11yMap[n.node_id || n.id] = n; });
           const merged = (infra.node || []).map((node) => {
             const o = o11yMap[node.id] || {};
             return { ...node, infraId: infra.id, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
@@ -124,7 +124,7 @@ export default function MonitoringConfig() {
           if (status === 'SUCCESS') {
             // Auto-select the Node to show items
             const refreshedNodes = await getNodeList(nsId, infraId);
-            const found = refreshedNodes.find(n => (n.vm_id || n.id) === nodeId);
+            const found = refreshedNodes.find(n => (n.node_id || n.id) === nodeId);
             if (found) selectNode({ ...found, id: nodeId, registered: true });
           }
         }

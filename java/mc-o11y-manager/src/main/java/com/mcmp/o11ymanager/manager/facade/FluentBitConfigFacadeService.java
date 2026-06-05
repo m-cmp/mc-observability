@@ -46,8 +46,8 @@ public class FluentBitConfigFacadeService {
         log.debug("VM={}/{}/{}", nsId, mciId, vmId);
 
         return template.replace("@NS_ID", nsId)
-                .replace("@MCI_ID", mciId)
-                .replace("@VM_ID", vmId)
+                .replace("@INFRA_ID", mciId)
+                .replace("@NODE_ID", vmId)
                 .replace("@LOKI_HOST", lokiHost);
     }
 }

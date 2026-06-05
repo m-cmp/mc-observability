@@ -45,7 +45,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private final MonitoringCacheService monitoringCacheService;
 
     private static final String NS_ID = "ns_id";
-    private static final String MCI_ID = "mci_id";
+    private static final String INFRA_ID = "infra_id";
 
     @PostConstruct
     void getInfluxFromYaml() {
@@ -197,9 +197,9 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                     continue;
                 }
                 String key = c.getKey().trim().toLowerCase();
-                if (key.equals("ns_id") || key.equals("mci_id")) {
+                if (key.equals("ns_id") || key.equals("infra_id")) {
                     throw new IllegalArgumentException(
-                            "[Invalid condition] 'ns_id' or 'mci_id' cannot be set manually in request body.");
+                            "[Invalid condition] 'ns_id' or 'infra_id' cannot be set manually in request body.");
                 }
             }
         }
@@ -213,7 +213,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         conditions.add(nsCond);
 
         MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
-        mciCond.setKey("mci_id");
+        mciCond.setKey("infra_id");
         mciCond.setValue(mciId);
         conditions.add(mciCond);
 
@@ -260,7 +260,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                                 tags.putAll(m.tags());
                             }
                             tags.put("ns_id", nsId);
-                            tags.put("mci_id", mciId);
+                            tags.put("infra_id", mciId);
                             return new MetricDTO(m.name(), m.columns(), tags, m.values());
                         })
                 .collect(Collectors.toList());
@@ -276,9 +276,9 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                     continue;
                 }
                 String key = c.getKey().trim().toLowerCase();
-                if (key.equals("ns_id") || key.equals("mci_id") || key.equals("vm_id")) {
+                if (key.equals("ns_id") || key.equals("infra_id") || key.equals("node_id")) {
                     throw new IllegalArgumentException(
-                            "[Invalid condition] 'ns_id', 'mci_id', or 'vm_id' cannot be set manually in request body.");
+                            "[Invalid condition] 'ns_id', 'infra_id', or 'node_id' cannot be set manually in request body.");
                 }
             }
         }
@@ -292,12 +292,12 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         conditions.add(nsCond);
 
         MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
-        mciCond.setKey("mci_id");
+        mciCond.setKey("infra_id");
         mciCond.setValue(mciId);
         conditions.add(mciCond);
 
         MetricRequestDTO.ConditionInfo vmCond = new MetricRequestDTO.ConditionInfo();
-        vmCond.setKey("vm_id");
+        vmCond.setKey("node_id");
         vmCond.setValue(vmId);
         conditions.add(vmCond);
 
@@ -346,8 +346,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                                 tags.putAll(m.tags());
                             }
                             tags.put("ns_id", nsId);
-                            tags.put("mci_id", mciId);
-                            tags.put("vm_id", vmId);
+                            tags.put("infra_id", mciId);
+                            tags.put("node_id", vmId);
                             return new MetricDTO(m.name(), m.columns(), tags, m.values());
                         })
                 .collect(Collectors.toList());
@@ -455,7 +455,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, mciId, entities.size());
 
-        // DB where (ns_id, mci_id) combination already exists
+        // DB where (ns_id, infra_id) combination already exists
         for (var e : entities) {
             var s = toDTO(e);
             if (!isConnectedDb(s)) {
@@ -586,8 +586,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private boolean existsVmInInflux(InfluxDTO influxDTO, String nsId, String mciId, String vmId) {
         String q =
                 String.format(
-                        "SHOW TAG VALUES ON \"%s\" WITH KEY=\"vm_id\" "
-                                + "WHERE \"ns_id\"='%s' AND \"mci_id\"='%s' AND \"vm_id\"='%s' LIMIT 1",
+                        "SHOW TAG VALUES ON \"%s\" WITH KEY=\"node_id\" "
+                                + "WHERE \"ns_id\"='%s' AND \"infra_id\"='%s' AND \"node_id\"='%s' LIMIT 1",
                         influxDTO.getDatabase(), esc(nsId), esc(mciId), esc(vmId));
         return hasResult(influxDTO, q);
     }
@@ -595,8 +595,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private boolean existsNsMciInInflux(InfluxDTO influxDTO, String nsId, String mciId) {
         String q =
                 String.format(
-                        "SHOW TAG VALUES ON \"%s\" WITH KEY=\"mci_id\" "
-                                + "WHERE \"ns_id\"='%s' AND \"mci_id\"='%s' LIMIT 1",
+                        "SHOW TAG VALUES ON \"%s\" WITH KEY=\"infra_id\" "
+                                + "WHERE \"ns_id\"='%s' AND \"infra_id\"='%s' LIMIT 1",
                         influxDTO.getDatabase(), esc(nsId), esc(mciId));
         return hasResult(influxDTO, q);
     }
@@ -614,7 +614,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                         + "\"='"
                         + esc(nsId)
                         + "' AND \""
-                        + MCI_ID
+                        + INFRA_ID
                         + "\"='"
                         + esc(mciId)
                         + "' "
@@ -628,7 +628,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                         + influxDTO.getDatabase()
                         + "\" "
                         + "WITH KEY=\""
-                        + MCI_ID
+                        + INFRA_ID
                         + "\"";
         return resCount(influxDTO, q);
     }
@@ -640,7 +640,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         Set<VmRef> seen = new LinkedHashSet<>();
         String q =
                 "SELECT count(*) FROM \"cpu\" WHERE time > now() - 7d "
-                        + "GROUP BY \"ns_id\", \"mci_id\", \"vm_id\"";
+                        + "GROUP BY \"ns_id\", \"infra_id\", \"node_id\"";
         for (var entity : rawEntities()) {
             var s = toDTO(entity);
             if (!isConnectedDb(s)) {
@@ -665,8 +665,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                             continue;
                         }
                         String ns = tags.get(NS_ID);
-                        String mci = tags.get(MCI_ID);
-                        String vm = tags.get("vm_id");
+                        String mci = tags.get(INFRA_ID);
+                        String vm = tags.get("node_id");
                         if (ns == null || mci == null || vm == null) {
                             continue;
                         }

@@ -24,8 +24,9 @@ public record MonitoringCacheKey(
     }
 
     /**
-     * Stable signature for a {@link MetricRequestDTO} that ignores ns_id/mci_id/vm_id conditions
-     * (those live in their own key fields) and is order-insensitive for fields/conditions.
+     * Stable signature for a {@link MetricRequestDTO} that ignores ns_id/infra_id/node_id
+     * conditions (those live in their own key fields) and is order-insensitive for
+     * fields/conditions.
      */
     private static String signatureOf(MetricRequestDTO req) {
         if (req == null) {
@@ -65,7 +66,7 @@ public record MonitoringCacheKey(
                     continue;
                 }
                 String key = c.getKey().trim().toLowerCase();
-                if (key.equals("ns_id") || key.equals("mci_id") || key.equals("vm_id")) {
+                if (key.equals("ns_id") || key.equals("infra_id") || key.equals("node_id")) {
                     // these are part of the key tuple, not the signature
                     continue;
                 }

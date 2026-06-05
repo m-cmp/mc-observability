@@ -1,6 +1,6 @@
 # CMP Beyla Configuration Template
 # Placeholders below (prefixed with `at` sign) are substituted at runtime
-# by BeylaConfigFacadeService: SITE_CODE, NS_ID, MCI_ID, VM_ID, OTEL_ENDPOINT.
+# by BeylaConfigFacadeService: SITE_CODE, NS_ID, INFRA_ID, NODE_ID, OTEL_ENDPOINT.
 
 # Service identification
 service:

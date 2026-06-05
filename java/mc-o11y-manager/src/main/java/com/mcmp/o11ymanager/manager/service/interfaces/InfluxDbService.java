@@ -32,7 +32,7 @@ public interface InfluxDbService {
     InfluxDTO resolveInfluxDto(String nsId, String mciId);
 
     /**
-     * Returns distinct (ns_id, mci_id, vm_id) tuples that currently have metric data in any
+     * Returns distinct (ns_id, infra_id, node_id) tuples that currently have metric data in any
      * configured InfluxDB instance. Used by the cache warmer to discover VMs to pre-load.
      */
     List<VmRef> discoverActiveVms();

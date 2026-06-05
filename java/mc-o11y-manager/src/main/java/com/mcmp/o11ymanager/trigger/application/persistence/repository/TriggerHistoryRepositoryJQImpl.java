@@ -37,11 +37,11 @@ public class TriggerHistoryRepositoryJQImpl implements TriggerHistoryRepositoryJ
                                                                         triggerHistory
                                                                                 .getNamespaceId()))
                                                 .and(
-                                                        DSL.field("mci_id")
-                                                                .eq(triggerHistory.getMciId()))
+                                                        DSL.field("infra_id")
+                                                                .eq(triggerHistory.getInfraId()))
                                                 .and(
-                                                        DSL.field("vm_id")
-                                                                .eq(triggerHistory.getVmId()))
+                                                        DSL.field("node_id")
+                                                                .eq(triggerHistory.getNodeId()))
                                                 .and(
                                                         DSL.field("starts_at")
                                                                 .eq(triggerHistory.getStartsAt())))

@@ -69,8 +69,8 @@ public class QueryFactory {
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .map("({ r with _value: 100.0 - r._value })")
                 .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
-                .keep(new String[] {"_time", "_value", "ns_id", "mci_id", "vm_id"})
-                .groupBy(new String[] {"ns_id", "mci_id", "vm_id"})
+                .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
+                .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
     }
 
@@ -93,8 +93,8 @@ public class QueryFactory {
                                 Restrictions.tag(tagName).equal(dto.targetId()),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
-                .keep(new String[] {"_time", "_value", "ns_id", "mci_id", "vm_id"})
-                .groupBy(new String[] {"ns_id", "mci_id", "vm_id"})
+                .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
+                .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
     }
 
@@ -116,8 +116,8 @@ public class QueryFactory {
                                 Restrictions.tag(tagName).equal(dto.targetId()),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
-                .keep(new String[] {"_time", "_value", "ns_id", "mci_id", "vm_id"})
-                .groupBy(new String[] {"ns_id", "mci_id", "vm_id"})
+                .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
+                .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
     }
 }

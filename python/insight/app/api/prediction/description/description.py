@@ -30,7 +30,7 @@ post_prediction_mci_description = {
                     "example": {
                         "data": {
                             "ns_id": "string",
-                            "mci_id": "string",
+                            "infra_id": "string",
                             "measurement": "cpu",
                             "values": [
                                 {"timestamp": "2024-08-22T00:00:00Z", "value": 75},
@@ -57,8 +57,8 @@ post_prediction_vm_description = {
                     "example": {
                         "data": {
                             "ns_id": "string",
-                            "mci_id": "string",
-                            "vm_id": "string",
+                            "infra_id": "string",
+                            "node_id": "string",
                             "measurement": "cpu",
                             "values": [
                                 {"timestamp": "2024-08-22T00:00:00Z", "value": 75},
@@ -85,7 +85,7 @@ get_history_mci_description = {
                     "example": {
                         "data": {
                             "ns_id": "string",
-                            "mci_id": "string",
+                            "infra_id": "string",
                             "measurement": "cpu",
                             "values": [
                                 {"timestamp": "2024-08-22T00:00:00Z", "value": 50},
@@ -112,8 +112,8 @@ get_history_vm_description = {
                     "example": {
                         "data": {
                             "ns_id": "string",
-                            "mci_id": "string",
-                            "vm_id": "string",
+                            "infra_id": "string",
+                            "node_id": "string",
                             "measurement": "cpu",
                             "values": [
                                 {"timestamp": "2024-08-22T00:00:00Z", "value": 50},

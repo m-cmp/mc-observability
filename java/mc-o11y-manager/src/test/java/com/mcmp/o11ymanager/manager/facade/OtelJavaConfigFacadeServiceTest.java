@@ -27,8 +27,8 @@ class OtelJavaConfigFacadeServiceTest {
     private static final String JAR_URL = "https://example.com/opentelemetry-javaagent.jar";
     private static final String JAR_PATH = "C:\\opentelemetry\\opentelemetry-javaagent.jar";
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
 
     @BeforeEach
     void setUp() {
@@ -53,13 +53,13 @@ class OtelJavaConfigFacadeServiceTest {
     @Test
     @DisplayName("initOtelJavaConfig: 모든 placeholder가 치환됨")
     void initOtelJavaConfig_replacesAllPlaceholders() {
-        String result = service.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).doesNotContain("@SITE_CODE");
         assertThat(result).doesNotContain("@OTEL_ENDPOINT");
         assertThat(result).doesNotContain("@NS_ID");
-        assertThat(result).doesNotContain("@MCI_ID");
-        assertThat(result).doesNotContain("@VM_ID");
+        assertThat(result).doesNotContain("@INFRA_ID");
+        assertThat(result).doesNotContain("@NODE_ID");
         assertThat(result).doesNotContain("@JAR_URL");
         assertThat(result).doesNotContain("@JAR_PATH");
     }
@@ -67,7 +67,7 @@ class OtelJavaConfigFacadeServiceTest {
     @Test
     @DisplayName("initOtelJavaConfig: OTEL_ENDPOINT/JAR_URL/JAR_PATH가 application.yaml 값으로 치환됨")
     void initOtelJavaConfig_substitutesValues() {
-        String result = service.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).contains(OTEL_ENDPOINT);
         assertThat(result).contains(JAR_URL);
@@ -75,17 +75,17 @@ class OtelJavaConfigFacadeServiceTest {
     }
 
     @Test
-    @DisplayName("initOtelJavaConfig: SITE_CODE/VM_ID가 OTEL_SERVICE_NAME에 합성됨")
+    @DisplayName("initOtelJavaConfig: SITE_CODE/NODE_ID가 OTEL_SERVICE_NAME에 합성됨")
     void initOtelJavaConfig_serviceNameComposition() {
-        String result = service.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID);
 
-        assertThat(result).contains("cmp-otel-java-" + SITE_CODE + "-" + VM_ID);
+        assertThat(result).contains("cmp-otel-java-" + SITE_CODE + "-" + NODE_ID);
     }
 
     @Test
     @DisplayName("initOtelJavaConfig: JAVA_TOOL_OPTIONS에 -javaagent + jar-path가 포함됨")
     void initOtelJavaConfig_javaToolOptions() {
-        String result = service.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).contains("JAVA_TOOL_OPTIONS=-javaagent:" + JAR_PATH);
     }
@@ -96,7 +96,7 @@ class OtelJavaConfigFacadeServiceTest {
         String result = service.initOtelJavaConfig(null, null, null);
 
         assertThat(result).doesNotContain("@NS_ID");
-        assertThat(result).doesNotContain("@MCI_ID");
-        assertThat(result).doesNotContain("@VM_ID");
+        assertThat(result).doesNotContain("@INFRA_ID");
+        assertThat(result).doesNotContain("@NODE_ID");
     }
 }

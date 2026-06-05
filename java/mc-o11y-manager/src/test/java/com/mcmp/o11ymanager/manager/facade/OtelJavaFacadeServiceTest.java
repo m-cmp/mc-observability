@@ -46,8 +46,8 @@ class OtelJavaFacadeServiceTest {
     @InjectMocks private OtelJavaFacadeService otelJavaFacadeService;
 
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
     private static final int TEMPLATE_COUNT = 1;
 
     private AccessInfoDTO accessInfo;
@@ -73,7 +73,7 @@ class OtelJavaFacadeServiceTest {
         void normalFlow_installsSuccessfully() throws Exception {
             Task mockTask = Task.builder().id(101).status("waiting").build();
             String generatedConfig = "JAVA_TOOL_OPTIONS=-javaagent:C:\\opentelemetry\\jar\n";
-            when(otelJavaConfigFacadeService.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID))
+            when(otelJavaConfigFacadeService.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(generatedConfig);
             when(semaphoreDomainService.install(
                             any(AccessInfoDTO.class),
@@ -84,22 +84,23 @@ class OtelJavaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-otel-1");
 
-            otelJavaFacadeService.install(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            otelJavaFacadeService.install(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
-            verify(vmService).isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
-            verify(otelJavaConfigFacadeService).initOtelJavaConfig(NS_ID, MCI_ID, VM_ID);
+            verify(vmService).isIdleTraceAgent(NS_ID, INFRA_ID, NODE_ID);
+            verify(otelJavaConfigFacadeService).initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING, "101");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING, "101");
             verify(schedulerFacadeService)
                     .scheduleTaskStatusCheck(
                             eq("req-otel-1"),
                             eq(101),
                             eq(NS_ID),
-                            eq(MCI_ID),
-                            eq(VM_ID),
+                            eq(INFRA_ID),
+                            eq(NODE_ID),
                             eq(SemaphoreInstallMethod.INSTALL),
                             eq(Agent.OTEL_JAVA_AGENT));
         }
@@ -109,14 +110,14 @@ class OtelJavaFacadeServiceTest {
         void alreadyProcessing_throwsException() throws Exception {
             doThrow(
                             new VMAgentTaskProcessingException(
-                                    "req-1", VM_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
+                                    "req-1", NODE_ID, "traceAgent", VMAgentTaskStatus.INSTALLING))
                     .when(vmService)
-                    .isIdleTraceAgent(NS_ID, MCI_ID, VM_ID);
+                    .isIdleTraceAgent(NS_ID, INFRA_ID, NODE_ID);
 
             assertThatThrownBy(
                             () ->
                                     otelJavaFacadeService.install(
-                                            NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
+                                            NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(VMAgentTaskProcessingException.class);
 
             verify(vmService, never())
@@ -126,7 +127,7 @@ class OtelJavaFacadeServiceTest {
         @Test
         @DisplayName("Semaphore 호출 실패 시 IDLE로 롤백")
         void semaphoreFails_rollbackToIdle() throws Exception {
-            when(otelJavaConfigFacadeService.initOtelJavaConfig(NS_ID, MCI_ID, VM_ID))
+            when(otelJavaConfigFacadeService.initOtelJavaConfig(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn("dummy");
             when(semaphoreDomainService.install(any(), any(), any(), any(), anyInt()))
                     .thenThrow(new RuntimeException("Semaphore connection failed"));
@@ -134,14 +135,15 @@ class OtelJavaFacadeServiceTest {
             assertThatThrownBy(
                             () ->
                                     otelJavaFacadeService.install(
-                                            NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT))
+                                            NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Semaphore connection failed");
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.INSTALLING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.INSTALLING);
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.IDLE);
+                    .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.IDLE);
         }
     }
 
@@ -162,13 +164,14 @@ class OtelJavaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-otel-2");
 
-            otelJavaFacadeService.update(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            otelJavaFacadeService.update(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UPDATING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UPDATING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UPDATING, "202");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UPDATING, "202");
         }
     }
 
@@ -189,13 +192,14 @@ class OtelJavaFacadeServiceTest {
                     .thenReturn(mockTask);
             when(requestInfo.getRequestId()).thenReturn("req-otel-3");
 
-            otelJavaFacadeService.uninstall(NS_ID, MCI_ID, VM_ID, accessInfo, TEMPLATE_COUNT);
+            otelJavaFacadeService.uninstall(NS_ID, INFRA_ID, NODE_ID, accessInfo, TEMPLATE_COUNT);
 
             verify(vmService)
-                    .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.PREPARING);
+                    .updateTraceAgentTaskStatus(
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.PREPARING);
             verify(vmService)
                     .updateTraceAgentTaskStatusAndTaskId(
-                            NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.UNINSTALLING, "303");
+                            NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.UNINSTALLING, "303");
         }
     }
 
@@ -208,10 +212,10 @@ class OtelJavaFacadeServiceTest {
         void restart_callsWithOtelJavaAgent() {
             // OTel Java agent는 TumblebugServiceImpl에서 restart-unsupported로 throw됨.
             // facade 입장에선 catch하고 ERROR 결과 반환.
-            when(tumblebugService.restart(NS_ID, MCI_ID, VM_ID, Agent.OTEL_JAVA_AGENT))
+            when(tumblebugService.restart(NS_ID, INFRA_ID, NODE_ID, Agent.OTEL_JAVA_AGENT))
                     .thenThrow(new RuntimeException("Restart is not supported"));
 
-            List<ResultDTO> results = otelJavaFacadeService.restart(NS_ID, MCI_ID, VM_ID);
+            List<ResultDTO> results = otelJavaFacadeService.restart(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(results).hasSize(1);
             assertThat(results.get(0).getStatus()).isEqualTo(ResponseStatus.ERROR);

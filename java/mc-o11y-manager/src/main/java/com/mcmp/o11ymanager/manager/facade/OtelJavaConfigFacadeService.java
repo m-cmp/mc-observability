@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * 읽어 placeholder를 치환한 결과를 반환한다. Ansible playbook은 이 결과를 Windows 호스트에 배포하고 KEY=VALUE 줄을 시스템 환경변수로
  * 설정한다.
  *
- * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @MCI_ID}, {@code @VM_ID},
+ * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @INFRA_ID}, {@code @NODE_ID},
  * {@code @OTEL_ENDPOINT}, {@code @JAR_URL}, {@code @JAR_PATH}.
  *
  * <p>OTEL endpoint는 Beyla와 공용으로 application.yaml의 {@code beyla.otel-endpoint}를 재사용한다 (POC 후 {@code
@@ -62,8 +62,8 @@ public class OtelJavaConfigFacadeService {
         return sb.toString()
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
-                .replace("@MCI_ID", finalMciId)
-                .replace("@VM_ID", finalVmId)
+                .replace("@INFRA_ID", finalMciId)
+                .replace("@NODE_ID", finalVmId)
                 .replace("@OTEL_ENDPOINT", otelEndpoint)
                 .replace("@JAR_URL", jarUrl)
                 .replace("@JAR_PATH", jarPath);

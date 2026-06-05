@@ -1,11 +1,11 @@
 import client from './client';
 
-// NOTE: Loki labels (NS_ID / MCI_ID / VM_ID) stay as-is — backend label rename
-// pending. JS identifiers reflect Tumblebug Infra/Node naming.
+// NOTE: Loki labels renamed to NS_ID / INFRA_ID / NODE_ID (fluent-bit label rename
+// applied). JS identifiers reflect Tumblebug Infra/Node naming.
 
 export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, rangeHours = 24 }) {
-  let logql = `{NS_ID="${nsId}", MCI_ID="${infraId}"`;
-  if (nodeId) logql += `, VM_ID="${nodeId}"`;
+  let logql = `{NS_ID="${nsId}", INFRA_ID="${infraId}"`;
+  if (nodeId) logql += `, NODE_ID="${nodeId}"`;
   logql += '}';
   if (keyword) logql += ` |~ "(?i)${keyword}"`;
 
@@ -31,7 +31,7 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
       timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
       message: parsed.message || '',
       level: e.labels?.level || parsed.level || '',
-      node_id: e.labels?.VM_ID || '',
+      node_id: e.labels?.NODE_ID || '',
       host: e.labels?.host || parsed.host || '',
       service: parsed.service || e.labels?.service || '',
       source: parsed.source || e.labels?.source || '',

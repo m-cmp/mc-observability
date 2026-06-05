@@ -277,7 +277,7 @@ public class MonitoringCacheWarmScheduler {
         req.setRange(q.getRange());
         req.setGroupTime(q.getGroupTime());
         req.setLimit(q.getLimit());
-        req.setGroupBy(new ArrayList<>(List.of("vm_id")));
+        req.setGroupBy(new ArrayList<>(List.of("node_id")));
         MetricRequestDTO.FieldInfo f = new MetricRequestDTO.FieldInfo();
         f.setFunction(q.getFunction());
         f.setField(q.getField());

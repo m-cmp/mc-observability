@@ -41,7 +41,7 @@ class PredictValue(BaseModel):
 
 class PredictionMCIResult(BaseModel):
     ns_id: str
-    mci_id: str
+    infra_id: str
     measurement: str
     values: list[PredictValue]
 
@@ -49,8 +49,8 @@ class PredictionMCIResult(BaseModel):
 # POST /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}
 class PredictionVMResult(BaseModel):
     ns_id: str
-    mci_id: str
-    vm_id: str
+    infra_id: str
+    node_id: str
     measurement: str
     values: list[PredictValue]
 
@@ -75,7 +75,7 @@ class HistoryValue(BaseModel):
 
 class PredictionMCIHistory(BaseModel):
     ns_id: str
-    mci_id: str
+    infra_id: str
     measurement: str
     values: list[HistoryValue]
 
@@ -89,8 +89,8 @@ class ResBodyPredictionMCIHistory(BaseModel):
 # GET /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}history
 class PredictionVMHistory(BaseModel):
     ns_id: str
-    mci_id: str
-    vm_id: str
+    infra_id: str
+    node_id: str
     measurement: str
     values: list[HistoryValue]
 

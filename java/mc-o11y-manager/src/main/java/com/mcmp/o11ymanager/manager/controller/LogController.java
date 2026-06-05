@@ -72,7 +72,7 @@ public class LogController {
             operationId = "LabelValueQuery",
             description = "Retrieve the list of values for a specific label key.")
     public ResBody<LabelResultDto.LabelValuesDto> getLabelValues(
-            @Parameter(description = "Label key (e.g., NS_ID, MCI_ID, service)") @PathVariable
+            @Parameter(description = "Label key (e.g., NS_ID, INFRA_ID, service)") @PathVariable
                     String label,
             @Parameter(description = "Start timestamp (RFC3339) (e.g., 2025-09-01T00:00:00Z)")
                     @RequestParam(required = false)

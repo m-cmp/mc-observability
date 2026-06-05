@@ -71,7 +71,7 @@ public class MonitoringCacheProperties {
 
         /**
          * Overview warming — warms the exact query shape the NS/MCI overview in the frontend sends
-         * (specific measurement+field+aggregation, group_by=vm_id, limit=2000). Without this, the
+         * (specific measurement+field+aggregation, group_by=node_id, limit=2000). Without this, the
          * generic {@code realtime} job caches {@code SELECT *} responses whose cache key differs
          * from what the UI requests, causing per-visit cache misses.
          */

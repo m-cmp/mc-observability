@@ -37,8 +37,8 @@ class AnomalySettingsService:
             AnomalyDetectionSettings(
                 seq=setting.SEQ,
                 ns_id=setting.NAMESPACE_ID,
-                mci_id=setting.MCI_ID,
-                vm_id=setting.VM_ID,
+                infra_id=setting.INFRA_ID,
+                node_id=setting.NODE_ID,
                 measurement=setting.MEASUREMENT,
                 execution_interval=setting.EXECUTION_INTERVAL,
                 last_execution=setting.LAST_EXECUTION.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -52,16 +52,16 @@ class AnomalySettingsService:
         return ResBodyAnomalyDetectionSettings(data=results)
 
     def get_setting(
-        self, ns_id: str, mci_id: str, vm_id: str | None = None
+        self, ns_id: str, infra_id: str, node_id: str | None = None
     ) -> ResBodyAnomalyDetectionSettings | JSONResponse:
-        settings = self.repo.get_specific_setting(ns_id=ns_id, mci_id=mci_id, vm_id=vm_id)
+        settings = self.repo.get_specific_setting(ns_id=ns_id, infra_id=infra_id, node_id=node_id)
         if settings:
             results = [
                 AnomalyDetectionSettings(
                     seq=setting.SEQ,
                     ns_id=setting.NAMESPACE_ID,
-                    mci_id=setting.MCI_ID,
-                    vm_id=setting.VM_ID,
+                    infra_id=setting.INFRA_ID,
+                    node_id=setting.NODE_ID,
                     measurement=setting.MEASUREMENT,
                     execution_interval=setting.EXECUTION_INTERVAL,
                     last_execution=setting.LAST_EXECUTION.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -75,10 +75,10 @@ class AnomalySettingsService:
     def create_setting(self, setting_data: dict) -> ResBodyVoid | JSONResponse:
         if "ns_id" in setting_data:
             setting_data["NAMESPACE_ID"] = setting_data.pop("ns_id")
-        if "mci_id" in setting_data:
-            setting_data["MCI_ID"] = setting_data.pop("mci_id")
-        if "vm_id" in setting_data:
-            setting_data["VM_ID"] = setting_data.pop("vm_id")
+        if "infra_id" in setting_data:
+            setting_data["INFRA_ID"] = setting_data.pop("infra_id")
+        if "node_id" in setting_data:
+            setting_data["NODE_ID"] = setting_data.pop("node_id")
 
         setting_data = {
             key.upper(): (value.value if isinstance(value, Enum) else value) for key, value in setting_data.items()

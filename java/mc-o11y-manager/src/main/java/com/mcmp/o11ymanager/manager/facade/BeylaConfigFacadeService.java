@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * monolithic 템플릿(FluentBit 패턴) 으로 단순화. ClassPath의 {@code beyla_template.yaml}을 읽어 placeholder를 치환한
  * 결과를 반환한다.
  *
- * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @MCI_ID}, {@code @VM_ID},
+ * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @INFRA_ID}, {@code @NODE_ID},
  * {@code @OTEL_ENDPOINT}.
  *
  * <p>OTEL endpoint는 application.yaml의 {@code beyla.otel-endpoint}에서 주입 (사이트별 환경변수 {@code
@@ -54,8 +54,8 @@ public class BeylaConfigFacadeService {
         return sb.toString()
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
-                .replace("@MCI_ID", finalMciId)
-                .replace("@VM_ID", finalVmId)
+                .replace("@INFRA_ID", finalMciId)
+                .replace("@NODE_ID", finalVmId)
                 .replace("@OTEL_ENDPOINT", otelEndpoint);
     }
 }
