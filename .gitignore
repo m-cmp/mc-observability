@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .conda/
 *.log
+mc-o11y-manager.pid
 tests/
 .vscode/
 
