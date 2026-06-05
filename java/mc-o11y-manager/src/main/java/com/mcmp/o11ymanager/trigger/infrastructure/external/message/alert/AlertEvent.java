@@ -62,8 +62,8 @@ public class AlertEvent {
                         AlertDetail alertDetail =
                                 AlertDetail.builder()
                                         .namespaceId(labels.get("ns_id"))
-                                        .mciId(labels.get("mci_id"))
-                                        .vmId(labels.get("vm_id"))
+                                        .infraId(labels.get("infra_id"))
+                                        .nodeId(labels.get("node_id"))
                                         .resourceType(labels.get("resourceType"))
                                         .resourceUsage(resourceUsage)
                                         .status(alert.getStatus())
@@ -76,7 +76,9 @@ public class AlertEvent {
                                         .build();
 
                         String alertKey =
-                                labels.get("ns_id") + labels.get("mci_id") + labels.get("vm_id");
+                                labels.get("ns_id")
+                                        + labels.get("infra_id")
+                                        + labels.get("node_id");
                         if (alertEvent.alertDetailMap.containsKey(alertKey)) {
                             AlertDetail savedDetail = alertEvent.alertDetailMap.get(alertKey);
                             AlertLevel savedLevel = AlertLevel.findBy(savedDetail.alertLevel);
@@ -194,8 +196,8 @@ public class AlertEvent {
     public static class AlertDetail {
         private String namespaceId;
         private String resourceType;
-        private String mciId;
-        private String vmId;
+        private String infraId;
+        private String nodeId;
         private String alertLevel;
         private String threshold;
         private String resourceUsage;

@@ -1,0 +1,41 @@
+[Unit]
+Description=CMP DCGM Exporter Service
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=%t/containers
+
+[Service]
+Type=notify
+NotifyAccess=all
+User=root
+
+
+Environment=TIME_DIFF_SECONDS=0
+Environment=PODMAN_SYSTEMD_UNIT=%n
+
+ExecStart=/cmp-agent/common/podman/bin/run-podman run \
+    --pid=host \
+    --cgroups=no-conmon \
+    --env TIME_DIFF_SECONDS \
+    --env HOSTNAME=%H \
+    --sdnotify=conmon \
+    --replace \
+    -d \
+    --restart=always \
+    --tz=Asia/Seoul \
+    --network=host \
+    --device=nvidia.com/gpu=all \
+    --name cmp-dcgm \
+    -p 9400:9400 \
+    --mount type=bind,src=/cmp-agent/dcgm-exporter-custom.csv,dst=/cmp-agent/dcgm-exporter-custom.csv,ro=true \
+    nvcr.io/nvidia/k8s/dcgm-exporter:4.4.2-4.7.0-ubuntu22.04 \
+    -f /cmp-agent/dcgm-exporter-custom.csv
+
+ExecStop=/cmp-agent/common/podman/bin/run-podman stop cmp-dcgm
+
+Restart=on-failure
+RestartPreventExitStatus=100
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

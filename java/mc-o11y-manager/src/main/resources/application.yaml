@@ -289,3 +289,8 @@ notification:
     baseUrl: ${TEAMS_WEBHOOK_BASEURL:https://}
 
 
+
+# DCGM Exporter (GPU 메트릭) 스크랩 주소.
+# telegraf가 GPU 노드 로컬에서 직접 스크랩하므로 기본값은 localhost.
+dcgm-exporter:
+  url: ${DCGM_EXPORTER_URL:http://localhost:9400/metrics}

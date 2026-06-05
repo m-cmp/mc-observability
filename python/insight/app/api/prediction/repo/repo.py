@@ -33,9 +33,9 @@ class InfluxDBRepository:
     def save_results(self, df: pd.DataFrame, nsId: str, mciId: str, vmId: str, measurement: str):
         points = []
         if vmId:
-            tags = {"ns_id": nsId, "mci_id": mciId, "vm_id": vmId}
+            tags = {"ns_id": nsId, "infra_id": mciId, "node_id": vmId}
         else:
-            tags = {"ns_id": nsId, "mci_id": mciId}
+            tags = {"ns_id": nsId, "infra_id": mciId}
         for _, row in df.iterrows():
             point = {
                 "measurement": measurement.lower(),
@@ -56,9 +56,9 @@ class InfluxDBRepository:
 
         conditions = []
         conditions.append(f"\"ns_id\" = '{nsId}'")
-        conditions.append(f"\"mci_id\" = '{mciId}'")
+        conditions.append(f"\"infra_id\" = '{mciId}'")
         if vmId:
-            conditions.append(f"\"vm_id\" = '{vmId}'")
+            conditions.append(f"\"node_id\" = '{vmId}'")
         conditions.append(f"time >= '{start_time}'")
         conditions.append(f"time <= '{end_time}'")
 

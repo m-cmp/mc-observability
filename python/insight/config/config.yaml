@@ -168,7 +168,7 @@ alarm_analysis:
     
     Your Mission:
     
-    1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (vm_id/host), and event types.
+    1. Alarm & Context Discovery (MariaDB first): Query mc_o11y_trigger_history to determine timeframe, target (node_id/host), and event types.
     2. Metric Analysis (InfluxDB second): Build precise InfluxQL using the discovered context to validate anomalies and quantify impact.
     3. Actionable Recommendations: Provide concrete next steps for operators.
     

@@ -33,7 +33,7 @@ GetAllInfluxDB: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"
   \ : \"mcmp:8086\",\n    \"database\" : \"mydb\",\n    \"username\" : \"mc-user\",\n    \"retention_policy\" : \"autogen\"\
   ,\n    \"password\" : \"mypw\",\n    \"uid\" : \"sdfsj1df33ff\"\n  } ],\n  \"error_message\" : \"\"\n}"
 GetAllVMs: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" : \"mcmp-vm\",\n   \
-  \ \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"mci_id\"\
+  \ \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"infra_id\"\
   \ : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\" : \"SUCCESS\"\n  } ],\n  \"error_message\"\
   \ : \"\"\n}"
 GetAnomalyDetectionOptions:
@@ -105,12 +105,12 @@ GetMeasurementFields: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",
   \ \"string\",\n    \"fields\" : [ {\n      \"key\" : \"cpu\",\n      \"type\" : \"Integer\"\n    } ]\n  } ],\n  \"error_message\"\
   \ : \"\"\n}"
 GetMeasurementTags: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"measurement\" : \"\
-  cpu\",\n    \"tags\" : [ \"host\", \"mci_id\" ]\n  } ],\n  \"error_message\" : \"\"\n}"
+  cpu\",\n    \"tags\" : [ \"host\", \"infra_id\" ]\n  } ],\n  \"error_message\" : \"\"\n}"
 GetMetricsByNsIdAndMciId: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" : \"\
   cpu\",\n    \"columns\" : [ \"cpu\", \"ns_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\", 0 ] ]\n  } ],\n\
   \  \"error_message\" : \"\"\n}"
 GetMetricsByVMId: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" : \"cpu\",\n\
-  \    \"columns\" : [ \"cpu\", \"vm_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\", 0 ] ]\n  } ],\n  \"error_message\"\
+  \    \"columns\" : [ \"cpu\", \"node_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\", 0 ] ]\n  } ],\n  \"error_message\"\
   \ : \"\"\n}"
 GetMonitoringItems: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"seq\" : 0,\n    \"\
   nsId\" : \"ns-1\",\n    \"mciId\" : \"mci-1\",\n    \"vmId\" : \"vm-1\",\n    \"name\" : \"mcmp-vm\",\n    \"state\" : \"\
@@ -155,7 +155,7 @@ GetPlugins: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data
   \ \"string\",\n    \"pluginId\" : \"string\",\n    \"pluginType\" : \"string\"\n  } ],\n  \"error_message\" : \"\"\n}"
 GetPredictionMCIHistory:
   data:
-    mci_id: string
+    infra_id: string
     measurement: cpu
     ns_id: string
     values:
@@ -184,7 +184,7 @@ GetPredictionOptions:
   rs_msg: Success
 GetPredictionVMHistory:
   data:
-    mci_id: string
+    infra_id: string
     measurement: cpu
     ns_id: string
     values:
@@ -194,7 +194,7 @@ GetPredictionVMHistory:
       value: 55
     - timestamp: 2024-08-22 02:00:00+00:00
       value: 60
-    vm_id: string
+    node_id: string
   rs_code: '200'
   rs_msg: Success
 GetSupportedNotificationChannels: "{\n  \"notiChannels\" : [ {\n    \"id\" : 1,\n    \"name\" : \"sms_naver-cloud\",\n   \
@@ -202,12 +202,12 @@ GetSupportedNotificationChannels: "{\n  \"notiChannels\" : [ {\n    \"id\" : 1,\
   isActive\" : true,\n    \"createdAt\" : \"2025-10-13T15:34:10.397689797\",\n    \"updatedAt\" : \"2025-10-13T15:34:10.397724146\"\
   \n  } ]\n}"
 GetVM: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"name\" : \"mcmp-vm\",\n    \"description\"\
-  \ : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"mci_id\" : \"mci-1\"\
+  \ : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\"\
   ,\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\" : \"SUCCESS\"\n  },\n  \"error_message\" : \"\
   \"\n}"
 GetVMByNsMci: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" : \"mcmp-vm\",\n\
-  \    \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"\
-  mci_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\" : \"SUCCESS\"\n  } ],\n\
+  \    \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"\
+  infra_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\" : \"SUCCESS\"\n  } ],\n\
   \  \"error_message\" : \"\"\n}"
 LabelValueQuery: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"data\" : [ \"string\",\
   \ \"string\" ]\n  },\n  \"error_message\" : \"\"\n}"
@@ -265,7 +265,7 @@ PostLogAnalysisQuery:
   rs_msg: Success
 PostPredictionMCI:
   data:
-    mci_id: string
+    infra_id: string
     measurement: cpu
     ns_id: string
     values:
@@ -279,7 +279,7 @@ PostPredictionMCI:
   rs_msg: Success
 PostPredictionVM:
   data:
-    mci_id: string
+    infra_id: string
     measurement: cpu
     ns_id: string
     values:
@@ -289,12 +289,12 @@ PostPredictionVM:
       value: 78
     - timestamp: 2024-08-22 02:00:00+00:00
       value: 80
-    vm_id: string
+    node_id: string
   rs_code: '200'
   rs_msg: Success
 PostVM: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : null,\n  \"error_message\" : \"\"\n}"
 PutVM: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"name\" : \"mcmp-vm\",\n    \"description\"\
-  \ : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"mci_id\" : \"mci-1\"\
+  \ : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\"\
   ,\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\" : \"SUCCESS\"\n  },\n  \"error_message\" : \"\
   \"\n}"
 SearchAlertsByTitle: '[ ]'

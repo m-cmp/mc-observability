@@ -43,10 +43,10 @@ class AnomalyService:
         return seq_list
 
     def get_raw_data(self, setting: object):
-        if setting.VM_ID:
-            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}/{setting.VM_ID}")
+        if setting.NODE_ID:
+            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.INFRA_ID}/{setting.NODE_ID}")
         else:
-            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.MCI_ID}")
+            url = self._build_url(f"influxdb/metric/{setting.NAMESPACE_ID}/{setting.INFRA_ID}")
         body = self._build_body(setting)
 
         response = self._send_request(method="POST", url=url, json=body)

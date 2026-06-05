@@ -23,7 +23,7 @@ public class ManagerAdapter implements ManagerPort {
 
         Long influxId;
 
-        // 1. Check whether vmScope is "mci_id" or "vm_id"
+        // 1. Check whether vmScope is "infra_id" or "node_id"
         if ("mci".equalsIgnoreCase(vmScope)) {
             final String mciId = vmId;
 

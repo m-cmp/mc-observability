@@ -42,9 +42,9 @@ class AnomalyHistoryService:
 
     def get_raw_data(self):
         all_data = []
-        vm_id = getattr(self.path_params, "vmId", None)
-        if vm_id:
-            url = self._build_url(f"influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}/{vm_id}")
+        node_id = getattr(self.path_params, "vmId", None)
+        if node_id:
+            url = self._build_url(f"influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}/{node_id}")
         else:
             url = self._build_url(f"influxdb/metric/{self.path_params.nsId}/{self.path_params.mciId}")
         body = self._build_body()
@@ -121,11 +121,11 @@ class AnomalyHistoryService:
             )
             values.append(value)
 
-        vm_id = getattr(self.path_params, "vmId", None)
+        node_id = getattr(self.path_params, "vmId", None)
         data = AnomalyDetectionHistoryResponse(
             ns_id=self.path_params.nsId,
-            mci_id=self.path_params.mciId,
-            vm_id=vm_id,
+            infra_id=self.path_params.mciId,
+            node_id=node_id,
             measurement=self.query_params.measurement.value,
             values=values,
         )

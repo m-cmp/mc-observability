@@ -293,7 +293,7 @@ export default function MonitoringDashboard() {
               <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)}>
                 <option value="">Select</option>
                 {nodes.map((node) => {
-                  const id = node.id || node.vm_id || node.name;
+                  const id = node.id || node.node_id || node.name;
                   return <option key={id} value={id}>{node.name || id}</option>;
                 })}
               </select>

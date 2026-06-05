@@ -25,8 +25,8 @@ class BeylaConfigFacadeServiceTest {
     private static final String SITE_CODE = "test-site";
     private static final String OTEL_ENDPOINT = "http://test-tempo:4317";
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
 
     @BeforeEach
     void setUp() {
@@ -51,19 +51,19 @@ class BeylaConfigFacadeServiceTest {
     @Test
     @DisplayName("initBeylaConfig: 모든 placeholder가 치환됨")
     void initBeylaConfig_replacesAllPlaceholders() {
-        String result = service.initBeylaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initBeylaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).doesNotContain("@SITE_CODE");
         assertThat(result).doesNotContain("@OTEL_ENDPOINT");
         assertThat(result).doesNotContain("@NS_ID");
-        assertThat(result).doesNotContain("@MCI_ID");
-        assertThat(result).doesNotContain("@VM_ID");
+        assertThat(result).doesNotContain("@INFRA_ID");
+        assertThat(result).doesNotContain("@NODE_ID");
     }
 
     @Test
     @DisplayName("initBeylaConfig: SITE_CODE가 deploy.site-code 값으로 치환됨")
     void initBeylaConfig_substitutesSiteCode() {
-        String result = service.initBeylaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initBeylaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).contains("cmp-beyla-" + SITE_CODE);
     }
@@ -71,7 +71,7 @@ class BeylaConfigFacadeServiceTest {
     @Test
     @DisplayName("initBeylaConfig: OTEL_ENDPOINT가 application.yaml 값으로 치환됨")
     void initBeylaConfig_substitutesOtelEndpoint() {
-        String result = service.initBeylaConfig(NS_ID, MCI_ID, VM_ID);
+        String result = service.initBeylaConfig(NS_ID, INFRA_ID, NODE_ID);
 
         assertThat(result).contains(OTEL_ENDPOINT);
         // metrics와 traces 두 곳에 모두 적용되는지
@@ -86,7 +86,7 @@ class BeylaConfigFacadeServiceTest {
         String result = service.initBeylaConfig(null, null, null);
 
         assertThat(result).doesNotContain("@NS_ID");
-        assertThat(result).doesNotContain("@MCI_ID");
-        assertThat(result).doesNotContain("@VM_ID");
+        assertThat(result).doesNotContain("@INFRA_ID");
+        assertThat(result).doesNotContain("@NODE_ID");
     }
 }

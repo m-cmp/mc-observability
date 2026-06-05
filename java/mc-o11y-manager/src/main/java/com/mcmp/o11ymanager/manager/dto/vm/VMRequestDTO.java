@@ -20,4 +20,10 @@ public class VMRequestDTO {
 
     @Schema(description = "VM description", example = "string")
     private String description;
+
+    @Schema(
+            description =
+                    "Enable GPU monitoring (installs DCGM Exporter and collects dcgm metrics via Telegraf)",
+            example = "false")
+    private Boolean gpu;
 }

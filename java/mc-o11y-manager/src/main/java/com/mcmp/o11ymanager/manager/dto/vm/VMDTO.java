@@ -25,7 +25,7 @@ import lombok.Setter;
 public class VMDTO {
 
     @Schema(description = "VM ID", example = "vm-1")
-    @JsonProperty("vm_id")
+    @JsonProperty("node_id")
     private String vmId;
 
     @Schema(description = "VM name", example = "mcmp-vm")
@@ -78,7 +78,7 @@ public class VMDTO {
     private String nsId;
 
     @Schema(description = "MCI ID", example = "mci-1")
-    @JsonProperty("mci_id")
+    @JsonProperty("infra_id")
     private String mciId;
 
     @Schema(description = "Monitoring agent status", example = "SUCCESS")

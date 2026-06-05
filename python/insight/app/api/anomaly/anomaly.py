@@ -147,7 +147,7 @@ async def delete_anomaly_detection_target(settingSeq: int, db: Session = Depends
 )
 async def get_specific_anomaly_detection_mci(nsId: str, mciId: str, db: Session = Depends(get_db)):
     service = AnomalySettingsService(db=db)
-    return service.get_setting(ns_id=nsId, mci_id=mciId)
+    return service.get_setting(ns_id=nsId, infra_id=mciId)
 
 
 @router.get(
@@ -158,7 +158,7 @@ async def get_specific_anomaly_detection_mci(nsId: str, mciId: str, db: Session 
 )
 async def get_specific_anomaly_detection_vm(nsId: str, mciId: str, vmId: str, db: Session = Depends(get_db)):
     service = AnomalySettingsService(db=db)
-    return service.get_setting(ns_id=nsId, mci_id=mciId, vm_id=vmId)
+    return service.get_setting(ns_id=nsId, infra_id=mciId, node_id=vmId)
 
 
 @router.get(

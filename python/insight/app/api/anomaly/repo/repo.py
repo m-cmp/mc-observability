@@ -21,8 +21,8 @@ class AnomalySettingsRepository:
     def get_all_settings(self):
         return self.db.query(AnomalyDetectionSettings).all()
 
-    def get_specific_setting(self, ns_id: str, mci_id: str, vm_id: str | None = None):
-        return self.db.query(AnomalyDetectionSettings).filter_by(NAMESPACE_ID=ns_id, MCI_ID=mci_id, VM_ID=vm_id).all()
+    def get_specific_setting(self, ns_id: str, infra_id: str, node_id: str | None = None):
+        return self.db.query(AnomalyDetectionSettings).filter_by(NAMESPACE_ID=ns_id, INFRA_ID=infra_id, NODE_ID=node_id).all()
 
     def create_setting(self, setting_data: dict):
         new_setting = AnomalyDetectionSettings(**setting_data)
@@ -54,8 +54,8 @@ class AnomalySettingsRepository:
             self.db.query(AnomalyDetectionSettings)
             .filter_by(
                 NAMESPACE_ID=setting_data["NAMESPACE_ID"],
-                MCI_ID=setting_data["MCI_ID"],
-                VM_ID=setting_data.get("VM_ID", None),
+                INFRA_ID=setting_data["INFRA_ID"],
+                NODE_ID=setting_data.get("NODE_ID", None),
                 MEASUREMENT=setting_data["MEASUREMENT"],
             )
             .first()
@@ -77,12 +77,12 @@ class InfluxDBRepository:
     def save_results(self, df: pd.DataFrame, setting: AnomalyDetectionSettings):
         tag = {
             "ns_id": setting.NAMESPACE_ID,
-            "mci_id": setting.MCI_ID,
+            "infra_id": setting.INFRA_ID,
         }
 
-        vm_id = getattr(setting, "VM_ID", None)
-        if vm_id:
-            tag["vm_id"] = vm_id
+        node_id = getattr(setting, "NODE_ID", None)
+        if node_id:
+            tag["node_id"] = node_id
 
         json_body = []
 
@@ -99,8 +99,8 @@ class InfluxDBRepository:
 
     def query_anomaly_detection_results(self, path_params, query_params: GetAnomalyHistoryFilter):
         ns_id = path_params.nsId
-        mci_id = path_params.mciId
-        vm_id = getattr(path_params, "vmId", None)
+        infra_id = path_params.mciId
+        node_id = getattr(path_params, "vmId", None)
         measurement = query_params.measurement.value.lower()
 
         start_time = query_params.start_time
@@ -110,9 +110,9 @@ class InfluxDBRepository:
 
         conditions = []
         conditions.append(f"\"ns_id\" = '{ns_id}'")
-        conditions.append(f"\"mci_id\" = '{mci_id}'")
-        if vm_id:
-            conditions.append(f"\"vm_id\" = '{vm_id}'")
+        conditions.append(f"\"infra_id\" = '{infra_id}'")
+        if node_id:
+            conditions.append(f"\"node_id\" = '{node_id}'")
         conditions.append(f"time >= '{start_time}'")
         conditions.append(f"time <= '{end_time}'")
 

@@ -1,0 +1,40 @@
+# 공통 부트스트랩: busybox + cmp-agent-common(podman 정적 바이너리 포함) 설치.
+# agent role의 agent_common_begin.yaml과 동일한 공통 설치 흐름을 dcgm role 단독 실행 시에도 보장한다.
+- name: Copy temporary busybox
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ playbook_dir }}/roles/agent/agent-install-files/{{ arch }}/busybox"
+    output_file_path: "/tmp/busybox_{{ request_id }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "755"
+
+- name: Copy Common Agent Install File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ playbook_dir }}/roles/agent/agent-install-files/{{ arch }}/cmp-agent-common.tar.gz"
+    output_file_path: "/tmp/cmp-agent-common_{{ request_id }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Copy Common Agent Install Script File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ playbook_dir }}/roles/agent/agent-install-files/{{ arch }}/cmp-agent_install_common"
+    output_file_path: "/tmp/cmp-agent_install_common_{{ request_id }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "755"
+
+- name: Run Common Agent Install Script File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "flock -x /tmp/cmp-agent_install_common.lock /tmp/cmp-agent_install_common_{{ request_id }} {{ request_id }}"

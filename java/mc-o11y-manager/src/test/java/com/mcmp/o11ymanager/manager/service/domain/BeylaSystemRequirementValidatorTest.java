@@ -26,19 +26,19 @@ class BeylaSystemRequirementValidatorTest {
     @InjectMocks private BeylaSystemRequirementValidator validator;
 
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
 
     private void mockKernelVersion(String version) {
-        when(tumblebugService.executeCommand(eq(NS_ID), eq(MCI_ID), eq(VM_ID), eq("uname -r")))
+        when(tumblebugService.executeCommand(eq(NS_ID), eq(INFRA_ID), eq(NODE_ID), eq("uname -r")))
                 .thenReturn(version);
     }
 
     private void mockBtfSupport(String result) {
         when(tumblebugService.executeCommand(
                         eq(NS_ID),
-                        eq(MCI_ID),
-                        eq(VM_ID),
+                        eq(INFRA_ID),
+                        eq(NODE_ID),
                         eq("test -f /sys/kernel/btf/vmlinux && echo 'true' || echo 'false'")))
                 .thenReturn(result);
     }
@@ -53,7 +53,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.15.0-91-generic");
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isTrue();
             assertThat(result.getKernelVersion()).isEqualTo("5.15.0-91-generic");
@@ -68,7 +68,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.8.0");
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isTrue();
             assertThat(result.isKernelVersionValid()).isTrue();
@@ -80,7 +80,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("4.18.0-305.el8.x86_64");
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isFalse();
             assertThat(result.isKernelVersionValid()).isFalse();
@@ -93,7 +93,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.15.0");
             mockBtfSupport("false");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isFalse();
             assertThat(result.isKernelVersionValid()).isTrue();
@@ -106,7 +106,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("4.15.0");
             mockBtfSupport("false");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isFalse();
             assertThat(result.isKernelVersionValid()).isFalse();
@@ -116,11 +116,12 @@ class BeylaSystemRequirementValidatorTest {
         @Test
         @DisplayName("uname -r 실패 시 unknown 반환, kernel invalid")
         void unameFails_unknown() {
-            when(tumblebugService.executeCommand(eq(NS_ID), eq(MCI_ID), eq(VM_ID), eq("uname -r")))
+            when(tumblebugService.executeCommand(
+                            eq(NS_ID), eq(INFRA_ID), eq(NODE_ID), eq("uname -r")))
                     .thenThrow(new RuntimeException("SSH connection failed"));
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.getKernelVersion()).isEqualTo("unknown");
             assertThat(result.isKernelVersionValid()).isFalse();
@@ -133,12 +134,12 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.15.0");
             when(tumblebugService.executeCommand(
                             eq(NS_ID),
-                            eq(MCI_ID),
-                            eq(VM_ID),
+                            eq(INFRA_ID),
+                            eq(NODE_ID),
                             eq("test -f /sys/kernel/btf/vmlinux && echo 'true' || echo 'false'")))
                     .thenThrow(new RuntimeException("SSH timeout"));
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isBtfSupported()).isFalse();
         }
@@ -149,7 +150,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("  5.15.0-91-generic\n");
             mockBtfSupport("  true\n");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isEligible()).isTrue();
             assertThat(result.getKernelVersion()).isEqualTo("5.15.0-91-generic");
@@ -161,7 +162,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion(null);
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.getKernelVersion()).isEqualTo("unknown");
             assertThat(result.isKernelVersionValid()).isFalse();
@@ -173,7 +174,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.7.9");
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isKernelVersionValid()).isFalse();
         }
@@ -184,7 +185,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("6.1.0");
             mockBtfSupport("true");
 
-            BeylaSystemCheckResult result = validator.validate(NS_ID, MCI_ID, VM_ID);
+            BeylaSystemCheckResult result = validator.validate(NS_ID, INFRA_ID, NODE_ID);
 
             assertThat(result.isKernelVersionValid()).isTrue();
         }
@@ -201,7 +202,7 @@ class BeylaSystemRequirementValidatorTest {
             mockBtfSupport("true");
 
             assertThatNoException()
-                    .isThrownBy(() -> validator.validateAndThrow(NS_ID, MCI_ID, VM_ID));
+                    .isThrownBy(() -> validator.validateAndThrow(NS_ID, INFRA_ID, NODE_ID));
         }
 
         @Test
@@ -210,7 +211,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("4.18.0");
             mockBtfSupport("true");
 
-            assertThatThrownBy(() -> validator.validateAndThrow(NS_ID, MCI_ID, VM_ID))
+            assertThatThrownBy(() -> validator.validateAndThrow(NS_ID, INFRA_ID, NODE_ID))
                     .isInstanceOf(BeylaSystemRequirementException.class)
                     .hasMessageContaining("Kernel version");
         }
@@ -221,7 +222,7 @@ class BeylaSystemRequirementValidatorTest {
             mockKernelVersion("5.15.0");
             mockBtfSupport("false");
 
-            assertThatThrownBy(() -> validator.validateAndThrow(NS_ID, MCI_ID, VM_ID))
+            assertThatThrownBy(() -> validator.validateAndThrow(NS_ID, INFRA_ID, NODE_ID))
                     .isInstanceOf(BeylaSystemRequirementException.class)
                     .hasMessageContaining("BTF");
         }

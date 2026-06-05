@@ -32,8 +32,8 @@ class SchedulerFacadeServiceTest {
     @InjectMocks private SchedulerFacadeService schedulerFacadeService;
 
     private static final String NS_ID = "ns-1";
-    private static final String MCI_ID = "mci-1";
-    private static final String VM_ID = "vm-1";
+    private static final String INFRA_ID = "mci-1";
+    private static final String NODE_ID = "vm-1";
     private static final String REQUEST_ID = "req-test";
     private static final Integer TASK_ID = 42;
     private static final String PROJECT_NAME = "test-project";
@@ -60,15 +60,15 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.BEYLA);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FINISHED);
+                .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FINISHED);
     }
 
     @Test
@@ -82,15 +82,15 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.BEYLA);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FAILED);
+                .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FAILED);
     }
 
     @Test
@@ -104,15 +104,15 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.BEYLA);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FAILED);
+                .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FAILED);
     }
 
     @Test
@@ -126,15 +126,15 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.BEYLA);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateTraceAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FAILED);
+                .updateTraceAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FAILED);
     }
 
     @Test
@@ -148,15 +148,16 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.TELEGRAF);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateMonitoringAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FINISHED);
+                .updateMonitoringAgentTaskStatus(
+                        NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FINISHED);
     }
 
     @Test
@@ -170,15 +171,15 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.FLUENT_BIT);
 
         Thread.sleep(3000);
 
         verify(vmService, atLeastOnce())
-                .updateLogAgentTaskStatus(NS_ID, MCI_ID, VM_ID, VMAgentTaskStatus.FINISHED);
+                .updateLogAgentTaskStatus(NS_ID, INFRA_ID, NODE_ID, VMAgentTaskStatus.FINISHED);
     }
 
     @Test
@@ -192,8 +193,8 @@ class SchedulerFacadeServiceTest {
                 REQUEST_ID,
                 TASK_ID,
                 NS_ID,
-                MCI_ID,
-                VM_ID,
+                INFRA_ID,
+                NODE_ID,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.BEYLA);
 

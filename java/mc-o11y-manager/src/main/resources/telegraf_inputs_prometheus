@@ -1,0 +1,2 @@
+[[inputs.prometheus]]
+  urls = ["@DCGM_EXPORTER_URL"]

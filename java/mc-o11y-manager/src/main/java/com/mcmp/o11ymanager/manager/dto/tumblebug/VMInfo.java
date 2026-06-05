@@ -13,7 +13,7 @@ public class VMInfo {
     @JsonProperty("ns_id")
     private String nsId;
 
-    @JsonProperty("mci_id")
+    @JsonProperty("infra_id")
     private String mciId;
 
     @JsonProperty("id")

@@ -101,7 +101,7 @@ async def predict_mci(body_params: PredictionBody, path_params: PredictionMCIPat
     df = prediction_service.get_data(path_params, body_params)
     result_dict = prediction_service.predict(df, path_params, body_params)
     prediction_result = PredictionMCIResult(
-        ns_id=path_params.nsId, mci_id=path_params.mciId, measurement=body_params.measurement, values=result_dict
+        ns_id=path_params.nsId, infra_id=path_params.mciId, measurement=body_params.measurement, values=result_dict
     )
 
     return ResBodyPredictionMCIResult(data=prediction_result)
@@ -120,8 +120,8 @@ async def predict_vm(body_params: PredictionBody, path_params: PredictionVMPath 
     result_dict = prediction_service.predict(df, path_params, body_params)
     prediction_result = PredictionVMResult(
         ns_id=path_params.nsId,
-        mci_id=path_params.mciId,
-        vm_id=path_params.vmId,
+        infra_id=path_params.mciId,
+        node_id=path_params.vmId,
         measurement=body_params.measurement,
         values=result_dict,
     )
@@ -143,7 +143,7 @@ async def get_prediction_mci_history(
     result_dict = prediction_service.get_prediction_history(path_params, query_params)
 
     prediction_history = PredictionMCIHistory(
-        ns_id=path_params.nsId, mci_id=path_params.mciId, measurement=query_params.measurement, values=result_dict
+        ns_id=path_params.nsId, infra_id=path_params.mciId, measurement=query_params.measurement, values=result_dict
     )
 
     return ResBodyPredictionMCIHistory(data=prediction_history)
@@ -164,8 +164,8 @@ async def get_prediction_vm_history(
 
     prediction_history = PredictionVMHistory(
         ns_id=path_params.nsId,
-        mci_id=path_params.mciId,
-        vm_id=path_params.vmId,
+        infra_id=path_params.mciId,
+        node_id=path_params.vmId,
         measurement=query_params.measurement,
         values=result_dict,
     )

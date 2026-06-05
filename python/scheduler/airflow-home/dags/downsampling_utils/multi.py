@@ -24,9 +24,9 @@ class DataProcessor:
         for vm in vm_list:
             influx_seq = vm.get("influx_seq")
             ns_id = vm.get("ns_id")
-            mci_id = vm.get("mci_id")
-            if influx_seq and ns_id and mci_id:
-                routing[influx_seq].add((ns_id, mci_id))
+            infra_id = vm.get("infra_id")
+            if influx_seq and ns_id and infra_id:
+                routing[influx_seq].add((ns_id, infra_id))
 
         # Process each InfluxDB server with its assigned ns/mci pairs
         for server in influx_servers:
@@ -71,13 +71,13 @@ class DataProcessor:
                 if field["field_type"] not in ["integer", "float"]:
                     continue
 
-                for ns_id, mci_id in ns_mci_pairs:
+                for ns_id, infra_id in ns_mci_pairs:
                     metric_data = self._load_metric_data(
                         client=read_client,
                         measurement=measurement,
                         field=field["field_key"],
                         ns_id=ns_id,
-                        mci_id=mci_id,
+                        infra_id=infra_id,
                     )
                     if not metric_data:
                         continue
@@ -94,18 +94,18 @@ class DataProcessor:
                         except Exception as e_msg:
                             print(
                                 f"Error processing {measurement}/{field['field_key']} "
-                                f"ns={ns_id} mci={mci_id}: {e_msg}"
+                                f"ns={ns_id} mci={infra_id}: {e_msg}"
                             )
 
             print(f"{measurement} done. ({read_client._host}:{read_client._port})")
 
     @staticmethod
-    def _load_metric_data(client: InfluxDBClient, measurement: str, field: str, ns_id: str, mci_id: str):
+    def _load_metric_data(client: InfluxDBClient, measurement: str, field: str, ns_id: str, infra_id: str):
         query = (
             f'SELECT MEAN("{field}") AS "y" FROM "{measurement}" '
             f"WHERE time > now() - 1h "
-            f"AND \"ns_id\" = '{ns_id}' AND \"mci_id\" = '{mci_id}' "
-            f'GROUP BY time(1m), "ns_id", "mci_id", "target_id"'
+            f"AND \"ns_id\" = '{ns_id}' AND \"infra_id\" = '{infra_id}' "
+            f'GROUP BY time(1m), "ns_id", "infra_id", "target_id"'
         )
         result = client.query(query)
 
@@ -150,7 +150,7 @@ class DataProcessor:
                 "time": row["time"],
                 "tags": {
                     "ns_id": tags["ns_id"],
-                    "mci_id": tags["mci_id"],
+                    "infra_id": tags["infra_id"],
                     "target_id": tags["target_id"],
                 },
                 "fields": {field: row["y"]},
