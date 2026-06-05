@@ -44,6 +44,15 @@ public class TelegrafConfigFacadeService {
             new ClassPathResource("telegraf_inputs_system");
     private final ClassPathResource telegrafConfigOutputsInfluxDB =
             new ClassPathResource("telegraf_outputs_influxdb");
+    // GPU(DCGM Exporter) 메트릭 수집용: prometheus input + starlark processor 쌍으로 동작.
+    // starlark가 DCGM_FI_*/DCGM_EXP_* 메트릭명을 `dcgm` measurement의 필드로 변환한다.
+    private final ClassPathResource telegrafConfigInputsPrometheus =
+            new ClassPathResource("telegraf_inputs_prometheus");
+    private final ClassPathResource telegrafProcessorsStarlark =
+            new ClassPathResource("telegraf_processors_starlark");
+
+    @Value("${dcgm-exporter.url:http://localhost:9400/metrics}")
+    private String dcgmExporterUrl;
 
     public static final String CONFIG_METRIC_CPU = "cpu";
     public static final String CONFIG_METRIC_DISK = "disk";
@@ -54,6 +63,7 @@ public class TelegrafConfigFacadeService {
     public static final String CONFIG_METRIC_PROCSTAT = "procstat";
     public static final String CONFIG_METRIC_SWAP = "swap";
     public static final String CONFIG_METRIC_SYSTEM = "system";
+    public static final String CONFIG_METRIC_GPU = "gpu";
 
     public static final String CONFIG_DEFAULT_METRICS =
             CONFIG_METRIC_CPU
@@ -76,6 +86,12 @@ public class TelegrafConfigFacadeService {
 
     public String initTelegrafConfig(String nsId, String mciId, String vmId) {
         return generateTelegrafConfig(nsId, mciId, vmId, CONFIG_DEFAULT_METRICS);
+    }
+
+    public String initTelegrafConfig(String nsId, String mciId, String vmId, boolean gpu) {
+        String metrics =
+                gpu ? CONFIG_DEFAULT_METRICS + "," + CONFIG_METRIC_GPU : CONFIG_DEFAULT_METRICS;
+        return generateTelegrafConfig(nsId, mciId, vmId, metrics);
     }
 
     public String generateTelegrafConfig(String nsId, String mciId, String vmId, String metrics) {
@@ -159,6 +175,18 @@ public class TelegrafConfigFacadeService {
             throw new RuntimeException(errMsg);
         }
 
+        if (!telegrafConfigInputsPrometheus.exists()) {
+            errMsg = "Invalid filePath : telegrafConfigInputsPrometheus";
+            log.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
+
+        if (!telegrafProcessorsStarlark.exists()) {
+            errMsg = "Invalid filePath : telegrafProcessorsStarlark";
+            log.error(errMsg);
+            throw new RuntimeException(errMsg);
+        }
+
         StringBuilder sb = new StringBuilder();
 
         fileService.appendConfig(telegrafConfigGlobal, sb);
@@ -200,6 +228,11 @@ public class TelegrafConfigFacadeService {
                 case CONFIG_METRIC_SYSTEM:
                     fileService.appendConfig(telegrafConfigInputsSystem, sb);
                     break;
+                case CONFIG_METRIC_GPU:
+                    // DCGM Exporter(:9400/metrics) 스크랩 + DCGM_FI_* -> dcgm measurement 변환
+                    fileService.appendConfig(telegrafConfigInputsPrometheus, sb);
+                    fileService.appendConfig(telegrafProcessorsStarlark, sb);
+                    break;
                 default:
                     throw new RuntimeException("Invalid metric: " + metric);
             }
@@ -219,6 +252,7 @@ public class TelegrafConfigFacadeService {
         log.debug(finalVmId);
 
         return sb.toString()
+                .replace("@DCGM_EXPORTER_URL", dcgmExporterUrl)
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
                 .replace("@INFRA_ID", finalMciId)

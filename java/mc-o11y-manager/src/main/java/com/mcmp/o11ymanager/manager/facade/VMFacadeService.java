@@ -77,7 +77,8 @@ public class VMFacadeService {
                     VMAgentTaskStatus.IDLE,
                     "");
 
-            agentFacadeService.install(nsId, mciId, vmId);
+            // dto.gpu=true면 DCGM Exporter 설치 + telegraf GPU(dcgm) 수집 설정 포함
+            agentFacadeService.install(nsId, mciId, vmId, Boolean.TRUE.equals(dto.getGpu()));
 
             return savedVM;
         } finally {

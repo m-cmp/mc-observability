@@ -7,6 +7,11 @@
     # 보고 mc-o11y-manager가 "linux" / "windows" 둘 중 하나로 채움.
     # default "linux" 로 두는 이유: 옛 호출자(직접 Semaphore template 호출 등)에 대한 호환 + Telegraf/FluentBit/Beyla 기존 케이스.
     os_type: "{{ os_type | default('linux') }}"
+    # enable_gpu: NVIDIA GPU 노드에서 DCGM Exporter를 함께 설치/제거할지 여부.
+    # telegraf 에이전트 설치 시에만 의미가 있으며, telegraf의 prometheus input이
+    # localhost:9400(DCGM Exporter)을 스크랩해 GPU 메트릭을 수집한다.
+    enable_gpu: "{{ enable_gpu | default(false) }}"
+    NVIDIA_CONTAINER_TOOLKIT_VERSION: "1.19.0-1"
   tasks:
     - name: Check variables
       include_role:
@@ -35,6 +40,13 @@
         target_password: "{{ target_password | b64decode }}"
       no_log: true
       when: os_type == 'windows'
+
+    # DCGM Exporter (GPU 메트릭): Linux + telegraf + enable_gpu 인 경우에만 수행.
+    # (o11y-infra dcgm role 포팅 — podman으로 dcgm-exporter 컨테이너 구동, 포트 9400)
+    - name: DCGM Exporter Operation
+      include_role:
+        name: dcgm
+      when: os_type == 'linux' and agent == 'telegraf' and (enable_gpu | bool)
 
     - name: Agent Operation (Linux)
       include_role:

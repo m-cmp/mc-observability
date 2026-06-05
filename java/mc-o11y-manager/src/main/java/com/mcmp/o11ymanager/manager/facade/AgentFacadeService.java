@@ -70,6 +70,12 @@ public class AgentFacadeService {
     }
 
     public List<ResultDTO> install(String nsId, String mciId, String vmId) {
+        return install(nsId, mciId, vmId, false);
+    }
+
+    // gpu: NVIDIA GPU 노드 여부. true면 telegraf 설치 시 DCGM Exporter 설치 +
+    // GPU 메트릭 수집(prometheus input + starlark processor) 설정이 포함된다.
+    public List<ResultDTO> install(String nsId, String mciId, String vmId, boolean gpu) {
 
         log.info(
                 "=================================== Start Agent Installation - vmId: {} ===========================================",
@@ -91,7 +97,7 @@ public class AgentFacadeService {
 
             // 2) Install agent
             // 2-1) Install Telegraf
-            telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
+            telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount, gpu);
 
             // 2-2) Install FluentBit
             fluentBitFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);

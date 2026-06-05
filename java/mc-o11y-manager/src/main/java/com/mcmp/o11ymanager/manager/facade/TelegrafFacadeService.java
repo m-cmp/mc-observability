@@ -41,6 +41,19 @@ public class TelegrafFacadeService {
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
+        install(nsId, mciId, vmId, accessInfo, templateCount, false);
+    }
+
+    // gpu: true면 telegraf config에 GPU(DCGM) 수집 블록을 포함하고,
+    // Ansible enable_gpu 변수로 DCGM Exporter 설치까지 함께 수행한다.
+    public void install(
+            String nsId,
+            String mciId,
+            String vmId,
+            AccessInfoDTO accessInfo,
+            @NotBlank int templateCount,
+            boolean gpu)
+            throws Exception {
 
         log.info("==========================telegraf idle start===============================");
         vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
@@ -49,7 +62,8 @@ public class TelegrafFacadeService {
         vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
         log.info("==========================update vm status===============================");
 
-        String configContent = telegrafConfigFacadeService.initTelegrafConfig(nsId, mciId, vmId);
+        String configContent =
+                telegrafConfigFacadeService.initTelegrafConfig(nsId, mciId, vmId, gpu);
 
         log.info("Telegraf config: {}", configContent);
 
@@ -61,7 +75,8 @@ public class TelegrafFacadeService {
                         SemaphoreInstallMethod.INSTALL,
                         configContent,
                         Agent.TELEGRAF,
-                        templateCount);
+                        templateCount,
+                        gpu);
 
         log.info("=========================FINISH INSTALL REQUEST============================");
 

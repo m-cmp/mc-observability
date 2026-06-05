@@ -1,0 +1,41 @@
+[[processors.starlark]]
+  source = '''
+def apply(metric):
+    name = metric.name
+
+    prefixes = ["DCGM_FI_", "DCGM_EXP_"]
+    prefix = None
+    for p in prefixes:
+        if name.startswith(p):
+            prefix = p
+            break
+    if prefix == None:
+        return metric
+
+    if not name.startswith(prefix):
+        return metric
+
+    # detect numeric field
+    val_key = None
+    for k in ["gauge", "counter", "sum"]:
+        if k in metric.fields:
+            val_key = k
+            break
+    if val_key == None:
+        return metric
+
+    value = metric.fields[val_key]
+
+    # safely strip prefix
+    suffix = name[len(prefix):]
+    tokens = suffix.split("_")
+
+    new_tokens = [t for t in tokens if t not in ["DEV"]]
+    field_name = "_".join(new_tokens).lower()
+
+    metric.name = "dcgm"
+    metric.fields.clear()
+    metric.fields[field_name] = value
+
+    return metric
+'''

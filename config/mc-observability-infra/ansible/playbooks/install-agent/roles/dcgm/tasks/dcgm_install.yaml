@@ -1,0 +1,308 @@
+# 1. Common bootstrap (podman static 설치)
+- name: Begin Agent Common Tasks
+  include_tasks: "{{ role_path }}/tasks/dcgm_common_begin.yaml"
+
+- name: Detect OS family
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: grep '^ID=' /etc/os-release | head -n1 | cut -d'=' -f2 | tr -d '"'
+  register: os_id_raw
+  changed_when: false
+  failed_when: false
+
+- name: Debug OS ID
+  debug:
+    msg: "OS ID is {{ os_id_raw.stdout | trim }}"
+
+- name: Set OS family for RedHat-based
+  set_fact:
+    os_family: "redhat"
+  when: os_id_raw.stdout | trim in ['rhel', 'centos', 'rocky', 'almalinux', 'fedora']
+
+- name: Set OS family for Debian-based
+  set_fact:
+    os_family: "debian"
+  when: os_id_raw.stdout | trim in ['ubuntu', 'debian']
+
+- name: Set OS family as unknown
+  set_fact:
+    os_family: "unknown"
+  when: os_family is not defined
+
+- name: Display OS family
+  debug:
+    msg: "Detected os family is {{ os_family }}"
+
+# 2. Install NVIDIA Container Toolkit
+- name: Create NVIDIA Container Toolkit Package Temporary Folder
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "mkdir -p /tmp/dcgm-install-files_{{ request_id }}/"
+
+- name: Copy NVIDIA Container Toolkit DEB Packages
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/dcgm-install-files/{{ arch }}/deb/{{ item }}"
+    output_file_path: "/tmp/dcgm-install-files_{{ request_id }}/{{ item }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+  loop:
+    - "libnvidia-container1_{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}_{{ arch }}.deb"
+    - "libnvidia-container-tools_{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}_{{ arch }}.deb"
+    - "nvidia-container-toolkit-base_{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}_{{ arch }}.deb"
+    - "nvidia-container-toolkit_{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}_{{ arch }}.deb"
+  when: os_family == "debian"
+
+- name: Copy NVIDIA Container Toolkit RPM Packages
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/dcgm-install-files/{{ arch }}/rpm/{{ item }}"
+    output_file_path: "/tmp/dcgm-install-files_{{ request_id }}/{{ item }}"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+  loop:
+    - "libnvidia-container1-{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}.{{ arch_raw.stdout | trim }}.rpm"
+    - "libnvidia-container-tools-{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}.{{ arch_raw.stdout | trim }}.rpm"
+    - "nvidia-container-toolkit-base-{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}.{{ arch_raw.stdout | trim }}.rpm"
+    - "nvidia-container-toolkit-{{ NVIDIA_CONTAINER_TOOLKIT_VERSION }}.{{ arch_raw.stdout | trim }}.rpm"
+  when: os_family == "redhat"
+
+- name: Install NVIDIA Container Toolkit Package (Debian/Ubuntu)
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "dpkg -i /tmp/dcgm-install-files_{{ request_id }}/*.deb"
+  when: os_family == "debian"
+
+- name: Install NVIDIA Container Toolkit Package (RHEL/CentOS)
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rpm -ivh --force /tmp/dcgm-install-files_{{ request_id }}/*.rpm"
+  when: os_family == "redhat"
+
+- name: Fix nvidia-cdi-refresh.service for compressed kernel modules (.ko.zst)
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: |
+    sed -i 's/nvidia|nvidia-current)\\\.ko\[:\]/nvidia|nvidia-current)\\.ko[^:]*:/g' /etc/systemd/system/nvidia-cdi-refresh.service && systemctl daemon-reload && systemctl restart nvidia-cdi-refresh
+  ignore_errors: true
+
+- name: Remove Temporary NVIDIA Container Toolkit Package Files
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -rf /tmp/dcgm-install-files_{{ request_id }}"
+
+# 3. DCGM Exporter 이미지 로드
+# 이미지(273MB)는 GitHub 100MB 제한 때문에 50MB 단위(_00.._05)로 분할 저장되어 있다.
+# (telegraf의 cmp-telegraf.tar.gz_* 분할 방식과 동일)
+- name: Merge split DCGM Exporter Image (local)
+  raw: "cat {{ role_path }}/dcgm-install-files/{{ arch }}/dcgm-exporter_4.4.2-4.7.0-ubuntu22.04.tar.gz_* > /tmp/dcgm-exporter_{{ request_id }}.tar.gz"
+  delegate_to: 127.0.0.1
+
+- name: Copy DCGM Exporter Image
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "/tmp/dcgm-exporter_{{ request_id }}.tar.gz"
+    output_file_path: "/tmp/dcgm-exporter_4.4.2-4.7.0-ubuntu22.04-{{ site_code }}.tar.gz"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Remove Local Merged DCGM Exporter Image
+  raw: "rm -f /tmp/dcgm-exporter_{{ request_id }}.tar.gz"
+  delegate_to: 127.0.0.1
+
+- name: Load DCGM Exporter Image
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "/cmp-agent/common/podman/bin/run-podman load -i /tmp/dcgm-exporter_4.4.2-4.7.0-ubuntu22.04-{{ site_code }}.tar.gz"
+
+- name: Remove Temporary DCGM Exporter Image File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -rf /tmp/dcgm-exporter_4.4.2-4.7.0-ubuntu22.04-{{ site_code }}.tar.gz"
+  changed_when: true
+
+# 4. systemd 적용 및 시작
+- name: Install DCGM Exporter Service File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/dcgm-install-files/{{ arch }}/cmp-dcgm-exporter.service"
+    output_file_path: "/lib/systemd/system/cmp-dcgm-exporter.service"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Copy DCGM Exporter Custom Config File
+  include_tasks: send_file.yaml
+  vars:
+    input_file_path: "{{ role_path }}/dcgm-install-files/{{ arch }}/dcgm-exporter-custom.csv"
+    output_file_path: "/cmp-agent/dcgm-exporter-custom.csv"
+    output_file_owner: "root"
+    output_file_group: "root"
+    output_file_chmod: "644"
+
+- name: Check if nvidia-persistenced service exists
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl list-unit-files nvidia-persistenced.service --no-legend | grep -c nvidia-persistenced"
+  register: nvidia_persistenced_exists
+  changed_when: false
+  failed_when: false
+
+- name: Remove --no-persistence-mode from nvidia-persistenced service file
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "sed -i 's/--no-persistence-mode//g' /lib/systemd/system/nvidia-persistenced.service"
+  when: nvidia_persistenced_exists.stdout | trim | int > 0
+  ignore_errors: true
+
+- name: Fix DCGM Exporter Service File SELinux Permission
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/cmp-dcgm-exporter.service"
+  ignore_errors: true
+
+- name: Fix DCGM Exporter Custom Config File SELinux Permission
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /cmp-agent/dcgm-exporter-custom.csv"
+  ignore_errors: true
+
+- name: Fix NVIDIA Persistenced Service File SELinux Permission
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "chcon system_u:object_r:systemd_unit_file_t:s0 /lib/systemd/system/nvidia-persistenced.service"
+  when: nvidia_persistenced_exists.stdout | trim | int > 0
+  ignore_errors: true
+
+- name: Reload systemd daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload"
+
+- name: Start and Enable DCGM Exporter service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl enable --now cmp-dcgm-exporter.service"
+
+- name: Restart NVIDIA Persistenced Service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl restart nvidia-persistenced.service"
+  when: nvidia_persistenced_exists.stdout | trim | int > 0
+  ignore_errors: true
+
+# 5. 공통 작업 종료
+- name: End Agent Common Tasks
+  include_tasks: "{{ role_path }}/tasks/dcgm_common_end.yaml"

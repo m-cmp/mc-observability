@@ -62,6 +62,18 @@ public class SemaphoreDomainService {
             String configContent,
             Agent agent,
             int templateCount) {
+        return install(accessInfo, method, configContent, agent, templateCount, false);
+    }
+
+    // enableGpu: telegraf 설치 시 DCGM Exporter를 함께 설치할지 여부.
+    // Ansible playbook의 `enable_gpu` 변수로 전달되어 dcgm role 실행을 결정한다.
+    public Task install(
+            AccessInfoDTO accessInfo,
+            SemaphoreInstallMethod method,
+            String configContent,
+            Agent agent,
+            int templateCount,
+            boolean enableGpu) {
 
         log.info("======================START SEMAPHORE INSTALL==============================");
 
@@ -79,6 +91,10 @@ public class SemaphoreDomainService {
                             accessInfo.getSshKey());
 
             env.addVariable("install_method", methodStr);
+
+            // enable_gpu: Ansible playbook이 이 값으로 dcgm role(DCGM Exporter 설치) 실행을 분기.
+            // telegraf 이외 에이전트에서는 playbook 조건(agent == 'telegraf')에 의해 무시된다.
+            env.addVariable("enable_gpu", String.valueOf(enableGpu));
 
             // os_type: Ansible playbook이 이 값으로 Linux용 `agent` role과 Windows용 `agent-windows`
             // role을 분기. AccessInfoDTO.osType이 null이면 기존 호출자(Telegraf/FluentBit/Beyla

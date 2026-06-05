@@ -1,0 +1,125 @@
+- name: Stop and Disable DCGM Exporter service
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl disable --now cmp-dcgm-exporter.service  2>&1 | true && /cmp-agent/common/podman/bin/run-podman rm -f cmp-dcgm 2>&1 | true"
+
+- name: Detect OS family
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: grep '^ID=' /etc/os-release | head -n1 | cut -d'=' -f2 | tr -d '"'
+  register: os_id_raw
+  changed_when: false
+  failed_when: false
+
+- name: Debug OS ID
+  debug:
+    msg: "OS ID is {{ os_id_raw.stdout | trim }}"
+
+- name: Set OS family for RedHat-based
+  set_fact:
+    os_family: "redhat"
+  when: os_id_raw.stdout | trim in ['rhel', 'centos', 'rocky', 'almalinux', 'fedora']
+
+- name: Set OS family for Debian-based
+  set_fact:
+    os_family: "debian"
+  when: os_id_raw.stdout | trim in ['ubuntu', 'debian']
+
+- name: Set OS family as unknown
+  set_fact:
+    os_family: "unknown"
+  when: os_family is not defined
+
+- name: Display OS family
+  debug:
+    msg: "Detected os family is {{ os_family }}"
+
+# 2. Remove NVIDIA Container Toolkit
+- name: Remove NVIDIA Container Toolkit DEB Packages
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "apt purge -y libnvidia-container1 libnvidia-container-tools nvidia-container-toolkit-base nvidia-container-toolkit"
+  when: os_family == "debian"
+
+- name: Remove NVIDIA Container Toolkit RPM Packages
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "yum remove -y libnvidia-container1 libnvidia-container-tools nvidia-container-toolkit-base nvidia-container-toolkit"
+  when: os_family == "redhat"
+
+# 3. DCGM Exporter 이미지 삭제
+- name: Remove DCGM Exporter Image
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "/cmp-agent/common/podman/bin/run-podman rmi nvcr.io/nvidia/k8s/dcgm-exporter:4.4.2-4.7.0-ubuntu22.04 2>&1 | true"
+
+# 4. systemd 서비스 삭제
+- name: Remove DCGM Exporter Service File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /lib/systemd/system/cmp-dcgm-exporter.service"
+  ignore_errors: true
+
+- name: Remove DCGM Exporter Custom Config File
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "rm -f /cmp-agent/dcgm-exporter-custom.csv"
+  ignore_errors: true
+
+- name: Reload systemd daemon
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl daemon-reload"
