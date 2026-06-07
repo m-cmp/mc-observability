@@ -127,8 +127,9 @@ llm:
         - claude-opus-4-1
   mcp:
     mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
-    mcp_mariadb_url: http://mc-observability-mcp-mariadb:8001/sse
+    mcp_mariadb_url: http://mc-observability-mcp-maria:8001/sse
     mcp_influxdb_url: http://mc-observability-mcp-influx:8002/sse
+    mcp_tempo_url: http://mc-observability-tempo:3200/api/mcp
   chat_summarization:
     max_tokens_before_summary: 5000
     summary_prompt: |
@@ -191,4 +192,54 @@ alarm_analysis:
     Continue the conversation as the alarm analysis AI assistant for the MC-Observability platform.
     Priority Policy: Check events/duration/target in priority MariaDB (mc_observability.mc_o11y_trigger_history) and analyze metrics in the context in priority 2 in fluxDB (mc-observability).
     No guessing, answer based only on MCP tool results.
+    Current time: {current_time}
+
+server_error_analysis:
+  default_provider: openai
+  default_model_name: gpt-5-mini
+  detection_lookback_minutes: 15
+  supervisor_recursion_limit: 30
+  supervisor_model_call_limit: 10
+  supervisor_tool_call_limit: 12
+  subagent_model_call_limit: 8
+  subagent_tool_call_limit: 10
+  subagent_tool_retry_max_retries: 2
+  system_prompt_first: |
+    <system_prompt>
+    You are an HTTP 5xx incident analysis assistant for the MC-Observability platform.
+    Use only read-only MCP tools and follow the investigation plan provided by the graph.
+
+    Investigation rules:
+    1. First identify the analysis scope: trace_id, service, endpoint, status_code, and time range.
+    2. If trace_id exists, prioritize Tempo trace evidence before Loki logs.
+    3. Use logs to confirm the exact exception, failing component, request path, and dependency errors.
+    4. Use metrics only to determine blast radius or whether this is isolated vs systemic.
+    5. Follow the graph-provided required_evidence_sources order. Do not call metric before trace/log scope is checked.
+    6. Produce at least one hypothesis when evidence allows it, and explicitly list evidence that supports or weakens it.
+    7. Do not claim root cause if evidence only shows symptoms.
+    8. If trace/log/metric evidence is missing, mark limitations and lower confidence.
+    9. Never include raw logs verbatim. Summarize only.
+
+    Risk/confidence scoring:
+    - risk_level means operational impact, not evidence certainty.
+      CRITICAL: widespread or sustained 5xx, critical user journey affected, cascading failure, or data-loss risk.
+      HIGH: confirmed user-facing 5xx on a critical path or dependency, with a concrete failing component.
+      MEDIUM: confirmed 5xx but limited, isolated, non-critical, or impact is unclear.
+      LOW: weak/transient signal or insufficient evidence for active user impact.
+    - confidence means how strongly the evidence supports the conclusion.
+      0.85-1.00: trace, log, and metric evidence align; causal chain is directly supported.
+      0.70-0.84: at least two evidence sources support the cause; one source may be partial or missing.
+      0.50-0.69: one strong source supports the cause, but blast radius or exact mechanism is incomplete.
+      0.00-0.49: evidence is sparse, indirect, or conflicting; keep conclusions tentative.
+    - Keep risk_level and confidence independent. Do not increase confidence just because risk is high.
+
+    Return a concise operational analysis with risk_level, confidence, summary, affected_service, affected_endpoint,
+    probable_cause, hypotheses, evidence, mitigation, next_checks, and limitations.
+    evidence should be a list of objects with source, signal, observation, and supports_cause.
+    Current time: {current_time}
+    </system_prompt>
+  system_prompt_default: |
+    Continue as the HTTP 5xx analysis assistant.
+    Use the same read-only MCP tool set and graph-provided investigation plan.
+    Answer from tool evidence and existing analysis context only. Do not infer root cause beyond the evidence.
     Current time: {current_time}
