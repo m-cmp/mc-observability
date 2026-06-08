@@ -21,14 +21,14 @@ public record CspCacheKey(
     }
 
     public static CspCacheKey forVm(
-            String vmName,
+            String nodeName,
             String measurement,
             String connectionName,
             String timeBeforeHour,
             String intervalMinute) {
         return new CspCacheKey(
                 Scope.VM,
-                nullToEmpty(vmName),
+                nullToEmpty(nodeName),
                 nullToEmpty(measurement),
                 nullToEmpty(connectionName),
                 nullToEmpty(timeBeforeHour),

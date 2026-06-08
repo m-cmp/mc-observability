@@ -43,9 +43,9 @@ public class AgentFacadeService {
     private final TumblebugService tumblebugService;
     private final VMService vmService;
 
-    private AccessInfoDTO getAccessInfo(String nsId, String mciId, String vmId) {
+    private AccessInfoDTO getAccessInfo(String nsId, String infraId, String nodeId) {
 
-        TumblebugInfra.Node node = tumblebugPort.getNode(nsId, mciId, vmId);
+        TumblebugInfra.Node node = tumblebugPort.getNode(nsId, infraId, nodeId);
         TumblebugSshKey sshKey = tumblebugPort.getSshKey(nsId, node.getSshKeyId());
 
         if (sshKey == null) {
@@ -64,27 +64,27 @@ public class AgentFacadeService {
     }
 
     public AgentServiceStatus getAgentServiceStatus(
-            String nsId, String mciId, String vmId, Agent agent) {
-        boolean isActive = tumblebugService.isServiceActive(nsId, mciId, vmId, agent);
+            String nsId, String infraId, String nodeId, Agent agent) {
+        boolean isActive = tumblebugService.isServiceActive(nsId, infraId, nodeId, agent);
         return isActive ? AgentServiceStatus.ACTIVE : AgentServiceStatus.INACTIVE;
     }
 
-    public List<ResultDTO> install(String nsId, String mciId, String vmId) {
-        return install(nsId, mciId, vmId, false);
+    public List<ResultDTO> install(String nsId, String infraId, String nodeId) {
+        return install(nsId, infraId, nodeId, false);
     }
 
     // gpu: NVIDIA GPU 노드 여부. true면 telegraf 설치 시 DCGM Exporter 설치 +
     // GPU 메트릭 수집(prometheus input + starlark processor) 설정이 포함된다.
-    public List<ResultDTO> install(String nsId, String mciId, String vmId, boolean gpu) {
+    public List<ResultDTO> install(String nsId, String infraId, String nodeId, boolean gpu) {
 
         log.info(
-                "=================================== Start Agent Installation - vmId: {} ===========================================",
-                vmId);
+                "=================================== Start Agent Installation - nodeId: {} ===========================================",
+                nodeId);
 
         List<ResultDTO> results = new ArrayList<>();
 
         try {
-            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
+            AccessInfoDTO accessInfo = getAccessInfo(nsId, infraId, nodeId);
 
             // 1) Acquire lock
             int templateCount;
@@ -97,16 +97,16 @@ public class AgentFacadeService {
 
             // 2) Install agent
             // 2-1) Install Telegraf
-            telegrafFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount, gpu);
+            telegrafFacadeService.install(nsId, infraId, nodeId, accessInfo, templateCount, gpu);
 
             // 2-2) Install FluentBit
-            fluentBitFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
+            fluentBitFacadeService.install(nsId, infraId, nodeId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
 
@@ -114,8 +114,8 @@ public class AgentFacadeService {
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
@@ -125,11 +125,11 @@ public class AgentFacadeService {
     }
 
     @Transactional
-    public List<ResultDTO> update(String nsId, String mciId, String vmId) {
+    public List<ResultDTO> update(String nsId, String infraId, String nodeId) {
         List<ResultDTO> results = new ArrayList<>();
 
         try {
-            AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
+            AccessInfoDTO accessInfo = getAccessInfo(nsId, infraId, nodeId);
 
             // 1) Lock 걸기
             int templateCount;
@@ -142,24 +142,24 @@ public class AgentFacadeService {
 
             // 2 ) 에이전트 업데이트
             // 2-1 ) Telegraf 업데이트
-            telegrafFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
+            telegrafFacadeService.update(nsId, infraId, nodeId, accessInfo, templateCount);
 
             // 2-1 ) FluentBit 업데이트
-            fluentBitFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
+            fluentBitFacadeService.update(nsId, infraId, nodeId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
         } catch (Exception e) {
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
@@ -191,16 +191,16 @@ public class AgentFacadeService {
         return semaphoreConfigUpdateTemplateCurrentCount;
     }
 
-    public AgentStatus getAgentStatus(String nsId, String mciId, String vmId, Agent agent) {
+    public AgentStatus getAgentStatus(String nsId, String infraId, String nodeId, Agent agent) {
         VMAgentTaskStatus taskStatus;
 
         if (agent == Agent.TELEGRAF) {
-            taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, mciId, vmId);
+            taskStatus = vmService.getMonitoringAgentTaskStatus(nsId, infraId, nodeId);
         } else if (agent == Agent.FLUENT_BIT) {
-            taskStatus = vmService.getLogAgentTaskStatus(nsId, mciId, vmId);
+            taskStatus = vmService.getLogAgentTaskStatus(nsId, infraId, nodeId);
         } else if (agent == Agent.BEYLA || agent == Agent.OTEL_JAVA_AGENT) {
             // 두 agent 모두 동일한 vmTraceAgentTaskStatus 컬럼을 공유한다 (Linux Beyla / Windows OTel Java).
-            taskStatus = vmService.getTraceAgentTaskStatus(nsId, mciId, vmId);
+            taskStatus = vmService.getTraceAgentTaskStatus(nsId, infraId, nodeId);
         } else {
             throw new IllegalArgumentException("Unknown agent type: " + agent);
         }
@@ -212,7 +212,7 @@ public class AgentFacadeService {
             return AgentStatus.FAILED;
         }
 
-        AgentServiceStatus serviceStatus = getAgentServiceStatus(nsId, mciId, vmId, agent);
+        AgentServiceStatus serviceStatus = getAgentServiceStatus(nsId, infraId, nodeId, agent);
 
         if (serviceStatus == AgentServiceStatus.ACTIVE) {
             return AgentStatus.SUCCESS;
@@ -223,11 +223,11 @@ public class AgentFacadeService {
 
     @Transactional
     @Base64Decode(ConfigDTO.class)
-    public List<ResultDTO> uninstall(String nsId, String mciId, String vmId) {
+    public List<ResultDTO> uninstall(String nsId, String infraId, String nodeId) {
 
         List<ResultDTO> results = new ArrayList<>();
 
-        AccessInfoDTO accessInfo = getAccessInfo(nsId, mciId, vmId);
+        AccessInfoDTO accessInfo = getAccessInfo(nsId, infraId, nodeId);
 
         try {
             int templateCount;
@@ -240,24 +240,24 @@ public class AgentFacadeService {
 
             // 4 ) 에이전트 제거
             // 4-1 ) Telegraf 제거
-            telegrafFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
+            telegrafFacadeService.uninstall(nsId, infraId, nodeId, accessInfo, templateCount);
 
             // 4-1 ) FluentBit 제거
-            fluentBitFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
+            fluentBitFacadeService.uninstall(nsId, infraId, nodeId, accessInfo, templateCount);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
         } catch (Exception e) {
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());

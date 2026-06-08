@@ -23,17 +23,17 @@ public class StatusServiceImpl implements StatusService {
             Integer taskId,
             VMAgentTaskStatus hostAgentTaskStatus,
             String nsId,
-            String mciId,
-            String vmId) {
+            String infraId,
+            String nodeId) {
         log.debug(
                 "Updating Agent Task Status - Request ID: {}, VM: {}/{}/{}, Agent Task Status: {}",
                 requestId,
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 hostAgentTaskStatus);
 
-        VMEntity updateVM = VMEntity.builder().nsId(nsId).mciId(mciId).vmId(vmId).build();
+        VMEntity updateVM = VMEntity.builder().nsId(nsId).infraId(infraId).nodeId(nodeId).build();
 
         updateVM.setMonitoringAgentTaskStatus(hostAgentTaskStatus);
         updateVM.setLogAgentTaskStatus(hostAgentTaskStatus);
@@ -50,19 +50,20 @@ public class StatusServiceImpl implements StatusService {
     }
 
     @Override
-    public void resetVMAgentTaskStatus(String requestId, String nsId, String mciId, String vmId) {
+    public void resetVMAgentTaskStatus(
+            String requestId, String nsId, String infraId, String nodeId) {
         if (nsId == null
                 || nsId.isEmpty()
-                || mciId == null
-                || mciId.isEmpty()
-                || vmId == null
-                || vmId.isEmpty()) {
+                || infraId == null
+                || infraId.isEmpty()
+                || nodeId == null
+                || nodeId.isEmpty()) {
             return;
         }
 
         try {
             agentTaskStatusLock.lock();
-            updateVMAgentTaskStatus(requestId, null, VMAgentTaskStatus.IDLE, nsId, mciId, vmId);
+            updateVMAgentTaskStatus(requestId, null, VMAgentTaskStatus.IDLE, nsId, infraId, nodeId);
         } finally {
             agentTaskStatusLock.unlock();
         }

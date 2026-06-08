@@ -41,23 +41,23 @@ public class VmCreatedTimeResolver {
             Caffeine.newBuilder().maximumSize(10_000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
     /** Returns the VM creation instant if known, or empty if Tumblebug doesn't expose it. */
-    public Optional<Instant> resolve(String nsId, String mciId, String vmId) {
-        if (nsId == null || mciId == null || vmId == null) {
+    public Optional<Instant> resolve(String nsId, String infraId, String nodeId) {
+        if (nsId == null || infraId == null || nodeId == null) {
             return Optional.empty();
         }
-        String key = nsId + "/" + mciId + "/" + vmId;
+        String key = nsId + "/" + infraId + "/" + nodeId;
         Optional<Instant> cached = cache.getIfPresent(key);
         if (cached != null) {
             return cached;
         }
-        Optional<Instant> resolved = fetchFromTumblebug(nsId, mciId, vmId);
+        Optional<Instant> resolved = fetchFromTumblebug(nsId, infraId, nodeId);
         cache.put(key, resolved);
         return resolved;
     }
 
-    private Optional<Instant> fetchFromTumblebug(String nsId, String mciId, String vmId) {
+    private Optional<Instant> fetchFromTumblebug(String nsId, String infraId, String nodeId) {
         try {
-            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, infraId, nodeId);
             if (node == null || node.getCreatedTime() == null || node.getCreatedTime().isBlank()) {
                 return Optional.empty();
             }
@@ -67,8 +67,8 @@ public class VmCreatedTimeResolver {
             log.debug(
                     "[VM-CREATED] failed to resolve createdTime ns={}, mci={}, vm={}, err={}",
                     nsId,
-                    mciId,
-                    vmId,
+                    infraId,
+                    nodeId,
                     e.toString());
             return Optional.empty();
         }

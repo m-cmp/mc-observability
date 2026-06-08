@@ -50,7 +50,7 @@ public class OtelJavaController {
     private final VmAccessInfoResolver vmAccessInfoResolver;
     private final SemaphoreInstallTemplateCounter templateCounter;
 
-    @PostMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/install")
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/install")
     @Operation(
             summary = "Install Windows OTel Java Auto-Instrumentation agent",
             operationId = "InstallWindowsTraceAgent",
@@ -60,36 +60,38 @@ public class OtelJavaController {
     public ResBody<Void> install(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID", example = "win2019-os01") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "win-1") @PathVariable String vmId)
+            @Parameter(description = "Infra ID", example = "win2019-os01") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID", example = "win-1") @PathVariable String nodeId)
             throws Exception {
 
-        ensureWindows(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureWindows(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        otelJavaFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
+        otelJavaFacadeService.install(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
-    @PutMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/update")
+    @PutMapping("/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/update")
     @Operation(
             summary = "Update Windows OTel Java agent (jar 재다운로드)",
             operationId = "UpdateWindowsTraceAgent")
     public ResBody<Void> update(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID", example = "win2019-os01") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "win-1") @PathVariable String vmId)
+            @Parameter(description = "Infra ID", example = "win2019-os01") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID", example = "win-1") @PathVariable String nodeId)
             throws Exception {
 
-        ensureWindows(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureWindows(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        otelJavaFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
+        otelJavaFacadeService.update(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
-    @DeleteMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/uninstall")
+    @DeleteMapping("/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/uninstall")
     @Operation(
             summary = "Uninstall Windows OTel Java agent",
             operationId = "UninstallWindowsTraceAgent",
@@ -97,13 +99,14 @@ public class OtelJavaController {
     public ResBody<Void> uninstall(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID", example = "win2019-os01") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "win-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "win2019-os01") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID", example = "win-1") @PathVariable String nodeId) {
 
-        ensureWindows(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureWindows(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        otelJavaFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
+        otelJavaFacadeService.uninstall(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
@@ -111,7 +114,7 @@ public class OtelJavaController {
      * Windows OTel Java agent는 호스트 단위 환경변수 주입 방식이라 service 단위 restart 의미 없음. {@link
      * OtelJavaFacadeService#restart} 내부에서 미지원 throw하지만 caller에 명확하게 ERROR 결과로 응답한다.
      */
-    @PostMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/restart")
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/restart")
     @Operation(
             summary = "Restart Windows OTel Java agent (미지원)",
             operationId = "RestartWindowsTraceAgent",
@@ -119,32 +122,34 @@ public class OtelJavaController {
     public ResBody<List<ResultDTO>> restart(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID", example = "win2019-os01") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "win-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "win2019-os01") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID", example = "win-1") @PathVariable String nodeId) {
 
-        ensureWindows(nsId, mciId, vmId);
-        List<ResultDTO> results = otelJavaFacadeService.restart(nsId, mciId, vmId);
+        ensureWindows(nsId, infraId, nodeId);
+        List<ResultDTO> results = otelJavaFacadeService.restart(nsId, infraId, nodeId);
         return new ResBody<>(results);
     }
 
-    @GetMapping("/{nsId}/{mciId}/vm/{vmId}/windows-trace-agent/status")
+    @GetMapping("/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/status")
     @Operation(
             summary = "Get Windows OTel Java agent status",
             operationId = "GetWindowsTraceAgentStatus")
     public ResBody<AgentStatus> getStatus(
             @Parameter(description = "Namespace ID", example = "testns01") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID", example = "win2019-os01") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "win-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "win2019-os01") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID", example = "win-1") @PathVariable String nodeId) {
 
         AgentStatus status =
-                agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.OTEL_JAVA_AGENT);
+                agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.OTEL_JAVA_AGENT);
         return new ResBody<>(status);
     }
 
     /** 잘못된 endpoint 사용 가드. Windows node가 아니면 명시적으로 throw해서 caller가 /beyla/...로 가도록 안내. */
-    private void ensureWindows(String nsId, String mciId, String vmId) {
-        if (!vmAccessInfoResolver.isWindowsNode(nsId, mciId, vmId)) {
+    private void ensureWindows(String nsId, String infraId, String nodeId) {
+        if (!vmAccessInfoResolver.isWindowsNode(nsId, infraId, nodeId)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "This endpoint is for Windows nodes only. For Linux nodes, use /beyla/...");

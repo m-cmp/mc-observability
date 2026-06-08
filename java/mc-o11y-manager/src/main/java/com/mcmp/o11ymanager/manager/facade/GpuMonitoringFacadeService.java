@@ -62,7 +62,7 @@ public class GpuMonitoringFacadeService {
 
     /** 각 GPU 메트릭 필드에 최근(5분) 데이터가 쌓이고 있는지 확인 */
     public List<GpuMetricFieldCheckDTO> checkGpuMetricFields(
-            String nsId, String mciId, String vmId) {
+            String nsId, String infraId, String nodeId) {
 
         List<GpuMetricFieldCheckDTO> results = new ArrayList<>();
 
@@ -79,7 +79,8 @@ public class GpuMonitoringFacadeService {
 
             boolean hasData;
             try {
-                List<MetricDTO> metrics = influxDbService.getMetricsByVM(nsId, mciId, vmId, req);
+                List<MetricDTO> metrics =
+                        influxDbService.getMetricsByVM(nsId, infraId, nodeId, req);
                 hasData =
                         metrics != null
                                 && metrics.stream()
@@ -101,8 +102,8 @@ public class GpuMonitoringFacadeService {
                         "Failed to check GPU metric field {} for {}/{}/{}: {}",
                         field.getFieldName(),
                         nsId,
-                        mciId,
-                        vmId,
+                        infraId,
+                        nodeId,
                         e.getMessage());
                 hasData = false;
             }
@@ -119,7 +120,7 @@ public class GpuMonitoringFacadeService {
 
     /** GPU 메트릭 조회: 요청 필드를 검증하고 measurement를 dcgm으로 고정해 조회 */
     public List<MetricDTO> getGpuMetrics(
-            String nsId, String mciId, String vmId, MetricRequestDTO req) {
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
 
         // 요청 필드가 정의된 GPU 메트릭 필드인지 검증
         if (req.getFields() != null) {
@@ -131,6 +132,6 @@ public class GpuMonitoringFacadeService {
         // GPU 메트릭은 항상 dcgm measurement에서 조회
         req.setMeasurement(GpuMetricKeyField.GPU_MEASUREMENT);
 
-        return influxDbService.getMetricsByVM(nsId, mciId, vmId, req);
+        return influxDbService.getMetricsByVM(nsId, infraId, nodeId, req);
     }
 }

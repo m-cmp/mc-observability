@@ -8,8 +8,8 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public class VmId implements Serializable {
+public class NodeId implements Serializable {
     private String nsId;
-    private String mciId;
-    private String vmId;
+    private String infraId;
+    private String nodeId;
 }

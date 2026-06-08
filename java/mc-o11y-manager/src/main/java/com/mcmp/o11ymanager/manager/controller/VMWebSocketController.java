@@ -16,17 +16,17 @@ public class VMWebSocketController {
 
     private final VMFacadeService vmFacadeService;
 
-    @MessageMapping("/vm/{nsId}/{mciId]/{vmId}")
-    @SendTo("/topic/vm/{nsId}/{mciId]/{vmId}")
+    @MessageMapping("/node/{nsId}/{infraId}/{nodeId}")
+    @SendTo("/topic/node/{nsId}/{infraId}/{nodeId}")
     public VMDTO subscribeVMInfo(
             @DestinationVariable String nsId,
-            @DestinationVariable String mciId,
-            @DestinationVariable String vmId) {
-        return vmFacadeService.getVM(nsId, mciId, vmId);
+            @DestinationVariable String infraId,
+            @DestinationVariable String nodeId) {
+        return vmFacadeService.getVM(nsId, infraId, nodeId);
     }
 
-    @MessageMapping("/vms")
-    @SendTo("/topic/vms")
+    @MessageMapping("/nodes")
+    @SendTo("/topic/nodes")
     public Object subscribeAllVMs() {
         return vmFacadeService.getVMs();
     }

@@ -10,22 +10,22 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Table(name = "vm")
+@Table(name = "node")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @DynamicUpdate
-@IdClass(VmId.class)
+@IdClass(NodeId.class)
 @EntityListeners(AuditingEntityListener.class)
 public class VMEntity {
 
     @Id private String nsId;
 
-    @Id private String mciId;
+    @Id private String infraId;
 
-    @Id private String vmId;
+    @Id private String nodeId;
 
     @Column(name = "influx_id", nullable = false)
     private Long influxSeq;

@@ -101,8 +101,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     }
 
     @Override
-    public InfluxDTO resolveInfluxDto(String nsId, String mciId) {
-        Long influxId = resolveInfluxDb(nsId, mciId);
+    public InfluxDTO resolveInfluxDto(String nsId, String infraId) {
+        Long influxId = resolveInfluxDb(nsId, infraId);
         InfluxEntity e =
                 influxJpaRepository
                         .findById(influxId)
@@ -189,7 +189,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     // ------------------------------------getMetric--------------------------------------------------//
 
     @Override
-    public List<MetricDTO> getMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req) {
+    public List<MetricDTO> getMetricsByNsMci(String nsId, String infraId, MetricRequestDTO req) {
 
         if (req.getConditions() != null) {
             for (MetricRequestDTO.ConditionInfo c : req.getConditions()) {
@@ -214,17 +214,17 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
         mciCond.setKey("infra_id");
-        mciCond.setValue(mciId);
+        mciCond.setValue(infraId);
         conditions.add(mciCond);
 
         req.setConditions(conditions);
 
         return monitoringCacheService.getOrLoad(
-                nsId, mciId, null, req, () -> loadMetricsByNsMci(nsId, mciId, req));
+                nsId, infraId, null, req, () -> loadMetricsByNsMci(nsId, infraId, req));
     }
 
-    private List<MetricDTO> loadMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req) {
-        Long influxId = resolveInfluxDb(nsId, mciId);
+    private List<MetricDTO> loadMetricsByNsMci(String nsId, String infraId, MetricRequestDTO req) {
+        Long influxId = resolveInfluxDb(nsId, infraId);
         InfluxEntity entity =
                 influxJpaRepository
                         .findById(influxId)
@@ -244,10 +244,11 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         String rp = fetchDefaultRp(s);
         String q = InfluxQl.buildQuery(req, rp);
 
-        if (!existsNsMciInInflux(s, nsId, mciId)) {
+        if (!existsNsMciInInflux(s, nsId, infraId)) {
             throw new IllegalArgumentException(
                     String.format(
-                            "Invalid nsId='%s' or mciId='%s': not found in InfluxDB", nsId, mciId));
+                            "Invalid nsId='%s' or infraId='%s': not found in InfluxDB",
+                            nsId, infraId));
         }
 
         List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
@@ -260,7 +261,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                                 tags.putAll(m.tags());
                             }
                             tags.put("ns_id", nsId);
-                            tags.put("infra_id", mciId);
+                            tags.put("infra_id", infraId);
                             return new MetricDTO(m.name(), m.columns(), tags, m.values());
                         })
                 .collect(Collectors.toList());
@@ -268,7 +269,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
     @Override
     public List<MetricDTO> getMetricsByVM(
-            String nsId, String mciId, String vmId, MetricRequestDTO req) {
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
 
         if (req.getConditions() != null) {
             for (MetricRequestDTO.ConditionInfo c : req.getConditions()) {
@@ -293,23 +294,23 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
         mciCond.setKey("infra_id");
-        mciCond.setValue(mciId);
+        mciCond.setValue(infraId);
         conditions.add(mciCond);
 
         MetricRequestDTO.ConditionInfo vmCond = new MetricRequestDTO.ConditionInfo();
         vmCond.setKey("node_id");
-        vmCond.setValue(vmId);
+        vmCond.setValue(nodeId);
         conditions.add(vmCond);
 
         req.setConditions(conditions);
 
         return monitoringCacheService.getOrLoad(
-                nsId, mciId, vmId, req, () -> loadMetricsByVM(nsId, mciId, vmId, req));
+                nsId, infraId, nodeId, req, () -> loadMetricsByVM(nsId, infraId, nodeId, req));
     }
 
     private List<MetricDTO> loadMetricsByVM(
-            String nsId, String mciId, String vmId, MetricRequestDTO req) {
-        Long influxId = resolveInfluxDb(nsId, mciId);
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        Long influxId = resolveInfluxDb(nsId, infraId);
         InfluxEntity entity =
                 influxJpaRepository
                         .findById(influxId)
@@ -329,11 +330,11 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         String rp = fetchDefaultRp(s);
         String q = InfluxQl.buildQuery(req, rp);
 
-        if (!existsVmInInflux(s, nsId, mciId, vmId)) {
+        if (!existsVmInInflux(s, nsId, infraId, nodeId)) {
             throw new IllegalArgumentException(
                     String.format(
-                            "Invalid vmId='%s': does not exist for nsId='%s', mciId='%s'",
-                            vmId, nsId, mciId));
+                            "Invalid nodeId='%s': does not exist for nsId='%s', infraId='%s'",
+                            nodeId, nsId, infraId));
         }
 
         List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
@@ -346,8 +347,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                                 tags.putAll(m.tags());
                             }
                             tags.put("ns_id", nsId);
-                            tags.put("infra_id", mciId);
-                            tags.put("node_id", vmId);
+                            tags.put("infra_id", infraId);
+                            tags.put("node_id", nodeId);
                             return new MetricDTO(m.name(), m.columns(), tags, m.values());
                         })
                 .collect(Collectors.toList());
@@ -447,13 +448,13 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     // ------------------------------------resolveInfluxdb--------------------------------------------------//
 
     @Override
-    public Long resolveInfluxDb(String nsId, String mciId) {
+    public Long resolveInfluxDb(String nsId, String infraId) {
         var entities = rawEntities();
         if (entities.isEmpty()) {
             throw new IllegalStateException("influxdb.servers must contain at least 1 server");
         }
 
-        log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, mciId, entities.size());
+        log.info("[INF-RESOLVE] start ns={}, mci={}, servers={}", nsId, infraId, entities.size());
 
         // DB where (ns_id, infra_id) combination already exists
         for (var e : entities) {
@@ -465,7 +466,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                         s.getUrl());
                 continue;
             }
-            if (existsTagCombination(s, nsId, mciId)) {
+            if (existsTagCombination(s, nsId, infraId)) {
                 log.info(
                         "[INF-RESOLVE] found vm combination at id={}, url={}",
                         e.getId(),
@@ -500,7 +501,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         }
 
         throw new IllegalStateException(
-                "no reachable influxdb candidates (ns=" + nsId + ", mci=" + mciId + ")");
+                "no reachable influxdb candidates (ns=" + nsId + ", mci=" + infraId + ")");
     }
 
     // ------------------------------------Retention
@@ -569,7 +570,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                 log.info("[CARDINALITY] id={}, url={} PING FAIL -> skip", e.getId(), s.getUrl());
                 continue;
             }
-            int count = countMciIdTag(s);
+            int count = countInfraIdTag(s);
             log.info("[CARDINALITY] id={}, url={}, count={}", e.getId(), s.getUrl(), count);
 
             if (count < bestCount) {
@@ -583,25 +584,26 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
     // ------------------------------------query--------------------------------------------------//
 
-    private boolean existsVmInInflux(InfluxDTO influxDTO, String nsId, String mciId, String vmId) {
+    private boolean existsVmInInflux(
+            InfluxDTO influxDTO, String nsId, String infraId, String nodeId) {
         String q =
                 String.format(
                         "SHOW TAG VALUES ON \"%s\" WITH KEY=\"node_id\" "
                                 + "WHERE \"ns_id\"='%s' AND \"infra_id\"='%s' AND \"node_id\"='%s' LIMIT 1",
-                        influxDTO.getDatabase(), esc(nsId), esc(mciId), esc(vmId));
+                        influxDTO.getDatabase(), esc(nsId), esc(infraId), esc(nodeId));
         return hasResult(influxDTO, q);
     }
 
-    private boolean existsNsMciInInflux(InfluxDTO influxDTO, String nsId, String mciId) {
+    private boolean existsNsMciInInflux(InfluxDTO influxDTO, String nsId, String infraId) {
         String q =
                 String.format(
                         "SHOW TAG VALUES ON \"%s\" WITH KEY=\"infra_id\" "
                                 + "WHERE \"ns_id\"='%s' AND \"infra_id\"='%s' LIMIT 1",
-                        influxDTO.getDatabase(), esc(nsId), esc(mciId));
+                        influxDTO.getDatabase(), esc(nsId), esc(infraId));
         return hasResult(influxDTO, q);
     }
 
-    public boolean existsTagCombination(InfluxDTO influxDTO, String nsId, String mciId) {
+    public boolean existsTagCombination(InfluxDTO influxDTO, String nsId, String infraId) {
         String q =
                 "SHOW TAG VALUES ON \""
                         + influxDTO.getDatabase()
@@ -616,13 +618,13 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                         + "' AND \""
                         + INFRA_ID
                         + "\"='"
-                        + esc(mciId)
+                        + esc(infraId)
                         + "' "
                         + "LIMIT 1";
         return hasResult(influxDTO, q);
     }
 
-    public int countMciIdTag(InfluxDTO influxDTO) {
+    public int countInfraIdTag(InfluxDTO influxDTO) {
         String q =
                 "SHOW TAG VALUES CARDINALITY ON \""
                         + influxDTO.getDatabase()
@@ -780,7 +782,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
         } catch (Exception e) {
             log.warn(
-                    "[countMciIdTag] query failed url={}, db={}, q={}, err={}",
+                    "[countInfraIdTag] query failed url={}, db={}, q={}, err={}",
                     influxDTO.getUrl(),
                     influxDTO.getDatabase(),
                     query,

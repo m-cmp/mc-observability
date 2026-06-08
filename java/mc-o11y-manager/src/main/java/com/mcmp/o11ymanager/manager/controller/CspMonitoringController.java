@@ -32,14 +32,14 @@ public class CspMonitoringController {
     private final SpiderClient spiderClient;
     private final CspCacheService cspCacheService;
 
-    @GetMapping("/vm/{vmName}/{measurement}")
+    @GetMapping("/node/{nodeName}/{measurement}")
     @Operation(
             summary = "GetVMMonitoring",
             operationId = "GetVMMonitoringCached",
             description =
                     "Proxy cb-spider /spider/monitoring/vm/{vmName}/{measurement} with Caffeine caching.")
     public SpiderMonitoringInfo.Data getVmMetric(
-            @Parameter(description = "CSP resource name of the VM") @PathVariable String vmName,
+            @Parameter(description = "CSP resource name of the VM") @PathVariable String nodeName,
             @Parameter(description = "Metric type (e.g. cpu_usage, memory_usage)") @PathVariable
                     String measurement,
             @RequestParam("ConnectionName") String connectionName,
@@ -49,10 +49,12 @@ public class CspMonitoringController {
             @RequestParam(value = "periodMinute", required = false) String periodMinute) {
         String tbh = firstNonBlank(timeBeforeHour, timeBeforeHourAlt, "1");
         String ivm = firstNonBlank(intervalMinute, periodMinute, "5");
-        CspCacheKey key = CspCacheKey.forVm(vmName, measurement, connectionName, tbh, ivm);
+        CspCacheKey key = CspCacheKey.forVm(nodeName, measurement, connectionName, tbh, ivm);
         return cspCacheService.getOrLoad(
                 key,
-                () -> spiderClient.getVMMonitoring(vmName, measurement, connectionName, tbh, ivm));
+                () ->
+                        spiderClient.getVMMonitoring(
+                                nodeName, measurement, connectionName, tbh, ivm));
     }
 
     @GetMapping("/cluster/{clusterName}/{nodeGroupName}/{nodeNumber}/{measurement}")

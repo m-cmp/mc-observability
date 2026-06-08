@@ -33,7 +33,7 @@ class ResBodyPredictionOptions(BaseModel):
     rs_msg: str = "Success"
 
 
-# POST /predictions/ns/{nsId}/mci/{mciId}
+# POST /predictions/ns/{nsId}/infra/{infraId}
 class PredictValue(BaseModel):
     timestamp: str
     value: float | None
@@ -46,7 +46,7 @@ class PredictionMCIResult(BaseModel):
     values: list[PredictValue]
 
 
-# POST /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}
+# POST /predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}
 class PredictionVMResult(BaseModel):
     ns_id: str
     infra_id: str
@@ -67,7 +67,7 @@ class ResBodyPredictionMCIResult(BaseModel):
     rs_msg: str = "Success"
 
 
-# GET /predictions/ns/{nsId}/mci/{mciId}/history
+# GET /predictions/ns/{nsId}/infra/{infraId}/history
 class HistoryValue(BaseModel):
     timestamp: str
     value: float | None
@@ -86,7 +86,7 @@ class ResBodyPredictionMCIHistory(BaseModel):
     rs_msg: str = "Success"
 
 
-# GET /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}history
+# GET /predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}history
 class PredictionVMHistory(BaseModel):
     ns_id: str
     infra_id: str

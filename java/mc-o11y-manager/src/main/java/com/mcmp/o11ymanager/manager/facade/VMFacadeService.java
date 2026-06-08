@@ -38,15 +38,15 @@ public class VMFacadeService {
     private final TumblebugService tumblebugService;
     private final InfluxDbService influxDbService;
 
-    public VMDTO postVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
+    public VMDTO postVM(String nsId, String infraId, String nodeId, VMRequestDTO dto) {
 
-        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
 
         try {
             hostLock.lock();
 
             VMStatus status =
-                    tumblebugService.isConnectedVM(nsId, mciId, vmId)
+                    tumblebugService.isConnectedVM(nsId, infraId, nodeId)
                             ? VMStatus.RUNNING
                             : VMStatus.FAILED;
 
@@ -54,31 +54,31 @@ public class VMFacadeService {
                 throw new RuntimeException("FAILED TO CONNECT VM");
             }
 
-            Long influxSeq = influxDbService.resolveInfluxDb(nsId, mciId);
+            Long influxSeq = influxDbService.resolveInfluxDb(nsId, infraId);
 
-            VMDTO savedVM = vmService.post(nsId, mciId, vmId, status, dto, influxSeq);
+            VMDTO savedVM = vmService.post(nsId, infraId, nodeId, status, dto, influxSeq);
 
             vmService.updateMonitoringAgentTaskStatusAndTaskId(
                     savedVM.getNsId(),
-                    savedVM.getMciId(),
-                    savedVM.getVmId(),
+                    savedVM.getInfraId(),
+                    savedVM.getNodeId(),
                     VMAgentTaskStatus.IDLE,
                     "");
             vmService.updateLogAgentTaskStatusAndTaskId(
                     savedVM.getNsId(),
-                    savedVM.getMciId(),
-                    savedVM.getVmId(),
+                    savedVM.getInfraId(),
+                    savedVM.getNodeId(),
                     VMAgentTaskStatus.IDLE,
                     "");
             vmService.updateTraceAgentTaskStatusAndTaskId(
                     savedVM.getNsId(),
-                    savedVM.getMciId(),
-                    savedVM.getVmId(),
+                    savedVM.getInfraId(),
+                    savedVM.getNodeId(),
                     VMAgentTaskStatus.IDLE,
                     "");
 
             // dto.gpu=true면 DCGM Exporter 설치 + telegraf GPU(dcgm) 수집 설정 포함
-            agentFacadeService.install(nsId, mciId, vmId, Boolean.TRUE.equals(dto.getGpu()));
+            agentFacadeService.install(nsId, infraId, nodeId, Boolean.TRUE.equals(dto.getGpu()));
 
             return savedVM;
         } finally {
@@ -86,17 +86,18 @@ public class VMFacadeService {
         }
     }
 
-    public VMDTO getVM(String nsId, String mciId, String vmId) {
+    public VMDTO getVM(String nsId, String infraId, String nodeId) {
 
-        log.info(">>> getVM() called with nsId: {}, mciId: {}, vmId: {}", nsId, mciId, vmId);
+        log.info(
+                ">>> getVM() called with nsId: {}, infraId: {}, nodeId: {}", nsId, infraId, nodeId);
 
-        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
 
         try {
             hostLock.lock();
 
-            VMDTO savedVM = vmService.get(nsId, mciId, vmId);
-            TumblebugInfra.Node node = tumblebugService.getNode(nsId, mciId, vmId);
+            VMDTO savedVM = vmService.get(nsId, infraId, nodeId);
+            TumblebugInfra.Node node = tumblebugService.getNode(nsId, infraId, nodeId);
             String userName = node.getNodeUserName();
             log.info(
                     ">>> VM fetched: id={}, name={} userName={}",
@@ -106,28 +107,28 @@ public class VMFacadeService {
 
             //        log.info(">>> start checking monitoring agent status");
             //        AgentServiceStatus monitoringStatus =
-            //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+            //                agentFacadeService.getAgentServiceStatus(nsId, infraId, nodeId,
             // Agent.TELEGRAF);
             //        log.info(">>> start checking log agent status");
             //        AgentServiceStatus logStatus =
-            //                agentFacadeService.getAgentServiceStatus(nsId, mciId, vmId,
+            //                agentFacadeService.getAgentServiceStatus(nsId, infraId, nodeId,
             // Agent.FLUENT_BIT);
 
             AgentStatus monitoringAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.TELEGRAF);
+                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.TELEGRAF);
 
             AgentStatus logAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.FLUENT_BIT);
+                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.FLUENT_BIT);
 
             AgentStatus traceAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.BEYLA);
+                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.BEYLA);
 
             return VMDTO.builder()
-                    .vmId(node.getId())
+                    .nodeId(node.getId())
                     .name(savedVM.getName())
                     .description(node.getDescription())
                     .nsId(nsId)
-                    .mciId(mciId)
+                    .infraId(infraId)
                     .monitoringAgentStatus(monitoringAgentStatus)
                     .logAgentStatus(logAgentStatus)
                     .traceAgentStatus(traceAgentStatus)
@@ -151,14 +152,14 @@ public class VMFacadeService {
                                 try {
                                     return getVM(
                                             baseDto.getNsId(),
-                                            baseDto.getMciId(),
-                                            baseDto.getVmId());
+                                            baseDto.getInfraId(),
+                                            baseDto.getNodeId());
                                 } catch (Exception e) {
                                     log.error(
-                                            ">>> getVM() failed for: nsId={}, mciId={}, vmId={}",
+                                            ">>> getVM() failed for: nsId={}, infraId={}, nodeId={}",
                                             baseDto.getNsId(),
-                                            baseDto.getMciId(),
-                                            baseDto.getVmId(),
+                                            baseDto.getInfraId(),
+                                            baseDto.getNodeId(),
                                             e);
                                     return null;
                                 }
@@ -180,9 +181,9 @@ public class VMFacadeService {
         return result;
     }
 
-    public List<VMDTO> getVMsNsMci(String nsId, String mciId) {
+    public List<VMDTO> getVMsNsMci(String nsId, String infraId) {
 
-        List<VMDTO> rawList = vmService.getByNsMci(nsId, mciId);
+        List<VMDTO> rawList = vmService.getByNsMci(nsId, infraId);
 
         return fetchVM(rawList);
     }
@@ -194,28 +195,28 @@ public class VMFacadeService {
         return fetchVM(rawList);
     }
 
-    public VMDTO putVM(String nsId, String mciId, String vmId, VMRequestDTO dto) {
+    public VMDTO putVM(String nsId, String infraId, String nodeId, VMRequestDTO dto) {
 
-        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
 
         try {
             hostLock.lock();
 
-            return vmService.put(nsId, mciId, vmId, dto);
+            return vmService.put(nsId, infraId, nodeId, dto);
         } finally {
             hostLock.unlock();
         }
     }
 
-    public void deleteVM(String nsId, String mciId, String vmId) {
+    public void deleteVM(String nsId, String infraId, String nodeId) {
 
-        ReentrantLock hostLock = vmService.getHostLock(nsId, mciId, vmId);
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
 
         try {
             hostLock.lock();
 
-            vmService.delete(nsId, mciId, vmId);
-            agentFacadeService.uninstall(nsId, mciId, vmId);
+            vmService.delete(nsId, infraId, nodeId);
+            agentFacadeService.uninstall(nsId, infraId, nodeId);
         } finally {
             hostLock.unlock();
         }

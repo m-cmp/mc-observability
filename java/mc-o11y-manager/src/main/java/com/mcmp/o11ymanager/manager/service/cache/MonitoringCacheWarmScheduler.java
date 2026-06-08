@@ -194,7 +194,7 @@ public class MonitoringCacheWarmScheduler {
             for (RangeSpec spec : ranges) {
                 try {
                     influxDbService.getMetricsByVM(
-                            vm.nsId(), vm.mciId(), vm.vmId(), buildRequest(spec, measurement));
+                            vm.nsId(), vm.infraId(), vm.nodeId(), buildRequest(spec, measurement));
                     ok.incrementAndGet();
                 } catch (Exception e) {
                     fail.incrementAndGet();
@@ -202,8 +202,8 @@ public class MonitoringCacheWarmScheduler {
                             "[CACHE-WARM:{}] failed ns={}, mci={}, vm={}, m={}, range={}, err={}",
                             jobName,
                             vm.nsId(),
-                            vm.mciId(),
-                            vm.vmId(),
+                            vm.infraId(),
+                            vm.nodeId(),
                             measurement,
                             spec.getRange(),
                             e.toString());
@@ -254,15 +254,15 @@ public class MonitoringCacheWarmScheduler {
         for (OverviewQuery q : queries) {
             try {
                 influxDbService.getMetricsByVM(
-                        vm.nsId(), vm.mciId(), vm.vmId(), buildOverviewRequest(q));
+                        vm.nsId(), vm.infraId(), vm.nodeId(), buildOverviewRequest(q));
                 ok.incrementAndGet();
             } catch (Exception e) {
                 fail.incrementAndGet();
                 log.debug(
                         "[CACHE-WARM:overview] failed ns={}, mci={}, vm={}, m={}, fn={}, fd={}, err={}",
                         vm.nsId(),
-                        vm.mciId(),
-                        vm.vmId(),
+                        vm.infraId(),
+                        vm.nodeId(),
                         q.getMeasurement(),
                         q.getFunction(),
                         q.getField(),
@@ -303,7 +303,7 @@ public class MonitoringCacheWarmScheduler {
         List<VmWithCreatedAt> withTime = new ArrayList<>(active.size());
         for (VmRef vm : active) {
             Optional<Instant> createdAt =
-                    vmCreatedTimeResolver.resolve(vm.nsId(), vm.mciId(), vm.vmId());
+                    vmCreatedTimeResolver.resolve(vm.nsId(), vm.infraId(), vm.nodeId());
             createdAt.ifPresent(instant -> withTime.add(new VmWithCreatedAt(vm, instant)));
         }
         if (withTime.isEmpty()) {

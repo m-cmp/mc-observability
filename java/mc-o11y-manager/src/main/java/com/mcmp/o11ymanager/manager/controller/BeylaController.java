@@ -51,7 +51,7 @@ public class BeylaController {
     private final VmAccessInfoResolver vmAccessInfoResolver;
     private final SemaphoreInstallTemplateCounter templateCounter;
 
-    @PostMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/install")
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/install")
     @Operation(
             summary = "Install Beyla trace agent (Linux only)",
             operationId = "InstallTraceAgent",
@@ -60,77 +60,77 @@ public class BeylaController {
                             + " Windows에는 /windows-trace-agent/install을 사용하라.")
     public ResBody<Void> install(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId)
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId)
             throws Exception {
 
-        ensureLinux(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureLinux(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        beylaFacadeService.install(nsId, mciId, vmId, accessInfo, templateCount);
+        beylaFacadeService.install(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
-    @PutMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/update")
+    @PutMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/update")
     @Operation(summary = "Update Beyla trace agent (Linux only)", operationId = "UpdateTraceAgent")
     public ResBody<Void> update(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId)
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId)
             throws Exception {
 
-        ensureLinux(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureLinux(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        beylaFacadeService.update(nsId, mciId, vmId, accessInfo, templateCount);
+        beylaFacadeService.update(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
-    @DeleteMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/uninstall")
+    @DeleteMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/uninstall")
     @Operation(
             summary = "Uninstall Beyla trace agent (Linux only)",
             operationId = "UninstallTraceAgent")
     public ResBody<Void> uninstall(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId) {
 
-        ensureLinux(nsId, mciId, vmId);
-        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, mciId, vmId);
+        ensureLinux(nsId, infraId, nodeId);
+        AccessInfoDTO accessInfo = vmAccessInfoResolver.resolve(nsId, infraId, nodeId);
         int templateCount = templateCounter.next();
-        beylaFacadeService.uninstall(nsId, mciId, vmId, accessInfo, templateCount);
+        beylaFacadeService.uninstall(nsId, infraId, nodeId, accessInfo, templateCount);
         return new ResBody<>();
     }
 
-    @PostMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/restart")
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/restart")
     @Operation(
             summary = "Restart Beyla trace agent (Linux only)",
             operationId = "RestartTraceAgent")
     public ResBody<List<ResultDTO>> restart(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId) {
 
-        ensureLinux(nsId, mciId, vmId);
-        List<ResultDTO> results = beylaFacadeService.restart(nsId, mciId, vmId);
+        ensureLinux(nsId, infraId, nodeId);
+        List<ResultDTO> results = beylaFacadeService.restart(nsId, infraId, nodeId);
         return new ResBody<>(results);
     }
 
-    @GetMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/status")
+    @GetMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/status")
     @Operation(
             summary = "Get Beyla Agent Status",
             operationId = "GetBeylaAgentStatus",
             description = "Get Beyla APM/Trace agent status on the target VM")
     public ResBody<AgentStatus> getStatus(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId) {
 
-        AgentStatus status = agentFacadeService.getAgentStatus(nsId, mciId, vmId, Agent.BEYLA);
+        AgentStatus status = agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.BEYLA);
         return new ResBody<>(status);
     }
 
-    @GetMapping("/{nsId}/{mciId}/vm/{vmId}/beyla/system-check")
+    @GetMapping("/{nsId}/{infraId}/node/{nodeId}/beyla/system-check")
     @Operation(
             summary = "Check Beyla System Requirements (Linux only)",
             operationId = "CheckBeylaSystemRequirements",
@@ -138,16 +138,17 @@ public class BeylaController {
                     "Check if the target VM meets Beyla system requirements (kernel version, BTF support)")
     public ResBody<BeylaSystemCheckResult> checkSystemRequirements(
             @Parameter(description = "Namespace ID", example = "ns-1") @PathVariable String nsId,
-            @Parameter(description = "MCI ID", example = "mci-1") @PathVariable String mciId,
-            @Parameter(description = "VM ID", example = "vm-1") @PathVariable String vmId) {
+            @Parameter(description = "Infra ID", example = "infra-1") @PathVariable String infraId,
+            @Parameter(description = "Node ID", example = "node-1") @PathVariable String nodeId) {
 
-        BeylaSystemCheckResult result = beylaSystemRequirementValidator.validate(nsId, mciId, vmId);
+        BeylaSystemCheckResult result =
+                beylaSystemRequirementValidator.validate(nsId, infraId, nodeId);
         return new ResBody<>(result);
     }
 
     /** Linux 전용 엔드포인트. Windows node면 400 BAD_REQUEST로 caller에 올바른 endpoint 안내. */
-    private void ensureLinux(String nsId, String mciId, String vmId) {
-        if (vmAccessInfoResolver.isWindowsNode(nsId, mciId, vmId)) {
+    private void ensureLinux(String nsId, String infraId, String nodeId) {
+        if (vmAccessInfoResolver.isWindowsNode(nsId, infraId, nodeId)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "This endpoint is for Linux nodes only. For Windows nodes, use"

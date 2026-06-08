@@ -20,8 +20,8 @@ public class InfluxDbFacadeService {
     private final InfluxDbService influxDbService;
 
     @Transactional(readOnly = true)
-    public InfluxDTO resolveForVM(String nsId, String mciId) {
-        return influxDbService.resolveInfluxDto(nsId, mciId);
+    public InfluxDTO resolveForVM(String nsId, String infraId) {
+        return influxDbService.resolveInfluxDto(nsId, infraId);
     }
 
     public List<TagDTO> getTags() {
@@ -32,13 +32,13 @@ public class InfluxDbFacadeService {
         return influxDbService.getFields().getData();
     }
 
-    public List<MetricDTO> postMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req) {
-        return influxDbService.getMetricsByNsMci(nsId, mciId, req);
+    public List<MetricDTO> postMetricsByNsMci(String nsId, String infraId, MetricRequestDTO req) {
+        return influxDbService.getMetricsByNsMci(nsId, infraId, req);
     }
 
     public List<MetricDTO> postMetricsByVM(
-            String nsId, String mciId, String vmId, MetricRequestDTO req) {
-        return influxDbService.getMetricsByVM(nsId, mciId, vmId, req);
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        return influxDbService.getMetricsByVM(nsId, infraId, nodeId, req);
     }
 
     public List<InfluxDTO> getInfluxDbs() {

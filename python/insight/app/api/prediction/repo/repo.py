@@ -30,12 +30,12 @@ class InfluxDBRepository:
             database=db_info["database"],
         )
 
-    def save_results(self, df: pd.DataFrame, nsId: str, mciId: str, vmId: str, measurement: str):
+    def save_results(self, df: pd.DataFrame, nsId: str, infraId: str, nodeId: str, measurement: str):
         points = []
-        if vmId:
-            tags = {"ns_id": nsId, "infra_id": mciId, "node_id": vmId}
+        if nodeId:
+            tags = {"ns_id": nsId, "infra_id": infraId, "node_id": nodeId}
         else:
-            tags = {"ns_id": nsId, "infra_id": mciId}
+            tags = {"ns_id": nsId, "infra_id": infraId}
         for _, row in df.iterrows():
             point = {
                 "measurement": measurement.lower(),
@@ -49,16 +49,16 @@ class InfluxDBRepository:
         logger.info("Success saving prediction result to influxdb")
 
     def query_prediction_history(
-        self, nsId: str, mciId: str, measurement: str, start_time: str, end_time: str, vmId=None
+        self, nsId: str, infraId: str, measurement: str, start_time: str, end_time: str, nodeId=None
     ):
         measurement = measurement.lower()
         query = f'SELECT mean("prediction_metric") as "prediction_metric" FROM "insight"."autogen".f"{measurement}"'
 
         conditions = []
         conditions.append(f"\"ns_id\" = '{nsId}'")
-        conditions.append(f"\"infra_id\" = '{mciId}'")
-        if vmId:
-            conditions.append(f"\"node_id\" = '{vmId}'")
+        conditions.append(f"\"infra_id\" = '{infraId}'")
+        if nodeId:
+            conditions.append(f"\"node_id\" = '{nodeId}'")
         conditions.append(f"time >= '{start_time}'")
         conditions.append(f"time <= '{end_time}'")
 

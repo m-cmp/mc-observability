@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface SpiderClient {
 
     @GetMapping(
-            value = "/spider/monitoring/vm/{vmName}/{measurement}",
+            value = "/spider/monitoring/vm/{nodeName}/{measurement}",
             produces = "application/json")
     SpiderMonitoringInfo.Data getVMMonitoring(
-            @PathVariable String vmName,
+            @PathVariable String nodeName,
             @PathVariable String measurement,
             @RequestParam("ConnectionName") String connectionName,
             @RequestParam("TimeBeforeHour") String timeBeforeHour,

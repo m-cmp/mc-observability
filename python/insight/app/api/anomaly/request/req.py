@@ -55,13 +55,13 @@ class AnomalyDetectionTargetUpdate(BaseModel):
 
 class GetHistoryMCIPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for anomaly detection."))
-    mciId: str = Field(Path(description="The MCI ID for anomaly detection."))
+    infraId: str = Field(Path(description="The MCI ID for anomaly detection."))
 
 
 class GetHistoryVMPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for anomaly detection."))
-    mciId: str = Field(Path(description="The MCI ID for anomaly detection."))
-    vmId: str = Field(Path(description="The VM ID for anomaly detection"))
+    infraId: str = Field(Path(description="The MCI ID for anomaly detection."))
+    nodeId: str = Field(Path(description="The VM ID for anomaly detection"))
 
 
 class GetAnomalyHistoryFilter(BaseModel):

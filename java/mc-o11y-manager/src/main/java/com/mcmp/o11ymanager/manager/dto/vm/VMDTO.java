@@ -24,9 +24,9 @@ import lombok.Setter;
 @JsonInclude(Include.NON_NULL)
 public class VMDTO {
 
-    @Schema(description = "VM ID", example = "vm-1")
+    @Schema(description = "Node ID", example = "node-1")
     @JsonProperty("node_id")
-    private String vmId;
+    private String nodeId;
 
     @Schema(description = "VM name", example = "mcmp-vm")
     private String name;
@@ -77,9 +77,9 @@ public class VMDTO {
     @JsonProperty("ns_id")
     private String nsId;
 
-    @Schema(description = "MCI ID", example = "mci-1")
+    @Schema(description = "Infra ID", example = "infra-1")
     @JsonProperty("infra_id")
-    private String mciId;
+    private String infraId;
 
     @Schema(description = "Monitoring agent status", example = "SUCCESS")
     @JsonProperty("monitoring_agent_status")
@@ -95,7 +95,7 @@ public class VMDTO {
 
     public static VMDTO fromEntity(VMEntity entity) {
         return VMDTO.builder()
-                .vmId(entity.getVmId())
+                .nodeId(entity.getNodeId())
                 .name(entity.getName())
                 .description(entity.getDescription())
                 .influxSeq(entity.getInfluxSeq())
@@ -111,13 +111,13 @@ public class VMDTO {
                 .logAgentStatus(entity.getLogAgentStatus())
                 .traceAgentStatus(entity.getTraceAgentStatus())
                 .nsId(entity.getNsId())
-                .mciId(entity.getMciId())
+                .infraId(entity.getInfraId())
                 .build();
     }
 
     public VMEntity toEntity() {
         return VMEntity.builder()
-                .vmId(this.getVmId())
+                .nodeId(this.getNodeId())
                 .name(this.name)
                 .influxSeq(this.getInfluxSeq())
                 .vmStatus(this.getVmStatus())
@@ -135,7 +135,7 @@ public class VMDTO {
                 .logAgentStatus(this.logAgentStatus)
                 .traceAgentStatus(this.traceAgentStatus)
                 .nsId(this.nsId)
-                .mciId(this.mciId)
+                .infraId(this.infraId)
                 .build();
     }
 }

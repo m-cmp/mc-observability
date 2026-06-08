@@ -34,19 +34,20 @@ public class FluentBitFacadeService {
 
     public void install(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
         // 1. Check if host is in IDLE state
-        vmService.isIdleLogAgent(nsId, mciId, vmId);
+        vmService.isIdleLogAgent(nsId, infraId, nodeId);
 
         // 2. Update host status
-        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
+        vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING);
 
-        String configContent = fluentBitConfigFacadeService.initFluentbitConfig(nsId, mciId, vmId);
+        String configContent =
+                fluentBitConfigFacadeService.initFluentbitConfig(nsId, infraId, nodeId);
 
         log.info(String.format("Fluent-Bit config: %s", configContent));
 
@@ -61,32 +62,32 @@ public class FluentBitFacadeService {
 
         // 5. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
         // 7. Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.FLUENT_BIT);
     }
 
     public void update(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
         // 1. Check if host is in IDLE state
-        vmService.isIdleLogAgent(nsId, mciId, vmId);
+        vmService.isIdleLogAgent(nsId, infraId, nodeId);
 
         // 2. Update host status
-        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
+        vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING);
 
         // 3. Send (via semaphore) - update request
         Task task =
@@ -99,27 +100,31 @@ public class FluentBitFacadeService {
 
         // 4. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
         // 6. Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UPDATE,
                 Agent.FLUENT_BIT);
     }
 
     public void uninstall(
-            String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
+            String nsId,
+            String infraId,
+            String nodeId,
+            AccessInfoDTO accessInfo,
+            int templateCount) {
 
         // 1) Check current status
-        vmService.isIdleLogAgent(nsId, mciId, vmId);
+        vmService.isIdleLogAgent(nsId, infraId, nodeId);
 
         // 2) Update status
-        vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
+        vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.PREPARING);
 
         // 3. Send (via semaphore) - uninstall request
         Task task =
@@ -132,54 +137,58 @@ public class FluentBitFacadeService {
 
         // 5. Update task ID and task status
         vmService.updateLogAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
+                nsId,
+                infraId,
+                nodeId,
+                VMAgentTaskStatus.UNINSTALLING,
+                String.valueOf(task.getId()));
 
         // 6) Register scheduler
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UNINSTALL,
                 Agent.FLUENT_BIT);
     }
 
     @Transactional
-    public List<ResultDTO> restart(String nsId, String mciId, String vmId) {
+    public List<ResultDTO> restart(String nsId, String infraId, String nodeId) {
         List<ResultDTO> results = new ArrayList<>();
 
         try {
             agentTaskStatusLock.lock();
 
             // 1. Check if host is in IDLE state
-            vmService.isIdleLogAgent(nsId, mciId, vmId);
+            vmService.isIdleLogAgent(nsId, infraId, nodeId);
 
             // 2. Change status to RESTARTING
-            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
+            vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.RESTARTING);
 
             // TODO: Use Tumblebug CMD - 3. Execute restart
 
-            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
             agentTaskStatusLock.unlock();
         } catch (Exception e) {
             agentTaskStatusLock.unlock();
 
-            vmService.updateLogAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateLogAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());

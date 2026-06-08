@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item")
+@RequestMapping("/api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/item")
 @Tag(name = "[Manager] Monitoring VM Item Management")
 public class ItemController {
     private final ItemFacadeService itemFacadeService;
@@ -30,11 +30,11 @@ public class ItemController {
     public ResBody<List<MonitoringItemDTO>> getItems(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId) {
-        return new ResBody<>(itemFacadeService.getTelegrafItems(nsId, mciId, vmId));
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId) {
+        return new ResBody<>(itemFacadeService.getTelegrafItems(nsId, infraId, nodeId));
     }
 
     @PostMapping
@@ -45,12 +45,12 @@ public class ItemController {
     public ResBody<Void> postItem(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody @Valid MonitoringItemRequestDTO dto) {
-        itemFacadeService.addTelegrafPlugin(nsId, mciId, vmId, dto);
+        itemFacadeService.addTelegrafPlugin(nsId, infraId, nodeId, dto);
         return ResBody.success(null);
     }
 
@@ -62,12 +62,12 @@ public class ItemController {
     public ResBody<Void> putItem(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody @Valid MonitoringItemUpdateDTO dto) {
-        itemFacadeService.updateTelegrafPlugin(nsId, mciId, vmId, dto);
+        itemFacadeService.updateTelegrafPlugin(nsId, infraId, nodeId, dto);
         return ResBody.success(null);
     }
 
@@ -79,13 +79,13 @@ public class ItemController {
     public ResBody<Void> deleteItem(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @Parameter(description = "Item Seq (e.g., 1)", example = "1") @PathVariable
                     Long itemSeq) {
-        itemFacadeService.deleteTelegrafPlugin(nsId, mciId, vmId, itemSeq);
+        itemFacadeService.deleteTelegrafPlugin(nsId, infraId, nodeId, itemSeq);
         return ResBody.success(null);
     }
 }

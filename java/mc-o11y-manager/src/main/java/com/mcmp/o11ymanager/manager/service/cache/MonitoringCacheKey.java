@@ -13,14 +13,22 @@ import java.util.Objects;
  * identical requests in the same hour return cached data, while a new hour produces a fresh entry.
  */
 public record MonitoringCacheKey(
-        String nsId, String mciId, String vmId, String requestSignature, long hourBucket) {
+        String nsId, String infraId, String nodeId, String requestSignature, long hourBucket) {
 
     /** Builds the canonical cache key for an ns/mci-scoped metric query. */
     public static MonitoringCacheKey of(
-            String nsId, String mciId, String vmId, MetricRequestDTO req, long blockPeriodSeconds) {
+            String nsId,
+            String infraId,
+            String nodeId,
+            MetricRequestDTO req,
+            long blockPeriodSeconds) {
         long bucket = (System.currentTimeMillis() / 1000L) / blockPeriodSeconds;
         return new MonitoringCacheKey(
-                nullToEmpty(nsId), nullToEmpty(mciId), nullToEmpty(vmId), signatureOf(req), bucket);
+                nullToEmpty(nsId),
+                nullToEmpty(infraId),
+                nullToEmpty(nodeId),
+                signatureOf(req),
+                bucket);
     }
 
     /**

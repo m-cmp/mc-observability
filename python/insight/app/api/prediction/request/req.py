@@ -21,13 +21,13 @@ class GetMeasurementPath(BaseModel):
 
 class PredictionMCIPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for the prediction."))
-    mciId: str = Field(Path(description="The MCI ID for the prediction."))
+    infraId: str = Field(Path(description="The MCI ID for the prediction."))
 
 
 class PredictionVMPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for the prediction."))
-    mciId: str = Field(Path(description="The MCI ID for the prediction."))
-    vmId: str = Field(Path(description="The VM ID for the prediction."))
+    infraId: str = Field(Path(description="The MCI ID for the prediction."))
+    nodeId: str = Field(Path(description="The VM ID for the prediction."))
 
 
 class PredictionMetricType(str, Enum):
@@ -54,13 +54,13 @@ def add_time_delta(delta=0) -> str:
 
 class GetHistoryMCIPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for retrieving predictions."))
-    mciId: str = Field(Path(description="The MCI ID for retrieving predictions."))
+    infraId: str = Field(Path(description="The MCI ID for retrieving predictions."))
 
 
 class GetHistoryVMPath(BaseModel):
     nsId: str = Field(Path(description="The Namespace ID for retrieving predictions."))
-    mciId: str = Field(Path(description="The MCI ID for retrieving predictions."))
-    vmId: str = Field(Path(description="The VM ID for retrieving predictions."))
+    infraId: str = Field(Path(description="The MCI ID for retrieving predictions."))
+    nodeId: str = Field(Path(description="The VM ID for retrieving predictions."))
 
 
 class GetPredictionHistoryQuery(BaseModel):

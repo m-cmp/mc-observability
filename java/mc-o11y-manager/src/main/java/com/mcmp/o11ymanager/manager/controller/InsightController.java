@@ -95,19 +95,20 @@ public class InsightController {
             summary = "GetMCIAnomalyDetectionSettings",
             operationId = "GetMCIAnomalyDetectionSettings",
             description = "Fetch the current anomaly detection settings for a specific mci group.")
-    @GetMapping("/anomaly-detection/settings/ns/{nsId}/mci/{mciId}")
-    public Object getAnomalySettingsForMci(@PathVariable String nsId, @PathVariable String mciId) {
-        return insightPort.getAnomalySettingsForMci(nsId, mciId);
+    @GetMapping("/anomaly-detection/settings/ns/{nsId}/infra/{infraId}")
+    public Object getAnomalySettingsForInfra(
+            @PathVariable String nsId, @PathVariable String infraId) {
+        return insightPort.getAnomalySettingsForInfra(nsId, infraId);
     }
 
     @Operation(
             summary = "GetVMAnomalyDetectionSettings",
             operationId = "GetVMAnomalyDetectionSettings",
             description = "Fetch the current anomaly detection settings for a specific vm.")
-    @GetMapping("/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}")
-    public Object getAnomalySettingsForVm(
-            @PathVariable String nsId, @PathVariable String mciId, @PathVariable String vmId) {
-        return insightPort.getAnomalySettingsForVm(nsId, mciId, vmId);
+    @GetMapping("/anomaly-detection/settings/ns/{nsId}/infra/{infraId}/node/{nodeId}")
+    public Object getAnomalySettingsForNode(
+            @PathVariable String nsId, @PathVariable String infraId, @PathVariable String nodeId) {
+        return insightPort.getAnomalySettingsForNode(nsId, infraId, nodeId);
     }
 
     @Operation(
@@ -115,14 +116,15 @@ public class InsightController {
             operationId = "GetAnomalyDetectionMCIHistory",
             description =
                     "Fetch the results of anomaly detection for mci group within a given time range.")
-    @GetMapping("/anomaly-detection/ns/{nsId}/mci/{mciId}/history")
-    public Object getAnomalyHistoryForMci(
+    @GetMapping("/anomaly-detection/ns/{nsId}/infra/{infraId}/history")
+    public Object getAnomalyHistoryForInfra(
             @PathVariable String nsId,
-            @PathVariable String mciId,
+            @PathVariable String infraId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getAnomalyHistoryForMci(nsId, mciId, measurement, startTime, endTime);
+        return insightPort.getAnomalyHistoryForInfra(
+                nsId, infraId, measurement, startTime, endTime);
     }
 
     @Operation(
@@ -130,16 +132,16 @@ public class InsightController {
             operationId = "GetAnomalyDetectionVMHistory",
             description =
                     "Fetch the results of anomaly detection for a specific vm within a given time range.")
-    @GetMapping("/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
-    public Object getAnomalyHistoryForVm(
+    @GetMapping("/anomaly-detection/ns/{nsId}/infra/{infraId}/node/{nodeId}/history")
+    public Object getAnomalyHistoryForNode(
             @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String vmId,
+            @PathVariable String infraId,
+            @PathVariable String nodeId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getAnomalyHistoryForVm(
-                nsId, mciId, vmId, measurement, startTime, endTime);
+        return insightPort.getAnomalyHistoryForNode(
+                nsId, infraId, nodeId, measurement, startTime, endTime);
     }
 
     /* ===================== ALERT ===================== */
@@ -281,52 +283,53 @@ public class InsightController {
             summary = "PostPredictionMCI",
             operationId = "PostPredictionMCI",
             description = "Predict future metrics (cpu, mem, disk, system) for a given mci group.")
-    @PostMapping("/predictions/ns/{nsId}/mci/{mciId}")
-    public Object predictMonitoringDataForMci(
-            @PathVariable String nsId, @PathVariable String mciId, @RequestBody Object body) {
-        return insightPort.predictMonitoringDataForMci(nsId, mciId, body);
+    @PostMapping("/predictions/ns/{nsId}/infra/{infraId}")
+    public Object predictMonitoringDataForInfra(
+            @PathVariable String nsId, @PathVariable String infraId, @RequestBody Object body) {
+        return insightPort.predictMonitoringDataForInfra(nsId, infraId, body);
     }
 
     @Operation(
             summary = "PostPredictionVM",
             operationId = "PostPredictionVM",
             description = "Predict future metrics (cpu, mem, disk, system) for a given vm.")
-    @PostMapping("/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}")
-    public Object predictMonitoringDataForVm(
+    @PostMapping("/predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}")
+    public Object predictMonitoringDataForNode(
             @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String vmId,
+            @PathVariable String infraId,
+            @PathVariable String nodeId,
             @RequestBody Object body) {
-        return insightPort.predictMonitoringDataForVm(nsId, mciId, vmId, body);
+        return insightPort.predictMonitoringDataForNode(nsId, infraId, nodeId, body);
     }
 
     @Operation(
             summary = "GetPredictionMCIHistory",
             operationId = "GetPredictionMCIHistory",
             description = "Get previously stored prediction data for a specific mci group.")
-    @GetMapping("/predictions/ns/{nsId}/mci/{mciId}/history")
-    public Object getPredictionHistoryForMci(
+    @GetMapping("/predictions/ns/{nsId}/infra/{infraId}/history")
+    public Object getPredictionHistoryForInfra(
             @PathVariable String nsId,
-            @PathVariable String mciId,
+            @PathVariable String infraId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getPredictionHistoryForMci(nsId, mciId, measurement, startTime, endTime);
+        return insightPort.getPredictionHistoryForInfra(
+                nsId, infraId, measurement, startTime, endTime);
     }
 
     @Operation(
             summary = "GetPredictionVMHistory",
             operationId = "GetPredictionVMHistory",
             description = "Get previously stored prediction data for a specific vm.")
-    @GetMapping("/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
-    public Object getPredictionHistoryForVm(
+    @GetMapping("/predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}/history")
+    public Object getPredictionHistoryForNode(
             @PathVariable String nsId,
-            @PathVariable String mciId,
-            @PathVariable String vmId,
+            @PathVariable String infraId,
+            @PathVariable String nodeId,
             @RequestParam String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime) {
-        return insightPort.getPredictionHistoryForVm(
-                nsId, mciId, vmId, measurement, startTime, endTime);
+        return insightPort.getPredictionHistoryForNode(
+                nsId, infraId, nodeId, measurement, startTime, endTime);
     }
 }

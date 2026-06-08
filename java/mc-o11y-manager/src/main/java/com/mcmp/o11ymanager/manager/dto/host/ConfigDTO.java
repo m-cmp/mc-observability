@@ -13,11 +13,11 @@ import lombok.*;
 @Schema(description = "DTO for updating configuration")
 public class ConfigDTO {
 
-    private String vmId;
+    private String nodeId;
 
     private String nsId;
 
-    private String mciId;
+    private String infraId;
 
     @Schema(description = "File path", example = "telegraf.conf")
     @NotBlank private String path;

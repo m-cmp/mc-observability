@@ -84,17 +84,18 @@ public class TelegrafConfigFacadeService {
                     + ","
                     + CONFIG_METRIC_SYSTEM;
 
-    public String initTelegrafConfig(String nsId, String mciId, String vmId) {
-        return generateTelegrafConfig(nsId, mciId, vmId, CONFIG_DEFAULT_METRICS);
+    public String initTelegrafConfig(String nsId, String infraId, String nodeId) {
+        return generateTelegrafConfig(nsId, infraId, nodeId, CONFIG_DEFAULT_METRICS);
     }
 
-    public String initTelegrafConfig(String nsId, String mciId, String vmId, boolean gpu) {
+    public String initTelegrafConfig(String nsId, String infraId, String nodeId, boolean gpu) {
         String metrics =
                 gpu ? CONFIG_DEFAULT_METRICS + "," + CONFIG_METRIC_GPU : CONFIG_DEFAULT_METRICS;
-        return generateTelegrafConfig(nsId, mciId, vmId, metrics);
+        return generateTelegrafConfig(nsId, infraId, nodeId, metrics);
     }
 
-    public String generateTelegrafConfig(String nsId, String mciId, String vmId, String metrics) {
+    public String generateTelegrafConfig(
+            String nsId, String infraId, String nodeId, String metrics) {
         String errMsg;
 
         if (!telegrafConfigGlobal.exists()) {
@@ -240,23 +241,23 @@ public class TelegrafConfigFacadeService {
 
         fileService.appendConfig(telegrafConfigOutputsInfluxDB, sb);
 
-        var out = influxDbFacadeService.resolveForVM(nsId, mciId);
+        var out = influxDbFacadeService.resolveForVM(nsId, infraId);
 
         String finalNsId = (nsId != null) ? nsId : "";
         log.debug(finalNsId);
 
-        String finalMciId = (mciId != null) ? mciId : "";
-        log.debug(finalMciId);
+        String finalInfraId = (infraId != null) ? infraId : "";
+        log.debug(finalInfraId);
 
-        String finalVmId = (vmId != null) ? vmId : "";
-        log.debug(finalVmId);
+        String finalNodeId = (nodeId != null) ? nodeId : "";
+        log.debug(finalNodeId);
 
         return sb.toString()
                 .replace("@DCGM_EXPORTER_URL", dcgmExporterUrl)
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
-                .replace("@INFRA_ID", finalMciId)
-                .replace("@NODE_ID", finalVmId)
+                .replace("@INFRA_ID", finalInfraId)
+                .replace("@NODE_ID", finalNodeId)
                 .replace("@URL", out.getUrl())
                 .replace("@DATABASE", out.getDatabase())
                 .replace("@USERNAME", out.getUsername())

@@ -24,64 +24,64 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring")
-@Tag(name = "[Manager] Monitoring VM Management")
+@Tag(name = "[Manager] Monitoring Node Management")
 public class VMController {
 
     private final VMFacadeService vmFacadeService;
 
-    @GetMapping("/{nsId}/{mciId}/vm/{vmId}")
+    @GetMapping("/{nsId}/{infraId}/node/{nodeId}")
     @Operation(summary = "GetVM", operationId = "GetVM", description = "Get target (VM)")
     public ResBody<VMDTO> getVM(
             @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId) {
-        return new ResBody<>(vmFacadeService.getVM(nsId, mciId, vmId));
+            @Parameter(description = "Infra ID (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId) {
+        return new ResBody<>(vmFacadeService.getVM(nsId, infraId, nodeId));
     }
 
-    @PostMapping("/{nsId}/{mciId}/vm/{vmId}")
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}")
     @Operation(summary = "PostVM", operationId = "PostVM", description = "Create target (VM)")
     public ResBody<Void> postVM(
             @Parameter(description = "Namespace ID (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "MCI ID (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "VM ID (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "Infra ID (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "Node ID (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody @Valid VMRequestDTO dto) {
-        vmFacadeService.postVM(nsId, mciId, vmId, dto);
+        vmFacadeService.postVM(nsId, infraId, nodeId, dto);
         return new ResBody<>();
     }
 
-    @PutMapping("/{nsId}/{mciId}/vm/{vmId}")
+    @PutMapping("/{nsId}/{infraId}/node/{nodeId}")
     @Operation(summary = "PutVM", operationId = "PutVM", description = "Update target")
     public ResBody<VMDTO> putVM(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody VMRequestDTO dto) {
-        return new ResBody<>(vmFacadeService.putVM(nsId, mciId, vmId, dto));
+        return new ResBody<>(vmFacadeService.putVM(nsId, infraId, nodeId, dto));
     }
 
-    @DeleteMapping("/{nsId}/{mciId}/vm/{vmId}")
+    @DeleteMapping("/{nsId}/{infraId}/node/{nodeId}")
     @Operation(summary = "DeleteVM", operationId = "DeleteVM", description = "Delete target")
     public ResBody<Void> deleteVM(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId) {
-        vmFacadeService.deleteVM(nsId, mciId, vmId);
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId) {
+        vmFacadeService.deleteVM(nsId, infraId, nodeId);
         return new ResBody<>();
     }
 
-    @GetMapping("/{nsId}/{mciId}/vm")
+    @GetMapping("/{nsId}/{infraId}/node")
     @Operation(
             summary = "GetVMByNsMci",
             operationId = "GetVMByNsMci",
@@ -89,12 +89,12 @@ public class VMController {
     public ResBody<List<VMDTO>> getVMByNsMci(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId) {
-        return new ResBody<>(vmFacadeService.getVMsNsMci(nsId, mciId));
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId) {
+        return new ResBody<>(vmFacadeService.getVMsNsMci(nsId, infraId));
     }
 
-    @GetMapping("/vm")
+    @GetMapping("/node")
     @Operation(
             summary = "GetAllVMs",
             operationId = "GetAllVMs",

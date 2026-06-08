@@ -1,8 +1,7 @@
 import client from './client';
 
-// NOTE: backend URL path still uses /vm (e.g. /trigger/policy/{id}/vm) and
-// payload field `targetScope` accepts "vm"|"mci" literals. JS function names
-// reflect Tumblebug Infra/Node naming.
+// Backend trigger path: /trigger/policy/{id}/node. The `targetScope` field accepts
+// "infra"|"node" (→ trigger queries by infra_id/node_id, matching Telegraf/InfluxDB tags).
 
 // Trigger policies
 export async function getPolicies(page = 1, size = 20) {
@@ -20,11 +19,11 @@ export async function deletePolicy(id) {
 }
 
 export async function addNodeToPolicy(policyId, body) {
-  return client.post(`/api/o11y/trigger/policy/${policyId}/vm`, body);
+  return client.post(`/api/o11y/trigger/policy/${policyId}/node`, body);
 }
 
 export async function removeNodeFromPolicy(policyId, body) {
-  return client.delete(`/api/o11y/trigger/policy/${policyId}/vm`, { data: body });
+  return client.delete(`/api/o11y/trigger/policy/${policyId}/node`, { data: body });
 }
 
 export async function updatePolicyChannels(policyId, channels) {

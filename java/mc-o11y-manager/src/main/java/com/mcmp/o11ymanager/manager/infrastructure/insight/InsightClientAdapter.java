@@ -28,32 +28,33 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object predictMonitoringDataForMci(String nsId, String mciId, Object body) {
-        return insightClient.predictMonitoringDataForMci(nsId, mciId, body);
+    public Object predictMonitoringDataForInfra(String nsId, String infraId, Object body) {
+        return insightClient.predictMonitoringDataForInfra(nsId, infraId, body);
     }
 
     @Override
-    public Object predictMonitoringDataForVm(String nsId, String mciId, String vmId, Object body) {
-        return insightClient.predictMonitoringDataForVm(nsId, mciId, vmId, body);
+    public Object predictMonitoringDataForNode(
+            String nsId, String infraId, String nodeId, Object body) {
+        return insightClient.predictMonitoringDataForNode(nsId, infraId, nodeId, body);
     }
 
     @Override
-    public Object getPredictionHistoryForMci(
-            String nsId, String mciId, String measurement, String startTime, String endTime) {
-        return insightClient.getPredictionHistoryForMci(
-                nsId, mciId, measurement, startTime, endTime);
+    public Object getPredictionHistoryForInfra(
+            String nsId, String infraId, String measurement, String startTime, String endTime) {
+        return insightClient.getPredictionHistoryForInfra(
+                nsId, infraId, measurement, startTime, endTime);
     }
 
     @Override
-    public Object getPredictionHistoryForVm(
+    public Object getPredictionHistoryForNode(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             String measurement,
             String startTime,
             String endTime) {
-        return insightClient.getPredictionHistoryForVm(
-                nsId, mciId, vmId, measurement, startTime, endTime);
+        return insightClient.getPredictionHistoryForNode(
+                nsId, infraId, nodeId, measurement, startTime, endTime);
     }
 
     /* ===================== Anomaly Detection ===================== */
@@ -98,31 +99,32 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object getAnomalySettingsForMci(String nsId, String mciId) {
-        return insightClient.getAnomalySettingsForMci(nsId, mciId);
+    public Object getAnomalySettingsForInfra(String nsId, String infraId) {
+        return insightClient.getAnomalySettingsForInfra(nsId, infraId);
     }
 
     @Override
-    public Object getAnomalySettingsForVm(String nsId, String mciId, String vmId) {
-        return insightClient.getAnomalySettingsForVm(nsId, mciId, vmId);
+    public Object getAnomalySettingsForNode(String nsId, String infraId, String nodeId) {
+        return insightClient.getAnomalySettingsForNode(nsId, infraId, nodeId);
     }
 
     @Override
-    public Object getAnomalyHistoryForMci(
-            String nsId, String mciId, String measurement, String startTime, String endTime) {
-        return insightClient.getAnomalyHistoryForMci(nsId, mciId, measurement, startTime, endTime);
+    public Object getAnomalyHistoryForInfra(
+            String nsId, String infraId, String measurement, String startTime, String endTime) {
+        return insightClient.getAnomalyHistoryForInfra(
+                nsId, infraId, measurement, startTime, endTime);
     }
 
     @Override
-    public Object getAnomalyHistoryForVm(
+    public Object getAnomalyHistoryForNode(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             String measurement,
             String startTime,
             String endTime) {
-        return insightClient.getAnomalyHistoryForVm(
-                nsId, mciId, vmId, measurement, startTime, endTime);
+        return insightClient.getAnomalyHistoryForNode(
+                nsId, infraId, nodeId, measurement, startTime, endTime);
     }
 
     /* ===================== LLM ===================== */

@@ -49,17 +49,18 @@ public class OtelJavaFacadeService {
 
     public void install(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
-        vmService.isIdleTraceAgent(nsId, mciId, vmId);
+        vmService.isIdleTraceAgent(nsId, infraId, nodeId);
 
-        vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
+        vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING);
 
-        String configContent = otelJavaConfigFacadeService.initOtelJavaConfig(nsId, mciId, vmId);
+        String configContent =
+                otelJavaConfigFacadeService.initOtelJavaConfig(nsId, infraId, nodeId);
         log.info("OTel Java config: {}", configContent);
 
         Task task;
@@ -72,34 +73,34 @@ public class OtelJavaFacadeService {
                             Agent.OTEL_JAVA_AGENT,
                             templateCount);
         } catch (Exception e) {
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
             throw e;
         }
 
         vmService.updateTraceAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.OTEL_JAVA_AGENT);
     }
 
     public void update(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
-        vmService.isIdleTraceAgent(nsId, mciId, vmId);
+        vmService.isIdleTraceAgent(nsId, infraId, nodeId);
 
-        vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
+        vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING);
 
         Task task;
         try {
@@ -111,29 +112,33 @@ public class OtelJavaFacadeService {
                             Agent.OTEL_JAVA_AGENT,
                             templateCount);
         } catch (Exception e) {
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
             throw e;
         }
 
         vmService.updateTraceAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UPDATE,
                 Agent.OTEL_JAVA_AGENT);
     }
 
     public void uninstall(
-            String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
+            String nsId,
+            String infraId,
+            String nodeId,
+            AccessInfoDTO accessInfo,
+            int templateCount) {
 
-        vmService.isIdleTraceAgent(nsId, mciId, vmId);
+        vmService.isIdleTraceAgent(nsId, infraId, nodeId);
 
-        vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
+        vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.PREPARING);
 
         Task task;
         try {
@@ -145,57 +150,62 @@ public class OtelJavaFacadeService {
                             Agent.OTEL_JAVA_AGENT,
                             templateCount);
         } catch (Exception e) {
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
             throw e;
         }
 
         vmService.updateTraceAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
+                nsId,
+                infraId,
+                nodeId,
+                VMAgentTaskStatus.UNINSTALLING,
+                String.valueOf(task.getId()));
 
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UNINSTALL,
                 Agent.OTEL_JAVA_AGENT);
     }
 
     @Transactional
-    public List<ResultDTO> restart(String nsId, String mciId, String vmId) {
+    public List<ResultDTO> restart(String nsId, String infraId, String nodeId) {
 
         List<ResultDTO> results = new ArrayList<>();
 
         try {
             agentTaskStatusLock.lock();
 
-            vmService.isIdleTraceAgent(nsId, mciId, vmId);
+            vmService.isIdleTraceAgent(nsId, infraId, nodeId);
 
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
+            vmService.updateTraceAgentTaskStatus(
+                    nsId, infraId, nodeId, VMAgentTaskStatus.RESTARTING);
 
-            tumblebugService.restart(nsId, mciId, vmId, Agent.OTEL_JAVA_AGENT);
+            tumblebugService.restart(nsId, infraId, nodeId, Agent.OTEL_JAVA_AGENT);
 
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
             agentTaskStatusLock.unlock();
         } catch (Exception e) {
             agentTaskStatusLock.unlock();
 
-            vmService.updateTraceAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateTraceAgentTaskStatus(nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
