@@ -294,7 +294,7 @@ services:
       - internal_network
 
   mc-observability-tempo:
-    image: grafana/tempo:2.8.2
+    image: grafana/tempo:2.9.2
     container_name: mc-observability-tempo
     restart: always
     ports:

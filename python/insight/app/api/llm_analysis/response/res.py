@@ -84,3 +84,47 @@ class ResBodyLLMAPIKey(BaseResponse):
 
 class ResBodyLLMAPIKeys(BaseResponse):
     data: list[LLMAPIKey]
+
+
+class ServerErrorAnalysisRecord(BaseModel):
+    id: int
+    trace_id: str | None
+    session_id: str
+    status: Literal["PENDING", "RUNNING", "SUCCEEDED", "FAILED", "PARTIAL"]
+    summary: str | None
+    detail: dict | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ServerErrorDetectResult(BaseModel):
+    accepted: bool
+    analysis_ids: list[int]
+
+
+class ResBodyServerErrorDetect(BaseResponse):
+    data: ServerErrorDetectResult
+
+
+class ResBodyServerErrorRecord(BaseResponse):
+    data: ServerErrorAnalysisRecord
+
+
+class ServerErrorRecordPage(BaseModel):
+    total: int
+    page: int
+    size: int
+    items: list[ServerErrorAnalysisRecord]
+
+
+class ResBodyServerErrorRecords(BaseResponse):
+    data: ServerErrorRecordPage
+
+
+class ServerErrorQueryResult(BaseModel):
+    message: Message
+    analysis: ServerErrorAnalysisRecord | None = None
+
+
+class ResBodyServerErrorQuery(BaseResponse):
+    data: ServerErrorQueryResult
