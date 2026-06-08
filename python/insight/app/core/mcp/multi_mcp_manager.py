@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from langchain_mcp_adapters.tools import load_mcp_tools
@@ -6,6 +7,7 @@ from app.core.mcp.grafana_mcp_context import GrafanaMCPContext
 from app.core.mcp.influxdb_mcp_context import InfluxDBMCPContext
 from app.core.mcp.mariadb_mcp_context import MariaDBMCPContext
 from app.core.mcp.mcp_context import MCPContext
+from app.core.mcp.tempo_mcp_context import TempoMCPContext
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +18,7 @@ class MCPManager:
         self.mcp_clients: dict[str, object] = {}
         self.mcp_contexts: dict[str, MCPContext] = {}
         self.all_tools: list = []
+        self.tools_by_mcp: dict[str, list] = {}
 
     def add_mariadb_mcp(self, name: str, mcp_url: str):
         """Add MariaDB MCP client."""
@@ -35,6 +38,12 @@ class MCPManager:
         self.mcp_clients[name] = client
         return client
 
+    def add_tempo_mcp(self, name: str, mcp_url: str):
+        """Add Tempo MCP client."""
+        client = TempoMCPContext(mcp_url)
+        self.mcp_clients[name] = client
+        return client
+
     async def start_all(self):
         """Start all MCP clients."""
         sessions = {}
@@ -47,6 +56,7 @@ class MCPManager:
                 sessions[name] = session
 
                 tools = await load_mcp_tools(session)
+                self.tools_by_mcp[name] = tools
                 tools_list.extend(tools)
                 logger.info(f"{name} MCP client started successfully with {len(tools)} tools")
 
@@ -68,6 +78,10 @@ class MCPManager:
             try:
                 await client.astop()
                 logger.info(f"{name} MCP client stopped successfully")
+            except asyncio.CancelledError as e:
+                logger.error(f"{name} MCP client cleanup was cancelled: {e}")
+                # Keep request cleanup from replacing the endpoint response.
+                continue
             except Exception as e:
                 logger.error(f"Failed to stop {name} MCP client: {e}")
                 # Continue processing other clients even if errors occur
@@ -75,6 +89,25 @@ class MCPManager:
     def get_all_tools(self):
         """Return tools from all MCP clients."""
         return self.all_tools
+
+    def get_tools_for_mcp(self, name: str):
+        """Return LangChain tools loaded from a specific MCP client."""
+        if name in self.tools_by_mcp:
+            return self.tools_by_mcp[name]
+
+        client = self.get_client(name)
+        if not client or not getattr(client, "tools", None):
+            return []
+
+        tool_names = {
+            tool.name
+            for tool in getattr(client.tools, "tools", [])
+        }
+        return [
+            tool
+            for tool in self.get_all_tools() or []
+            if getattr(tool, "name", None) in tool_names
+        ]
 
     def get_client(self, name: str):
         """Return client with specific name."""

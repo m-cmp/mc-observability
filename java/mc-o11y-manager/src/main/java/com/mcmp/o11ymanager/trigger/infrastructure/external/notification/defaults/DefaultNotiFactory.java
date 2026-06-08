@@ -6,6 +6,8 @@ import com.mcmp.o11ymanager.trigger.application.service.dto.TriggerPolicyNotiCha
 import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertEvent;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiFactory;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordNoti;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoNoti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailNoti;
@@ -14,6 +16,8 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsNoti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.sms.ncp.SmsProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsNoti;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 import java.util.HashMap;
 import java.util.List;
@@ -87,6 +91,10 @@ public class DefaultNotiFactory implements NotiFactory {
                     alertEvent, (SlackProperties) notiProperty, notiChannelDto.recipients());
             case KAKAO -> KakaoNoti.from(
                     alertEvent, (KakaoProperties) notiProperty, notiChannelDto.recipients());
+            case DISCORD -> DiscordNoti.from(
+                    alertEvent, (DiscordProperties) notiProperty, notiChannelDto.recipients());
+            case TEAMS -> TeamsNoti.from(
+                    alertEvent, (TeamsProperties) notiProperty, notiChannelDto.recipients());
         };
     }
 
@@ -122,6 +130,18 @@ public class DefaultNotiFactory implements NotiFactory {
 
             case KAKAO -> KakaoNoti.direct(
                     (KakaoProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case DISCORD -> DiscordNoti.direct(
+                    (DiscordProperties) property,
+                    directAlert.getRecipients(),
+                    directAlert.getTitle(),
+                    directAlert.getMessage());
+
+            case TEAMS -> TeamsNoti.direct(
+                    (TeamsProperties) property,
                     directAlert.getRecipients(),
                     directAlert.getTitle(),
                     directAlert.getMessage());

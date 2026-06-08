@@ -1,5 +1,5 @@
+from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 
 
 class OpenAIClient:
@@ -21,6 +21,23 @@ class OpenAIClient:
         self.model = model
         self.llm = ChatOpenAI(model=self.model, api_key=self.api_key, base_url=self.base_url, streaming=streaming)
 
-    def bind_tools(self, tools, memory):
-        self.agent = create_react_agent(model=self.llm, tools=tools, checkpointer=memory)
+    def create_agent_runner(
+        self,
+        tools,
+        checkpointer=None,
+        system_prompt: str | None = None,
+        response_format=None,
+        middleware=None,
+    ):
+        self.agent = create_agent(
+            model=self.llm,
+            tools=tools or [],
+            system_prompt=system_prompt,
+            checkpointer=checkpointer,
+            response_format=response_format,
+            middleware=middleware or [],
+        )
         return self.agent
+
+    def bind_tools(self, tools, memory):
+        return self.create_agent_runner(tools=tools, checkpointer=memory)

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import logging
 
 import uvicorn
@@ -10,10 +11,12 @@ from app.api.llm_analysis import (
     api_key_router,
     log_analysis_router,
     model_router,
+    server_error_analysis_router,
     session_router,
 )
 from app.api.prediction import prediction
 from app.api.readyz import readyz
+from app.core.graph.server_error_analysis_graph import ServerErrorGraphRuntime
 from app.core.otel.log import init_otel_logger
 from app.core.otel.trace import init_otel_trace
 from config.ConfigManager import ConfigManager
@@ -23,7 +26,17 @@ logger = logging.getLogger(__name__)
 
 config = ConfigManager()
 
-app = FastAPI(title="Insight Module DOCS", description="mc-observability insight module")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.server_error_graph_runtime = await ServerErrorGraphRuntime.create()
+    try:
+        yield
+    finally:
+        await app.state.server_error_graph_runtime.aclose()
+
+
+app = FastAPI(title="Insight Module DOCS", description="mc-observability insight module", lifespan=lifespan)
 
 origins = ["*"]
 
@@ -43,6 +56,7 @@ app.include_router(api_key_router, prefix=api_prefix, tags=["[Insight] LLM API K
 app.include_router(model_router, prefix=api_prefix, tags=["[Insight] LLM Model Options"])
 app.include_router(log_analysis_router, prefix=api_prefix, tags=["[Insight] Log Analysis"])
 app.include_router(alert_analysis_router, prefix=api_prefix, tags=["[Insight] Alert Analysis"])
+app.include_router(server_error_analysis_router, prefix=api_prefix, tags=["[Insight] Server Error Analysis"])
 app.include_router(readyz.router, tags=["[Insight] System Management"])
 
 if __name__ == "__main__":
