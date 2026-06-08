@@ -142,6 +142,9 @@ export default function HomePage() {
           <button onClick={() => go('alerts')} className="bg-red-600 text-white rounded py-2.5 text-sm font-medium hover:bg-red-700">
             Alerts
           </button>
+          <button onClick={() => go('trace')} className="bg-teal-600 text-white rounded py-2.5 text-sm font-medium hover:bg-teal-700">
+            Tracing
+          </button>
           <button onClick={() => {
             if (!nsId || !infraId) { alert('Select NS and Infra first'); return; }
             window.open(nodeId ? `/embed/monitoring/${nsId}/${infraId}/${nodeId}` : `/embed/monitoring/${nsId}/${infraId}`, '_blank');

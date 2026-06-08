@@ -11,6 +11,7 @@ import LogViewer from './pages/LogViewer';
 import MonitoringConfig from './pages/MonitoringConfig';
 import InsightDashboard from './pages/InsightDashboard';
 import AlertManager from './pages/AlertManager';
+import TraceViewer from './pages/TraceViewer';
 import K8sNodeDashboard from './pages/K8sNodeDashboard';
 import HomePage from './pages/HomePage';
 
@@ -41,6 +42,8 @@ export default function App() {
         <Route path="/insight/:nsId" element={<InsightDashboard />} />
         <Route path="/alerts/:nsId/:infraId" element={<AlertManager />} />
         <Route path="/alerts/:nsId" element={<AlertManager />} />
+        <Route path="/trace/:nsId/:infraId" element={<TraceViewer />} />
+        <Route path="/trace/:nsId" element={<TraceViewer />} />
       </Route>
 
       {/* Embed — no nav, for iframe */}
@@ -59,6 +62,8 @@ export default function App() {
         <Route path="/embed/insight/:nsId" element={<InsightDashboard />} />
         <Route path="/embed/alerts/:nsId/:infraId" element={<AlertManager />} />
         <Route path="/embed/alerts/:nsId" element={<AlertManager />} />
+        <Route path="/embed/trace/:nsId/:infraId" element={<TraceViewer />} />
+        <Route path="/embed/trace/:nsId" element={<TraceViewer />} />
       </Route>
     </Routes>
     </ErrorBoundary>

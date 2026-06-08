@@ -10,6 +10,7 @@ const navItems = [
   { label: 'Config', path: 'config' },
   { label: 'Insight', path: 'insight' },
   { label: 'Alerts', path: 'alerts' },
+  { label: 'Tracing', path: 'trace' },
 ];
 
 export default function Layout() {
