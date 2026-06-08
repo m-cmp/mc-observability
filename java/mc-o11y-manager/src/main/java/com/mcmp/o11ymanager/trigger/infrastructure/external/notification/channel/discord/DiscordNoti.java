@@ -134,8 +134,8 @@ public class DiscordNoti implements Noti {
                     String.format(
                             "%-15s %-15s %-15s %-15s %s%%\n",
                             truncateString(alert.getNamespaceId(), 14),
-                            truncateString(alert.getMciId(), 14),
-                            truncateString(alert.getVmId(), 14),
+                            truncateString(alert.getInfraId(), 14),
+                            truncateString(alert.getNodeId(), 14),
                             truncateString(alert.getResourceType(), 14),
                             alert.getResourceUsage()));
         }
