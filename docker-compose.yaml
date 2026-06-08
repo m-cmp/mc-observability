@@ -48,9 +48,7 @@ services:
       retries: 30
 
   mc-observability-front:
-    build:
-      context: ./front
-      dockerfile: Dockerfile
+    image: cloudbaristaorg/mc-observability-front:edge
     container_name: mc-observability-front
     restart: always
     networks:
@@ -425,7 +423,7 @@ services:
       - 9002:9002
     depends_on:
       mc-observability-maria:
-        condition: service_started
+        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
@@ -558,11 +556,11 @@ services:
       - -c
       - /fluent-bit/etc/fluent-bit.conf
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:2020/api/v1/health || exit 1"]
+      test: ["CMD", "/fluent-bit/bin/fluent-bit", "--version"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
 
 
   # CB-Tumblebug
