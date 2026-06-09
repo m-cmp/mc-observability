@@ -11,6 +11,7 @@ public interface InsightClient {
     String LLM = "/api/o11y/insight/llm";
     String LOG = "/api/o11y/insight/log-analysis";
     String PREDICTION = "/api/o11y/insight/predictions";
+    String SERVER_ERROR = "/api/o11y/insight/server-error-analysis";
 
     @GetMapping(ANOMALY + "/measurement")
     Object getMeasurements();
@@ -141,4 +142,25 @@ public interface InsightClient {
             @RequestParam("measurement") String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);
+
+    /* ===================== Server Error Analysis ===================== */
+    @PostMapping(SERVER_ERROR + "/detect")
+    Object detectServerError(@RequestBody Object body);
+
+    @PostMapping(SERVER_ERROR + "/query")
+    Object queryServerError(@RequestBody Object body);
+
+    @GetMapping(SERVER_ERROR + "/records")
+    Object listServerErrorRecords(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "from", required = false) String fromDt,
+            @RequestParam(value = "to", required = false) String toDt,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size);
+
+    @GetMapping(SERVER_ERROR + "/records/{analysisId}")
+    Object getServerErrorRecord(@PathVariable("analysisId") int analysisId);
+
+    @PostMapping(SERVER_ERROR + "/records/{analysisId}/rerun")
+    Object rerunServerErrorAnalysis(@PathVariable("analysisId") int analysisId);
 }

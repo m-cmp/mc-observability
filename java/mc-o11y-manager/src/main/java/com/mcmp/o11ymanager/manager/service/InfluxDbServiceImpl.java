@@ -277,7 +277,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         InfluxDTO s =
                 InfluxDTO.builder()
                         .url(entity.getUrl())
-                        .database(pickDatabase(entity, req))
+                        .database(pickDatabase(entity, req, nsId, infraId, null))
                         .username(entity.getUsername())
                         .password(entity.getPassword())
                         .build();
@@ -363,7 +363,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         InfluxDTO s =
                 InfluxDTO.builder()
                         .url(entity.getUrl())
-                        .database(pickDatabase(entity, req))
+                        .database(pickDatabase(entity, req, nsId, infraId, nodeId))
                         .username(entity.getUsername())
                         .password(entity.getPassword())
                         .build();
@@ -738,15 +738,32 @@ public class InfluxDbServiceImpl implements InfluxDbService {
      * downsampling DB when the requested range is at least 1 day, otherwise the entity's default
      * (raw) DB.
      */
-    private String pickDatabase(InfluxEntity entity, MetricRequestDTO req) {
+    private String pickDatabase(
+            InfluxEntity entity, MetricRequestDTO req, String nsId, String infraId, String nodeId) {
+        String raw = entity.getDatabase();
         long rangeSec = parseRangeSeconds(req == null ? null : req.getRange());
-        if (rangeSec >= DOWNSAMPLING_THRESHOLD_SECONDS) {
-            String dsDb = influxDbInfo.downsamplingDatabase();
-            if (dsDb != null && !dsDb.isBlank()) {
-                return dsDb;
-            }
+        if (rangeSec < DOWNSAMPLING_THRESHOLD_SECONDS) {
+            return raw;
         }
-        return entity.getDatabase();
+        String dsDb = influxDbInfo.downsamplingDatabase();
+        if (dsDb == null || dsDb.isBlank()) {
+            return raw;
+        }
+        // Use the downsampling DB for long ranges only when it actually holds the data.
+        // If the downsampling pipeline hasn't populated it, fall back to the raw DB so
+        // metric/prediction queries don't silently return empty results.
+        InfluxDTO probe =
+                InfluxDTO.builder()
+                        .url(entity.getUrl())
+                        .database(dsDb)
+                        .username(entity.getUsername())
+                        .password(entity.getPassword())
+                        .build();
+        boolean dsHasData =
+                (nodeId != null)
+                        ? existsVmInInflux(probe, nsId, infraId, nodeId)
+                        : existsNsMciInInflux(probe, nsId, infraId);
+        return dsHasData ? dsDb : raw;
     }
 
     /**
