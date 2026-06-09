@@ -1,0 +1,6 @@
+# Build outputs must not pollute the image build context — copying stale
+# build/.gradle made Gradle skip recompilation (e.g. dropping -parameters).
+build/
+.gradle/
+*/build/
+*/.gradle/
