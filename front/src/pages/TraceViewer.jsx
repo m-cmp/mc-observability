@@ -26,6 +26,10 @@ export default function TraceViewer() {
   const [traces, setTraces] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // paging
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
   // inline-expanded trace detail
   const [expandedId, setExpandedId] = useState('');
   const [spans, setSpans] = useState(null);
@@ -37,6 +41,7 @@ export default function TraceViewer() {
     setTraces(null);
     setExpandedId('');
     setSpans(null);
+    setPage(1);
     getTraceServices(scope).then(setServices).catch(() => setServices([]));
   }, [scope]);
 
@@ -44,8 +49,9 @@ export default function TraceViewer() {
     setLoading(true);
     setExpandedId('');
     setSpans(null);
+    setPage(1);
     try {
-      const result = await searchTraces({ scope, service, keyword, rangeHours });
+      const result = await searchTraces({ scope, service, keyword, rangeHours, limit: 500 });
       setTraces(Array.isArray(result) ? result : []);
     } catch (e) {
       console.error('Trace query failed', e);
@@ -133,13 +139,17 @@ export default function TraceViewer() {
 
       {/* Trace list with inline expand */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-4 py-3 border-b font-semibold text-sm">List of Trace</div>
+        <div className="px-4 py-3 border-b font-semibold text-sm flex items-center gap-2">
+          <span>List of Trace</span>
+          {traces && traces.length > 0 && <span className="text-xs font-normal text-gray-400">· {traces.length} traces</span>}
+        </div>
         <div className="p-4 overflow-auto">
           {traces === null ? (
             <p className="text-sm text-gray-400">Click Search to query traces</p>
           ) : traces.length === 0 ? (
             <p className="text-sm text-gray-400">No traces found</p>
           ) : (
+            <>
             <table className="w-full text-sm">
               <thead><tr className="bg-gray-50 text-left">
                 <th className="px-3 py-2 border-b text-xs text-gray-500 w-6" />
@@ -150,7 +160,7 @@ export default function TraceViewer() {
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Trace ID</th>
               </tr></thead>
               <tbody>
-                {traces.map((t) => {
+                {traces.slice((page - 1) * pageSize, page * pageSize).map((t) => {
                   const open = expandedId === t.traceId;
                   return (
                     <Fragment key={t.traceId}>
@@ -182,8 +192,33 @@ export default function TraceViewer() {
                 })}
               </tbody>
             </table>
+            <Pager total={traces.length} page={page} pageSize={pageSize}
+              onPage={setPage} onPageSize={(s) => { setPageSize(s); setPage(1); }} />
+            </>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Pager({ total, page, pageSize, onPage, onPageSize }) {
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const cur = Math.min(page, pageCount);
+  const from = total === 0 ? 0 : (cur - 1) * pageSize + 1;
+  const to = Math.min(cur * pageSize, total);
+  return (
+    <div className="flex items-center gap-2 mt-3 flex-wrap">
+      <span className="text-xs text-gray-500">{from}–{to} / {total}</span>
+      <div className="ml-auto flex items-center gap-1">
+        <button onClick={() => onPage(1)} disabled={cur <= 1} className="px-2 py-1 border rounded text-xs disabled:opacity-40">«</button>
+        <button onClick={() => onPage(cur - 1)} disabled={cur <= 1} className="px-2 py-1 border rounded text-xs disabled:opacity-40">‹ Prev</button>
+        <span className="text-xs text-gray-600 px-1">{cur} / {pageCount}</span>
+        <button onClick={() => onPage(cur + 1)} disabled={cur >= pageCount} className="px-2 py-1 border rounded text-xs disabled:opacity-40">Next ›</button>
+        <button onClick={() => onPage(pageCount)} disabled={cur >= pageCount} className="px-2 py-1 border rounded text-xs disabled:opacity-40">»</button>
+        <select value={pageSize} onChange={(e) => onPageSize(+e.target.value)} className="ml-2 border rounded px-2 py-1 text-xs">
+          {[10, 20, 50, 100].map((n) => <option key={n} value={n}>{n}/page</option>)}
+        </select>
       </div>
     </div>
   );
