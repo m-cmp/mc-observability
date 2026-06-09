@@ -160,7 +160,7 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
       await createAnomalySetting(body);
       onCreated();
     } catch (e2) {
-      setErr(e2.response?.data?.error_message || e2.response?.data?.rs_msg || e2.message);
+      setErr(e2.response?.data?.detail || e2.response?.data?.error_message || e2.response?.data?.rs_msg || e2.message);
     }
     setBusy(false);
   }
@@ -241,7 +241,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
       setMsg('Prediction started. Loading history…');
       await loadHistory();
     } catch (e) {
-      setMsg(e.response?.data?.error_message || e.response?.data?.rs_msg || e.message);
+      setMsg(e.response?.data?.detail || e.response?.data?.error_message || e.response?.data?.rs_msg || e.message);
     }
     setLoading(false);
   }
@@ -323,7 +323,7 @@ function ServerErrorTab() {
       setMsg(`Detect 요청됨 (accepted=${res?.accepted}, ids=${(res?.analysis_ids || []).join(',') || '-'})`);
       await load();
     } catch (e) {
-      setMsg('Detect 실패 (LLM 미설정 가능): ' + (e.response?.data?.error_message || e.response?.data?.rs_msg || e.message));
+      setMsg('Detect 실패 (LLM 미설정 가능): ' + (e.response?.data?.detail || e.response?.data?.error_message || e.response?.data?.rs_msg || e.message));
     }
     setBusy(false);
   }
@@ -335,7 +335,7 @@ function ServerErrorTab() {
       setMsg(`#${id} rerun 요청됨`);
       await load();
     } catch (e) {
-      setMsg('Rerun 실패 (LLM 미설정 가능): ' + (e.response?.data?.error_message || e.response?.data?.rs_msg || e.message));
+      setMsg('Rerun 실패 (LLM 미설정 가능): ' + (e.response?.data?.detail || e.response?.data?.error_message || e.response?.data?.rs_msg || e.message));
     }
     setBusy(false);
   }
