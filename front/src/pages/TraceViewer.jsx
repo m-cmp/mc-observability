@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useParams } from 'react-router-dom';
 import { searchTraces, getTrace, getTraceServices } from '../api/trace';
 
@@ -25,20 +25,23 @@ export default function TraceViewer() {
   const [traces, setTraces] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // expanded trace detail
-  const [selectedTraceId, setSelectedTraceId] = useState('');
+  // inline-expanded trace detail
+  const [expandedId, setExpandedId] = useState('');
   const [spans, setSpans] = useState(null);
   const [spanLoading, setSpanLoading] = useState(false);
 
-  // Load service dropdown whenever scope changes
+  // Load service dropdown + reset list whenever scope changes (avoid stale list from other scope)
   useEffect(() => {
     setService('');
+    setTraces(null);
+    setExpandedId('');
+    setSpans(null);
     getTraceServices(scope).then(setServices).catch(() => setServices([]));
   }, [scope]);
 
   const search = useCallback(async () => {
     setLoading(true);
-    setSelectedTraceId('');
+    setExpandedId('');
     setSpans(null);
     try {
       const result = await searchTraces({ scope, service, keyword, rangeHours });
@@ -54,13 +57,13 @@ export default function TraceViewer() {
     if (e.key === 'Enter') search();
   };
 
-  async function selectTrace(traceId) {
-    if (selectedTraceId === traceId) {
-      setSelectedTraceId('');
+  async function toggleTrace(traceId) {
+    if (expandedId === traceId) {
+      setExpandedId('');
       setSpans(null);
       return;
     }
-    setSelectedTraceId(traceId);
+    setExpandedId(traceId);
     setSpanLoading(true);
     setSpans(null);
     try {
@@ -91,7 +94,6 @@ export default function TraceViewer() {
         <div className="px-4 py-3 border-b font-semibold text-sm">Trace Manage</div>
         <div className="p-4">
           <div className="grid grid-cols-4 gap-4 mb-2">
-            {/* Service dropdown */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Service</label>
               <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={service} onChange={(e) => setService(e.target.value)}>
@@ -99,20 +101,17 @@ export default function TraceViewer() {
                 {services.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            {/* Keyword */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Keyword</label>
               <input type="text" placeholder="span / service keyword..." value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleKeyDown}
                 className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" />
             </div>
-            {/* Range */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Range</label>
               <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={rangeHours} onChange={(e) => setRangeHours(+e.target.value)}>
                 {RANGE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
-            {/* Search */}
             <div className="flex items-end">
               <button onClick={search} disabled={loading}
                 className="px-4 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 text-sm">
@@ -123,12 +122,12 @@ export default function TraceViewer() {
           <p className="text-xs text-gray-400">
             {scope === 'vm'
               ? 'VM 트레이스는 대상 노드에 trace agent(Beyla / OTel)가 설치되어 있어야 수집됩니다.'
-              : 'Framework 트레이스는 o11y 매니저/인사이트가 OTel로 자기계측한 데이터입니다.'}
+              : 'Framework 트레이스는 o11y 매니저/인사이트가 OTel로 자기계측한 데이터입니다. 행을 클릭하면 API 호출 흐름이 펼쳐집니다.'}
           </p>
         </div>
       </div>
 
-      {/* Trace list */}
+      {/* Trace list with inline expand */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-4 py-3 border-b font-semibold text-sm">List of Trace</div>
         <div className="p-4 overflow-auto">
@@ -139,6 +138,7 @@ export default function TraceViewer() {
           ) : (
             <table className="w-full text-sm">
               <thead><tr className="bg-gray-50 text-left">
+                <th className="px-3 py-2 border-b text-xs text-gray-500 w-6" />
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Start Time</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Root Service</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Root Name</th>
@@ -146,39 +146,41 @@ export default function TraceViewer() {
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Trace ID</th>
               </tr></thead>
               <tbody>
-                {traces.map((t) => (
-                  <tr key={t.traceId} onClick={() => selectTrace(t.traceId)}
-                    className={`cursor-pointer hover:bg-blue-50 ${selectedTraceId === t.traceId ? 'bg-blue-100' : ''}`}>
-                    <td className="px-3 py-2 border-b whitespace-nowrap">{fmtTime(t.startTimeMs)}</td>
-                    <td className="px-3 py-2 border-b font-medium">{t.rootService || '-'}</td>
-                    <td className="px-3 py-2 border-b">{t.rootName || '-'}</td>
-                    <td className="px-3 py-2 border-b text-right">{fmtDuration(t.durationMs)}</td>
-                    <td className="px-3 py-2 border-b font-mono text-xs text-gray-500">{shortId(t.traceId)}</td>
-                  </tr>
-                ))}
+                {traces.map((t) => {
+                  const open = expandedId === t.traceId;
+                  return (
+                    <Fragment key={t.traceId}>
+                      <tr onClick={() => toggleTrace(t.traceId)}
+                        className={`cursor-pointer hover:bg-blue-50 ${open ? 'bg-blue-100' : ''}`}>
+                        <td className="px-3 py-2 border-b text-gray-400">{open ? '▼' : '▶'}</td>
+                        <td className="px-3 py-2 border-b whitespace-nowrap">{fmtTime(t.startTimeMs)}</td>
+                        <td className="px-3 py-2 border-b font-medium">{t.rootService || '-'}</td>
+                        <td className="px-3 py-2 border-b">{t.rootName || '-'}</td>
+                        <td className="px-3 py-2 border-b text-right">{fmtDuration(t.durationMs)}</td>
+                        <td className="px-3 py-2 border-b font-mono text-xs text-gray-500">{shortId(t.traceId)}</td>
+                      </tr>
+                      {open && (
+                        <tr>
+                          <td colSpan={6} className="border-b bg-gray-50 p-3">
+                            <div className="text-xs font-semibold text-gray-500 mb-2">API Call Sequence</div>
+                            {spanLoading ? (
+                              <p className="text-sm text-gray-400 animate-pulse">Loading spans...</p>
+                            ) : !spans || spans.length === 0 ? (
+                              <p className="text-sm text-gray-400">No spans found</p>
+                            ) : (
+                              <CallTree spans={spans} />
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </div>
       </div>
-
-      {/* Span call sequence */}
-      {selectedTraceId && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-4 py-3 border-b font-semibold text-sm">
-            Call Sequence — <span className="font-mono text-xs text-gray-500">{selectedTraceId}</span>
-          </div>
-          <div className="p-4 overflow-auto">
-            {spanLoading ? (
-              <p className="text-sm text-gray-400 animate-pulse">Loading spans...</p>
-            ) : !spans || spans.length === 0 ? (
-              <p className="text-sm text-gray-400">No spans found</p>
-            ) : (
-              <CallTree spans={spans} />
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -189,8 +191,8 @@ function CallTree({ spans }) {
   const t0 = spans.reduce((min, s) => (s.startTimeMs < min ? s.startTimeMs : min), spans[0].startTimeMs);
   const totalDur = Math.max(1, ...spans.map((s) => (s.startTimeMs - t0) + (s.durationMs || 0)));
   return (
-    <table className="w-full text-sm">
-      <thead><tr className="bg-gray-50 text-left">
+    <table className="w-full text-sm bg-white rounded border">
+      <thead><tr className="bg-gray-100 text-left">
         <th className="px-3 py-2 border-b text-xs text-gray-500 w-8">#</th>
         <th className="px-3 py-2 border-b text-xs text-gray-500">Span (call order)</th>
         <th className="px-3 py-2 border-b text-xs text-gray-500">Service</th>
