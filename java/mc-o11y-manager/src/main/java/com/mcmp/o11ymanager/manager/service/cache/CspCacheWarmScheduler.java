@@ -235,7 +235,7 @@ public class CspCacheWarmScheduler {
         for (VmRef ref : active) {
             try {
                 TumblebugInfra.Node node =
-                        tumblebugService.getNode(ref.nsId(), ref.mciId(), ref.vmId());
+                        tumblebugService.getNode(ref.nsId(), ref.infraId(), ref.nodeId());
                 if (node == null
                         || node.getConnectionName() == null
                         || node.getCspResourceName() == null) {
@@ -246,7 +246,7 @@ public class CspCacheWarmScheduler {
                 }
                 Instant createdAt =
                         vmCreatedTimeResolver
-                                .resolve(ref.nsId(), ref.mciId(), ref.vmId())
+                                .resolve(ref.nsId(), ref.infraId(), ref.nodeId())
                                 .orElse(Instant.EPOCH);
                 resolved.add(
                         new VmWithCsp(
@@ -258,8 +258,8 @@ public class CspCacheWarmScheduler {
                 log.debug(
                         "[CSP-CACHE-WARM] resolve failed ns={}, mci={}, vm={}, err={}",
                         ref.nsId(),
-                        ref.mciId(),
-                        ref.vmId(),
+                        ref.infraId(),
+                        ref.nodeId(),
                         e.toString());
             }
         }

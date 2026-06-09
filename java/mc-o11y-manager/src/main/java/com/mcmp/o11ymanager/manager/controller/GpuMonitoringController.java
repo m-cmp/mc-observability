@@ -42,7 +42,7 @@ public class GpuMonitoringController {
         return new ResBody<>(gpuMonitoringFacadeService.getGpuMetricKeys());
     }
 
-    @GetMapping("/field/check/{nsId}/{mciId}/{vmId}")
+    @GetMapping("/field/check/{nsId}/{infraId}/{nodeId}")
     @Operation(
             summary = "CheckGpuMetricFields",
             operationId = "CheckGpuMetricFields",
@@ -51,14 +51,15 @@ public class GpuMonitoringController {
     public ResBody<List<GpuMetricFieldCheckDTO>> checkGpuMetricFields(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId) {
-        return new ResBody<>(gpuMonitoringFacadeService.checkGpuMetricFields(nsId, mciId, vmId));
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId) {
+        return new ResBody<>(
+                gpuMonitoringFacadeService.checkGpuMetricFields(nsId, infraId, nodeId));
     }
 
-    @PostMapping("/metric/{nsId}/{mciId}/{vmId}")
+    @PostMapping("/metric/{nsId}/{infraId}/{nodeId}")
     @Operation(
             summary = "GetGpuMetrics",
             operationId = "GetGpuMetrics",
@@ -67,11 +68,11 @@ public class GpuMonitoringController {
     public ResBody<List<MetricDTO>> getGpuMetrics(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody MetricRequestDTO req) {
-        return new ResBody<>(gpuMonitoringFacadeService.getGpuMetrics(nsId, mciId, vmId, req));
+        return new ResBody<>(gpuMonitoringFacadeService.getGpuMetrics(nsId, infraId, nodeId, req));
     }
 }

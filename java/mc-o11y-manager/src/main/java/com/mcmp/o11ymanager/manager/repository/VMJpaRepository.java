@@ -1,20 +1,20 @@
 package com.mcmp.o11ymanager.manager.repository;
 
+import com.mcmp.o11ymanager.manager.entity.NodeId;
 import com.mcmp.o11ymanager.manager.entity.VMEntity;
-import com.mcmp.o11ymanager.manager.entity.VmId;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface VMJpaRepository extends JpaRepository<VMEntity, VmId> {
+public interface VMJpaRepository extends JpaRepository<VMEntity, NodeId> {
 
-    List<VMEntity> findByNsIdAndMciId(String nsId, String mciId);
+    List<VMEntity> findByNsIdAndInfraId(String nsId, String infraId);
 
-    Optional<VMEntity> findByNsIdAndMciIdAndVmId(String nsId, String mciId, String vmId);
+    Optional<VMEntity> findByNsIdAndInfraIdAndNodeId(String nsId, String infraId, String nodeId);
 
-    Optional<VMEntity> findTop1ByNsIdAndMciIdOrderByVmIdAsc(String nsId, String mciId);
+    Optional<VMEntity> findTop1ByNsIdAndInfraIdOrderByNodeIdAsc(String nsId, String infraId);
 
-    Optional<VMEntity> findByNsIdAndVmId(String nsId, String vmId);
+    Optional<VMEntity> findByNsIdAndNodeId(String nsId, String nodeId);
 }

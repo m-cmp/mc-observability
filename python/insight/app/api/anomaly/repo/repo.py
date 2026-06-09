@@ -99,8 +99,8 @@ class InfluxDBRepository:
 
     def query_anomaly_detection_results(self, path_params, query_params: GetAnomalyHistoryFilter):
         ns_id = path_params.nsId
-        infra_id = path_params.mciId
-        node_id = getattr(path_params, "vmId", None)
+        infra_id = path_params.infraId
+        node_id = getattr(path_params, "nodeId", None)
         measurement = query_params.measurement.value.lower()
 
         start_time = query_params.start_time

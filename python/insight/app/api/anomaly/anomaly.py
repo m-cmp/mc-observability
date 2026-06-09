@@ -140,29 +140,29 @@ async def delete_anomaly_detection_target(settingSeq: int, db: Session = Depends
 
 
 @router.get(
-    path="/anomaly-detection/settings/ns/{nsId}/mci/{mciId}",
+    path="/anomaly-detection/settings/ns/{nsId}/infra/{infraId}",
     description=get_specific_settings_mci_description["api_description"],
     response_model=ResBodyAnomalyDetectionSettings,
     operation_id="GetMCIAnomalyDetectionSettings",
 )
-async def get_specific_anomaly_detection_mci(nsId: str, mciId: str, db: Session = Depends(get_db)):
+async def get_specific_anomaly_detection_mci(nsId: str, infraId: str, db: Session = Depends(get_db)):
     service = AnomalySettingsService(db=db)
-    return service.get_setting(ns_id=nsId, infra_id=mciId)
+    return service.get_setting(ns_id=nsId, infra_id=infraId)
 
 
 @router.get(
-    path="/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}",
+    path="/anomaly-detection/settings/ns/{nsId}/infra/{infraId}/node/{nodeId}",
     description=get_specific_settings_vm_description["api_description"],
     response_model=ResBodyAnomalyDetectionSettings,
     operation_id="GetVMAnomalyDetectionSettings",
 )
-async def get_specific_anomaly_detection_vm(nsId: str, mciId: str, vmId: str, db: Session = Depends(get_db)):
+async def get_specific_anomaly_detection_vm(nsId: str, infraId: str, nodeId: str, db: Session = Depends(get_db)):
     service = AnomalySettingsService(db=db)
-    return service.get_setting(ns_id=nsId, infra_id=mciId, node_id=vmId)
+    return service.get_setting(ns_id=nsId, infra_id=infraId, node_id=nodeId)
 
 
 @router.get(
-    path="/anomaly-detection/ns/{nsId}/mci/{mciId}/history",
+    path="/anomaly-detection/ns/{nsId}/infra/{infraId}/history",
     description=get_history_mci_description["api_description"],
     response_model=ResBodyAnomalyDetectionHistoryResponse,
     operation_id="GetAnomalyDetectionMCIHistory",
@@ -177,7 +177,7 @@ async def get_anomaly_detection_mci_history(
 
 
 @router.get(
-    path="/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history",
+    path="/anomaly-detection/ns/{nsId}/infra/{infraId}/node/{nodeId}/history",
     description=get_history_vm_description["api_description"],
     response_model=ResBodyAnomalyDetectionHistoryResponse,
     operation_id="GetAnomalyDetectionVMHistory",

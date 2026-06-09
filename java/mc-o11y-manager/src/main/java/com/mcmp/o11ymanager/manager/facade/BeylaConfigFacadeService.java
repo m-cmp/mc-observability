@@ -37,7 +37,7 @@ public class BeylaConfigFacadeService {
             new ClassPathResource("beyla_template.yaml");
 
     /** install 시점에 호출되어, target VM에 배포할 beyla.yaml 내용을 문자열로 반환한다. */
-    public String initBeylaConfig(String nsId, String mciId, String vmId) {
+    public String initBeylaConfig(String nsId, String infraId, String nodeId) {
         if (!beylaConfigTemplate.exists()) {
             String errMsg = "Invalid filePath : beylaConfigTemplate (beyla_template.yaml)";
             log.error(errMsg);
@@ -48,14 +48,14 @@ public class BeylaConfigFacadeService {
         fileService.appendConfig(beylaConfigTemplate, sb);
 
         String finalNsId = (nsId != null) ? nsId : "";
-        String finalMciId = (mciId != null) ? mciId : "";
-        String finalVmId = (vmId != null) ? vmId : "";
+        String finalInfraId = (infraId != null) ? infraId : "";
+        String finalNodeId = (nodeId != null) ? nodeId : "";
 
         return sb.toString()
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
-                .replace("@INFRA_ID", finalMciId)
-                .replace("@NODE_ID", finalVmId)
+                .replace("@INFRA_ID", finalInfraId)
+                .replace("@NODE_ID", finalNodeId)
                 .replace("@OTEL_ENDPOINT", otelEndpoint);
     }
 }

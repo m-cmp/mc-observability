@@ -14,10 +14,10 @@ public class VMMapper {
 
     public VMEntity fromResponseDTO(VMDTO dto) {
         return VMEntity.builder()
-                .vmId(dto.getVmId())
+                .nodeId(dto.getNodeId())
                 .nsId(dto.getNsId())
                 .vmStatus(dto.getVmStatus())
-                .mciId(dto.getMciId())
+                .infraId(dto.getInfraId())
                 .name(dto.getName())
                 .description(dto.getDescription())
                 .monitoringAgentTaskStatus(dto.getMonitoringAgentTaskStatus())
@@ -30,7 +30,7 @@ public class VMMapper {
                 .logServiceStatus(dto.getLogServiceStatus())
                 .traceServiceStatus(dto.getTraceServiceStatus())
                 .nsId(dto.getNsId())
-                .mciId(dto.getMciId())
+                .infraId(dto.getInfraId())
                 .build();
     }
 

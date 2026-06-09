@@ -126,7 +126,7 @@ public class DiscordNoti implements Noti {
         sb.append(
                 String.format(
                         "%-15s %-15s %-15s %-15s %s\n",
-                        "Namespace ID", "MCI ID", "VM ID", "Metric", "Usage"));
+                        "Namespace ID", "Infra ID", "Node ID", "Metric", "Usage"));
         sb.append("─".repeat(90)).append("\n");
 
         for (AlertDetail alert : alerts) {
@@ -134,8 +134,8 @@ public class DiscordNoti implements Noti {
                     String.format(
                             "%-15s %-15s %-15s %-15s %s%%\n",
                             truncateString(alert.getNamespaceId(), 14),
-                            truncateString(alert.getMciId(), 14),
-                            truncateString(alert.getVmId(), 14),
+                            truncateString(alert.getInfraId(), 14),
+                            truncateString(alert.getNodeId(), 14),
                             truncateString(alert.getResourceType(), 14),
                             alert.getResourceUsage()));
         }

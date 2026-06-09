@@ -14,13 +14,13 @@ public class SpiderClientAdapter implements SpiderClient {
 
     @Override
     public SpiderMonitoringInfo.Data getVMMonitoring(
-            String vmName,
+            String nodeName,
             String measurement,
             String connectionName,
             String timeBeforeHour,
             String intervalMinute) {
         return spiderClient.getVMMonitoring(
-                vmName, measurement, connectionName, timeBeforeHour, intervalMinute);
+                nodeName, measurement, connectionName, timeBeforeHour, intervalMinute);
     }
 
     @Override

@@ -15,7 +15,7 @@ public interface InfluxDbService {
 
     boolean isConnectedDb(InfluxDTO influxDTO);
 
-    Long resolveInfluxDb(String nsId, String mciId);
+    Long resolveInfluxDb(String nsId, String infraId);
 
     ResBody<List<FieldDTO>> getFields();
 
@@ -23,13 +23,14 @@ public interface InfluxDbService {
 
     String fetchDefaultRp(InfluxDTO influxDTO);
 
-    List<MetricDTO> getMetricsByNsMci(String nsId, String mciId, MetricRequestDTO req);
+    List<MetricDTO> getMetricsByNsMci(String nsId, String infraId, MetricRequestDTO req);
 
-    List<MetricDTO> getMetricsByVM(String nsId, String mciId, String vmId, MetricRequestDTO req);
+    List<MetricDTO> getMetricsByVM(
+            String nsId, String infraId, String nodeId, MetricRequestDTO req);
 
     List<InfluxDTO> rawServers();
 
-    InfluxDTO resolveInfluxDto(String nsId, String mciId);
+    InfluxDTO resolveInfluxDto(String nsId, String infraId);
 
     /**
      * Returns distinct (ns_id, infra_id, node_id) tuples that currently have metric data in any

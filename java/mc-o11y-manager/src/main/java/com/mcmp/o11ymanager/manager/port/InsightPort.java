@@ -9,17 +9,17 @@ public interface InsightPort {
 
     Object getPredictionOptions();
 
-    Object predictMonitoringDataForMci(String nsId, String mciId, Object body);
+    Object predictMonitoringDataForInfra(String nsId, String infraId, Object body);
 
-    Object predictMonitoringDataForVm(String nsId, String mciId, String vmId, Object body);
+    Object predictMonitoringDataForNode(String nsId, String infraId, String nodeId, Object body);
 
-    Object getPredictionHistoryForMci(
-            String nsId, String mciId, String measurement, String startTime, String endTime);
+    Object getPredictionHistoryForInfra(
+            String nsId, String infraId, String measurement, String startTime, String endTime);
 
-    Object getPredictionHistoryForVm(
+    Object getPredictionHistoryForNode(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             String measurement,
             String startTime,
             String endTime);
@@ -41,17 +41,17 @@ public interface InsightPort {
 
     Object deleteAnomalySetting(int settingSeq);
 
-    Object getAnomalySettingsForMci(String nsId, String mciId);
+    Object getAnomalySettingsForInfra(String nsId, String infraId);
 
-    Object getAnomalySettingsForVm(String nsId, String mciId, String vmId);
+    Object getAnomalySettingsForNode(String nsId, String infraId, String nodeId);
 
-    Object getAnomalyHistoryForMci(
-            String nsId, String mciId, String measurement, String startTime, String endTime);
+    Object getAnomalyHistoryForInfra(
+            String nsId, String infraId, String measurement, String startTime, String endTime);
 
-    Object getAnomalyHistoryForVm(
+    Object getAnomalyHistoryForNode(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             String measurement,
             String startTime,
             String endTime);

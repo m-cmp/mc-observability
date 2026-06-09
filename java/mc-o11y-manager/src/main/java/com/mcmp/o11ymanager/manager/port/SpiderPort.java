@@ -5,7 +5,7 @@ import com.mcmp.o11ymanager.manager.dto.SpiderMonitoringInfo;
 public interface SpiderPort {
 
     SpiderMonitoringInfo.Data getVMMonitoring(
-            String vmName,
+            String nodeName,
             String measurement,
             String connectionName,
             String timeBeforeHour,

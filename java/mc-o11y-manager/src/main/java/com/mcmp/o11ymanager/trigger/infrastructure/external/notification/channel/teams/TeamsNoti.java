@@ -137,8 +137,8 @@ public class TeamsNoti implements Noti {
         factSet.facts =
                 List.of(
                         new Fact("Namespace ID", safe(alert.getNamespaceId())),
-                        new Fact("MCI ID", safe(alert.getMciId())),
-                        new Fact("VM ID", safe(alert.getVmId())),
+                        new Fact("Infra ID", safe(alert.getInfraId())),
+                        new Fact("Node ID", safe(alert.getNodeId())),
                         new Fact("Metric", safe(alert.getResourceType())),
                         new Fact("Usage", alert.getResourceUsage() + "%"));
         return factSet;

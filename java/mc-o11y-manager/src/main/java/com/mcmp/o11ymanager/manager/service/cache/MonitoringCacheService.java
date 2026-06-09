@@ -75,15 +75,16 @@ public class MonitoringCacheService {
      */
     public List<MetricDTO> getOrLoad(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             MetricRequestDTO req,
             Supplier<List<MetricDTO>> loader) {
         if (cache == null) {
             return loader.get();
         }
         MonitoringCacheKey key =
-                MonitoringCacheKey.of(nsId, mciId, vmId, req, properties.getBlockPeriodSeconds());
+                MonitoringCacheKey.of(
+                        nsId, infraId, nodeId, req, properties.getBlockPeriodSeconds());
 
         List<MetricDTO> hit = cache.getIfPresent(key);
         if (hit != null && hasAnyDataPoint(hit)) {
@@ -91,8 +92,8 @@ public class MonitoringCacheService {
             log.debug(
                     "[MON-CACHE] HIT ns={}, mci={}, vm={}, bucket={}",
                     key.nsId(),
-                    key.mciId(),
-                    key.vmId(),
+                    key.infraId(),
+                    key.nodeId(),
                     key.hourBucket());
             return hit;
         }
@@ -101,8 +102,8 @@ public class MonitoringCacheService {
         log.debug(
                 "[MON-CACHE] MISS ns={}, mci={}, vm={}, bucket={}",
                 key.nsId(),
-                key.mciId(),
-                key.vmId(),
+                key.infraId(),
+                key.nodeId(),
                 key.hourBucket());
 
         List<MetricDTO> loaded = loader.get();
@@ -157,12 +158,12 @@ public class MonitoringCacheService {
      */
     private long computeTtlNanos(MonitoringCacheKey key) {
         long maxTtlSec = properties.getExpireAfterWriteSeconds();
-        if (key.vmId() == null || key.vmId().isEmpty()) {
+        if (key.nodeId() == null || key.nodeId().isEmpty()) {
             // ns/mci-scoped queries can't be tied to a specific VM creation time → use global TTL
             return TimeUnit.SECONDS.toNanos(maxTtlSec);
         }
         Optional<Instant> createdAt =
-                vmCreatedTimeResolver.resolve(key.nsId(), key.mciId(), key.vmId());
+                vmCreatedTimeResolver.resolve(key.nsId(), key.infraId(), key.nodeId());
         if (createdAt.isEmpty()) {
             return TimeUnit.SECONDS.toNanos(maxTtlSec);
         }
@@ -220,8 +221,8 @@ public class MonitoringCacheService {
             MonitoringCacheKey key, List<MetricDTO> value, int bytesPerPoint) {
         int keyBytes =
                 (key.nsId().length()
-                                        + key.mciId().length()
-                                        + key.vmId().length()
+                                        + key.infraId().length()
+                                        + key.nodeId().length()
                                         + key.requestSignature().length())
                                 * 2
                         + 16;

@@ -44,7 +44,7 @@ public class OtelJavaConfigFacadeService {
             new ClassPathResource("otel_java_template.properties");
 
     /** install 시점에 호출되어, target VM에 배포할 OTel Java 환경변수 묶음을 문자열로 반환한다. */
-    public String initOtelJavaConfig(String nsId, String mciId, String vmId) {
+    public String initOtelJavaConfig(String nsId, String infraId, String nodeId) {
         if (!otelJavaConfigTemplate.exists()) {
             String errMsg =
                     "Invalid filePath : otelJavaConfigTemplate (otel_java_template.properties)";
@@ -56,14 +56,14 @@ public class OtelJavaConfigFacadeService {
         fileService.appendConfig(otelJavaConfigTemplate, sb);
 
         String finalNsId = (nsId != null) ? nsId : "";
-        String finalMciId = (mciId != null) ? mciId : "";
-        String finalVmId = (vmId != null) ? vmId : "";
+        String finalInfraId = (infraId != null) ? infraId : "";
+        String finalNodeId = (nodeId != null) ? nodeId : "";
 
         return sb.toString()
                 .replace("@SITE_CODE", deploySiteCode)
                 .replace("@NS_ID", finalNsId)
-                .replace("@INFRA_ID", finalMciId)
-                .replace("@NODE_ID", finalVmId)
+                .replace("@INFRA_ID", finalInfraId)
+                .replace("@NODE_ID", finalNodeId)
                 .replace("@OTEL_ENDPOINT", otelEndpoint)
                 .replace("@JAR_URL", jarUrl)
                 .replace("@JAR_PATH", jarPath);

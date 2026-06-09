@@ -61,21 +61,21 @@ public class InfluxDBController {
         return new ResBody<>(influxDbFacadeService.getTags());
     }
 
-    @PostMapping("/metric/{nsId}/{mciId}")
+    @PostMapping("/metric/{nsId}/{infraId}")
     @Operation(
-            summary = "GetMetricsByNsIdAndMciId",
-            operationId = "GetMetricsByNsIdAndMciId",
+            summary = "GetMetricsByNsIdAndInfraId",
+            operationId = "GetMetricsByNsIdAndInfraId",
             description = "Retrieve InfluxDB metrics")
-    public ResBody<List<MetricDTO>> MetricByNsIdAndMciId(
+    public ResBody<List<MetricDTO>> MetricByNsIdAndInfraId(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
             @RequestBody MetricRequestDTO req) {
-        return new ResBody<>(influxDbFacadeService.postMetricsByNsMci(nsId, mciId, req));
+        return new ResBody<>(influxDbFacadeService.postMetricsByNsMci(nsId, infraId, req));
     }
 
-    @PostMapping("/metric/{nsId}/{mciId}/{vmId}")
+    @PostMapping("/metric/{nsId}/{infraId}/{nodeId}")
     @Operation(
             summary = "GetMetricsByVMId",
             operationId = "GetMetricsByVMId",
@@ -83,12 +83,12 @@ public class InfluxDBController {
     public ResBody<List<MetricDTO>> MetricByVMId(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
-            @Parameter(description = "mciId (e.g., mci-1)", example = "mci-1") @PathVariable
-                    String mciId,
-            @Parameter(description = "vmId (e.g., vm-1)", example = "vm-1") @PathVariable
-                    String vmId,
+            @Parameter(description = "infraId (e.g., infra-1)", example = "infra-1") @PathVariable
+                    String infraId,
+            @Parameter(description = "nodeId (e.g., node-1)", example = "node-1") @PathVariable
+                    String nodeId,
             @RequestBody MetricRequestDTO req) {
-        return new ResBody<>(influxDbFacadeService.postMetricsByVM(nsId, mciId, vmId, req));
+        return new ResBody<>(influxDbFacadeService.postMetricsByVM(nsId, infraId, nodeId, req));
     }
 
     @GetMapping("/cache/stats")

@@ -119,7 +119,7 @@ public class TriggerController {
             summary = "AddTriggerVM",
             description = "Add trigger vm",
             operationId = "AddTriggerVM")
-    @PostMapping("/{id}/vm")
+    @PostMapping("/{id}/node")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ResBody<Void> addTriggerVM(
             @Parameter(name = "id", description = "trigger policy id") @PathVariable long id,
@@ -132,7 +132,7 @@ public class TriggerController {
             summary = "RemoveTriggerVM",
             description = "Remove trigger vm",
             operationId = "RemoveTriggerVM")
-    @DeleteMapping("/{id}/vm")
+    @DeleteMapping("/{id}/node")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public ResBody<Void> removeTriggerVM(
             @Parameter(name = "id", description = "trigger policy id") @PathVariable long id,

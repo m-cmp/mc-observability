@@ -17,11 +17,11 @@ public class MonitoringItemDTO {
     @Schema(description = "Namespace ID", example = "ns-1")
     private String nsId;
 
-    @Schema(description = "MCI ID", example = "mci-1")
-    private String mciId;
+    @Schema(description = "Infra ID", example = "infra-1")
+    private String infraId;
 
-    @Schema(description = "VM ID", example = "vm-1")
-    private String vmId;
+    @Schema(description = "Node ID", example = "node-1")
+    private String nodeId;
 
     @Schema(description = "VM name", example = "mcmp-vm")
     private String name;

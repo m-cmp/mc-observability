@@ -67,6 +67,17 @@ loki:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
 
+tempo:
+  # Tempo HTTP query API (port 3200). OTLP ingest(4317/4318)와 별개의 read 경로.
+  url: ${TEMPO_URL:http://mc-observability-tempo:3200}
+  endpoints:
+    search: /api/search
+    trace: /api/traces
+    serviceValues: /api/search/tag/service.name/values
+  # service.name prefix that identifies the o11y platform's own (framework) traces.
+  # Everything else is treated as VM/application trace (Beyla / OTel agents).
+  framework-service-prefix: ${TEMPO_FRAMEWORK_PREFIX:mc-observability}
+
 beyla:
   # Beyla agent가 trace/metric을 송신할 OTEL 엔드포인트.
   # 기본값은 사내 docker network의 Tempo OTLP receiver. 사이트별로 BEYLA_OTEL_ENDPOINT
@@ -182,6 +193,8 @@ feign:
         read-timeout: ${FEIGN_READ_TIMEOUT:30000}
         loggerLevel: full
       LokiFeignClient:
+        loggerLevel: full
+      TempoFeignClient:
         loggerLevel: full
   semaphore:
     url: ${SEMAPHORE_URL:http://mc-observability-infra:3000}

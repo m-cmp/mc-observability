@@ -15,11 +15,11 @@ public class BeylaSystemRequirementValidator {
 
     private final TumblebugService tumblebugService;
 
-    public BeylaSystemCheckResult validate(String nsId, String mciId, String vmId) {
-        log.info("Validating Beyla system requirements for VM: {}/{}/{}", nsId, mciId, vmId);
+    public BeylaSystemCheckResult validate(String nsId, String infraId, String nodeId) {
+        log.info("Validating Beyla system requirements for VM: {}/{}/{}", nsId, infraId, nodeId);
 
-        String kernelVersion = getKernelVersion(nsId, mciId, vmId);
-        boolean btfSupported = checkBtfSupport(nsId, mciId, vmId);
+        String kernelVersion = getKernelVersion(nsId, infraId, nodeId);
+        boolean btfSupported = checkBtfSupport(nsId, infraId, nodeId);
         boolean kernelVersionValid = isKernelVersionValid(kernelVersion);
 
         BeylaSystemCheckResult result =
@@ -35,8 +35,8 @@ public class BeylaSystemRequirementValidator {
         return result;
     }
 
-    public void validateAndThrow(String nsId, String mciId, String vmId) {
-        BeylaSystemCheckResult result = validate(nsId, mciId, vmId);
+    public void validateAndThrow(String nsId, String infraId, String nodeId) {
+        BeylaSystemCheckResult result = validate(nsId, infraId, nodeId);
 
         if (!result.isKernelVersionValid()) {
             throw new BeylaSystemRequirementException(
@@ -65,13 +65,13 @@ public class BeylaSystemRequirementValidator {
                 result.isBtfSupported());
     }
 
-    private String getKernelVersion(String nsId, String mciId, String vmId) {
+    private String getKernelVersion(String nsId, String infraId, String nodeId) {
         try {
             String result =
                     tumblebugService.executeCommand(
                             nsId,
-                            mciId,
-                            vmId,
+                            infraId,
+                            nodeId,
                             "uname -r"); // 원격 VM에 'uname -r'을 실행 => '5.15.0-91-generic' 같은 문자열이 들어옴
             return result != null ? result.trim() : "unknown";
         } catch (Exception e) {
@@ -80,13 +80,13 @@ public class BeylaSystemRequirementValidator {
         }
     }
 
-    private boolean checkBtfSupport(String nsId, String mciId, String vmId) {
+    private boolean checkBtfSupport(String nsId, String infraId, String nodeId) {
         try {
             String result =
                     tumblebugService.executeCommand(
                             nsId,
-                            mciId,
-                            vmId,
+                            infraId,
+                            nodeId,
                             "test -f /sys/kernel/btf/vmlinux && echo 'true' || echo 'false'"); // 원격
             // vm에 해당 문자열 입력, BTF 팡리이 있으면 true 없으면 false
             return result != null

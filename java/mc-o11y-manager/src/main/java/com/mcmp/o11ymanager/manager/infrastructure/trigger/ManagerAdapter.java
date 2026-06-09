@@ -19,35 +19,35 @@ public class ManagerAdapter implements ManagerPort {
     private final InfluxDbService influxDbService;
 
     @Override
-    public String getInfluxUid(String nsId, String vmScope, String vmId) {
+    public String getInfluxUid(String nsId, String vmScope, String nodeId) {
 
         Long influxId;
 
         // 1. Check whether vmScope is "infra_id" or "node_id"
         if ("mci".equalsIgnoreCase(vmScope)) {
-            final String mciId = vmId;
+            final String infraId = nodeId;
 
             // 2. Map influx id using the combination of ns id and mci id
-            List<VMDTO> vms = vmService.getByNsMci(nsId, mciId);
+            List<VMDTO> vms = vmService.getByNsMci(nsId, infraId);
             influxId =
                     vms.stream()
                             .map(VMDTO::getInfluxSeq)
                             .filter(Objects::nonNull)
                             .findFirst() // Can choose first/latest/minimum based on rules
-                            .orElseGet(() -> influxDbService.resolveInfluxDb(nsId, mciId));
+                            .orElseGet(() -> influxDbService.resolveInfluxDb(nsId, infraId));
 
         } else if ("vm".equalsIgnoreCase(vmScope)) {
             // 3. Map mci id using ns and vm
-            VMDTO t = vmService.getByNsVm(nsId, vmId);
+            VMDTO t = vmService.getByNsVm(nsId, nodeId);
 
             influxId = t.getInfluxSeq();
             if (influxId == null) {
-                String mciId = t.getMciId();
-                if (mciId == null || mciId.isBlank()) {
+                String infraId = t.getInfraId();
+                if (infraId == null || infraId.isBlank()) {
                     throw new IllegalStateException(
-                            "mciId not found for vm: ns=" + nsId + ", vmId=" + vmId);
+                            "infraId not found for vm: ns=" + nsId + ", nodeId=" + nodeId);
                 }
-                influxId = influxDbService.resolveInfluxDb(nsId, mciId);
+                influxId = influxDbService.resolveInfluxDb(nsId, infraId);
             }
 
         } else {

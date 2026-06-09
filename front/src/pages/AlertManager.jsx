@@ -47,8 +47,8 @@ function PoliciesTab({ nsId, infraId }) {
 
   async function handleAddInfra(policyId) {
     if (!nsId || !infraId) { alert('NS/Infra not set'); return; }
-    // NOTE: targetScope literal stays "mci" — backend enum not yet renamed
-    await addNodeToPolicy(policyId, { namespaceId: nsId, targetScope: 'mci', targetId: infraId });
+    // targetScope "infra" → trigger query tags by infra_id (matches Telegraf/InfluxDB tags)
+    await addNodeToPolicy(policyId, { namespaceId: nsId, targetScope: 'infra', targetId: infraId });
     load();
   }
 

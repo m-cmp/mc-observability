@@ -37,29 +37,29 @@ public interface InsightClient {
     @DeleteMapping(ANOMALY + "/settings/{settingSeq}")
     Object deleteAnomalySetting(@PathVariable("settingSeq") int settingSeq);
 
-    @GetMapping(ANOMALY + "/settings/ns/{nsId}/mci/{mciId}")
-    Object getAnomalySettingsForMci(
-            @PathVariable("nsId") String nsId, @PathVariable("mciId") String mciId);
+    @GetMapping(ANOMALY + "/settings/ns/{nsId}/infra/{infraId}")
+    Object getAnomalySettingsForInfra(
+            @PathVariable("nsId") String nsId, @PathVariable("infraId") String infraId);
 
-    @GetMapping(ANOMALY + "/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}")
-    Object getAnomalySettingsForVm(
+    @GetMapping(ANOMALY + "/settings/ns/{nsId}/infra/{infraId}/node/{nodeId}")
+    Object getAnomalySettingsForNode(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
-            @PathVariable("vmId") String vmId);
+            @PathVariable("infraId") String infraId,
+            @PathVariable("nodeId") String nodeId);
 
-    @GetMapping(ANOMALY + "/ns/{nsId}/mci/{mciId}/history")
-    Object getAnomalyHistoryForMci(
+    @GetMapping(ANOMALY + "/ns/{nsId}/infra/{infraId}/history")
+    Object getAnomalyHistoryForInfra(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
+            @PathVariable("infraId") String infraId,
             @RequestParam("measurement") String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);
 
-    @GetMapping(ANOMALY + "/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
-    Object getAnomalyHistoryForVm(
+    @GetMapping(ANOMALY + "/ns/{nsId}/infra/{infraId}/node/{nodeId}/history")
+    Object getAnomalyHistoryForNode(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
-            @PathVariable("vmId") String vmId,
+            @PathVariable("infraId") String infraId,
+            @PathVariable("nodeId") String nodeId,
             @RequestParam("measurement") String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);
@@ -108,36 +108,36 @@ public interface InsightClient {
     @GetMapping(PREDICTION + "/options")
     Object getPredictionOptions();
 
-    /** POST /predictions/ns/{nsId}/mci/{mciId} */
-    @PostMapping(PREDICTION + "/ns/{nsId}/mci/{mciId}")
-    Object predictMonitoringDataForMci(
+    /** POST /predictions/ns/{nsId}/infra/{infraId} */
+    @PostMapping(PREDICTION + "/ns/{nsId}/infra/{infraId}")
+    Object predictMonitoringDataForInfra(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
+            @PathVariable("infraId") String infraId,
             @RequestBody Object body);
 
-    /** POST /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId} */
-    @PostMapping(PREDICTION + "/ns/{nsId}/mci/{mciId}/vm/{vmId}")
-    Object predictMonitoringDataForVm(
+    /** POST /predictions/ns/{nsId}/infra/{infraId}/node/{nodeId} */
+    @PostMapping(PREDICTION + "/ns/{nsId}/infra/{infraId}/node/{nodeId}")
+    Object predictMonitoringDataForNode(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
-            @PathVariable("vmId") String vmId,
+            @PathVariable("infraId") String infraId,
+            @PathVariable("nodeId") String nodeId,
             @RequestBody Object body);
 
-    /** GET /predictions/ns/{nsId}/mci/{mciId}/history */
-    @GetMapping(PREDICTION + "/ns/{nsId}/mci/{mciId}/history")
-    Object getPredictionHistoryForMci(
+    /** GET /predictions/ns/{nsId}/infra/{infraId}/history */
+    @GetMapping(PREDICTION + "/ns/{nsId}/infra/{infraId}/history")
+    Object getPredictionHistoryForInfra(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
+            @PathVariable("infraId") String infraId,
             @RequestParam("measurement") String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);
 
-    /** GET /predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history */
-    @GetMapping(PREDICTION + "/ns/{nsId}/mci/{mciId}/vm/{vmId}/history")
-    Object getPredictionHistoryForVm(
+    /** GET /predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}/history */
+    @GetMapping(PREDICTION + "/ns/{nsId}/infra/{infraId}/node/{nodeId}/history")
+    Object getPredictionHistoryForNode(
             @PathVariable("nsId") String nsId,
-            @PathVariable("mciId") String mciId,
-            @PathVariable("vmId") String vmId,
+            @PathVariable("infraId") String infraId,
+            @PathVariable("nodeId") String nodeId,
             @RequestParam("measurement") String measurement,
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);

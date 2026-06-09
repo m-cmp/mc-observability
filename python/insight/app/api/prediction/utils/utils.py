@@ -78,17 +78,17 @@ class PredictionService:
 
     def get_data(self, path_params, body_params):
         nsId = path_params.nsId
-        mciId = path_params.mciId
-        vmId = getattr(path_params, "vmId", None)
+        infraId = path_params.infraId
+        nodeId = getattr(path_params, "nodeId", None)
 
         measurement = body_params.measurement
         prediction_range = body_params.prediction_range
 
         all_data = []
-        if vmId:
-            url = self._build_url(f"influxdb/metric/{nsId}/{mciId}/{vmId}")
+        if nodeId:
+            url = self._build_url(f"influxdb/metric/{nsId}/{infraId}/{nodeId}")
         else:
-            url = self._build_url(f"influxdb/metric/{nsId}/{mciId}")
+            url = self._build_url(f"influxdb/metric/{nsId}/{infraId}")
 
         body = self._build_body(measurement, prediction_range)
 
@@ -116,8 +116,8 @@ class PredictionService:
     def predict(self, df: pd.DataFrame, path_params, body_params):
         logger.info("start prediction")
         nsId = path_params.nsId
-        mciId = path_params.mciId
-        vmId = getattr(path_params, "vmId", None)
+        infraId = path_params.infraId
+        nodeId = getattr(path_params, "nodeId", None)
 
         measurement = body_params.measurement
         prediction_range = body_params.prediction_range
@@ -144,13 +144,13 @@ class PredictionService:
         prediction["value"] = np.clip(prediction["value"], 0, 100).round(2)
         prediction["timestamp"] = prediction["timestamp"].apply(self.insert_timezone)
         logger.info("start prediction result saving")
-        self.save_prediction_result(prediction, nsId, mciId, vmId, measurement)
+        self.save_prediction_result(prediction, nsId, infraId, nodeId, measurement)
         result_dict = prediction.to_dict("records")
 
         return result_dict
 
-    def save_prediction_result(self, df: pd.DataFrame, nsId: str, mciId: str, vmId: str, measurement: str):
-        self.influxdb_repo.save_results(df, nsId, mciId, vmId, measurement)
+    def save_prediction_result(self, df: pd.DataFrame, nsId: str, infraId: str, nodeId: str, measurement: str):
+        self.influxdb_repo.save_results(df, nsId, infraId, nodeId, measurement)
 
     @staticmethod
     def convert_prediction_range(prediction_range: str):
@@ -177,7 +177,7 @@ class PredictionService:
     def get_prediction_history(self, path_params, query_params):
         prediction_points = self.influxdb_repo.query_prediction_history(
             nsId=path_params.nsId,
-            mciId=path_params.mciId,
+            infraId=path_params.infraId,
             measurement=query_params.measurement,
             start_time=query_params.start_time,
             end_time=query_params.end_time,

@@ -9,13 +9,13 @@ import lombok.Getter;
 public class VMAgentTaskProcessingException extends BaseException {
 
     public VMAgentTaskProcessingException(
-            String requestId, String vmId, String agentTypeName, VMAgentTaskStatus status) {
+            String requestId, String nodeId, String agentTypeName, VMAgentTaskStatus status) {
         super(
                 requestId,
                 ErrorCode.AGENT_TASK_IN_PROGRESS,
                 String.format(
                         "Agent task %s is in progress on host (ID: %s). (Current status: %s)",
-                        agentTypeName, vmId, status));
+                        agentTypeName, nodeId, status));
     }
 
     public VMAgentTaskProcessingException(String requestId, String idsSummary) {

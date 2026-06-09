@@ -22,10 +22,11 @@ public class VMNotificationService {
             hostResponseList.add(vmMapper.toDTO(vm));
         }
 
-        messagingTemplate.convertAndSend("/topic/vms", hostResponseList);
+        messagingTemplate.convertAndSend("/topic/nodes", hostResponseList);
     }
 
-    public void notifyVMUpdate(String nsId, String mciId, String vmId, VMDTO vmInfo) {
-        messagingTemplate.convertAndSend("/topic/vm/" + nsId + "/" + mciId + "/" + vmId, vmInfo);
+    public void notifyVMUpdate(String nsId, String infraId, String nodeId, VMDTO vmInfo) {
+        messagingTemplate.convertAndSend(
+                "/topic/node/" + nsId + "/" + infraId + "/" + nodeId, vmInfo);
     }
 }

@@ -22,7 +22,10 @@ public class VMDomainService {
         VMEntity savedVM = vmJpaRepository.save(vmEntity);
 
         vmNotificationService.notifyVMUpdate(
-                savedVM.getNsId(), savedVM.getMciId(), savedVM.getVmId(), vmMapper.toDTO(savedVM));
+                savedVM.getNsId(),
+                savedVM.getInfraId(),
+                savedVM.getNodeId(),
+                vmMapper.toDTO(savedVM));
         vmNotificationService.notifyAllVMsUpdate(vmJpaRepository.findAll());
         log.info("VMDomainService : {}", savedVM);
     }

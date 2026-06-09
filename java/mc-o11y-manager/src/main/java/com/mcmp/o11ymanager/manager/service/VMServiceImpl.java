@@ -29,43 +29,43 @@ public class VMServiceImpl implements VMService {
     private final ConcurrentHashMap<String, ReentrantLock> repositoryLocks =
             new ConcurrentHashMap<>();
 
-    public ReentrantLock getHostLock(String nsId, String mciId, String vmId) {
-        String lockKey = nsId + "-" + mciId + "-" + vmId;
+    public ReentrantLock getHostLock(String nsId, String infraId, String nodeId) {
+        String lockKey = nsId + "-" + infraId + "-" + nodeId;
         return repositoryLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
     }
 
     @Override
-    public VMDTO get(String nsId, String mciId, String vmId) {
+    public VMDTO get(String nsId, String infraId, String nodeId) {
         VMEntity entity =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
                                                 requestInfo.getRequestId(),
                                                 "VMEntity",
-                                                nsId + "/" + mciId));
+                                                nsId + "/" + infraId));
         return VMDTO.fromEntity(entity);
     }
 
     @Override
-    public List<VMDTO> getByNsMci(String nsId, String mciId) {
-        return vmJpaRepository.findByNsIdAndMciId(nsId, mciId).stream()
+    public List<VMDTO> getByNsMci(String nsId, String infraId) {
+        return vmJpaRepository.findByNsIdAndInfraId(nsId, infraId).stream()
                 .map(VMDTO::fromEntity)
                 .toList();
     }
 
     @Override
-    public VMDTO getByNsVm(String nsId, String vmId) {
+    public VMDTO getByNsVm(String nsId, String nodeId) {
         VMEntity e =
                 vmJpaRepository
-                        .findByNsIdAndVmId(nsId, vmId)
+                        .findByNsIdAndNodeId(nsId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
                                                 requestInfo.getRequestId(),
                                                 "VMEntity",
-                                                nsId + "/" + vmId));
+                                                nsId + "/" + nodeId));
         return VMDTO.fromEntity(e);
     }
 
@@ -77,20 +77,20 @@ public class VMServiceImpl implements VMService {
     @Override
     public VMDTO post(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             VMStatus vmStatus,
             VMRequestDTO dto,
             Long influxSeq) {
         VMEntity vm =
                 VMEntity.builder()
                         .nsId(nsId)
-                        .mciId(mciId)
-                        .vmId(vmId)
+                        .infraId(infraId)
+                        .nodeId(nodeId)
                         .name(dto.getName())
                         .description(dto.getDescription())
                         .nsId(nsId)
-                        .mciId(mciId)
+                        .infraId(infraId)
                         .vmStatus(vmStatus)
                         .influxSeq(influxSeq)
                         .build();
@@ -101,14 +101,14 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
-    public VMDTO put(String nsId, String mciId, String vmId, VMRequestDTO dto) {
+    public VMDTO put(String nsId, String infraId, String nodeId, VMRequestDTO dto) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         if (dto.getName() != null) vm.setName(dto.getName());
         if (dto.getDescription() != null) vm.setDescription(dto.getDescription());
@@ -120,98 +120,99 @@ public class VMServiceImpl implements VMService {
 
     @Override
     @Transactional
-    public void delete(String nsId, String mciId, String vmId) {
+    public void delete(String nsId, String infraId, String nodeId) {
         VMEntity entity =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vmJpaRepository.delete(entity);
     }
 
     @Override
-    public VMAgentTaskStatus getMonitoringAgentTaskStatus(String nsId, String mciId, String vmId) {
+    public VMAgentTaskStatus getMonitoringAgentTaskStatus(
+            String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
         return vm.getMonitoringAgentTaskStatus();
     }
 
     @Override
-    public VMAgentTaskStatus getLogAgentTaskStatus(String nsId, String mciId, String vmId) {
+    public VMAgentTaskStatus getLogAgentTaskStatus(String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
         return vm.getLogAgentTaskStatus();
     }
 
     @Override
-    public VMAgentTaskStatus getTraceAgentTaskStatus(String nsId, String mciId, String vmId) {
+    public VMAgentTaskStatus getTraceAgentTaskStatus(String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
         return vm.getTraceAgentTaskStatus();
     }
 
     @Override
-    public void isIdleMonitoringAgent(String nsId, String mciId, String vmId) {
+    public void isIdleMonitoringAgent(String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         if (vm.getMonitoringAgentTaskStatus() != VMAgentTaskStatus.IDLE) {
             throw new VMAgentTaskProcessingException(
                     requestInfo.getRequestId(),
-                    vmId,
+                    nodeId,
                     "monitoringAgentTask",
                     vm.getMonitoringAgentTaskStatus());
         }
     }
 
     @Override
-    public void isIdleLogAgent(String nsId, String mciId, String vmId) {
+    public void isIdleLogAgent(String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         if (vm.getLogAgentTaskStatus() != VMAgentTaskStatus.IDLE) {
             throw new VMAgentTaskProcessingException(
-                    requestInfo.getRequestId(), vmId, "로그", vm.getLogAgentTaskStatus());
+                    requestInfo.getRequestId(), nodeId, "로그", vm.getLogAgentTaskStatus());
         }
     }
 
     @Override
-    public void isIdleTraceAgent(String nsId, String mciId, String vmId) {
+    public void isIdleTraceAgent(String nsId, String infraId, String nodeId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         VMAgentTaskStatus status = vm.getTraceAgentTaskStatus();
         // NULL은 아직 Beyla 작업이 한 번도 없었던 상태로 간주하고 IDLE과 동일하게 취급.
@@ -219,20 +220,20 @@ public class VMServiceImpl implements VMService {
         // 기존 VM 레코드들이 NULL로 남아있는 경우를 대응.
         if (status != null && status != VMAgentTaskStatus.IDLE) {
             throw new VMAgentTaskProcessingException(
-                    requestInfo.getRequestId(), vmId, "traceAgent", status);
+                    requestInfo.getRequestId(), nodeId, "traceAgent", status);
         }
     }
 
     @Override
     public void updateMonitoringAgentTaskStatus(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setMonitoringAgentTaskStatus(status);
 
@@ -249,14 +250,14 @@ public class VMServiceImpl implements VMService {
 
     @Override
     public void updateLogAgentTaskStatus(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setLogAgentTaskStatus(status);
 
@@ -273,16 +274,16 @@ public class VMServiceImpl implements VMService {
 
     @Override
     public void updateTraceAgentTaskStatus(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status) {
         // 특정 VM의 Beyla 작업 상태를 DB에 업데이트
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(
-                                nsId, mciId, vmId) // nsId + mciId + vmId 복합키로 VMEntity 조회
+                        .findByNsIdAndInfraIdAndNodeId(
+                                nsId, infraId, nodeId) // nsId + infraId + nodeId 복합키로 VMEntity 조회
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setTraceAgentTaskStatus(status); // traceAgentTaskStatus 필드에 새 상태 세팅
 
@@ -300,14 +301,14 @@ public class VMServiceImpl implements VMService {
 
     @Override
     public void updateMonitoringAgentTaskStatusAndTaskId(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status, String taskId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setMonitoringAgentTaskStatus(status);
         vm.setVmMonitoringAgentTaskId(taskId);
@@ -320,14 +321,14 @@ public class VMServiceImpl implements VMService {
 
     @Override
     public void updateLogAgentTaskStatusAndTaskId(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status, String taskId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setLogAgentTaskStatus(status);
         vm.setVmLogAgentTaskId(taskId);
@@ -339,14 +340,14 @@ public class VMServiceImpl implements VMService {
 
     @Override
     public void updateTraceAgentTaskStatusAndTaskId(
-            String nsId, String mciId, String vmId, VMAgentTaskStatus status, String taskId) {
+            String nsId, String infraId, String nodeId, VMAgentTaskStatus status, String taskId) {
         VMEntity vm =
                 vmJpaRepository
-                        .findByNsIdAndMciIdAndVmId(nsId, mciId, vmId)
+                        .findByNsIdAndInfraIdAndNodeId(nsId, infraId, nodeId)
                         .orElseThrow(
                                 () ->
                                         new ResourceNotExistsException(
-                                                requestInfo.getRequestId(), "VMEntity", vmId));
+                                                requestInfo.getRequestId(), "VMEntity", nodeId));
 
         vm.setTraceAgentTaskStatus(status);
         vm.setVmTraceAgentTaskId(taskId);
@@ -357,17 +358,17 @@ public class VMServiceImpl implements VMService {
     }
 
     @Override
-    public List<String> getVmIds(String nsId, String mciId) {
-        return vmJpaRepository.findByNsIdAndMciId(nsId, mciId).stream()
-                .map(VMEntity::getVmId)
+    public List<String> getNodeIds(String nsId, String infraId) {
+        return vmJpaRepository.findByNsIdAndInfraId(nsId, infraId).stream()
+                .map(VMEntity::getNodeId)
                 .toList();
     }
 
     @Override
-    public Long getInfluxId(String nsId, String mciId) {
+    public Long getInfluxId(String nsId, String infraId) {
         VMEntity t =
                 vmJpaRepository
-                        .findTop1ByNsIdAndMciIdOrderByVmIdAsc(nsId, mciId)
+                        .findTop1ByNsIdAndInfraIdOrderByNodeIdAsc(nsId, infraId)
                         .orElseThrow(() -> new IllegalStateException("no vms under ns/mci"));
 
         return t.getInfluxSeq();

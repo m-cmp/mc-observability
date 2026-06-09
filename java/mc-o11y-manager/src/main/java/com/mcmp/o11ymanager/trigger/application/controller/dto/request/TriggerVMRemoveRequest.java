@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record TriggerVMRemoveRequest(
         @Schema(description = "Namespace ID", example = "namespace-1") @NotNull @NotBlank String namespaceId,
-        @Schema(description = "Target scope", example = "vm") @NotNull @NotBlank String targetScope,
-        @Schema(description = "Target ID", example = "vm-1") @NotNull @NotBlank String targetId) {
+        @Schema(description = "Target scope", example = "node") @NotNull @NotBlank String targetScope,
+        @Schema(description = "Target ID", example = "node-1") @NotNull @NotBlank String targetId) {
 
     public TriggerVMDto toDto() {
         return new TriggerVMDto(namespaceId, targetScope, targetId, true);

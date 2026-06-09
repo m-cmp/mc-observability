@@ -9,8 +9,8 @@ public interface StatusService {
             Integer taskId,
             VMAgentTaskStatus hostAgentTaskStatus,
             String nsId,
-            String mciId,
-            String vmId);
+            String infraId,
+            String nodeId);
 
-    void resetVMAgentTaskStatus(String requestId, String nsId, String mciId, String vmId);
+    void resetVMAgentTaskStatus(String requestId, String nsId, String infraId, String nodeId);
 }

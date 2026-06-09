@@ -1,8 +1,7 @@
 import client from './client';
 
-// NOTE: backend URL path still uses /mci/{}/vm/{} literals (Tumblebug renamed
-// to Infra/Node but mc-observability backend URL not yet). JS identifiers
-// reflect the new naming.
+// Backend insight URL paths use /ns/{nsId}/infra/{infraId}/node/{nodeId}
+// (MCI→Infra, VM→Node naming applied).
 
 // Anomaly Detection
 export async function getAnomalySettings() {
@@ -34,8 +33,8 @@ export async function getAnomalyHistory(nsId, infraId, nodeId, measurement, star
   if (startTime) params.start_time = startTime;
   if (endTime) params.end_time = endTime;
   const path = nodeId
-    ? `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${infraId}/vm/${nodeId}/history`
-    : `/api/o11y/insight/anomaly-detection/ns/${nsId}/mci/${infraId}/history`;
+    ? `/api/o11y/insight/anomaly-detection/ns/${nsId}/infra/${infraId}/node/${nodeId}/history`
+    : `/api/o11y/insight/anomaly-detection/ns/${nsId}/infra/${infraId}/history`;
   const res = await client.get(path, { params });
   return res.data?.data || res.data?.responseData || {};
 }
@@ -51,16 +50,16 @@ export async function getPredictionHistory(nsId, infraId, nodeId, measurement, s
   if (startTime) params.start_time = startTime;
   if (endTime) params.end_time = endTime;
   const path = nodeId
-    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/vm/${nodeId}/history`
-    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/history`;
+    ? `/api/o11y/insight/predictions/ns/${nsId}/infra/${infraId}/node/${nodeId}/history`
+    : `/api/o11y/insight/predictions/ns/${nsId}/infra/${infraId}/history`;
   const res = await client.get(path, { params });
   return res.data?.data || res.data?.responseData || {};
 }
 
 export async function runPrediction(nsId, infraId, nodeId, body) {
   const path = nodeId
-    ? `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}/vm/${nodeId}`
-    : `/api/o11y/insight/predictions/ns/${nsId}/mci/${infraId}`;
+    ? `/api/o11y/insight/predictions/ns/${nsId}/infra/${infraId}/node/${nodeId}`
+    : `/api/o11y/insight/predictions/ns/${nsId}/infra/${infraId}`;
   const res = await client.post(path, body);
   return res.data?.data || res.data?.responseData || {};
 }

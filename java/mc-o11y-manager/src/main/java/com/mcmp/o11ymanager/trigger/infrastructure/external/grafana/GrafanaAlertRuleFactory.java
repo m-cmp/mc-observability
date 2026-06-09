@@ -55,7 +55,7 @@ public class GrafanaAlertRuleFactory {
      * @param thresholdCondition threshold expression defining info/warning/critical levels
      * @param repeatInterval interval for re-sending the alert when the same condition/state
      *     continues.
-     * @param targetScope scope identifier for the monitoring target (mci or vm)
+     * @param targetScope scope identifier for the monitoring target (infra or node)
      * @return GrafanaAlertRule configured for the specified parameters
      */
     public GrafanaAlertRule createGrafanaAlertRule(

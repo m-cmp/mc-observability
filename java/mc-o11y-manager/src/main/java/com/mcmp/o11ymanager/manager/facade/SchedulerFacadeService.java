@@ -63,8 +63,8 @@ public class SchedulerFacadeService {
             String requestId,
             Integer taskId,
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             SemaphoreInstallMethod method,
             Agent agent) {
 
@@ -94,8 +94,8 @@ public class SchedulerFacadeService {
                                         "Task Status - Request ID: {}, VM: {}/{}/{}, Agent: {}, Method: {}, Task ID: {}, Status: {}",
                                         requestId,
                                         nsId,
-                                        mciId,
-                                        vmId,
+                                        infraId,
+                                        nodeId,
                                         agent,
                                         method,
                                         currentTask.getId(),
@@ -117,20 +117,20 @@ public class SchedulerFacadeService {
                                             "Task timed out after {} minutes. Resetting to IDLE. VM: {}/{}/{}, Agent: {}",
                                             maxWaitMinutes,
                                             nsId,
-                                            mciId,
-                                            vmId,
+                                            infraId,
+                                            nodeId,
                                             agent);
 
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
                                     } else if (agent == Agent.BEYLA
                                             || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
                                     }
 
                                     log.warn("Timeout occurred for agent {}", agent);
@@ -148,14 +148,14 @@ public class SchedulerFacadeService {
                                     log.debug("Task successful for agent {}", agent);
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
                                     } else if (agent == Agent.BEYLA
                                             || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
                                     }
 
                                     ScheduledFuture<?> scheduledFuture = futureRef.get();
@@ -173,14 +173,14 @@ public class SchedulerFacadeService {
 
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FAILED);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FAILED);
                                     } else if (agent == Agent.BEYLA
                                             || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
-                                                nsId, mciId, vmId, VMAgentTaskStatus.FAILED);
+                                                nsId, infraId, nodeId, VMAgentTaskStatus.FAILED);
                                     }
 
                                     ScheduledFuture<?> scheduledFuture = futureRef.get();

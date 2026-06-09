@@ -82,7 +82,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
                 {settings.map((s, i) => (
                   <tr key={s.settingSeq || s.seq || i} className="hover:bg-gray-50">
                     <td className="px-3 py-2 border-b">{s.settingSeq || s.seq}</td>
-                    <td className="px-3 py-2 border-b">{s.nsId || s.ns_id}/{s.mciId || s.infra_id}/{s.vmId || s.node_id || '-'}</td>
+                    <td className="px-3 py-2 border-b">{s.nsId || s.ns_id}/{s.infraId || s.infra_id}/{s.nodeId || s.node_id || '-'}</td>
                     <td className="px-3 py-2 border-b">{s.measurement || '-'}</td>
                     <td className="px-3 py-2 border-b text-right">
                       <button onClick={() => handleDelete(s.settingSeq || s.seq)} className="text-xs text-red-500 hover:text-red-700">Delete</button>

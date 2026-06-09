@@ -12,8 +12,8 @@ import lombok.Getter;
 public class ResultDTO {
 
     private String nsId;
-    private String mciId;
-    private String vmId;
+    private String infraId;
+    private String nodeId;
     private ResponseStatus status;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

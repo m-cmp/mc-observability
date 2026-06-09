@@ -36,34 +36,35 @@ public class TelegrafFacadeService {
 
     public void install(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
-        install(nsId, mciId, vmId, accessInfo, templateCount, false);
+        install(nsId, infraId, nodeId, accessInfo, templateCount, false);
     }
 
     // gpu: true면 telegraf config에 GPU(DCGM) 수집 블록을 포함하고,
     // Ansible enable_gpu 변수로 DCGM Exporter 설치까지 함께 수행한다.
     public void install(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount,
             boolean gpu)
             throws Exception {
 
         log.info("==========================telegraf idle start===============================");
-        vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
+        vmService.isIdleMonitoringAgent(nsId, infraId, nodeId);
         log.info("==========================telegraf idle finish===============================");
 
-        vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING);
+        vmService.updateMonitoringAgentTaskStatus(
+                nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING);
         log.info("==========================update vm status===============================");
 
         String configContent =
-                telegrafConfigFacadeService.initTelegrafConfig(nsId, mciId, vmId, gpu);
+                telegrafConfigFacadeService.initTelegrafConfig(nsId, infraId, nodeId, gpu);
 
         log.info("Telegraf config: {}", configContent);
 
@@ -81,7 +82,7 @@ public class TelegrafFacadeService {
         log.info("=========================FINISH INSTALL REQUEST============================");
 
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.INSTALLING, String.valueOf(task.getId()));
 
         log.info(
                 "==========================update vm status task ID: {}============================",
@@ -91,23 +92,24 @@ public class TelegrafFacadeService {
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.INSTALL,
                 Agent.TELEGRAF);
     }
 
     public void update(
             String nsId,
-            String mciId,
-            String vmId,
+            String infraId,
+            String nodeId,
             AccessInfoDTO accessInfo,
             @NotBlank int templateCount)
             throws Exception {
 
-        vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
+        vmService.isIdleMonitoringAgent(nsId, infraId, nodeId);
 
-        vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.UPDATING);
+        vmService.updateMonitoringAgentTaskStatus(
+                nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING);
 
         Task task =
                 semaphoreDomainService.install(
@@ -118,24 +120,29 @@ public class TelegrafFacadeService {
                         templateCount);
 
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
+                nsId, infraId, nodeId, VMAgentTaskStatus.UPDATING, String.valueOf(task.getId()));
 
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UPDATE,
                 Agent.TELEGRAF);
     }
 
     public void uninstall(
-            String nsId, String mciId, String vmId, AccessInfoDTO accessInfo, int templateCount) {
+            String nsId,
+            String infraId,
+            String nodeId,
+            AccessInfoDTO accessInfo,
+            int templateCount) {
 
-        vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
+        vmService.isIdleMonitoringAgent(nsId, infraId, nodeId);
 
-        vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.PREPARING);
+        vmService.updateMonitoringAgentTaskStatus(
+                nsId, infraId, nodeId, VMAgentTaskStatus.PREPARING);
 
         Task task =
                 semaphoreDomainService.install(
@@ -146,53 +153,59 @@ public class TelegrafFacadeService {
                         templateCount);
 
         vmService.updateMonitoringAgentTaskStatusAndTaskId(
-                nsId, mciId, vmId, VMAgentTaskStatus.UNINSTALLING, String.valueOf(task.getId()));
+                nsId,
+                infraId,
+                nodeId,
+                VMAgentTaskStatus.UNINSTALLING,
+                String.valueOf(task.getId()));
 
         schedulerFacadeService.scheduleTaskStatusCheck(
                 requestInfo.getRequestId(),
                 task.getId(),
                 nsId,
-                mciId,
-                vmId,
+                infraId,
+                nodeId,
                 SemaphoreInstallMethod.UNINSTALL,
                 Agent.TELEGRAF);
     }
 
     @Transactional
-    public List<ResultDTO> restart(String nsId, String mciId, String vmId) {
+    public List<ResultDTO> restart(String nsId, String infraId, String nodeId) {
 
         List<ResultDTO> results = new ArrayList<>();
 
         try {
             agentTaskStatusLock.lock();
 
-            vmService.isIdleMonitoringAgent(nsId, mciId, vmId);
+            vmService.isIdleMonitoringAgent(nsId, infraId, nodeId);
 
             vmService.updateMonitoringAgentTaskStatus(
-                    nsId, mciId, vmId, VMAgentTaskStatus.RESTARTING);
+                    nsId, infraId, nodeId, VMAgentTaskStatus.RESTARTING);
 
-            tumblebugService.restart(nsId, mciId, vmId, Agent.TELEGRAF);
+            tumblebugService.restart(nsId, infraId, nodeId, Agent.TELEGRAF);
 
-            vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateMonitoringAgentTaskStatus(
+                    nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.SUCCESS)
                             .build());
             agentTaskStatusLock.unlock();
         } catch (Exception e) {
             agentTaskStatusLock.unlock();
 
-            vmService.updateMonitoringAgentTaskStatus(nsId, mciId, vmId, VMAgentTaskStatus.IDLE);
+            vmService.updateMonitoringAgentTaskStatus(
+                    nsId, infraId, nodeId, VMAgentTaskStatus.IDLE);
 
             results.add(
                     ResultDTO.builder()
                             .nsId(nsId)
-                            .mciId(mciId)
-                            .vmId(vmId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
                             .status(ResponseStatus.ERROR)
                             .errorMessage(e.getMessage())
                             .build());
