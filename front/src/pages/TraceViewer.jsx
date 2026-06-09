@@ -15,9 +15,10 @@ const SCOPES = [
 ];
 
 export default function TraceViewer() {
-  const { infraId } = useParams();
+  const { infraId, nodeId } = useParams();
 
-  const [scope, setScope] = useState('framework');
+  // Selecting a specific VM/node implies you want VM (Beyla/OTel) traces, not framework ones.
+  const [scope, setScope] = useState(nodeId ? 'vm' : 'framework');
   const [services, setServices] = useState([]);
   const [service, setService] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -91,7 +92,10 @@ export default function TraceViewer() {
 
       {/* Control card */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-4 py-3 border-b font-semibold text-sm">Trace Manage</div>
+        <div className="px-4 py-3 border-b font-semibold text-sm flex items-center gap-2">
+          <span>Trace Manage</span>
+          {infraId && <span className="text-xs font-normal text-gray-400">· Workload: {infraId}{nodeId ? ` / Node: ${nodeId}` : ''}</span>}
+        </div>
         <div className="p-4">
           <div className="grid grid-cols-4 gap-4 mb-2">
             <div>
