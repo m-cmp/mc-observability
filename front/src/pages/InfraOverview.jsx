@@ -28,7 +28,7 @@ export default function InfraOverview() {
   const [viewTab, setViewTab] = useState(infraId ? 'node' : 'node');
   const [clusters, setClusters] = useState([]);
 
-  // Infra 선택되면 Node 탭, Infra 없으면 유지
+  // Switch to Node tab when an Infra is selected; keep otherwise
   useEffect(() => {
     if (infraId) setViewTab('node');
   }, [infraId]);

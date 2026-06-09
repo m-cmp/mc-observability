@@ -37,7 +37,7 @@ export default function Layout() {
     getNsList().then(setNsList).catch(() => setNsList([]));
   }, []);
 
-  // NS 변경 → Infra 목록 갱신
+  // NS change -> refresh Infra list
   const loadInfraList = useCallback(async (ns) => {
     if (!ns) { setInfraList([]); return []; }
     try {
@@ -48,7 +48,7 @@ export default function Layout() {
     } catch { setInfraList([]); return []; }
   }, []);
 
-  // Infra 변경 → Node 목록 갱신
+  // Infra change -> refresh Node list
   const loadNodeList = useCallback(async (ns, infra) => {
     if (!ns || !infra) { setNodeList([]); return; }
     try {
@@ -57,11 +57,11 @@ export default function Layout() {
     } catch { setNodeList([]); }
   }, []);
 
-  // URL의 nsId/infraId 가 바뀔 때마다 목록 갱신
+  // Refresh lists whenever URL nsId/infraId changes
   useEffect(() => { loadInfraList(nsId); }, [nsId, loadInfraList]);
   useEffect(() => { loadNodeList(nsId, infraId); }, [nsId, infraId, loadNodeList]);
 
-  // NS 드롭다운 변경
+  // NS dropdown change
   async function handleNsChange(newNs) {
     const infras = await loadInfraList(newNs);
     const firstInfra = infras[0]?.id;
@@ -70,7 +70,7 @@ export default function Layout() {
     }
   }
 
-  // Infra 드롭다운 변경
+  // Infra dropdown change
   function handleInfraChange(newInfra) {
     if (!newInfra) {
       navigate(`${base}/${currentSection}/${nsId}`);
@@ -79,7 +79,7 @@ export default function Layout() {
     navigate(`${base}/${currentSection}/${nsId}/${newInfra}`);
   }
 
-  // Node 드롭다운 변경
+  // Node dropdown change
   function handleNodeChange(newNode) {
     if (!nsId || !infraId) return;
     let path = `${base}/${currentSection}/${nsId}/${infraId}`;

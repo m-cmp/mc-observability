@@ -15,7 +15,7 @@ export default function LogViewer() {
   const [logs, setLogs] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // NS 레벨: Infra 목록 로드
+  // NS level: load Infra list
   useEffect(() => {
     if (!nsId) return;
     if (!infraId) {
@@ -25,7 +25,7 @@ export default function LogViewer() {
     }
   }, [nsId, infraId]);
 
-  // Infra 선택 시 Node 목록 로드
+  // Load Node list when an Infra is selected
   useEffect(() => {
     if (!nsId || !selectedInfraId) { setNodes([]); return; }
     getInfra(nsId, selectedInfraId)
