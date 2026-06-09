@@ -184,4 +184,31 @@ public class InsightClientAdapter implements InsightPort {
     public Object queryLogAnalysis(Object body) {
         return insightClient.queryLogAnalysis(body);
     }
+
+    /* ===================== Server Error Analysis ===================== */
+    @Override
+    public Object detectServerError(Object body) {
+        return insightClient.detectServerError(body);
+    }
+
+    @Override
+    public Object queryServerError(Object body) {
+        return insightClient.queryServerError(body);
+    }
+
+    @Override
+    public Object listServerErrorRecords(
+            String status, String fromDt, String toDt, Integer page, Integer size) {
+        return insightClient.listServerErrorRecords(status, fromDt, toDt, page, size);
+    }
+
+    @Override
+    public Object getServerErrorRecord(int analysisId) {
+        return insightClient.getServerErrorRecord(analysisId);
+    }
+
+    @Override
+    public Object rerunServerErrorAnalysis(int analysisId) {
+        return insightClient.rerunServerErrorAnalysis(analysisId);
+    }
 }

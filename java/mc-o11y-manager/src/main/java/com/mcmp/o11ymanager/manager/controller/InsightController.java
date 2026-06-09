@@ -332,4 +332,35 @@ public class InsightController {
         return insightPort.getPredictionHistoryForNode(
                 nsId, infraId, nodeId, measurement, startTime, endTime);
     }
+
+    /* ===================== Server Error Analysis ===================== */
+    @PostMapping("/server-error-analysis/detect")
+    public Object detectServerError(@RequestBody Object body) {
+        return insightPort.detectServerError(body);
+    }
+
+    @PostMapping("/server-error-analysis/query")
+    public Object queryServerError(@RequestBody Object body) {
+        return insightPort.queryServerError(body);
+    }
+
+    @GetMapping("/server-error-analysis/records")
+    public Object listServerErrorRecords(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "from", required = false) String fromDt,
+            @RequestParam(value = "to", required = false) String toDt,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) {
+        return insightPort.listServerErrorRecords(status, fromDt, toDt, page, size);
+    }
+
+    @GetMapping("/server-error-analysis/records/{analysisId}")
+    public Object getServerErrorRecord(@PathVariable int analysisId) {
+        return insightPort.getServerErrorRecord(analysisId);
+    }
+
+    @PostMapping("/server-error-analysis/records/{analysisId}/rerun")
+    public Object rerunServerErrorAnalysis(@PathVariable int analysisId) {
+        return insightPort.rerunServerErrorAnalysis(analysisId);
+    }
 }

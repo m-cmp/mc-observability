@@ -80,4 +80,16 @@ public interface InsightPort {
 
     /* ===================== Log Analysis ===================== */
     Object queryLogAnalysis(Object body);
+
+    /* ===================== Server Error Analysis ===================== */
+    Object detectServerError(Object body);
+
+    Object queryServerError(Object body);
+
+    Object listServerErrorRecords(
+            String status, String fromDt, String toDt, Integer page, Integer size);
+
+    Object getServerErrorRecord(int analysisId);
+
+    Object rerunServerErrorAnalysis(int analysisId);
 }
