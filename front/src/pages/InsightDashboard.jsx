@@ -72,7 +72,9 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
 
   const chartSeries = history.length > 0 ? [{
     name: 'Anomaly Score',
-    data: history.map((h) => ({ x: new Date(h.timestamp).getTime(), y: h.anomaly_score ?? parseFloat(h.value) })),
+    data: history
+      .map((h) => ({ x: new Date(h.timestamp).getTime(), y: h.anomaly_score ?? (h.value == null ? null : parseFloat(h.value)) }))
+      .filter((p) => p.y != null && !Number.isNaN(p.y)),
   }] : [];
 
   return (
@@ -248,7 +250,9 @@ function PredictionTab({ nsId, infraId, nodeId }) {
 
   const chartSeries = history.length > 0 ? [{
     name: 'Prediction',
-    data: history.map((h) => ({ x: new Date(h.timestamp).getTime(), y: parseFloat(h.value) })),
+    data: history
+      .map((h) => ({ x: new Date(h.timestamp).getTime(), y: h.value == null ? null : parseFloat(h.value) }))
+      .filter((p) => p.y != null && !Number.isNaN(p.y)),
   }] : [];
 
   return (
