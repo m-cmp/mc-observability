@@ -10,8 +10,8 @@ const RANGE_OPTIONS = [
 ];
 
 const SCOPES = [
-  { key: 'framework', label: 'Framework', desc: 'o11y 플랫폼 자체 트레이스 (manager / insight)' },
-  { key: 'vm', label: 'VM', desc: '대상 VM 애플리케이션 트레이스 (Beyla / OTel)' },
+  { key: 'framework', label: 'Framework', desc: 'Traces from the o11y platform itself (manager / insight)' },
+  { key: 'vm', label: 'VM', desc: 'Application traces from the target VM (Beyla / OTel)' },
 ];
 
 export default function TraceViewer() {
@@ -131,8 +131,8 @@ export default function TraceViewer() {
           </div>
           <p className="text-xs text-gray-400">
             {scope === 'vm'
-              ? 'VM 트레이스는 대상 노드에 trace agent(Beyla / OTel)가 설치되어 있어야 수집됩니다.'
-              : 'Framework 트레이스는 o11y 매니저/인사이트가 OTel로 자기계측한 데이터입니다. 행을 클릭하면 API 호출 흐름이 펼쳐집니다.'}
+              ? 'VM traces require a trace agent (Beyla / OTel) installed on the target node.'
+              : 'Framework traces are self-instrumented by the o11y manager/insight via OTel. Click a row to expand the API call flow.'}
           </p>
         </div>
       </div>
