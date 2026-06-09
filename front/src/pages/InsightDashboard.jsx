@@ -23,10 +23,18 @@ export default function InsightDashboard() {
             {t}
           </button>
         ))}
-        <span className="ml-auto self-center text-xs text-gray-400 pr-2">
-          {nsId}/{infraId}{nodeId ? `/${nodeId}` : ''}
+        <span className="ml-auto self-center text-xs pr-2 flex items-center gap-1.5">
+          <span className="text-gray-400">분석 대상</span>
+          {nodeId
+            ? <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" title={`${nsId} / ${infraId} / ${nodeId}`}>Node: {nodeId}</span>
+            : <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700" title={`${nsId} / ${infraId}`}>Infra: {infraId} (전체 노드 집계)</span>}
         </span>
       </div>
+      {!nodeId && tab !== 2 && (
+        <p className="text-xs text-gray-400 px-1">
+          노드 미선택 — Infra 전체(노드들 평균) 기준입니다. 특정 VM을 보려면 상단에서 Node를 선택하세요.
+        </p>
+      )}
       {tab === 0 && <AnomalyTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
       {tab === 1 && <PredictionTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
       {tab === 2 && <ServerErrorTab />}
@@ -127,7 +135,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
               {(measurements.length ? measurements : options.measurements || []).map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
             <button onClick={loadHistory} disabled={loading} className="px-4 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50">
-              {loading ? 'Loading...' : 'Load History'}
+              {loading ? 'Loading...' : '이상탐지 점수 조회'}
             </button>
           </div>
           <MetricChart title="Anomaly Score" series={chartSeries} height={240} chartType="line" />
@@ -171,10 +179,10 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
     <form onSubmit={submit} className="p-4 border-b bg-gray-50 space-y-3">
       <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs text-gray-600 mb-1">Target</label>
+          <label className="block text-xs text-gray-600 mb-1">분석 대상</label>
           <select value={scope} onChange={(e) => setScope(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
-            <option value="infra">Infra ({infraId})</option>
-            {nodeId && <option value="node">Node ({nodeId})</option>}
+            <option value="infra">Infra 전체 ({infraId})</option>
+            {nodeId && <option value="node">Node {nodeId}</option>}
           </select>
         </div>
         <div>
@@ -282,11 +290,11 @@ function PredictionTab({ nsId, infraId, nodeId }) {
               {RANGE_PRESETS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </div>
-          <button onClick={handleRun} disabled={loading} className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
-            Run Prediction
+          <button onClick={handleRun} disabled={loading} className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50" title="새로 예측을 실행하고 결과를 저장합니다">
+            예측 실행
           </button>
-          <button onClick={loadHistory} disabled={loading} className="px-4 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50">
-            Load History
+          <button onClick={loadHistory} disabled={loading} className="px-4 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50" title="이미 저장된 예측 결과를 불러옵니다 (재실행 안 함)">
+            저장된 예측 조회
           </button>
         </div>
         {msg && <p className="text-xs text-gray-500 mb-2">{msg}</p>}
