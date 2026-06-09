@@ -50,9 +50,50 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     @PostConstruct
     void getInfluxFromYaml() {
         try {
-            rawEntities();
+            List<InfluxEntity> entities = rawEntities();
+            ensureDatabasesExist(entities);
         } catch (Exception e) {
             log.error("[INF-BOOTSTRAP] seeding failed", e);
+        }
+    }
+
+    /**
+     * Idempotently creates the InfluxDB databases the stack needs on every configured server.
+     *
+     * <p>The influx container only runs its first-boot init (INFLUXDB_DB + init-database.sh) when
+     * the data volume is empty; a persisted/pre-existing volume leaves the databases missing, which
+     * then surfaces as "database not found" on every metric query. InfluxQL {@code CREATE DATABASE}
+     * is a no-op when the database already exists, so running it at startup makes the manager
+     * self-heal regardless of volume state. Per-server failures (unreachable / remote influx) are
+     * logged and skipped so they never block boot.
+     */
+    private void ensureDatabasesExist(List<InfluxEntity> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return;
+        }
+        Set<String> databases = new LinkedHashSet<>();
+        if (influxDbInfo.database() != null && !influxDbInfo.database().isBlank()) {
+            databases.add(influxDbInfo.database());
+        }
+        if (influxDbInfo.downsamplingDatabase() != null
+                && !influxDbInfo.downsamplingDatabase().isBlank()) {
+            databases.add(influxDbInfo.downsamplingDatabase());
+        }
+        // insight predictions DB — created by the bundled init-database.sh on first boot too.
+        databases.add("insight");
+        for (InfluxEntity e : entities) {
+            try (var influx =
+                    InfluxDBFactory.connect(e.getUrl(), e.getUsername(), e.getPassword())) {
+                for (String db : databases) {
+                    influx.query(new Query("CREATE DATABASE \"" + db + "\""));
+                }
+                log.info("[INF-BOOTSTRAP] ensured databases {} on {}", databases, e.getUrl());
+            } catch (Exception ex) {
+                log.warn(
+                        "[INF-BOOTSTRAP] ensure databases failed url={} err={}",
+                        e.getUrl(),
+                        ex.getMessage());
+            }
         }
     }
 
