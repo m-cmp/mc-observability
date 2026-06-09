@@ -37,6 +37,11 @@ public class TraceController {
             @Parameter(description = "Free-text keyword (matches span name or service name)")
                     @RequestParam(required = false)
                     String keyword,
+            @Parameter(
+                            description =
+                                    "Trace scope: framework (o11y platform) | vm (target VMs) | all")
+                    @RequestParam(required = false)
+                    String scope,
             @Parameter(description = "Start time (RFC3339 or unix epoch). Defaults to 1h ago.")
                     @RequestParam(required = false)
                     String start,
@@ -47,7 +52,22 @@ public class TraceController {
                     int limit) {
 
         return new ResBody<>(
-                traceFacadeService.searchTraces(query, service, keyword, start, end, limit));
+                traceFacadeService.searchTraces(query, service, keyword, scope, start, end, limit));
+    }
+
+    @GetMapping("/services")
+    @Operation(
+            summary = "TraceServiceList",
+            operationId = "TraceServiceList",
+            description =
+                    "List service.name values in Tempo, optionally narrowed by scope"
+                            + " (framework | vm | all). Drives the UI service dropdown.")
+    public ResBody<List<String>> getServices(
+            @Parameter(description = "Trace scope: framework | vm | all")
+                    @RequestParam(required = false)
+                    String scope) {
+
+        return new ResBody<>(traceFacadeService.getServiceNames(scope));
     }
 
     @GetMapping("/{traceId}")

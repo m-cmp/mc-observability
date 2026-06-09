@@ -25,4 +25,9 @@ public class TraceServiceImpl implements TraceService {
     public TraceResponseDto.TraceDetail getTraceDetail(String traceId) {
         return tempoPort.getTraceDetail(traceId);
     }
+
+    @Override
+    public List<String> getServiceNames() {
+        return tempoPort.getServiceNames();
+    }
 }

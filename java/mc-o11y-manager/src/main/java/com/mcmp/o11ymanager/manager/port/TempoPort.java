@@ -28,4 +28,11 @@ public interface TempoPort {
      * @return trace detail with span rows
      */
     TraceResponseDto.TraceDetail getTraceDetail(String traceId);
+
+    /**
+     * List distinct service names known to Tempo.
+     *
+     * @return service.name values
+     */
+    List<String> getServiceNames();
 }

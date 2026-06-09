@@ -9,4 +9,6 @@ public interface TraceService {
             String traceQl, Integer limit, Long startSec, Long endSec);
 
     TraceResponseDto.TraceDetail getTraceDetail(String traceId);
+
+    List<String> getServiceNames();
 }

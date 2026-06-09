@@ -3,6 +3,7 @@ package com.mcmp.o11ymanager.manager.infrastructure.trace.adapter;
 import com.mcmp.o11ymanager.manager.dto.trace.TraceResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.client.TempoFeignClient;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoSearchResponseDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoServiceValuesDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTraceDto;
 import com.mcmp.o11ymanager.manager.port.TempoPort;
 import java.util.ArrayList;
@@ -106,6 +107,19 @@ public class TempoClientAdapter implements TempoPort {
             rows.sort(Comparator.comparingLong(TraceResponseDto.SpanRow::getStartTimeMs));
         }
         return TraceResponseDto.TraceDetail.builder().traceId(traceId).spans(rows).build();
+    }
+
+    @Override
+    public List<String> getServiceNames() {
+        try {
+            return tempoFeignClient
+                    .getServiceNames()
+                    .map(TempoServiceValuesDto::getTagValues)
+                    .orElse(Collections.emptyList());
+        } catch (Exception e) {
+            log.warn("tempo getServiceNames failed err={}", e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
     // ---------- helpers ----------

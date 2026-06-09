@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.manager.infrastructure.trace.client;
 
 import com.mcmp.o11ymanager.manager.infrastructure.log.client.FeignLogConfig;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoSearchResponseDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoServiceValuesDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTraceDto;
 import java.util.Optional;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -31,4 +32,8 @@ public interface TempoFeignClient {
     /** Full OTLP-shaped payload of a single trace (resource + scope + spans). */
     @GetMapping(value = "${tempo.endpoints.trace}/{traceId}")
     Optional<TempoTraceDto> getTrace(@PathVariable("traceId") String traceId);
+
+    /** Distinct service.name values ingested by Tempo — drives the UI service dropdown. */
+    @GetMapping(value = "${tempo.endpoints.serviceValues}")
+    Optional<TempoServiceValuesDto> getServiceNames();
 }

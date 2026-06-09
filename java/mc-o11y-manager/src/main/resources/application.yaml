@@ -73,6 +73,10 @@ tempo:
   endpoints:
     search: /api/search
     trace: /api/traces
+    serviceValues: /api/search/tag/service.name/values
+  # service.name prefix that identifies the o11y platform's own (framework) traces.
+  # Everything else is treated as VM/application trace (Beyla / OTel agents).
+  framework-service-prefix: ${TEMPO_FRAMEWORK_PREFIX:mc-observability}
 
 beyla:
   # Beyla agent가 trace/metric을 송신할 OTEL 엔드포인트.
