@@ -92,7 +92,6 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
           {settings.length === 0 ? <p className="text-sm text-gray-400">No settings configured</p> : (
             <table className="w-full text-sm">
               <thead><tr className="bg-gray-50 text-left">
-                <th className="px-3 py-2 border-b text-xs text-gray-500">Seq</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">NS / Infra / Node</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Measurement</th>
                 <th className="px-3 py-2 border-b text-xs text-gray-500">Interval</th>
@@ -102,7 +101,6 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
               <tbody>
                 {settings.map((s) => (
                   <tr key={s.seq} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 border-b">{s.seq}</td>
                     <td className="px-3 py-2 border-b">{s.ns_id}/{s.infra_id}/{s.node_id || '-'}</td>
                     <td className="px-3 py-2 border-b">{s.measurement}</td>
                     <td className="px-3 py-2 border-b">{s.execution_interval}</td>
@@ -201,20 +199,28 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
 }
 
 /* ----------------------------- Prediction ----------------------------- */
+// prediction_range is a duration string within the options' min~max bounds (e.g. 1h~2160h),
+// NOT the option keys ("min"/"max"). Offer sensible presets.
+const RANGE_PRESETS = [
+  { value: '1h', label: '1 hour' },
+  { value: '6h', label: '6 hours' },
+  { value: '12h', label: '12 hours' },
+  { value: '24h', label: '1 day' },
+  { value: '72h', label: '3 days' },
+  { value: '168h', label: '7 days' },
+  { value: '720h', label: '30 days' },
+];
+
 function PredictionTab({ nsId, infraId, nodeId }) {
   const [options, setOptions] = useState({ measurements: [], prediction_ranges: {} });
   const [measurement, setMeasurement] = useState('');
-  const [range, setRange] = useState('');
+  const [range, setRange] = useState('24h');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    getPredictionOptions().then((o) => {
-      setOptions(o || {});
-      const ranges = Object.keys(o?.prediction_ranges || {});
-      if (ranges.length) setRange(ranges[0]);
-    }).catch(() => {});
+    getPredictionOptions().then((o) => setOptions(o || {})).catch(() => {});
   }, []);
 
   async function loadHistory() {
@@ -260,7 +266,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
           <div>
             <label className="block text-xs text-gray-600 mb-1">Prediction Range</label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
-              {Object.entries(options.prediction_ranges || {}).map(([k, v]) => <option key={k} value={k}>{v || k}</option>)}
+              {RANGE_PRESETS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
           </div>
           <button onClick={handleRun} disabled={loading} className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50">
