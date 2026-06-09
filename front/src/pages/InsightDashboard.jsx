@@ -218,6 +218,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   const [measurement, setMeasurement] = useState('');
   const [range, setRange] = useState('24h');
   const [history, setHistory] = useState([]);
+  const [loadedMeasurement, setLoadedMeasurement] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -231,6 +232,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
     try {
       const data = await getPredictionHistory(nsId, infraId, nodeId, measurement);
       setHistory(data.values || []);
+      setLoadedMeasurement(measurement);
     } catch { setHistory([]); }
     setLoading(false);
   }
@@ -248,10 +250,17 @@ function PredictionTab({ nsId, infraId, nodeId }) {
     setLoading(false);
   }
 
+  // Backend predicts the cpu measurement's `usage_idle` field. Show it as usage (100 - idle),
+  // matching the Monitoring dashboard's "CPU Used" convention.
+  const isCpu = loadedMeasurement === 'cpu';
   const chartSeries = history.length > 0 ? [{
-    name: 'Prediction',
+    name: isCpu ? 'Predicted CPU Usage (%)' : 'Prediction',
     data: history
-      .map((h) => ({ x: new Date(h.timestamp).getTime(), y: h.value == null ? null : parseFloat(h.value) }))
+      .map((h) => {
+        if (h.value == null) return { x: new Date(h.timestamp).getTime(), y: null };
+        const v = parseFloat(h.value);
+        return { x: new Date(h.timestamp).getTime(), y: isCpu ? 100 - v : v };
+      })
       .filter((p) => p.y != null && !Number.isNaN(p.y)),
   }] : [];
 
