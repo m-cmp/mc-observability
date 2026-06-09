@@ -37,6 +37,14 @@ subprojects {
         }
     }
 
+    // Keep constructor parameter names in the bytecode so Jackson can bind JSON to
+    // multi-arg constructors (e.g. Feign response DTOs like the Semaphore models).
+    // Without this, deserialization fails with "constructor ... has no property name
+    // annotation", which silently broke Semaphore initialization on startup.
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << '-parameters'
+    }
+
     configurations {
         compileOnly {
             extendsFrom annotationProcessor

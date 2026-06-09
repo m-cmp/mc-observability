@@ -30,6 +30,11 @@ public class SemaphoreFeignConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
+        // Register classpath modules (incl. ParameterNamesModule) so Jackson can bind JSON to
+        // multi-arg constructors using the -parameters constructor names. Without this, decoding
+        // Semaphore responses (e.g. Project) fails with "constructor ... has no property name",
+        // which silently broke Semaphore initialization on startup.
+        mapper.findAndRegisterModules();
         mapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
         mapper.configure(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION.mappedFeature(), true);
         return mapper;
