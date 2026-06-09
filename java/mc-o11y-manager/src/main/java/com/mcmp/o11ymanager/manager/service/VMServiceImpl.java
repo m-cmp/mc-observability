@@ -373,4 +373,47 @@ public class VMServiceImpl implements VMService {
 
         return t.getInfluxSeq();
     }
+
+    @Override
+    @Transactional
+    public void resetAllHostAgentTaskStatus() {
+        List<VMEntity> all = vmJpaRepository.findAll();
+        int reset = 0;
+        for (VMEntity vm : all) {
+            boolean changed = false;
+            if (isInProgress(vm.getMonitoringAgentTaskStatus())) {
+                vm.setMonitoringAgentTaskStatus(VMAgentTaskStatus.IDLE);
+                vm.setVmMonitoringAgentTaskId("");
+                changed = true;
+            }
+            if (isInProgress(vm.getLogAgentTaskStatus())) {
+                vm.setLogAgentTaskStatus(VMAgentTaskStatus.IDLE);
+                vm.setVmLogAgentTaskId("");
+                changed = true;
+            }
+            if (isInProgress(vm.getTraceAgentTaskStatus())) {
+                vm.setTraceAgentTaskStatus(VMAgentTaskStatus.IDLE);
+                vm.setVmTraceAgentTaskId("");
+                changed = true;
+            }
+            if (changed) {
+                vmJpaRepository.save(vm);
+                reset++;
+                log.info(
+                        "[AGENT-TASK-RESET] reset stuck task status ns={} infra={} node={}",
+                        vm.getNsId(),
+                        vm.getInfraId(),
+                        vm.getNodeId());
+            }
+        }
+        log.info("[AGENT-TASK-RESET] reset {} node(s) with in-progress agent task status", reset);
+    }
+
+    /** In-progress = anything that is not a terminal/idle state, i.e. a task that was running. */
+    private static boolean isInProgress(VMAgentTaskStatus status) {
+        return status != null
+                && status != VMAgentTaskStatus.IDLE
+                && status != VMAgentTaskStatus.FINISHED
+                && status != VMAgentTaskStatus.FAILED;
+    }
 }

@@ -68,4 +68,10 @@ public interface VMService {
     List<String> getNodeIds(String nsId, String infraId);
 
     Long getInfluxId(String nsId, String infraId);
+
+    /**
+     * Resets any in-progress agent task status (e.g. INSTALLING left behind by a crash mid-task)
+     * back to IDLE for all nodes, so the UI/flow is not stuck. Called once on manager startup.
+     */
+    void resetAllHostAgentTaskStatus();
 }
