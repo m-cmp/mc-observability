@@ -63,6 +63,11 @@ springdoc:
 
 loki:
   url: ${LOKI_URL:http://mc-observability-loki:3100}
+  # Optional override for the host VM log agents (fluent-bit) push logs to. Normally leave
+  # empty: the manager auto-derives it from the InfluxDB endpoint each VM already uses
+  # (same host as Loki, already set by the deployment to a VM-reachable address). Set this
+  # only when Loki is NOT co-located with InfluxDB.
+  agent-host: ${LOKI_AGENT_HOST:}
   endpoints:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
