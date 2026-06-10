@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.manager.facade;
 
+import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.service.interfaces.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +18,9 @@ import org.springframework.stereotype.Service;
  * <p>치환 placeholder: {@code @SITE_CODE}, {@code @NS_ID}, {@code @INFRA_ID}, {@code @NODE_ID},
  * {@code @OTEL_ENDPOINT}.
  *
- * <p>OTEL endpoint는 application.yaml의 {@code beyla.otel-endpoint}에서 주입 (사이트별 환경변수 {@code
- * BEYLA_OTEL_ENDPOINT}로 override 가능). InfluxDbFacadeService 같은 DB 조회 없이 단일 전역 endpoint 사용.
+ * <p>OTEL endpoint의 host는, 내부 docker 이름(otel-endpoint 기본값)이 실제 VM에서 해석되지 않으므로, 그 VM이 이미 사용하는
+ * InfluxDB 엔드포인트의 host(Tempo와 동일 호스트이자 VM-도달 가능 주소)로 자동 치환한다. scheme/port는 유지. {@code
+ * beyla.agent-host}로 명시적 override 가능. (FluentBitConfigFacadeService와 동일 패턴)
  */
 @Service
 @Slf4j
@@ -26,12 +28,16 @@ import org.springframework.stereotype.Service;
 public class BeylaConfigFacadeService {
 
     private final FileService fileService;
+    private final InfluxDbFacadeService influxDbFacadeService;
 
     @Value("${deploy.site-code}")
     private String deploySiteCode;
 
     @Value("${beyla.otel-endpoint}")
     private String otelEndpoint;
+
+    @Value("${beyla.agent-host:}")
+    private String beylaAgentHost;
 
     private final ClassPathResource beylaConfigTemplate =
             new ClassPathResource("beyla_template.yaml");
@@ -56,6 +62,66 @@ public class BeylaConfigFacadeService {
                 .replace("@NS_ID", finalNsId)
                 .replace("@INFRA_ID", finalInfraId)
                 .replace("@NODE_ID", finalNodeId)
-                .replace("@OTEL_ENDPOINT", otelEndpoint);
+                .replace("@OTEL_ENDPOINT", resolveOtelEndpoint(nsId, infraId));
+    }
+
+    /**
+     * Rewrites the OTLP endpoint host to one reachable FROM the target VM (the internal docker
+     * hostname in otel-endpoint is not), keeping the configured scheme and port.
+     *
+     * <p>Host resolution order: explicit {@code beyla.agent-host} → the host of the InfluxDB
+     * endpoint this VM already uses (co-located with Tempo, already VM-reachable) → the original
+     * otel-endpoint host (legacy).
+     */
+    private String resolveOtelEndpoint(String nsId, String infraId) {
+        if (beylaAgentHost != null && !beylaAgentHost.isBlank()) {
+            return rewriteHost(otelEndpoint, beylaAgentHost.trim());
+        }
+        try {
+            InfluxDTO out = influxDbFacadeService.resolveForVM(nsId, infraId);
+            String host = hostOf(out.getUrl());
+            if (host != null && !host.isBlank()) {
+                return rewriteHost(otelEndpoint, host);
+            }
+        } catch (Exception e) {
+            log.warn(
+                    "[BEYLA] failed to derive OTLP host from InfluxDB endpoint for {}/{}; "
+                            + "using configured otel-endpoint. err={}",
+                    nsId,
+                    infraId,
+                    e.getMessage());
+        }
+        return otelEndpoint;
+    }
+
+    /** Replaces the host of a {@code scheme://host:port/path} URL, preserving scheme/port/path. */
+    private String rewriteHost(String url, String newHost) {
+        if (url == null) {
+            return null;
+        }
+        int schemeIdx = url.indexOf("://");
+        String scheme = schemeIdx >= 0 ? url.substring(0, schemeIdx + 3) : "";
+        String rest = schemeIdx >= 0 ? url.substring(schemeIdx + 3) : url;
+        int portIdx = rest.indexOf(':');
+        int pathIdx = rest.indexOf('/');
+        String tail;
+        if (portIdx >= 0 && (pathIdx < 0 || portIdx < pathIdx)) {
+            tail = rest.substring(portIdx);
+        } else if (pathIdx >= 0) {
+            tail = rest.substring(pathIdx);
+        } else {
+            tail = "";
+        }
+        return scheme + newHost + tail;
+    }
+
+    /** Extracts the host portion from a {@code scheme://host:port} URL. */
+    private String hostOf(String url) {
+        if (url == null) {
+            return null;
+        }
+        String[] schemeSplit = url.split("://");
+        String hostPort = schemeSplit.length == 2 ? schemeSplit[1] : schemeSplit[0];
+        return hostPort.split("[:/]")[0];
     }
 }
