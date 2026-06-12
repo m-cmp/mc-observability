@@ -4,7 +4,7 @@ import {
   addNodeToPolicy, removeNodeFromPolicy, updatePolicyChannels,
   getNotiChannels, getNotiHistory, sendTestNotification,
 } from '../api/trigger';
-import { getNodeList } from '../api/node';
+import { getInfraList } from '../api/tumblebug';
 import { useParams } from 'react-router-dom';
 
 const TABS = ['Policies', 'Notification History'];
@@ -71,7 +71,7 @@ function PoliciesTab({ nsId, infraId }) {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [channels, setChannels] = useState([]); // available noti channels
-  const [nodes, setNodes] = useState([]);       // VMs in this infra
+  const [infras, setInfras] = useState([]);     // infras (each with embedded `node` list)
   const [expanded, setExpanded] = useState(null);
 
   const load = () => {
@@ -87,9 +87,11 @@ function PoliciesTab({ nsId, infraId }) {
   }, []);
 
   useEffect(() => {
-    if (!nsId || !infraId) { setNodes([]); return; }
-    getNodeList(nsId, infraId).then(list => setNodes(list || [])).catch(() => setNodes([]));
-  }, [nsId, infraId]);
+    if (!nsId) { setInfras([]); return; }
+    // getInfraList returns each infra with its embedded `node` list, so VM selection
+    // works even when the route has no infraId (namespace-level alert page).
+    getInfraList(nsId).then(list => setInfras(list || [])).catch(() => setInfras([]));
+  }, [nsId]);
 
   async function handleDelete(id) {
     if (!confirm('Delete this policy?')) return;
@@ -108,7 +110,7 @@ function PoliciesTab({ nsId, infraId }) {
         </div>
         {showCreate && (
           <CreatePolicyForm
-            nsId={nsId} infraId={infraId} channels={channels} nodes={nodes}
+            nsId={nsId} infraId={infraId} channels={channels} infras={infras}
             onCreated={() => { setShowCreate(false); load(); }}
           />
         )}
@@ -129,7 +131,7 @@ function PoliciesTab({ nsId, infraId }) {
               <tbody>
                 {policies.map(p => (
                   <PolicyRow
-                    key={p.id} p={p} nsId={nsId} infraId={infraId} channels={channels} nodes={nodes}
+                    key={p.id} p={p} nsId={nsId} infraId={infraId} channels={channels} infras={infras}
                     expanded={expanded === p.id} onToggle={() => setExpanded(expanded === p.id ? null : p.id)}
                     onChanged={load} onDelete={() => handleDelete(p.id)}
                   />
@@ -143,7 +145,7 @@ function PoliciesTab({ nsId, infraId }) {
   );
 }
 
-function PolicyRow({ p, nsId, infraId, channels, nodes, expanded, onToggle, onChanged, onDelete }) {
+function PolicyRow({ p, nsId, infraId, channels, infras, expanded, onToggle, onChanged, onDelete }) {
   const vms = p.vms || [];
   const chans = p.notiChannels || [];
   return (
@@ -167,7 +169,7 @@ function PolicyRow({ p, nsId, infraId, channels, nodes, expanded, onToggle, onCh
       {expanded && (
         <tr>
           <td colSpan={7} className="border-b bg-gray-50 px-4 py-3">
-            <ManagePanel p={p} nsId={nsId} infraId={infraId} channels={channels} nodes={nodes} onChanged={onChanged} />
+            <ManagePanel p={p} nsId={nsId} infraId={infraId} channels={channels} infras={infras} onChanged={onChanged} />
           </td>
         </tr>
       )}
@@ -175,7 +177,7 @@ function PolicyRow({ p, nsId, infraId, channels, nodes, expanded, onToggle, onCh
   );
 }
 
-function ManagePanel({ p, nsId, infraId, channels, nodes, onChanged }) {
+function ManagePanel({ p, nsId, infraId, channels, infras, onChanged }) {
   const vms = p.vms || [];
   const [busy, setBusy] = useState(false);
 
@@ -233,7 +235,7 @@ function ManagePanel({ p, nsId, infraId, channels, nodes, onChanged }) {
             ))}
           </div>
         )}
-        <TargetPicker nsId={nsId} infraId={infraId} nodes={nodes} busy={busy} onAdd={addTargets} addLabel="Add targets" />
+        <TargetPicker nsId={nsId} defaultInfraId={infraId} infras={infras} busy={busy} onAdd={addTargets} addLabel="Add targets" />
       </div>
 
       <div>
@@ -247,7 +249,7 @@ function ManagePanel({ p, nsId, infraId, channels, nodes, onChanged }) {
   );
 }
 
-function CreatePolicyForm({ nsId, infraId, channels, nodes, onCreated }) {
+function CreatePolicyForm({ nsId, infraId, channels, infras, onCreated }) {
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [resource, setResource] = useState('CPU');
@@ -350,7 +352,7 @@ function CreatePolicyForm({ nsId, infraId, channels, nodes, onCreated }) {
             ))}
           </div>
         )}
-        <TargetPicker nsId={nsId} infraId={infraId} nodes={nodes} onAdd={addPending} addLabel="Add" />
+        <TargetPicker nsId={nsId} defaultInfraId={infraId} infras={infras} onAdd={addPending} addLabel="Add" />
       </div>
 
       {/* Notification channels */}
@@ -450,19 +452,28 @@ function ChannelPicker({ channels, value, onChange }) {
   );
 }
 
-// Infra level = multi-select VMs in the infra; Node level = a single VM.
-// Both are added as `node` targets.
-function TargetPicker({ nsId, infraId, nodes, busy, onAdd, addLabel }) {
+// Pick an infra, then its VMs. Infra level = multi-select VMs; Node level = a single VM.
+// Both are added as `node` targets. Works at namespace-level (route has no infraId) by
+// letting the user choose the infra from the dropdown.
+function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel }) {
+  const matchInfra = (i) => i.id === defaultInfraId || i.name === defaultInfraId;
+  const [selInfra, setSelInfra] = useState(() => {
+    const m = (infras || []).find(matchInfra);
+    return m ? (m.id ?? m.name) : (infras?.[0]?.id ?? infras?.[0]?.name ?? '');
+  });
   const [level, setLevel] = useState('infra');
   const [checked, setChecked] = useState({}); // nodeId -> bool (infra level)
   const [single, setSingle] = useState('');   // node level
 
-  if (!nsId || !infraId) {
-    return <p className="text-xs text-gray-400">Open the alert page from a specific infra to choose target VMs.</p>;
+  if (!nsId) {
+    return <p className="text-xs text-gray-400">Select a namespace to choose target VMs.</p>;
   }
-  if (!nodes || nodes.length === 0) {
-    return <p className="text-xs text-gray-400">No VMs found in this infra.</p>;
+  if (!infras || infras.length === 0) {
+    return <p className="text-xs text-gray-400">No infras found in this namespace.</p>;
   }
+
+  const infra = infras.find(i => String(i.id ?? i.name) === String(selInfra)) || infras[0];
+  const nodes = infra?.node || [];
 
   const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -481,16 +492,31 @@ function TargetPicker({ nsId, infraId, nodes, busy, onAdd, addLabel }) {
 
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-gray-500">Infra</span>
+        <select
+          value={selInfra}
+          onChange={e => { setSelInfra(e.target.value); setChecked({}); setSingle(''); }}
+          className="border rounded px-2 py-1 text-xs">
+          {infras.map(i => {
+            const id = i.id ?? i.name;
+            return <option key={id} value={id}>{i.name ?? id}</option>;
+          })}
+        </select>
+      </div>
+
       <div className="flex items-center gap-4 text-xs">
         <label className="flex items-center gap-1 cursor-pointer">
-          <input type="radio" name={`level-${infraId}`} checked={level === 'infra'} onChange={() => setLevel('infra')} /> Infra (select VMs)
+          <input type="radio" name={`level-${selInfra}`} checked={level === 'infra'} onChange={() => setLevel('infra')} /> Infra (select VMs)
         </label>
         <label className="flex items-center gap-1 cursor-pointer">
-          <input type="radio" name={`level-${infraId}`} checked={level === 'node'} onChange={() => setLevel('node')} /> Node (single VM)
+          <input type="radio" name={`level-${selInfra}`} checked={level === 'node'} onChange={() => setLevel('node')} /> Node (single VM)
         </label>
       </div>
 
-      {level === 'infra' ? (
+      {nodes.length === 0 ? (
+        <p className="text-xs text-gray-400">No VMs found in this infra.</p>
+      ) : level === 'infra' ? (
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {nodes.map(n => {
             const id = nodeIdOf(n);
@@ -512,7 +538,7 @@ function TargetPicker({ nsId, infraId, nodes, busy, onAdd, addLabel }) {
         </select>
       )}
 
-      <button type="button" disabled={busy} onClick={commit} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
+      <button type="button" disabled={busy || nodes.length === 0} onClick={commit} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
         {addLabel || 'Add'}
       </button>
     </div>
