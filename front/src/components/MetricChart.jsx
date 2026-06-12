@@ -20,6 +20,11 @@ export default function MetricChart({ title, series, height = 240, chartType = '
   const formatter = buildFormatter(unit);
   const yTitle = unit.label ? `(${unit.label})` : '';
 
+  // A line/area needs >=2 points to draw anything; show point markers when data
+  // is sparse so a single isolated sample is still visible (not just on hover).
+  const maxPoints = Math.max(0, ...series.map(s => (s.data ? s.data.length : 0)));
+  const markerSize = maxPoints <= 2 ? 5 : 0;
+
   const options = {
     chart: { type: chartType, toolbar: { show: true }, zoom: { enabled: true, type: 'x', autoScaleYaxis: true, allowMouseWheelZoom: false }, animations: { enabled: false } },
     title: { text: title + (yTitle ? ` ${yTitle}` : ''), align: 'left', style: { fontSize: '13px', fontWeight: 600 }, offsetY: 0 },
@@ -30,6 +35,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
     },
     fill: { type: 'solid', opacity: 0.12 },
     stroke: { curve: 'smooth', width: 2 },
+    markers: { size: markerSize, strokeWidth: 0, hover: { size: 6 } },
     colors: COLORS.slice(0, series.length),
     legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '11px' },
     tooltip: {
