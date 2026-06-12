@@ -52,6 +52,12 @@ export async function getNotiHistory(page = 1, size = 20) {
   return res.data?.data || {};
 }
 
+// Send a test notification through RabbitMQ to a single channel (verifies end-to-end delivery).
+// body: { channelName, recipients[], title?, message? }
+export async function sendTestNotification(body) {
+  return client.post('/api/o11y/trigger/noti/test', body);
+}
+
 // Trigger history
 export async function getTriggerHistory(page = 1, size = 20) {
   const res = await client.get('/api/o11y/trigger/history', { params: { page, size } });
