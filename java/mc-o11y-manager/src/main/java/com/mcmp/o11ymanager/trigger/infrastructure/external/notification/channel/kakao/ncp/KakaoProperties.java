@@ -13,7 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Configuration properties for NCP Kakao FriendTalk service Contains NCP Kakao API settings
+ * Configuration properties for NCP Kakao AlimTalk service Contains NCP Kakao API settings
  * including channel configuration and signature generation.
  */
 @Getter
@@ -40,7 +40,7 @@ public class KakaoProperties implements NotiProperty {
             String space = " ";
             String newLine = "\n";
             String method = "POST";
-            String url = "/friendtalk/v2/services/" + serviceId + "/messages";
+            String url = "/alimtalk/v2/services/" + serviceId + "/messages";
 
             String message = method + space + url + newLine + timestamp + newLine + accessKey;
 
@@ -57,11 +57,11 @@ public class KakaoProperties implements NotiProperty {
     }
 
     /**
-     * Constructs complete NCP Kakao FriendTalk API URL.
+     * Constructs complete NCP Kakao AlimTalk API URL.
      *
-     * @return complete NCP Kakao FriendTalk API URL with service ID
+     * @return complete NCP Kakao AlimTalk API URL with service ID
      */
     public String getApiUrl() {
-        return baseUrl + "/friendtalk/v2/services/" + serviceId + "/messages";
+        return baseUrl + "/alimtalk/v2/services/" + serviceId + "/messages";
     }
 }

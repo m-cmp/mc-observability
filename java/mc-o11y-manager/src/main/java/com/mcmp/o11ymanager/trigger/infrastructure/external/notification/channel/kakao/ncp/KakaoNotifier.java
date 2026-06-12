@@ -16,8 +16,8 @@ import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
 
 /**
- * Kakao FriendTalk notification sender implementation for NCP Kakao service Handles sending alert
- * notifications via NCP Kakao FriendTalk API with signature-based authentication.
+ * Kakao AlimTalk notification sender implementation for NCP Kakao service Handles sending alert
+ * notifications via NCP Kakao AlimTalk API with signature-based authentication.
  */
 @Slf4j
 @Component
@@ -35,7 +35,7 @@ public class KakaoNotifier implements Notifier {
     }
 
     /**
-     * Sends Kakao FriendTalk notifications to multiple recipients using NCP API.
+     * Sends Kakao AlimTalk notifications to multiple recipients using NCP API.
      *
      * @param noti the notification to send (must be KakaoNoti)
      * @return result of the Kakao notification delivery
