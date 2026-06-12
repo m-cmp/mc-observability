@@ -14,8 +14,10 @@ import lombok.Builder;
 @Builder
 public record TriggerPolicyCreateRequest(
         @Schema(description = "Policy title", example = "CPU Alert Policy") @NotNull @NotBlank String title,
-        @Schema(description = "Policy description", example = "Alert when CPU usage is high")
-                @NotNull @NotBlank String description,
+        @Schema(
+                        description = "Policy description (optional)",
+                        example = "Alert when CPU usage is high")
+                String description,
         @NotNull @Valid ThresholdCondition thresholdCondition,
         @Schema(description = "Resource type", example = "CPU") @NotNull ResourceType resourceType,
         @Schema(description = "Aggregation type", example = "LAST") @NotNull AggregationType aggregationType,
