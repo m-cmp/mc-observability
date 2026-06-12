@@ -10,7 +10,7 @@ import lombok.Getter;
 import org.springframework.util.MimeTypeUtils;
 
 /**
- * Kakao FriendTalk notification data class for NCP Kakao service Represents a Kakao FriendTalk
+ * Kakao AlimTalk notification data class for NCP Kakao service Represents a Kakao AlimTalk
  * notification message formatted for NCP Kakao API requirements.
  */
 @Getter
