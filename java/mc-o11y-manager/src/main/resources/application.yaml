@@ -63,6 +63,11 @@ springdoc:
 
 loki:
   url: ${LOKI_URL:http://mc-observability-loki:3100}
+  # Optional override for the host VM log agents (fluent-bit) push logs to. Normally leave
+  # empty: the manager auto-derives it from the InfluxDB endpoint each VM already uses
+  # (same host as Loki, already set by the deployment to a VM-reachable address). Set this
+  # only when Loki is NOT co-located with InfluxDB.
+  agent-host: ${LOKI_AGENT_HOST:}
   endpoints:
     query: /loki/api/v1/query
     range: /loki/api/v1/query_range
@@ -84,6 +89,12 @@ beyla:
   # 환경변수만 override하면 다른 사이트(외부 endpoint)에 배포 가능.
   # 본 키는 Windows OTel Java agent에서도 그대로 재사용한다(POC 후 tracing.otel-endpoint로 일반화 예정).
   otel-endpoint: ${BEYLA_OTEL_ENDPOINT:http://mc-observability-tempo:4317}
+  # Optional override for the host the VM's Beyla agent sends OTLP traces to. Like the Loki
+  # agent host, the internal docker name in otel-endpoint is unreachable from real VMs. Leave
+  # empty to auto-derive the host from the InfluxDB endpoint the VM already uses (same host as
+  # Tempo, already VM-reachable); the scheme/port of otel-endpoint are kept. Set this only when
+  # Tempo is NOT co-located with InfluxDB. Mirrors loki.agent-host.
+  agent-host: ${BEYLA_AGENT_HOST:}
 
 otel-java-agent:
   # Windows VM 트레이싱용 OpenTelemetry Java Auto-Instrumentation jar 다운로드 URL.
