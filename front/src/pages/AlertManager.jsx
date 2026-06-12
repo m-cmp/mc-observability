@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from 'react';
 import {
   getPolicies, createPolicy, deletePolicy,
   addNodeToPolicy, removeNodeFromPolicy, updatePolicyChannels,
-  getNotiChannels, getNotiHistory,
+  getNotiChannels, getNotiHistory, sendTestNotification,
 } from '../api/trigger';
 import { getNodeList } from '../api/node';
 import { useParams } from 'react-router-dom';
@@ -10,21 +10,41 @@ import { useParams } from 'react-router-dom';
 const TABS = ['Policies', 'Notification History'];
 const RESOURCE_TYPES = ['CPU', 'MEMORY', 'DISK'];
 const AGG_TYPES = ['AVG', 'MAX', 'MIN', 'LAST'];
+const HISTORY_PAGE_SIZE = 20;
 
-// Backend(/policy/{id}/channel)는 짧은 채널명만 허용: kakao, sms, email, slack, discord, teams.
-// NotiChannel.name("email_smtp.gmail.com" 등)에서 '_' 앞부분이 짧은 이름과 일치한다.
+// Backend (/policy/{id}/channel and /noti/test) accepts only the short channel name:
+// kakao, sms, email, slack, discord, teams. NotiChannel.name (e.g. "email_smtp.gmail.com")
+// matches that short name in its part before the first '_'.
 const channelShortName = (name) => (name || '').split('_')[0].toLowerCase();
 const RECIPIENT_HINTS = {
-  email: 'a@b.com, c@d.com',
-  slack: '#alerts 또는 webhook URL',
-  discord: 'webhook URL',
-  teams: 'webhook URL',
-  sms: '01012345678, 01087654321',
-  kakao: '01012345678',
+  email: 'Email addresses (e.g. a@b.com, c@d.com)',
+  slack: 'Channel name or ID (e.g. #alerts, C0123ABCD)',
+  discord: 'Webhook URL (e.g. https://discord.com/api/webhooks/...)',
+  teams: 'Webhook URL (Teams Workflows incoming webhook)',
+  sms: 'Phone numbers (e.g. 01012345678, 01087654321)',
+  kakao: 'Phone number (e.g. 01012345678)',
 };
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const nodeIdOf = (n) => n.node_id ?? n.id ?? n.name;
 const nodeLabelOf = (n) => n.name ?? n.node_id ?? n.id;
+const parseRecipients = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
+
+// Strip the raw Java exception class names and stack trace, leaving only the
+// human-readable failure message.
+function cleanError(raw) {
+  if (!raw) return 'No error detail recorded.';
+  const out = [];
+  for (const line of String(raw).split(/\r?\n/)) {
+    if (/^\s*at\s+/.test(line)) continue;                 // stack frame
+    if (/^\s*\.\.\.\s*\d+\s*more\s*$/.test(line)) continue; // "... N more"
+    let l = line.replace(/^\s*Caused by:\s*/, '');         // keep the cause message
+    // remove a leading fully-qualified exception class name (e.g. java.lang.RuntimeException: )
+    l = l.replace(/^([\w$]+\.)+[\w$]*(Exception|Error|Throwable)(:\s*|\s*$)/, '');
+    l = l.trim();
+    if (l) out.push(l);
+  }
+  return out.join(' ').trim() || 'Delivery failed.';
+}
 
 export default function AlertManager() {
   const { nsId, infraId } = useParams();
@@ -159,7 +179,7 @@ function ManagePanel({ p, nsId, infraId, channels, nodes, onChanged }) {
   const vms = p.vms || [];
   const [busy, setBusy] = useState(false);
 
-  // 채널 편집: 기존 설정으로 초기화
+  // Initialize channel editor from the policy's current channels.
   const [chanSel, setChanSel] = useState(() => {
     const init = {};
     (p.notiChannels || []).forEach(c => {
@@ -190,10 +210,9 @@ function ManagePanel({ p, nsId, infraId, channels, nodes, onChanged }) {
   }
 
   async function saveChannels() {
-    const payload = buildChannelPayload(chanSel);
     setBusy(true);
     try {
-      await updatePolicyChannels(p.id, payload);
+      await updatePolicyChannels(p.id, buildChannelPayload(chanSel));
       onChanged();
       alert('Channels updated');
     } catch (e) { alert('Channel update failed: ' + (e?.message || e)); }
@@ -277,25 +296,44 @@ function CreatePolicyForm({ nsId, infraId, channels, nodes, onCreated }) {
   }
 
   return (
-    <form onSubmit={submit} className="p-4 border-b bg-gray-50 space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <input placeholder="Title" required value={title} onChange={e => setTitle(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-        <input placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-        <select value={resource} onChange={e => setResource(e.target.value)} className="border rounded px-3 py-1.5 text-sm">
+    <form onSubmit={submit} className="p-4 border-b bg-gray-50 space-y-3">
+      <Field label="Title" hint="Unique name to identify this policy">
+        <input required value={title} onChange={e => setTitle(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+      </Field>
+      <Field label="Description" hint="Optional note about this policy">
+        <input value={desc} onChange={e => setDesc(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+      </Field>
+      <Field label="Resource" hint="Metric type to evaluate against the thresholds">
+        <select value={resource} onChange={e => setResource(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
           {RESOURCE_TYPES.map(r => <option key={r}>{r}</option>)}
         </select>
-        <select value={agg} onChange={e => setAgg(e.target.value)} className="border rounded px-3 py-1.5 text-sm">
+      </Field>
+      <Field label="Aggregation" hint="How to evaluate values over the interval (avg / max / min / last)">
+        <select value={agg} onChange={e => setAgg(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
           {AGG_TYPES.map(a => <option key={a}>{a}</option>)}
         </select>
+      </Field>
+
+      <div className="border-t pt-3 space-y-3">
+        <div className="text-xs font-semibold text-gray-600">Thresholds (%) — per-level alert criteria</div>
+        <Field label="Info" hint="Lowest alert level">
+          <input type="number" value={info} onChange={e => setInfo(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+        </Field>
+        <Field label="Warning" hint="Middle alert level">
+          <input type="number" value={warning} onChange={e => setWarning(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+        </Field>
+        <Field label="Critical" hint="Highest alert level">
+          <input type="number" value={critical} onChange={e => setCritical(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+        </Field>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <input type="number" placeholder="Info" value={info} onChange={e => setInfo(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-        <input type="number" placeholder="Warning" value={warning} onChange={e => setWarning(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-        <input type="number" placeholder="Critical" value={critical} onChange={e => setCritical(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <input placeholder="Hold (e.g. 5m)" value={hold} onChange={e => setHold(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
-        <input placeholder="Repeat (e.g. 1h)" value={repeat} onChange={e => setRepeat(e.target.value)} className="border rounded px-3 py-1.5 text-sm" />
+
+      <div className="border-t pt-3 space-y-3">
+        <Field label="Hold Duration" hint="Exceed threshold continuously this long before firing (e.g. 5m, 0s)">
+          <input value={hold} onChange={e => setHold(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+        </Field>
+        <Field label="Repeat Interval" hint="How often to re-notify while firing (e.g. 1h)">
+          <input value={repeat} onChange={e => setRepeat(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm" />
+        </Field>
       </div>
 
       {/* Alarm targets */}
@@ -328,8 +366,24 @@ function CreatePolicyForm({ nsId, infraId, channels, nodes, onCreated }) {
   );
 }
 
-// 채널 선택 + 채널별 수신자 입력. value = { [shortName]: { checked, recipients } }
+// Label shown to the LEFT of the input (with a small description underneath).
+function Field({ label, hint, children }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="w-48 shrink-0 pt-1.5">
+        <div className="text-xs font-medium text-gray-700">{label}</div>
+        {hint && <div className="text-[11px] text-gray-400 leading-tight">{hint}</div>}
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
+
+// Channel selection + per-channel recipients + per-channel Test button.
+// value = { [shortName]: { checked, recipients } }
 function ChannelPicker({ channels, value, onChange }) {
+  const [testing, setTesting] = useState('');
+
   if (!channels || channels.length === 0) {
     return <p className="text-xs text-gray-400">No notification channels configured on the server.</p>;
   }
@@ -341,6 +395,26 @@ function ChannelPicker({ channels, value, onChange }) {
     const cur = value[short] || { checked: true, recipients: '' };
     onChange({ ...value, [short]: { ...cur, recipients, checked: true } });
   };
+
+  async function test(short) {
+    const recipients = parseRecipients((value[short] || {}).recipients);
+    if (!recipients.length) { alert('Enter at least one recipient first.'); return; }
+    setTesting(short);
+    try {
+      await sendTestNotification({
+        channelName: short,
+        recipients,
+        title: 'Test notification',
+        message: 'This is a test alert from mc-observability.',
+      });
+      alert(`Test sent to ${short}. Check the Notification History tab for the delivery result.`);
+    } catch (e) {
+      alert('Test send failed: ' + (e?.message || e));
+    } finally {
+      setTesting('');
+    }
+  }
+
   return (
     <div className="space-y-2">
       {channels.map(c => {
@@ -359,15 +433,25 @@ function ChannelPicker({ channels, value, onChange }) {
               onChange={e => setRecipients(short, e.target.value)}
               className="flex-1 border rounded px-2 py-1 text-xs disabled:bg-gray-100"
             />
+            <button
+              type="button"
+              disabled={!sel.checked || testing === short}
+              onClick={() => test(short)}
+              className="text-xs border border-blue-300 text-blue-600 px-2 py-1 rounded hover:bg-blue-50 disabled:opacity-40 shrink-0"
+              title="Send a test notification via RabbitMQ to this channel"
+            >
+              {testing === short ? 'Sending...' : 'Test'}
+            </button>
           </div>
         );
       })}
-      <p className="text-[11px] text-gray-400">Comma-separate multiple recipients. Checked channels need at least one recipient.</p>
+      <p className="text-[11px] text-gray-400">Comma-separate multiple recipients. Checked channels need at least one recipient. Test delivers a real message through RabbitMQ.</p>
     </div>
   );
 }
 
-// Infra 레벨 = 인프라 내 VM 다중선택, Node 레벨 = 단일 VM. 둘 다 node 타깃으로 추가.
+// Infra level = multi-select VMs in the infra; Node level = a single VM.
+// Both are added as `node` targets.
 function TargetPicker({ nsId, infraId, nodes, busy, onAdd, addLabel }) {
   const [level, setLevel] = useState('infra');
   const [checked, setChecked] = useState({}); // nodeId -> bool (infra level)
@@ -439,83 +523,106 @@ function TargetPicker({ nsId, infraId, nodes, busy, onAdd, addLabel }) {
 function buildChannelPayload(chanSel) {
   return Object.entries(chanSel)
     .filter(([, v]) => v && v.checked)
-    .map(([short, v]) => ({
-      channelName: short,
-      recipients: (v.recipients || '').split(',').map(s => s.trim()).filter(Boolean),
-    }))
+    .map(([short, v]) => ({ channelName: short, recipients: parseRecipients(v.recipients) }))
     .filter(c => c.recipients.length > 0);
 }
 
 function NotiHistoryTab() {
-  const [history, setHistory] = useState([]);
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState({ content: [], totalPages: 1, totalElements: 0 });
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(null);
 
   useEffect(() => {
-    getNotiHistory(1, 50).then(d => setHistory(d.content || []))
-      .catch(() => setHistory([]))
+    setLoading(true);
+    getNotiHistory(page, HISTORY_PAGE_SIZE)
+      .then(d => setData({ content: d.content || [], totalPages: d.totalPages || 1, totalElements: d.totalElements || 0 }))
+      .catch(() => setData({ content: [], totalPages: 1, totalElements: 0 }))
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
+
+  const { content, totalPages, totalElements } = data;
 
   return (
     <div className="bg-white rounded-lg shadow">
-      <div className="px-4 py-3 border-b font-semibold text-sm">Notification History</div>
+      <div className="px-4 py-3 border-b font-semibold text-sm flex justify-between items-center">
+        <span>Notification History</span>
+        {totalElements > 0 && <span className="text-xs font-normal text-gray-400">{totalElements} total</span>}
+      </div>
       <div className="p-4 overflow-auto">
-        {loading ? <p className="text-sm text-gray-400">Loading...</p> : history.length === 0 ? (
+        {loading ? <p className="text-sm text-gray-400">Loading...</p> : content.length === 0 ? (
           <p className="text-sm text-gray-400">No notifications</p>
         ) : (
-          <table className="w-full text-sm">
-            <thead><tr className="bg-gray-50 text-left">
-              <th className="px-3 py-2 border-b text-xs text-gray-500 w-6"></th>
-              <th className="px-3 py-2 border-b text-xs text-gray-500">ID</th>
-              <th className="px-3 py-2 border-b text-xs text-gray-500">Channel</th>
-              <th className="px-3 py-2 border-b text-xs text-gray-500">Recipients</th>
-              <th className="px-3 py-2 border-b text-xs text-gray-500">Status</th>
-              <th className="px-3 py-2 border-b text-xs text-gray-500">Time</th>
-            </tr></thead>
-            <tbody>
-              {history.map(h => {
-                const isOpen = open === h.id;
-                return (
-                  <Fragment key={h.id}>
-                    <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setOpen(isOpen ? null : h.id)}>
-                      <td className="px-3 py-2 border-b text-gray-400 text-xs">{isOpen ? '▼' : '▶'}</td>
-                      <td className="px-3 py-2 border-b">{h.id}</td>
-                      <td className="px-3 py-2 border-b">{h.channel}</td>
-                      <td className="px-3 py-2 border-b text-xs">{h.recipients?.join(', ')}</td>
-                      <td className="px-3 py-2 border-b">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${h.isSucceeded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {h.isSucceeded ? 'OK' : 'FAIL'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 border-b text-xs">{h.createdAt}</td>
-                    </tr>
-                    {isOpen && (
-                      <tr>
-                        <td colSpan={6} className="border-b bg-gray-50 px-4 py-3">
-                          <div className="space-y-2 text-xs">
-                            <div><span className="text-gray-500">Channel:</span> {h.channel}</div>
-                            <div><span className="text-gray-500">Recipients:</span> {h.recipients?.join(', ') || '-'}</div>
-                            <div><span className="text-gray-500">Time:</span> {h.createdAt}</div>
-                            {h.isSucceeded ? (
-                              <div className="text-green-700">Delivered successfully.</div>
-                            ) : (
-                              <div>
-                                <div className="text-red-700 font-semibold mb-1">Failure cause</div>
-                                <pre className="whitespace-pre-wrap break-all bg-red-50 border border-red-200 rounded p-2 text-[11px] text-red-800 max-h-64 overflow-auto">
-{h.exception || 'No error detail recorded.'}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
+          <>
+            <table className="w-full text-sm">
+              <thead><tr className="bg-gray-50 text-left">
+                <th className="px-3 py-2 border-b text-xs text-gray-500 w-6"></th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">ID</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">Channel</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">Recipients</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">Status</th>
+                <th className="px-3 py-2 border-b text-xs text-gray-500">Time</th>
+              </tr></thead>
+              <tbody>
+                {content.map(h => {
+                  const isOpen = open === h.id;
+                  return (
+                    <Fragment key={h.id}>
+                      <tr className="hover:bg-gray-50 cursor-pointer" onClick={() => setOpen(isOpen ? null : h.id)}>
+                        <td className="px-3 py-2 border-b text-gray-400 text-xs">{isOpen ? '▼' : '▶'}</td>
+                        <td className="px-3 py-2 border-b">{h.id}</td>
+                        <td className="px-3 py-2 border-b">{h.channel}</td>
+                        <td className="px-3 py-2 border-b text-xs">{h.recipients?.join(', ')}</td>
+                        <td className="px-3 py-2 border-b">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${h.isSucceeded ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {h.isSucceeded ? 'OK' : 'FAIL'}
+                          </span>
                         </td>
+                        <td className="px-3 py-2 border-b text-xs">{h.createdAt}</td>
                       </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+                      {isOpen && (
+                        <tr>
+                          <td colSpan={6} className="border-b bg-gray-50 px-4 py-3">
+                            <div className="space-y-2 text-xs">
+                              <div><span className="text-gray-500">Channel:</span> {h.channel}</div>
+                              <div><span className="text-gray-500">Recipients:</span> {h.recipients?.join(', ') || '-'}</div>
+                              <div><span className="text-gray-500">Time:</span> {h.createdAt}</div>
+                              {h.isSucceeded ? (
+                                <div className="text-green-700">Delivered successfully.</div>
+                              ) : (
+                                <div>
+                                  <div className="text-red-700 font-semibold mb-1">Failure cause</div>
+                                  <div className="whitespace-pre-wrap break-words bg-red-50 border border-red-200 rounded p-2 text-[12px] text-red-800">
+                                    {cleanError(h.exception)}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+              <button
+                disabled={page <= 1}
+                onClick={() => { setOpen(null); setPage(p => Math.max(1, p - 1)); }}
+                className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">
+                ‹ Prev
+              </button>
+              <span>Page {page} / {totalPages || 1}</span>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => { setOpen(null); setPage(p => p + 1); }}
+                className="px-3 py-1 border rounded disabled:opacity-40 hover:bg-gray-50">
+                Next ›
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
