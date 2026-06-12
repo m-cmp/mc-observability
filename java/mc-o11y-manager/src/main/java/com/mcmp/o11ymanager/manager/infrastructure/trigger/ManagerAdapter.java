@@ -24,10 +24,10 @@ public class ManagerAdapter implements ManagerPort {
         Long influxId;
 
         // 1. Check whether vmScope is "infra_id" or "node_id"
-        if ("mci".equalsIgnoreCase(vmScope)) {
+        if ("infra".equalsIgnoreCase(vmScope)) {
             final String infraId = nodeId;
 
-            // 2. Map influx id using the combination of ns id and mci id
+            // 2. Map influx id using the combination of ns id and infra id
             List<VMDTO> vms = vmService.getByNsMci(nsId, infraId);
             influxId =
                     vms.stream()
@@ -36,8 +36,8 @@ public class ManagerAdapter implements ManagerPort {
                             .findFirst() // Can choose first/latest/minimum based on rules
                             .orElseGet(() -> influxDbService.resolveInfluxDb(nsId, infraId));
 
-        } else if ("vm".equalsIgnoreCase(vmScope)) {
-            // 3. Map mci id using ns and vm
+        } else if ("node".equalsIgnoreCase(vmScope)) {
+            // 3. Map infra id using ns and node
             VMDTO t = vmService.getByNsVm(nsId, nodeId);
 
             influxId = t.getInfluxSeq();
