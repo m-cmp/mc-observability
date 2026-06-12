@@ -13,8 +13,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Configuration properties for NCP Kakao AlimTalk service Contains NCP Kakao API settings
- * including channel configuration and signature generation.
+ * Configuration properties for NCP Kakao AlimTalk service Contains NCP Kakao API settings including
+ * channel configuration and signature generation.
  */
 @Getter
 @Setter
