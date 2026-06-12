@@ -271,7 +271,8 @@ notification:
     baseUrl: ${SMS_BASEURL:https://sens.apigw.ntruss.com}
   kakao:
     channelId: ${KAKAO_CHANNEL_ID:@xxxx}
-    templateCode: ${KAKAO_TEMPLATE_CODE:triggerTemplate}
+    alertTemplateCode: ${KAKAO_ALERT_TEMPLATE_CODE:alertTemplate}
+    directTemplateCode: ${KAKAO_DIRECT_TEMPLATE_CODE:directTemplate}
     serviceId: ${KAKAO_SERVICE_ID:ncp:kkobizmsg:kr:12345678:m-cmp}
     accessKey: ${KAKAO_ACCESS_KEY:ncp_iam_YYYY}
     secretKey: ${KAKAO_SECRET_KEY:ncp_iam_YYYYZZZZ}

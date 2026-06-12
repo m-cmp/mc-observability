@@ -13,15 +13,16 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Configuration properties for NCP Kakao AlimTalk service Contains NCP Kakao API settings
- * including channel configuration and signature generation.
+ * Configuration properties for NCP Kakao AlimTalk service Contains NCP Kakao API settings including
+ * channel configuration and signature generation.
  */
 @Getter
 @Setter
 public class KakaoProperties implements NotiProperty {
     private final NotificationType type = KAKAO;
     private String channelId;
-    private String templateCode;
+    private String alertTemplateCode;
+    private String directTemplateCode;
     private String serviceId;
     private String accessKey;
     private String secretKey;
