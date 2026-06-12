@@ -73,6 +73,19 @@ public class TriggerController {
     }
 
     @Operation(
+            summary = "UpdateTriggerPolicy",
+            description = "Update trigger policy (title, thresholds, resource, aggregation, etc.)",
+            operationId = "UpdateTriggerPolicy")
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ResBody<Void> updateTriggerPolicy(
+            @Parameter(name = "id", description = "trigger policy id") @PathVariable long id,
+            @Valid @RequestBody TriggerPolicyCreateRequest request) {
+        triggerService.updateTriggerPolicy(id, request.toDto());
+        return new ResBody<>();
+    }
+
+    @Operation(
             summary = "GetPaginatedTriggerPolicies",
             description = "Get paginated trigger policies",
             operationId = "GetPaginatedTriggerPolicies")

@@ -87,6 +87,23 @@ public class TriggerPolicy extends BaseEntity {
         return entity;
     }
 
+    public void update(
+            String title,
+            String description,
+            String thresholdCondition,
+            String resourceType,
+            String aggregationType,
+            String holdDuration,
+            String repeatInterval) {
+        this.title = title;
+        this.description = description;
+        this.thresholdCondition = thresholdCondition;
+        this.resourceType = resourceType;
+        this.aggregationType = aggregationType;
+        this.holdDuration = holdDuration;
+        this.repeatInterval = repeatInterval;
+    }
+
     public TriggerPolicyDetailDto toDto() {
         List<TriggerVMDetailDto> vms = triggerVMs.stream().map(TriggerVM::toDto).toList();
         List<TriggerPolicyNotiChannelDto> notiChannels =
