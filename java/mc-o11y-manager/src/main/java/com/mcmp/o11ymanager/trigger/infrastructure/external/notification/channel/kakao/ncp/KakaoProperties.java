@@ -21,7 +21,8 @@ import lombok.Setter;
 public class KakaoProperties implements NotiProperty {
     private final NotificationType type = KAKAO;
     private String channelId;
-    private String templateCode;
+    private String alertTemplateCode;
+    private String directTemplateCode;
     private String serviceId;
     private String accessKey;
     private String secretKey;

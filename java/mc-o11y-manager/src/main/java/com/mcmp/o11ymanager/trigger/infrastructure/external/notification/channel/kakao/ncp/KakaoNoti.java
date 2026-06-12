@@ -56,6 +56,7 @@ public class KakaoNoti implements Noti {
 
         RequestBody requestBody = new RequestBody();
         requestBody.plusFriendId = kakaoProperties.getChannelId();
+        requestBody.templateCode = kakaoProperties.getDirectTemplateCode();
 
         String content =
                 """
@@ -89,6 +90,7 @@ public class KakaoNoti implements Noti {
             AlertEvent event, KakaoProperties kakaoProperties, List<String> recipients) {
         RequestBody requestBody = new RequestBody();
         requestBody.plusFriendId = kakaoProperties.getChannelId();
+        requestBody.templateCode = kakaoProperties.getAlertTemplateCode();
         String content =
                 """
             [M-CMP] %s alerts triggered.
@@ -133,6 +135,7 @@ public class KakaoNoti implements Noti {
     public static class RequestBody {
 
         private String plusFriendId;
+        private String templateCode;
         private List<Message> messages;
     }
 
