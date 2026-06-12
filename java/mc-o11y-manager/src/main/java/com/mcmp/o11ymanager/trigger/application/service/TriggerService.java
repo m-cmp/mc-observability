@@ -141,6 +141,15 @@ public class TriggerService implements TriggerServiceInternal {
 
         List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
 
+        // Replace the policy's channels: remove existing rows before saving the new set
+        // so repeated saves don't accumulate duplicates.
+        List<TriggerPolicyNotiChannel> existing =
+                triggerPolicyNotiChannelRepository.findByTriggerPolicy(triggerPolicy);
+        if (!existing.isEmpty()) {
+            triggerPolicyNotiChannelRepository.deleteAll(existing);
+            triggerPolicyNotiChannelRepository.flush();
+        }
+
         List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
                 TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);
 
