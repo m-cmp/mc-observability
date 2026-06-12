@@ -38,7 +38,7 @@ export default function LogTable({ logs }) {
               {paged.map((log, i) => (
                 <tr key={page * PAGE_SIZE + i} onClick={() => setSelected(log)}
                   className={`cursor-pointer hover:bg-blue-50 ${selected === log ? 'bg-blue-100' : ''}`}>
-                  <td className="px-3 py-2 border-b whitespace-nowrap text-sm text-gray-500">{log.timestamp || '-'}</td>
+                  <td className="px-3 py-2 border-b whitespace-nowrap text-sm text-gray-500">{formatLocalTime(log.timestamp) || '-'}</td>
                   <td className="px-3 py-2 border-b text-sm"><LevelBadge level={log.level} /></td>
                   <td className="px-3 py-2 border-b whitespace-nowrap text-sm">{log.node_id || '-'}</td>
                   <td className="px-3 py-2 border-b whitespace-nowrap text-sm">{log.service || '-'}</td>
@@ -54,7 +54,7 @@ export default function LogTable({ logs }) {
           <div className="w-96 bg-gray-50 rounded-md p-4 overflow-auto max-h-[600px] shrink-0 text-sm">
             <h4 className="font-semibold mb-3">Log Detail</h4>
             <div className="space-y-1.5 mb-3">
-              <Row label="Timestamp" value={selected.timestamp} />
+              <Row label="Timestamp" value={formatLocalTime(selected.timestamp)} />
               <Row label="Level" value={selected.level} />
               <Row label="Node" value={selected.node_id} />
               <Row label="Host" value={selected.host} />

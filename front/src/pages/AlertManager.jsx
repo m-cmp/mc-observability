@@ -5,6 +5,7 @@ import {
   getNotiChannels, getNotiHistory, sendTestNotification,
 } from '../api/trigger';
 import { getInfraList } from '../api/tumblebug';
+import { formatLocalTime } from '../utils/time';
 import { useParams } from 'react-router-dom';
 
 const TABS = ['Policies', 'Notification History'];
@@ -604,7 +605,7 @@ function NotiHistoryTab() {
                             {h.isSucceeded ? 'OK' : 'FAIL'}
                           </span>
                         </td>
-                        <td className="px-3 py-2 border-b text-xs">{h.createdAt}</td>
+                        <td className="px-3 py-2 border-b text-xs">{formatLocalTime(h.createdAt)}</td>
                       </tr>
                       {isOpen && (
                         <tr>
@@ -612,7 +613,7 @@ function NotiHistoryTab() {
                             <div className="space-y-2 text-xs">
                               <div><span className="text-gray-500">Channel:</span> {h.channel}</div>
                               <div><span className="text-gray-500">Recipients:</span> {h.recipients?.join(', ') || '-'}</div>
-                              <div><span className="text-gray-500">Time:</span> {h.createdAt}</div>
+                              <div><span className="text-gray-500">Time:</span> {formatLocalTime(h.createdAt)}</div>
                               {h.isSucceeded ? (
                                 <div className="text-green-700">Delivered successfully.</div>
                               ) : (
