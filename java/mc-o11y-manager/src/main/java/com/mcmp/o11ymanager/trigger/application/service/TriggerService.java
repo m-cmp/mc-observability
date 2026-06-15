@@ -78,6 +78,41 @@ public class TriggerService implements TriggerServiceInternal {
         return triggerPolicy.getId();
     }
 
+    @Transactional
+    public void updateTriggerPolicy(long id, TriggerPolicyCreateDto dto) {
+        TriggerPolicy triggerPolicy =
+                triggerPolicyRepository
+                        .findById(id)
+                        .orElseThrow(() -> new TriggerPolicyNotFoundException(id));
+
+        triggerPolicy.update(
+                dto.title(),
+                dto.description(),
+                dto.thresholdCondition().toJson(),
+                dto.resourceType().getMeasurement(),
+                dto.aggregationType().getName(),
+                dto.holdDuration(),
+                dto.repeatInterval());
+        triggerPolicyRepository.save(triggerPolicy);
+
+        // Re-sync each target's alert rule so the updated thresholds/settings take effect.
+        TriggerPolicyDetailDto policyDto = triggerPolicy.toDto();
+        for (TriggerVM triggerVM : triggerPolicy.getTriggerVMs()) {
+            String datasourceUid =
+                    managerPort.getInfluxUid(
+                            triggerVM.getNamespaceId(),
+                            triggerVM.getTargetScope(),
+                            triggerVM.getTargetId());
+            try {
+                alertManager.deleteAlertRule(triggerVM.getUuid());
+            } catch (Exception ignored) {
+                // Rule may not exist yet (e.g. earlier creation failed); recreate below.
+            }
+            alertManager.createAlertRule(
+                    AlertRuleCreateDto.from(policyDto, triggerVM.toDto()), datasourceUid);
+        }
+    }
+
     public void deleteTriggerPolicy(long id) {
         TriggerPolicy triggerPolicy =
                 triggerPolicyRepository
@@ -140,6 +175,15 @@ public class TriggerService implements TriggerServiceInternal {
                         .toList();
 
         List<NotiChannel> notiChannels = notiChannelRepository.findByNameIn(notiChannelNames);
+
+        // Replace the policy's channels: remove existing rows before saving the new set
+        // so repeated saves don't accumulate duplicates.
+        List<TriggerPolicyNotiChannel> existing =
+                triggerPolicyNotiChannelRepository.findByTriggerPolicy(triggerPolicy);
+        if (!existing.isEmpty()) {
+            triggerPolicyNotiChannelRepository.deleteAll(existing);
+            triggerPolicyNotiChannelRepository.flush();
+        }
 
         List<TriggerPolicyNotiChannel> triggerPolicyNotiChannels =
                 TriggerPolicyNotiChannel.create(triggerPolicy, notiChannels, channelRecipientMap);

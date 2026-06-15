@@ -18,6 +18,10 @@ export async function deletePolicy(id) {
   return client.delete(`/api/o11y/trigger/policy/${id}`);
 }
 
+export async function updatePolicy(id, body) {
+  return client.put(`/api/o11y/trigger/policy/${id}`, body);
+}
+
 export async function addNodeToPolicy(policyId, body) {
   return client.post(`/api/o11y/trigger/policy/${policyId}/node`, body);
 }
