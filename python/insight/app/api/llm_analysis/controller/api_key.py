@@ -36,7 +36,11 @@ async def get_llm_api_key(db: Session = Depends(get_db), query_params: GetAPIKey
 )
 async def post_llm_api_key(body_params: PostAPIKeyBody, db: Session = Depends(get_db)):
     service = CommonAPIKeyService(db=db)
-    result = service.post_api_key(provider=body_params.provider, api_key=body_params.api_key)
+    result = service.post_api_key(
+        provider=body_params.provider,
+        api_key=body_params.api_key,
+        base_url=body_params.base_url,
+    )
     return ResBodyLLMAPIKey(data=result)
 
 

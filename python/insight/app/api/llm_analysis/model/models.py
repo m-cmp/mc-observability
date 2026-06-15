@@ -20,7 +20,8 @@ class LLMAPIKey(Base):
     __tablename__ = "mc_o11y_insight_llm_api_key"
     SEQ = Column(Integer, primary_key=True)
     PROVIDER = Column(String(100), nullable=False)
-    API_KEY = Column(Text, nullable=False)
+    API_KEY = Column(Text, nullable=True)
+    BASE_URL = Column(Text, nullable=True)
 
 
 class ServerErrorAnalysis(Base):

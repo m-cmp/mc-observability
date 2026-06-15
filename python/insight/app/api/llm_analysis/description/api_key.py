@@ -9,7 +9,15 @@ get_api_key_description = {
                     "example": {
                         "rs_code": "200",
                         "rs_msg": "Success",
-                        "data": [{"seq": 1, "provider": "openai", "api_key": "api_key"}],
+                        "data": [
+                            {"seq": 1, "provider": "openai", "api_key": "api_key"},
+                            {
+                                "seq": 2,
+                                "provider": "openai-compatible",
+                                "api_key": "api_key",
+                                "base_url": "http://vllm:8000/v1",
+                            },
+                        ],
                     }
                 }
             },
@@ -27,7 +35,12 @@ post_api_key_description = {
                     "example": {
                         "rs_code": "200",
                         "rs_msg": "Success",
-                        "data": {"seq": 2, "provider": "openai", "api_key": "api_key"},
+                        "data": {
+                            "seq": 2,
+                            "provider": "openai-compatible",
+                            "api_key": "api_key",
+                            "base_url": "http://vllm:8000/v1",
+                        },
                     }
                 }
             },

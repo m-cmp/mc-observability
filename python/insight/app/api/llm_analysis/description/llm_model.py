@@ -11,6 +11,7 @@ get_llm_model_options_description = {
                         "data": [
                             {"provider": "ollama", "model_name": ["llama3.1:8b", "mistral:7b"]},
                             {"provider": "openai", "model_name": ["gpt-5", "gpt-5-mini", "gpt-5-nano"]},
+                            {"provider": "openai-compatible", "model_name": ["google/gemma-4-12B-it"]},
                         ],
                     }
                 }

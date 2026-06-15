@@ -68,21 +68,34 @@ class MCPContext:
 
     async def get_agent(self, provider: str, model_name: str, provider_credential: str, streaming: bool = False):
         try:
-            if not provider_credential:
+            provider_value = getattr(provider, "value", provider)
+            api_key = getattr(provider_credential, "api_key", provider_credential)
+            base_url = getattr(provider_credential, "base_url", None)
+            if provider_value == "ollama" and base_url is None:
+                base_url = provider_credential
+            if provider_value == "ollama":
+                credential = base_url
+            elif provider_value == "openai-compatible":
+                credential = api_key and base_url
+            else:
+                credential = api_key
+            if not credential:
                 msg = f"Missing credential for provider '{provider}'."
                 logger.error(msg)
                 raise ValueError(msg)
 
-            if provider == "ollama":
-                self.llm_client = OllamaClient(provider_credential)
-            elif provider == "openai":
-                self.llm_client = OpenAIClient(provider_credential)
-            elif provider == "google":
+            if provider_value == "ollama":
+                self.llm_client = OllamaClient(base_url)
+            elif provider_value == "openai-compatible":
+                self.llm_client = OpenAIClient(api_key, base_url=base_url)
+            elif provider_value == "openai":
+                self.llm_client = OpenAIClient(api_key)
+            elif provider_value == "google":
                 self.llm_client = OpenAIClient(
-                    provider_credential, base_url="https://generativelanguage.googleapis.com/v1beta/openai"
+                    api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai"
                 )
-            elif provider == "anthropic":
-                self.llm_client = OpenAIClient(provider_credential, base_url="https://api.anthropic.com/v1/")
+            elif provider_value == "anthropic":
+                self.llm_client = OpenAIClient(api_key, base_url="https://api.anthropic.com/v1/")
             else:
                 msg = f"Unsupported provider: {provider}"
                 logger.error(msg)
@@ -99,7 +112,7 @@ class MCPContext:
             else:
                 # Pass streaming parameter only to OpenAI-based clients
                 if hasattr(self.llm_client, "setup"):
-                    if provider in ["openai", "google", "anthropic"]:
+                    if provider_value in ["openai", "openai-compatible", "google", "anthropic"]:
                         self.llm_client.setup(model=model_name, streaming=streaming)
                     else:
                         self.llm_client.setup(model=model_name)
