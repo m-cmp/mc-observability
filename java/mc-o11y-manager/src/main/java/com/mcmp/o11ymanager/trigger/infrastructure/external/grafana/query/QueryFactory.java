@@ -33,6 +33,22 @@ public class QueryFactory {
     }
 
     /**
+     * Maps a policy aggregation name to a valid Flux function. Flux has no {@code avg} identifier —
+     * the average reducer is {@code mean}. {@code min}/{@code max}/{@code last} are valid as-is.
+     *
+     * @param aggregation policy aggregation name (e.g. "avg", "max")
+     * @return Flux aggregate function name (e.g. "mean", "max")
+     */
+    private static String fluxFn(String aggregation) {
+        if (aggregation == null) {
+            return "mean";
+        }
+        return "avg".equalsIgnoreCase(aggregation.trim())
+                ? "mean"
+                : aggregation.trim().toLowerCase();
+    }
+
+    /**
      * Generates FluxQL query string based on resource type Routes to appropriate query method based
      * on the resource type specified in the DTO.
      *
@@ -68,7 +84,7 @@ public class QueryFactory {
                                 Restrictions.tag(tagName).equal(dto.targetId()),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .map("({ r with _value: 100.0 - r._value })")
-                .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
+                .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
                 .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
                 .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
@@ -92,7 +108,7 @@ public class QueryFactory {
                                 Restrictions.field().equal(dto.field()),
                                 Restrictions.tag(tagName).equal(dto.targetId()),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
-                .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
+                .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
                 .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
                 .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
@@ -115,7 +131,7 @@ public class QueryFactory {
                                 Restrictions.field().equal(dto.field()),
                                 Restrictions.tag(tagName).equal(dto.targetId()),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
-                .aggregateWindow(1L, ChronoUnit.MINUTES, dto.aggregation())
+                .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
                 .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
                 .groupBy(new String[] {"ns_id", "infra_id", "node_id"})
                 .toString();
