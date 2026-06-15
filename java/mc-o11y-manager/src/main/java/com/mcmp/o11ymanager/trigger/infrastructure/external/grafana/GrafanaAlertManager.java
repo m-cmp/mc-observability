@@ -81,7 +81,19 @@ public class GrafanaAlertManager implements AlertManager {
         GrafanaAlertRule alertRule =
                 alertRuleFactory.createGrafanaAlertRule(
                         dto.uuid(),
-                        dto.namespaceId() + "-" + dto.targetScope() + "-" + dto.targetId(),
+                        // Include the policy title so the same VM can be targeted by multiple
+                        // policies. Grafana requires alert rule titles to be unique per folder, so
+                        // a title keyed only by ns/scope/target collides when two policies share a
+                        // target. Notification routing keys off the ruleGroup label (policy title),
+                        // not this title, so making it policy-specific is safe.
+                        dto.namespaceId()
+                                + "-"
+                                + dto.targetScope()
+                                + "-"
+                                + dto.targetId()
+                                + " ["
+                                + dto.title()
+                                + "]",
                         dto.holdDuration(),
                         query,
                         dto.thresholdExpression(),

@@ -64,8 +64,8 @@
     <thead>
     <tr>
       <th>Namespace ID</th>
-      <th>MCI ID</th>
-      <th>VM ID</th>
+      <th>Infra ID</th>
+      <th>Node ID</th>
       <th>Metric</th>
       <th>Resource Usage</th>
     </tr>
@@ -73,8 +73,8 @@
     <tbody>
     <tr th:each="alert : ${alerts}">
       <td th:text="${alert.namespaceId}">namespace-id</td>
-      <td th:text="${alert.mciId}">mci-id</td>
-      <td th:text="${alert.vmId}">vm-id</td>
+      <td th:text="${alert.infraId}">infra-id</td>
+      <td th:text="${alert.nodeId}">node-id</td>
       <td th:text="${alert.resourceType}"></td>
       <td class="metric" th:text="${alert.resourceUsage + '%'}">0%</td>
     </tr>
