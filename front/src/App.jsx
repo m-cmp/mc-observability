@@ -40,6 +40,7 @@ export default function App() {
         <Route path="/insight/:nsId/:infraId/:nodeId" element={<InsightDashboard />} />
         <Route path="/insight/:nsId/:infraId" element={<InsightDashboard />} />
         <Route path="/insight/:nsId" element={<InsightDashboard />} />
+        <Route path="/alerts/:nsId/:infraId/:nodeId" element={<AlertManager />} />
         <Route path="/alerts/:nsId/:infraId" element={<AlertManager />} />
         <Route path="/alerts/:nsId" element={<AlertManager />} />
         <Route path="/trace/:nsId/:infraId/:nodeId" element={<TraceViewer />} />
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/embed/insight/:nsId/:infraId/:nodeId" element={<InsightDashboard />} />
         <Route path="/embed/insight/:nsId/:infraId" element={<InsightDashboard />} />
         <Route path="/embed/insight/:nsId" element={<InsightDashboard />} />
+        <Route path="/embed/alerts/:nsId/:infraId/:nodeId" element={<AlertManager />} />
         <Route path="/embed/alerts/:nsId/:infraId" element={<AlertManager />} />
         <Route path="/embed/alerts/:nsId" element={<AlertManager />} />
         <Route path="/embed/trace/:nsId/:infraId/:nodeId" element={<TraceViewer />} />
