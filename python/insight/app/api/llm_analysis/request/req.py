@@ -3,11 +3,12 @@ from enum import Enum
 from typing import Literal
 
 from fastapi import Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProviderType(str, Enum):
     openai = "openai"
+    openai_compatible = "openai-compatible"
     ollama = "ollama"
     google = "google"
     anthropic = "anthropic"
@@ -15,6 +16,8 @@ class ProviderType(str, Enum):
 
 class APIProviderType(str, Enum):
     openai = "openai"
+    openai_compatible = "openai-compatible"
+    ollama = "ollama"
     google = "google"
     anthropic = "anthropic"
 
@@ -42,12 +45,31 @@ class PostQueryBody(BaseModel):
 
 
 class GetAPIKeyFilter(BaseModel):
-    provider: APIProviderType = Field(Query(default=None, description="The LLM provider to use", example="openai"))
+    provider: APIProviderType | None = Field(Query(default=None, description="The LLM provider to use", example="openai"))
 
 
 class PostAPIKeyBody(BaseModel):
     provider: APIProviderType = Field(..., description="The LLM provider to use")
-    api_key: str = Field(..., min_length=20, description="API key for the LLM provider")
+    api_key: str | None = Field(default=None, min_length=1, description="API key for the LLM provider")
+    base_url: str | None = Field(default=None, min_length=1, description="Base URL for endpoint-based providers")
+
+    @model_validator(mode="after")
+    def validate_provider_config(self):
+        if self.provider == APIProviderType.ollama:
+            if not self.base_url:
+                raise ValueError("base_url is required for ollama provider")
+            return self
+
+        if self.provider == APIProviderType.openai_compatible:
+            if not self.api_key:
+                raise ValueError("api_key is required for openai-compatible provider")
+            if not self.base_url:
+                raise ValueError("base_url is required for openai-compatible provider")
+            return self
+
+        if not self.api_key:
+            raise ValueError("api_key is required for this provider")
+        return self
 
 
 class DeleteAPIKeyFilter(BaseModel):

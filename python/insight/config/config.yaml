@@ -114,6 +114,10 @@ llm:
         - gpt-5
         - gpt-5-mini
         - gpt-5-nano
+    - provider: openai-compatible
+      model_name:
+        - google/gemma-4-12B-it
+        - lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF
     - provider: google
       model_name:
         - gemini-2.5-flash

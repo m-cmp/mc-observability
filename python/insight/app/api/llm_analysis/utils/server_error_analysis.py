@@ -24,8 +24,8 @@ from app.api.llm_analysis.response.res import (
 from app.api.llm_analysis.utils.llm_api_key import CredentialService
 from app.core.graph.server_error_analysis_graph import (
     EvidenceResult,
-    ServerErrorInputDetail,
     ServerErrorAnalysisResult,
+    ServerErrorInputDetail,
     ServerErrorRunContext,
     extract_structured_response,
     normalize_server_error_detail,
@@ -322,12 +322,14 @@ class ServerErrorAnalysisService:
     async def _create_supervisor_agent(self, provider, model_name):
         """Create the supervisor agent and source-specific trace/log/metric subagents."""
         provider_value = self._provider_value(provider)
-        credential = CredentialService(repo=self.session_repo).get_provider_credential(provider=provider_value)
+        provider_config = CredentialService(repo=self.session_repo).get_provider_config(provider=provider_value)
 
         if provider_value == "ollama":
-            client = OllamaClient(credential)
+            client = OllamaClient(provider_config.base_url)
+        elif provider_value == "openai-compatible":
+            client = OpenAIClient(provider_config.api_key, base_url=provider_config.base_url)
         else:
-            client = OpenAIClient(credential, base_url=OPENAI_COMPAT_BASE_URLS.get(provider_value))
+            client = OpenAIClient(provider_config.api_key, base_url=OPENAI_COMPAT_BASE_URLS.get(provider_value))
         client.setup(model_name)
 
         prompt_service = PromptFactory.create_prompt_service("server_error", self.config)
@@ -518,9 +520,9 @@ class ServerErrorAnalysisService:
         """Find a loaded MCP tool by exact tool name."""
         if not self.mcp_manager:
             return None
-        for tool in self.mcp_manager.get_all_tools() or []:
-            if getattr(tool, "name", None) == name:
-                return tool
+        for mcp_tool in self.mcp_manager.get_all_tools() or []:
+            if getattr(mcp_tool, "name", None) == name:
+                return mcp_tool
         return None
 
     def _extract_candidates(self, result, limit):

@@ -43,12 +43,13 @@ class LogAnalysisRepository:
         else:
             return self.db.query(LLMAPIKey).all()
 
-    def post_api_key(self, provider: str, api_key: str):
+    def post_api_key(self, provider: str, api_key: str | None, base_url: str | None = None):
         record = self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
         if record:
             record.API_KEY = api_key
+            record.BASE_URL = base_url
         else:
-            record = LLMAPIKey(PROVIDER=provider, API_KEY=api_key)
+            record = LLMAPIKey(PROVIDER=provider, API_KEY=api_key, BASE_URL=base_url)
             self.db.add(record)
         self.db.commit()
         return record

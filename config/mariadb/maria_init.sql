@@ -24,7 +24,8 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
 CREATE TABLE `mc_o11y_insight_llm_api_key` (
   `SEQ` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `PROVIDER` varchar(20) NOT NULL,
-  `API_KEY` text NOT NULL,
+  `API_KEY` text DEFAULT NULL,
+  `BASE_URL` text DEFAULT NULL,
   PRIMARY KEY (`SEQ`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 

@@ -24,8 +24,8 @@ class AlertQueryService:
         session = self.repo.get_session_by_id(session_id)
         if not session:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session Not Found")
-        provider_credential = CredentialService(repo=self.repo).get_provider_credential(provider=session.PROVIDER)
-        await self.mcp_context.get_agent(session.PROVIDER, session.MODEL_NAME, provider_credential, streaming=False)
+        provider_config = CredentialService(repo=self.repo).get_provider_config(provider=session.PROVIDER)
+        await self.mcp_context.get_agent(session.PROVIDER, session.MODEL_NAME, provider_config, streaming=False)
 
         query_result = await self.mcp_context.aquery(session_id, message)
         result = query_result["messages"][-1].content

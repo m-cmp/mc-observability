@@ -10,7 +10,7 @@ class BaseResponse(BaseModel):
 
 
 class LLMModel(BaseModel):
-    provider: Literal["ollama", "openai", "google", "anthropic"]
+    provider: Literal["ollama", "openai", "openai-compatible", "google", "anthropic"]
     model_name: list[str]
 
 
@@ -75,7 +75,8 @@ class ResBodyQuery(BaseResponse):
 class LLMAPIKey(BaseModel):
     seq: int
     provider: str
-    api_key: str
+    api_key: str | None = None
+    base_url: str | None = None
 
 
 class ResBodyLLMAPIKey(BaseResponse):
