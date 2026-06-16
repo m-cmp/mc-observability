@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp;
 
 import com.mcmp.o11ymanager.trigger.application.common.exception.NotificationConfigurationException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KakaoTemplateProvider {
 
-    private static final String USABLE_STATUS = "ACTIVE";
+    private static final Set<String> USABLE_STATUSES = Set.of("ACTIVE", "READY");
 
     private final KakaoTemplateClient templateClient;
     private final ConcurrentHashMap<String, String> contentCache = new ConcurrentHashMap<>();
@@ -52,10 +53,11 @@ public class KakaoTemplateProvider {
                         .orElseThrow(
                                 () ->
                                         new NotificationConfigurationException(
-                                                "Kakao template not found on NCP: " + templateCode));
+                                                "Kakao template not found on NCP: "
+                                                        + templateCode));
 
         String status = template.getTemplateStatus();
-        if (status == null || !USABLE_STATUS.equalsIgnoreCase(status)) {
+        if (status == null || USABLE_STATUSES.stream().noneMatch(s -> s.equalsIgnoreCase(status))) {
             throw new NotificationConfigurationException(
                     "Kakao template '"
                             + templateCode
