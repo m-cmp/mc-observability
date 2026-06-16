@@ -81,7 +81,9 @@ public class KakaoNoti implements Noti {
         RequestHeader requestHeader = new RequestHeader();
         requestHeader.url = kakaoProperties.getApiUrl();
         requestHeader.timestamp = String.valueOf(System.currentTimeMillis());
-        requestHeader.authorization = kakaoProperties.makeSignature(requestHeader.timestamp);
+        requestHeader.authorization =
+                kakaoProperties.makeSignature(
+                        "POST", kakaoProperties.getMessagesPath(), requestHeader.timestamp);
         requestHeader.accessKey = kakaoProperties.getAccessKey();
         return requestHeader;
     }
