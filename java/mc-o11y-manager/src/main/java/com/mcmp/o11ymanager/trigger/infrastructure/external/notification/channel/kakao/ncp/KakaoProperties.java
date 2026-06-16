@@ -67,6 +67,15 @@ public class KakaoProperties implements NotiProperty {
     }
 
     /**
+     * URI path for the NCP Kakao AlimTalk template-inquiry endpoint.
+     *
+     * @return AlimTalk templates URI path with service ID
+     */
+    public String getTemplatesPath() {
+        return "/alimtalk/v2/services/" + serviceId + "/templates";
+    }
+
+    /**
      * Constructs complete NCP Kakao AlimTalk API URL.
      *
      * @return complete NCP Kakao AlimTalk API URL with service ID
