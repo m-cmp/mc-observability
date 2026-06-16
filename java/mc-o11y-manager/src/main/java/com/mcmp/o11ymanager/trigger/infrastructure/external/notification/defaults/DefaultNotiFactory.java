@@ -10,6 +10,7 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoNoti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoTemplateProvider;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailNoti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackNoti;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 public class DefaultNotiFactory implements NotiFactory {
 
     private final Map<NotificationType, NotiProperty> notiChannelProps = new HashMap<>();
+    private KakaoTemplateProvider kakaoTemplateProvider;
 
     /**
      * Creates a new instance of DefaultNotiFactory.
@@ -40,6 +42,18 @@ public class DefaultNotiFactory implements NotiFactory {
      */
     public static DefaultNotiFactory newInstance() {
         return new DefaultNotiFactory();
+    }
+
+    /**
+     * Registers the Kakao template provider used to resolve registered AlimTalk template content.
+     *
+     * @param kakaoTemplateProvider provider that fetches and caches Kakao templates from NCP
+     * @return this factory instance for method chaining
+     */
+    public DefaultNotiFactory withKakaoTemplateProvider(
+            KakaoTemplateProvider kakaoTemplateProvider) {
+        this.kakaoTemplateProvider = kakaoTemplateProvider;
+        return this;
     }
 
     /**
@@ -90,7 +104,10 @@ public class DefaultNotiFactory implements NotiFactory {
             case SLACK -> SlackNoti.from(
                     alertEvent, (SlackProperties) notiProperty, notiChannelDto.recipients());
             case KAKAO -> KakaoNoti.from(
-                    alertEvent, (KakaoProperties) notiProperty, notiChannelDto.recipients());
+                    alertEvent,
+                    (KakaoProperties) notiProperty,
+                    kakaoTemplateProvider,
+                    notiChannelDto.recipients());
             case DISCORD -> DiscordNoti.from(
                     alertEvent, (DiscordProperties) notiProperty, notiChannelDto.recipients());
             case TEAMS -> TeamsNoti.from(
@@ -130,6 +147,7 @@ public class DefaultNotiFactory implements NotiFactory {
 
             case KAKAO -> KakaoNoti.direct(
                     (KakaoProperties) property,
+                    kakaoTemplateProvider,
                     directAlert.getRecipients(),
                     directAlert.getTitle(),
                     directAlert.getMessage());

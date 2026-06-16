@@ -30,6 +30,9 @@ public class KakaoTemplateProvider {
      * @throws NotificationConfigurationException if the template is missing, not usable, or empty
      */
     public String getContent(String templateCode) {
+        if (templateCode == null || templateCode.isBlank()) {
+            throw new NotificationConfigurationException("Kakao templateCode is not configured");
+        }
         return contentCache.computeIfAbsent(templateCode, this::fetchValidated);
     }
 
