@@ -125,7 +125,8 @@ notification:
     baseUrl: ${SMS_BASEURL:https://sms.test.com}
   kakao:
     channelId: ${KAKAO_CHANNEL_ID:test}
-    templateCode: ${KAKAO_TEMPLATE_CODE:test}
+    alertTemplateCode: ${KAKAO_ALERT_TEMPLATE_CODE:test}
+    directTemplateCode: ${KAKAO_DIRECT_TEMPLATE_CODE:test}
     serviceId: ${KAKAO_SERVICE_ID:test}
     accessKey: ${KAKAO_ACCESS_KEY:test}
     secretKey: ${KAKAO_SECRET_KEY:test}
