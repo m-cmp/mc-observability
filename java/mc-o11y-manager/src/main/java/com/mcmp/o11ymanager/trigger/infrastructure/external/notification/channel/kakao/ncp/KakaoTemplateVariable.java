@@ -37,8 +37,8 @@ public enum KakaoTemplateVariable {
             event -> primaryDetail(event, AlertDetail::getNamespaceId)),
     TARGET_ID(
             "targetId",
-            "대표(최고 심각도) 알림의 VM ID",
-            event -> primaryDetail(event, AlertDetail::getVmId));
+            "대표(최고 심각도) 알림의 Node ID",
+            event -> primaryDetail(event, AlertDetail::getNodeId));
 
     private final String key;
     private final String description;
