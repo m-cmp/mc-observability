@@ -6,6 +6,7 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.message.alert.AlertE
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.type.NotificationType;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import org.springframework.util.MimeTypeUtils;
 
@@ -29,41 +30,46 @@ public class KakaoNoti implements Noti {
      * @return KakaoNoti instance ready to be sent
      */
     public static Noti from(
-            AlertEvent event, KakaoProperties kakaoProperties, List<String> recipients) {
+            AlertEvent event,
+            KakaoProperties kakaoProperties,
+            KakaoTemplateProvider templateProvider,
+            List<String> recipients) {
         KakaoNoti notification = new KakaoNoti();
         notification.header = buildHeader(kakaoProperties);
-        notification.body = buildBody(event, kakaoProperties, recipients);
+        notification.body = buildBody(event, kakaoProperties, templateProvider, recipients);
         return notification;
     }
 
     public static KakaoNoti direct(
             KakaoProperties kakaoProperties,
+            KakaoTemplateProvider templateProvider,
             List<String> recipients,
             String title,
             String message) {
 
         KakaoNoti notification = new KakaoNoti();
         notification.header = buildHeader(kakaoProperties);
-        notification.body = buildDirectBody(kakaoProperties, recipients, title, message);
+        notification.body =
+                buildDirectBody(kakaoProperties, templateProvider, recipients, title, message);
         return notification;
     }
 
     private static RequestBody buildDirectBody(
             KakaoProperties kakaoProperties,
+            KakaoTemplateProvider templateProvider,
             List<String> recipients,
             String title,
             String message) {
 
         RequestBody requestBody = new RequestBody();
         requestBody.plusFriendId = kakaoProperties.getChannelId();
-        requestBody.templateCode = kakaoProperties.getDirectTemplateCode();
+        String templateCode = kakaoProperties.getDirectTemplateCode();
+        requestBody.templateCode = templateCode;
 
+        String template = templateProvider.getContent(templateCode);
         String content =
-                """
-        [M-CMP]
-        %s
-        %s
-        """.formatted(title, message);
+                KakaoTemplateRenderer.render(
+                        templateCode, template, Map.of("title", title, "message", message));
 
         requestBody.messages =
                 recipients.stream().map(recipient -> new Message(recipient, content)).toList();
@@ -81,31 +87,27 @@ public class KakaoNoti implements Noti {
         RequestHeader requestHeader = new RequestHeader();
         requestHeader.url = kakaoProperties.getApiUrl();
         requestHeader.timestamp = String.valueOf(System.currentTimeMillis());
-        requestHeader.authorization = kakaoProperties.makeSignature(requestHeader.timestamp);
+        requestHeader.authorization =
+                kakaoProperties.makeSignature(
+                        "POST", kakaoProperties.getMessagesPath(), requestHeader.timestamp);
         requestHeader.accessKey = kakaoProperties.getAccessKey();
         return requestHeader;
     }
 
     private static RequestBody buildBody(
-            AlertEvent event, KakaoProperties kakaoProperties, List<String> recipients) {
+            AlertEvent event,
+            KakaoProperties kakaoProperties,
+            KakaoTemplateProvider templateProvider,
+            List<String> recipients) {
         RequestBody requestBody = new RequestBody();
         requestBody.plusFriendId = kakaoProperties.getChannelId();
-        requestBody.templateCode = kakaoProperties.getAlertTemplateCode();
-        String content =
-                """
-            [M-CMP] %s alerts triggered.
+        String templateCode = kakaoProperties.getAlertTemplateCode();
+        requestBody.templateCode = templateCode;
 
-            %s
-            - info: %s
-            - warning: %s
-            - critical: %s
-            """
-                        .formatted(
-                                event.getAlertsCount(),
-                                event.getTitle(),
-                                event.getInfoAlerts().size(),
-                                event.getWarningAlerts().size(),
-                                event.getCriticalAlerts().size());
+        String template = templateProvider.getContent(templateCode);
+        String content =
+                KakaoTemplateRenderer.render(
+                        templateCode, template, KakaoTemplateVariable.toValues(event));
 
         requestBody.messages =
                 recipients.stream().map(recipient -> new Message(recipient, content)).toList();

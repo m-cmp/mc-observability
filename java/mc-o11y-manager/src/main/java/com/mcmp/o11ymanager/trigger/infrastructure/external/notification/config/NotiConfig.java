@@ -13,6 +13,7 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.discord.DiscordProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoNotifier;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoProperties;
+import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.kakao.ncp.KakaoTemplateProvider;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailNotifier;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.mail.MailProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.slack.SlackNotifier;
@@ -121,8 +122,10 @@ public class NotiConfig {
     public NotiFactory notiRegistry(
             MailProperties mailProperties,
             SmsProperties smsProperties,
-            KakaoProperties kakaoProperties) {
+            KakaoProperties kakaoProperties,
+            KakaoTemplateProvider kakaoTemplateProvider) {
         return DefaultNotiFactory.newInstance()
+                .withKakaoTemplateProvider(kakaoTemplateProvider)
                 .put(EMAIL, mailProperties)
                 .put(SMS, smsProperties)
                 .put(SLACK, slackProperties())

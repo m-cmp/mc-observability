@@ -32,16 +32,16 @@ public class KakaoProperties implements NotiProperty {
     /**
      * Generates HMAC-SHA256 signature for NCP Kakao API authentication.
      *
+     * @param method HTTP method of the request (e.g. POST, GET)
+     * @param url request URI path used in the signature
      * @param timestamp current timestamp for signature generation
      * @return Base64-encoded signature for API authentication
      * @throws NotificationConfigurationException if signature generation fails
      */
-    public String makeSignature(String timestamp) {
+    public String makeSignature(String method, String url, String timestamp) {
         try {
             String space = " ";
             String newLine = "\n";
-            String method = "POST";
-            String url = "/alimtalk/v2/services/" + serviceId + "/messages";
 
             String message = method + space + url + newLine + timestamp + newLine + accessKey;
 
@@ -58,11 +58,29 @@ public class KakaoProperties implements NotiProperty {
     }
 
     /**
+     * URI path for the NCP Kakao AlimTalk send-message endpoint.
+     *
+     * @return AlimTalk messages URI path with service ID
+     */
+    public String getMessagesPath() {
+        return "/alimtalk/v2/services/" + serviceId + "/messages";
+    }
+
+    /**
+     * URI path for the NCP Kakao AlimTalk template-inquiry endpoint.
+     *
+     * @return AlimTalk templates URI path with service ID
+     */
+    public String getTemplatesPath() {
+        return "/alimtalk/v2/services/" + serviceId + "/templates";
+    }
+
+    /**
      * Constructs complete NCP Kakao AlimTalk API URL.
      *
      * @return complete NCP Kakao AlimTalk API URL with service ID
      */
     public String getApiUrl() {
-        return baseUrl + "/alimtalk/v2/services/" + serviceId + "/messages";
+        return baseUrl + getMessagesPath();
     }
 }

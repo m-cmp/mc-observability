@@ -134,6 +134,9 @@ vi .env ## Edit this file
 sudo docker compose up -d
 ```
 
+> To enable KakaoTalk (AlimTalk) notifications you must register an approved template in your own
+> NCP account. See [Kakao AlimTalk Notification Setup](mc-o11y-manager/docs/kakao-alimtalk-template.md).
+
 ### 4. Check network listen states
 ```
 sudo ss -nltp | grep docker                                                                                                       12:03:20 PM
