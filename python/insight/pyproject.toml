@@ -14,8 +14,8 @@ dependencies = [
     "langchain-ollama>=1.0,<2.0",
     "langchain-openai>=1.0,<2.0",
     "langgraph>=1.0,<2.0",
-    "langgraph-checkpoint>=2.1.1",
-    "langgraph-checkpoint-sqlite",
+    "langgraph-checkpoint>=4.1.1,<5.0.0",
+    "langgraph-checkpoint-sqlite>=3.0.3,<4.0.0",
     "langgraph-prebuilt>=1.0,<2.0",
     "langgraph-sdk>=0.2.9",
     "langmem>=0.0.29",
@@ -38,14 +38,6 @@ dependencies = [
     "sqlalchemy==2.0.34",
     "uvicorn==0.30.6",
 ]
-
-[tool.uv.workspace]
-members = [
-    "external/checkpoint-sqlite",
-]
-
-[tool.uv.sources]
-langgraph-checkpoint-sqlite = { workspace = true }
 
 [dependency-groups]
 dev = [

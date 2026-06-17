@@ -468,24 +468,6 @@ def build_server_error_analysis_graph(*, checkpointer=None):
     return graph.compile(checkpointer=checkpointer)
 
 
-class _JsonPlusMetadataCompat:
-    """Adapt newer LangGraph serde methods to the sqlite saver metadata API."""
-
-    def __init__(self, serde):
-        self.serde = serde
-
-    def dumps(self, obj):
-        """Serialize checkpoint metadata for sqlite checkpoint compatibility."""
-        type_, data = self.serde.dumps_typed(obj)
-        if type_ != "msgpack":
-            raise TypeError(f"Unsupported SQLite checkpoint metadata type: {type_}")
-        return data
-
-    def loads(self, data):
-        """Deserialize checkpoint metadata for sqlite checkpoint compatibility."""
-        return self.serde.loads_typed(("msgpack", data))
-
-
 @dataclass(slots=True)
 class ServerErrorGraphRuntime:
     """Own the compiled graph and async sqlite checkpoint connection lifecycle."""
@@ -500,8 +482,6 @@ class ServerErrorGraphRuntime:
         Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
         connection = await aiosqlite.connect(checkpoint_path, check_same_thread=False)
         checkpointer = AsyncSqliteSaver(connection)
-        if not hasattr(checkpointer.jsonplus_serde, "dumps"):
-            checkpointer.jsonplus_serde = _JsonPlusMetadataCompat(checkpointer.jsonplus_serde)
         graph = build_server_error_analysis_graph(checkpointer=checkpointer)
         return cls(graph=graph, checkpointer=checkpointer, connection=connection)
 
