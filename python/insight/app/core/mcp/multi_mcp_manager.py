@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from contextlib import AsyncExitStack
 
 from langchain_mcp_adapters.tools import load_mcp_tools
 
@@ -19,6 +20,14 @@ class MCPManager:
         self.mcp_contexts: dict[str, MCPContext] = {}
         self.all_tools: list = []
         self.tools_by_mcp: dict[str, list] = {}
+        self._exit_stack = AsyncExitStack()
+
+    async def __aenter__(self):
+        await self.start_all()
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.stop_all()
 
     def add_mariadb_mcp(self, name: str, mcp_url: str):
         """Add MariaDB MCP client."""
@@ -52,7 +61,7 @@ class MCPManager:
         for name, client in self.mcp_clients.items():
             try:
                 logger.info(f"Starting {name} MCP client...")
-                session = await client.astart()
+                session = await self._start_client(name, client)
                 sessions[name] = session
 
                 tools = await load_mcp_tools(session)
@@ -72,19 +81,25 @@ class MCPManager:
         logger.info(f"Total MCP tools loaded: {len(self.all_tools)}")
         return sessions
 
+    async def _start_client(self, name: str, client):
+        """Start one MCP client and register its context stack for manager-owned cleanup."""
+        session = await client.astart()
+        self._exit_stack.push_async_callback(client.astop)
+        return session
+
     async def stop_all(self):
-        """Stop all MCP clients."""
-        for name, client in self.mcp_clients.items():
-            try:
-                await client.astop()
-                logger.info(f"{name} MCP client stopped successfully")
-            except asyncio.CancelledError as e:
-                logger.error(f"{name} MCP client cleanup was cancelled: {e}")
-                # Keep request cleanup from replacing the endpoint response.
-                continue
-            except Exception as e:
-                logger.error(f"Failed to stop {name} MCP client: {e}")
-                # Continue processing other clients even if errors occur
+        """Stop all MCP clients through the manager-owned async context stack."""
+        try:
+            await self._exit_stack.aclose()
+            logger.info("All MCP clients stopped successfully")
+        except asyncio.CancelledError as e:
+            logger.error(f"MCP client cleanup was cancelled: {e}")
+        except Exception as e:
+            logger.error(f"Failed to stop MCP clients: {e}")
+        finally:
+            self._exit_stack = AsyncExitStack()
+            self.all_tools = []
+            self.tools_by_mcp = {}
 
     def get_all_tools(self):
         """Return tools from all MCP clients."""

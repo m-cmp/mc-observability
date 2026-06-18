@@ -1,4 +1,5 @@
 import logging
+from contextlib import AsyncExitStack
 
 from mcp import ClientSession
 from mcp.client.sse import sse_client
@@ -9,19 +10,17 @@ logger = logging.getLogger(__name__)
 class GrafanaMCPContext:
     def __init__(self, mcp_url):
         self.mcp_url = mcp_url
-        self._sse = None
+        self._stack = AsyncExitStack()
         self.session = None
         self.tools = None
-        self._read = None
-        self._write = None
 
     async def astart(self):
         logger.info(f"Starting Grafana MCP connection to: {self.mcp_url}")
+        self._stack = AsyncExitStack()
         try:
-            self._sse = sse_client(self.mcp_url)
-            self._read, self._write = await self._sse.__aenter__()
-            self.session = ClientSession(self._read, self._write)
-            await self.session.__aenter__()
+            read, write = await self._stack.enter_async_context(sse_client(self.mcp_url))
+            self.session = ClientSession(read, write)
+            await self._stack.enter_async_context(self.session)
             await self.session.initialize()
             logger.info("MCP session initialized")
 
@@ -33,11 +32,12 @@ class GrafanaMCPContext:
             raise
 
     async def astop(self):
-        if self.session:
-            await self.session.__aexit__(None, None, None)
-
-        if self._sse:
-            await self._sse.__aexit__(None, None, None)
+        try:
+            await self._stack.aclose()
+        finally:
+            self._stack = AsyncExitStack()
+            self.session = None
+            self.tools = None
 
     async def get_tools(self):
         self.tools = await self.session.list_tools()
