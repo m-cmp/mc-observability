@@ -14,6 +14,8 @@ import AlertManager from './pages/AlertManager';
 import TraceViewer from './pages/TraceViewer';
 import K8sNodeDashboard from './pages/K8sNodeDashboard';
 import HomePage from './pages/HomePage';
+import NamespaceHome from './pages/NamespaceHome';
+import NsScopedApp from './pages/NsScopedApp';
 
 export default function App() {
   const { token } = useAppContext();
@@ -25,9 +27,20 @@ export default function App() {
   return (
     <ErrorBoundary>
     <Routes>
-      {/* Standalone — full nav + test console */}
-      <Route path="/" element={<HomePage />} />
+      {/* Dev/test console (was at "/") */}
+      <Route path="/console" element={<HomePage />} />
+
+      {/* Namespace-scoped iframe app: no logo, in-place section switching.
+          Infra level → Infra selector only; Node level → no selectors + Back. */}
+      <Route path="/:nsId/:infraId" element={<NsScopedApp />} />
+      <Route path="/:nsId/:infraId/:nodeId" element={<NsScopedApp />} />
+
+      {/* Standalone — full nav + NS/Infra selectors */}
       <Route element={<Layout />}>
+        {/* Namespace-rooted entry: `/` shows NS picker, `/:nsId` shows the
+            namespace overview with full nav (NS selector). */}
+        <Route path="/" element={<NamespaceHome />} />
+        <Route path="/:nsId" element={<InfraOverview />} />
         <Route path="/monitoring/:nsId/k8s/:connectionName/:clusterName/:nodeGroupName/:nodeNumber" element={<K8sNodeDashboard />} />
         <Route path="/monitoring/:nsId/:infraId/:nodeId" element={<MonitoringDashboard />} />
         <Route path="/monitoring/:nsId/:infraId" element={<InfraOverview />} />

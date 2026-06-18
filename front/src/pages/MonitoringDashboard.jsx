@@ -4,8 +4,9 @@ import { getMeasurementFields, getMetricsByNode } from '../api/monitoring';
 import { getInfra } from '../api/tumblebug';
 import { getPlugins, getPrediction, getDetectionHistory } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
-import { getNodeItems } from '../api/node';
+import { getNodeItems, getNodeList } from '../api/node';
 import MetricChart from '../components/MetricChart';
+import AgentNotInstalled from '../components/AgentNotInstalled';
 
 const RANGE_OPTIONS = [
   { value: '1h', label: '1H' },
@@ -94,6 +95,23 @@ export default function MonitoringDashboard() {
   useEffect(() => {
     getMeasurementFields().then(setAllFields).catch(() => setAllFields([]));
   }, []);
+
+  // Detect whether the monitoring agent is installed on the selected Node.
+  // null = unknown (don't show the notice), true/false otherwise.
+  const [agentInstalled, setAgentInstalled] = useState(null);
+  useEffect(() => {
+    if (!nsId || !infraId || !selectedNodeId) { setAgentInstalled(null); return; }
+    let alive = true;
+    getNodeList(nsId, infraId)
+      .then((list) => {
+        if (!alive) return;
+        const found = (list || []).find((n) => (n.node_id || n.id) === selectedNodeId);
+        // A node only appears in the o11y list once its agent has been installed.
+        setAgentInstalled(!!found);
+      })
+      .catch(() => { if (alive) setAgentInstalled(null); });
+    return () => { alive = false; };
+  }, [nsId, infraId, selectedNodeId]);
 
   // Load active items for selected Node → filter measurements
   useEffect(() => {
@@ -425,7 +443,9 @@ export default function MonitoringDashboard() {
             <div className="mb-2 text-sm font-medium">
               Node: {nodes.find(n => n.id === selectedNodeId)?.name || selectedNodeId}
             </div>
-            {(overviewLoading || !overviewCharts) ? (
+            {agentInstalled === false ? (
+              <AgentNotInstalled nsId={nsId} infraId={infraId} nodeId={selectedNodeId} height={160} />
+            ) : (overviewLoading || !overviewCharts) ? (
               <div className="flex items-center justify-center h-[160px] text-gray-400 animate-pulse">Loading metrics...</div>
             ) : overviewCharts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
