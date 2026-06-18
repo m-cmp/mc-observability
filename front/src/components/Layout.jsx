@@ -2,15 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import useBasePath from '../hooks/useBasePath';
 import { setApiToken } from '../api/client';
-import { getNsList, getInfraList, getInfra } from '../api/tumblebug';
+import { getInfraList, getInfra } from '../api/tumblebug';
 
+// Idle = black text (no color). Active = per-feature colored background + white
+// text. Explicit class strings so Tailwind keeps them.
+const IDLE = 'text-gray-800 hover:bg-gray-100';
 const navItems = [
-  { label: 'Monitoring', path: 'monitoring' },
-  { label: 'Logs', path: 'logs' },
-  { label: 'Config', path: 'config' },
-  { label: 'Insight', path: 'insight' },
-  { label: 'Alerts', path: 'alerts' },
-  { label: 'Tracing', path: 'trace' },
+  { label: 'Monitoring', path: 'monitoring', active: 'bg-blue-600 text-white' },
+  { label: 'Logs', path: 'logs', active: 'bg-emerald-600 text-white' },
+  { label: 'Config', path: 'config', active: 'bg-amber-600 text-white' },
+  { label: 'Insight', path: 'insight', active: 'bg-purple-600 text-white' },
+  { label: 'Alerts', path: 'alerts', active: 'bg-red-600 text-white' },
+  { label: 'Tracing', path: 'trace', active: 'bg-teal-600 text-white' },
 ];
 
 export default function Layout() {
@@ -21,21 +24,14 @@ export default function Layout() {
 
   const currentSection = navItems.find((n) => location.pathname.includes(`/${n.path}/`))?.path || 'monitoring';
 
-  const [showDevTools, setShowDevTools] = useState(false);
-  const [bypassAuth, setBypassAuth] = useState(true);
+  const [bypassAuth] = useState(true);
 
-  const [nsList, setNsList] = useState([]);
   const [infraList, setInfraList] = useState([]);
   const [nodeList, setNodeList] = useState([]);
 
   useEffect(() => {
     if (bypassAuth) setApiToken('bypass');
   }, [bypassAuth]);
-
-  // Load NS list
-  useEffect(() => {
-    getNsList().then(setNsList).catch(() => setNsList([]));
-  }, []);
 
   // NS change -> refresh Infra list
   const loadInfraList = useCallback(async (ns) => {
@@ -61,24 +57,6 @@ export default function Layout() {
   useEffect(() => { loadInfraList(nsId); }, [nsId, loadInfraList]);
   useEffect(() => { loadNodeList(nsId, infraId); }, [nsId, infraId, loadNodeList]);
 
-  // NS dropdown change
-  async function handleNsChange(newNs) {
-    const infras = await loadInfraList(newNs);
-    const firstInfra = infras[0]?.id;
-    if (firstInfra) {
-      navigate(`${base}/${currentSection}/${newNs}/${firstInfra}`);
-    }
-  }
-
-  // Infra dropdown change
-  function handleInfraChange(newInfra) {
-    if (!newInfra) {
-      navigate(`${base}/${currentSection}/${nsId}`);
-      return;
-    }
-    navigate(`${base}/${currentSection}/${nsId}/${newInfra}`);
-  }
-
   // Node dropdown change
   function handleNodeChange(newNode) {
     if (!nsId || !infraId) return;
@@ -87,87 +65,54 @@ export default function Layout() {
     navigate(path);
   }
 
+  // Top menu always navigates to the namespace level for the section,
+  // dropping any selected infra/node.
   const buildNavPath = (section) => {
-    if (infraId) return `${base}/${section}/${nsId}/${infraId}`;
+    if (!nsId) return `${base}/`;
     return `${base}/${section}/${nsId}`;
   };
 
   return (
     <div className="flex flex-col h-screen">
       <nav className="flex items-center gap-1 px-4 py-2 bg-white border-b border-gray-200 text-sm shrink-0 flex-wrap">
-        <a href="/" className="font-semibold text-gray-700 mr-3 hover:text-blue-600">MC-Observability</a>
-
-        {navItems.map((item) => (
-          <NavLink key={item.path} to={buildNavPath(item.path)}
-            className={({ isActive }) =>
-              `px-3 py-1.5 rounded-md transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`
-            }>
-            {item.label}
-          </NavLink>
-        ))}
+        {nsId ? (
+          navItems.map((item) => (
+            <NavLink key={item.path} to={buildNavPath(item.path)}
+              className={`px-3 py-1.5 rounded-md transition-colors ${currentSection === item.path ? item.active : IDLE}`}>
+              {item.label}
+            </NavLink>
+          ))
+        ) : (
+          <>
+            {navItems.map((item) => (
+              <span key={item.path}
+                className="px-3 py-1.5 rounded-md text-gray-300 cursor-not-allowed select-none">
+                {item.label}
+              </span>
+            ))}
+            <span className="ml-2 text-xs text-gray-400">← Select a namespace</span>
+          </>
+        )}
 
         <div className="ml-auto flex items-center gap-1">
-          {/* NS */}
-          <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={nsId || ''}
-            onChange={(e) => handleNsChange(e.target.value)}>
-            <option value="">NS</option>
-            {nsList.map((ns) => <option key={ns.id} value={ns.id}>{ns.id}</option>)}
-          </select>
-          {infraId && <>
-            <span className="text-gray-300">/</span>
-            {/* Infra */}
-            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={infraId || ''}
-              onChange={(e) => handleInfraChange(e.target.value)}>
-              <option value="">Infra</option>
-              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
-            </select>
-            <span className="text-gray-300">/</span>
-            {/* Node */}
-            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={nodeId || ''}
-              onChange={(e) => handleNodeChange(e.target.value)}>
-              <option value="">(Overview)</option>
-              {nodeList.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
-            </select>
-          </>}
-          {!infraId && infraList.length > 0 && <>
-            <span className="text-gray-300">/</span>
+          {/* Infra selector — shown only when an infra is NOT yet in the path */}
+          {nsId && !infraId && infraList.length > 0 && (
             <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
               onChange={(e) => { if (e.target.value) navigate(`${base}/${currentSection}/${nsId}/${e.target.value}`); }}>
               <option value="">Infra</option>
               {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
             </select>
-          </>}
-
-          <button onClick={() => setShowDevTools(!showDevTools)}
-            className={`ml-2 text-xs border rounded px-2 py-1 ${showDevTools ? 'bg-gray-800 text-white border-gray-800' : 'text-gray-400 border-gray-200 hover:text-gray-600'}`}>
-            Dev
-          </button>
+          )}
+          {/* Node selector — when an infra is in the path */}
+          {infraId && (
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={nodeId || ''}
+              onChange={(e) => handleNodeChange(e.target.value)}>
+              <option value="">(Overview)</option>
+              {nodeList.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
+            </select>
+          )}
         </div>
       </nav>
-
-      {showDevTools && (
-        <div className="bg-gray-800 text-gray-200 px-4 py-3 text-xs space-y-2 shrink-0">
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-1 cursor-pointer">
-              <input type="checkbox" checked={bypassAuth} onChange={(e) => { setBypassAuth(e.target.checked); if (e.target.checked) setApiToken('bypass'); }} />
-              Token Bypass
-            </label>
-            <span className="text-gray-500">|</span>
-            <span>Path: <code className="text-green-400">/{currentSection}/{nsId}/{infraId}{nodeId ? '/' + nodeId : ''}</code></span>
-          </div>
-          <div className="border-t border-gray-700 pt-2">
-            <p className="text-yellow-300 font-semibold mb-1">iframe Integration</p>
-            <code className="block bg-gray-900 p-2 rounded text-green-300 whitespace-pre-wrap">{`<iframe src="${window.location.origin}/embed/${currentSection}/${nsId || '{nsId}'}/${infraId || '{infraId}'}${nodeId ? '/' + nodeId : ''}" />
-
-<script>
-iframe.onload = () => iframe.contentWindow.postMessage({
-  accessToken: "Bearer ...",
-  projectInfo: { ns_id: "${nsId || 'ns-1'}" }
-}, "${window.location.origin}");
-</script>`}</code>
-          </div>
-        </div>
-      )}
 
       <main className="flex-1 overflow-auto p-4 bg-gray-50">
         <Outlet />

@@ -6,6 +6,7 @@ import {
   getPredictionHistory, runPrediction, getPredictionOptions,
   getServerErrorRecords, getServerErrorRecord, detectServerError, rerunServerErrorAnalysis,
 } from '../api/insight';
+import { getInfraList, getInfra } from '../api/tumblebug';
 import MetricChart from '../components/MetricChart';
 
 const TABS = ['Anomaly Detection', 'Prediction', 'Server Error Analysis'];
@@ -23,18 +24,7 @@ export default function InsightDashboard() {
             {t}
           </button>
         ))}
-        <span className="ml-auto self-center text-xs pr-2 flex items-center gap-1.5">
-          <span className="text-gray-400">Scope</span>
-          {nodeId
-            ? <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700" title={`${nsId} / ${infraId} / ${nodeId}`}>Node: {nodeId}</span>
-            : <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700" title={`${nsId} / ${infraId}`}>Infra: {infraId} (all nodes)</span>}
-        </span>
       </div>
-      {!nodeId && tab !== 2 && (
-        <p className="text-xs text-gray-400 px-1">
-          No node selected — using Infra-level (averaged across nodes). Select a Node above to scope to a specific VM.
-        </p>
-      )}
       {tab === 0 && <AnomalyTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
       {tab === 1 && <PredictionTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
       {tab === 2 && <ServerErrorTab />}
@@ -148,22 +138,37 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
 function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
   const [measurement, setMeasurement] = useState('');
   const [interval, setInterval] = useState('');
-  const [scope, setScope] = useState(nodeId ? 'node' : 'infra');
+  // Scope: pick Infra, then optionally a Node (empty = all nodes).
+  const [infra, setInfra] = useState(infraId || '');
+  const [node, setNode] = useState(nodeId || '');
+  const [infraList, setInfraList] = useState([]);
+  const [nodeList, setNodeList] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
   const measurements = options.measurements || [];
   const intervals = options.execution_intervals || [];
 
+  useEffect(() => {
+    if (!nsId) { setInfraList([]); return; }
+    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
+  }, [nsId]);
+
+  useEffect(() => {
+    if (!nsId || !infra) { setNodeList([]); return; }
+    getInfra(nsId, infra).then((d) => setNodeList(d.node || [])).catch(() => setNodeList([]));
+  }, [nsId, infra]);
+
   async function submit(e) {
     e.preventDefault();
+    if (!infra) { setErr('Infra is required.'); return; }
     if (!measurement || !interval) { setErr('Measurement and interval are required.'); return; }
     setBusy(true); setErr('');
     try {
       const body = {
         ns_id: nsId,
-        infra_id: infraId,
-        node_id: scope === 'node' ? nodeId : null,
+        infra_id: infra,
+        node_id: node || null,
         measurement,
         execution_interval: interval,
       };
@@ -177,12 +182,22 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
 
   return (
     <form onSubmit={submit} className="p-4 border-b bg-gray-50 space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Infra selector only when not already fixed by the path */}
+        {!infraId && (
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Scope — Infra</label>
+            <select value={infra} onChange={(e) => { setInfra(e.target.value); setNode(''); }} className="w-full border rounded px-3 py-1.5 text-sm">
+              <option value="">Select Infra</option>
+              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+            </select>
+          </div>
+        )}
         <div>
-          <label className="block text-xs text-gray-600 mb-1">Scope</label>
-          <select value={scope} onChange={(e) => setScope(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
-            <option value="infra">Infra: {infraId} (all nodes)</option>
-            {nodeId && <option value="node">Node: {nodeId}</option>}
+          <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
+          <select value={node} onChange={(e) => setNode(e.target.value)} disabled={!infra} className="w-full border rounded px-3 py-1.5 text-sm disabled:bg-gray-100">
+            <option value="">All nodes</option>
+            {nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
           </select>
         </div>
         <div>
@@ -229,16 +244,32 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   const [loadedMeasurement, setLoadedMeasurement] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
+  // Scope: pick Infra, then optionally a Node (empty = all nodes).
+  const [pInfra, setPInfra] = useState(infraId || '');
+  const [pNode, setPNode] = useState(nodeId || '');
+  const [infraList, setInfraList] = useState([]);
+  const [nodeList, setNodeList] = useState([]);
 
   useEffect(() => {
     getPredictionOptions().then((o) => setOptions(o || {})).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!nsId) { setInfraList([]); return; }
+    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
+  }, [nsId]);
+
+  useEffect(() => {
+    if (!nsId || !pInfra) { setNodeList([]); return; }
+    getInfra(nsId, pInfra).then((d) => setNodeList(d.node || [])).catch(() => setNodeList([]));
+  }, [nsId, pInfra]);
+
   async function loadHistory() {
+    if (!pInfra) { setMsg('Select an Infra first.'); return; }
     if (!measurement) return;
     setLoading(true); setMsg('');
     try {
-      const data = await getPredictionHistory(nsId, infraId, nodeId, measurement);
+      const data = await getPredictionHistory(nsId, pInfra, pNode, measurement);
       setHistory(data.values || []);
       setLoadedMeasurement(measurement);
     } catch { setHistory([]); }
@@ -246,10 +277,11 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   }
 
   async function handleRun() {
+    if (!pInfra) { setMsg('Select an Infra first.'); return; }
     if (!measurement || !range) { setMsg('Measurement and range are required.'); return; }
     setLoading(true); setMsg('');
     try {
-      await runPrediction(nsId, infraId, nodeId, { measurement, prediction_range: range });
+      await runPrediction(nsId, pInfra, pNode, { measurement, prediction_range: range });
       setMsg('Prediction started. Loading history…');
       await loadHistory();
     } catch (e) {
@@ -276,7 +308,28 @@ function PredictionTab({ nsId, infraId, nodeId }) {
     <div className="bg-white rounded-lg shadow">
       <div className="px-4 py-3 border-b font-semibold text-sm">Prediction</div>
       <div className="p-4">
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-3">
+          Predictions become available about <strong>one day</strong> after the monitoring agent is installed
+          (from the <strong>Config</strong> menu), once enough metric history has been collected.
+        </p>
         <div className="flex gap-3 mb-2 flex-wrap items-end">
+          {/* Infra selector only when not already fixed by the path */}
+          {!infraId && (
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Scope — Infra</label>
+              <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={pInfra} onChange={(e) => { setPInfra(e.target.value); setPNode(''); }}>
+                <option value="">Select Infra</option>
+                {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
+            <select className="border border-gray-300 rounded px-3 py-1.5 text-sm disabled:bg-gray-100" value={pNode} onChange={(e) => setPNode(e.target.value)} disabled={!pInfra}>
+              <option value="">All nodes</option>
+              {nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
+            </select>
+          </div>
           <div>
             <label className="block text-xs text-gray-600 mb-1">Measurement</label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={measurement} onChange={(e) => setMeasurement(e.target.value)}>

@@ -5,8 +5,10 @@ import { getInfraList } from '../api/tumblebug';
 import { getMetricsByNode } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
+import { getNodeList } from '../api/node';
 import MetricChart from '../components/MetricChart';
 import ProviderBadge from '../components/ProviderBadge';
+import AgentNotInstalled from '../components/AgentNotInstalled';
 
 const AGENT_METRICS = [
   { key: 'cpu', measurement: 'cpu', field: 'usage_idle', label: 'CPU Used', unit: '%', invert: true },
@@ -53,12 +55,21 @@ export default function InfraOverview() {
       } else {
         // Node: load all Infras in NS, show grouped
         const infras = await getInfraList(nsId);
-        setAllInfras(infras);
-        const allNodes = infras.flatMap(i => i.node || []);
+        // Enrich each Node with its Infra id + whether the monitoring agent is
+        // installed (present in the o11y node list). Used to show an install
+        // hint instead of an empty "No data" chart.
+        const enriched = await Promise.all((infras || []).map(async (infra) => {
+          let o11yNodes = [];
+          try { o11yNodes = await getNodeList(nsId, infra.id); } catch {}
+          const reg = new Set(o11yNodes.map((n) => n.node_id || n.id));
+          return { ...infra, node: (infra.node || []).map((n) => ({ ...n, infraId: infra.id, registered: reg.has(n.id) })) };
+        }));
+        setAllInfras(enriched);
+        const allNodes = enriched.flatMap(i => i.node || []);
         setNodes(allNodes);
         if (allNodes.length > 0) {
           setMetricsLoading(true);
-          if (dataSource === 'agent') await loadAgentData(allNodes, infras);
+          if (dataSource === 'agent') await loadAgentData(allNodes, enriched);
           else await loadCspData(allNodes);
           setMetricsLoading(false);
         }
@@ -415,6 +426,7 @@ function NodeCard({ node, nodeMetrics, dataSource, metricsLoading, selectedChart
 }
 
 function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
+  const { nsId } = useParams();
   const gauges = AGENT_METRICS.map((m) => {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
@@ -425,6 +437,16 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
   const activeMetric = AGENT_METRICS.find((m) => m.key === selectedChart) || AGENT_METRICS[0];
   const chartData = metrics[selectedChart];
   const chartSeries = chartData?.res ? toSeries(chartData.res, activeMetric.label, activeMetric.invert) : [];
+
+  // Agent not installed → guide to Config instead of rendering empty charts.
+  if (node.registered === false) {
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
+        <AgentNotInstalled nsId={nsId} infraId={node.infraId} nodeId={node.id} height={180} />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow">
