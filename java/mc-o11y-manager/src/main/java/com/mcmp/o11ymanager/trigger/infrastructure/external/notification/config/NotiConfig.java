@@ -24,12 +24,13 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiSender;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Properties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.web.client.RestClient;
@@ -196,8 +197,13 @@ public class NotiConfig {
      */
     @Bean
     public RestClient restClient(RestClient.Builder builder) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(Duration.ofSeconds(10));
+        // Use the JDK HttpClient-based factory. Unlike SimpleClientHttpRequestFactory
+        // (HttpURLConnection), it returns error responses (e.g. 401) instead of throwing
+        // "HttpRetryException: cannot retry due to server authentication, in streaming
+        // mode", so onStatus handlers can read and log the body.
+        HttpClient httpClient =
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
         requestFactory.setReadTimeout(Duration.ofSeconds(30));
 
         return builder.requestFactory(requestFactory).build();

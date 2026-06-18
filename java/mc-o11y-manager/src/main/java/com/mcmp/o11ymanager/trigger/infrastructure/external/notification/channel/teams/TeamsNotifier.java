@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.trigger.application.common.exception.NotificationDel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Noti;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.NotiResult;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.Notifier;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,9 +59,13 @@ public class TeamsNotifier implements Notifier {
                             .map(TeamsNotifier::maskWebhookUrl)
                             .collect(Collectors.joining(", "));
             for (String webhookUrl : webhookUrls) {
+                // Pass a pre-built URI so the (already percent-encoded) signature query
+                // params (sp=%2F..., sig=...) are sent verbatim. Passing the raw String
+                // lets RestClient re-encode them, which corrupts the signature and makes
+                // Power Automate reject the request with 401.
                 restClient
                         .post()
-                        .uri(webhookUrl)
+                        .uri(URI.create(webhookUrl))
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(teamsNoti.getBody())
                         .retrieve()
