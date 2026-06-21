@@ -44,3 +44,23 @@ export async function getK8sNodeMetrics(nsId, clusterId, nodeName) {
   );
   return res.data?.data || { available: [], active: [] };
 }
+
+// Log agent (fluent-bit via podman) on K8s cluster nodes.
+export async function getK8sLogStatus(nsId, clusterId) {
+  const res = await client.get(`/api/o11y/monitoring/k8s/${nsId}/${clusterId}/log-agent`);
+  return res.data?.data || [];
+}
+
+export async function installK8sLogNode(nsId, clusterId, nodeName) {
+  const res = await client.post(
+    `/api/o11y/monitoring/k8s/${nsId}/${clusterId}/node/${encodeURIComponent(nodeName)}/log-agent`
+  );
+  return res.data?.data;
+}
+
+export async function uninstallK8sLogNode(nsId, clusterId, nodeName) {
+  const res = await client.delete(
+    `/api/o11y/monitoring/k8s/${nsId}/${clusterId}/node/${encodeURIComponent(nodeName)}/log-agent`
+  );
+  return res.data?.data;
+}
