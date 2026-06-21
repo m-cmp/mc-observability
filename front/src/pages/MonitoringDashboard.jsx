@@ -444,7 +444,8 @@ export default function MonitoringDashboard() {
               Node: {nodes.find(n => n.id === selectedNodeId)?.name || selectedNodeId}
             </div>
             {agentInstalled === false ? (
-              <AgentNotInstalled nsId={nsId} infraId={infraId} nodeId={selectedNodeId} height={160} />
+              <AgentNotInstalled nsId={nsId} infraId={infraId} nodeId={selectedNodeId} height={160}
+                nodeStatus={nodes.find(n => n.id === selectedNodeId)?.status} />
             ) : (overviewLoading || !overviewCharts) ? (
               <div className="flex items-center justify-center h-[160px] text-gray-400 animate-pulse">Loading metrics...</div>
             ) : overviewCharts.length > 0 ? (

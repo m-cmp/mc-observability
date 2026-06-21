@@ -9,6 +9,7 @@ import { getNodeList } from '../api/node';
 import MetricChart from '../components/MetricChart';
 import ProviderBadge from '../components/ProviderBadge';
 import AgentNotInstalled from '../components/AgentNotInstalled';
+import K8sAgentMonitor from '../components/K8sAgentMonitor';
 
 const AGENT_METRICS = [
   { key: 'cpu', measurement: 'cpu', field: 'usage_idle', label: 'CPU Used', unit: '%', invert: true },
@@ -235,7 +236,11 @@ export default function InfraOverview() {
       </div>
 
       {/* K8s Tab */}
-      {viewTab === 'k8s' && (
+      {/* K8s tab + Agent source → host telegraf metrics (InfluxDB, by clusterId/nodeName) */}
+      {viewTab === 'k8s' && dataSource === 'agent' && <K8sAgentMonitor nsId={nsId} />}
+
+      {/* K8s tab + CSP source → cb-spider API metrics */}
+      {viewTab === 'k8s' && dataSource === 'csp' && (
         clustersLoading ? (
           <div className="text-sm text-gray-400 animate-pulse p-4">Loading clusters...</div>
         ) : k8sNodes.length === 0 ? (
@@ -443,7 +448,8 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
     return (
       <div className="bg-white rounded-lg shadow">
         <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
-        <AgentNotInstalled nsId={nsId} infraId={node.infraId} nodeId={node.id} height={180} />
+        <AgentNotInstalled nsId={nsId} infraId={node.infraId} nodeId={node.id} height={180}
+          nodeStatus={node.status} />
       </div>
     );
   }
