@@ -32,6 +32,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.influxdb:influxdb-java'
+    // Version is managed by Spring Boot's dependency management (aligns all fabric8
+    // kubernetes-client modules to one version). Pinning here causes api/impl skew.
+    implementation 'io.fabric8:kubernetes-client'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-amqp'

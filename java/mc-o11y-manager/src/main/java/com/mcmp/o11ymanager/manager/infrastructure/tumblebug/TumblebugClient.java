@@ -3,6 +3,7 @@ package com.mcmp.o11ymanager.manager.infrastructure.tumblebug;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugCmd;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfraList;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugSshKey;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -37,4 +38,10 @@ public interface TumblebugClient {
             @PathVariable String infraId,
             @RequestParam String nodeId,
             @RequestBody TumblebugCmd tumblebugCmd);
+
+    @GetMapping("/tumblebug/ns/{nsId}/k8sCluster")
+    TumblebugK8sCluster.ListResponse getK8sClusterList(@PathVariable String nsId);
+
+    @GetMapping("/tumblebug/ns/{nsId}/k8sCluster/{k8sClusterId}")
+    TumblebugK8sCluster getK8sCluster(@PathVariable String nsId, @PathVariable String k8sClusterId);
 }
