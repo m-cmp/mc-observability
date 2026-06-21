@@ -79,6 +79,47 @@ public class K8sAgentController {
                         "active", k8sAgentService.nodeActiveMetrics(nsId, clusterId, nodeName)));
     }
 
+    // --- Log agent (fluent-bit via podman) ---
+
+    @Operation(summary = "Per-node log agent status (running = node logs in Loki recently)")
+    @GetMapping("/{nsId}/{clusterId}/log-agent")
+    public ResBody<List<K8sAgentService.NodeStatus>> logStatus(
+            @PathVariable String nsId, @PathVariable String clusterId) {
+        return new ResBody<>(k8sAgentService.logStatus(nsId, clusterId));
+    }
+
+    @Operation(summary = "Install fluent-bit log agent on every node of the cluster")
+    @PostMapping("/{nsId}/{clusterId}/log-agent")
+    public ResBody<List<K8sAgentService.NodeResult>> installLog(
+            @PathVariable String nsId, @PathVariable String clusterId) {
+        return new ResBody<>(k8sAgentService.installLog(nsId, clusterId));
+    }
+
+    @Operation(summary = "Uninstall fluent-bit log agent from every node of the cluster")
+    @DeleteMapping("/{nsId}/{clusterId}/log-agent")
+    public ResBody<List<K8sAgentService.NodeResult>> uninstallLog(
+            @PathVariable String nsId, @PathVariable String clusterId) {
+        return new ResBody<>(k8sAgentService.uninstallLog(nsId, clusterId));
+    }
+
+    @Operation(summary = "Install fluent-bit log agent on a single node")
+    @PostMapping("/{nsId}/{clusterId}/node/{nodeName}/log-agent")
+    public ResBody<K8sAgentService.NodeResult> installLogNode(
+            @PathVariable String nsId,
+            @PathVariable String clusterId,
+            @PathVariable String nodeName) {
+        return new ResBody<>(k8sAgentService.installLogNode(nsId, clusterId, nodeName));
+    }
+
+    @Operation(summary = "Uninstall fluent-bit log agent from a single node")
+    @DeleteMapping("/{nsId}/{clusterId}/node/{nodeName}/log-agent")
+    public ResBody<K8sAgentService.NodeResult> uninstallLogNode(
+            @PathVariable String nsId,
+            @PathVariable String clusterId,
+            @PathVariable String nodeName) {
+        return new ResBody<>(k8sAgentService.uninstallLogNode(nsId, clusterId, nodeName));
+    }
+
     @SuppressWarnings("unchecked")
     private static List<String> metrics(Map<String, Object> body) {
         if (body == null) {

@@ -64,6 +64,11 @@ public class K8sAgentService {
 
     private static final List<String> DEFAULT_METRICS = new ArrayList<>(INPUTS.keySet());
 
+    /** Log agent (fluent-bit) runs as a podman container on the node host, shipping to Loki. */
+    private static final String FLUENT_BIT_IMAGE = "docker.io/fluent/fluent-bit:3.2.4";
+
+    private static final int LOKI_PORT = 3100;
+
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
@@ -192,6 +197,198 @@ public class K8sAgentService {
             }
         }
         return active;
+    }
+
+    // --- Log agent (fluent-bit via podman) -------------------------------
+
+    public List<NodeResult> installLog(String nsId, String clusterId) {
+        String lokiHost = lokiHost(nsId, clusterId);
+        List<NodeResult> results = new ArrayList<>();
+        try (KubernetesClient k8s = client(nsId, clusterId)) {
+            for (Node node : k8s.nodes().list().getItems()) {
+                results.add(
+                        installLogOne(
+                                k8s, nsId, clusterId, node.getMetadata().getName(), lokiHost));
+            }
+        }
+        return results;
+    }
+
+    public NodeResult installLogNode(String nsId, String clusterId, String nodeName) {
+        String lokiHost = lokiHost(nsId, clusterId);
+        try (KubernetesClient k8s = client(nsId, clusterId)) {
+            return installLogOne(k8s, nsId, clusterId, nodeName, lokiHost);
+        }
+    }
+
+    public List<NodeResult> uninstallLog(String nsId, String clusterId) {
+        List<NodeResult> results = new ArrayList<>();
+        try (KubernetesClient k8s = client(nsId, clusterId)) {
+            for (Node node : k8s.nodes().list().getItems()) {
+                results.add(uninstallLogOne(k8s, node.getMetadata().getName()));
+            }
+        }
+        return results;
+    }
+
+    public NodeResult uninstallLogNode(String nsId, String clusterId, String nodeName) {
+        try (KubernetesClient k8s = client(nsId, clusterId)) {
+            return uninstallLogOne(k8s, nodeName);
+        }
+    }
+
+    /** Per-node log agent status (running = node logs present in Loki recently). */
+    public List<NodeStatus> logStatus(String nsId, String clusterId) {
+        String lokiHost = lokiHost(nsId, clusterId);
+        List<NodeStatus> out = new ArrayList<>();
+        try (KubernetesClient k8s = client(nsId, clusterId)) {
+            for (Node node : k8s.nodes().list().getItems()) {
+                String nodeName = node.getMetadata().getName();
+                boolean running = lokiHasRecent(lokiHost, nsId, clusterId, nodeName);
+                out.add(new NodeStatus(nodeName, running, running, null));
+            }
+        }
+        return out;
+    }
+
+    private NodeResult installLogOne(
+            KubernetesClient k8s, String nsId, String clusterId, String nodeName, String lokiHost) {
+        try {
+            runJob(
+                    k8s,
+                    "cmp-fluentbit-install-",
+                    nodeName,
+                    logInstallScript(nsId, clusterId, nodeName, lokiHost));
+            return new NodeResult(nodeName, true, "installed");
+        } catch (Exception e) {
+            log.error("k8s log agent install failed node={}", nodeName, e);
+            return new NodeResult(nodeName, false, e.getMessage());
+        }
+    }
+
+    private NodeResult uninstallLogOne(KubernetesClient k8s, String nodeName) {
+        try {
+            runJob(k8s, "cmp-fluentbit-uninstall-", nodeName, logUninstallScript());
+            return new NodeResult(nodeName, true, "uninstalled");
+        } catch (Exception e) {
+            log.error("k8s log agent uninstall failed node={}", nodeName, e);
+            return new NodeResult(nodeName, false, e.getMessage());
+        }
+    }
+
+    /** Loki host = same host as the (VM-reachable) InfluxDB endpoint. */
+    private String lokiHost(String nsId, String clusterId) {
+        InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+        try {
+            return URI.create(influx.getUrl()).getHost();
+        } catch (Exception e) {
+            return influx.getUrl();
+        }
+    }
+
+    private boolean lokiHasRecent(String lokiHost, String nsId, String clusterId, String nodeName) {
+        try {
+            long endNs = System.currentTimeMillis() * 1_000_000L;
+            long startNs = endNs - 180L * 1_000_000_000L;
+            String q =
+                    "{NS_ID=\""
+                            + nsId
+                            + "\",INFRA_ID=\""
+                            + clusterId
+                            + "\",NODE_ID=\""
+                            + nodeName
+                            + "\"}";
+            String url =
+                    "http://"
+                            + lokiHost
+                            + ":"
+                            + LOKI_PORT
+                            + "/loki/api/v1/query_range?limit=1&start="
+                            + startNs
+                            + "&end="
+                            + endNs
+                            + "&query="
+                            + enc(q);
+            HttpResponse<String> resp =
+                    http.send(
+                            HttpRequest.newBuilder(URI.create(url))
+                                    .timeout(Duration.ofSeconds(10))
+                                    .GET()
+                                    .build(),
+                            HttpResponse.BodyHandlers.ofString());
+            com.fasterxml.jackson.databind.JsonNode root =
+                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(resp.body());
+            return root.path("data").path("result").isArray()
+                    && root.path("data").path("result").size() > 0;
+        } catch (Exception e) {
+            log.warn("loki recent check failed node={}", nodeName, e);
+            return false;
+        }
+    }
+
+    private String logInstallScript(
+            String nsId, String clusterId, String nodeName, String lokiHost) {
+        return """
+                set -e
+                export DEBIAN_FRONTEND=noninteractive
+                if ! command -v podman >/dev/null 2>&1; then apt-get update -qq && apt-get install -y -qq podman; fi
+                PODMAN=$(command -v podman)
+                "$PODMAN" pull %s
+                mkdir -p /etc/cmp-fluent-bit
+                cat > /etc/cmp-fluent-bit/fluent-bit.conf <<'CONF'
+                [SERVICE]
+                    flush 5
+                    log_level info
+                [INPUT]
+                    name tail
+                    tag k8slog
+                    path /var/log/syslog,/var/log/containers/*.log
+                    Read_from_Head false
+                [OUTPUT]
+                    name loki
+                    match *
+                    host %s
+                    port %d
+                    labels NS_ID=%s, INFRA_ID=%s, NODE_ID=%s
+                CONF
+                "$PODMAN" rm -f cmp-fluent-bit >/dev/null 2>&1 || true
+                cat > /etc/systemd/system/cmp-fluent-bit.service <<SVC
+                [Unit]
+                Description=CMP Fluent Bit (k8s node host log agent)
+                After=network-online.target
+                Wants=network-online.target
+                [Service]
+                ExecStartPre=-$PODMAN rm -f cmp-fluent-bit
+                ExecStart=$PODMAN run --rm --name cmp-fluent-bit --network=host -v /var/log:/var/log:ro -v /etc/cmp-fluent-bit:/etc/cmp-fluent-bit:ro %s -c /etc/cmp-fluent-bit/fluent-bit.conf
+                ExecStop=$PODMAN stop -t 10 cmp-fluent-bit
+                Restart=always
+                RestartSec=5
+                [Install]
+                WantedBy=multi-user.target
+                SVC
+                systemctl daemon-reload
+                systemctl enable --now cmp-fluent-bit
+                """
+                .formatted(
+                        FLUENT_BIT_IMAGE,
+                        lokiHost,
+                        LOKI_PORT,
+                        nsId,
+                        clusterId,
+                        nodeName,
+                        FLUENT_BIT_IMAGE);
+    }
+
+    private String logUninstallScript() {
+        return """
+                systemctl disable --now cmp-fluent-bit 2>/dev/null || true
+                PODMAN=$(command -v podman)
+                [ -n "$PODMAN" ] && "$PODMAN" rm -f cmp-fluent-bit 2>/dev/null || true
+                rm -f /etc/systemd/system/cmp-fluent-bit.service
+                rm -rf /etc/cmp-fluent-bit
+                systemctl daemon-reload 2>/dev/null || true
+                echo UNINSTALLED
+                """;
     }
 
     public List<NodeStatus> status(String nsId, String clusterId) {
