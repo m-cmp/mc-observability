@@ -4,7 +4,7 @@ import useBasePath from '../hooks/useBasePath';
 import { getInfraList } from '../api/tumblebug';
 import { getMetricsByNode } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
-import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
+import { getClustersDetailed, getAllClusterNodeMetrics } from '../api/k8s';
 import { getNodeList } from '../api/node';
 import { getK8sClusters } from '../api/k8sAgent';
 import MetricChart from '../components/MetricChart';
@@ -135,11 +135,10 @@ export default function InfraOverview() {
       try { tbConns = (await getK8sClusters(nsId)).map((c) => c.connectionName).filter(Boolean); } catch {}
       const vmConns = infras.flatMap(i => i.node || []).map(n => n.connectionName).filter(Boolean);
       const connNames = [...new Set([...tbConns, ...vmConns])];
-      // Search clusters across all connections
+      // Search clusters across all connections (cached, single call per connection).
       const results = await Promise.allSettled(connNames.map(async (conn) => {
-        const list = await getClusters(conn);
-        const detailed = await Promise.allSettled(list.map(c => getCluster(conn, c.IId?.NameId)));
-        return detailed.filter(r => r.status === 'fulfilled').map(r => ({ ...r.value, connectionName: conn }));
+        const detailed = await getClustersDetailed(conn);
+        return detailed.map(c => ({ ...c, connectionName: conn }));
       }));
       setClusters(results.filter(r => r.status === 'fulfilled').flatMap(r => r.value));
     })().finally(() => setClustersLoading(false));

@@ -12,6 +12,13 @@ export async function getCluster(connectionName, clusterName) {
   return res.data || {};
 }
 
+// Cached (manager-side, ~30s) cluster list WITH node-group detail for a connection.
+// One call instead of getClusters + N×getCluster, and no cb-spider hit on every load.
+export async function getClustersDetailed(connectionName) {
+  const res = await client.get('/api/o11y/monitoring/csp/clusters', { params: { ConnectionName: connectionName } });
+  return Array.isArray(res.data) ? res.data : [];
+}
+
 export async function getClusterNodeMetric(connectionName, clusterName, nodeGroupName, nodeNumber, metricType, periodMinute = '5', timeBeforeHour = '1') {
   const res = await client.get(
     `/api/o11y/monitoring/csp/cluster/${clusterName}/${nodeGroupName}/${nodeNumber}/${metricType}`,
