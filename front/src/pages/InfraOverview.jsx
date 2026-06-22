@@ -6,6 +6,7 @@ import { getMetricsByNode } from '../api/monitoring';
 import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import { getClusters, getCluster, getAllClusterNodeMetrics } from '../api/k8s';
 import { getNodeList } from '../api/node';
+import { getK8sClusters } from '../api/k8sAgent';
 import MetricChart from '../components/MetricChart';
 import ProviderBadge from '../components/ProviderBadge';
 import AgentNotInstalled from '../components/AgentNotInstalled';
@@ -128,8 +129,12 @@ export default function InfraOverview() {
       let infras = [];
       try { infras = await getInfraList(nsId); } catch {}
       setAllInfras(infras);
-      const allNodes = infras.flatMap(i => i.node || []);
-      const connNames = [...new Set(allNodes.map(n => n.connectionName).filter(Boolean))];
+      // Connections to search: from the namespace's K8s clusters (Tumblebug) primarily —
+      // VMs may not exist — unioned with any VM-derived connections.
+      let tbConns = [];
+      try { tbConns = (await getK8sClusters(nsId)).map((c) => c.connectionName).filter(Boolean); } catch {}
+      const vmConns = infras.flatMap(i => i.node || []).map(n => n.connectionName).filter(Boolean);
+      const connNames = [...new Set([...tbConns, ...vmConns])];
       // Search clusters across all connections
       const results = await Promise.allSettled(connNames.map(async (conn) => {
         const list = await getClusters(conn);
