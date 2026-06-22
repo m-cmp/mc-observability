@@ -89,8 +89,10 @@ public class ItemFacadeService {
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for vm: %s/%s/%s",
-                                nsId, infraId, nodeId);
+                                "Monitoring agent is not properly installed on this node:"
+                                        + " telegraf config '%s' is missing. Please (re)install the"
+                                        + " monitoring agent before changing metrics. [vm: %s/%s/%s]",
+                                getTelegrafConfigPath(), nsId, infraId, nodeId);
                 log.error(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
@@ -157,8 +159,10 @@ public class ItemFacadeService {
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for vm: %s/%s/%s",
-                                nsId, infraId, nodeId);
+                                "Monitoring agent is not properly installed on this node:"
+                                        + " telegraf config '%s' is missing. Please (re)install the"
+                                        + " monitoring agent before changing metrics. [vm: %s/%s/%s]",
+                                getTelegrafConfigPath(), nsId, infraId, nodeId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
@@ -232,8 +236,10 @@ public class ItemFacadeService {
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for vm: %s/%s/%s",
-                                nsId, infraId, nodeId);
+                                "Monitoring agent is not properly installed on this node:"
+                                        + " telegraf config '%s' is missing. Please (re)install the"
+                                        + " monitoring agent before changing metrics. [vm: %s/%s/%s]",
+                                getTelegrafConfigPath(), nsId, infraId, nodeId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
@@ -298,8 +304,10 @@ public class ItemFacadeService {
             if (configContent == null || configContent.isEmpty()) {
                 String errorMsg =
                         String.format(
-                                "Telegraf config not found for vm: %s/%s/%s",
-                                nsId, infraId, nodeId);
+                                "Monitoring agent is not properly installed on this node:"
+                                        + " telegraf config '%s' is missing. Please (re)install the"
+                                        + " monitoring agent before changing metrics. [vm: %s/%s/%s]",
+                                getTelegrafConfigPath(), nsId, infraId, nodeId);
                 log.warn(errorMsg);
                 throw new TelegrafConfigException(ResponseCode.TELEGRAF_CONFIG_NOT_FOUND, errorMsg);
             }
