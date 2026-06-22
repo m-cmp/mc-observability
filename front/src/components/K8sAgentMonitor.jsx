@@ -6,11 +6,36 @@ import ProviderBadge from './ProviderBadge';
 
 // Host-agent (telegraf) metrics for K8s nodes, queried from InfluxDB by
 // (ns_id, infra_id=clusterId, node_id=k8s node name) — same schema as VM agents.
+// Mirrors the full set of telegraf inputs the agent collects (cpu/mem/disk/diskio/
+// net/system/processes/swap) so the Agent tab shows varied graphs like the API tab.
 const METRICS = [
   { key: 'cpu', measurement: 'cpu', field: 'usage_idle', label: 'CPU Used', unit: '%', invert: true },
+  { key: 'cpu_user', measurement: 'cpu', field: 'usage_user', label: 'CPU User', unit: '%' },
+  { key: 'cpu_system', measurement: 'cpu', field: 'usage_system', label: 'CPU System', unit: '%' },
+  { key: 'cpu_iowait', measurement: 'cpu', field: 'usage_iowait', label: 'CPU IOWait', unit: '%' },
   { key: 'mem', measurement: 'mem', field: 'used_percent', label: 'Memory Used', unit: '%' },
+  { key: 'swap', measurement: 'swap', field: 'used_percent', label: 'Swap Used', unit: '%' },
   { key: 'disk', measurement: 'disk', field: 'used_percent', label: 'Disk Used', unit: '%' },
+  { key: 'diskio_read', measurement: 'diskio', field: 'read_bytes', label: 'Disk Read', unit: 'B' },
+  { key: 'diskio_write', measurement: 'diskio', field: 'write_bytes', label: 'Disk Write', unit: 'B' },
+  { key: 'net_recv', measurement: 'net', field: 'bytes_recv', label: 'Net Recv', unit: 'B' },
+  { key: 'net_sent', measurement: 'net', field: 'bytes_sent', label: 'Net Sent', unit: 'B' },
+  { key: 'load1', measurement: 'system', field: 'load1', label: 'Load (1m)', unit: '' },
+  { key: 'procs', measurement: 'processes', field: 'total', label: 'Processes', unit: '' },
 ];
+
+function fmtValue(val, unit) {
+  if (val == null) return '-';
+  if (unit === 'B') {
+    const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let n = val, i = 0;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return n.toFixed(n >= 100 || i === 0 ? 0 : 1) + ' ' + u[i];
+  }
+  if (unit === '%') return val.toFixed(1) + '%';
+  if (unit === '') return Number.isInteger(val) ? String(val) : val.toFixed(2);
+  return val.toFixed(1) + ' ' + unit;
+}
 
 function getLastValue(res) {
   if (!res || res.length === 0) return null;
@@ -123,10 +148,10 @@ function NodeCard({ node, metrics, selectedChart, onSelectChart }) {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
     const val = last != null ? (m.invert ? 100 - last : last) : null;
-    return { ...m, display: val != null ? val.toFixed(1) + '%' : '-' };
+    return { ...m, display: fmtValue(val, m.unit) };
   });
   const active = METRICS.find((m) => m.key === selectedChart) || METRICS[0];
-  const cd = metrics[selectedChart];
+  const cd = metrics[active.key];
   const series = cd?.res ? toSeries(cd.res, active.label, active.invert) : [];
   return (
     <div className="bg-white rounded-lg border">
@@ -134,7 +159,7 @@ function NodeCard({ node, metrics, selectedChart, onSelectChart }) {
         <span className="font-mono text-sm text-gray-700">{node}</span>
       </div>
       <div className="flex">
-        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
+        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r max-h-[360px] overflow-auto">
           {gauges.map((g) => (
             <button key={g.key} onClick={() => onSelectChart(g.key)}
               className={`text-left px-2 py-1.5 rounded ${selectedChart === g.key ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-gray-50'}`}>
@@ -144,7 +169,11 @@ function NodeCard({ node, metrics, selectedChart, onSelectChart }) {
           ))}
         </div>
         <div className="flex-1 px-2 py-1 min-w-0">
-          <MetricChart title={active.label} series={series} height={200} measurement={active.measurement} metric={active.field} />
+          {cd?.res ? (
+            <MetricChart title={`${active.label}${active.unit ? ` (${active.unit})` : ''}`} series={series} height={200} measurement={active.measurement} metric={active.field} />
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-gray-400 text-sm animate-pulse">Loading {active.label}…</div>
+          )}
         </div>
       </div>
     </div>

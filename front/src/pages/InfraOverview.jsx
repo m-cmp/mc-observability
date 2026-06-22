@@ -12,11 +12,30 @@ import ProviderBadge from '../components/ProviderBadge';
 import AgentNotInstalled from '../components/AgentNotInstalled';
 import K8sAgentMonitor from '../components/K8sAgentMonitor';
 
+// Mirrors the full telegraf input set the host agent collects (cpu/mem/disk/diskio/
+// net/system/processes/swap) so the Agent tab shows varied graphs like the API tab.
 const AGENT_METRICS = [
   { key: 'cpu', measurement: 'cpu', field: 'usage_idle', label: 'CPU Used', unit: '%', invert: true },
+  { key: 'cpu_user', measurement: 'cpu', field: 'usage_user', label: 'CPU User', unit: '%' },
+  { key: 'cpu_system', measurement: 'cpu', field: 'usage_system', label: 'CPU System', unit: '%' },
+  { key: 'cpu_iowait', measurement: 'cpu', field: 'usage_iowait', label: 'CPU IOWait', unit: '%' },
   { key: 'mem', measurement: 'mem', field: 'used_percent', label: 'Memory Used', unit: '%' },
+  { key: 'swap', measurement: 'swap', field: 'used_percent', label: 'Swap Used', unit: '%' },
   { key: 'disk', measurement: 'disk', field: 'used_percent', label: 'Disk Used', unit: '%' },
+  { key: 'diskio_read', measurement: 'diskio', field: 'read_bytes', label: 'Disk Read', unit: 'bytes' },
+  { key: 'diskio_write', measurement: 'diskio', field: 'write_bytes', label: 'Disk Write', unit: 'bytes' },
+  { key: 'net_recv', measurement: 'net', field: 'bytes_recv', label: 'Net Recv', unit: 'bytes' },
+  { key: 'net_sent', measurement: 'net', field: 'bytes_sent', label: 'Net Sent', unit: 'bytes' },
+  { key: 'load1', measurement: 'system', field: 'load1', label: 'Load (1m)', unit: '' },
+  { key: 'procs', measurement: 'processes', field: 'total', label: 'Processes', unit: '' },
 ];
+
+function fmtAgentValue(v, unit) {
+  if (v == null) return '-';
+  if (unit === '%') return v.toFixed(1) + '%';
+  if (unit === 'bytes') return formatCspValue(v, 'bytes');
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
 
 export default function InfraOverview() {
   const { nsId, infraId } = useParams();
@@ -440,7 +459,7 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
     const val = last != null ? (m.invert ? 100 - last : last) : null;
-    return { ...m, value: val, display: val != null ? val.toFixed(1) + '%' : '-' };
+    return { ...m, value: m.unit === '%' ? val : null, display: fmtAgentValue(val, m.unit) };
   });
 
   const activeMetric = AGENT_METRICS.find((m) => m.key === selectedChart) || AGENT_METRICS[0];
@@ -462,16 +481,16 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
     <div className="bg-white rounded-lg shadow">
       <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
       <div className="flex">
-        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
+        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r max-h-[380px] overflow-auto">
           {gauges.map((g) => (
-            <GaugeItem key={g.key} g={g} active={selectedChart === g.key} onClick={() => onSelectChart(g.key)} />
+            <GaugeItem key={g.key} g={g} active={selectedChart === g.key} onClick={() => onSelectChart(g.key)} noBar={g.unit !== '%'} />
           ))}
         </div>
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading Agent data...</div>
           ) : (
-            <MetricChart title={activeMetric.label} series={chartSeries} height={220} measurement={activeMetric.measurement} metric={activeMetric.field} />
+            <MetricChart title={`${activeMetric.label}${activeMetric.unit && activeMetric.unit !== '%' ? ` (${activeMetric.unit})` : ''}`} series={chartSeries} height={220} measurement={activeMetric.measurement} metric={activeMetric.field} />
           )}
         </div>
       </div>
