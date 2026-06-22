@@ -101,10 +101,9 @@ export default function K8sAgentPanel({ nsId }) {
                   <th className="px-4 py-2.5 border-b text-gray-500">Name</th>
                   <th className="px-4 py-2.5 border-b text-gray-500">Monitoring Agent</th>
                   <th className="px-4 py-2.5 border-b text-gray-500">Log Agent</th>
-                  <th className="px-4 py-2.5 border-b text-gray-500 text-right">Actions</th>
                 </tr></thead>
                 <tbody>
-                  {nodes.length === 0 ? <tr><td colSpan={4} className="px-4 py-6 text-center text-gray-400">No nodes / status unavailable</td></tr>
+                  {nodes.length === 0 ? <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">No nodes / status unavailable</td></tr>
                   : nodes.map((n) => {
                     const monOn = n.running;
                     const logOn = logRunning(c.id, n.node);
@@ -112,18 +111,21 @@ export default function K8sAgentPanel({ nsId }) {
                       <tr key={n.node} onClick={() => selectNode(c.id, n.node)}
                         className={`cursor-pointer hover:bg-blue-50 ${sel?.clusterId === c.id && sel?.node === n.node ? 'bg-blue-100' : ''}`}>
                         <td className="px-4 py-2.5 border-b font-medium"><span className="inline-flex items-center gap-1.5"><ProviderBadge connectionName={c.connectionName} showLabel={false} />{n.node}</span></td>
-                        <td className="px-4 py-2.5 border-b"><AgentBadge running={monOn} /></td>
-                        <td className="px-4 py-2.5 border-b"><AgentBadge running={logOn} /></td>
-                        <td className="px-4 py-2.5 border-b text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-xs text-gray-400 mr-1">Mon</span>
-                          {!monOn
-                            ? <button onClick={() => run(`${c.id}/${n.node}/mon`, `Installing agent on ${n.node}…`, () => installK8sNode(nsId, c.id, n.node, null), c.id)} disabled={!!busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
-                            : <button onClick={() => run(`${c.id}/${n.node}/mon`, `Uninstalling agent from ${n.node}…`, () => uninstallK8sNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
-                          <span className="text-xs text-gray-300 mx-2">|</span>
-                          <span className="text-xs text-gray-400 mr-1">Log</span>
-                          {!logOn
-                            ? <button onClick={() => run(`${c.id}/${n.node}/log`, `Installing log agent on ${n.node}…`, () => installK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs bg-emerald-600 text-white px-2 py-1 rounded hover:bg-emerald-700 disabled:opacity-50">Install</button>
-                            : <button onClick={() => run(`${c.id}/${n.node}/log`, `Uninstalling log agent from ${n.node}…`, () => uninstallK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                        <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <AgentBadge running={monOn} />
+                            {!monOn
+                              ? <button onClick={() => run(`${c.id}/${n.node}/mon`, `Installing agent on ${n.node}…`, () => installK8sNode(nsId, c.id, n.node, null), c.id)} disabled={!!busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
+                              : <button onClick={() => run(`${c.id}/${n.node}/mon`, `Uninstalling agent from ${n.node}…`, () => uninstallK8sNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <AgentBadge running={logOn} />
+                            {!logOn
+                              ? <button onClick={() => run(`${c.id}/${n.node}/log`, `Installing log agent on ${n.node}…`, () => installK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs bg-emerald-600 text-white px-2 py-1 rounded hover:bg-emerald-700 disabled:opacity-50">Install</button>
+                              : <button onClick={() => run(`${c.id}/${n.node}/log`, `Uninstalling log agent from ${n.node}…`, () => uninstallK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                          </div>
                         </td>
                       </tr>
                     );
