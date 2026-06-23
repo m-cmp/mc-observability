@@ -10,8 +10,10 @@ export default function LogViewer() {
 
   const [infraList, setInfraList] = useState([]);   // VM infras
   const [clusters, setClusters] = useState([]);     // K8s clusters
+  const [listLoading, setListLoading] = useState(false); // VM infra + k8s cluster list loading
   const [selectedInfraId, setSelectedInfraId] = useState(infraId || '');
   const [nodes, setNodes] = useState([]);
+  const [nodesLoading, setNodesLoading] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(routeNodeId || '');
   const [keyword, setKeyword] = useState('');
   const [logs, setLogs] = useState(null);
@@ -25,8 +27,16 @@ export default function LogViewer() {
   // know which kind the selected target is (for node loading + Loki labels are shared).
   useEffect(() => {
     if (!nsId) { setInfraList([]); setClusters([]); return; }
-    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
-    getK8sClusters(nsId).then((l) => setClusters(Array.isArray(l) ? l : [])).catch(() => setClusters([]));
+    let alive = true;
+    setListLoading(true);
+    Promise.allSettled([getInfraList(nsId), getK8sClusters(nsId)])
+      .then(([inf, cl]) => {
+        if (!alive) return;
+        setInfraList(inf.status === 'fulfilled' && Array.isArray(inf.value) ? inf.value : []);
+        setClusters(cl.status === 'fulfilled' && Array.isArray(cl.value) ? cl.value : []);
+      })
+      .finally(() => { if (alive) setListLoading(false); });
+    return () => { alive = false; };
   }, [nsId]);
 
   useEffect(() => { if (infraId) setSelectedInfraId(infraId); }, [infraId]);
@@ -36,14 +46,18 @@ export default function LogViewer() {
   useEffect(() => {
     if (!nsId || !selectedInfraId) { setNodes([]); return; }
     let alive = true;
+    setNodesLoading(true);
+    const done = () => { if (alive) setNodesLoading(false); };
     if (isK8s) {
       getK8sLogStatus(nsId, selectedInfraId)
         .then((st) => { if (alive) setNodes((Array.isArray(st) ? st : []).filter((n) => n.running).map((n) => ({ id: n.node, name: n.node }))); })
-        .catch(() => { if (alive) setNodes([]); });
+        .catch(() => { if (alive) setNodes([]); })
+        .finally(done);
     } else {
       getInfra(nsId, selectedInfraId)
         .then((data) => { if (alive) setNodes(data.node || []); })
-        .catch(() => { if (alive) setNodes([]); });
+        .catch(() => { if (alive) setNodes([]); })
+        .finally(done);
     }
     return () => { alive = false; };
   }, [nsId, selectedInfraId, isK8s]);
@@ -91,7 +105,8 @@ export default function LogViewer() {
                 </select>
               ) : (
                 <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedInfraId} onChange={(e) => { setSelectedInfraId(e.target.value); setSelectedNodeId(''); }}>
-                  <option value="">Select Infra / Cluster</option>
+                  <option value="">{listLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
+                  {listLoading && <option disabled>Loading infras / clusters…</option>}
                   {infraList.length > 0 && (
                     <optgroup label="VM Infra">
                       {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
@@ -109,8 +124,8 @@ export default function LogViewer() {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Server</label>
               <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedNodeId} onChange={(e) => setSelectedNodeId(e.target.value)}>
-                <option value="">All</option>
-                {nodes.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
+                <option value="">{nodesLoading ? 'Loading nodes…' : 'All'}</option>
+                {nodesLoading ? <option disabled>Loading nodes…</option> : nodes.map((node) => <option key={node.id} value={node.id}>{node.name || node.id}</option>)}
               </select>
             </div>
             {/* Keyword */}

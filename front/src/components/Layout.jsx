@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import useBasePath from '../hooks/useBasePath';
+import useFollowParentNamespace from '../hooks/useFollowParentNamespace';
 import { setApiToken } from '../api/client';
 import { getInfraList, getInfra } from '../api/tumblebug';
 
@@ -21,6 +22,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const base = useBasePath();
   const location = useLocation();
+  useFollowParentNamespace(); // follow parent-page namespace changes for the whole session
 
   const currentSection = navItems.find((n) => location.pathname.includes(`/${n.path}/`))?.path || 'monitoring';
 

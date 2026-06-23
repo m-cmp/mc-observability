@@ -27,7 +27,6 @@ const AGENT_METRICS = [
   { key: 'net_recv', measurement: 'net', field: 'bytes_recv', label: 'Net Recv', unit: 'bytes' },
   { key: 'net_sent', measurement: 'net', field: 'bytes_sent', label: 'Net Sent', unit: 'bytes' },
   { key: 'load1', measurement: 'system', field: 'load1', label: 'Load (1m)', unit: '' },
-  { key: 'procs', measurement: 'processes', field: 'total', label: 'Processes', unit: '' },
 ];
 
 function fmtAgentValue(v, unit) {
@@ -487,7 +486,7 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
     <div className="bg-white rounded-lg shadow">
       <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
       <div className="flex">
-        <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r max-h-[380px] overflow-auto">
+        <div className="flex flex-col justify-start gap-2 px-4 py-3 w-52 shrink-0 border-r max-h-[380px] overflow-auto">
           {gauges.map((g) => (
             <GaugeItem key={g.key} g={g} active={selectedChart === g.key} onClick={() => onSelectChart(g.key)} noBar={g.unit !== '%'} />
           ))}

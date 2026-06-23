@@ -23,6 +23,7 @@ export default function K8sAgentPanel({ nsId }) {
   const [metricLoading, setMetricLoading] = useState(false);
   const [busy, setBusy] = useState('');
   const [busyMsg, setBusyMsg] = useState('');
+  const [applied, setApplied] = useState(''); // `${clusterId}/${node}` after a successful Apply
 
   const load = useCallback(() => {
     if (!nsId) { setClusters([]); setLoading(false); return; }
@@ -65,6 +66,7 @@ export default function K8sAgentPanel({ nsId }) {
 
   async function selectNode(clusterId, node) {
     setSel({ clusterId, node });
+    setApplied('');
     setMetricLoading(true);
     setMetrics({ available: [], active: [] });
     try {
@@ -169,12 +171,22 @@ export default function K8sAgentPanel({ nsId }) {
                         );
                       })}
                     </div>
-                    <button onClick={() => run(`${c.id}/${sel.node}/mon`, `Applying metrics on ${sel.node}…`, async () => { await installK8sNode(nsId, c.id, sel.node, [...picked]); setTimeout(() => selectNode(c.id, sel.node), 1200); }, c.id)}
+                    <button onClick={() => run(`${c.id}/${sel.node}/mon`, `Applying metrics on ${sel.node}…`, async () => {
+                        await installK8sNode(nsId, c.id, sel.node, [...picked]);
+                        // Keep the user's selection visible. Refresh the available list but do NOT
+                        // reset `picked` from InfluxDB-derived "active" — metrics take ~1 min to
+                        // start flowing after install, so active would be empty and wrongly clear
+                        // every checkbox.
+                        try { const m = await getK8sNodeMetrics(nsId, c.id, sel.node); setMetrics((prev) => ({ ...prev, available: m.available || prev.available, active: m.active || [] })); } catch { /* keep current */ }
+                        setApplied(`${c.id}/${sel.node}`);
+                      }, c.id)}
                       disabled={!!busy || picked.size === 0}
                       className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50">
                       Apply (install selected)
                     </button>
-                    <span className="ml-3 text-xs text-gray-400">Re-installs the monitoring agent with the selected inputs.</span>
+                    {applied === `${c.id}/${sel.node}`
+                      ? <span className="ml-3 text-xs text-green-600">Applied — the agent is installing; metrics &amp; Running status appear within ~1 min.</span>
+                      : <span className="ml-3 text-xs text-gray-400">Re-installs the monitoring agent with the selected inputs.</span>}
                   </>
                 )}
               </div>

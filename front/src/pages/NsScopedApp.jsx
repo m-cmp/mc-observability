@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import useBasePath from '../hooks/useBasePath';
+import useFollowParentNamespace from '../hooks/useFollowParentNamespace';
 import InfraOverview from './InfraOverview';
 import MonitoringDashboard from './MonitoringDashboard';
 
@@ -31,6 +32,7 @@ export default function NsScopedApp() {
   const { nsId, infraId, nodeId } = useParams();
   const navigate = useNavigate();
   const base = useBasePath();
+  useFollowParentNamespace(); // follow parent-page namespace changes for the whole session
 
   return (
     <div className="flex flex-col h-screen">
