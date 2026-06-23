@@ -40,6 +40,10 @@ export default function MonitoringDashboard() {
   const { nsId, infraId, nodeId: routeNodeId } = useParams();
   const [searchParams] = useSearchParams();
   const initialSource = searchParams.get('source') || 'agent';
+  // K8s agent node detail: infraId is the clusterId and routeNodeId is the k8s node name.
+  // Metrics live in InfluxDB under the same (ns_id, infra_id, node_id) schema, but the node
+  // is NOT a Tumblebug VM — so skip the VM infra/node-list lookups.
+  const isK8s = searchParams.get('k8s') === '1';
 
   // Cascade selectors
   const [nodes, setNodes] = useState([]);
@@ -85,10 +89,16 @@ export default function MonitoringDashboard() {
   useEffect(() => {
     if (!nsId || !infraId) return;
     setNodesLoaded(false);
+    // K8s agent node: not a Tumblebug VM infra — synthesize the single node from the route.
+    if (isK8s) {
+      setNodes(routeNodeId ? [{ id: routeNodeId, name: routeNodeId }] : []);
+      setNodesLoaded(true);
+      return;
+    }
     getInfra(nsId, infraId)
       .then((data) => { setNodes(data.node || []); setNodesLoaded(true); })
       .catch(() => { setNodes([]); setNodesLoaded(true); });
-  }, [nsId, infraId]);
+  }, [nsId, infraId, isK8s, routeNodeId]);
 
   // Load all measurement fields (for metric dropdown options)
   const [activeItemNames, setActiveItemNames] = useState(null); // null = not loaded, Set = loaded
@@ -101,6 +111,9 @@ export default function MonitoringDashboard() {
   const [agentInstalled, setAgentInstalled] = useState(null);
   useEffect(() => {
     if (!nsId || !infraId || !selectedNodeId) { setAgentInstalled(null); return; }
+    // K8s agent nodes are not in the VM node list; we arrived here because the agent
+    // is installed and reporting metrics, so don't show the "not installed" notice.
+    if (isK8s) { setAgentInstalled(true); return; }
     let alive = true;
     getNodeList(nsId, infraId)
       .then((list) => {
@@ -111,7 +124,7 @@ export default function MonitoringDashboard() {
       })
       .catch(() => { if (alive) setAgentInstalled(null); });
     return () => { alive = false; };
-  }, [nsId, infraId, selectedNodeId]);
+  }, [nsId, infraId, selectedNodeId, isK8s]);
 
   // Load active items for selected Node → filter measurements
   useEffect(() => {
