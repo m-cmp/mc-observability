@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getK8sClusters, getK8sAgentStatus, getK8sLogStatus,
   installK8sNode, uninstallK8sNode, getK8sNodeMetrics,
@@ -48,6 +48,16 @@ export default function K8sAgentPanel({ nsId }) {
   }, [nsId]);
 
   useEffect(() => { clusters.forEach((c) => loadStatus(c.id)); }, [clusters, loadStatus]);
+
+  // Periodically re-check agent status so transient states settle on their own (e.g. after a
+  // node restart). Skipped while an install/uninstall is running on a cluster.
+  const busyRef = useRef('');
+  useEffect(() => { busyRef.current = busy; }, [busy]);
+  useEffect(() => {
+    if (clusters.length === 0) return;
+    const id = setInterval(() => { if (!busyRef.current) clusters.forEach((c) => loadStatus(c.id)); }, 20000);
+    return () => clearInterval(id);
+  }, [clusters, loadStatus]);
 
   async function selectNode(clusterId, node) {
     setSel({ clusterId, node });

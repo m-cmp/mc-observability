@@ -24,9 +24,9 @@ export default function MonitoringConfig() {
   const [globalBusy, setGlobalBusy] = useState(false);
   const pollRef = useRef(null);
 
-  const loadNodes = useCallback(async () => {
+  const loadNodes = useCallback(async (silent = false) => {
     if (!nsId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       if (infraId) {
         // Single Infra mode
@@ -59,11 +59,23 @@ export default function MonitoringConfig() {
         setAllInfras(enriched);
         setNodes(enriched.flatMap(i => i.node || []));
       }
-    } catch { setNodes([]); setAllInfras([]); }
-    setLoading(false);
+    } catch { if (!silent) { setNodes([]); setAllInfras([]); } }
+    if (!silent) setLoading(false);
   }, [nsId, infraId]);
 
   useEffect(() => { loadNodes(); return () => { if (pollRef.current) clearInterval(pollRef.current); }; }, [loadNodes]);
+
+  // Silently re-poll agent status so transient states (e.g. SERVICE_INACTIVE right after a
+  // VM suspend/resume, before the agent finishes restarting) self-correct without a manual
+  // refresh. Skipped while an install/uninstall or metric op is running.
+  const loadNodesRef = useRef(loadNodes);
+  useEffect(() => { loadNodesRef.current = loadNodes; }, [loadNodes]);
+  const mutatingRef = useRef(false);
+  useEffect(() => { mutatingRef.current = busy || globalBusy; }, [busy, globalBusy]);
+  useEffect(() => {
+    const id = setInterval(() => { if (!mutatingRef.current) loadNodesRef.current(true); }, 20000);
+    return () => clearInterval(id);
+  }, []);
   useEffect(() => { getPlugins().then(setPlugins).catch(() => setPlugins([])); }, []);
 
   async function selectNode(node) {
