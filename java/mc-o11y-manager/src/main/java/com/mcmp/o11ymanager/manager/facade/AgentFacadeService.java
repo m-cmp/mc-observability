@@ -213,8 +213,9 @@ public class AgentFacadeService {
         }
         // This agent was never installed (or was uninstalled) on a node that still has the
         // other agent — don't probe the (absent) service; report NOT_INSTALLED so the UI shows
-        // an Install button for it.
-        if (taskStatus == VMAgentTaskStatus.NOT_INSTALLED || taskStatus == null) {
+        // an Install button for it. (Only the explicit marker — a null status means "unknown",
+        // so fall through to the live service probe as before.)
+        if (taskStatus == VMAgentTaskStatus.NOT_INSTALLED) {
             return AgentStatus.NOT_INSTALLED;
         }
 
