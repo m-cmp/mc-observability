@@ -129,9 +129,12 @@ public class TumblebugServiceImpl implements TumblebugService {
                     agent);
         }
 
+        // Must run with sudo: the SSH user (e.g. cb-user) cannot restart a systemd unit
+        // otherwise ("Interactive authentication required"), which left the agent inactive
+        // after a VM suspend/resume and surfaced as a 500 when toggling a metric.
         String command =
                 String.format(
-                        "systemctl restart cmp-%s-%s.service",
+                        "sudo systemctl restart cmp-%s-%s.service",
                         agent.name().toLowerCase().replace("_", "-"), sitecode.toLowerCase());
 
         String result = executeCommand(nsId, infraId, nodeId, command).trim();
