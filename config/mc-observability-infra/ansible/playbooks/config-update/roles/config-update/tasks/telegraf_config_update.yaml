@@ -69,7 +69,8 @@
     output_file_chmod: "644"
   when: update_required
 
-- name: Restart CMP Telegraf service
+# 설정이 바뀐 경우에만 restart 해서 새 설정을 적용한다(불필요한 재시작/수집 공백 방지).
+- name: Restart CMP Telegraf service (only when config changed)
   become: true
   become_method: sudo
   become_user: root
@@ -79,10 +80,14 @@
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  shell: "systemctl restart cmp-telegraf-{{ site_code }}"
+  raw: "systemctl restart cmp-telegraf-{{ site_code }}"
   when: update_required
 
-- name: Run CMP Telegraf status command
+# 설정 변경 여부와 무관하게 항상 enable + start 로 "켜져있음"을 보장한다.
+# start는 이미 떠있으면 no-op이라 재시작 공백이 없고, enable만 되고 꺼져 있던
+# 케이스(설치 직후 Inactive)는 여기서 실제로 켜진다. raw를 쓰는 이유는 대상 노드에
+# Python이 없을 수 있어 shell 모듈이 실패하는 것을 피하기 위함(다른 task와 일관).
+- name: Ensure CMP Telegraf service is enabled and running
   become: true
   become_method: sudo
   become_user: root
@@ -92,14 +97,31 @@
     ansible_port: "{{ target_port }}"
     ansible_user: "{{ target_user }}"
     ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
-  raw: "systemctl status --no-pager cmp-telegraf-{{ site_code }}"
-  register: cmp_telegraf_status
-  failed_when: cmp_telegraf_status.rc not in [0, 3]
-  when: update_required
+  raw: "systemctl enable cmp-telegraf-{{ site_code }} && systemctl start cmp-telegraf-{{ site_code }}"
+
+# telegraf가 실제로 active 인지 검증하고, 끝까지 active가 아니면 play를 실패시킨다.
+# (기존엔 inactive(rc=3)를 정상으로 흘려보내 설치가 success로 보고되던 문제를 해결)
+# `|| true`로 rc를 항상 0으로 만들어 raw의 rc기반 실패 대신 until 조건으로만 판정한다.
+- name: Verify CMP Telegraf service is active
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl is-active cmp-telegraf-{{ site_code }} || true"
+  register: cmp_telegraf_active
+  changed_when: false
+  retries: 5
+  delay: 3
+  until: cmp_telegraf_active.stdout | trim == 'active'
 
 - name: Display CMP Telegraf status
   debug:
-    var: cmp_telegraf_status
+    msg: "CMP Telegraf is {{ cmp_telegraf_active.stdout | trim }}"
 
 - name: Cleanup temporary telegraf config file
   file:
