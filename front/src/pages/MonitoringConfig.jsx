@@ -250,9 +250,9 @@ export default function MonitoringConfig() {
                 {infraNodes.length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
                 : infraNodes.map((node) => {
                   const run = nodeRunState(node.status);
-                  // VM agents (telegraf + fluent-bit) install together — the install/uninstall
-                  // control lives in the Monitoring Agent column (same layout as K8s nodes).
-                  const action = (run !== 'running' && !node.registered)
+                  // VM agents (telegraf + fluent-bit) install/uninstall together, so the same
+                  // control is shown in BOTH the Monitoring Agent and Log Agent columns.
+                  const renderAction = () => (run !== 'running' && !node.registered)
                     ? <span className="text-xs text-gray-400" title="Node is not running; agent state unknown">—</span>
                     : !node.registered
                     ? <button onClick={(e) => handleInstall(e, node)} disabled={busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
@@ -266,9 +266,11 @@ export default function MonitoringConfig() {
                     <td className="px-4 py-2.5 border-b text-gray-500">{node.id}</td>
                     <td className="px-4 py-2.5 border-b"><Badge status={node.status} /></td>
                     <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{action}</div>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{renderAction()}</div>
                     </td>
-                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.log_agent_status} run={run} /></td>
+                    <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.log_agent_status} run={run} />{renderAction()}</div>
+                    </td>
                   </tr>
                   );
                 })}
