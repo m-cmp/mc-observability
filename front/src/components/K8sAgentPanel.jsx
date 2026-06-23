@@ -36,15 +36,19 @@ export default function K8sAgentPanel({ nsId }) {
   useEffect(() => { load(); }, [load]);
 
   const loadStatus = useCallback(async (clusterId) => {
+    let ok = false;
     try {
       const s = await getK8sAgentStatus(nsId, clusterId);
       setStatusMap((m) => ({ ...m, [clusterId]: Array.isArray(s) ? s : [] }));
-    } catch { setStatusMap((m) => ({ ...m, [clusterId]: [] })); }
+      ok = true;
+    } catch { /* keep previous data + "Checking…" state; the periodic refresh retries */ }
     try {
       const l = await getK8sLogStatus(nsId, clusterId);
       setLogMap((m) => ({ ...m, [clusterId]: Array.isArray(l) ? l : [] }));
-    } catch { setLogMap((m) => ({ ...m, [clusterId]: [] })); }
-    setStatusLoaded((m) => ({ ...m, [clusterId]: true }));
+    } catch { /* log status is best-effort */ }
+    // Only mark "loaded" once the agent status actually came back, so a transient failure
+    // (e.g. rate limit) shows "Checking agent status…" instead of "No nodes".
+    if (ok) setStatusLoaded((m) => ({ ...m, [clusterId]: true }));
   }, [nsId]);
 
   useEffect(() => { clusters.forEach((c) => loadStatus(c.id)); }, [clusters, loadStatus]);

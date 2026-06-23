@@ -344,7 +344,12 @@ export default function InfraOverview() {
 
       {/* Node Tab — grouped by Infra. When a specific infraId is selected via the
           URL/dropdown, narrow to that one; otherwise show every Infra in the NS. */}
-      {viewTab === 'node' && (infraId ? allInfras.filter(i => i.id === infraId || i.name === infraId) : allInfras).map((infra) => (
+      {viewTab === 'node' && (() => {
+        const list = infraId ? allInfras.filter(i => i.id === infraId || i.name === infraId) : allInfras;
+        if (list.length === 0) {
+          return <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No nodes in this namespace</div>;
+        }
+        return list.map((infra) => (
         <div key={infra.id} className="bg-white rounded-lg shadow">
           {/* Infra group header */}
           <div className="px-4 py-3 border-b flex items-center gap-3">
@@ -370,7 +375,8 @@ export default function InfraOverview() {
             ))}
           </div>
         </div>
-      ))}
+        ));
+      })()}
     </div>
   );
 }
