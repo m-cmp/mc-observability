@@ -14,8 +14,15 @@ public class RequestIdAspect {
 
     private final RequestInfo requestInfo;
 
+    // The leading within(...) restricts class-level matching to the controller package so Spring's
+    // ClassFilter rejects every other bean cheaply. Without it, the trailing !within(...) negation
+    // makes the class filter permissive and AspectJ falls back to resolving the generic signature
+    // of
+    // every method on every bean during auto-proxy creation — that added ~5 minutes to startup.
     @Around(
-            "execution(* com.mcmp.o11ymanager.manager.controller.*.*(..)) && !within(com.mcmp.o11ymanager.manager.controller.VMWebSocketController)")
+            "within(com.mcmp.o11ymanager.manager.controller..*)"
+                    + " && execution(* com.mcmp.o11ymanager.manager.controller.*.*(..))"
+                    + " && !within(com.mcmp.o11ymanager.manager.controller.VMWebSocketController)")
     public Object aroundControllerMethods(ProceedingJoinPoint joinPoint) throws Throwable {
         String requestId = UUID.randomUUID().toString();
         requestInfo.setRequestId(requestId);
