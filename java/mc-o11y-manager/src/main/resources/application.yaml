@@ -259,14 +259,17 @@ logging:
   level:
     org.apache.sshd.client: ERROR
     org.apache.sshd.common: ERROR
-    feign: DEBUG
-    feign.Logger: DEBUG
+    feign: ${LOG_FEIGN:INFO}
+    feign.Logger: ${LOG_FEIGN:INFO}
     feign.template: WARN
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.hibernate.type: TRACE
-    org.hibernate.engine.transaction.internal.TransactionImpl: TRACE
-    org.hibernate.type.descriptor.sql: TRACE
+    # Hibernate SQL/type loggers default to WARN so startup isn't spent logging every type
+    # registration (org.hibernate.type at TRACE alone added minutes of boot time and floods every
+    # request). Override via the env vars below to re-enable SQL/bind tracing when debugging.
+    org.hibernate.SQL: ${LOG_HIBERNATE_SQL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_HIBERNATE_BIND:WARN}
+    org.hibernate.type: ${LOG_HIBERNATE_TYPE:WARN}
+    org.hibernate.engine.transaction.internal.TransactionImpl: ${LOG_HIBERNATE_TX:WARN}
+    org.hibernate.type.descriptor.sql: ${LOG_HIBERNATE_TYPE_SQL:WARN}
 
 management:
   endpoints:
