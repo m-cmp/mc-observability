@@ -24,9 +24,9 @@ export default function MonitoringConfig() {
   const [globalBusy, setGlobalBusy] = useState(false);
   const pollRef = useRef(null);
 
-  const loadNodes = useCallback(async () => {
+  const loadNodes = useCallback(async (silent = false) => {
     if (!nsId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     try {
       if (infraId) {
         // Single Infra mode
@@ -59,11 +59,23 @@ export default function MonitoringConfig() {
         setAllInfras(enriched);
         setNodes(enriched.flatMap(i => i.node || []));
       }
-    } catch { setNodes([]); setAllInfras([]); }
-    setLoading(false);
+    } catch { if (!silent) { setNodes([]); setAllInfras([]); } }
+    if (!silent) setLoading(false);
   }, [nsId, infraId]);
 
   useEffect(() => { loadNodes(); return () => { if (pollRef.current) clearInterval(pollRef.current); }; }, [loadNodes]);
+
+  // Silently re-poll agent status so transient states (e.g. SERVICE_INACTIVE right after a
+  // VM suspend/resume, before the agent finishes restarting) self-correct without a manual
+  // refresh. Skipped while an install/uninstall or metric op is running.
+  const loadNodesRef = useRef(loadNodes);
+  useEffect(() => { loadNodesRef.current = loadNodes; }, [loadNodes]);
+  const mutatingRef = useRef(false);
+  useEffect(() => { mutatingRef.current = busy || globalBusy; }, [busy, globalBusy]);
+  useEffect(() => {
+    const id = setInterval(() => { if (!mutatingRef.current) loadNodesRef.current(true); }, 10000);
+    return () => clearInterval(id);
+  }, []);
   useEffect(() => { getPlugins().then(setPlugins).catch(() => setPlugins([])); }, []);
 
   async function selectNode(node) {
@@ -214,7 +226,7 @@ export default function MonitoringConfig() {
       <K8sAgentPanel nsId={nsId} />
 
       {/* Server list — grouped by Infra */}
-      {loading ? <div className="text-sm text-gray-400 p-4 animate-pulse">Loading...</div>
+      {loading ? <div className="bg-white rounded-lg shadow p-4 text-sm text-gray-400 animate-pulse">Loading servers & agent status…</div>
       : allInfras.map((infra) => {
         const infraNodes = filter ? (infra.node || []).filter((node) => (node.name || node.id || '').toLowerCase().includes(filter.toLowerCase())) : (infra.node || []);
         return (
@@ -233,29 +245,33 @@ export default function MonitoringConfig() {
                 <th className="px-4 py-2.5 border-b text-gray-500">Status</th>
                 <th className="px-4 py-2.5 border-b text-gray-500">Monitoring Agent</th>
                 <th className="px-4 py-2.5 border-b text-gray-500">Log Agent</th>
-                <th className="px-4 py-2.5 border-b text-gray-500 text-right">Actions</th>
               </tr></thead>
               <tbody>
-                {infraNodes.length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
-                : infraNodes.map((node) => (
+                {infraNodes.length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
+                : infraNodes.map((node) => {
+                  const run = nodeRunState(node.status);
+                  // VM agents (telegraf + fluent-bit) install together — the install/uninstall
+                  // control lives in the Monitoring Agent column (same layout as K8s nodes).
+                  const action = (run !== 'running' && !node.registered)
+                    ? <span className="text-xs text-gray-400" title="Node is not running; agent state unknown">—</span>
+                    : !node.registered
+                    ? <button onClick={(e) => handleInstall(e, node)} disabled={busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
+                    : node.monitoring_agent_status === 'INSTALLING'
+                    ? <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>
+                    : <button onClick={(e) => handleUninstall(e, node)} disabled={busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>;
+                  return (
                   <tr key={node.id} onClick={() => selectNode(node)}
                     className={`cursor-pointer hover:bg-blue-50 ${selectedNode?.id === node.id ? 'bg-blue-100' : ''}`}>
                     <td className="px-4 py-2.5 border-b font-medium"><span className="inline-flex items-center gap-1.5"><ProviderBadge connectionName={node.connectionName} showLabel={false} />{node.name || node.id}</span></td>
                     <td className="px-4 py-2.5 border-b text-gray-500">{node.id}</td>
                     <td className="px-4 py-2.5 border-b"><Badge status={node.status} /></td>
-                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.monitoring_agent_status} run={nodeRunState(node.status)} /></td>
-                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.log_agent_status} run={nodeRunState(node.status)} /></td>
-                    <td className="px-4 py-2.5 border-b text-right">
-                      {nodeRunState(node.status) !== 'running' && !node.registered
-                        ? <span className="text-xs text-gray-400" title="Node is not running; agent state unknown">—</span>
-                        : !node.registered
-                        ? <button onClick={(e) => handleInstall(e, node)} disabled={busy} className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install Agent</button>
-                        : node.monitoring_agent_status === 'INSTALLING'
-                        ? <span className="text-sm text-yellow-600 animate-pulse">Installing...</span>
-                        : <button onClick={(e) => handleUninstall(e, node)} disabled={busy} className="text-sm text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                    <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{action}</div>
                     </td>
+                    <td className="px-4 py-2.5 border-b"><AgentBadge status={node.log_agent_status} run={run} /></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
         </div>

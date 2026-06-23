@@ -38,16 +38,28 @@ public class ManagerAdapter implements ManagerPort {
 
         } else if ("node".equalsIgnoreCase(vmScope)) {
             // 3. Map infra id using ns and node
-            VMDTO t = vmService.getByNsVm(nsId, nodeId);
+            VMDTO t = null;
+            try {
+                t = vmService.getByNsVm(nsId, nodeId);
+            } catch (Exception ignore) {
+                // Not a Tumblebug VM (e.g. a K8s agent node) — fall through to InfluxDB resolve.
+            }
 
-            influxId = t.getInfluxSeq();
-            if (influxId == null) {
-                String infraId = t.getInfraId();
-                if (infraId == null || infraId.isBlank()) {
-                    throw new IllegalStateException(
-                            "infraId not found for vm: ns=" + nsId + ", nodeId=" + nodeId);
+            if (t != null) {
+                influxId = t.getInfluxSeq();
+                if (influxId == null) {
+                    String infraId = t.getInfraId();
+                    if (infraId == null || infraId.isBlank()) {
+                        throw new IllegalStateException(
+                                "infraId not found for vm: ns=" + nsId + ", nodeId=" + nodeId);
+                    }
+                    influxId = influxDbService.resolveInfluxDb(nsId, infraId);
                 }
-                influxId = influxDbService.resolveInfluxDb(nsId, infraId);
+            } else {
+                // K8s node: metrics live in the shared InfluxDB; resolve by namespace.
+                // resolveInfluxDb falls back to a reachable DB when the exact tag combo
+                // isn't matched, so a bare nodeId is sufficient here.
+                influxId = influxDbService.resolveInfluxDb(nsId, nodeId);
             }
 
         } else {

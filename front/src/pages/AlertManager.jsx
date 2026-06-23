@@ -5,6 +5,7 @@ import {
   getNotiChannels, getNotiHistory, sendTestNotification,
 } from '../api/trigger';
 import { getInfraList } from '../api/tumblebug';
+import { getK8sClusters, getK8sAgentStatus } from '../api/k8sAgent';
 import { formatLocalTime } from '../utils/time';
 import { useParams } from 'react-router-dom';
 
@@ -91,9 +92,25 @@ function PoliciesTab({ nsId, infraId }) {
 
   useEffect(() => {
     if (!nsId) { setInfras([]); return; }
-    // getInfraList returns each infra with its embedded `node` list, so VM selection
-    // works even when the route has no infraId (namespace-level alert page).
-    getInfraList(nsId).then(list => setInfras(list || [])).catch(() => setInfras([]));
+    let alive = true;
+    // getInfraList returns each VM infra with its embedded `node` list. K8s clusters are
+    // appended as pseudo-infras (node list = installed agent nodes) so alerts can target
+    // them too — k8s metrics share the same (infra_id, node_id) InfluxDB schema.
+    (async () => {
+      const [vmRes, clRes] = await Promise.allSettled([getInfraList(nsId), getK8sClusters(nsId)]);
+      const vms = vmRes.status === 'fulfilled' && Array.isArray(vmRes.value) ? vmRes.value : [];
+      const clusters = clRes.status === 'fulfilled' && Array.isArray(clRes.value) ? clRes.value : [];
+      const k8sInfras = await Promise.all(clusters.map(async (c) => {
+        let node = [];
+        try {
+          const st = await getK8sAgentStatus(nsId, c.id);
+          node = (Array.isArray(st) ? st : []).filter((n) => n.running).map((n) => ({ id: n.node, name: n.node }));
+        } catch { node = []; }
+        return { id: c.id, name: `[K8s] ${c.name || c.id}`, node, isK8s: true };
+      }));
+      if (alive) setInfras([...vms, ...k8sInfras]);
+    })();
+    return () => { alive = false; };
   }, [nsId]);
 
   async function handleDelete(id) {
