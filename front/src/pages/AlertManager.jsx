@@ -104,7 +104,9 @@ function PoliciesTab({ nsId, infraId }) {
         let node = [];
         try {
           const st = await getK8sAgentStatus(nsId, c.id);
-          node = (Array.isArray(st) ? st : []).filter((n) => n.running).map((n) => ({ id: n.node, name: n.node }));
+          // List every cluster node (not only ones currently "running") so a target can be set
+          // even right after install, before the agent's InfluxDB data has started flowing.
+          node = (Array.isArray(st) ? st : []).map((n) => ({ id: n.node, name: n.node }));
         } catch { node = []; }
         return { id: c.id, name: `[K8s] ${c.name || c.id}`, node, isK8s: true };
       }));
