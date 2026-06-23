@@ -30,21 +30,42 @@ export default function NamespaceHome() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
+    // Retry a call a couple of times on 429 — cb-tumblebug rate-limits bursts, and the
+    // k8sCluster lookup can be heavy.
+    const withRetry = async (fn) => {
+      for (let i = 0; i < 3; i++) {
+        try { return await fn(); }
+        catch (e) {
+          if (e?.response?.status === 429 && i < 2) {
+            await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+            continue;
+          }
+          throw e;
+        }
+      }
+    };
     getNsList()
       .then(async (list) => {
         const arr = Array.isArray(list) ? list : [];
         if (alive) { setNsList(arr); setLoading(false); setCounting(true); }
-        // best-effort infra + k8s cluster counts per namespace
-        const entries = await Promise.all(
-          arr.map(async (ns) => {
-            const [inf, cl] = await Promise.allSettled([getInfraList(ns.id), getK8sClusters(ns.id)]);
-            return [ns.id, {
+        // Count infra + k8s per namespace SEQUENTIALLY (avoid bursting the rate limiter) and
+        // fill each card in as it resolves.
+        for (const ns of arr) {
+          if (!alive) return;
+          const [inf, cl] = await Promise.allSettled([
+            withRetry(() => getInfraList(ns.id)),
+            withRetry(() => getK8sClusters(ns.id)),
+          ]);
+          if (!alive) return;
+          setCounts((c) => ({
+            ...c,
+            [ns.id]: {
               infra: inf.status === 'fulfilled' && Array.isArray(inf.value) ? inf.value.length : null,
               k8s: cl.status === 'fulfilled' && Array.isArray(cl.value) ? cl.value.length : null,
-            }];
-          })
-        );
-        if (alive) { setCounts(Object.fromEntries(entries)); setCounting(false); }
+            },
+          }));
+        }
+        if (alive) setCounting(false);
       })
       .catch(() => { if (alive) { setNsList([]); setLoading(false); setCounting(false); } });
     return () => { alive = false; };
