@@ -10,6 +10,7 @@ export default function LogViewer() {
 
   const [infraList, setInfraList] = useState([]);   // VM infras
   const [clusters, setClusters] = useState([]);     // K8s clusters
+  const [listLoading, setListLoading] = useState(false); // VM infra + k8s cluster list loading
   const [selectedInfraId, setSelectedInfraId] = useState(infraId || '');
   const [nodes, setNodes] = useState([]);
   const [nodesLoading, setNodesLoading] = useState(false);
@@ -26,8 +27,16 @@ export default function LogViewer() {
   // know which kind the selected target is (for node loading + Loki labels are shared).
   useEffect(() => {
     if (!nsId) { setInfraList([]); setClusters([]); return; }
-    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
-    getK8sClusters(nsId).then((l) => setClusters(Array.isArray(l) ? l : [])).catch(() => setClusters([]));
+    let alive = true;
+    setListLoading(true);
+    Promise.allSettled([getInfraList(nsId), getK8sClusters(nsId)])
+      .then(([inf, cl]) => {
+        if (!alive) return;
+        setInfraList(inf.status === 'fulfilled' && Array.isArray(inf.value) ? inf.value : []);
+        setClusters(cl.status === 'fulfilled' && Array.isArray(cl.value) ? cl.value : []);
+      })
+      .finally(() => { if (alive) setListLoading(false); });
+    return () => { alive = false; };
   }, [nsId]);
 
   useEffect(() => { if (infraId) setSelectedInfraId(infraId); }, [infraId]);
@@ -96,7 +105,8 @@ export default function LogViewer() {
                 </select>
               ) : (
                 <select className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedInfraId} onChange={(e) => { setSelectedInfraId(e.target.value); setSelectedNodeId(''); }}>
-                  <option value="">Select Infra / Cluster</option>
+                  <option value="">{listLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
+                  {listLoading && <option disabled>Loading infras / clusters…</option>}
                   {infraList.length > 0 && (
                     <optgroup label="VM Infra">
                       {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
