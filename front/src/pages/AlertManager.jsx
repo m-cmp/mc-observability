@@ -558,24 +558,22 @@ function ChannelPicker({ channels, value, onChange }) {
   );
 }
 
-// Pick an infra, then its VMs. Infra level = multi-select VMs; Node level = a single VM.
-// Both are added as `node` targets. Works at namespace-level (route has no infraId) by
-// letting the user choose the infra from the dropdown.
+// Pick an Infra/Cluster, then check one or more of its nodes. All selections are added as
+// `node` targets. Works at namespace-level (route has no infraId) by letting the user choose
+// the infra/cluster from the dropdown.
 function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel }) {
   const matchInfra = (i) => i.id === defaultInfraId || i.name === defaultInfraId;
   const [selInfra, setSelInfra] = useState(() => {
     const m = (infras || []).find(matchInfra);
     return m ? (m.id ?? m.name) : (infras?.[0]?.id ?? infras?.[0]?.name ?? '');
   });
-  const [level, setLevel] = useState('infra');
-  const [checked, setChecked] = useState({}); // nodeId -> bool (infra level)
-  const [single, setSingle] = useState('');   // node level
+  const [checked, setChecked] = useState({}); // nodeId -> bool
 
   if (!nsId) {
-    return <p className="text-xs text-gray-400">Select a namespace to choose target VMs.</p>;
+    return <p className="text-xs text-gray-400">Select a namespace to choose target nodes.</p>;
   }
   if (!infras || infras.length === 0) {
-    return <p className="text-xs text-gray-400">No infras found in this namespace.</p>;
+    return <p className="text-xs text-gray-400">No infras / clusters found in this namespace.</p>;
   }
 
   const infra = infras.find(i => String(i.id ?? i.name) === String(selInfra)) || infras[0];
@@ -584,25 +582,21 @@ function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel }) {
   const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
   const commit = () => {
-    let targets = [];
-    if (level === 'infra') {
-      targets = nodes.filter(n => checked[nodeIdOf(n)]).map(n => ({ targetScope: 'node', targetId: nodeIdOf(n), label: nodeLabelOf(n) }));
-    } else if (single) {
-      const n = nodes.find(x => String(nodeIdOf(x)) === String(single));
-      if (n) targets = [{ targetScope: 'node', targetId: nodeIdOf(n), label: nodeLabelOf(n) }];
-    }
-    if (!targets.length) { alert('Select at least one VM.'); return; }
+    const targets = nodes
+      .filter(n => checked[nodeIdOf(n)])
+      .map(n => ({ targetScope: 'node', targetId: nodeIdOf(n), label: nodeLabelOf(n) }));
+    if (!targets.length) { alert('Select at least one node.'); return; }
     onAdd(targets);
-    setChecked({}); setSingle('');
+    setChecked({});
   };
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-xs">
-        <span className="text-gray-500">Infra</span>
+        <span className="text-gray-500">Infra / Cluster</span>
         <select
           value={selInfra}
-          onChange={e => { setSelInfra(e.target.value); setChecked({}); setSingle(''); }}
+          onChange={e => { setSelInfra(e.target.value); setChecked({}); }}
           className="border rounded px-2 py-1 text-xs">
           {infras.map(i => {
             const id = i.id ?? i.name;
@@ -611,18 +605,9 @@ function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel }) {
         </select>
       </div>
 
-      <div className="flex items-center gap-4 text-xs">
-        <label className="flex items-center gap-1 cursor-pointer">
-          <input type="radio" name={`level-${selInfra}`} checked={level === 'infra'} onChange={() => setLevel('infra')} /> Infra (select VMs)
-        </label>
-        <label className="flex items-center gap-1 cursor-pointer">
-          <input type="radio" name={`level-${selInfra}`} checked={level === 'node'} onChange={() => setLevel('node')} /> Node (single VM)
-        </label>
-      </div>
-
       {nodes.length === 0 ? (
-        <p className="text-xs text-gray-400">No VMs found in this infra.</p>
-      ) : level === 'infra' ? (
+        <p className="text-xs text-gray-400">No nodes found in this infra / cluster.</p>
+      ) : (
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {nodes.map(n => {
             const id = nodeIdOf(n);
@@ -634,14 +619,6 @@ function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel }) {
             );
           })}
         </div>
-      ) : (
-        <select value={single} onChange={e => setSingle(e.target.value)} className="border rounded px-2 py-1 text-xs">
-          <option value="">Select VM...</option>
-          {nodes.map(n => {
-            const id = nodeIdOf(n);
-            return <option key={id} value={id}>{nodeLabelOf(n)} ({id})</option>;
-          })}
-        </select>
       )}
 
       <button type="button" disabled={busy || nodes.length === 0} onClick={commit} className="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 disabled:opacity-50">
