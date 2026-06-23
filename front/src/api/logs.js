@@ -26,10 +26,27 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
   if (!Array.isArray(entries)) return [];
   return entries.map((e) => {
     let parsed = {};
-    try { parsed = typeof e.value === 'string' ? JSON.parse(e.value) : (e.value || {}); } catch {}
+    let isJson = false;
+    try {
+      if (typeof e.value === 'string') { parsed = JSON.parse(e.value); isJson = true; }
+      else if (e.value) parsed = e.value;
+    } catch { parsed = {}; }
+    // VM agent ships structured JSON with a `message` key. The K8s agent (fluent-bit tailing
+    // container/syslog files) ships the raw line under `log`; container logs are CRI-formatted
+    // ("<ts> stdout|stderr F <msg>") so strip that prefix to show the real message.
+    let message = parsed.message;
+    if (!message) {
+      if (typeof parsed.log === 'string') {
+        const m = parsed.log.match(/^\S+\s+std(?:out|err)\s+[FP]\s+([\s\S]*)$/);
+        message = m ? m[1] : parsed.log;
+      } else if (!isJson && typeof e.value === 'string') {
+        message = e.value; // plain (non-JSON) log line
+      }
+    }
+    message = (message || '').replace(/\s+$/, '');
     return {
       timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
-      message: parsed.message || '',
+      message,
       level: e.labels?.level || parsed.level || '',
       node_id: e.labels?.NODE_ID || '',
       host: e.labels?.host || parsed.host || '',
