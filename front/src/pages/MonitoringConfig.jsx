@@ -73,7 +73,7 @@ export default function MonitoringConfig() {
   const mutatingRef = useRef(false);
   useEffect(() => { mutatingRef.current = busy || globalBusy; }, [busy, globalBusy]);
   useEffect(() => {
-    const id = setInterval(() => { if (!mutatingRef.current) loadNodesRef.current(true); }, 20000);
+    const id = setInterval(() => { if (!mutatingRef.current) loadNodesRef.current(true); }, 10000);
     return () => clearInterval(id);
   }, []);
   useEffect(() => { getPlugins().then(setPlugins).catch(() => setPlugins([])); }, []);

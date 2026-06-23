@@ -55,7 +55,7 @@ export default function K8sAgentPanel({ nsId }) {
   useEffect(() => { busyRef.current = busy; }, [busy]);
   useEffect(() => {
     if (clusters.length === 0) return;
-    const id = setInterval(() => { if (!busyRef.current) clusters.forEach((c) => loadStatus(c.id)); }, 20000);
+    const id = setInterval(() => { if (!busyRef.current) clusters.forEach((c) => loadStatus(c.id)); }, 10000);
     return () => clearInterval(id);
   }, [clusters, loadStatus]);
 
