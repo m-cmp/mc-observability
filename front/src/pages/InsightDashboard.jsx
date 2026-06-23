@@ -143,6 +143,7 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
   const [node, setNode] = useState(nodeId || '');
   const { infras, clusters } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
+  const [nodesLoading, setNodesLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -152,7 +153,13 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
 
   useEffect(() => {
     if (!nsId || !infra) { setNodeList([]); return; }
-    loadScopeNodes(nsId, infra, isK8s).then((ns) => setNodeList(ns)).catch(() => setNodeList([]));
+    let alive = true;
+    setNodesLoading(true);
+    loadScopeNodes(nsId, infra, isK8s)
+      .then((ns) => { if (alive) setNodeList(ns); })
+      .catch(() => { if (alive) setNodeList([]); })
+      .finally(() => { if (alive) setNodesLoading(false); });
+    return () => { alive = false; };
   }, [nsId, infra, isK8s]);
 
   async function submit(e) {
@@ -201,8 +208,8 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
         <div>
           <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
           <select value={node} onChange={(e) => setNode(e.target.value)} disabled={!infra} className="w-full border rounded px-3 py-1.5 text-sm disabled:bg-gray-100">
-            <option value="">All nodes</option>
-            {nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
+            <option value="">{nodesLoading ? 'Loading nodes…' : 'All nodes'}</option>
+            {nodesLoading ? <option disabled>Loading nodes…</option> : nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
           </select>
         </div>
         <div>
@@ -254,6 +261,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   const [pNode, setPNode] = useState(nodeId || '');
   const { infras, clusters } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
+  const [nodesLoading, setNodesLoading] = useState(false);
   const isK8s = clusters.some((c) => c.id === pInfra);
 
   useEffect(() => {
@@ -262,7 +270,13 @@ function PredictionTab({ nsId, infraId, nodeId }) {
 
   useEffect(() => {
     if (!nsId || !pInfra) { setNodeList([]); return; }
-    loadScopeNodes(nsId, pInfra, isK8s).then((ns) => setNodeList(ns)).catch(() => setNodeList([]));
+    let alive = true;
+    setNodesLoading(true);
+    loadScopeNodes(nsId, pInfra, isK8s)
+      .then((ns) => { if (alive) setNodeList(ns); })
+      .catch(() => { if (alive) setNodeList([]); })
+      .finally(() => { if (alive) setNodesLoading(false); });
+    return () => { alive = false; };
   }, [nsId, pInfra, isK8s]);
 
   async function loadHistory() {
@@ -336,8 +350,8 @@ function PredictionTab({ nsId, infraId, nodeId }) {
           <div>
             <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm disabled:bg-gray-100" value={pNode} onChange={(e) => setPNode(e.target.value)} disabled={!pInfra}>
-              <option value="">All nodes</option>
-              {nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
+              <option value="">{nodesLoading ? 'Loading nodes…' : 'All nodes'}</option>
+              {nodesLoading ? <option disabled>Loading nodes…</option> : nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
             </select>
           </div>
           <div>
