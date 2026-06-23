@@ -143,19 +143,25 @@ public class SchedulerFacadeService {
                                 }
 
                                 // success case
-                                // 에이전트 별, FINISHED 상태로 DB 업데이트
+                                // 설치/업데이트 성공 → FINISHED, 제거 성공 → NOT_INSTALLED 로 DB 업데이트.
+                                // (NOT_INSTALLED 로 남겨야 노드 등록은 유지하면서 해당 에이전트만
+                                // "미설치"로 표시되어 Install 버튼이 다시 노출된다.)
                                 if ("success".equals(status)) {
                                     log.debug("Task successful for agent {}", agent);
+                                    VMAgentTaskStatus doneStatus =
+                                            method == SemaphoreInstallMethod.UNINSTALL
+                                                    ? VMAgentTaskStatus.NOT_INSTALLED
+                                                    : VMAgentTaskStatus.FINISHED;
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
-                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, doneStatus);
                                     } else if (agent == Agent.FLUENT_BIT) {
                                         vmService.updateLogAgentTaskStatus(
-                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, doneStatus);
                                     } else if (agent == Agent.BEYLA
                                             || agent == Agent.OTEL_JAVA_AGENT) {
                                         vmService.updateTraceAgentTaskStatus(
-                                                nsId, infraId, nodeId, VMAgentTaskStatus.FINISHED);
+                                                nsId, infraId, nodeId, doneStatus);
                                     }
 
                                     ScheduledFuture<?> scheduledFuture = futureRef.get();

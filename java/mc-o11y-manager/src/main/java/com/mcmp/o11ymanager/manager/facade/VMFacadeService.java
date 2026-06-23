@@ -1,6 +1,7 @@
 package com.mcmp.o11ymanager.manager.facade;
 
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
+import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
@@ -84,6 +85,86 @@ public class VMFacadeService {
         } finally {
             hostLock.unlock();
         }
+    }
+
+    // --- Per-agent install / uninstall (monitoring = telegraf, log = fluent-bit) --------------
+    // VM monitoring and log agents can be managed independently, like K8s nodes. The first
+    // install registers the node; the node record stays even when both agents are uninstalled
+    // (both then show NOT_INSTALLED -> Install button).
+
+    public List<ResultDTO> installMonitoringAgent(String nsId, String infraId, String nodeId) {
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
+        try {
+            hostLock.lock();
+            ensureRegistered(nsId, infraId, nodeId, Agent.TELEGRAF);
+            return agentFacadeService.installMonitoringAgent(nsId, infraId, nodeId);
+        } finally {
+            hostLock.unlock();
+        }
+    }
+
+    public List<ResultDTO> uninstallMonitoringAgent(String nsId, String infraId, String nodeId) {
+        return agentFacadeService.uninstallMonitoringAgent(nsId, infraId, nodeId);
+    }
+
+    public List<ResultDTO> installLogAgent(String nsId, String infraId, String nodeId) {
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
+        try {
+            hostLock.lock();
+            ensureRegistered(nsId, infraId, nodeId, Agent.FLUENT_BIT);
+            return agentFacadeService.installLogAgent(nsId, infraId, nodeId);
+        } finally {
+            hostLock.unlock();
+        }
+    }
+
+    public List<ResultDTO> uninstallLogAgent(String nsId, String infraId, String nodeId) {
+        return agentFacadeService.uninstallLogAgent(nsId, infraId, nodeId);
+    }
+
+    private void ensureRegistered(String nsId, String infraId, String nodeId, Agent installing) {
+        boolean exists;
+        try {
+            vmService.getByNsVm(nsId, nodeId);
+            exists = true;
+        } catch (Exception e) {
+            exists = false;
+        }
+        if (exists) {
+            return;
+        }
+
+        VMStatus status =
+                tumblebugService.isConnectedVM(nsId, infraId, nodeId)
+                        ? VMStatus.RUNNING
+                        : VMStatus.FAILED;
+        if (status != VMStatus.RUNNING) {
+            throw new RuntimeException("FAILED TO CONNECT VM");
+        }
+        Long influxSeq = influxDbService.resolveInfluxDb(nsId, infraId);
+        VMRequestDTO dto = VMRequestDTO.builder().name(nodeId).build();
+        vmService.post(nsId, infraId, nodeId, status, dto, influxSeq);
+
+        // Agent being installed -> IDLE (the install flow moves it to INSTALLING); the others
+        // start NOT_INSTALLED so the UI shows them as installable.
+        vmService.updateMonitoringAgentTaskStatusAndTaskId(
+                nsId,
+                infraId,
+                nodeId,
+                installing == Agent.TELEGRAF
+                        ? VMAgentTaskStatus.IDLE
+                        : VMAgentTaskStatus.NOT_INSTALLED,
+                "");
+        vmService.updateLogAgentTaskStatusAndTaskId(
+                nsId,
+                infraId,
+                nodeId,
+                installing == Agent.FLUENT_BIT
+                        ? VMAgentTaskStatus.IDLE
+                        : VMAgentTaskStatus.NOT_INSTALLED,
+                "");
+        vmService.updateTraceAgentTaskStatusAndTaskId(
+                nsId, infraId, nodeId, VMAgentTaskStatus.NOT_INSTALLED, "");
     }
 
     public VMDTO getVM(String nsId, String infraId, String nodeId) {

@@ -5,4 +5,5 @@ public enum AgentStatus {
     SERVICE_INACTIVE,
     SUCCESS,
     FAILED,
+    NOT_INSTALLED,
 }

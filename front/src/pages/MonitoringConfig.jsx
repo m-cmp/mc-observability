@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getNodeList, getNode, getNodeItems, installAgent, uninstallAgent, createNodeItem, deleteNodeItem } from '../api/node';
+import {
+  getNodeList, getNode, getNodeItems, createNodeItem, deleteNodeItem,
+  installMonitoringAgent, uninstallMonitoringAgent, installLogAgent, uninstallLogAgent,
+} from '../api/node';
 import { getPlugins } from '../api/monitoring';
 import { getInfra, getInfraList } from '../api/tumblebug';
 import ProviderBadge from '../components/ProviderBadge';
@@ -83,7 +86,8 @@ export default function MonitoringConfig() {
     setSelectedNode(node);
     setSelectedNodeInfraId(node.infraId || infraId);
     setItems([]);
-    if (!node.registered) return;
+    // Metric config is for the monitoring (telegraf) agent — only load when it's installed.
+    if (!isAgentInstalled(node.monitoring_agent_status)) return;
     setItemLoading(true);
     try { setItems(await getNodeItems(nsId, node.infraId || infraId, node.id)); } catch { setItems([]); }
     setItemLoading(false);
@@ -112,58 +116,54 @@ export default function MonitoringConfig() {
     setBusy(false); setBusyMsg('');
   }
 
-  // --- Install / Uninstall with polling ---
-  async function handleInstall(e, node) {
+  // --- Per-agent install / uninstall with polling (monitoring = telegraf, log = fluent-bit) ---
+  const AGENT_API = {
+    monitoring: { install: installMonitoringAgent, uninstall: uninstallMonitoringAgent, field: 'monitoring_agent_status', label: 'monitoring agent' },
+    log: { install: installLogAgent, uninstall: uninstallLogAgent, field: 'log_agent_status', label: 'log agent' },
+  };
+
+  async function handleAgent(e, node, kind, op) {
     e.stopPropagation();
-    if (!confirm(`Install monitoring agent on "${node.name || node.id}"?`)) return;
+    const a = AGENT_API[kind];
+    const verb = op === 'install' ? 'Install' : 'Uninstall';
+    if (!confirm(`${verb} ${a.label} on "${node.name || node.id}"?`)) return;
+    const infra = node.infraId || infraId;
     setGlobalBusy(true);
-    setBusyMsg(`Installing agent on ${node.name || node.id}...`);
+    setBusyMsg(`${verb}ing ${a.label} on ${node.name || node.id}...`);
     try {
-      await installAgent(nsId, node.infraId || infraId, node.id);
-      startPolling(node.id);
+      await a[op](nsId, infra, node.id);
+      startPolling(node.id, infra, a.field, `${verb}ing ${a.label}`, kind, op);
     } catch (err) {
-      alert('Install failed: ' + (err.response?.data?.error_message || err.message));
+      alert(`${verb} failed: ` + (err.response?.data?.error_message || err.message));
       setGlobalBusy(false);
       setBusyMsg('');
     }
   }
 
-  async function handleUninstall(e, node) {
-    e.stopPropagation();
-    if (!confirm(`Uninstall monitoring agent from "${node.name || node.id}"?`)) return;
-    setGlobalBusy(true);
-    setBusyMsg(`Uninstalling agent from ${node.name || node.id}...`);
-    try {
-      await uninstallAgent(nsId, node.infraId || infraId, node.id);
-      await loadNodes();
-      if (selectedNode?.id === node.id) { setSelectedNode(null); setItems([]); }
-    } catch (err) {
-      alert('Uninstall failed: ' + (err.response?.data?.error_message || err.message));
-    }
-    setGlobalBusy(false);
-    setBusyMsg('');
-  }
-
-  function startPolling(nodeId) {
+  function startPolling(nodeId, infra, statusField, msgPrefix, kind, op) {
     if (pollRef.current) clearInterval(pollRef.current);
     let count = 0;
     pollRef.current = setInterval(async () => {
       count++;
       try {
-        const nodeData = await getNode(nsId, selectedNodeInfraId || infraId, nodeId);
-        const status = nodeData?.monitoring_agent_status || nodeData?.monitoringAgentStatus;
-        setBusyMsg(`Installing agent... (${status || 'checking'}) [${count * 5}s]`);
-        if (status === 'SUCCESS' || status === 'FAILED' || count > 60) {
+        const nodeData = await getNode(nsId, infra, nodeId);
+        const status = nodeData?.[statusField];
+        setBusyMsg(`${msgPrefix}... (${status || 'checking'}) [${count * 5}s]`);
+        // INSTALLING/UNINSTALLING are in-progress; any other resolved state ends the poll.
+        const done = status && !['INSTALLING', 'UNINSTALLING', 'PREPARING', 'IDLE'].includes(status);
+        if (done || count > 60) {
           clearInterval(pollRef.current);
           pollRef.current = null;
           setGlobalBusy(false);
           setBusyMsg('');
           await loadNodes();
-          if (status === 'SUCCESS') {
-            // Auto-select the Node to show items
-            const refreshedNodes = await getNodeList(nsId, infraId);
-            const found = refreshedNodes.find(n => (n.node_id || n.id) === nodeId);
-            if (found) selectNode({ ...found, id: nodeId, registered: true });
+          // After a successful monitoring install, auto-select the node to show its metrics.
+          if (kind === 'monitoring' && op === 'install' && (status === 'SUCCESS' || status === 'SERVICE_INACTIVE')) {
+            try {
+              const refreshed = await getNodeList(nsId, infra);
+              const found = refreshed.find((n) => (n.node_id || n.id) === nodeId);
+              if (found) selectNode({ ...found, infraId: infra, id: nodeId, registered: true });
+            } catch { /* ignore */ }
           }
         }
       } catch {
@@ -171,6 +171,9 @@ export default function MonitoringConfig() {
       }
     }, 5000);
   }
+
+  // An agent column shows Install when its status is missing/NOT_INSTALLED, Uninstall otherwise.
+  const isAgentInstalled = (status) => !!status && status !== 'NOT_INSTALLED';
 
   // --- Metric toggle with confirmation + overlay ---
   async function handleToggle(plugin, isActive) {
@@ -250,15 +253,15 @@ export default function MonitoringConfig() {
                 {infraNodes.length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-gray-400">No servers</td></tr>
                 : infraNodes.map((node) => {
                   const run = nodeRunState(node.status);
-                  // VM agents (telegraf + fluent-bit) install/uninstall together, so the same
-                  // control is shown in BOTH the Monitoring Agent and Log Agent columns.
-                  const renderAction = () => (run !== 'running' && !node.registered)
-                    ? <span className="text-xs text-gray-400" title="Node is not running; agent state unknown">—</span>
-                    : !node.registered
-                    ? <button onClick={(e) => handleInstall(e, node)} disabled={busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
-                    : node.monitoring_agent_status === 'INSTALLING'
-                    ? <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>
-                    : <button onClick={(e) => handleUninstall(e, node)} disabled={busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>;
+                  // Monitoring (telegraf) and Log (fluent-bit) agents are installed independently.
+                  const agentControl = (kind, status) => {
+                    const installed = isAgentInstalled(status);
+                    if (status === 'INSTALLING') return <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>;
+                    if (status === 'UNINSTALLING') return <span className="text-xs text-yellow-600 animate-pulse">Uninstalling…</span>;
+                    if (installed) return <button onClick={(e) => handleAgent(e, node, kind, 'uninstall')} disabled={busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>;
+                    if (run !== 'running') return <span className="text-xs text-gray-400" title="Node is not running">—</span>;
+                    return <button onClick={(e) => handleAgent(e, node, kind, 'install')} disabled={busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>;
+                  };
                   return (
                   <tr key={node.id} onClick={() => selectNode(node)}
                     className={`cursor-pointer hover:bg-blue-50 ${selectedNode?.id === node.id ? 'bg-blue-100' : ''}`}>
@@ -266,10 +269,10 @@ export default function MonitoringConfig() {
                     <td className="px-4 py-2.5 border-b text-gray-500">{node.id}</td>
                     <td className="px-4 py-2.5 border-b"><Badge status={node.status} /></td>
                     <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{renderAction()}</div>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{agentControl('monitoring', node.monitoring_agent_status)}</div>
                     </td>
                     <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2"><AgentBadge status={node.log_agent_status} run={run} />{renderAction()}</div>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.log_agent_status} run={run} />{agentControl('log', node.log_agent_status)}</div>
                     </td>
                   </tr>
                   );
@@ -300,11 +303,11 @@ export default function MonitoringConfig() {
                 </div>
               </div>
             )}
-            {!selectedNode.registered ? (
+            {!isAgentInstalled(selectedNode.monitoring_agent_status) ? (
               nodeRunState(selectedNode.status) === 'running' ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-gray-500 mb-3">Agent not installed.</p>
-                  <button onClick={(e) => handleInstall(e, selectedNode)} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">Install Agent</button>
+                  <p className="text-sm text-gray-500 mb-3">Monitoring agent not installed.</p>
+                  <button onClick={(e) => handleAgent(e, selectedNode, 'monitoring', 'install')} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">Install Monitoring Agent</button>
                 </div>
               ) : (
                 <div className="text-center py-6 text-sm text-gray-500">
@@ -351,13 +354,12 @@ function Badge({ status }) {
 }
 
 function AgentBadge({ status, run }) {
-  if (!status) {
-    // No agent status: only call it "Not installed" when the node is actually running.
-    // For stopped/terminated/undefined nodes we don't know the agent state.
-    return <span className="text-xs text-gray-400">{run === 'running' ? 'Not installed' : 'Unknown'}</span>;
+  if (!status || status === 'NOT_INSTALLED') {
+    // Not installed (or, for stopped/undefined nodes, state unknown).
+    return <span className="text-xs text-gray-400">{status === 'NOT_INSTALLED' || run === 'running' ? 'Not installed' : 'Unknown'}</span>;
   }
   const s = status.toUpperCase();
-  const c = s === 'SUCCESS' ? 'bg-green-100 text-green-700' : s === 'INSTALLING' ? 'bg-yellow-100 text-yellow-700' :
+  const c = s === 'SUCCESS' ? 'bg-green-100 text-green-700' : (s === 'INSTALLING' || s === 'UNINSTALLING') ? 'bg-yellow-100 text-yellow-700' :
     s === 'SERVICE_INACTIVE' ? 'bg-orange-100 text-orange-700' : s === 'FAILED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500';
   return <span className={`text-xs px-2 py-0.5 rounded-full ${c}`}>{status}</span>;
 }

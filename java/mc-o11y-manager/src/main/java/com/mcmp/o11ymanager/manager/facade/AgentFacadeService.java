@@ -211,6 +211,12 @@ public class AgentFacadeService {
         if (taskStatus == VMAgentTaskStatus.FAILED) {
             return AgentStatus.FAILED;
         }
+        // This agent was never installed (or was uninstalled) on a node that still has the
+        // other agent — don't probe the (absent) service; report NOT_INSTALLED so the UI shows
+        // an Install button for it.
+        if (taskStatus == VMAgentTaskStatus.NOT_INSTALLED || taskStatus == null) {
+            return AgentStatus.NOT_INSTALLED;
+        }
 
         AgentServiceStatus serviceStatus = getAgentServiceStatus(nsId, infraId, nodeId, agent);
 
@@ -263,6 +269,90 @@ public class AgentFacadeService {
                             .build());
         }
 
+        return results;
+    }
+
+    // --- Per-agent install / uninstall (monitoring = telegraf, log = fluent-bit) ---------------
+    // VM monitoring and log agents can be installed/removed independently (same as K8s nodes).
+
+    @Transactional
+    public List<ResultDTO> installMonitoringAgent(String nsId, String infraId, String nodeId) {
+        return runAgentTask(
+                nsId,
+                infraId,
+                nodeId,
+                (accessInfo, templateCount) ->
+                        telegrafFacadeService.install(
+                                nsId, infraId, nodeId, accessInfo, templateCount));
+    }
+
+    @Transactional
+    public List<ResultDTO> uninstallMonitoringAgent(String nsId, String infraId, String nodeId) {
+        return runAgentTask(
+                nsId,
+                infraId,
+                nodeId,
+                (accessInfo, templateCount) ->
+                        telegrafFacadeService.uninstall(
+                                nsId, infraId, nodeId, accessInfo, templateCount));
+    }
+
+    @Transactional
+    public List<ResultDTO> installLogAgent(String nsId, String infraId, String nodeId) {
+        return runAgentTask(
+                nsId,
+                infraId,
+                nodeId,
+                (accessInfo, templateCount) ->
+                        fluentBitFacadeService.install(
+                                nsId, infraId, nodeId, accessInfo, templateCount));
+    }
+
+    @Transactional
+    public List<ResultDTO> uninstallLogAgent(String nsId, String infraId, String nodeId) {
+        return runAgentTask(
+                nsId,
+                infraId,
+                nodeId,
+                (accessInfo, templateCount) ->
+                        fluentBitFacadeService.uninstall(
+                                nsId, infraId, nodeId, accessInfo, templateCount));
+    }
+
+    private interface AgentTask {
+        void run(AccessInfoDTO accessInfo, int templateCount) throws Exception;
+    }
+
+    private List<ResultDTO> runAgentTask(
+            String nsId, String infraId, String nodeId, AgentTask task) {
+        List<ResultDTO> results = new ArrayList<>();
+        try {
+            AccessInfoDTO accessInfo = getAccessInfo(nsId, infraId, nodeId);
+            int templateCount;
+            try {
+                semaphoreInstallTemplateCurrentCountLock.lock();
+                templateCount = getSemaphoreInstallTemplateCurrentCount();
+            } finally {
+                semaphoreInstallTemplateCurrentCountLock.unlock();
+            }
+            task.run(accessInfo, templateCount);
+            results.add(
+                    ResultDTO.builder()
+                            .nsId(nsId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
+                            .status(ResponseStatus.SUCCESS)
+                            .build());
+        } catch (Exception e) {
+            results.add(
+                    ResultDTO.builder()
+                            .nsId(nsId)
+                            .infraId(infraId)
+                            .nodeId(nodeId)
+                            .status(ResponseStatus.ERROR)
+                            .errorMessage(e.getMessage())
+                            .build());
+        }
         return results;
     }
 }
