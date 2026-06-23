@@ -27,7 +27,6 @@ const AGENT_METRICS = [
   { key: 'net_recv', measurement: 'net', field: 'bytes_recv', label: 'Net Recv', unit: 'bytes' },
   { key: 'net_sent', measurement: 'net', field: 'bytes_sent', label: 'Net Sent', unit: 'bytes' },
   { key: 'load1', measurement: 'system', field: 'load1', label: 'Load (1m)', unit: '' },
-  { key: 'procs', measurement: 'processes', field: 'total', label: 'Processes', unit: '' },
 ];
 
 function fmtAgentValue(v, unit) {
