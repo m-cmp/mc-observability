@@ -1,9 +1,13 @@
 import client from './client';
+import { cached } from './cache';
 
-// K8s clusters in a namespace (from cb-tumblebug, proxied by nginx).
+// K8s clusters in a namespace (from cb-tumblebug, proxied by nginx). Cached ~30s with
+// in-flight dedup since several panels list clusters and the lookup is heavy.
 export async function getK8sClusters(nsId) {
-  const res = await client.get(`/tumblebug/ns/${nsId}/k8sCluster`);
-  return res.data?.K8sClusterInfo || res.data?.k8sClusterInfo || [];
+  return cached(`k8sClusters:${nsId}`, 30000, async () => {
+    const res = await client.get(`/tumblebug/ns/${nsId}/k8sCluster`);
+    return res.data?.K8sClusterInfo || res.data?.k8sClusterInfo || [];
+  });
 }
 
 // Host Telegraf agent on K8s cluster nodes (mc-observability manager).
