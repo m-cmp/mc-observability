@@ -3,6 +3,25 @@ import client from './client';
 // NOTE: Loki labels renamed to NS_ID / INFRA_ID / NODE_ID (fluent-bit label rename
 // applied). JS identifiers reflect Tumblebug Infra/Node naming.
 
+// Best-effort level from a log line: bracketed tags, klog (I/W/E/F0623…), or a bare keyword.
+function deriveLevel(msg) {
+  if (!msg) return '';
+  const b = msg.match(/^\s*\[(TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|FATAL|CRIT|CRITICAL)\]/i);
+  if (b) return b[1].toUpperCase();
+  const k = msg.match(/^([IWEF])\d{4}\s/);
+  if (k) return { I: 'INFO', W: 'WARN', E: 'ERROR', F: 'FATAL' }[k[1]];
+  const w = msg.match(/\b(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|CRITICAL)\b/);
+  if (w) return w[1].toUpperCase();
+  return '';
+}
+
+// Best-effort service from a syslog-style line: "Mon DD HH:MM:SS host <proc>[pid]: …".
+function deriveService(msg) {
+  if (!msg) return '';
+  const m = msg.match(/^[A-Z][a-z]{2}\s+\d+\s+[\d:]+\s+\S+\s+([\w.-]+?)(?:\[\d+\])?:\s/);
+  return m ? m[1] : '';
+}
+
 export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, rangeHours = 24 }) {
   let logql = `{NS_ID="${nsId}", INFRA_ID="${infraId}"`;
   if (nodeId) logql += `, NODE_ID="${nodeId}"`;
@@ -47,10 +66,10 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
     return {
       timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
       message,
-      level: e.labels?.level || parsed.level || '',
+      level: e.labels?.level || parsed.level || deriveLevel(message),
       node_id: e.labels?.NODE_ID || '',
       host: e.labels?.host || parsed.host || '',
-      service: parsed.service || e.labels?.service || '',
+      service: parsed.service || e.labels?.service || deriveService(message),
       source: parsed.source || e.labels?.source || '',
       labels: e.labels || {},
       raw: parsed,
