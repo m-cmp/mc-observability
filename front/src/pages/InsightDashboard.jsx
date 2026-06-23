@@ -141,7 +141,7 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
   // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
   const [infra, setInfra] = useState(infraId || '');
   const [node, setNode] = useState(nodeId || '');
-  const { infras, clusters } = useScopeTargets(nsId);
+  const { infras, clusters, loading: scopeLoading } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
   const [nodesLoading, setNodesLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -191,7 +191,8 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
           <div>
             <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
             <select value={infra} onChange={(e) => { setInfra(e.target.value); setNode(''); }} className="w-full border rounded px-3 py-1.5 text-sm">
-              <option value="">Select Infra / Cluster</option>
+              <option value="">{scopeLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
+              {scopeLoading && <option disabled>Loading infras / clusters…</option>}
               {infras.length > 0 && (
                 <optgroup label="VM Infra">
                   {infras.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
@@ -259,7 +260,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
   const [pInfra, setPInfra] = useState(infraId || '');
   const [pNode, setPNode] = useState(nodeId || '');
-  const { infras, clusters } = useScopeTargets(nsId);
+  const { infras, clusters, loading: scopeLoading } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
   const [nodesLoading, setNodesLoading] = useState(false);
   const isK8s = clusters.some((c) => c.id === pInfra);
@@ -333,7 +334,8 @@ function PredictionTab({ nsId, infraId, nodeId }) {
             <div>
               <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
               <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={pInfra} onChange={(e) => { setPInfra(e.target.value); setPNode(''); }}>
-                <option value="">Select Infra / Cluster</option>
+                <option value="">{scopeLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
+                {scopeLoading && <option disabled>Loading infras / clusters…</option>}
                 {infras.length > 0 && (
                   <optgroup label="VM Infra">
                     {infras.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
