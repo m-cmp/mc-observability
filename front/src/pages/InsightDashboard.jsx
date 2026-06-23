@@ -6,7 +6,7 @@ import {
   getPredictionHistory, runPrediction, getPredictionOptions,
   getServerErrorRecords, getServerErrorRecord, detectServerError, rerunServerErrorAnalysis,
 } from '../api/insight';
-import { getInfraList, getInfra } from '../api/tumblebug';
+import useScopeTargets, { loadScopeNodes } from '../hooks/useScopeTargets';
 import MetricChart from '../components/MetricChart';
 
 const TABS = ['Anomaly Detection', 'Prediction', 'Server Error Analysis'];
@@ -138,26 +138,22 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
 function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
   const [measurement, setMeasurement] = useState('');
   const [interval, setInterval] = useState('');
-  // Scope: pick Infra, then optionally a Node (empty = all nodes).
+  // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
   const [infra, setInfra] = useState(infraId || '');
   const [node, setNode] = useState(nodeId || '');
-  const [infraList, setInfraList] = useState([]);
+  const { infras, clusters } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
   const measurements = options.measurements || [];
   const intervals = options.execution_intervals || [];
-
-  useEffect(() => {
-    if (!nsId) { setInfraList([]); return; }
-    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
-  }, [nsId]);
+  const isK8s = clusters.some((c) => c.id === infra);
 
   useEffect(() => {
     if (!nsId || !infra) { setNodeList([]); return; }
-    getInfra(nsId, infra).then((d) => setNodeList(d.node || [])).catch(() => setNodeList([]));
-  }, [nsId, infra]);
+    loadScopeNodes(nsId, infra, isK8s).then((ns) => setNodeList(ns)).catch(() => setNodeList([]));
+  }, [nsId, infra, isK8s]);
 
   async function submit(e) {
     e.preventDefault();
@@ -186,10 +182,19 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
         {/* Infra selector only when not already fixed by the path */}
         {!infraId && (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Scope — Infra</label>
+            <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
             <select value={infra} onChange={(e) => { setInfra(e.target.value); setNode(''); }} className="w-full border rounded px-3 py-1.5 text-sm">
-              <option value="">Select Infra</option>
-              {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+              <option value="">Select Infra / Cluster</option>
+              {infras.length > 0 && (
+                <optgroup label="VM Infra">
+                  {infras.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+                </optgroup>
+              )}
+              {clusters.length > 0 && (
+                <optgroup label="K8s Cluster">
+                  {clusters.map((c) => <option key={c.id} value={c.id}>{c.name || c.id}</option>)}
+                </optgroup>
+              )}
             </select>
           </div>
         )}
@@ -244,25 +249,21 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   const [loadedMeasurement, setLoadedMeasurement] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
-  // Scope: pick Infra, then optionally a Node (empty = all nodes).
+  // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
   const [pInfra, setPInfra] = useState(infraId || '');
   const [pNode, setPNode] = useState(nodeId || '');
-  const [infraList, setInfraList] = useState([]);
+  const { infras, clusters } = useScopeTargets(nsId);
   const [nodeList, setNodeList] = useState([]);
+  const isK8s = clusters.some((c) => c.id === pInfra);
 
   useEffect(() => {
     getPredictionOptions().then((o) => setOptions(o || {})).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!nsId) { setInfraList([]); return; }
-    getInfraList(nsId).then((l) => setInfraList(Array.isArray(l) ? l : [])).catch(() => setInfraList([]));
-  }, [nsId]);
-
-  useEffect(() => {
     if (!nsId || !pInfra) { setNodeList([]); return; }
-    getInfra(nsId, pInfra).then((d) => setNodeList(d.node || [])).catch(() => setNodeList([]));
-  }, [nsId, pInfra]);
+    loadScopeNodes(nsId, pInfra, isK8s).then((ns) => setNodeList(ns)).catch(() => setNodeList([]));
+  }, [nsId, pInfra, isK8s]);
 
   async function loadHistory() {
     if (!pInfra) { setMsg('Select an Infra first.'); return; }
@@ -316,10 +317,19 @@ function PredictionTab({ nsId, infraId, nodeId }) {
           {/* Infra selector only when not already fixed by the path */}
           {!infraId && (
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Scope — Infra</label>
+              <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
               <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={pInfra} onChange={(e) => { setPInfra(e.target.value); setPNode(''); }}>
-                <option value="">Select Infra</option>
-                {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+                <option value="">Select Infra / Cluster</option>
+                {infras.length > 0 && (
+                  <optgroup label="VM Infra">
+                    {infras.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
+                  </optgroup>
+                )}
+                {clusters.length > 0 && (
+                  <optgroup label="K8s Cluster">
+                    {clusters.map((c) => <option key={c.id} value={c.id}>{c.name || c.id}</option>)}
+                  </optgroup>
+                )}
               </select>
             </div>
           )}
