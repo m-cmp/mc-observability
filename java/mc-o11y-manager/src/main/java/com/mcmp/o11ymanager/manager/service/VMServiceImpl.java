@@ -414,6 +414,7 @@ public class VMServiceImpl implements VMService {
         return status != null
                 && status != VMAgentTaskStatus.IDLE
                 && status != VMAgentTaskStatus.FINISHED
-                && status != VMAgentTaskStatus.FAILED;
+                && status != VMAgentTaskStatus.FAILED
+                && status != VMAgentTaskStatus.NOT_INSTALLED;
     }
 }

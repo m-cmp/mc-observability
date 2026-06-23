@@ -1,5 +1,6 @@
 package com.mcmp.o11ymanager.manager.controller;
 
+import com.mcmp.o11ymanager.manager.dto.vm.ResultDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.facade.VMFacadeService;
@@ -53,6 +54,42 @@ public class VMController {
             @RequestBody @Valid VMRequestDTO dto) {
         vmFacadeService.postVM(nsId, infraId, nodeId, dto);
         return new ResBody<>();
+    }
+
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/monitoring-agent")
+    @Operation(
+            summary = "InstallMonitoringAgent",
+            description = "Install only the monitoring agent (telegraf) on the node")
+    public ResBody<List<ResultDTO>> installMonitoringAgent(
+            @PathVariable String nsId, @PathVariable String infraId, @PathVariable String nodeId) {
+        return new ResBody<>(vmFacadeService.installMonitoringAgent(nsId, infraId, nodeId));
+    }
+
+    @DeleteMapping("/{nsId}/{infraId}/node/{nodeId}/monitoring-agent")
+    @Operation(
+            summary = "UninstallMonitoringAgent",
+            description = "Uninstall only the monitoring agent (telegraf) from the node")
+    public ResBody<List<ResultDTO>> uninstallMonitoringAgent(
+            @PathVariable String nsId, @PathVariable String infraId, @PathVariable String nodeId) {
+        return new ResBody<>(vmFacadeService.uninstallMonitoringAgent(nsId, infraId, nodeId));
+    }
+
+    @PostMapping("/{nsId}/{infraId}/node/{nodeId}/log-agent")
+    @Operation(
+            summary = "InstallLogAgent",
+            description = "Install only the log agent (fluent-bit) on the node")
+    public ResBody<List<ResultDTO>> installLogAgent(
+            @PathVariable String nsId, @PathVariable String infraId, @PathVariable String nodeId) {
+        return new ResBody<>(vmFacadeService.installLogAgent(nsId, infraId, nodeId));
+    }
+
+    @DeleteMapping("/{nsId}/{infraId}/node/{nodeId}/log-agent")
+    @Operation(
+            summary = "UninstallLogAgent",
+            description = "Uninstall only the log agent (fluent-bit) from the node")
+    public ResBody<List<ResultDTO>> uninstallLogAgent(
+            @PathVariable String nsId, @PathVariable String infraId, @PathVariable String nodeId) {
+        return new ResBody<>(vmFacadeService.uninstallLogAgent(nsId, infraId, nodeId));
     }
 
     @PutMapping("/{nsId}/{infraId}/node/{nodeId}")

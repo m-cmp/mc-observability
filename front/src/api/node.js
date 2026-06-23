@@ -23,6 +23,20 @@ export async function uninstallAgent(nsId, infraId, nodeId) {
   return res.data;
 }
 
+// Per-agent install/uninstall (monitoring = telegraf, log = fluent-bit) — managed independently.
+export async function installMonitoringAgent(nsId, infraId, nodeId) {
+  return (await client.post(`/api/o11y/monitoring/${nsId}/${infraId}/node/${nodeId}/monitoring-agent`)).data;
+}
+export async function uninstallMonitoringAgent(nsId, infraId, nodeId) {
+  return (await client.delete(`/api/o11y/monitoring/${nsId}/${infraId}/node/${nodeId}/monitoring-agent`)).data;
+}
+export async function installLogAgent(nsId, infraId, nodeId) {
+  return (await client.post(`/api/o11y/monitoring/${nsId}/${infraId}/node/${nodeId}/log-agent`)).data;
+}
+export async function uninstallLogAgent(nsId, infraId, nodeId) {
+  return (await client.delete(`/api/o11y/monitoring/${nsId}/${infraId}/node/${nodeId}/log-agent`)).data;
+}
+
 export async function getNodeItems(nsId, infraId, nodeId) {
   const res = await client.get(`/api/o11y/monitoring/${nsId}/${infraId}/node/${nodeId}/item`);
   return res.data?.data || [];

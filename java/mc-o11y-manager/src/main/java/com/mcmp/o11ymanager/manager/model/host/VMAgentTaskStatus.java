@@ -12,6 +12,7 @@ public enum VMAgentTaskStatus {
     RESTARTING("Agent restart is in progress."),
     FAILED("There are no agent-related tasks currently in progress."),
     FINISHED("There are no agent-related tasks currently in progress."),
+    NOT_INSTALLED("The agent is not installed on this node."),
     IDLE("There are no agent-related tasks currently in progress.");
 
     private final String message;
