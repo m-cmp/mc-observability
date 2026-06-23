@@ -8,7 +8,9 @@ function deriveLevel(msg) {
   if (!msg) return '';
   const b = msg.match(/^\s*\[(TRACE|DEBUG|INFO|NOTICE|WARN|WARNING|ERROR|FATAL|CRIT|CRITICAL)\]/i);
   if (b) return b[1].toUpperCase();
-  const k = msg.match(/^([IWEF])\d{4}\s/);
+  // klog severity token "<I|W|E|F>MMDD HH:MM:SS" — at the start (container logs) or embedded
+  // after a syslog prefix (e.g. "kubelet[4168]: E0623 05:15:04 …").
+  const k = msg.match(/(?:^|\s)([IWEF])\d{4}\s+\d{2}:\d{2}:\d{2}/);
   if (k) return { I: 'INFO', W: 'WARN', E: 'ERROR', F: 'FATAL' }[k[1]];
   const w = msg.match(/\b(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL|CRITICAL)\b/);
   if (w) return w[1].toUpperCase();
@@ -66,7 +68,7 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
     return {
       timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
       message,
-      level: e.labels?.level || parsed.level || deriveLevel(message),
+      level: e.labels?.level || parsed.level || deriveLevel(message) || 'UNKNOWN',
       node_id: e.labels?.NODE_ID || '',
       host: e.labels?.host || parsed.host || '',
       service: parsed.service || e.labels?.service || deriveService(message),
