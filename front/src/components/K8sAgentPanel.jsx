@@ -16,6 +16,7 @@ export default function K8sAgentPanel({ nsId }) {
   const [loading, setLoading] = useState(true);
   const [statusMap, setStatusMap] = useState({}); // clusterId -> [{node,running}]
   const [logMap, setLogMap] = useState({}); // clusterId -> [{node,running}]
+  const [statusLoaded, setStatusLoaded] = useState({}); // clusterId -> bool (agent status checked)
   const [sel, setSel] = useState(null); // { clusterId, node }
   const [metrics, setMetrics] = useState({ available: [], active: [] });
   const [picked, setPicked] = useState(new Set());
@@ -43,6 +44,7 @@ export default function K8sAgentPanel({ nsId }) {
       const l = await getK8sLogStatus(nsId, clusterId);
       setLogMap((m) => ({ ...m, [clusterId]: Array.isArray(l) ? l : [] }));
     } catch { setLogMap((m) => ({ ...m, [clusterId]: [] })); }
+    setStatusLoaded((m) => ({ ...m, [clusterId]: true }));
   }, [nsId]);
 
   useEffect(() => { clusters.forEach((c) => loadStatus(c.id)); }, [clusters, loadStatus]);
@@ -72,7 +74,7 @@ export default function K8sAgentPanel({ nsId }) {
 
   const logRunning = (cid, node) => (logMap[cid] || []).find((n) => n.node === node)?.running;
 
-  if (loading) return null;
+  if (loading) return <div className="bg-white rounded-lg shadow p-4 text-sm text-gray-400 animate-pulse">Loading K8s clusters…</div>;
   if (clusters.length === 0) return null;
 
   return (
@@ -93,7 +95,7 @@ export default function K8sAgentPanel({ nsId }) {
               <span className="text-xs px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-medium">K8s</span>
               <span className="font-semibold text-sm">{c.name || c.id}</span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${(c.status || '').includes('Active') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{c.status || '-'}</span>
-              <span className="text-xs text-gray-400">{nodes.length} Nodes</span>
+              <span className="text-xs text-gray-400">{statusLoaded[c.id] ? `${nodes.length} Nodes` : 'checking agents…'}</span>
             </div>
             <div className="overflow-auto">
               <table className="w-full text-sm">
@@ -103,7 +105,8 @@ export default function K8sAgentPanel({ nsId }) {
                   <th className="px-4 py-2.5 border-b text-gray-500">Log Agent</th>
                 </tr></thead>
                 <tbody>
-                  {nodes.length === 0 ? <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">No nodes / status unavailable</td></tr>
+                  {!statusLoaded[c.id] ? <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400 animate-pulse">Checking agent status…</td></tr>
+                  : nodes.length === 0 ? <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400">No nodes / status unavailable</td></tr>
                   : nodes.map((n) => {
                     const monOn = n.running;
                     const logOn = logRunning(c.id, n.node);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNsList, getInfraList } from '../api/tumblebug';
+import { getK8sClusters } from '../api/k8sAgent';
 import useParentNamespace from '../hooks/useParentNamespace';
 
 /**
@@ -13,8 +14,9 @@ export default function NamespaceHome() {
   const navigate = useNavigate();
   const parentNs = useParentNamespace(); // namespace from the embedding page (if any)
   const [nsList, setNsList] = useState([]);
-  const [counts, setCounts] = useState({}); // ns -> infra count
+  const [counts, setCounts] = useState({}); // ns -> { infra, k8s }
   const [loading, setLoading] = useState(true);
+  const [counting, setCounting] = useState(false); // infra/cluster counts being aggregated
 
   // If the parent page exposes a selected project, reflect it automatically:
   // resolve the displayed text against the ns list (by id or name) and open it.
@@ -31,22 +33,20 @@ export default function NamespaceHome() {
     getNsList()
       .then(async (list) => {
         const arr = Array.isArray(list) ? list : [];
-        if (alive) setNsList(arr);
-        // best-effort infra counts per namespace
+        if (alive) { setNsList(arr); setLoading(false); setCounting(true); }
+        // best-effort infra + k8s cluster counts per namespace
         const entries = await Promise.all(
           arr.map(async (ns) => {
-            try {
-              const infras = await getInfraList(ns.id);
-              return [ns.id, Array.isArray(infras) ? infras.length : 0];
-            } catch {
-              return [ns.id, null];
-            }
+            const [inf, cl] = await Promise.allSettled([getInfraList(ns.id), getK8sClusters(ns.id)]);
+            return [ns.id, {
+              infra: inf.status === 'fulfilled' && Array.isArray(inf.value) ? inf.value.length : null,
+              k8s: cl.status === 'fulfilled' && Array.isArray(cl.value) ? cl.value.length : null,
+            }];
           })
         );
-        if (alive) setCounts(Object.fromEntries(entries));
+        if (alive) { setCounts(Object.fromEntries(entries)); setCounting(false); }
       })
-      .catch(() => alive && setNsList([]))
-      .finally(() => alive && setLoading(false));
+      .catch(() => { if (alive) { setNsList([]); setLoading(false); setCounting(false); } });
     return () => { alive = false; };
   }, []);
 
@@ -76,7 +76,11 @@ export default function NamespaceHome() {
                 <div className="text-xs text-gray-400 break-all">{ns.id}</div>
               )}
               <div className="mt-2 text-xs text-gray-500">
-                {counts[ns.id] == null ? '—' : `${counts[ns.id]} infra`}
+                {counts[ns.id] == null ? (
+                  counting ? <span className="text-gray-400 animate-pulse">counting…</span> : '—'
+                ) : (
+                  `${counts[ns.id].infra ?? '—'} infra · ${counts[ns.id].k8s ?? '—'} k8s`
+                )}
               </div>
             </button>
           ))}
