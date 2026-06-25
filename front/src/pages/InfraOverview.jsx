@@ -36,6 +36,13 @@ function fmtAgentValue(v, unit) {
   return Number.isInteger(v) ? String(v) : v.toFixed(2);
 }
 
+// A VM/node host is "powered on" when its (cb-tumblebug) status is Running. Anything else
+// (Suspended/Suspending/Terminated/…) means the host is down, so — like stopped K8s nodes —
+// we show a "powered off" state instead of empty charts.
+function isPowered(status) {
+  return String(status || '').toLowerCase().includes('running');
+}
+
 export default function InfraOverview() {
   const { nsId, infraId } = useParams();
   const navigate = useNavigate();
@@ -162,22 +169,45 @@ export default function InfraOverview() {
     })().finally(() => setClustersLoading(false));
   }, [viewTab, nsId]);
 
-  // Group by cluster + NodeGroup, with per-node entries (1-indexed nodeNumber per cb-spider API)
+  // Group by cluster + NodeGroup, with per-node entries (1-indexed nodeNumber per cb-spider API).
+  // When the cluster is powered off, cb-spider returns NodeGroup with Nodes == null but keeps
+  // DesiredNodeSize — synthesize that many "stopped" placeholder nodes so the node count and
+  // per-node status still show (real names aren't retrievable while the cluster is off).
   const k8sGroups = clusters.flatMap((cluster) =>
-    (cluster.NodeGroupList || []).map((ng) => ({
-      key: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}`,
-      cluster,
-      nodeGroup: ng,
-      nodes: (ng.Nodes || []).map((node, idx) => ({
+    (cluster.NodeGroupList || []).map((ng) => {
+      const real = (ng.Nodes || []).map((node, idx) => ({
         id: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}/${idx + 1}`,
         node,
         nodeNumber: idx + 1,
+        powered: true,
+        placeholder: false,
         nodeGroupName: ng.IId?.NameId,
         clusterName: cluster.IId?.NameId,
         clusterStatus: cluster.Status,
         connectionName: cluster.connectionName,
-      })),
-    }))
+      }));
+      const stoppedCount = Math.max(0, (ng.DesiredNodeSize || 0) - real.length);
+      const stopped = Array.from({ length: stoppedCount }, (_, i) => {
+        const num = real.length + i + 1;
+        return {
+          id: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}/off-${num}`,
+          node: null,
+          nodeNumber: num,
+          powered: false,
+          placeholder: true,
+          nodeGroupName: ng.IId?.NameId,
+          clusterName: cluster.IId?.NameId,
+          clusterStatus: cluster.Status,
+          connectionName: cluster.connectionName,
+        };
+      });
+      return {
+        key: `${cluster.connectionName}/${cluster.IId?.NameId}/${ng.IId?.NameId}`,
+        cluster,
+        nodeGroup: ng,
+        nodes: [...real, ...stopped],
+      };
+    })
   );
   const k8sNodes = k8sGroups.flatMap((g) => g.nodes);
 
@@ -207,7 +237,7 @@ export default function InfraOverview() {
     const data = {};
     Promise.allSettled(
       k8sNodes.map(async (n) => {
-        if (!isCspSupported(n.connectionName)) return;
+        if (n.placeholder || !isCspSupported(n.connectionName)) return;
         const m = await getAllClusterNodeMetrics(n.connectionName, n.clusterName, n.nodeGroupName, String(n.nodeNumber), '1');
         data[n.id] = m;
       })
@@ -303,7 +333,7 @@ export default function InfraOverview() {
                   <span className="font-semibold text-gray-700">All</span>
                 </label>
                 {g.nodes.map((n) => {
-                  const nodeName = n.node?.NameId || n.node?.SystemId || `node-${n.nodeNumber}`;
+                  const nodeName = n.node?.NameId || n.node?.SystemId || `${n.nodeGroupName} #${n.nodeNumber}`;
                   return (
                     <label key={n.id} className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
                       <input
@@ -312,7 +342,7 @@ export default function InfraOverview() {
                         checked={!hiddenK8sNodeIds.has(n.id)}
                         onChange={() => toggleK8sNode(n.id)}
                       />
-                      <span className="font-mono text-gray-600">{nodeName}</span>
+                      <span className={`font-mono ${n.placeholder ? 'text-gray-400 italic' : 'text-gray-600'}`}>{nodeName}</span>
                     </label>
                   );
                 })}
@@ -382,21 +412,31 @@ export default function InfraOverview() {
 
 function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart, onSelectChart, onClickChart }) {
   const cspSupported = isCspSupported(info.connectionName);
-  const nodeName = info.node?.NameId || info.node?.SystemId || `node-${info.nodeNumber}`;
+  const nodeName = info.node?.NameId || info.node?.SystemId || `${info.nodeGroupName} #${info.nodeNumber}`;
+  const powered = info.powered !== false;
 
   const header = (
     <div className="flex items-center justify-between px-4 py-2.5 border-b bg-white">
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Node</span>
-        <span className="font-semibold text-sm truncate font-mono">{nodeName}</span>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${info.clusterStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{info.clusterStatus || '-'}</span>
-        {dataSource === 'csp' && cspSupported && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
+        <span className={`font-semibold text-sm truncate font-mono ${info.placeholder ? 'text-gray-400 italic' : ''}`}>{nodeName}</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${powered ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{powered ? 'Running' : 'Stopped'}</span>
+        {dataSource === 'csp' && cspSupported && powered && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
       </div>
       <div className="text-xs text-gray-400 shrink-0">
         <span className="font-mono">#{info.nodeNumber}</span>
       </div>
     </div>
   );
+
+  if (!powered) {
+    return (
+      <div className="bg-white rounded-md border border-gray-200">
+        {header}
+        <div className="p-8 text-center text-sm text-gray-400">Node is powered off — start the cluster to collect metrics.</div>
+      </div>
+    );
+  }
 
   if (dataSource === 'agent') {
     return (
@@ -460,6 +500,17 @@ function NodeCard({ node, nodeMetrics, dataSource, metricsLoading, selectedChart
 
 function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
   const { nsId } = useParams();
+
+  // Powered off → nothing to collect; show the stopped state (same as stopped K8s nodes).
+  if (!isPowered(node.status)) {
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
+        <div className="p-8 text-center text-sm text-gray-400">Node is powered off — start the VM to collect metrics.</div>
+      </div>
+    );
+  }
+
   const gauges = AGENT_METRICS.map((m) => {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
@@ -504,6 +555,15 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
 }
 
 function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
+  if (!isPowered(node.status)) {
+    return (
+      <div className="bg-white rounded-lg shadow">
+        <NodeHeader node={node} showCspBadge={cspSupported} cspAvailable={cspSupported} />
+        <div className="p-8 text-center text-sm text-gray-400">Node is powered off — start the VM to collect metrics.</div>
+      </div>
+    );
+  }
+
   if (!cspSupported) {
     return (
       <div className="bg-white rounded-lg shadow">
