@@ -9,6 +9,7 @@ import com.mcmp.o11ymanager.manager.dto.SpiderMonitoringInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfra;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugInfraList;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugNS;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
@@ -71,6 +72,7 @@ public class CspCacheWarmScheduler {
 
     private final CspCacheProperties properties;
     private final CspCacheService cspCacheService;
+    private final ClusterListCacheService clusterListCacheService;
     private final SpiderClient spiderClient;
     private final TumblebugService tumblebugService;
     private final TumblebugClient tumblebugClient;
@@ -169,6 +171,15 @@ public class CspCacheWarmScheduler {
         AtomicInteger nodeFail = new AtomicInteger();
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+        // Pre-fill the per-connection K8s cluster-list cache so the UI never pays the
+        // multi-second cb-spider discovery on a cold page load.
+        for (String conn : connectionNames) {
+            final String c = conn;
+            futures.add(
+                    CompletableFuture.runAsync(() -> clusterListCacheService.warm(c), executor));
+        }
+
         for (CspCacheProperties.Range r : job.getRanges()) {
             if (r == null || r.getTimeBeforeHour() == null || r.getIntervalMinute() == null) {
                 continue;
@@ -332,6 +343,41 @@ public class CspCacheWarmScheduler {
                         out.add(node.getConnectionName());
                     }
                 }
+            }
+        }
+        // Also collect connections backing K8s clusters (which may have no VMs at all),
+        // so their cluster-list cache gets warmed too.
+        boolean k8sThrottled = false;
+        for (TumblebugNS.NS ns : nsList.getNs()) {
+            if (ns == null || ns.getId() == null) {
+                continue;
+            }
+            if (k8sThrottled) {
+                try {
+                    Thread.sleep(400L);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            k8sThrottled = true;
+            try {
+                TumblebugK8sCluster.ListResponse resp =
+                        tumblebugClient.getK8sClusterList(ns.getId());
+                if (resp != null && resp.getK8sClusterInfo() != null) {
+                    for (TumblebugK8sCluster c : resp.getK8sClusterInfo()) {
+                        if (c.getConnectionName() != null
+                                && !c.getConnectionName().isBlank()
+                                && isCspSupported(c.getConnectionName())) {
+                            out.add(c.getConnectionName());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn(
+                        "[CSP-CACHE-WARM] getK8sClusterList failed ns={}: {}",
+                        ns.getId(),
+                        e.toString());
             }
         }
         connectionDiscoveryCache.put("all", out);
