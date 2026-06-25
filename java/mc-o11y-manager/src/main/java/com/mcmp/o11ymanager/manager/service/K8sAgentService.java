@@ -1,8 +1,10 @@
 package com.mcmp.o11ymanager.manager.service;
 
+import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
+import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
@@ -18,8 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +44,7 @@ public class K8sAgentService {
 
     private final TumblebugClient tumblebugClient;
     private final InfluxDbFacadeService influxDbFacadeService;
+    private final SpiderClient spiderClient;
 
     private static final String JOB_NS = "default";
     private static final String TELEGRAF_VERSION = "1.29.5";
@@ -80,13 +86,38 @@ public class K8sAgentService {
         private String message;
     }
 
+    /** Whether a node host is powered on. Serialized as "RUNNING"/"STOPPED". */
+    public enum PowerState {
+        RUNNING,
+        STOPPED;
+
+        static PowerState of(boolean up) {
+            return up ? RUNNING : STOPPED;
+        }
+    }
+
     @Getter
     @lombok.AllArgsConstructor
     public static class NodeStatus {
         private String node;
-        private boolean installed; // job-created marker / telegraf present
+        private boolean installed; // agent has reported at some point (telegraf present)
         private boolean running; // reported to InfluxDB recently
         private String lastSeen; // ISO timestamp or null
+        private PowerState powerState; // node host power state
+        private boolean placeholder; // synthesized stopped node (real name not retrievable)
+    }
+
+    /** One node discovered for a cluster, with whether its host is currently up. */
+    private static class NodeRef {
+        final String name;
+        final boolean running; // host powered on (present in cb-spider node list or reporting)
+        final boolean placeholder;
+
+        NodeRef(String name, boolean running, boolean placeholder) {
+            this.name = name;
+            this.running = running;
+            this.placeholder = placeholder;
+        }
     }
 
     private KubernetesClient client(String nsId, String clusterId) {
@@ -177,7 +208,12 @@ public class K8sAgentService {
 
     /** Input plugin names currently producing data for the node (recent measurements). */
     public List<String> nodeActiveMetrics(String nsId, String clusterId, String nodeName) {
-        InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+        InfluxDTO influx;
+        try {
+            influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+        } catch (Exception e) {
+            return new ArrayList<>(); // no influx target yet → nothing active
+        }
         List<String> active = new ArrayList<>();
         for (String m : INPUTS.keySet()) {
             try {
@@ -239,14 +275,27 @@ public class K8sAgentService {
 
     /** Per-node log agent status (running = node logs present in Loki recently). */
     public List<NodeStatus> logStatus(String nsId, String clusterId) {
-        String lokiHost = lokiHost(nsId, clusterId);
+        String lokiHost = null;
+        Map<String, String> historical = Map.of();
+        try {
+            lokiHost = lokiHost(nsId, clusterId);
+            InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+            historical = queryLastSeen(influx, clusterId);
+        } catch (Exception e) {
+            log.warn(
+                    "k8s log agent status: loki/influxdb unavailable for {}/{} — listing nodes"
+                            + " without log history",
+                    nsId,
+                    clusterId);
+        }
         List<NodeStatus> out = new ArrayList<>();
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            for (Node node : k8s.nodes().list().getItems()) {
-                String nodeName = node.getMetadata().getName();
-                boolean running = lokiHasRecent(lokiHost, nsId, clusterId, nodeName);
-                out.add(new NodeStatus(nodeName, running, running, null));
-            }
+        for (NodeRef ref : discoverNodes(nsId, clusterId, historical)) {
+            boolean logging =
+                    lokiHost != null
+                            && !ref.placeholder
+                            && lokiHasRecent(lokiHost, nsId, clusterId, ref.name);
+            PowerState power = PowerState.of(ref.running || logging);
+            out.add(new NodeStatus(ref.name, logging, logging, null, power, ref.placeholder));
         }
         return out;
     }
@@ -392,18 +441,109 @@ public class K8sAgentService {
     }
 
     public List<NodeStatus> status(String nsId, String clusterId) {
-        InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
-        Map<String, String> lastSeen = queryLastSeen(influx, clusterId);
+        // InfluxDB may be unresolvable (e.g. a cluster that never had an agent / no monitoring
+        // target). That just means no agent history — still list the nodes from cb-spider.
+        Map<String, String> lastSeen = Map.of();
+        try {
+            InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+            lastSeen = queryLastSeen(influx, clusterId);
+        } catch (Exception e) {
+            log.warn(
+                    "k8s agent status: influxdb unavailable for {}/{} — listing nodes without"
+                            + " agent history",
+                    nsId,
+                    clusterId);
+        }
         List<NodeStatus> out = new ArrayList<>();
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            for (Node node : k8s.nodes().list().getItems()) {
-                String nodeName = node.getMetadata().getName();
-                String ts = lastSeen.get(nodeName);
-                boolean running = ts != null && isFresh(ts);
-                out.add(new NodeStatus(nodeName, running, running, ts));
-            }
+        for (NodeRef ref : discoverNodes(nsId, clusterId, lastSeen)) {
+            String ts = ref.placeholder ? null : lastSeen.get(ref.name);
+            boolean reporting = ts != null && isFresh(ts);
+            // host is up if cb-spider lists it OR it is actively reporting metrics
+            PowerState power = PowerState.of(ref.running || reporting);
+            // "installed" = the agent has reported at least once (so it was installed on this node)
+            boolean installed = ts != null;
+            out.add(new NodeStatus(ref.name, installed, reporting, ts, power, ref.placeholder));
         }
         return out;
+    }
+
+    /**
+     * Enumerates a cluster's nodes from cb-spider node groups so the node list survives the cluster
+     * being powered off (the kubeconfig/k8s API is unreachable then, and cb-spider returns node
+     * groups with {@code Nodes == null}).
+     *
+     * <p>When the cluster is up, cb-spider's live node list is authoritative. When it is down,
+     * nodes are recovered by their real names from InfluxDB history ({@code historyLastSeen}: node
+     * -> last-seen ISO time), keeping only the {@code DesiredNodeSize} most-recently-seen ones (so
+     * old names left over from a previous cluster generation don't pile up). Any shortfall against
+     * {@code DesiredNodeSize} is filled with powered-off placeholder rows.
+     */
+    private List<NodeRef> discoverNodes(
+            String nsId, String clusterId, Map<String, String> historyLastSeen) {
+        Set<String> running = new LinkedHashSet<>();
+        List<String> ngNames = new ArrayList<>();
+        int desired = 0;
+        try {
+            TumblebugK8sCluster cluster = tumblebugClient.getK8sCluster(nsId, clusterId);
+            String conn = cluster == null ? null : cluster.getConnectionName();
+            String cspName = cluster == null ? null : cluster.getCspResourceName();
+            if (conn != null && cspName != null) {
+                SpiderClusterInfo info = spiderClient.getCluster(cspName, conn);
+                if (info != null && info.getNodeGroupList() != null) {
+                    for (SpiderClusterInfo.NodeGroup ng : info.getNodeGroupList()) {
+                        if (ng.getIId() != null && ng.getIId().getNameId() != null) {
+                            ngNames.add(ng.getIId().getNameId());
+                        }
+                        if (ng.getNodes() != null) {
+                            for (SpiderClusterInfo.IId n : ng.getNodes()) {
+                                if (n.getNameId() != null) {
+                                    running.add(n.getNameId());
+                                }
+                            }
+                        }
+                        if (ng.getDesiredNodeSize() != null) {
+                            desired += ng.getDesiredNodeSize();
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("k8s node discovery via cb-spider failed cluster={}/{}", nsId, clusterId, e);
+        }
+
+        LinkedHashMap<String, NodeRef> ordered = new LinkedHashMap<>();
+        if (!running.isEmpty()) {
+            // Cluster is up: cb-spider's node list is authoritative (ignore stale history names).
+            for (String n : running) {
+                ordered.put(n, new NodeRef(n, true, false));
+            }
+        } else {
+            // Cluster is down: recover names from history, most-recently-seen first, capped to the
+            // desired node count so dead nodes from an earlier generation don't accumulate.
+            List<String> recent = new ArrayList<>(historyLastSeen.keySet());
+            recent.sort(
+                    (a, b) ->
+                            nullSafe(historyLastSeen.get(b))
+                                    .compareTo(nullSafe(historyLastSeen.get(a))));
+            int limit = desired > 0 ? Math.min(desired, recent.size()) : recent.size();
+            for (int i = 0; i < limit; i++) {
+                ordered.put(recent.get(i), new NodeRef(recent.get(i), false, false));
+            }
+        }
+        // Fill the remaining (desired - known) nodes as powered-off placeholders.
+        String prefix = ngNames.size() == 1 ? ngNames.get(0) : "node";
+        int idx = 1;
+        while (ordered.size() < desired) {
+            String ph = prefix + " #" + idx++;
+            if (!ordered.containsKey(ph)) {
+                ordered.put(ph, new NodeRef(ph, false, true));
+            }
+        }
+        return new ArrayList<>(ordered.values());
+    }
+
+    private static String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 
     // --- Job execution ---------------------------------------------------
