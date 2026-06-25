@@ -124,7 +124,8 @@ export default function K8sAgentMonitor({ nsId }) {
     <>
       {clusters.map((c) => {
         const statuses = nodesMap[c.id] || [];
-        const installed = statuses.filter((n) => n.running);
+        const reporting = statuses.filter((n) => n.running);
+        const idle = statuses.filter((n) => !n.running); // off or agent not reporting
         const loaded = statusLoaded[c.id];
         return (
           <div key={c.id} className="bg-white rounded-lg shadow">
@@ -134,24 +135,60 @@ export default function K8sAgentMonitor({ nsId }) {
               <span className="font-semibold text-sm truncate">{c.name || c.id}</span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${(c.status || '').includes('Active') ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{c.status || '-'}</span>
               <span className="text-xs text-gray-400 ml-auto">
-                {!loaded ? 'checking agents…' : `${installed.length} agent node(s)`}
+                {!loaded ? 'checking agents…' : `${reporting.length}/${statuses.length} node(s) reporting`}
               </span>
             </div>
             <div className="p-3 space-y-3">
               {!loaded
                 ? <div className="p-6 text-center text-xs text-gray-400 animate-pulse">Checking agent status…</div>
-                : installed.length === 0
-                ? <div className="p-6 text-center text-xs text-gray-400">No host agent installed — install from the Config menu.</div>
-                : installed.map((s) => (
-                  <NodeCard key={s.node} node={s.node} metrics={data[`${c.id}/${s.node}`] || {}}
-                    selectedChart={selectedChart} onSelectChart={setSelectedChart}
-                    onOpen={() => openNode(c.id, s.node)} />
-                ))}
+                : statuses.length === 0
+                ? <div className="p-6 text-center text-xs text-gray-400">No nodes found for this cluster.</div>
+                : (
+                  <>
+                    {reporting.map((s) => (
+                      <NodeCard key={s.node} node={s.node} metrics={data[`${c.id}/${s.node}`] || {}}
+                        selectedChart={selectedChart} onSelectChart={setSelectedChart}
+                        onOpen={() => openNode(c.id, s.node)} />
+                    ))}
+                    {idle.length > 0 && (
+                      <div className="rounded-lg border divide-y">
+                        {idle.map((s) => <NodeStatusRow key={s.node} s={s} />)}
+                      </div>
+                    )}
+                  </>
+                )}
             </div>
           </div>
         );
       })}
     </>
+  );
+}
+
+function fmtLastSeen(iso) {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return null;
+  const d = new Date(t);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// Compact row for nodes that have no live metrics (powered off, or agent not reporting).
+function NodeStatusRow({ s }) {
+  const powered = String(s.powerState || '').toUpperCase() === 'RUNNING';
+  const last = fmtLastSeen(s.lastSeen);
+  let agentText, agentCls;
+  if (s.running) { agentText = 'reporting'; agentCls = 'text-green-600'; }
+  else if (s.installed) { agentText = last ? `agent installed · last seen ${last}` : 'agent installed'; agentCls = 'text-amber-600'; }
+  else { agentText = 'agent not installed'; agentCls = 'text-gray-400'; }
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5">
+      <span className={`font-mono text-sm ${s.placeholder ? 'text-gray-400 italic' : 'text-gray-700'}`}>{s.node}</span>
+      <span className={`text-[11px] px-2 py-0.5 rounded-full ${powered ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+        {powered ? 'Running' : 'Stopped'}
+      </span>
+      <span className={`text-xs ml-auto ${agentCls}`}>{agentText}</span>
+    </div>
   );
 }
 

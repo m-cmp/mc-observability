@@ -1,19 +1,15 @@
 package com.mcmp.o11ymanager.manager.controller;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
-import com.mcmp.o11ymanager.manager.dto.SpiderClusterList;
 import com.mcmp.o11ymanager.manager.dto.SpiderMonitoringInfo;
 import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
+import com.mcmp.o11ymanager.manager.service.cache.ClusterListCacheService;
 import com.mcmp.o11ymanager.manager.service.cache.CspCacheKey;
 import com.mcmp.o11ymanager.manager.service.cache.CspCacheService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +34,7 @@ public class CspMonitoringController {
 
     private final SpiderClient spiderClient;
     private final CspCacheService cspCacheService;
-
-    /** Short-TTL cache for the (expensive) per-connection K8s cluster discovery + detail. */
-    private final Cache<String, List<SpiderClusterInfo>> clusterListCache =
-            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(30)).maximumSize(200).build();
+    private final ClusterListCacheService clusterListCacheService;
 
     @GetMapping("/clusters")
     @Operation(
@@ -51,22 +44,7 @@ public class CspMonitoringController {
                             + " avoid hitting cb-spider on every page load.")
     public List<SpiderClusterInfo> getClusters(
             @RequestParam("ConnectionName") String connectionName) {
-        return clusterListCache.get(
-                connectionName,
-                conn -> {
-                    List<SpiderClusterInfo> out = new ArrayList<>();
-                    SpiderClusterList list = spiderClient.listClusters(conn);
-                    if (list != null && list.getCluster() != null) {
-                        for (SpiderClusterInfo c : list.getCluster()) {
-                            try {
-                                out.add(spiderClient.getCluster(c.getIId().getNameId(), conn));
-                            } catch (Exception e) {
-                                out.add(c);
-                            }
-                        }
-                    }
-                    return out;
-                });
+        return clusterListCacheService.get(connectionName);
     }
 
     @GetMapping("/node/{nodeName}/{measurement}")

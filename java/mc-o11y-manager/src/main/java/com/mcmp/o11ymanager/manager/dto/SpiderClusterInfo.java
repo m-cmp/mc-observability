@@ -37,6 +37,13 @@ public class SpiderClusterInfo {
 
         @JsonProperty("Nodes")
         private List<IId> Nodes;
+
+        /**
+         * Desired node count. Present even when the cluster is powered off (in which case {@link
+         * #Nodes} is null), so it lets callers know how many nodes the (stopped) cluster has.
+         */
+        @JsonProperty("DesiredNodeSize")
+        private Integer DesiredNodeSize;
     }
 
     @JsonProperty("IId")
