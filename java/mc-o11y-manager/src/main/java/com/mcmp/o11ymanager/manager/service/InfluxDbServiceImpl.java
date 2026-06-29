@@ -372,10 +372,14 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         String q = InfluxQl.buildQuery(req, rp);
 
         if (!existsVmInInflux(s, nsId, infraId, nodeId)) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Invalid nodeId='%s': does not exist for nsId='%s', infraId='%s'",
-                            nodeId, nsId, infraId));
+            // No series for this node yet — the agent isn't installed or hasn't reported. Return
+            // empty (not a 400) so the UI renders a graceful "no data" state instead of an error.
+            log.debug(
+                    "No InfluxDB series for ns='{}', infra='{}', node='{}'; returning empty metrics",
+                    nsId,
+                    infraId,
+                    nodeId);
+            return List.of();
         }
 
         List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());

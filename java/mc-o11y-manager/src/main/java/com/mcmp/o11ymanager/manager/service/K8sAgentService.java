@@ -3,6 +3,7 @@ package com.mcmp.o11ymanager.manager.service;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
+import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sToken;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
@@ -10,6 +11,7 @@ import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import java.net.URI;
@@ -129,8 +131,63 @@ public class K8sAgentService {
             throw new IllegalStateException(
                     "kubeconfig not available for cluster " + nsId + "/" + clusterId);
         }
-        Config cfg = Config.fromKubeconfig(cluster.getAccessInfo().getKubeconfig());
+        String kubeconfig = cluster.getAccessInfo().getKubeconfig();
+
+        // cb-spider hands out exec-plugin kubeconfigs for AWS EKS / GCP GKE / NCP NKS that shell
+        // out to a cloud CLI (or cb-spider's local credential via 0.0.0.0:1024) to mint a token.
+        // Neither the CLI nor that credential exists in this container, and fabric8 cannot even
+        // parse the exec stanza (YAML "mapping values are not allowed here"). Mirror
+        // cm-grasshopper:
+        // pull a short-lived bearer token from cb-tumblebug's /token endpoint and build the client
+        // from the API server + CA + token, dropping the exec stanza entirely. Self-contained
+        // kubeconfigs (e.g. Azure AKS) carry their own credentials and are used as-is.
+        if (kubeconfig.contains("exec:")) {
+            String server = extractKubeconfigField(kubeconfig, "server");
+            if (server == null) {
+                throw new IllegalStateException(
+                        "could not extract API server from kubeconfig for "
+                                + nsId
+                                + "/"
+                                + clusterId);
+            }
+            String caData = extractKubeconfigField(kubeconfig, "certificate-authority-data");
+            String token = resolveClusterToken(nsId, clusterId);
+            ConfigBuilder b = new ConfigBuilder().withMasterUrl(server).withOauthToken(token);
+            if (caData != null && !caData.isBlank()) {
+                b.withCaCertData(caData);
+            } else {
+                b.withTrustCerts(true);
+            }
+            return new KubernetesClientBuilder().withConfig(b.build()).build();
+        }
+
+        Config cfg = Config.fromKubeconfig(kubeconfig);
         return new KubernetesClientBuilder().withConfig(cfg).build();
+    }
+
+    /** Resolves a short-lived bearer token for an exec-plugin cluster via cb-tumblebug. */
+    private String resolveClusterToken(String nsId, String clusterId) {
+        TumblebugK8sToken t = tumblebugClient.getK8sClusterToken(nsId, clusterId);
+        String token = t == null ? null : t.getToken();
+        if (token == null || token.isBlank()) {
+            throw new IllegalStateException(
+                    "cb-tumblebug returned no token for cluster " + nsId + "/" + clusterId);
+        }
+        return token;
+    }
+
+    /**
+     * Pulls a single scalar field (e.g. {@code server}, {@code certificate-authority-data}) out of
+     * a kubeconfig by line, without YAML-parsing the exec-plugin user section that fabric8 rejects.
+     */
+    private static String extractKubeconfigField(String kubeconfig, String key) {
+        java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile(
+                                "(?m)^\\s*"
+                                        + java.util.regex.Pattern.quote(key)
+                                        + ":\\s*(\\S+)\\s*$")
+                        .matcher(kubeconfig);
+        return m.find() ? m.group(1) : null;
     }
 
     public List<NodeResult> install(String nsId, String clusterId) {
