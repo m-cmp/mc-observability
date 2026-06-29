@@ -72,9 +72,7 @@ public class K8sAgentService {
 
     private static final List<String> DEFAULT_METRICS = new ArrayList<>(INPUTS.keySet());
 
-    /** Log agent (fluent-bit) runs as a podman container on the node host, shipping to Loki. */
-    private static final String FLUENT_BIT_IMAGE = "docker.io/fluent/fluent-bit:3.2.4";
-
+    /** Log agent: Fluent Bit installed as a host binary (official OS package), shipping to Loki. */
     private static final int LOKI_PORT = 3100;
 
     private final HttpClient http =
@@ -434,12 +432,17 @@ public class K8sAgentService {
 
     private String logInstallScript(
             String nsId, String clusterId, String nodeName, String lokiHost) {
+        // Install Fluent Bit as a host binary via its official OS package (the install.sh detects
+        // apt/dnf/yum and adds the right repo). This works across Ubuntu and Amazon Linux 2023 —
+        // unlike the previous podman approach, since EKS AL2023 nodes have no podman in their
+        // repos.
         return """
                 set -e
-                export DEBIAN_FRONTEND=noninteractive
-                if ! command -v podman >/dev/null 2>&1; then apt-get update -qq && apt-get install -y -qq podman; fi
-                PODMAN=$(command -v podman)
-                "$PODMAN" pull %s
+                if [ ! -x /opt/fluent-bit/bin/fluent-bit ] && ! command -v fluent-bit >/dev/null 2>&1; then
+                  curl -fsSL https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh -o /tmp/cmp-fbi.sh
+                  sh /tmp/cmp-fbi.sh
+                fi
+                FB=$(command -v fluent-bit || echo /opt/fluent-bit/bin/fluent-bit)
                 mkdir -p /etc/cmp-fluent-bit
                 cat > /etc/cmp-fluent-bit/fluent-bit.conf <<'CONF'
                 [SERVICE]
@@ -448,7 +451,7 @@ public class K8sAgentService {
                 [INPUT]
                     name tail
                     tag k8slog
-                    path /var/log/syslog,/var/log/containers/*.log
+                    path /var/log/messages,/var/log/syslog,/var/log/containers/*.log
                     Read_from_Head false
                 [OUTPUT]
                     name loki
@@ -457,16 +460,13 @@ public class K8sAgentService {
                     port %d
                     labels NS_ID=%s, INFRA_ID=%s, NODE_ID=%s
                 CONF
-                "$PODMAN" rm -f cmp-fluent-bit >/dev/null 2>&1 || true
                 cat > /etc/systemd/system/cmp-fluent-bit.service <<SVC
                 [Unit]
                 Description=CMP Fluent Bit (k8s node host log agent)
                 After=network-online.target
                 Wants=network-online.target
                 [Service]
-                ExecStartPre=-$PODMAN rm -f cmp-fluent-bit
-                ExecStart=$PODMAN run --rm --name cmp-fluent-bit --network=host -v /var/log:/var/log:ro -v /etc/cmp-fluent-bit:/etc/cmp-fluent-bit:ro %s -c /etc/cmp-fluent-bit/fluent-bit.conf
-                ExecStop=$PODMAN stop -t 10 cmp-fluent-bit
+                ExecStart=$FB -c /etc/cmp-fluent-bit/fluent-bit.conf
                 Restart=always
                 RestartSec=5
                 [Install]
@@ -475,21 +475,12 @@ public class K8sAgentService {
                 systemctl daemon-reload
                 systemctl enable --now cmp-fluent-bit
                 """
-                .formatted(
-                        FLUENT_BIT_IMAGE,
-                        lokiHost,
-                        LOKI_PORT,
-                        nsId,
-                        clusterId,
-                        nodeName,
-                        FLUENT_BIT_IMAGE);
+                .formatted(lokiHost, LOKI_PORT, nsId, clusterId, nodeName);
     }
 
     private String logUninstallScript() {
         return """
                 systemctl disable --now cmp-fluent-bit 2>/dev/null || true
-                PODMAN=$(command -v podman)
-                [ -n "$PODMAN" ] && "$PODMAN" rm -f cmp-fluent-bit 2>/dev/null || true
                 rm -f /etc/systemd/system/cmp-fluent-bit.service
                 rm -rf /etc/cmp-fluent-bit
                 systemctl daemon-reload 2>/dev/null || true
