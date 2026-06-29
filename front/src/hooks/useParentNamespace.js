@@ -87,6 +87,10 @@ export default function useParentNamespace() {
     } catch {
       sel = null; // cross-origin: cannot attach listener, postMessage covers it
     }
+    // Read once immediately: the parent's on-load postMessage may have already landed in
+    // window.__parentNs (via main.jsx) before this effect attached its listener, so don't wait
+    // for the first poll tick — pick it up now for an instant switch.
+    update();
     const timer = setInterval(update, 1500);
 
     return () => {
