@@ -7,6 +7,7 @@ import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.service.cache.ClusterListCacheService;
 import com.mcmp.o11ymanager.manager.service.cache.CspCacheKey;
 import com.mcmp.o11ymanager.manager.service.cache.CspCacheService;
+import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -83,7 +84,7 @@ public class CspMonitoringController {
                                 nodeName,
                                 measurement,
                                 e.toString());
-                        return emptyData(measurement);
+                        return emptyData(measurement, isUnsupported(e));
                     }
                 });
     }
@@ -136,20 +137,49 @@ public class CspMonitoringController {
                                 nodeNumber,
                                 measurement,
                                 e.toString());
-                        return emptyData(measurement);
+                        return emptyData(measurement, isUnsupported(e));
                     }
                 });
     }
 
     /**
-     * An empty series flagged unsupported, used when cb-spider can't monitor the resource/metric.
+     * An empty series. {@code unsupported=true} only when cb-spider genuinely can't serve the
+     * metric/resource (a 4xx — not found / invalid metric); a transient failure (5xx, timeout,
+     * rate-limit) leaves it false so the UI shows a retryable "no data" rather than "not
+     * supported".
      */
-    private static SpiderMonitoringInfo.Data emptyData(String measurement) {
+    private static SpiderMonitoringInfo.Data emptyData(String measurement, boolean unsupported) {
         SpiderMonitoringInfo.Data d = new SpiderMonitoringInfo.Data();
         d.setMetricName(measurement);
         d.setTimestampValues(java.util.List.of());
-        d.setUnsupported(true);
+        d.setUnsupported(unsupported);
         return d;
+    }
+
+    /**
+     * True when the cb-spider error means the metric/resource is genuinely unsupported (HTTP 4xx,
+     * or a message like "not found" / "invalid metric"), as opposed to a transient/server error.
+     */
+    private static boolean isUnsupported(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            // Check the message first — cb-spider returns 500 with "Invalid Metric Type" for an
+            // unsupported metric (e.g. AWS EKS cluster nodes), which is a genuine "unsupported",
+            // not a transient server error.
+            String m = t.getMessage();
+            if (m != null) {
+                String lm = m.toLowerCase();
+                if (lm.contains("not found")
+                        || lm.contains("invalid metric")
+                        || lm.contains("not supported")
+                        || lm.contains("unsupported")) {
+                    return true;
+                }
+            }
+            if (t instanceof FeignException fe && fe.status() >= 400 && fe.status() < 500) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @GetMapping("/cache/stats")
