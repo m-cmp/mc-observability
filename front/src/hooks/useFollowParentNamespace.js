@@ -40,7 +40,8 @@ export default function useFollowParentNamespace() {
         const match = (list || []).find((n) => n.id === parentNs || n.name === parentNs);
         const targetNs = match ? match.id : parentNs;
         if (targetNs && targetNs !== currentNs) {
-          navigate(`${base}/${section ? section + '/' : ''}${targetNs}`, { replace: true });
+          // Preserve the current section; at the namespace root (no section) land on Monitoring.
+          navigate(`${base}/${section || 'monitoring'}/${targetNs}`, { replace: true });
         }
       })
       .catch(() => {});
