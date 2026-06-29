@@ -38,6 +38,7 @@ export async function getAllCspMetrics(connectionName, cspResourceName, timeBefo
         ...m,
         metricName,
         metricUnit,
+        unsupported: data.unsupported === true,
         series: [{ name: metricName, data: points }],
       };
     })

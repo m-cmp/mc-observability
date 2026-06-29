@@ -43,6 +43,7 @@ export async function getAllClusterNodeMetrics(connectionName, clusterName, node
         ...m,
         metricName,
         metricUnit,
+        unsupported: data.unsupported === true,
         series: [{ name: metricName, data: points }],
       };
     })

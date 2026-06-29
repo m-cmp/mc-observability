@@ -221,7 +221,7 @@ export default function MonitoringConfig() {
         <div className="p-4 flex items-center gap-4">
           <span className="text-sm text-gray-600">{infraId ? 'Workload:' : 'Namespace:'}</span>
           <span className="font-medium">{infraId || nsId}</span>
-          <button onClick={loadNodes} className="ml-auto text-sm text-gray-500 hover:text-gray-700">Refresh</button>
+          <button onClick={() => loadNodes()} className="ml-auto text-sm text-gray-500 hover:text-gray-700">Refresh</button>
         </div>
       </div>
 

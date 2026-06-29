@@ -516,7 +516,9 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP API data...</div>
-          ) : activeData?.series ? (
+          ) : activeData?.unsupported ? (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">Not supported for this resource</div>
+          ) : activeData?.series?.[0]?.data?.length ? (
             <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
           ) : (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">No data</div>
@@ -634,7 +636,9 @@ function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectCha
         <div className="flex-1 px-2 py-1 min-w-0 cursor-pointer" onClick={onClickChart}>
           {metricsLoading ? (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm animate-pulse">Loading CSP API data...</div>
-          ) : activeData?.series ? (
+          ) : activeData?.unsupported ? (
+            <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">Not supported for this resource</div>
+          ) : activeData?.series?.[0]?.data?.length ? (
             <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={220} />
           ) : (
             <div className="flex items-center justify-center h-[220px] text-gray-400 text-sm">No data</div>

@@ -438,7 +438,9 @@ export default function MonitoringDashboard() {
             </div>
             {(cspLoading || !cspMetrics) ? (
               <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading CSP API data...</div>
-            ) : cspMetrics[selectedCspMetric]?.series ? (
+            ) : cspMetrics[selectedCspMetric]?.unsupported ? (
+              <div className="flex items-center justify-center h-[300px] text-gray-400">Not supported for this resource</div>
+            ) : cspMetrics[selectedCspMetric]?.series?.[0]?.data?.length ? (
               <div className="bg-white rounded border p-3">
                 <MetricChart
                   title={`${cspMetrics[selectedCspMetric].metricName} (${cspMetrics[selectedCspMetric].metricUnit})`}

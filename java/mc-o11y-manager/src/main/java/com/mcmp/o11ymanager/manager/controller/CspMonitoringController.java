@@ -141,11 +141,14 @@ public class CspMonitoringController {
                 });
     }
 
-    /** An empty monitoring series, used when cb-spider has no data for the resource/metric. */
+    /**
+     * An empty series flagged unsupported, used when cb-spider can't monitor the resource/metric.
+     */
     private static SpiderMonitoringInfo.Data emptyData(String measurement) {
         SpiderMonitoringInfo.Data d = new SpiderMonitoringInfo.Data();
         d.setMetricName(measurement);
         d.setTimestampValues(java.util.List.of());
+        d.setUnsupported(true);
         return d;
     }
 
