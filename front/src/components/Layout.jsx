@@ -97,11 +97,14 @@ export default function Layout() {
         )}
 
         <div className="ml-auto flex items-center gap-1">
-          {/* Infra selector — shown only when an infra is NOT yet in the path */}
-          {nsId && !infraId && infraList.length > 0 && (
-            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value=""
-              onChange={(e) => { if (e.target.value) navigate(`${base}/${currentSection}/${nsId}/${e.target.value}`); }}>
-              <option value="">Infra</option>
+          {/* Infra selector — kept visible even after an infra is selected so the user can switch
+              to another infra (selecting the blank option returns to the namespace level). */}
+          {nsId && infraList.length > 0 && (
+            <select className="border border-gray-200 rounded px-2 py-1 text-xs" value={infraId || ''}
+              onChange={(e) => navigate(e.target.value
+                ? `${base}/${currentSection}/${nsId}/${e.target.value}`
+                : `${base}/${currentSection}/${nsId}`)}>
+              <option value="">All Infra</option>
               {infraList.map((i) => <option key={i.id} value={i.id}>{i.name || i.id}</option>)}
             </select>
           )}
