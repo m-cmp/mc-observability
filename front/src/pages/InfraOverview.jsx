@@ -65,14 +65,20 @@ export default function InfraOverview() {
   const [k8sNodeData, setK8sNodeData] = useState({});
   const [k8sNodeMetricsLoading, setK8sNodeMetricsLoading] = useState(false);
   const [hiddenK8sNodeIds, setHiddenK8sNodeIds] = useState(new Set()); // empty = all visible
+  // Distinguishes "backend unreachable" from "genuinely empty" so a failed fetch
+  // surfaces an error + Retry instead of a misleading "No data" / "No nodes" state.
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const retry = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     if (!nsId) return;
     loadData();
-  }, [nsId, infraId, viewTab]);
+  }, [nsId, infraId, viewTab, reloadKey]);
 
   async function loadData() {
     setLoading(true);
+    setError(null);
     try {
       if (viewTab === 'k8s') {
         // K8s: load all Infras to find connections
@@ -101,7 +107,11 @@ export default function InfraOverview() {
           setMetricsLoading(false);
         }
       }
-    } catch { setNodes([]); setAllInfras([]); }
+    } catch (e) {
+      // getInfraList (the primary discovery call) threw → backend unreachable, not empty.
+      setNodes([]); setAllInfras([]);
+      setError(e?.message || 'Failed to load data from the monitoring backend.');
+    }
     setLoading(false);
   }
 
@@ -149,15 +159,17 @@ export default function InfraOverview() {
   useEffect(() => {
     if (viewTab !== 'k8s') return;
     setClustersLoading(true);
+    setError(null);
     (async () => {
       // Get all Infras in namespace to find all connections
       let infras = [];
-      try { infras = await getInfraList(nsId); } catch {}
+      let discoveryFailed = false;
+      try { infras = await getInfraList(nsId); } catch { discoveryFailed = true; }
       setAllInfras(infras);
       // Connections to search: from the namespace's K8s clusters (Tumblebug) primarily —
       // VMs may not exist — unioned with any VM-derived connections.
       let tbConns = [];
-      try { tbConns = (await getK8sClusters(nsId)).map((c) => c.connectionName).filter(Boolean); } catch {}
+      try { tbConns = (await getK8sClusters(nsId)).map((c) => c.connectionName).filter(Boolean); } catch { discoveryFailed = true; }
       const vmConns = infras.flatMap(i => i.node || []).map(n => n.connectionName).filter(Boolean);
       const connNames = [...new Set([...tbConns, ...vmConns])];
       // Search clusters across all connections (cached, single call per connection).
@@ -165,9 +177,17 @@ export default function InfraOverview() {
         const detailed = await getClustersDetailed(conn);
         return detailed.map(c => ({ ...c, connectionName: conn }));
       }));
-      setClusters(results.filter(r => r.status === 'fulfilled').flatMap(r => r.value));
+      const ok = results.filter(r => r.status === 'fulfilled');
+      // Surface a connection error (vs. a genuinely empty NS) when discovery calls
+      // threw and yielded nothing, or when every cluster-detail fetch failed.
+      if (discoveryFailed && connNames.length === 0) {
+        setError('Failed to load K8s clusters from the monitoring backend.');
+      } else if (connNames.length > 0 && ok.length === 0) {
+        setError('Failed to load K8s cluster details from the monitoring backend.');
+      }
+      setClusters(ok.flatMap(r => r.value));
     })().finally(() => setClustersLoading(false));
-  }, [viewTab, nsId]);
+  }, [viewTab, nsId, reloadKey]);
 
   // Group by cluster + NodeGroup, with per-node entries (1-indexed nodeNumber per cb-spider API).
   // When the cluster is powered off, cb-spider returns NodeGroup with Nodes == null but keeps
@@ -287,6 +307,23 @@ export default function InfraOverview() {
         </div>
       </div>
 
+      {/* Backend unreachable → show an explicit error + Retry instead of a silent empty state. */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between gap-3">
+          <div className="flex items-start gap-2 text-sm text-red-700 min-w-0">
+            <span aria-hidden className="mt-0.5">⚠</span>
+            <span className="min-w-0">
+              Couldn't reach the monitoring backend, so data may be missing or incomplete.
+              <span className="block text-xs text-red-500 mt-0.5 break-words">{error}</span>
+            </span>
+          </div>
+          <button onClick={retry}
+            className="text-xs px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 shrink-0">
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* K8s Tab */}
       {/* K8s tab + Agent source → host telegraf metrics (InfluxDB, by clusterId/nodeName) */}
       {viewTab === 'k8s' && dataSource === 'agent' && <K8sAgentMonitor nsId={nsId} />}
@@ -296,7 +333,7 @@ export default function InfraOverview() {
         clustersLoading ? (
           <div className="text-sm text-gray-400 animate-pulse p-4">Loading clusters...</div>
         ) : k8sNodes.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s nodes found</div>
+          error ? null : <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s nodes found</div>
         ) : k8sGroups.map((g) => {
           const ids = g.nodes.map((n) => n.id);
           const allVisible = ids.length > 0 && ids.every((id) => !hiddenK8sNodeIds.has(id));
@@ -376,6 +413,7 @@ export default function InfraOverview() {
       {viewTab === 'node' && (() => {
         const list = infraId ? allInfras.filter(i => i.id === infraId || i.name === infraId) : allInfras;
         if (list.length === 0) {
+          if (error) return null;
           return <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No nodes in this namespace</div>;
         }
         return list.map((infra) => (
