@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNsList, getInfraList } from '../api/tumblebug';
 import { getK8sClusters } from '../api/k8sAgent';
@@ -17,14 +17,18 @@ export default function NamespaceHome() {
   const [counts, setCounts] = useState({}); // ns -> { infra, k8s }
   const [loading, setLoading] = useState(true);
   const [counting, setCounting] = useState(false); // infra/cluster counts being aggregated
+  // Kept current so the async count loop can bail the moment a parent namespace arrives
+  // (we navigate away then, so counting every namespace would just hammer cb-tumblebug → 429).
+  const parentNsRef = useRef(parentNs);
+  parentNsRef.current = parentNs;
 
-  // If the parent page exposes a selected project, reflect it automatically:
-  // resolve the displayed text against the ns list (by id or name) and open it.
-  // When it can't be read, parentNs is '' and we just show the picker below.
+  // If the parent page exposes a selected project, reflect it automatically by opening that
+  // namespace's Monitoring view (the landing section). When it can't be read, parentNs is ''
+  // and we just show the picker below.
   useEffect(() => {
     if (!parentNs || loading) return;
     const match = nsList.find((n) => n.id === parentNs || (n.name && n.name === parentNs));
-    navigate(`/${match ? match.id : parentNs}`, { replace: true });
+    navigate(`/monitoring/${match ? match.id : parentNs}`, { replace: true });
   }, [parentNs, loading, nsList, navigate]);
 
   useEffect(() => {
@@ -47,11 +51,15 @@ export default function NamespaceHome() {
     getNsList()
       .then(async (list) => {
         const arr = Array.isArray(list) ? list : [];
-        if (alive) { setNsList(arr); setLoading(false); setCounting(true); }
+        if (alive) { setNsList(arr); setLoading(false); }
+        // When embedded with a parent namespace we navigate straight to it, so skip the
+        // count-every-namespace pass entirely — it would just burst cb-tumblebug into 429s.
+        if (parentNsRef.current) { if (alive) setCounting(false); return; }
+        if (alive) setCounting(true);
         // Count infra + k8s per namespace SEQUENTIALLY (avoid bursting the rate limiter) and
         // fill each card in as it resolves.
         for (const ns of arr) {
-          if (!alive) return;
+          if (!alive || parentNsRef.current) return;
           const [inf, cl] = await Promise.allSettled([
             withRetry(() => getInfraList(ns.id)),
             withRetry(() => getK8sClusters(ns.id)),
@@ -89,7 +97,7 @@ export default function NamespaceHome() {
           {nsList.map((ns) => (
             <button
               key={ns.id}
-              onClick={() => navigate(`/${ns.id}`)}
+              onClick={() => navigate(`/monitoring/${ns.id}`)}
               className="text-left bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-sm transition-colors"
             >
               <div className="font-semibold text-gray-800 break-all">{ns.name || ns.id}</div>
