@@ -157,7 +157,9 @@ export default function K8sNodeDashboard() {
               <div className="mb-2 text-sm font-medium">{activeData?.metricName || selectedMetric}</div>
               {(loading || !allMetrics) ? (
                 <div className="flex items-center justify-center h-[300px] text-gray-400 animate-pulse">Loading CSP API data...</div>
-              ) : activeData?.series ? (
+              ) : activeData?.unsupported ? (
+                <div className="flex items-center justify-center h-[300px] text-gray-400">Not supported for this resource</div>
+              ) : activeData?.series?.[0]?.data?.length ? (
                 <div className="bg-white rounded border p-3">
                   <MetricChart title={`${activeData.metricName} (${activeData.metricUnit})`} series={activeData.series} height={300} />
                 </div>
