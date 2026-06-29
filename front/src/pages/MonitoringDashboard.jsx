@@ -171,15 +171,17 @@ export default function MonitoringDashboard() {
     if (routeNodeId) setSelectedNodeId(routeNodeId);
   }, [routeNodeId]);
 
-  // Track CSP info for selected Node
+  // Track CSP info for selected Node. K8s nodes are NOT cb-spider VMs — their CSP metrics live
+  // behind the cluster-node endpoint (see K8sNodeDashboard / the Infra overview K8s tab), so don't
+  // offer the VM-based API source here for a k8s node (it would 404/empty on cb-spider).
   useEffect(() => {
     const node = nodes.find((n) => n.id === selectedNodeId);
-    if (node && node.connectionName && node.cspResourceName) {
+    if (!isK8s && node && node.connectionName && node.cspResourceName) {
       setCspNodeInfo({ connectionName: node.connectionName, cspResourceName: node.cspResourceName });
     } else {
       setCspNodeInfo(null);
     }
-  }, [selectedNodeId, nodes]);
+  }, [selectedNodeId, nodes, isK8s]);
 
   // Load CSP metrics when dataSource=csp (wait for nodes to load first)
   const [cspLoading, setCspLoading] = useState(false);

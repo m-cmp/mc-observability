@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>Returns the raw cb-spider payload (no {@code ResBody} wrapping) so existing clients that
  * talked directly to {@code /spider/monitoring/**} only need to repoint the base path.
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/o11y/monitoring/csp")
@@ -67,9 +69,23 @@ public class CspMonitoringController {
         CspCacheKey key = CspCacheKey.forVm(nodeName, measurement, connectionName, tbh, ivm);
         return cspCacheService.getOrLoad(
                 key,
-                () ->
-                        spiderClient.getVMMonitoring(
-                                nodeName, measurement, connectionName, tbh, ivm));
+                () -> {
+                    try {
+                        return spiderClient.getVMMonitoring(
+                                nodeName, measurement, connectionName, tbh, ivm);
+                    } catch (Exception e) {
+                        // cb-spider has no CloudWatch monitoring for this resource (e.g. a k8s node
+                        // queried as a VM, or an unsupported metric). Return empty so the UI shows
+                        // "no data" instead of a 500.
+                        log.debug(
+                                "cb-spider VM monitoring unavailable conn={} node={} metric={}: {}",
+                                connectionName,
+                                nodeName,
+                                measurement,
+                                e.toString());
+                        return emptyData(measurement);
+                    }
+                });
     }
 
     @GetMapping("/cluster/{clusterName}/{nodeGroupName}/{nodeNumber}/{measurement}")
@@ -101,15 +117,36 @@ public class CspMonitoringController {
                         ivm);
         return cspCacheService.getOrLoad(
                 key,
-                () ->
-                        spiderClient.getClusterNodeMonitoring(
+                () -> {
+                    try {
+                        return spiderClient.getClusterNodeMonitoring(
                                 clusterName,
                                 nodeGroupName,
                                 nodeNumber,
                                 measurement,
                                 connectionName,
                                 tbh,
-                                ivm));
+                                ivm);
+                    } catch (Exception e) {
+                        log.debug(
+                                "cb-spider cluster-node monitoring unavailable conn={} cluster={}"
+                                        + " node={} metric={}: {}",
+                                connectionName,
+                                clusterName,
+                                nodeNumber,
+                                measurement,
+                                e.toString());
+                        return emptyData(measurement);
+                    }
+                });
+    }
+
+    /** An empty monitoring series, used when cb-spider has no data for the resource/metric. */
+    private static SpiderMonitoringInfo.Data emptyData(String measurement) {
+        SpiderMonitoringInfo.Data d = new SpiderMonitoringInfo.Data();
+        d.setMetricName(measurement);
+        d.setTimestampValues(java.util.List.of());
+        return d;
     }
 
     @GetMapping("/cache/stats")
