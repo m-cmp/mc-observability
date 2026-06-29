@@ -70,10 +70,13 @@ export default function useParentNamespace() {
     };
     window.addEventListener('message', onMessage);
 
-    // 2. same-origin DOM read + change listener + polling (dev fallback).
+    // 2. window.__parentNs (captured by the early listener in main.jsx) + same-origin DOM read,
+    //    polled. This recovers the parent's one-shot on-load postMessage even if it landed in the
+    //    gap between this component's first render and this effect attaching its own listener —
+    //    main.jsx's module-level listener still caught it into window.__parentNs.
     let sel = null;
     const update = () => {
-      const v = readParentNamespaceFromDom();
+      const v = (typeof window !== 'undefined' && window.__parentNs) || readParentNamespaceFromDom();
       if (v) setNs(v);
     };
     try {
