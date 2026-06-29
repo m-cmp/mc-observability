@@ -605,6 +605,33 @@ public class K8sAgentService {
 
     // --- Job execution ---------------------------------------------------
 
+    /**
+     * Maps a cb-spider node identifier to the actual Kubernetes node name so a Job can be scheduled
+     * onto it. On AWS EKS, cb-spider reports the EC2 instance id (e.g. {@code i-0abc...}) while the
+     * k8s node name is the private DNS name; the node's {@code spec.providerID} ({@code
+     * aws:///<az>/<instance-id>}) links the two. Returns {@code nodeName} unchanged when it already
+     * matches a k8s node (e.g. Azure AKS) or no mapping is found.
+     */
+    private String resolveK8sNodeName(KubernetesClient k8s, String nodeName) {
+        try {
+            List<Node> nodes = k8s.nodes().list().getItems();
+            for (Node n : nodes) {
+                if (nodeName.equals(n.getMetadata().getName())) {
+                    return nodeName;
+                }
+            }
+            for (Node n : nodes) {
+                String pid = n.getSpec() == null ? null : n.getSpec().getProviderID();
+                if (pid != null && (pid.endsWith("/" + nodeName) || pid.endsWith(":" + nodeName))) {
+                    return n.getMetadata().getName();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("resolveK8sNodeName failed for node={}: {}", nodeName, e.toString());
+        }
+        return nodeName;
+    }
+
     private void runJob(KubernetesClient k8s, String prefix, String nodeName, String script) {
         String b64 = Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_8));
         String jobName = prefix + sanitize(nodeName);
@@ -622,7 +649,7 @@ public class K8sAgentService {
                         .withTtlSecondsAfterFinished(300)
                         .withNewTemplate()
                         .withNewSpec()
-                        .withNodeName(nodeName)
+                        .withNodeName(resolveK8sNodeName(k8s, nodeName))
                         .withHostPID(true)
                         .withHostNetwork(true)
                         .withRestartPolicy("Never")
