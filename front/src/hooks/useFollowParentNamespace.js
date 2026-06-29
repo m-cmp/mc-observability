@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useParentNamespace from './useParentNamespace';
 import useBasePath from './useBasePath';
 import { getNsList } from '../api/tumblebug';
-
-const SECTIONS = ['monitoring', 'logs', 'config', 'insight', 'alerts', 'trace'];
+import { getLastSection, setLastSection, SECTIONS } from '../lib/lastSection';
 
 // Pull the section (if any) and the namespace out of the current path, ignoring the
 // optional /embed base. Paths look like `/{ns}`, `/{ns}/{infra}[/{node}]`, or
@@ -29,6 +28,13 @@ export default function useFollowParentNamespace() {
   const base = useBasePath();
   const { pathname } = useLocation();
 
+  // Remember the section the user is on so a parent namespace switch (which reloads this
+  // iframe) can return to the same menu instead of snapping back to Monitoring.
+  useEffect(() => {
+    const { section } = parsePath(pathname, base);
+    if (section) setLastSection(section);
+  }, [pathname, base]);
+
   useEffect(() => {
     if (!parentNs) return;
     let alive = true;
@@ -40,8 +46,10 @@ export default function useFollowParentNamespace() {
         const match = (list || []).find((n) => n.id === parentNs || n.name === parentNs);
         const targetNs = match ? match.id : parentNs;
         if (targetNs && targetNs !== currentNs) {
-          // Preserve the current section; at the namespace root (no section) land on Monitoring.
-          navigate(`${base}/${section || 'monitoring'}/${targetNs}`, { replace: true });
+          // Preserve the current section; at the namespace root (no section) fall back to the
+          // last remembered section (then Monitoring) so the chosen menu survives a switch.
+          const sec = section || getLastSection() || 'monitoring';
+          navigate(`${base}/${sec}/${targetNs}`, { replace: true });
         }
       })
       .catch(() => {});

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getNsList, getInfraList } from '../api/tumblebug';
 import { getK8sClusters } from '../api/k8sAgent';
 import useParentNamespace from '../hooks/useParentNamespace';
+import { getLastSection } from '../lib/lastSection';
 
 /**
  * Landing shown at `/` when no namespace is passed in the path.
@@ -28,7 +29,10 @@ export default function NamespaceHome() {
   useEffect(() => {
     if (!parentNs || loading) return;
     const match = nsList.find((n) => n.id === parentNs || (n.name && n.name === parentNs));
-    navigate(`/monitoring/${match ? match.id : parentNs}`, { replace: true });
+    // Land on the last section the user was on (survives the iframe reload a parent namespace
+    // switch triggers); default to Monitoring on the very first visit.
+    const sec = getLastSection() || 'monitoring';
+    navigate(`/${sec}/${match ? match.id : parentNs}`, { replace: true });
   }, [parentNs, loading, nsList, navigate]);
 
   useEffect(() => {
