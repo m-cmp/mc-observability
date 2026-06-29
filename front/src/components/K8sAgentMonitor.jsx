@@ -72,11 +72,17 @@ export default function K8sAgentMonitor({ nsId }) {
   const [data, setData] = useState({}); // `${clusterId}/${node}` -> { cpu:{res}, ... }
   const [selectedChart, setSelectedChart] = useState('cpu');
   const [loading, setLoading] = useState(true);
+  // Tell "backend unreachable" apart from "genuinely no clusters" so a failed
+  // fetch shows an error + Retry instead of a misleading empty state.
+  const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const retry = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     if (!nsId) { setClusters([]); setLoading(false); return; }
     let alive = true;
     setLoading(true);
+    setError(null);
     setData({}); setNodesMap({}); setStatusLoaded({});
     getK8sClusters(nsId)
       .then(async (cs) => {
@@ -108,16 +114,33 @@ export default function K8sAgentMonitor({ nsId }) {
           }
         }
       })
-      .catch(() => alive && setClusters([]))
+      .catch(() => {
+        if (!alive) return;
+        // getK8sClusters threw → backend unreachable, not an empty namespace.
+        setClusters([]);
+        setError('Failed to load K8s clusters from the monitoring backend.');
+      })
       .finally(() => alive && setLoading(false));
     return () => { alive = false; };
-  }, [nsId]);
+  }, [nsId, reloadKey]);
 
   function openNode(clusterId, node) {
     navigate(`${base}/monitoring/${nsId}/${clusterId}/${node}?source=agent&k8s=1`);
   }
 
   if (loading) return <div className="text-sm text-gray-400 animate-pulse p-4">Loading K8s agent metrics…</div>;
+  if (error) return (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between gap-3">
+      <div className="flex items-start gap-2 text-sm text-red-700 min-w-0">
+        <span aria-hidden className="mt-0.5">⚠</span>
+        <span className="min-w-0">
+          Couldn't reach the monitoring backend, so K8s data may be missing.
+          <span className="block text-xs text-red-500 mt-0.5 break-words">{error}</span>
+        </span>
+      </div>
+      <button onClick={retry} className="text-xs px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 shrink-0">Retry</button>
+    </div>
+  );
   if (clusters.length === 0) return <div className="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-400">No K8s clusters in this namespace</div>;
 
   return (
