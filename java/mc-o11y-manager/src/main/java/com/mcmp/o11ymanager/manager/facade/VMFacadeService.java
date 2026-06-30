@@ -127,7 +127,14 @@ public class VMFacadeService {
     private void ensureRegistered(String nsId, String infraId, String nodeId, Agent installing) {
         boolean exists;
         try {
-            vmService.getByNsVm(nsId, nodeId);
+            // Must check by the full (nsId, infraId, nodeId) key, not (nsId, nodeId): node ids are
+            // only unique within an MCI, so different MCIs routinely share one (e.g. every
+            // cluster's
+            // first node is "n1-1"). A (nsId, nodeId) lookup matches a *different* MCI's node, so
+            // we
+            // wrongly conclude this node is already registered, skip the insert, and the subsequent
+            // agent install fails with "VMEntity ID does not exist".
+            vmService.get(nsId, infraId, nodeId);
             exists = true;
         } catch (Exception e) {
             exists = false;
@@ -181,7 +188,31 @@ public class VMFacadeService {
         try {
             hostLock.lock();
 
-            VMDTO savedVM = vmService.get(nsId, infraId, nodeId);
+            VMDTO savedVM;
+            try {
+                savedVM = vmService.get(nsId, infraId, nodeId);
+            } catch (Exception notRegistered) {
+                // The node exists in cb-tumblebug but was never registered for monitoring (no
+                // agent installed yet). Don't 500 here — the monitoring-config page polls this for
+                // every tumblebug node, and a hard error makes the UI retry in a tight loop and
+                // pile requests up. Report the node as installable (NOT_INSTALLED) so the page can
+                // render an Install button. Display name is best-effort from tumblebug.
+                String name = nodeId;
+                try {
+                    name = tumblebugService.getNode(nsId, infraId, nodeId).getName();
+                } catch (Exception ignore) {
+                    // tumblebug node lookup is best-effort for the label only
+                }
+                return VMDTO.builder()
+                        .nodeId(nodeId)
+                        .name(name != null ? name : nodeId)
+                        .nsId(nsId)
+                        .infraId(infraId)
+                        .monitoringAgentStatus(AgentStatus.NOT_INSTALLED)
+                        .logAgentStatus(AgentStatus.NOT_INSTALLED)
+                        .traceAgentStatus(AgentStatus.NOT_INSTALLED)
+                        .build();
+            }
             TumblebugInfra.Node node = tumblebugService.getNode(nsId, infraId, nodeId);
             String userName = node.getNodeUserName();
             log.info(
