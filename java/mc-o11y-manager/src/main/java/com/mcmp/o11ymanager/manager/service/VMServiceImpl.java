@@ -179,12 +179,10 @@ public class VMServiceImpl implements VMService {
                                         new ResourceNotExistsException(
                                                 requestInfo.getRequestId(), "VMEntity", nodeId));
 
-        if (vm.getMonitoringAgentTaskStatus() != VMAgentTaskStatus.IDLE) {
+        VMAgentTaskStatus status = vm.getMonitoringAgentTaskStatus();
+        if (status != null && status.isBusy()) {
             throw new VMAgentTaskProcessingException(
-                    requestInfo.getRequestId(),
-                    nodeId,
-                    "monitoringAgentTask",
-                    vm.getMonitoringAgentTaskStatus());
+                    requestInfo.getRequestId(), nodeId, "monitoringAgentTask", status);
         }
     }
 
@@ -198,9 +196,10 @@ public class VMServiceImpl implements VMService {
                                         new ResourceNotExistsException(
                                                 requestInfo.getRequestId(), "VMEntity", nodeId));
 
-        if (vm.getLogAgentTaskStatus() != VMAgentTaskStatus.IDLE) {
+        VMAgentTaskStatus status = vm.getLogAgentTaskStatus();
+        if (status != null && status.isBusy()) {
             throw new VMAgentTaskProcessingException(
-                    requestInfo.getRequestId(), nodeId, "로그", vm.getLogAgentTaskStatus());
+                    requestInfo.getRequestId(), nodeId, "로그", status);
         }
     }
 
@@ -218,7 +217,7 @@ public class VMServiceImpl implements VMService {
         // NULL은 아직 Beyla 작업이 한 번도 없었던 상태로 간주하고 IDLE과 동일하게 취급.
         // ddl-auto:update로 trace_agent_task_status 컬럼이 새로 추가되면서
         // 기존 VM 레코드들이 NULL로 남아있는 경우를 대응.
-        if (status != null && status != VMAgentTaskStatus.IDLE) {
+        if (status != null && status.isBusy()) {
             throw new VMAgentTaskProcessingException(
                     requestInfo.getRequestId(), nodeId, "traceAgent", status);
         }

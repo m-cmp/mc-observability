@@ -20,4 +20,19 @@ public enum VMAgentTaskStatus {
     VMAgentTaskStatus(String message) {
         this.message = message;
     }
+
+    /**
+     * Whether an agent task is actively running, i.e. a new install/uninstall must be rejected.
+     * IDLE/FINISHED/FAILED/NOT_INSTALLED are all settled states from which a new task may start —
+     * notably NOT_INSTALLED, which is the resting state of the *other* agent after one agent is
+     * installed and must not block installing it.
+     */
+    public boolean isBusy() {
+        return this == PREPARING
+                || this == INSTALLING
+                || this == UPDATING
+                || this == UPDATING_CONFIG
+                || this == UNINSTALLING
+                || this == RESTARTING;
+    }
 }

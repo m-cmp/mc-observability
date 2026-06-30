@@ -1,5 +1,7 @@
 package com.mcmp.o11ymanager.manager.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
@@ -77,6 +79,16 @@ public class K8sAgentService {
 
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+
+    // Per-node status is expensive: a live cb-spider getCluster (CSP round-trip) plus InfluxDB
+    // cardinality/last-seen queries, run once per cluster. The UI polls every cluster's agent and
+    // log-agent status on a short interval, so without caching those slow calls pile up in the
+    // Tomcat queue and the whole UI stalls behind them. A short TTL collapses a burst of polls into
+    // a single backend pass while keeping status fresh enough to be useful.
+    private final Cache<String, List<NodeStatus>> statusCache =
+            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(500).build();
+    private final Cache<String, List<NodeStatus>> logStatusCache =
+            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(500).build();
 
     @Getter
     @lombok.AllArgsConstructor
@@ -330,6 +342,10 @@ public class K8sAgentService {
 
     /** Per-node log agent status (running = node logs present in Loki recently). */
     public List<NodeStatus> logStatus(String nsId, String clusterId) {
+        return logStatusCache.get(nsId + "/" + clusterId, k -> computeLogStatus(nsId, clusterId));
+    }
+
+    private List<NodeStatus> computeLogStatus(String nsId, String clusterId) {
         String lokiHost = null;
         Map<String, String> historical = Map.of();
         try {
@@ -489,6 +505,10 @@ public class K8sAgentService {
     }
 
     public List<NodeStatus> status(String nsId, String clusterId) {
+        return statusCache.get(nsId + "/" + clusterId, k -> computeStatus(nsId, clusterId));
+    }
+
+    private List<NodeStatus> computeStatus(String nsId, String clusterId) {
         // InfluxDB may be unresolvable (e.g. a cluster that never had an agent / no monitoring
         // target). That just means no agent history — still list the nodes from cb-spider.
         Map<String, String> lastSeen = Map.of();
@@ -617,15 +637,57 @@ public class K8sAgentService {
                     return n.getMetadata().getName();
                 }
             }
+            // Azure AKS: cb-spider names the node "<vmss>_<index>" (with an underscore, which is
+            // not
+            // even a valid k8s node name) while the real node name is the VMSS instance DNS
+            // ("<vmss>00000<index>"). Link them through the providerID
+            // (.../virtualMachineScaleSets/<vmss>/virtualMachines/<index>).
+            java.util.regex.Pattern vmss =
+                    java.util.regex.Pattern.compile(
+                            "virtualMachineScaleSets/([^/]+)/virtualMachines/([^/]+)");
+            for (Node n : nodes) {
+                String pid = n.getSpec() == null ? null : n.getSpec().getProviderID();
+                if (pid == null) {
+                    continue;
+                }
+                java.util.regex.Matcher m = vmss.matcher(pid);
+                if (m.find() && (m.group(1) + "_" + m.group(2)).equals(nodeName)) {
+                    return n.getMetadata().getName();
+                }
+            }
         } catch (Exception e) {
             log.warn("resolveK8sNodeName failed for node={}: {}", nodeName, e.toString());
         }
         return nodeName;
     }
 
+    /**
+     * Builds a Job name that stays within Kubernetes' 63-character label limit. The Job controller
+     * copies the Job name into the pod template's {@code job-name} label, so an over-long name
+     * (e.g. EKS {@code ip-…-ap-northeast-2.compute.internal} or NHN {@code
+     * …-default-worker-node-0}) makes the API server reject the Job with "spec.template.labels …
+     * must be no more than 63 characters". Keep it unique by appending a short hash of the full
+     * node name when truncation is needed.
+     */
+    private static String boundedJobName(String prefix, String nodeName) {
+        String full = prefix + sanitize(nodeName);
+        if (full.length() <= 63) {
+            return full;
+        }
+        String hash = Integer.toHexString(nodeName.hashCode());
+        int keep = 63 - prefix.length() - 1 - hash.length();
+        String head = sanitize(nodeName);
+        if (keep < 1) {
+            head = "";
+        } else if (head.length() > keep) {
+            head = head.substring(0, keep);
+        }
+        return (prefix + head + "-" + hash).replaceAll("-+", "-").replaceAll("-+$", "");
+    }
+
     private void runJob(KubernetesClient k8s, String prefix, String nodeName, String script) {
         String b64 = Base64.getEncoder().encodeToString(script.getBytes(StandardCharsets.UTF_8));
-        String jobName = prefix + sanitize(nodeName);
+        String jobName = boundedJobName(prefix, nodeName);
         // Clean any stale job with the same name first.
         k8s.batch().v1().jobs().inNamespace(JOB_NS).withName(jobName).delete();
 
