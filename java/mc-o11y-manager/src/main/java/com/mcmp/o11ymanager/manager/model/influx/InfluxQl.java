@@ -22,7 +22,12 @@ public class InfluxQl {
         String select = "select time as timestamp" + projection(r.getFields());
         String from = " from " + qualifiedMeasurement(retentionPolicy, r.getMeasurement());
         String where = " where time > now() - " + r.getRange() + conditions(r.getConditions());
-        String group = groupBy(r.getGroupTime(), r.getGroupBy());
+        // GROUP BY time() is only valid when every projected field is aggregated; InfluxDB rejects
+        // it otherwise ("GROUP BY requires at least one aggregate function"), which silently turns
+        // into empty graphs. When the projection is raw (no function, or "*"), drop the time bucket
+        // and return the raw points instead of producing an invalid query.
+        String groupTime = hasAggregate(r.getFields()) ? r.getGroupTime() : null;
+        String group = groupBy(groupTime, r.getGroupBy());
         String order = " order by time desc";
         String limit = (r.getLimit() != null && r.getLimit() > 0) ? " limit " + r.getLimit() : "";
 
@@ -31,6 +36,19 @@ public class InfluxQl {
 
     // ------------------------------------select
     // query--------------------------------------------------//
+    /** True when at least one projected field uses an aggregate function (mean, last, ...). */
+    private static boolean hasAggregate(List<FieldInfo> fields) {
+        if (fields == null || fields.isEmpty()) {
+            return false;
+        }
+        for (var f : fields) {
+            if (StringUtils.hasText(f.getFunction())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static String projection(List<FieldInfo> fields) {
         if (fields == null || fields.isEmpty()) {
             return ", *";
