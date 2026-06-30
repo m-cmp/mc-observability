@@ -454,6 +454,14 @@ public class K8sAgentService {
         // repos.
         return """
                 set -e
+                # The official install.sh runs `apt-get update`, which on hardened nodes (e.g. NHN
+                # NKS) fails because apt-key's sandbox user `_apt` cannot create its temp file:
+                # "Couldn't create temporary file /tmp/apt.conf.* ... Permission denied", which aborts
+                # the whole repo refresh and the install. Make /tmp world-writable and force apt to
+                # run as root (no sandbox user) so the refresh the install script triggers succeeds.
+                chmod 1777 /tmp 2>/dev/null || true
+                mkdir -p /etc/apt/apt.conf.d 2>/dev/null || true
+                echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/00cmp-sandbox-root 2>/dev/null || true
                 if [ ! -x /opt/fluent-bit/bin/fluent-bit ] && ! command -v fluent-bit >/dev/null 2>&1; then
                   curl -fsSL https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh -o /tmp/cmp-fbi.sh
                   sh /tmp/cmp-fbi.sh
