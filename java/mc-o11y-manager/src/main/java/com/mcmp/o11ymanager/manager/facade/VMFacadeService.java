@@ -141,7 +141,9 @@ public class VMFacadeService {
                         ? VMStatus.RUNNING
                         : VMStatus.FAILED;
         if (status != VMStatus.RUNNING) {
-            throw new RuntimeException("FAILED TO CONNECT VM");
+            throw new IllegalArgumentException(
+                    "Cannot connect to the VM — it must be running and reachable to"
+                            + " install/uninstall an agent. Start the VM and try again.");
         }
         Long influxSeq = influxDbService.resolveInfluxDb(nsId, infraId);
         VMRequestDTO dto = VMRequestDTO.builder().name(nodeId).build();
