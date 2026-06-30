@@ -130,6 +130,13 @@ export default function K8sAgentPanel({ nsId }) {
                     // Agents can only be installed/uninstalled on a powered-on node with a real name.
                     const actionable = powered && !n.placeholder;
                     const selectable = !n.placeholder;
+                    // Durable, cross-tab agent task state from the server (INSTALLING/UNINSTALLING/…).
+                    const monTask = n.taskStatus;
+                    const monPending = monTask === 'INSTALLING' || monTask === 'UNINSTALLING';
+                    const logNode = (logMap[c.id] || []).find((x) => x.node === n.node);
+                    const logInstalled = logNode?.installed;
+                    const logTask = logNode?.taskStatus;
+                    const logPending = logTask === 'INSTALLING' || logTask === 'UNINSTALLING';
                     return (
                       <tr key={n.node} onClick={() => selectable && selectNode(c.id, n.node)}
                         className={`${selectable ? 'cursor-pointer hover:bg-blue-50' : 'cursor-default'} ${sel?.clusterId === c.id && sel?.node === n.node ? 'bg-blue-100' : ''}`}>
@@ -142,20 +149,24 @@ export default function K8sAgentPanel({ nsId }) {
                         </td>
                         <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
-                            <AgentBadge running={monOn} installed={n.installed} powered={powered} />
+                            <AgentBadge running={monOn} installed={n.installed} powered={powered} pending={monTask} />
                             {!actionable
                               ? <span className="text-xs text-gray-400">{powered ? '' : 'start cluster to manage'}</span>
-                              : !monOn
+                              : monPending
+                              ? <PendingLabel kind={monTask} />
+                              : !n.installed
                               ? <button onClick={() => run(`${c.id}/${n.node}/mon`, `Installing agent on ${n.node}…`, () => installK8sNode(nsId, c.id, n.node, null), c.id)} disabled={!!busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>
                               : <button onClick={() => run(`${c.id}/${n.node}/mon`, `Uninstalling agent from ${n.node}…`, () => uninstallK8sNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
                           </div>
                         </td>
                         <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
-                            <AgentBadge running={logOn} powered={powered} />
+                            <AgentBadge running={logOn} installed={logInstalled} powered={powered} pending={logTask} />
                             {!actionable
                               ? <span className="text-xs text-gray-400">{powered ? '' : 'start cluster to manage'}</span>
-                              : !logOn
+                              : logPending
+                              ? <PendingLabel kind={logTask} />
+                              : !logInstalled
                               ? <button onClick={() => run(`${c.id}/${n.node}/log`, `Installing log agent on ${n.node}…`, () => installK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs bg-emerald-600 text-white px-2 py-1 rounded hover:bg-emerald-700 disabled:opacity-50">Install</button>
                               : <button onClick={() => run(`${c.id}/${n.node}/log`, `Uninstalling log agent from ${n.node}…`, () => uninstallK8sLogNode(nsId, c.id, n.node), c.id)} disabled={!!busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
                           </div>
@@ -212,9 +223,23 @@ export default function K8sAgentPanel({ nsId }) {
   );
 }
 
-function AgentBadge({ running, installed, powered }) {
+function AgentBadge({ running, installed, powered, pending }) {
+  if (pending === 'INSTALLING' || pending === 'UNINSTALLING')
+    return <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{pending === 'INSTALLING' ? 'Installing…' : 'Uninstalling…'}</span>;
   if (running) return <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">Running</span>;
+  if (pending === 'FAILED') return <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700">Failed</span>;
   if (installed && powered === false) return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Installed · off</span>;
+  if (installed) return <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Installed</span>;
   if (powered === false) return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">—</span>;
   return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">Not installed</span>;
+}
+
+/** Inline spinner + label shown while a node's agent install/uninstall is running (any tab). */
+function PendingLabel({ kind }) {
+  return (
+    <span className="text-xs text-gray-500 inline-flex items-center gap-1">
+      <span className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+      {kind === 'UNINSTALLING' ? 'Uninstalling…' : 'Installing…'}
+    </span>
+  );
 }

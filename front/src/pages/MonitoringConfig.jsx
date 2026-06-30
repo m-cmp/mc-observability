@@ -24,6 +24,9 @@ export default function MonitoringConfig() {
   const [itemLoading, setItemLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyMsg, setBusyMsg] = useState('');
+  // Node id the metric apply/toggle overlay belongs to, so switching to another node mid-apply
+  // doesn't show "Applying…" on that other node's panel.
+  const [busyNodeId, setBusyNodeId] = useState(null);
   const [globalBusy, setGlobalBusy] = useState(false);
   const pollRef = useRef(null);
 
@@ -105,15 +108,17 @@ export default function MonitoringConfig() {
     const toAdd = inputPlugins.filter((p) => picked.has(p.seq) && !active.has(p.seq));
     const toRemove = items.filter((it) => !picked.has(it.pluginSeq));
     if (toAdd.length === 0 && toRemove.length === 0) return;
-    setBusy(true); setBusyMsg('Applying metric selection...');
+    const targetId = selectedNode.id;
+    setBusy(true); setBusyNodeId(targetId); setBusyMsg('Applying metric selection...');
     try {
-      for (const it of toRemove) await deleteNodeItem(nsId, infra, selectedNode.id, it.seq);
-      for (const p of toAdd) await createNodeItem(nsId, infra, selectedNode.id, { pluginSeq: p.seq });
-      setItems(await getNodeItems(nsId, infra, selectedNode.id));
+      for (const it of toRemove) await deleteNodeItem(nsId, infra, targetId, it.seq);
+      for (const p of toAdd) await createNodeItem(nsId, infra, targetId, { pluginSeq: p.seq });
+      const fresh = await getNodeItems(nsId, infra, targetId);
+      if (selectedNode?.id === targetId) setItems(fresh);
     } catch (err) {
       alert('Failed: ' + (err.response?.data?.error_message || err.response?.data?.message || err.message));
     }
-    setBusy(false); setBusyMsg('');
+    setBusy(false); setBusyNodeId(null); setBusyMsg('');
   }
 
   // --- Per-agent install / uninstall with polling (monitoring = telegraf, log = fluent-bit) ---
@@ -181,20 +186,23 @@ export default function MonitoringConfig() {
     const action = isActive ? 'Disable' : 'Enable';
     if (!confirm(`${action} "${plugin.name}" monitoring metric on ${selectedNode.name || selectedNode.id}?`)) return;
 
-    setBusy(true);
+    const targetId = selectedNode.id;
+    const infra = selectedNodeInfraId || infraId;
+    setBusy(true); setBusyNodeId(targetId);
     setBusyMsg(`${action === 'Enable' ? 'Enabling' : 'Disabling'} ${plugin.name} metric...`);
     try {
       if (isActive) {
         const item = items.find((it) => it.pluginSeq === plugin.seq);
-        if (item) await deleteNodeItem(nsId, selectedNodeInfraId || infraId, selectedNode.id, item.seq);
+        if (item) await deleteNodeItem(nsId, infra, targetId, item.seq);
       } else {
-        await createNodeItem(nsId, selectedNodeInfraId || infraId, selectedNode.id, { pluginSeq: plugin.seq });
+        await createNodeItem(nsId, infra, targetId, { pluginSeq: plugin.seq });
       }
-      setItems(await getNodeItems(nsId, selectedNodeInfraId || infraId, selectedNode.id));
+      const fresh = await getNodeItems(nsId, infra, targetId);
+      if (selectedNode?.id === targetId) setItems(fresh);
     } catch (err) {
       alert('Failed: ' + (err.response?.data?.error_message || err.response?.data?.message || err.message));
     }
-    setBusy(false);
+    setBusy(false); setBusyNodeId(null);
     setBusyMsg('');
   }
 
@@ -299,8 +307,8 @@ export default function MonitoringConfig() {
         <div className="bg-white rounded-lg shadow mt-3">
           <div className="px-4 py-3 border-b font-semibold">Monitoring Metrics — {selectedNode.name || selectedNode.id}</div>
           <div className="p-4 relative">
-            {/* Metric toggle busy overlay */}
-            {busy && (
+            {/* Metric toggle busy overlay — only on the node the apply/toggle actually targets */}
+            {busy && busyNodeId === selectedNode.id && (
               <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex items-center justify-center rounded">
                 <div className="text-center">
                   <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
