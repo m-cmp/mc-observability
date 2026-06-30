@@ -111,7 +111,7 @@ export default function MonitoringConfig() {
       for (const p of toAdd) await createNodeItem(nsId, infra, selectedNode.id, { pluginSeq: p.seq });
       setItems(await getNodeItems(nsId, infra, selectedNode.id));
     } catch (err) {
-      alert('Failed: ' + (err.response?.data?.error_message || err.message));
+      alert('Failed: ' + (err.response?.data?.error_message || err.response?.data?.message || err.message));
     }
     setBusy(false); setBusyMsg('');
   }
@@ -134,7 +134,7 @@ export default function MonitoringConfig() {
       await a[op](nsId, infra, node.id);
       startPolling(node.id, infra, a.field, `${verb}ing ${a.label}`, kind, op);
     } catch (err) {
-      alert(`${verb} failed: ` + (err.response?.data?.error_message || err.message));
+      alert(`${verb} failed: ` + (err.response?.data?.error_message || err.response?.data?.message || err.message));
       setGlobalBusy(false);
       setBusyMsg('');
     }
@@ -192,7 +192,7 @@ export default function MonitoringConfig() {
       }
       setItems(await getNodeItems(nsId, selectedNodeInfraId || infraId, selectedNode.id));
     } catch (err) {
-      alert('Failed: ' + (err.response?.data?.error_message || err.message));
+      alert('Failed: ' + (err.response?.data?.error_message || err.response?.data?.message || err.message));
     }
     setBusy(false);
     setBusyMsg('');
@@ -258,8 +258,13 @@ export default function MonitoringConfig() {
                     const installed = isAgentInstalled(status);
                     if (status === 'INSTALLING') return <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>;
                     if (status === 'UNINSTALLING') return <span className="text-xs text-yellow-600 animate-pulse">Uninstalling…</span>;
+                    // Install AND uninstall both connect to the host over SSH, which fails ("FAILED
+                    // TO CONNECT VM") on a VM that isn't running (suspended/failed/stopped). Don't
+                    // offer either button then — just reflect the current agent state.
+                    if (run !== 'running') {
+                      return <span className="text-xs text-gray-400" title={`Node is not running (${node.status || 'unknown'})`}>{installed ? 'installed' : '—'}</span>;
+                    }
                     if (installed) return <button onClick={(e) => handleAgent(e, node, kind, 'uninstall')} disabled={busy} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>;
-                    if (run !== 'running') return <span className="text-xs text-gray-400" title="Node is not running">—</span>;
                     return <button onClick={(e) => handleAgent(e, node, kind, 'install')} disabled={busy} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>;
                   };
                   return (
