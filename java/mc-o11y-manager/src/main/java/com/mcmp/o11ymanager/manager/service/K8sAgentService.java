@@ -6,9 +6,12 @@ import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sToken;
+import com.mcmp.o11ymanager.manager.entity.K8sAgentTaskEntity;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
+import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
+import com.mcmp.o11ymanager.manager.repository.K8sAgentTaskJpaRepository;
 import io.fabric8.kubernetes.api.model.Node;
 import io.fabric8.kubernetes.api.model.batch.v1.Job;
 import io.fabric8.kubernetes.api.model.batch.v1.JobBuilder;
@@ -29,6 +32,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +54,7 @@ public class K8sAgentService {
     private final TumblebugClient tumblebugClient;
     private final InfluxDbFacadeService influxDbFacadeService;
     private final SpiderClient spiderClient;
+    private final K8sAgentTaskJpaRepository agentTaskRepo;
 
     private static final String JOB_NS = "default";
     private static final String TELEGRAF_VERSION = "1.29.5";
@@ -90,6 +96,48 @@ public class K8sAgentService {
     private final Cache<String, List<NodeStatus>> logStatusCache =
             Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(500).build();
 
+    // Per-node lock: serialize install/uninstall on a single k8s node so concurrent requests (e.g.
+    // two browser tabs) don't launch two Jobs that, sharing a name, delete each other mid-run.
+    private final ConcurrentHashMap<String, ReentrantLock> nodeLocks = new ConcurrentHashMap<>();
+
+    private ReentrantLock lockFor(String nsId, String clusterId, String node) {
+        return nodeLocks.computeIfAbsent(
+                nsId + "/" + clusterId + "/" + node, k -> new ReentrantLock());
+    }
+
+    private K8sAgentTaskEntity taskRow(String nsId, String clusterId, String node) {
+        return agentTaskRepo
+                .findByNsIdAndClusterIdAndNodeName(nsId, clusterId, node)
+                .orElseGet(
+                        () ->
+                                K8sAgentTaskEntity.builder()
+                                        .nsId(nsId)
+                                        .clusterId(clusterId)
+                                        .nodeName(node)
+                                        .build());
+    }
+
+    private void setMonitoringTask(
+            String nsId, String clusterId, String node, VMAgentTaskStatus status) {
+        K8sAgentTaskEntity e = taskRow(nsId, clusterId, node);
+        e.setMonitoringTaskStatus(status);
+        agentTaskRepo.save(e);
+    }
+
+    private void setLogTask(String nsId, String clusterId, String node, VMAgentTaskStatus status) {
+        K8sAgentTaskEntity e = taskRow(nsId, clusterId, node);
+        e.setLogTaskStatus(status);
+        agentTaskRepo.save(e);
+    }
+
+    /** Rejects a new op when one is already running on the node (durable, visible across tabs). */
+    private void assertNotBusy(VMAgentTaskStatus current) {
+        if (current != null && current.isBusy()) {
+            throw new IllegalStateException(
+                    "An agent task is already in progress on this node (" + current + ").");
+        }
+    }
+
     @Getter
     @lombok.AllArgsConstructor
     public static class NodeResult {
@@ -117,6 +165,7 @@ public class K8sAgentService {
         private String lastSeen; // ISO timestamp or null
         private PowerState powerState; // node host power state
         private boolean placeholder; // synthesized stopped node (real name not retrievable)
+        private String taskStatus; // durable agent task state (INSTALLING/UNINSTALLING/...) or null
     }
 
     /** One node discovered for a cluster, with whether its host is currently up. */
@@ -224,9 +273,27 @@ public class K8sAgentService {
 
     public NodeResult installNode(
             String nsId, String clusterId, String nodeName, List<String> metrics) {
-        InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            return installOne(k8s, nsId, clusterId, nodeName, influx, metrics);
+        ReentrantLock lock = lockFor(nsId, clusterId, nodeName);
+        lock.lock();
+        try {
+            assertNotBusy(taskRow(nsId, clusterId, nodeName).getMonitoringTaskStatus());
+            setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.INSTALLING);
+            InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
+            NodeResult r;
+            try (KubernetesClient k8s = client(nsId, clusterId)) {
+                r = installOne(k8s, nsId, clusterId, nodeName, influx, metrics);
+            }
+            setMonitoringTask(
+                    nsId,
+                    clusterId,
+                    nodeName,
+                    r.isOk() ? VMAgentTaskStatus.FINISHED : VMAgentTaskStatus.FAILED);
+            return r;
+        } catch (RuntimeException e) {
+            setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            throw e;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -241,8 +308,26 @@ public class K8sAgentService {
     }
 
     public NodeResult uninstallNode(String nsId, String clusterId, String nodeName) {
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            return uninstallOne(k8s, nodeName);
+        ReentrantLock lock = lockFor(nsId, clusterId, nodeName);
+        lock.lock();
+        try {
+            assertNotBusy(taskRow(nsId, clusterId, nodeName).getMonitoringTaskStatus());
+            setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.UNINSTALLING);
+            NodeResult r;
+            try (KubernetesClient k8s = client(nsId, clusterId)) {
+                r = uninstallOne(k8s, nodeName);
+            }
+            setMonitoringTask(
+                    nsId,
+                    clusterId,
+                    nodeName,
+                    r.isOk() ? VMAgentTaskStatus.NOT_INSTALLED : VMAgentTaskStatus.FAILED);
+            return r;
+        } catch (RuntimeException e) {
+            setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            throw e;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -318,9 +403,27 @@ public class K8sAgentService {
     }
 
     public NodeResult installLogNode(String nsId, String clusterId, String nodeName) {
-        String lokiHost = lokiHost(nsId, clusterId);
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            return installLogOne(k8s, nsId, clusterId, nodeName, lokiHost);
+        ReentrantLock lock = lockFor(nsId, clusterId, nodeName);
+        lock.lock();
+        try {
+            assertNotBusy(taskRow(nsId, clusterId, nodeName).getLogTaskStatus());
+            setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.INSTALLING);
+            String lokiHost = lokiHost(nsId, clusterId);
+            NodeResult r;
+            try (KubernetesClient k8s = client(nsId, clusterId)) {
+                r = installLogOne(k8s, nsId, clusterId, nodeName, lokiHost);
+            }
+            setLogTask(
+                    nsId,
+                    clusterId,
+                    nodeName,
+                    r.isOk() ? VMAgentTaskStatus.FINISHED : VMAgentTaskStatus.FAILED);
+            return r;
+        } catch (RuntimeException e) {
+            setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            throw e;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -335,14 +438,34 @@ public class K8sAgentService {
     }
 
     public NodeResult uninstallLogNode(String nsId, String clusterId, String nodeName) {
-        try (KubernetesClient k8s = client(nsId, clusterId)) {
-            return uninstallLogOne(k8s, nodeName);
+        ReentrantLock lock = lockFor(nsId, clusterId, nodeName);
+        lock.lock();
+        try {
+            assertNotBusy(taskRow(nsId, clusterId, nodeName).getLogTaskStatus());
+            setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.UNINSTALLING);
+            NodeResult r;
+            try (KubernetesClient k8s = client(nsId, clusterId)) {
+                r = uninstallLogOne(k8s, nodeName);
+            }
+            setLogTask(
+                    nsId,
+                    clusterId,
+                    nodeName,
+                    r.isOk() ? VMAgentTaskStatus.NOT_INSTALLED : VMAgentTaskStatus.FAILED);
+            return r;
+        } catch (RuntimeException e) {
+            setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            throw e;
+        } finally {
+            lock.unlock();
         }
     }
 
     /** Per-node log agent status (running = node logs present in Loki recently). */
     public List<NodeStatus> logStatus(String nsId, String clusterId) {
-        return logStatusCache.get(nsId + "/" + clusterId, k -> computeLogStatus(nsId, clusterId));
+        List<NodeStatus> base =
+                logStatusCache.get(nsId + "/" + clusterId, k -> computeLogStatus(nsId, clusterId));
+        return overlayTaskStatus(nsId, clusterId, base, true);
     }
 
     private List<NodeStatus> computeLogStatus(String nsId, String clusterId) {
@@ -366,7 +489,7 @@ public class K8sAgentService {
                             && !ref.placeholder
                             && lokiHasRecent(lokiHost, nsId, clusterId, ref.name);
             PowerState power = PowerState.of(ref.running || logging);
-            out.add(new NodeStatus(ref.name, logging, logging, null, power, ref.placeholder));
+            out.add(new NodeStatus(ref.name, logging, logging, null, power, ref.placeholder, null));
         }
         return out;
     }
@@ -513,7 +636,54 @@ public class K8sAgentService {
     }
 
     public List<NodeStatus> status(String nsId, String clusterId) {
-        return statusCache.get(nsId + "/" + clusterId, k -> computeStatus(nsId, clusterId));
+        List<NodeStatus> base =
+                statusCache.get(nsId + "/" + clusterId, k -> computeStatus(nsId, clusterId));
+        return overlayTaskStatus(nsId, clusterId, base, false);
+    }
+
+    /**
+     * Overlays the durable per-node agent task state onto the (cached) live status. Kept out of the
+     * cache so an in-flight install/uninstall is reflected immediately and consistently across
+     * tabs: a busy state ({@code INSTALLING}/{@code UNINSTALLING}) is surfaced as {@code
+     * taskStatus} so the UI can disable its button, and a {@code FINISHED} state marks the node
+     * installed even before its first metric/log arrives (so the button doesn't briefly flip back
+     * to Install).
+     */
+    private List<NodeStatus> overlayTaskStatus(
+            String nsId, String clusterId, List<NodeStatus> base, boolean log) {
+        Map<String, K8sAgentTaskEntity> byNode = new java.util.HashMap<>();
+        try {
+            for (K8sAgentTaskEntity e : agentTaskRepo.findByNsIdAndClusterId(nsId, clusterId)) {
+                byNode.put(e.getNodeName(), e);
+            }
+        } catch (Exception ignore) {
+            return base; // DB unavailable -> fall back to live status without the overlay
+        }
+        if (byNode.isEmpty()) {
+            return base;
+        }
+        List<NodeStatus> out = new ArrayList<>(base.size());
+        for (NodeStatus s : base) {
+            K8sAgentTaskEntity e = byNode.get(s.getNode());
+            VMAgentTaskStatus t =
+                    e == null ? null : (log ? e.getLogTaskStatus() : e.getMonitoringTaskStatus());
+            if (t == null) {
+                out.add(s);
+                continue;
+            }
+            boolean installed = s.isInstalled() || t == VMAgentTaskStatus.FINISHED;
+            String taskStatus = (t.isBusy() || t == VMAgentTaskStatus.FAILED) ? t.name() : null;
+            out.add(
+                    new NodeStatus(
+                            s.getNode(),
+                            installed,
+                            s.isRunning(),
+                            s.getLastSeen(),
+                            s.getPowerState(),
+                            s.isPlaceholder(),
+                            taskStatus));
+        }
+        return out;
     }
 
     private List<NodeStatus> computeStatus(String nsId, String clusterId) {
@@ -538,7 +708,9 @@ public class K8sAgentService {
             PowerState power = PowerState.of(ref.running || reporting);
             // "installed" = the agent has reported at least once (so it was installed on this node)
             boolean installed = ts != null;
-            out.add(new NodeStatus(ref.name, installed, reporting, ts, power, ref.placeholder));
+            out.add(
+                    new NodeStatus(
+                            ref.name, installed, reporting, ts, power, ref.placeholder, null));
         }
         return out;
     }
