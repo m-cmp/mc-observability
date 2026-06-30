@@ -26,8 +26,12 @@ public class ClusterListCacheService {
 
     private final SpiderClient spiderClient;
 
-    /** TTL must exceed the warmer interval so warmed entries never expire between ticks. */
-    @Value("${csp.cache.cluster-list.ttl-seconds:120}")
+    /**
+     * TTL must comfortably exceed one warm pass so entries don't expire mid-cycle and force the UI
+     * onto the slow cb-spider path. A warm pass can take minutes when some CSP connections are slow
+     * to list, so keep this generous — the warmer refreshes entries well before they expire.
+     */
+    @Value("${csp.cache.cluster-list.ttl-seconds:600}")
     private long ttlSeconds;
 
     private Cache<String, List<SpiderClusterInfo>> cache;
@@ -58,15 +62,26 @@ public class ClusterListCacheService {
 
     private List<SpiderClusterInfo> load(String connectionName) {
         List<SpiderClusterInfo> out = new ArrayList<>();
-        SpiderClusterList list = spiderClient.listClusters(connectionName);
-        if (list != null && list.getCluster() != null) {
-            for (SpiderClusterInfo c : list.getCluster()) {
-                try {
-                    out.add(spiderClient.getCluster(c.getIId().getNameId(), connectionName));
-                } catch (Exception e) {
-                    out.add(c);
+        try {
+            SpiderClusterList list = spiderClient.listClusters(connectionName);
+            if (list != null && list.getCluster() != null) {
+                for (SpiderClusterInfo c : list.getCluster()) {
+                    try {
+                        out.add(spiderClient.getCluster(c.getIId().getNameId(), connectionName));
+                    } catch (Exception e) {
+                        out.add(c);
+                    }
                 }
             }
+        } catch (Exception e) {
+            // cb-spider is slow/erroring for this connection (read timeout, 5xx, stale clusters).
+            // Cache an empty result so the UI returns instantly instead of repeatedly paying the
+            // slow cb-spider cost; the warmer keeps retrying and fills in real data once it
+            // recovers.
+            log.warn(
+                    "[CLUSTER-LIST] conn={} list failed, caching empty: {}",
+                    connectionName,
+                    e.toString());
         }
         return out;
     }
