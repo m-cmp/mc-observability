@@ -202,31 +202,52 @@ class ServerErrorAnalysisGraphNodes:
         try:
             result = await runtime.context.supervisor_agent.ainvoke(payload, config=supervisor_config)
         except Exception as exc:
-            return {"analysis_result": None, "error_message": str(exc)}
+            # Preserve whatever evidence subagents collected before the failure so the
+            # record reflects the real trace/log/metric status instead of all SKIPPED.
+            return {
+                "analysis_result": None,
+                "error_message": str(exc),
+                **self._evidence_fields(self._read_evidence_store(runtime)),
+            }
+
+        evidence_fields = self._evidence_fields(self._read_evidence_store(runtime, result))
 
         structured = extract_structured_response(result)
         if structured is None:
             return {
                 "analysis_result": None,
                 "error_message": "Supervisor returned no structured result",
+                **evidence_fields,
             }
-
-        evidence_store = {}
-        if hasattr(runtime.context.supervisor_agent, "get_evidence_store"):
-            store = runtime.context.supervisor_agent.get_evidence_store()
-            if isinstance(store, dict):
-                evidence_store = store
-        if not evidence_store and isinstance(result, dict) and isinstance(result.get("evidence_store"), dict):
-            evidence_store = result["evidence_store"]
 
         return {
             "analysis_result": structured,
             "error_message": None,
-            "trace_evidence": evidence_store.get("trace_evidence") or {},
-            "log_evidence": evidence_store.get("log_evidence") or {},
-            "metric_evidence": evidence_store.get("metric_evidence") or {},
-            "supervisor_trace": evidence_store.get("supervisor_trace") or {},
-            "evidence_limitations": evidence_store.get("evidence_limitations") or [],
+            **evidence_fields,
+        }
+
+    def _read_evidence_store(self, runtime, result=None) -> dict:
+        """Return the subagent evidence store captured on the supervisor bundle (or result)."""
+        evidence_store = {}
+        agent = runtime.context.supervisor_agent
+        if hasattr(agent, "get_evidence_store"):
+            store = agent.get_evidence_store()
+            if isinstance(store, dict):
+                evidence_store = store
+        if not evidence_store and isinstance(result, dict) and isinstance(result.get("evidence_store"), dict):
+            evidence_store = result["evidence_store"]
+        return evidence_store
+
+    @staticmethod
+    def _evidence_fields(evidence_store: dict) -> dict[str, Any]:
+        """Map the collected evidence store into graph-state evidence fields."""
+        store = evidence_store if isinstance(evidence_store, dict) else {}
+        return {
+            "trace_evidence": store.get("trace_evidence") or {},
+            "log_evidence": store.get("log_evidence") or {},
+            "metric_evidence": store.get("metric_evidence") or {},
+            "supervisor_trace": store.get("supervisor_trace") or {},
+            "evidence_limitations": store.get("evidence_limitations") or [],
         }
 
     async def validate_quality(
@@ -390,10 +411,14 @@ class ServerErrorAnalysisGraphNodes:
         return "\n".join(
             [
                 "Task: Investigate one HTTP 5xx incident.",
-                "Use investigator subagent tools in the required_evidence_sources order. Do not call raw MCP tools directly.",
+                "Call each investigator subagent (ask_trace_subagent, ask_log_subagent, ask_metric_subagent) "
+                "AT MOST ONCE, in the required_evidence_sources order. Do not call raw MCP tools directly.",
                 f"Required evidence order: {', '.join(required_sources) if required_sources else 'none'}",
                 "Call metric only after trace/log scope has been checked; use metric for blast radius, not primary root cause discovery.",
-                "Return the final structured ServerErrorAnalysisResult when evidence is sufficient.",
+                "Do NOT retry or re-call a subagent, even if it returns FAILED, PARTIAL, or empty evidence.",
+                "As soon as each required subagent has been called once, IMMEDIATELY return the final structured "
+                "ServerErrorAnalysisResult using whatever evidence is available. Do not keep investigating to gather "
+                "more evidence. Record missing or failed sources under limitations and lower confidence accordingly.",
                 "",
                 "Incident context:",
                 incident_context,

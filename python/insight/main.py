@@ -16,6 +16,7 @@ from app.api.llm_analysis import (
 )
 from app.api.prediction import prediction
 from app.api.readyz import readyz
+from app.core.dependencies.migrations import run_startup_migrations
 from app.core.graph.server_error_analysis_graph import ServerErrorGraphRuntime
 from app.core.otel.log import init_otel_logger
 from app.core.otel.trace import init_otel_trace
@@ -29,6 +30,7 @@ config = ConfigManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    run_startup_migrations()
     app.state.server_error_graph_runtime = await ServerErrorGraphRuntime.create()
     try:
         yield
