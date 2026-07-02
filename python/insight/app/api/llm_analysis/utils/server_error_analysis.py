@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
@@ -41,6 +42,8 @@ from app.core.llm.ollama_client import OllamaClient
 from app.core.llm.openai_client import OpenAIClient
 from app.core.prompts.prompt_factory import PromptFactory
 from config.ConfigManager import ConfigManager
+
+logger = logging.getLogger(__name__)
 
 
 class InvestigatorTask(BaseModel):
@@ -452,14 +455,62 @@ class ServerErrorAnalysisService:
         )
 
     async def _query_5xx_candidates(self, start, end, limit):
-        """Query Loki for HTTP 5xx log entries and convert them into analysis candidates."""
-        tool = self._find_tool("query_loki_logs")
-        if not tool:
+        """Collect HTTP 5xx candidates from Tempo traces and Loki logs, deduped by trace_id.
+
+        On this platform HTTP status lives in Tempo span attributes, while some deployments
+        emit status-labeled Loki logs, so query both sources and merge. Tempo is queried
+        first because it carries the trace_id the analysis graph keys on.
+        """
+        candidates: list[dict] = []
+        seen_trace_ids: set[str] = set()
+        any_tool_available = False
+
+        for source in (self._query_5xx_from_tempo, self._query_5xx_from_loki):
+            if len(candidates) >= limit:
+                break
+            try:
+                available, source_candidates = await source(start, end, limit)
+            except Exception as exc:  # one source failing must not hide the other's results
+                logger.warning("5xx candidate source %s failed: %s", source.__name__, exc)
+                any_tool_available = True
+                continue
+            any_tool_available = any_tool_available or available
+            for candidate in source_candidates:
+                trace_id = (candidate.get("scope") or {}).get("trace_id")
+                if trace_id and trace_id in seen_trace_ids:
+                    continue
+                if trace_id:
+                    seen_trace_ids.add(trace_id)
+                candidates.append(candidate)
+                if len(candidates) >= limit:
+                    break
+
+        if not any_tool_available:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="query_loki_logs tool not available",
+                detail="No 5xx detection tool available (traceql-search / query_loki_logs)",
             )
+        return candidates
 
+    async def _query_5xx_from_tempo(self, start, end, limit):
+        """Return (tool_available, candidates) for HTTP 5xx spans found via Tempo TraceQL."""
+        tool = self._find_tool("traceql-search")
+        if not tool:
+            return False, []
+        result = await tool.ainvoke(
+            {
+                "query": "{span.http.response.status_code >= 500 || span.http.status_code >= 500}",
+                "start": self._to_rfc3339(start),
+                "end": self._to_rfc3339(end),
+            }
+        )
+        return True, self._extract_tempo_candidates(result, limit)
+
+    async def _query_5xx_from_loki(self, start, end, limit):
+        """Return (tool_available, candidates) for status-labeled HTTP 5xx Loki logs."""
+        tool = self._find_tool("query_loki_logs")
+        if not tool:
+            return False, []
         datasource_uid = await self._get_loki_datasource_uid()
         result = await tool.ainvoke(
             {
@@ -470,7 +521,70 @@ class ServerErrorAnalysisService:
                 "limit": limit,
             }
         )
-        return self._extract_candidates(result, limit)
+        return True, self._extract_candidates(result, limit)
+
+    def _extract_tempo_candidates(self, result, limit):
+        """Convert Tempo traceql-search traces into ServerErrorInputDetail candidates."""
+        payload = self._parse_mcp_json_payload(result)
+        traces = payload.get("traces") if isinstance(payload, dict) else None
+        if not isinstance(traces, list):
+            return []
+
+        candidates = []
+        for trace in traces:
+            if not isinstance(trace, dict):
+                continue
+            trace_id = trace.get("traceID") or trace.get("traceId")
+            if not trace_id:
+                continue
+            service_name = trace.get("rootServiceName")
+            if isinstance(service_name, str) and service_name.startswith("<"):
+                service_name = None  # e.g. "<root span not yet received>"
+            endpoint = trace.get("rootTraceName")
+            status_code = self._extract_span_status_code(trace)
+            summary = "".join(
+                part
+                for part in (
+                    f"HTTP {status_code or '5xx'} trace",
+                    f" on {service_name}" if service_name else "",
+                    f" ({endpoint})" if endpoint else "",
+                )
+            )
+            candidates.append(
+                ServerErrorInputDetail(
+                    scope={
+                        "trace_id": trace_id,
+                        "service_name": service_name,
+                        "status_code": status_code,
+                        "endpoint": endpoint,
+                    },
+                    log_summary=summary[:DEFAULT_MAX_LOG_SUMMARY_CHARS],
+                ).model_dump()
+            )
+            if len(candidates) == limit:
+                break
+        return candidates
+
+    @staticmethod
+    def _extract_span_status_code(trace):
+        """Return the first HTTP 5xx status code from a Tempo trace's matched spans."""
+        spans = list((trace.get("spanSet") or {}).get("spans") or [])
+        for extra in trace.get("spanSets") or []:
+            if isinstance(extra, dict):
+                spans.extend(extra.get("spans") or [])
+        for span in spans:
+            if not isinstance(span, dict):
+                continue
+            for attr in span.get("attributes") or []:
+                if isinstance(attr, dict) and attr.get("key") in (
+                    "http.response.status_code",
+                    "http.status_code",
+                ):
+                    value = attr.get("value") or {}
+                    code = value.get("intValue") or value.get("stringValue")
+                    if code is not None:
+                        return str(code)
+        return None
 
     @staticmethod
     def _to_rfc3339(dt: datetime) -> str:
