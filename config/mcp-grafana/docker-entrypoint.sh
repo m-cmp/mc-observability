@@ -26,8 +26,13 @@ fi
 ADDRESS=${MCP_ADDRESS:-"0.0.0.0:8000"}
 TRANSPORT=${MCP_TRANSPORT:-"sse"}
 ENABLED_TOOLS=${MCP_ENABLED_TOOLS:-"loki,datasource"}
+# Newer mcp-grafana enforces Host-header allowlisting (DNS-rebind protection).
+# In-cluster clients reach this server via the compose service name, so that
+# host must be allowlisted or every SSE handshake is rejected with 403.
+ALLOWED_HOSTS=${MCP_ALLOWED_HOSTS:-"mc-observability-mcp-grafana:8000,localhost:8000,127.0.0.1:8000"}
 
 exec /app/mcp-grafana \
   --transport "${TRANSPORT}" \
   --address "${ADDRESS}" \
-  --enabled-tools "${ENABLED_TOOLS}"
+  --enabled-tools "${ENABLED_TOOLS}" \
+  --allowed-hosts "${ALLOWED_HOSTS}"

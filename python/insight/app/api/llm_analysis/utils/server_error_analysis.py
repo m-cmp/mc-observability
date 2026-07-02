@@ -196,7 +196,7 @@ class ServerErrorAnalysisService:
                     "mode": "auto",
                     "session_id": session.SESSION_ID,
                     "trace_id": scope.get("trace_id"),
-                    "time_range": {"start": start.isoformat(), "end": end.isoformat()},
+                    "time_range": {"start": self._to_rfc3339(start), "end": self._to_rfc3339(end)},
                     "user_message": None,
                     "record_detail": candidate,
                 },
@@ -465,12 +465,23 @@ class ServerErrorAnalysisService:
             {
                 "datasourceUid": datasource_uid,
                 "logql": '{status=~"5.."}',
-                "startRfc3339": start.isoformat(),
-                "endRfc3339": end.isoformat(),
+                "startRfc3339": self._to_rfc3339(start),
+                "endRfc3339": self._to_rfc3339(end),
                 "limit": limit,
             }
         )
         return self._extract_candidates(result, limit)
+
+    @staticmethod
+    def _to_rfc3339(dt: datetime) -> str:
+        """Format a datetime as second-precision RFC3339 UTC (e.g. 2026-06-30T07:03:57Z).
+
+        The Grafana/Loki MCP time parser rejects the sub-second offset form produced by
+        datetime.isoformat() (e.g. '...57.590229+00:00'), so drop microseconds and use 'Z'.
+        """
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
+        return dt.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     async def _get_loki_datasource_uid(self):
         """Resolve the Grafana datasource UID for Loki before querying logs."""
