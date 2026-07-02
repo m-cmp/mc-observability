@@ -358,7 +358,11 @@ class ServerErrorAnalysisService:
             system_prompt=(
                 system_prompt
                 + "\n\nUse only the investigator subagent tools provided to you. "
-                + "Do not call raw MCP tools directly."
+                + "Do not call raw MCP tools directly. "
+                + "Call each subagent AT MOST ONCE and never retry a subagent that returned FAILED, PARTIAL, "
+                + "or empty evidence. After the required subagents have each been called once, immediately return "
+                + "the final structured ServerErrorAnalysisResult from the available evidence instead of "
+                + "investigating further."
             ),
             response_format=ServerErrorAnalysisResult,
             middleware=self._create_agent_middleware(self.analysis_config, role="supervisor"),

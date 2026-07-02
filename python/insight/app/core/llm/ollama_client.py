@@ -1,5 +1,20 @@
+import os
+
 from langchain.agents import create_agent
 from langchain_ollama import ChatOllama
+
+# Ollama's default context window (~4k) is far too small for the multi-agent
+# server-error workflow: large trace/log/metric evidence overflows it, the model
+# loses the tool results and the "return the structured result" instruction, and
+# the agent loops until the graph recursion limit. Give it a roomy, tunable ctx.
+DEFAULT_OLLAMA_NUM_CTX = 32768
+
+
+def _ollama_num_ctx() -> int:
+    try:
+        return int(os.getenv("OLLAMA_NUM_CTX", str(DEFAULT_OLLAMA_NUM_CTX)))
+    except (TypeError, ValueError):
+        return DEFAULT_OLLAMA_NUM_CTX
 
 
 class OllamaClient:
@@ -11,11 +26,15 @@ class OllamaClient:
 
     def setup(self, model: str):
         self.model = model
-        self.llm = ChatOllama(base_url=self.base_url, model=self.model, temperature=0)
+        self.llm = ChatOllama(
+            base_url=self.base_url, model=self.model, temperature=0, num_ctx=_ollama_num_ctx()
+        )
 
     def setup_graph_llm(self, model: str):
         self.model = model
-        self.llm = ChatOllama(base_url=self.base_url, model=self.model, temperature=0)
+        self.llm = ChatOllama(
+            base_url=self.base_url, model=self.model, temperature=0, num_ctx=_ollama_num_ctx()
+        )
 
     def create_agent_runner(
         self,
