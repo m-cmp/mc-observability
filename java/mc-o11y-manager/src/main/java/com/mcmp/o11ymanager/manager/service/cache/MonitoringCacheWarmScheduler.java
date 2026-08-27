@@ -13,13 +13,20 @@ import jakarta.annotation.PreDestroy;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,19 +36,24 @@ import org.springframework.stereotype.Component;
 /**
  * Periodically pre-warms the monitoring metric cache.
  *
- * <p>Two independent jobs run on separate fixed thread pools:
+ * <p>Three jobs run on their own fixed thread pools: {@code realtime} for short ranges, {@code
+ * longrange} for ranges that route to the downsampling database, and {@code overview} for the exact
+ * query shape the NS/MCI overview screen sends.
+ *
+ * <p>A few properties are worth calling out, because the previous implementation got them wrong:
  *
  * <ul>
- *   <li><b>realtime</b> — short-range queries (e.g. {@code 1h/1m, 6h/5m, 12h/5m}) refreshed every
- *       minute. These hit the raw mc-observability InfluxDB.
- *   <li><b>longrange</b> — long-range queries (e.g. {@code 1d/5m, 3d/15m, 5d/30m, 7d/1h}) refreshed
- *       on the hourly Airflow downsampling DAG cycle. These automatically route to the downsampling
- *       InfluxDB via {@code InfluxDbServiceImpl#pickDatabase}.
+ *   <li><b>Warming forces a reload.</b> It goes through {@code refreshNow}, not the normal read
+ *       path. Reading through the cache meant that after the first tick filled an entry every later
+ *       tick was a no-op and the data simply froze until the key rotated.
+ *   <li><b>A pass never blocks the scheduler thread.</b> Spring's scheduler is single-threaded by
+ *       default and several jobs fire on the same boundary, so a pass that waits for completion
+ *       delays every other job. Passes run detached under a timebox.
+ *   <li><b>Targets come from real query traffic.</b> Creation order is a poor proxy for what people
+ *       are actually looking at.
+ *   <li><b>Only measurements a VM really reports are warmed.</b> The old cartesian product over
+ *       every known measurement generated mostly-empty queries.
  * </ul>
- *
- * For each tick the scheduler discovers active VMs in InfluxDB, sorts by Tumblebug createdTime,
- * keeps the top-N most recently created, and submits per-VM warming tasks (one per measurement ×
- * range combo) to the job's executor.
  */
 @Slf4j
 @Component
@@ -56,10 +68,21 @@ public class MonitoringCacheWarmScheduler {
     private final MonitoringCacheProperties properties;
     private final InfluxDbService influxDbService;
     private final VmCreatedTimeResolver vmCreatedTimeResolver;
+    private final QueryAccessTracker accessTracker;
 
     private ExecutorService realtimeExecutor;
     private ExecutorService longrangeExecutor;
     private ExecutorService overviewExecutor;
+
+    /** Guards against a pass starting while the previous one is still running. */
+    private final AtomicBoolean realtimeRunning = new AtomicBoolean();
+
+    private final AtomicBoolean longrangeRunning = new AtomicBoolean();
+    private final AtomicBoolean overviewRunning = new AtomicBoolean();
+
+    private final AtomicLong passesRun = new AtomicLong();
+    private final AtomicLong passesSkippedOverlap = new AtomicLong();
+    private final AtomicLong passesTimedOut = new AtomicLong();
 
     @PostConstruct
     void init() {
@@ -73,7 +96,12 @@ public class MonitoringCacheWarmScheduler {
                         "mon-cache-warm-overview",
                         overview == null ? 10 : overview.getThreadPoolSize());
         log.info(
-                "[CACHE-WARM] initialized realtimeThreads={}, longrangeThreads={}, overviewThreads={}",
+                "[CACHE-WARM] initialized selection={}, topN={}, timeboxSec={}, jitterSec={},"
+                        + " realtimeThreads={}, longrangeThreads={}, overviewThreads={}",
+                properties.getWarm().getSelection(),
+                properties.getWarm().getTopN(),
+                properties.getWarm().getTimeboxSeconds(),
+                properties.getWarm().getJitterSeconds(),
                 properties.getWarm().getRealtime().getThreadPoolSize(),
                 properties.getWarm().getLongrange().getThreadPoolSize(),
                 overview == null ? 0 : overview.getThreadPoolSize());
@@ -81,38 +109,92 @@ public class MonitoringCacheWarmScheduler {
 
     @PreDestroy
     void shutdown() {
-        if (realtimeExecutor != null) {
-            realtimeExecutor.shutdownNow();
-        }
-        if (longrangeExecutor != null) {
-            longrangeExecutor.shutdownNow();
-        }
-        if (overviewExecutor != null) {
-            overviewExecutor.shutdownNow();
-        }
+        shutdownPool(realtimeExecutor);
+        shutdownPool(longrangeExecutor);
+        shutdownPool(overviewExecutor);
     }
 
     @Scheduled(cron = "${monitoring.cache.warm.realtime.cron:0 * * * * *}")
     public void scheduledRealtime() {
-        runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor);
+        launch(
+                "realtime",
+                realtimeRunning,
+                () -> runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor));
     }
 
     @Scheduled(cron = "${monitoring.cache.warm.longrange.cron:0 5 * * * *}")
     public void scheduledLongrange() {
-        runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
+        launch(
+                "longrange",
+                longrangeRunning,
+                () -> runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor));
     }
 
     @Scheduled(cron = "${monitoring.cache.warm.overview.cron:0 * * * * *}")
     public void scheduledOverview() {
-        runOverviewJob();
+        launch("overview", overviewRunning, this::runOverviewJob);
     }
 
-    /** Triggers all warming jobs immediately (admin endpoint). */
+    /** Triggers all warming jobs immediately and waits for them (admin endpoint). */
     public int warmNow() {
         int realtime = runJob("realtime", properties.getWarm().getRealtime(), realtimeExecutor);
         int longrange = runJob("longrange", properties.getWarm().getLongrange(), longrangeExecutor);
         int overview = runOverviewJob();
         return realtime + longrange + overview;
+    }
+
+    /** Warming pass counters, folded into the cache stats endpoint. */
+    public java.util.Map<String, Object> stats() {
+        return java.util.Map.of(
+                "passesRun", passesRun.get(),
+                "passesSkippedOverlap", passesSkippedOverlap.get(),
+                "passesTimedOut", passesTimedOut.get(),
+                "selection", properties.getWarm().getSelection(),
+                "topN", properties.getWarm().getTopN());
+    }
+
+    /**
+     * Runs a pass off the scheduler thread, applying jitter and a timebox, and refusing to start
+     * when the previous pass of the same job has not finished.
+     */
+    private void launch(String jobName, AtomicBoolean guard, Runnable body) {
+        if (!guard.compareAndSet(false, true)) {
+            passesSkippedOverlap.incrementAndGet();
+            log.info("[CACHE-WARM:{}] previous pass still running — skipping this tick", jobName);
+            return;
+        }
+        long jitterSec = Math.max(0L, properties.getWarm().getJitterSeconds());
+        long delayMillis =
+                jitterSec == 0 ? 0 : ThreadLocalRandom.current().nextLong(jitterSec * 1000L);
+        long timeboxSec = Math.max(5L, properties.getWarm().getTimeboxSeconds());
+
+        CompletableFuture<Void> pass =
+                CompletableFuture.runAsync(
+                        () -> {
+                            try {
+                                if (delayMillis > 0) {
+                                    Thread.sleep(delayMillis);
+                                }
+                                passesRun.incrementAndGet();
+                                body.run();
+                            } catch (InterruptedException ie) {
+                                Thread.currentThread().interrupt();
+                            } catch (Exception e) {
+                                log.warn("[CACHE-WARM:{}] pass failed: {}", jobName, e.toString());
+                            }
+                        });
+        pass.orTimeout(timeboxSec + jitterSec, TimeUnit.SECONDS)
+                .whenComplete(
+                        (ignored, error) -> {
+                            guard.set(false);
+                            if (error instanceof TimeoutException) {
+                                passesTimedOut.incrementAndGet();
+                                log.warn(
+                                        "[CACHE-WARM:{}] pass exceeded timebox of {}s — abandoned",
+                                        jobName,
+                                        timeboxSec);
+                            }
+                        });
     }
 
     private int runJob(String jobName, Job job, ExecutorService executor) {
@@ -123,78 +205,59 @@ public class MonitoringCacheWarmScheduler {
             return 0;
         }
         long started = System.currentTimeMillis();
-        List<VmWithCreatedAt> top = pickTopVms();
-        if (top.isEmpty()) {
+        List<VmRef> targets = pickTargets();
+        if (targets.isEmpty()) {
             log.info("[CACHE-WARM:{}] no eligible VMs", jobName);
-            return 0;
-        }
-
-        List<String> measurements = discoverMeasurements();
-        if (measurements.isEmpty()) {
-            log.info("[CACHE-WARM:{}] no measurements discovered", jobName);
             return 0;
         }
 
         AtomicInteger ok = new AtomicInteger();
         AtomicInteger fail = new AtomicInteger();
-        List<CompletableFuture<Void>> futures = new ArrayList<>(top.size());
-        for (VmWithCreatedAt entry : top) {
+        AtomicInteger skipped = new AtomicInteger();
+        List<CompletableFuture<Void>> futures = new ArrayList<>(targets.size());
+        for (VmRef vm : targets) {
             futures.add(
                     CompletableFuture.runAsync(
-                            () ->
-                                    warmOneVm(
-                                            jobName,
-                                            job.getRanges(),
-                                            entry.vm(),
-                                            measurements,
-                                            ok,
-                                            fail),
+                            () -> warmOneVm(jobName, job.getRanges(), vm, ok, fail, skipped),
                             executor));
         }
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+        awaitWithin(futures, properties.getWarm().getTimeboxSeconds(), jobName);
 
         log.info(
-                "[CACHE-WARM:{}] vms={}, measurements={}, ranges={}, ok={}, fail={}, took={}ms",
+                "[CACHE-WARM:{}] vms={}, ranges={}, ok={}, skipped={}, fail={}, took={}ms",
                 jobName,
-                top.size(),
-                measurements.size(),
+                targets.size(),
                 job.getRanges().size(),
                 ok.get(),
+                skipped.get(),
                 fail.get(),
                 System.currentTimeMillis() - started);
-        return top.size();
-    }
-
-    /** Discover all measurement names known to any configured InfluxDB instance. */
-    private List<String> discoverMeasurements() {
-        try {
-            var body = influxDbService.getFields();
-            if (body == null || body.getData() == null) {
-                return List.of();
-            }
-            return body.getData().stream()
-                    .map(f -> f.getMeasurement())
-                    .filter(m -> m != null && !m.isBlank())
-                    .distinct()
-                    .toList();
-        } catch (Exception e) {
-            log.warn("[CACHE-WARM] discover measurements failed: {}", e.toString());
-            return List.of();
-        }
+        return targets.size();
     }
 
     private void warmOneVm(
             String jobName,
             List<RangeSpec> ranges,
             VmRef vm,
-            List<String> measurements,
             AtomicInteger ok,
-            AtomicInteger fail) {
+            AtomicInteger fail,
+            AtomicInteger skipped) {
+        List<String> measurements = measurementsFor(vm);
+        if (measurements.isEmpty()) {
+            return;
+        }
         for (String measurement : measurements) {
             for (RangeSpec spec : ranges) {
+                MetricRequestDTO req = buildRequest(spec, measurement);
                 try {
-                    influxDbService.getMetricsByVM(
-                            vm.nsId(), vm.infraId(), vm.nodeId(), buildRequest(spec, measurement));
+                    // Skip when the entry is still inside its fresh window — no point reloading
+                    // data the cache would have served anyway.
+                    if (influxDbService.isMetricCacheFresh(
+                            vm.nsId(), vm.infraId(), vm.nodeId(), req)) {
+                        skipped.incrementAndGet();
+                        continue;
+                    }
+                    influxDbService.refreshMetricsByVM(vm.nsId(), vm.infraId(), vm.nodeId(), req);
                     ok.incrementAndGet();
                 } catch (Exception e) {
                     fail.incrementAndGet();
@@ -222,52 +285,136 @@ public class MonitoringCacheWarmScheduler {
             return 0;
         }
         long started = System.currentTimeMillis();
-        List<VmWithCreatedAt> top = pickTopVms();
-        if (top.isEmpty()) {
+        List<VmRef> targets = pickTargets();
+        if (targets.isEmpty()) {
             log.info("[CACHE-WARM:overview] no eligible VMs");
             return 0;
         }
 
         AtomicInteger ok = new AtomicInteger();
         AtomicInteger fail = new AtomicInteger();
-        List<CompletableFuture<Void>> futures = new ArrayList<>(top.size());
-        for (VmWithCreatedAt entry : top) {
+        List<CompletableFuture<Void>> futures = new ArrayList<>(targets.size());
+        for (VmRef vm : targets) {
             futures.add(
                     CompletableFuture.runAsync(
-                            () -> warmOneVmOverview(entry.vm(), job.getQueries(), ok, fail),
+                            () -> warmOneVmOverview(vm, job.getQueries(), ok, fail),
                             overviewExecutor));
         }
-        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+        awaitWithin(futures, properties.getWarm().getTimeboxSeconds(), "overview");
 
         log.info(
                 "[CACHE-WARM:overview] vms={}, queries={}, ok={}, fail={}, took={}ms",
-                top.size(),
+                targets.size(),
                 job.getQueries().size(),
                 ok.get(),
                 fail.get(),
                 System.currentTimeMillis() - started);
-        return top.size();
+        return targets.size();
     }
 
     private void warmOneVmOverview(
             VmRef vm, List<OverviewQuery> queries, AtomicInteger ok, AtomicInteger fail) {
         for (OverviewQuery q : queries) {
             try {
-                influxDbService.getMetricsByVM(
+                influxDbService.refreshMetricsByVM(
                         vm.nsId(), vm.infraId(), vm.nodeId(), buildOverviewRequest(q));
                 ok.incrementAndGet();
             } catch (Exception e) {
                 fail.incrementAndGet();
                 log.debug(
-                        "[CACHE-WARM:overview] failed ns={}, mci={}, vm={}, m={}, fn={}, fd={}, err={}",
+                        "[CACHE-WARM:overview] failed ns={}, mci={}, vm={}, m={}, err={}",
                         vm.nsId(),
                         vm.infraId(),
                         vm.nodeId(),
                         q.getMeasurement(),
-                        q.getFunction(),
-                        q.getField(),
                         e.toString());
             }
+        }
+    }
+
+    /** Measurements this VM actually reports, resolved once and memoised by the meta cache. */
+    private List<String> measurementsFor(VmRef vm) {
+        try {
+            return influxDbService.measurementsOfVm(vm.nsId(), vm.infraId(), vm.nodeId());
+        } catch (Exception e) {
+            log.debug(
+                    "[CACHE-WARM] measurement lookup failed ns={}, mci={}, vm={}, err={}",
+                    vm.nsId(),
+                    vm.infraId(),
+                    vm.nodeId(),
+                    e.toString());
+            return List.of();
+        }
+    }
+
+    /**
+     * Warming targets: the VMs users are actually querying, topped up with recently created ones
+     * when traffic alone does not fill the quota (which is the case right after a restart).
+     */
+    private List<VmRef> pickTargets() {
+        int topN = Math.max(1, properties.getWarm().getTopN());
+        boolean preferQueried =
+                !"recently-created".equalsIgnoreCase(properties.getWarm().getSelection());
+
+        Set<VmRef> picked = new LinkedHashSet<>(topN * 2);
+        if (preferQueried) {
+            picked.addAll(accessTracker.topVms(topN));
+        }
+        if (picked.size() < topN) {
+            picked.addAll(recentlyCreatedVms(topN - picked.size()));
+        }
+        List<VmRef> out = new ArrayList<>(picked);
+        return out.size() > topN ? out.subList(0, topN) : out;
+    }
+
+    /** Discover active VMs and return the most recently created ones. */
+    private List<VmRef> recentlyCreatedVms(int limit) {
+        if (limit <= 0) {
+            return List.of();
+        }
+        List<VmRef> active;
+        try {
+            active = influxDbService.discoverActiveVms();
+        } catch (Exception e) {
+            log.warn("[CACHE-WARM] discover failed: {}", e.toString());
+            return List.of();
+        }
+        if (active.isEmpty()) {
+            return List.of();
+        }
+        List<VmWithCreatedAt> withTime = new ArrayList<>(active.size());
+        for (VmRef vm : active) {
+            Optional<Instant> createdAt =
+                    vmCreatedTimeResolver.resolve(vm.nsId(), vm.infraId(), vm.nodeId());
+            createdAt.ifPresent(instant -> withTime.add(new VmWithCreatedAt(vm, instant)));
+        }
+        if (withTime.isEmpty()) {
+            // Tumblebug may not expose createdTime at all — fall back to discovery order rather
+            // than warming nothing.
+            return active.size() > limit ? active.subList(0, limit) : active;
+        }
+        withTime.sort(Comparator.comparing(VmWithCreatedAt::createdAt).reversed());
+        List<VmRef> out = new ArrayList<>(Math.min(limit, withTime.size()));
+        for (int i = 0; i < withTime.size() && out.size() < limit; i++) {
+            out.add(withTime.get(i).vm());
+        }
+        return out;
+    }
+
+    /** Waits for the pass, giving up once the timebox elapses instead of blocking indefinitely. */
+    private void awaitWithin(
+            List<CompletableFuture<Void>> futures, long timeboxSeconds, String jobName) {
+        try {
+            CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+                    .get(Math.max(5L, timeboxSeconds), TimeUnit.SECONDS);
+        } catch (TimeoutException te) {
+            passesTimedOut.incrementAndGet();
+            futures.forEach(f -> f.cancel(true));
+            log.warn("[CACHE-WARM:{}] timebox elapsed — remaining work cancelled", jobName);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.debug("[CACHE-WARM:{}] await failed: {}", jobName, e.toString());
         }
     }
 
@@ -288,32 +435,6 @@ public class MonitoringCacheWarmScheduler {
         return req;
     }
 
-    /** Discover active VMs and return the {@code topN} sorted by createdTime descending. */
-    private List<VmWithCreatedAt> pickTopVms() {
-        List<VmRef> active;
-        try {
-            active = influxDbService.discoverActiveVms();
-        } catch (Exception e) {
-            log.warn("[CACHE-WARM] discover failed: {}", e.toString());
-            return List.of();
-        }
-        if (active.isEmpty()) {
-            return List.of();
-        }
-        List<VmWithCreatedAt> withTime = new ArrayList<>(active.size());
-        for (VmRef vm : active) {
-            Optional<Instant> createdAt =
-                    vmCreatedTimeResolver.resolve(vm.nsId(), vm.infraId(), vm.nodeId());
-            createdAt.ifPresent(instant -> withTime.add(new VmWithCreatedAt(vm, instant)));
-        }
-        if (withTime.isEmpty()) {
-            return List.of();
-        }
-        withTime.sort(Comparator.comparing(VmWithCreatedAt::createdAt).reversed());
-        int topN = Math.max(1, properties.getWarm().getTopN());
-        return new ArrayList<>(withTime.subList(0, Math.min(topN, withTime.size())));
-    }
-
     private MetricRequestDTO buildRequest(RangeSpec spec, String measurement) {
         MetricRequestDTO req = new MetricRequestDTO();
         req.setMeasurement(measurement);
@@ -322,6 +443,12 @@ public class MonitoringCacheWarmScheduler {
         req.setFields(new ArrayList<>());
         req.setConditions(new ArrayList<>());
         return req;
+    }
+
+    private static void shutdownPool(ExecutorService pool) {
+        if (pool != null) {
+            pool.shutdownNow();
+        }
     }
 
     private static ExecutorService newFixedPool(String namePrefix, Job job) {

@@ -14,6 +14,9 @@ import com.mcmp.o11ymanager.manager.mapper.influx.QueryMapper;
 import com.mcmp.o11ymanager.manager.model.influx.InfluxQl;
 import com.mcmp.o11ymanager.manager.repository.InfluxJpaRepository;
 import com.mcmp.o11ymanager.manager.service.cache.MonitoringCacheService;
+import com.mcmp.o11ymanager.manager.service.influx.ChunkedMetricQueryService;
+import com.mcmp.o11ymanager.manager.service.influx.InfluxClientProvider;
+import com.mcmp.o11ymanager.manager.service.influx.InfluxMetaCache;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -27,7 +30,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.Pong;
 import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
@@ -43,6 +45,9 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     private final InfluxDbInfo influxDbInfo;
     private final InfluxMapper influxMapper;
     private final MonitoringCacheService monitoringCacheService;
+    private final InfluxClientProvider influxClientProvider;
+    private final ChunkedMetricQueryService chunkedMetricQueryService;
+    private final InfluxMetaCache influxMetaCache;
 
     private static final String NS_ID = "ns_id";
     private static final String INFRA_ID = "infra_id";
@@ -82,8 +87,8 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         // insight predictions DB — created by the bundled init-database.sh on first boot too.
         databases.add("insight");
         for (InfluxEntity e : entities) {
-            try (var influx =
-                    InfluxDBFactory.connect(e.getUrl(), e.getUsername(), e.getPassword())) {
+            try {
+                var influx = influxClientProvider.get(e.getUrl(), e.getUsername(), e.getPassword());
                 for (String db : databases) {
                     influx.query(new Query("CREATE DATABASE \"" + db + "\""));
                 }
@@ -154,9 +159,10 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
     @Override
     public boolean isConnectedDb(InfluxDTO influxDTO) {
-        try (var influx =
-                InfluxDBFactory.connect(
-                        influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword())) {
+        try {
+            var influx =
+                    influxClientProvider.get(
+                            influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword());
 
             Pong pong = influx.ping();
             if (pong == null || "unknown".equalsIgnoreCase(pong.getVersion())) {
@@ -201,9 +207,10 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
     // ------------------------------------queryExecutor--------------------------------------------------//
     private Optional<QueryResult> exec(InfluxDTO influxDTO, String query) {
-        try (var influx =
-                InfluxDBFactory.connect(
-                        influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword())) {
+        try {
+            var influx =
+                    influxClientProvider.get(
+                            influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword());
             var qr = influx.query(new Query(query, influxDTO.getDatabase()));
             var err = QueryMapper.firstError(qr);
             if (err != null) {
@@ -245,20 +252,7 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             }
         }
 
-        List<MetricRequestDTO.ConditionInfo> conditions =
-                Optional.ofNullable(req.getConditions()).orElse(new ArrayList<>());
-
-        MetricRequestDTO.ConditionInfo nsCond = new MetricRequestDTO.ConditionInfo();
-        nsCond.setKey("ns_id");
-        nsCond.setValue(nsId);
-        conditions.add(nsCond);
-
-        MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
-        mciCond.setKey("infra_id");
-        mciCond.setValue(infraId);
-        conditions.add(mciCond);
-
-        req.setConditions(conditions);
+        applyScopeConditions(req, nsId, infraId, null);
 
         return monitoringCacheService.getOrLoad(
                 nsId, infraId, null, req, () -> loadMetricsByNsMci(nsId, infraId, req));
@@ -292,7 +286,16 @@ public class InfluxDbServiceImpl implements InfluxDbService {
                             nsId, infraId));
         }
 
-        List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
+        List<MetricDTO> metrics =
+                chunkedMetricQueryService.fetch(
+                        s,
+                        rp,
+                        req,
+                        sliceQuery ->
+                                exec(s, sliceQuery)
+                                        .map(QueryMapper::toMetricDTOs)
+                                        .orElse(List.of()),
+                        () -> exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of()));
 
         return metrics.stream()
                 .map(
@@ -325,28 +328,117 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             }
         }
 
-        List<MetricRequestDTO.ConditionInfo> conditions =
-                Optional.ofNullable(req.getConditions()).orElse(new ArrayList<>());
-
-        MetricRequestDTO.ConditionInfo nsCond = new MetricRequestDTO.ConditionInfo();
-        nsCond.setKey("ns_id");
-        nsCond.setValue(nsId);
-        conditions.add(nsCond);
-
-        MetricRequestDTO.ConditionInfo mciCond = new MetricRequestDTO.ConditionInfo();
-        mciCond.setKey("infra_id");
-        mciCond.setValue(infraId);
-        conditions.add(mciCond);
-
-        MetricRequestDTO.ConditionInfo vmCond = new MetricRequestDTO.ConditionInfo();
-        vmCond.setKey("node_id");
-        vmCond.setValue(nodeId);
-        conditions.add(vmCond);
-
-        req.setConditions(conditions);
+        applyScopeConditions(req, nsId, infraId, nodeId);
 
         return monitoringCacheService.getOrLoad(
                 nsId, infraId, nodeId, req, () -> loadMetricsByVM(nsId, infraId, nodeId, req));
+    }
+
+    @Override
+    public List<MetricDTO> refreshMetricsByVM(
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        applyScopeConditions(req, nsId, infraId, nodeId);
+        return monitoringCacheService.refreshNow(
+                nsId, infraId, nodeId, req, () -> loadMetricsByVM(nsId, infraId, nodeId, req));
+    }
+
+    @Override
+    public boolean isMetricCacheFresh(
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        applyScopeConditions(req, nsId, infraId, nodeId);
+        return monitoringCacheService.isFresh(nsId, infraId, nodeId, req);
+    }
+
+    /**
+     * Measurement names this VM actually reports.
+     *
+     * <p>Resolved with one {@code SHOW MEASUREMENTS} scoped to the VM's tags and memoised, so cache
+     * warming stops issuing the full measurement-by-VM cartesian product where most combinations
+     * have no data at all.
+     */
+    @Override
+    public List<String> measurementsOfVm(String nsId, String infraId, String nodeId) {
+        InfluxDTO dto;
+        try {
+            dto = resolveInfluxDto(nsId, infraId);
+        } catch (Exception e) {
+            log.debug("[measurementsOfVm] no influx for ns={}, mci={}", nsId, infraId);
+            return List.of();
+        }
+        if (dto == null) {
+            return List.of();
+        }
+        String scope =
+                InfluxMetaCache.probeKey(
+                        dto.getUrl(), dto.getDatabase(), "measurements", nsId, infraId, nodeId);
+        return influxMetaCache.measurements(
+                scope, () -> loadMeasurementsOfVm(dto, nsId, infraId, nodeId));
+    }
+
+    private List<String> loadMeasurementsOfVm(
+            InfluxDTO dto, String nsId, String infraId, String nodeId) {
+        String q =
+                String.format(
+                        "SHOW MEASUREMENTS ON \"%s\" WHERE \"ns_id\"='%s' AND \"infra_id\"='%s'"
+                                + " AND \"node_id\"='%s'",
+                        dto.getDatabase(), esc(nsId), esc(infraId), esc(nodeId));
+        List<String> out = new ArrayList<>();
+        exec(dto, q)
+                .ifPresent(
+                        qr -> {
+                            var results = qr.getResults();
+                            if (results == null || results.isEmpty()) {
+                                return;
+                            }
+                            var series = results.get(0).getSeries();
+                            if (series == null || series.isEmpty()) {
+                                return;
+                            }
+                            var values = series.get(0).getValues();
+                            if (values == null) {
+                                return;
+                            }
+                            for (var row : values) {
+                                if (row != null && !row.isEmpty() && row.get(0) != null) {
+                                    out.add(String.valueOf(row.get(0)));
+                                }
+                            }
+                        });
+        return out;
+    }
+
+    /**
+     * Stamps the ns/mci[/vm] scope onto the request conditions, replacing any previous scope so the
+     * same request object can safely be reused across calls.
+     */
+    private static void applyScopeConditions(
+            MetricRequestDTO req, String nsId, String infraId, String nodeId) {
+        List<MetricRequestDTO.ConditionInfo> conditions = new ArrayList<>();
+        if (req.getConditions() != null) {
+            for (MetricRequestDTO.ConditionInfo c : req.getConditions()) {
+                if (c == null || c.getKey() == null) {
+                    continue;
+                }
+                String key = c.getKey().trim().toLowerCase();
+                if (key.equals("ns_id") || key.equals("infra_id") || key.equals("node_id")) {
+                    continue;
+                }
+                conditions.add(c);
+            }
+        }
+        conditions.add(condition("ns_id", nsId));
+        conditions.add(condition("infra_id", infraId));
+        if (nodeId != null && !nodeId.isEmpty()) {
+            conditions.add(condition("node_id", nodeId));
+        }
+        req.setConditions(conditions);
+    }
+
+    private static MetricRequestDTO.ConditionInfo condition(String key, String value) {
+        MetricRequestDTO.ConditionInfo c = new MetricRequestDTO.ConditionInfo();
+        c.setKey(key);
+        c.setValue(value);
+        return c;
     }
 
     private List<MetricDTO> loadMetricsByVM(
@@ -382,7 +474,16 @@ public class InfluxDbServiceImpl implements InfluxDbService {
             return List.of();
         }
 
-        List<MetricDTO> metrics = exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of());
+        List<MetricDTO> metrics =
+                chunkedMetricQueryService.fetch(
+                        s,
+                        rp,
+                        req,
+                        sliceQuery ->
+                                exec(s, sliceQuery)
+                                        .map(QueryMapper::toMetricDTOs)
+                                        .orElse(List.of()),
+                        () -> exec(s, q).map(QueryMapper::toMetricDTOs).orElse(List.of()));
 
         return metrics.stream()
                 .map(
@@ -552,12 +653,24 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     // ------------------------------------Retention
     // Policy--------------------------------------------------//
 
+    /**
+     * Default retention policy for the database, memoised.
+     *
+     * <p>Retention policies effectively never change, but this used to run a {@code SHOW RETENTION
+     * POLICIES} round trip on every single metric query.
+     */
     @Override
     public String fetchDefaultRp(InfluxDTO influxDTO) {
+        return influxMetaCache.retentionPolicy(
+                influxDTO.getUrl(), influxDTO.getDatabase(), () -> loadDefaultRp(influxDTO));
+    }
+
+    private String loadDefaultRp(InfluxDTO influxDTO) {
         String q = "SHOW RETENTION POLICIES ON \"" + influxDTO.getDatabase() + "\"";
-        try (var influx =
-                InfluxDBFactory.connect(
-                        influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword())) {
+        try {
+            var influx =
+                    influxClientProvider.get(
+                            influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword());
             var qr = influx.query(new Query(q, influxDTO.getDatabase()));
             if (qr == null || hasError(qr)) {
                 return null;
@@ -631,6 +744,14 @@ public class InfluxDbServiceImpl implements InfluxDbService {
 
     private boolean existsVmInInflux(
             InfluxDTO influxDTO, String nsId, String infraId, String nodeId) {
+        String probeKey =
+                InfluxMetaCache.probeKey(
+                        influxDTO.getUrl(), influxDTO.getDatabase(), nsId, infraId, nodeId);
+        return influxMetaCache.exists(
+                probeKey, () -> loadExistsVm(influxDTO, nsId, infraId, nodeId));
+    }
+
+    private boolean loadExistsVm(InfluxDTO influxDTO, String nsId, String infraId, String nodeId) {
         String q =
                 String.format(
                         "SHOW TAG VALUES ON \"%s\" WITH KEY=\"node_id\" "
@@ -640,6 +761,13 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     }
 
     private boolean existsNsMciInInflux(InfluxDTO influxDTO, String nsId, String infraId) {
+        String probeKey =
+                InfluxMetaCache.probeKey(
+                        influxDTO.getUrl(), influxDTO.getDatabase(), nsId, infraId);
+        return influxMetaCache.exists(probeKey, () -> loadExistsNsMci(influxDTO, nsId, infraId));
+    }
+
+    private boolean loadExistsNsMci(InfluxDTO influxDTO, String nsId, String infraId) {
         String q =
                 String.format(
                         "SHOW TAG VALUES ON \"%s\" WITH KEY=\"infra_id\" "
@@ -806,9 +934,10 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     // ------------------------------------helper--------------------------------------------------//
 
     private int resCount(InfluxDTO influxDTO, String query) {
-        try (var influx =
-                InfluxDBFactory.connect(
-                        influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword())) {
+        try {
+            var influx =
+                    influxClientProvider.get(
+                            influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword());
 
             QueryResult qr = influx.query(new Query(query, influxDTO.getDatabase()));
             if (qr == null || hasError(qr)) {
@@ -854,9 +983,10 @@ public class InfluxDbServiceImpl implements InfluxDbService {
     }
 
     private boolean hasResult(InfluxDTO influxDTO, String query) {
-        try (var influx =
-                InfluxDBFactory.connect(
-                        influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword())) {
+        try {
+            var influx =
+                    influxClientProvider.get(
+                            influxDTO.getUrl(), influxDTO.getUsername(), influxDTO.getPassword());
             var qr = influx.query(new Query(query, influxDTO.getDatabase()));
             if (qr == null || hasError(qr)) {
                 return false;

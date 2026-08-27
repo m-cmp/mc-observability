@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useParentNamespace from './useParentNamespace';
 import useBasePath from './useBasePath';
 import { getNsList } from '../api/tumblebug';
-import { getLastSection, setLastSection, SECTIONS } from '../lib/lastSection';
+import { getLastSection, setLastSection, toSection } from '../lib/lastSection';
 
 // Pull the section (if any) and the namespace out of the current path, ignoring the
 // optional /embed base. Paths look like `/{ns}`, `/{ns}/{infra}[/{node}]`, or
@@ -12,7 +12,8 @@ function parsePath(pathname, base) {
   let p = pathname;
   if (base && p.startsWith(base)) p = p.slice(base.length);
   const segs = p.split('/').filter(Boolean);
-  if (segs.length && SECTIONS.includes(segs[0])) return { section: segs[0], ns: segs[1] || '' };
+  const section = segs.length ? toSection(segs[0]) : '';
+  if (section) return { section, ns: segs[1] || '' };
   return { section: '', ns: segs[0] || '' };
 }
 

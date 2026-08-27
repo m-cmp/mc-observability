@@ -32,6 +32,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.influxdb:influxdb-java'
+    // Explicit so the shared InfluxDB client provider can build its own OkHttp client
+    // (connection-pool reuse) instead of letting influxdb-java create one per query.
+    implementation 'com.squareup.okhttp3:okhttp'
     // Version is managed by Spring Boot's dependency management (aligns all fabric8
     // kubernetes-client modules to one version). Pinning here causes api/impl skew.
     implementation 'io.fabric8:kubernetes-client'

@@ -4,6 +4,35 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MC-Observability</title>
+    <script>
+      // Capture the embedding console's namespace before anything else can miss it.
+      //
+      // This has to be an inline classic script: `<script type="module">` is deferred, so the
+      // bundle's own listener only attaches after the document has parsed and the JS has been
+      // fetched. A parent that posts before that point (anything not waiting for the iframe's
+      // load event) lost the message permanently, leaving the iframe stuck on the namespace
+      // picker with no way to recover, since nothing asks the parent to resend.
+      (function () {
+        function nsOf(d) {
+          if (!d || typeof d !== 'object') return '';
+          var p = d.projectInfo || d.project || {};
+          return p.ns_id || p.nsId || p.NsId || p.nsid || d.ns_id || d.nsId || d.NsId || '';
+        }
+        window.addEventListener('message', function (e) {
+          var ns = nsOf(e && e.data);
+          if (ns) window.__parentNs = String(ns).trim();
+        });
+        // Tell the parent we are listening, so a console that posts on its own schedule can
+        // resend rather than having its single early message vanish. Harmless if unhandled.
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'mc-observability:ready' }, '*');
+          }
+        } catch (err) {
+          /* cross-origin parent that refuses postMessage - nothing to do */
+        }
+      })();
+    </script>
   </head>
   <body class="bg-gray-50 text-gray-900">
     <div id="root"></div>

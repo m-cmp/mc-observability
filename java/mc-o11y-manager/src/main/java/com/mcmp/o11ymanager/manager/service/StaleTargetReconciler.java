@@ -27,10 +27,10 @@ import org.springframework.stereotype.Component;
  * rows are only ever inserted (on VM registration / agent install) and are never pruned when the
  * underlying VM or K8s cluster disappears from Tumblebug.
  *
- * <p>Each pass walks every Tumblebug namespace, builds the set of live targets, and diffs it against
- * the persisted rows. To stay safe against id-mapping mistakes or transient Tumblebug errors, a row
- * is deleted <b>only</b> when Tumblebug explicitly confirms it is gone with a 404 on a direct
- * lookup — any other error (429, 5xx, network) leaves the row untouched.
+ * <p>Each pass walks every Tumblebug namespace, builds the set of live targets, and diffs it
+ * against the persisted rows. To stay safe against id-mapping mistakes or transient Tumblebug
+ * errors, a row is deleted <b>only</b> when Tumblebug explicitly confirms it is gone with a 404 on
+ * a direct lookup — any other error (429, 5xx, network) leaves the row untouched.
  */
 @Slf4j
 @Component
@@ -150,7 +150,8 @@ public class StaleTargetReconciler {
             if (nsId == null || !scannedNs.contains(nsId)) {
                 continue; // couldn't verify this NS this pass — leave it alone
             }
-            if (liveKeysByNs.getOrDefault(nsId, Set.of())
+            if (liveKeysByNs
+                    .getOrDefault(nsId, Set.of())
                     .contains(vmKey(vm.getInfraId(), vm.getNodeId()))) {
                 continue; // still present in Tumblebug
             }
@@ -207,7 +208,9 @@ public class StaleTargetReconciler {
         } catch (FeignException.NotFound nf) {
             return true;
         } catch (Exception e) {
-            log.debug("[STALE-RECONCILE] existence check inconclusive, keeping row: {}", e.toString());
+            log.debug(
+                    "[STALE-RECONCILE] existence check inconclusive, keeping row: {}",
+                    e.toString());
             return false;
         }
     }

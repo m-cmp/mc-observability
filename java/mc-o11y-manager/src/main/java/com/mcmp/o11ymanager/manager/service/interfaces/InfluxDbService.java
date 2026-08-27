@@ -37,4 +37,22 @@ public interface InfluxDbService {
      * configured InfluxDB instance. Used by the cache warmer to discover VMs to pre-load.
      */
     List<VmRef> discoverActiveVms();
+
+    /**
+     * Loads metrics for a VM and stores them in the cache, bypassing the fresh window.
+     *
+     * <p>Warming must not go through {@link #getMetricsByVM} — that path returns whatever is
+     * already cached, so repeated warming ticks would never refresh anything.
+     */
+    List<MetricDTO> refreshMetricsByVM(
+            String nsId, String infraId, String nodeId, MetricRequestDTO req);
+
+    /** True when the cache already holds a fresh entry for this query, so warming can skip it. */
+    boolean isMetricCacheFresh(String nsId, String infraId, String nodeId, MetricRequestDTO req);
+
+    /**
+     * Measurement names this specific VM reports, memoised. Warming every known measurement against
+     * every VM produced mostly-empty queries; this narrows it to what actually exists.
+     */
+    List<String> measurementsOfVm(String nsId, String infraId, String nodeId);
 }

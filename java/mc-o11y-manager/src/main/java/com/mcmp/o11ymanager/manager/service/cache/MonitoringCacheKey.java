@@ -9,26 +9,86 @@ import java.util.Objects;
 /**
  * Cache key for monitoring metric query results.
  *
- * <p>The {@code hourBucket} component ensures that queries fall into 1-hour wall-clock blocks: two
- * identical requests in the same hour return cached data, while a new hour produces a fresh entry.
+ * <p>The key deliberately carries <b>no wall-clock component</b>. One query against one VM maps to
+ * a single entry whose contents are refreshed over time, rather than to a new entry per time
+ * window.
+ *
+ * <p>Quantising time into the key produced a synchronised wall of misses every time the window
+ * rolled over, and with a one-hour window a one-minute chart could be served from data 59 minutes
+ * old. Freshness is now a lifetime on the entry instead: {@link #freshWindowSeconds()} is the
+ * query's own {@code group_time} step, so an entry stays fresh for exactly as long as it takes a
+ * new data point to exist, and past that it is refreshed in the background while still being
+ * served.
  */
 public record MonitoringCacheKey(
-        String nsId, String infraId, String nodeId, String requestSignature, long hourBucket) {
+        String nsId,
+        String infraId,
+        String nodeId,
+        String requestSignature,
+        long freshWindowSeconds) {
 
-    /** Builds the canonical cache key for an ns/mci-scoped metric query. */
+    /** Builds the canonical cache key for a metric query. */
     public static MonitoringCacheKey of(
             String nsId,
             String infraId,
             String nodeId,
             MetricRequestDTO req,
-            long blockPeriodSeconds) {
-        long bucket = (System.currentTimeMillis() / 1000L) / blockPeriodSeconds;
+            long minBucketSeconds,
+            long maxBucketSeconds) {
         return new MonitoringCacheKey(
                 nullToEmpty(nsId),
                 nullToEmpty(infraId),
                 nullToEmpty(nodeId),
                 signatureOf(req),
-                bucket);
+                freshWindowOf(req, minBucketSeconds, maxBucketSeconds));
+    }
+
+    /**
+     * Fresh window for a request: its {@code group_time} step, clamped to the configured floor and
+     * ceiling. Requests without a usable step fall back to the floor, which is the safe choice —
+     * too short a window only costs an extra background reload, while too long a one serves stale
+     * data.
+     */
+    static long freshWindowOf(MetricRequestDTO req, long minBucketSeconds, long maxBucketSeconds) {
+        long floor = Math.max(1L, minBucketSeconds);
+        long ceiling = Math.max(floor, maxBucketSeconds);
+        long step = req == null ? 0L : parseDurationSeconds(req.getGroupTime());
+        if (step <= 0L) {
+            return floor;
+        }
+        return Math.min(Math.max(step, floor), ceiling);
+    }
+
+    /**
+     * Parses an InfluxQL-style duration such as {@code "30s"}, {@code "1m"}, {@code "1h"} or {@code
+     * "7d"} into seconds. Returns {@code 0} when the value is absent or unparseable.
+     */
+    static long parseDurationSeconds(String value) {
+        if (value == null || value.isBlank()) {
+            return 0L;
+        }
+        String s = value.trim().toLowerCase();
+        int i = 0;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) {
+            i++;
+        }
+        if (i == 0 || i == s.length()) {
+            return 0L;
+        }
+        long n;
+        try {
+            n = Long.parseLong(s.substring(0, i));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+        return switch (s.substring(i)) {
+            case "s" -> n;
+            case "m" -> n * 60L;
+            case "h" -> n * 3600L;
+            case "d" -> n * 86400L;
+            case "w" -> n * 604800L;
+            default -> 0L;
+        };
     }
 
     /**

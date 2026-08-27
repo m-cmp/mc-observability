@@ -2,19 +2,21 @@ package com.mcmp.o11ymanager.manager.service.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.mcmp.o11ymanager.manager.config.MonitoringCacheProperties;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import jakarta.annotation.PostConstruct;
-import java.time.Duration;
-import java.time.Instant;
+import jakarta.annotation.PreDestroy;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +26,22 @@ import org.springframework.stereotype.Service;
 /**
  * In-memory monitoring metric cache backed by Caffeine.
  *
- * <p>Results are bucketed by 1-hour wall-clock blocks (configurable). Within the same hour,
- * identical requests return cached data without touching InfluxDB. Eviction is driven by total
- * weight (default 512MB) and a 7-day TTL — naturally retaining the most recently queried VMs.
+ * <p>Three properties define the behaviour:
+ *
+ * <ul>
+ *   <li><b>Freshness follows the query's own aggregation step.</b> The cache key carries a time
+ *       bucket whose width comes from {@code group_time}, so a one-minute chart rotates its key
+ *       once a minute instead of once an hour.
+ *   <li><b>Stale-while-revalidate.</b> Once an entry passes its fresh window it is still returned
+ *       immediately while a background task reloads it, so no reader ever waits for InfluxDB just
+ *       because a window elapsed, and expiry never produces a synchronised wall of misses.
+ *   <li><b>One load per key.</b> Concurrent misses on the same key collapse into a single loader
+ *       call through {@link Cache#get(Object, java.util.function.Function)}, so a burst of requests
+ *       cannot stampede InfluxDB.
+ * </ul>
+ *
+ * <p>Empty results are cached too, under a short dedicated TTL. Without that, a VM/measurement
+ * combination that legitimately has no data re-queried InfluxDB on every single request.
  */
 @Slf4j
 @Service
@@ -34,12 +49,24 @@ import org.springframework.stereotype.Service;
 public class MonitoringCacheService {
 
     private final MonitoringCacheProperties properties;
-    private final VmCreatedTimeResolver vmCreatedTimeResolver;
+    private final QueryAccessTracker accessTracker;
 
-    private Cache<MonitoringCacheKey, List<MetricDTO>> cache;
-    private final AtomicLong manualHitCount = new AtomicLong();
-    private final AtomicLong manualMissCount = new AtomicLong();
-    private final AtomicLong skippedTooOldCount = new AtomicLong();
+    private Cache<MonitoringCacheKey, CachedMetrics> cache;
+    private ExecutorService refreshExecutor;
+
+    /** Keys with a refresh already in flight, so parallel readers queue at most one reload. */
+    private final Map<MonitoringCacheKey, Boolean> refreshing = new ConcurrentHashMap<>();
+
+    private final AtomicLong hitFresh = new AtomicLong();
+    private final AtomicLong hitStale = new AtomicLong();
+    private final AtomicLong missCold = new AtomicLong();
+    private final AtomicLong emptyCached = new AtomicLong();
+    private final AtomicLong refreshSubmitted = new AtomicLong();
+    private final AtomicLong refreshRejected = new AtomicLong();
+    private final AtomicLong refreshFailed = new AtomicLong();
+    private final AtomicLong ageSumMillis = new AtomicLong();
+    private final AtomicLong ageSamples = new AtomicLong();
+    private final AtomicLong ageMaxMillis = new AtomicLong();
 
     @PostConstruct
     void init() {
@@ -54,26 +81,79 @@ public class MonitoringCacheService {
                 Caffeine.newBuilder()
                         .maximumWeight(maxWeightBytes)
                         .weigher(
-                                (MonitoringCacheKey key, List<MetricDTO> value) ->
+                                (MonitoringCacheKey key, CachedMetrics value) ->
                                         estimateWeight(key, value, bytesPerPoint))
-                        .expireAfter(buildExpiry())
+                        .expireAfterWrite(
+                                java.time.Duration.ofSeconds(
+                                        Math.max(1L, properties.getHardTtlSeconds())))
                         .recordStats()
                         .build();
+        this.refreshExecutor = newRefreshPool(properties.getRefreshThreads());
         log.info(
-                "[MON-CACHE] enabled blockPeriodSec={}, maxWeightMB={}, ttlSec={}",
-                properties.getBlockPeriodSeconds(),
+                "[MON-CACHE] enabled minBucketSec={}, maxBucketSec={},"
+                        + " emptyTtlSec={}, hardTtlSec={}, maxWeightMB={}, refreshThreads={}",
+                properties.getMinBucketSeconds(),
+                properties.getMaxBucketSeconds(),
+                properties.getEmptyTtlSeconds(),
+                properties.getHardTtlSeconds(),
                 properties.getMaxWeightMb(),
-                properties.getExpireAfterWriteSeconds());
+                properties.getRefreshThreads());
+    }
+
+    @PreDestroy
+    void shutdown() {
+        if (refreshExecutor != null) {
+            refreshExecutor.shutdownNow();
+        }
     }
 
     /**
-     * Returns the cached metric list for the given query, or computes it from InfluxDB via {@code
-     * loader} on miss and stores the result.
-     *
-     * <p>An empty hit (cached but no data points) is treated as a miss so that once metrics
-     * actually start flowing the next call fills the cache with real data.
+     * Returns cached metrics for the query, loading them through {@code loader} when nothing usable
+     * is cached. See the class javadoc for the freshness and stampede semantics.
      */
     public List<MetricDTO> getOrLoad(
+            String nsId,
+            String infraId,
+            String nodeId,
+            MetricRequestDTO req,
+            Supplier<List<MetricDTO>> loader) {
+        accessTracker.record(nsId, infraId, nodeId);
+        if (cache == null) {
+            return loader.get();
+        }
+        MonitoringCacheKey key = keyOf(nsId, infraId, nodeId, req);
+        long now = System.currentTimeMillis();
+
+        CachedMetrics hit = cache.getIfPresent(key);
+        if (hit != null) {
+            recordAge(now - hit.loadedAtMillis());
+            if (now < hit.freshUntilMillis()) {
+                hitFresh.incrementAndGet();
+                return hit.metrics();
+            }
+            // Past the fresh window but still serviceable: hand back the stale copy right away and
+            // refresh it out of band. A reader never waits for InfluxDB because a bucket rolled
+            // over.
+            hitStale.incrementAndGet();
+            submitRefresh(key, loader);
+            return hit.metrics();
+        }
+
+        missCold.incrementAndGet();
+        return loadNow(key, loader);
+    }
+
+    /**
+     * Loads and stores an entry, collapsing concurrent callers for the same key into one loader
+     * invocation.
+     */
+    private List<MetricDTO> loadNow(MonitoringCacheKey key, Supplier<List<MetricDTO>> loader) {
+        CachedMetrics entry = cache.get(key, k -> buildEntry(k, loader));
+        return entry == null ? Collections.emptyList() : entry.metrics();
+    }
+
+    /** Bypasses the fresh window and reloads the entry — used by the warming scheduler. */
+    public List<MetricDTO> refreshNow(
             String nsId,
             String infraId,
             String nodeId,
@@ -82,42 +162,86 @@ public class MonitoringCacheService {
         if (cache == null) {
             return loader.get();
         }
-        MonitoringCacheKey key =
-                MonitoringCacheKey.of(
-                        nsId, infraId, nodeId, req, properties.getBlockPeriodSeconds());
+        MonitoringCacheKey key = keyOf(nsId, infraId, nodeId, req);
+        CachedMetrics entry = buildEntry(key, loader);
+        cache.put(key, entry);
+        return entry.metrics();
+    }
 
-        List<MetricDTO> hit = cache.getIfPresent(key);
-        if (hit != null && hasAnyDataPoint(hit)) {
-            manualHitCount.incrementAndGet();
-            log.debug(
-                    "[MON-CACHE] HIT ns={}, mci={}, vm={}, bucket={}",
-                    key.nsId(),
-                    key.infraId(),
-                    key.nodeId(),
-                    key.hourBucket());
-            return hit;
+    /** True when the key already holds a fresh entry — lets the warmer skip needless work. */
+    public boolean isFresh(String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        if (cache == null) {
+            return false;
         }
+        CachedMetrics hit = cache.getIfPresent(keyOf(nsId, infraId, nodeId, req));
+        return hit != null && System.currentTimeMillis() < hit.freshUntilMillis();
+    }
 
-        manualMissCount.incrementAndGet();
-        log.debug(
-                "[MON-CACHE] MISS ns={}, mci={}, vm={}, bucket={}",
-                key.nsId(),
-                key.infraId(),
-                key.nodeId(),
-                key.hourBucket());
+    private MonitoringCacheKey keyOf(
+            String nsId, String infraId, String nodeId, MetricRequestDTO req) {
+        return MonitoringCacheKey.of(
+                nsId,
+                infraId,
+                nodeId,
+                req,
+                properties.getMinBucketSeconds(),
+                properties.getMaxBucketSeconds());
+    }
 
+    private CachedMetrics buildEntry(MonitoringCacheKey key, Supplier<List<MetricDTO>> loader) {
         List<MetricDTO> loaded = loader.get();
-        if (loaded == null) {
-            return Collections.emptyList();
+        List<MetricDTO> safe = loaded == null ? List.of() : List.copyOf(loaded);
+        long now = System.currentTimeMillis();
+        boolean empty = !hasAnyDataPoint(safe);
+        if (empty) {
+            emptyCached.incrementAndGet();
         }
-        // Only cache when the VM was created within the last 7 days. Anything older has nothing
-        // useful left to cache (would expire immediately) and would just waste a slot.
-        if (computeTtlNanos(key) > 0) {
-            cache.put(key, loaded);
-        } else {
-            skippedTooOldCount.incrementAndGet();
+        long freshMillis =
+                empty
+                        ? Math.max(1L, properties.getEmptyTtlSeconds()) * 1000L
+                        : key.freshWindowSeconds() * 1000L;
+        return new CachedMetrics(safe, now, now + freshMillis);
+    }
+
+    private void submitRefresh(MonitoringCacheKey key, Supplier<List<MetricDTO>> loader) {
+        if (refreshExecutor == null) {
+            return;
         }
-        return loaded;
+        if (refreshing.putIfAbsent(key, Boolean.TRUE) != null) {
+            return; // a refresh for this key is already running
+        }
+        try {
+            refreshExecutor.execute(
+                    () -> {
+                        try {
+                            cache.put(key, buildEntry(key, loader));
+                        } catch (Exception e) {
+                            refreshFailed.incrementAndGet();
+                            log.debug(
+                                    "[MON-CACHE] background refresh failed ns={}, mci={}, vm={},"
+                                            + " err={}",
+                                    key.nsId(),
+                                    key.infraId(),
+                                    key.nodeId(),
+                                    e.toString());
+                        } finally {
+                            refreshing.remove(key);
+                        }
+                    });
+            refreshSubmitted.incrementAndGet();
+        } catch (Exception rejected) {
+            refreshing.remove(key);
+            refreshRejected.incrementAndGet();
+        }
+    }
+
+    private void recordAge(long ageMillis) {
+        if (ageMillis < 0) {
+            return;
+        }
+        ageSumMillis.addAndGet(ageMillis);
+        ageSamples.incrementAndGet();
+        ageMaxMillis.accumulateAndGet(ageMillis, Math::max);
     }
 
     /** Invalidate everything — exposed mainly for ops/admin use. */
@@ -125,6 +249,7 @@ public class MonitoringCacheService {
         if (cache != null) {
             cache.invalidateAll();
         }
+        refreshing.clear();
     }
 
     /** Returns runtime stats for the {@code /cache/stats} endpoint. */
@@ -133,75 +258,34 @@ public class MonitoringCacheService {
             return Map.of("enabled", false);
         }
         CacheStats s = cache.stats();
-        long totalRequests = manualHitCount.get() + manualMissCount.get();
-        double hitRate = totalRequests == 0 ? 0d : (double) manualHitCount.get() / totalRequests;
-        return Map.ofEntries(
-                Map.entry("enabled", true),
-                Map.entry("blockPeriodSeconds", properties.getBlockPeriodSeconds()),
-                Map.entry("maxWeightMB", properties.getMaxWeightMb()),
-                Map.entry("expireAfterWriteSeconds", properties.getExpireAfterWriteSeconds()),
-                Map.entry("estimatedSize", cache.estimatedSize()),
-                Map.entry("hitCount", manualHitCount.get()),
-                Map.entry("missCount", manualMissCount.get()),
-                Map.entry("hitRate", hitRate),
-                Map.entry("evictionCount", s.evictionCount()),
-                Map.entry("evictionWeight", s.evictionWeight()),
-                Map.entry("loadFailureCount", s.loadFailureCount()),
-                Map.entry("skippedTooOldCount", skippedTooOldCount.get()));
-    }
+        long hits = hitFresh.get() + hitStale.get();
+        long misses = missCold.get();
+        long total = hits + misses;
+        long samples = ageSamples.get();
 
-    /**
-     * Returns the remaining lifetime (in nanoseconds) for an entry whose VM was created at the
-     * resolved {@code createdTime}. Falls back to the configured global TTL when Tumblebug doesn't
-     * expose a creation time. Returns {@code 0} when the VM is already older than the configured
-     * window — the caller should skip caching such entries.
-     */
-    private long computeTtlNanos(MonitoringCacheKey key) {
-        long maxTtlSec = properties.getExpireAfterWriteSeconds();
-        if (key.nodeId() == null || key.nodeId().isEmpty()) {
-            // ns/mci-scoped queries can't be tied to a specific VM creation time → use global TTL
-            return TimeUnit.SECONDS.toNanos(maxTtlSec);
-        }
-        Optional<Instant> createdAt =
-                vmCreatedTimeResolver.resolve(key.nsId(), key.infraId(), key.nodeId());
-        if (createdAt.isEmpty()) {
-            return TimeUnit.SECONDS.toNanos(maxTtlSec);
-        }
-        Instant deadline = createdAt.get().plusSeconds(maxTtlSec);
-        long remainSec = Duration.between(Instant.now(), deadline).getSeconds();
-        if (remainSec <= 0) {
-            return 0L;
-        }
-        return TimeUnit.SECONDS.toNanos(Math.min(remainSec, maxTtlSec));
-    }
-
-    private Expiry<MonitoringCacheKey, List<MetricDTO>> buildExpiry() {
-        return new Expiry<>() {
-            @Override
-            public long expireAfterCreate(
-                    MonitoringCacheKey key, List<MetricDTO> value, long currentTime) {
-                return Math.max(1L, computeTtlNanos(key));
-            }
-
-            @Override
-            public long expireAfterUpdate(
-                    MonitoringCacheKey key,
-                    List<MetricDTO> value,
-                    long currentTime,
-                    long currentDuration) {
-                return Math.max(1L, computeTtlNanos(key));
-            }
-
-            @Override
-            public long expireAfterRead(
-                    MonitoringCacheKey key,
-                    List<MetricDTO> value,
-                    long currentTime,
-                    long currentDuration) {
-                // reads do not extend the lifetime — keep the createdTime-bound deadline
-                return currentDuration;
-            }
-        };
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("enabled", true);
+        out.put("minBucketSeconds", properties.getMinBucketSeconds());
+        out.put("maxBucketSeconds", properties.getMaxBucketSeconds());
+        out.put("emptyTtlSeconds", properties.getEmptyTtlSeconds());
+        out.put("hardTtlSeconds", properties.getHardTtlSeconds());
+        out.put("maxWeightMB", properties.getMaxWeightMb());
+        out.put("estimatedSize", cache.estimatedSize());
+        out.put("hitCount", hits);
+        out.put("hitFreshCount", hitFresh.get());
+        out.put("hitStaleCount", hitStale.get());
+        out.put("missCount", misses);
+        out.put("hitRate", total == 0 ? 0d : (double) hits / total);
+        out.put("emptyCachedCount", emptyCached.get());
+        out.put("refreshSubmittedCount", refreshSubmitted.get());
+        out.put("refreshRejectedCount", refreshRejected.get());
+        out.put("refreshFailedCount", refreshFailed.get());
+        out.put("servedAgeAvgMillis", samples == 0 ? 0L : ageSumMillis.get() / samples);
+        out.put("servedAgeMaxMillis", ageMaxMillis.get());
+        out.put("evictionCount", s.evictionCount());
+        out.put("evictionWeight", s.evictionWeight());
+        out.put("trackedVmCount", accessTracker.size());
+        return out;
     }
 
     /** True if at least one series in the list has at least one data point. */
@@ -218,19 +302,20 @@ public class MonitoringCacheService {
     }
 
     private static int estimateWeight(
-            MonitoringCacheKey key, List<MetricDTO> value, int bytesPerPoint) {
+            MonitoringCacheKey key, CachedMetrics value, int bytesPerPoint) {
         int keyBytes =
                 (key.nsId().length()
                                         + key.infraId().length()
                                         + key.nodeId().length()
                                         + key.requestSignature().length())
                                 * 2
-                        + 16;
-        if (value == null || value.isEmpty()) {
+                        + 32;
+        List<MetricDTO> metrics = value == null ? null : value.metrics();
+        if (metrics == null || metrics.isEmpty()) {
             return keyBytes + 32;
         }
         long points = 0;
-        for (MetricDTO m : value) {
+        for (MetricDTO m : metrics) {
             if (m == null) {
                 continue;
             }
@@ -239,7 +324,23 @@ public class MonitoringCacheService {
                 points += values.size();
             }
         }
-        long weight = (long) keyBytes + points * bytesPerPoint + (long) value.size() * 64L;
+        long weight = (long) keyBytes + points * bytesPerPoint + (long) metrics.size() * 64L;
         return (int) Math.min(weight, Integer.MAX_VALUE);
     }
+
+    private static ExecutorService newRefreshPool(int size) {
+        int bounded = Math.max(1, size);
+        AtomicInteger counter = new AtomicInteger();
+        ThreadFactory factory =
+                r -> {
+                    Thread t = new Thread(r, "mon-cache-refresh-" + counter.incrementAndGet());
+                    t.setDaemon(true);
+                    return t;
+                };
+        return Executors.newFixedThreadPool(bounded, factory);
+    }
+
+    /** A cached result together with the instant it was loaded and the end of its fresh window. */
+    private record CachedMetrics(
+            List<MetricDTO> metrics, long loadedAtMillis, long freshUntilMillis) {}
 }

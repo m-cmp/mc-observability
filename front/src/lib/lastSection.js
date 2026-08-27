@@ -5,6 +5,20 @@
 const KEY = 'o11y:lastSection';
 export const SECTIONS = ['monitoring', 'logs', 'config', 'insight', 'alerts', 'trace'];
 
+/**
+ * Canonical section name for a path segment, or '' when it names no section.
+ *
+ * React Router matches static path segments case-insensitively, so `/embed/LOGS/{ns}` already
+ * reaches the Logs route. Matching this list case-sensitively made the section entry points
+ * disagree with that: `/embed/Logs` fell through to NotFound while `/embed/LOGS/{ns}` rendered
+ * fine. Normalising here keeps both halves of the URL space on the same rule.
+ */
+export function toSection(segment) {
+  if (!segment) return '';
+  const s = String(segment).toLowerCase();
+  return SECTIONS.includes(s) ? s : '';
+}
+
 export function setLastSection(section) {
   try {
     if (SECTIONS.includes(section)) localStorage.setItem(KEY, section);

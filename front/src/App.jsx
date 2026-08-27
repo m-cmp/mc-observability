@@ -16,6 +16,8 @@ import K8sNodeDashboard from './pages/K8sNodeDashboard';
 import HomePage from './pages/HomePage';
 import NamespaceHome from './pages/NamespaceHome';
 import NsScopedApp from './pages/NsScopedApp';
+import SectionEntry, { NsRootOrSection } from './pages/SectionEntry';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   const { token } = useAppContext();
@@ -37,10 +39,10 @@ export default function App() {
 
       {/* Standalone — full nav + NS/Infra selectors */}
       <Route element={<Layout />}>
-        {/* Namespace-rooted entry: `/` shows NS picker, `/:nsId` shows the
-            namespace overview with full nav (NS selector). */}
+        {/* Namespace-rooted entry: `/` shows the NS picker, and a lone segment is either a
+            section (`/logs` -> picker pinned to Logs) or a namespace (`/{ns}` -> overview). */}
         <Route path="/" element={<NamespaceHome />} />
-        <Route path="/:nsId" element={<InfraOverview />} />
+        <Route path="/:nsId" element={<NsRootOrSection />} />
         <Route path="/monitoring/:nsId/k8s/:connectionName/:clusterName/:nodeGroupName/:nodeNumber" element={<K8sNodeDashboard />} />
         <Route path="/monitoring/:nsId/:infraId/:nodeId" element={<MonitoringDashboard />} />
         <Route path="/monitoring/:nsId/:infraId" element={<InfraOverview />} />
@@ -63,6 +65,10 @@ export default function App() {
 
       {/* Embed — no nav, for iframe */}
       <Route element={<EmbedLayout />}>
+        {/* Namespace-less entries. The console's per-section sub-menus point here: the URL
+            names the section, the namespace still arrives over postMessage. */}
+        <Route path="/embed" element={<NamespaceHome />} />
+        <Route path="/embed/:section" element={<SectionEntry />} />
         <Route path="/embed/monitoring/:nsId/k8s/:connectionName/:clusterName/:nodeGroupName/:nodeNumber" element={<K8sNodeDashboard />} />
         <Route path="/embed/monitoring/:nsId/:infraId/:nodeId" element={<MonitoringDashboard />} />
         <Route path="/embed/monitoring/:nsId/:infraId" element={<InfraOverview />} />
@@ -82,6 +88,9 @@ export default function App() {
         <Route path="/embed/trace/:nsId/:infraId" element={<TraceViewer />} />
         <Route path="/embed/trace/:nsId" element={<TraceViewer />} />
       </Route>
+
+      {/* Anything else would otherwise render an empty iframe with no explanation. */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
     </ErrorBoundary>
   );

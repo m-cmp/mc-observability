@@ -19,9 +19,35 @@ public class InfluxQl {
             throw new IllegalArgumentException("The range must be in the format 10s/5m/1h/2d.");
         }
 
+        return build(
+                r,
+                retentionPolicy,
+                " where time > now() - " + r.getRange() + conditions(r.getConditions()));
+    }
+
+    /**
+     * Same query, but bounded by an absolute half-open window {@code [startNanos, endNanos)}
+     * instead of a relative {@code now() - range}.
+     *
+     * <p>Used by chunked fetching: a relative window shifts on every call, so nothing about it can
+     * be reused. Absolute bounds aligned to the aggregation step make each slice deterministic, and
+     * a slice that lies entirely in the past can never change — which is what makes it cacheable.
+     */
+    public static String buildRangeQuery(
+            MetricRequestDTO r, String retentionPolicy, long startNanos, long endNanos) {
+        if (!StringUtils.hasText(r.getMeasurement())) {
+            throw new IllegalArgumentException("Measurement is required.");
+        }
+        if (startNanos >= endNanos) {
+            throw new IllegalArgumentException("startNanos must be before endNanos");
+        }
+        String where = " where time >= " + startNanos + " and time < " + endNanos;
+        return build(r, retentionPolicy, where + conditions(r.getConditions()));
+    }
+
+    private static String build(MetricRequestDTO r, String retentionPolicy, String where) {
         String select = "select time as timestamp" + projection(r.getFields());
         String from = " from " + qualifiedMeasurement(retentionPolicy, r.getMeasurement());
-        String where = " where time > now() - " + r.getRange() + conditions(r.getConditions());
         // GROUP BY time() is only valid when every projected field is aggregated; InfluxDB rejects
         // it otherwise ("GROUP BY requires at least one aggregate function"), which silently turns
         // into empty graphs. When the projection is raw (no function, or "*"), drop the time bucket

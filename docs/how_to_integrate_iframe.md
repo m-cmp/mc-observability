@@ -1,6 +1,11 @@
 # iframe 연동 가이드 (How to integrate via iframe)
 
-mc-observability 프론트(`mc-observability-front`, 기본 포트 `18081`)를 다른 콘솔/포털에 **iframe으로 임베드**하는 방법을 설명합니다. 네임스페이스 기반 URL만 넘기면 상단 메뉴로 모든 기능(Monitoring / Logs / Config / Insight / Alerts / Tracing)을 제어할 수 있습니다.
+mc-observability 프론트(`mc-observability-front`, 기본 포트 `18081`)를 다른 콘솔/포털에 **iframe으로 임베드**하는 방법을 설명합니다.
+
+임베드 방식은 두 가지입니다.
+
+- **한 덩어리로 임베드**: 네임스페이스 기반 URL 하나만 넘기면 프론트 상단 메뉴로 모든 기능(Monitoring / Logs / Config / Insight / Alerts / Tracing)을 제어합니다.
+- **기능별로 나눠서 임베드**: 포털 쪽에 기능별 하위 메뉴를 두고 각 메뉴가 자기 기능만 담긴 iframe을 띄웁니다. 이때 프론트 상단 메뉴는 나오지 않습니다. → [5. 포털 하위 메뉴로 나눠서 임베드하기](#5-포털-하위-메뉴로-나눠서-임베드하기)
 
 ---
 
@@ -14,6 +19,10 @@ mc-observability 프론트(`mc-observability-front`, 기본 포트 `18081`)를 �
 | `/{ns}/{infra}/{node}` | **Node 레벨 스코프 화면** (로고 없음, 셀렉터 없음, 뒤로가기 버튼) | iframe 임베드 |
 | `/console` | 개발/테스트 콘솔(토큰·ns·infra·node 수동 선택) | 로컬 디버깅 |
 | `/embed/{section}/{ns}/...` | 메뉴 없는 단일 패널(예: `/embed/monitoring/{ns}/{infra}/{node}`) | 특정 패널 1개만 임베드 |
+| `/embed/{section}` | 위와 같되 **ns를 URL에 넣지 않는 형태.** ns는 postMessage로 받아 `/embed/{section}/{ns}`로 자동 이동 | **포털 하위 메뉴별 임베드** |
+| `/embed` | 메뉴 없는 네임스페이스 선택 화면 | ns·기능 모두 미지정 |
+
+`{section}`은 `monitoring` · `logs` · `config` · `insight` · `alerts` · `trace` 여섯 개입니다. 이 중 어디에도 걸리지 않는 주소는 빈 화면 대신 **안내 화면**이 표시됩니다.
 
 > 예시(원격): `http://20.41.115.17:18081/testns01/test01`, `http://20.41.115.17:18081/testns01/test01/vm-1`
 
@@ -24,7 +33,7 @@ mc-observability 프론트(`mc-observability-front`, 기본 포트 `18081`)를 �
 iframe 임베드에 최적화된 화면입니다.
 
 - **제품 로고("MC-Observability") 미표시.**
-- **상단 메뉴(Monitoring/Logs/Config/Insight/Alerts/Tracing)는 표시**되며, 클릭 시 **URL을 바꾸지 않고** 화면 내용만 그 자리에서 전환됩니다(in-place). → iframe `src`가 고정 유지됩니다.
+- **상단 메뉴(Monitoring/Logs/Config/Insight/Alerts/Tracing)는 표시**되며, 클릭하면 iframe 안에서 `/{section}/{ns}/{infra}[/{node}]`로 이동합니다. 이때 바뀌는 것은 **iframe 내부의 history**이고, 부모가 지정한 `src` 속성값 자체는 그대로입니다. 즉 부모는 아무것도 다시 하지 않아도 되지만, iframe 안의 현재 주소는 선택한 메뉴를 따라갑니다.
 - **셀렉터 규칙**: 경로에 이미 들어간 식별자의 셀렉터는 숨깁니다. ns가 경로에 있으면 NS 셀렉터, infra가 경로에 있으면 Infra 셀렉터를 표시하지 않습니다. 따라서 `/{ns}/{infra}`·`/{ns}/{infra}/{node}` 화면에는 우측 상단 셀렉터가 없습니다.
 - **Node 레벨(`/{ns}/{infra}/{node}`)**: 좌측 상단에 **뒤로가기(← Back) 버튼**이 있어 다시 Infra 레벨(`/{ns}/{infra}`)로 돌아갑니다.
 
@@ -73,7 +82,54 @@ iframe 임베드에 최적화된 화면입니다.
 
 ---
 
-## 5. 인증 토큰 전달 (postMessage)
+## 5. 포털 하위 메뉴로 나눠서 임베드하기
+
+포털 메뉴를 하나만 두고 그 안에서 프론트 상단 메뉴로 전환하는 대신, **포털 쪽에 기능별 하위 메뉴를 두고 각 메뉴가 자기 기능만 담긴 iframe을 띄우는** 방식입니다. 이 경우 프론트 상단 메뉴는 나오지 않으므로 포털 메뉴와 겹치지 않습니다.
+
+### 5.1 하위 메뉴별 src
+
+`/embed/{section}` 형태를 씁니다. **네임스페이스를 URL에 넣지 않아도 됩니다.**
+
+| 포털 하위 메뉴 | iframe src |
+|---|---|
+| Monitoring | `http://<HOST>:18081/embed/monitoring` |
+| Logs | `http://<HOST>:18081/embed/logs` |
+| Config | `http://<HOST>:18081/embed/config` |
+| Insight | `http://<HOST>:18081/embed/insight` |
+| Alerts | `http://<HOST>:18081/embed/alerts` |
+| Tracing | `http://<HOST>:18081/embed/trace` |
+
+네임스페이스는 기존과 똑같이 **postMessage로 받습니다**(→ [6. 인증 토큰 전달](#6-인증-토큰-전달-postmessage)). 프론트가 ns를 받으면 스스로 `/embed/{section}/{ns}`로 이동하므로, 포털은 프로젝트가 바뀔 때마다 `src` 문자열을 다시 조립할 필요가 없습니다.
+
+ns를 이미 알고 있다면 처음부터 `/embed/{section}/{ns}`로 지정해도 됩니다. 둘 다 동작합니다.
+
+```html
+<!-- 하위 메뉴 "Logs" 의 페이지 -->
+<iframe id="o11y" src="http://<HOST>:18081/embed/logs"
+        style="width:100%;height:100%;border:0;"></iframe>
+<script>
+  document.getElementById('o11y').onload = function () {
+    this.contentWindow.postMessage({
+      accessToken: "Bearer eyJhbGciOi...",
+      workspaceInfo: { id: "...", name: "..." },
+      projectInfo:   { id: "...", ns_id: "testns01", name: "..." }
+    }, "http://<HOST>:18081");
+  };
+</script>
+```
+
+### 5.2 이때 보장되는 동작
+
+- **프론트 상단 메뉴가 표시되지 않습니다.** `/embed/*`는 메뉴 없는 레이아웃을 씁니다.
+- **워크스페이스·네임스페이스 선택은 상위 포털이 계속 담당합니다.** 하위 메뉴마다 별도로 고를 필요가 없습니다.
+- **부모가 프로젝트(ns)를 바꾸면 보고 있던 기능을 유지한 채** 새 ns로 이동합니다. Logs를 보고 있었으면 `/embed/logs/{새ns}`로 갑니다. Monitoring으로 되돌아가지 않습니다.
+- ns가 아직 안 왔거나 부모 없이 직접 열면, **그 기능으로 한정된 네임스페이스 선택 화면**이 표시됩니다.
+
+> 포털이 프로젝트 변경 시 iframe을 통째로 다시 만드는 구조여도 됩니다. 새로 만들어진 iframe이 다시 `/embed/{section}`에서 시작해 postMessage로 ns를 받으므로 결과는 같습니다.
+
+---
+
+## 6. 인증 토큰 전달 (postMessage)
 
 프론트는 부모 창에서 `window.postMessage`로 보내는 **액세스 토큰**을 받아 백엔드 호출에 사용합니다. (`AppContext`가 `message` 이벤트를 수신)
 
@@ -103,7 +159,7 @@ http://<HOST>:18081/testns01/test01?token=Bearer%20eyJ...&ns_id=testns01
 
 ---
 
-## 6. 백엔드 프록시 경로 (nginx)
+## 7. 백엔드 프록시 경로 (nginx)
 
 프론트 nginx가 동일 오리진에서 백엔드로 프록시하므로 CORS 설정이 필요 없습니다.
 
@@ -117,8 +173,8 @@ SPA 라우팅은 `try_files $uri /index.html` 폴백으로 처리되므로 `/{ns
 
 ---
 
-## 7. 참고 사항
+## 8. 참고 사항
 
 - **에이전트 미설치 노드**: 메트릭이 없을 때 빈 "No data" 대신, **Config 메뉴에서 에이전트를 설치하라는 안내**가 표시됩니다.
-- **`/embed/*`**: 상단 메뉴까지 빼고 패널 하나만 임베드하고 싶을 때 사용합니다(예: 대시보드 카드에 차트 하나만 넣기).
+- **`/embed/*`**: 상단 메뉴 없이 기능 하나만 임베드할 때 사용합니다. 포털 하위 메뉴로 나눌 때(→ 5장)와 대시보드 카드에 패널 하나만 넣을 때가 여기 해당합니다.
 - 식별자 명명: cb-tumblebug 리네임에 맞춰 경로/필드는 `ns`(네임스페이스) · `infra`(구 MCI) · `node`(구 VM)를 사용합니다.

@@ -9,6 +9,12 @@ deploy:
 spring:
   application:
     name: ${SPRING_APP_NAME:mc-o11y-manager}
+  task:
+    scheduling:
+      # Several @Scheduled jobs fire on the same minute boundary. With the Spring default of a
+      # single scheduler thread they serialise behind each other.
+      pool:
+        size: ${SPRING_SCHEDULING_POOL_SIZE:4}
   datasource:
     url: jdbc:mariadb://${DATABASE_HOST:mc-observability-maria}:${DATABASE_PORT:3306}/${DATABASE_NAME:mc_observability}
     username: ${DATABASE_ID:mc-agent}
@@ -151,13 +157,40 @@ csp:
 monitoring:
   cache:
     enabled: ${MONITORING_CACHE_ENABLED:true}
-    block-period-seconds: ${MONITORING_CACHE_BLOCK_PERIOD_SECONDS:3600}
+    # Bucket width follows each query's own group_time, clamped to this range. A one-minute chart
+    # therefore rotates its cache key once a minute instead of once an hour.
+    min-bucket-seconds: ${MONITORING_CACHE_MIN_BUCKET_SECONDS:60}
+    max-bucket-seconds: ${MONITORING_CACHE_MAX_BUCKET_SECONDS:3600}
+    # Empty results are cached briefly so a measurement a VM does not report stops being re-queried
+    # on every request, while a VM that just started reporting still appears quickly.
+    empty-ttl-seconds: ${MONITORING_CACHE_EMPTY_TTL_SECONDS:60}
+    # Past its fresh window an entry is still served while it refreshes in the background; this caps
+    # how long that may continue if refreshes keep failing.
+    hard-ttl-seconds: ${MONITORING_CACHE_HARD_TTL_SECONDS:900}
+    refresh-threads: ${MONITORING_CACHE_REFRESH_THREADS:8}
     max-weight-mb: ${MONITORING_CACHE_MAX_WEIGHT_MB:512}
-    expire-after-write-seconds: ${MONITORING_CACHE_EXPIRE_SECONDS:604800}
     estimated-bytes-per-point: ${MONITORING_CACHE_BYTES_PER_POINT:200}
+    chunk:
+      # 조회 구간을 절대 시각 슬라이스로 잘라, 과거 슬라이스를 재사용한다.
+      # InfluxDB 가 훑는 데이터 양을 줄이는 장치이며 사용자 응답 지연과는 무관하다
+      # (그쪽은 결과 캐시 + SWR 이 이미 처리한다). 기본 off.
+      enabled: ${MONITORING_CACHE_CHUNK_ENABLED:false}
+      target-chunks: ${MONITORING_CACHE_CHUNK_TARGET:12}
+      max-chunks: ${MONITORING_CACHE_CHUNK_MAX:48}
+      min-range-seconds: ${MONITORING_CACHE_CHUNK_MIN_RANGE_SECONDS:900}
+      settle-seconds: ${MONITORING_CACHE_CHUNK_SETTLE_SECONDS:0}
+      max-slices: ${MONITORING_CACHE_CHUNK_MAX_SLICES:20000}
+      slice-ttl-seconds: ${MONITORING_CACHE_CHUNK_SLICE_TTL_SECONDS:1800}
+    access-tracker:
+      max-size: ${MONITORING_CACHE_ACCESS_MAX_SIZE:2000}
+      window-seconds: ${MONITORING_CACHE_ACCESS_WINDOW_SECONDS:900}
     warm:
       enabled: ${MONITORING_CACHE_WARM_ENABLED:true}
       top-n: ${MONITORING_CACHE_WARM_TOP_N:10}
+      # recently-queried | recently-created
+      selection: ${MONITORING_CACHE_WARM_SELECTION:recently-queried}
+      timebox-seconds: ${MONITORING_CACHE_WARM_TIMEBOX_SECONDS:45}
+      jitter-seconds: ${MONITORING_CACHE_WARM_JITTER_SECONDS:10}
       realtime:
         cron: ${MONITORING_CACHE_WARM_REALTIME_CRON:0 * * * * *}
         thread-pool-size: ${MONITORING_CACHE_WARM_REALTIME_THREADS:10}
@@ -182,6 +215,22 @@ monitoring:
           - { measurement: cpu,  function: mean, field: usage_idle,   range: 1h, group-time: 1m, limit: 2000 }
           - { measurement: mem,  function: mean, field: used_percent, range: 1h, group-time: 1m, limit: 2000 }
           - { measurement: disk, function: mean, field: used_percent, range: 1h, group-time: 1m, limit: 2000 }
+
+influx:
+  client:
+    # One shared client per endpoint — connection pool reuse instead of a new client per query.
+    max-idle-connections: ${INFLUX_CLIENT_MAX_IDLE_CONNECTIONS:32}
+    keep-alive-seconds: ${INFLUX_CLIENT_KEEP_ALIVE_SECONDS:300}
+    connect-timeout-seconds: ${INFLUX_CLIENT_CONNECT_TIMEOUT_SECONDS:5}
+    read-timeout-seconds: ${INFLUX_CLIENT_READ_TIMEOUT_SECONDS:30}
+    write-timeout-seconds: ${INFLUX_CLIENT_WRITE_TIMEOUT_SECONDS:30}
+  meta:
+    # Auxiliary lookups that used to run on every metric query.
+    retention-policy-ttl-seconds: ${INFLUX_META_RP_TTL_SECONDS:3600}
+    exists-ttl-seconds: ${INFLUX_META_EXISTS_TTL_SECONDS:60}
+    exists-negative-ttl-seconds: ${INFLUX_META_EXISTS_NEGATIVE_TTL_SECONDS:15}
+    measurement-ttl-seconds: ${INFLUX_META_MEASUREMENT_TTL_SECONDS:600}
+    max-size: ${INFLUX_META_MAX_SIZE:20000}
 
 health:
   check-interval: ${HEALTH_INTERVAL:10000}

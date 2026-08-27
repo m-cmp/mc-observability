@@ -9,8 +9,10 @@ import org.springframework.stereotype.Component;
 /**
  * Configuration for the in-memory monitoring metric cache.
  *
- * <p>The cache groups metric query results into 1-hour wall-clock buckets so that repeated queries
- * landing in the same hour return immediately without hitting InfluxDB.
+ * <p>Cache entries are keyed by a time bucket whose width follows the query's own {@code
+ * group_time} step, clamped between {@link #minBucketSeconds} and {@link #maxBucketSeconds}. Inside
+ * that window an entry is served as-is; past it the entry is still returned while a background task
+ * refreshes it, until {@link #hardTtlSeconds} elapses and it is dropped entirely.
  */
 @Getter
 @Setter
@@ -21,14 +23,34 @@ public class MonitoringCacheProperties {
     /** Whether the cache layer is enabled. */
     private boolean enabled = true;
 
-    /** Bucket size in seconds. Defaults to 1 hour. */
-    private long blockPeriodSeconds = 3600L;
+    /**
+     * Lower bound for the bucket width, in seconds. Also the width used when a request carries no
+     * usable {@code group_time}.
+     */
+    private long minBucketSeconds = 60L;
 
-    /** Maximum total cache weight in megabytes. Defaults to 512MB per the spec. */
+    /** Upper bound for the bucket width, in seconds. */
+    private long maxBucketSeconds = 3600L;
+
+    /**
+     * Fresh window for an empty result, in seconds. Kept short so a VM that has just started
+     * reporting shows up quickly, but long enough that a genuinely empty measurement stops being
+     * re-queried on every request.
+     */
+    private long emptyTtlSeconds = 60L;
+
+    /**
+     * Absolute lifetime of an entry, in seconds. Past the fresh window an entry is still served
+     * while it refreshes in the background; this caps how long that may continue when refreshes
+     * keep failing.
+     */
+    private long hardTtlSeconds = 900L;
+
+    /** Worker threads used for background stale-while-revalidate refreshes. */
+    private int refreshThreads = 8;
+
+    /** Maximum total cache weight in megabytes. */
     private long maxWeightMb = 512L;
-
-    /** Entry TTL after write. Defaults to 7 days per the spec. */
-    private long expireAfterWriteSeconds = 7L * 24L * 3600L;
 
     /** Estimated bytes per cached time-series data point (used by the weigher). */
     private int estimatedBytesPerPoint = 200;
@@ -42,8 +64,27 @@ public class MonitoringCacheProperties {
         /** Whether any periodic warming is enabled. */
         private boolean enabled = true;
 
-        /** Maximum number of recently-created VMs to warm per run. */
+        /** Maximum number of VMs to warm per run. */
         private int topN = 10;
+
+        /**
+         * How warming targets are chosen. {@code recently-queried} follows what users actually look
+         * at (falling back to creation order until enough traffic is observed); {@code
+         * recently-created} keeps the original creation-order behaviour.
+         */
+        private String selection = "recently-queried";
+
+        /**
+         * Upper bound on a single warming pass, in seconds. Work still running past this is
+         * abandoned so a slow InfluxDB cannot make passes pile up on each other.
+         */
+        private long timeboxSeconds = 45L;
+
+        /**
+         * Random delay applied before each pass, in seconds. Without it every job fires exactly on
+         * the minute boundary and they contend with each other and with bucket rotation.
+         */
+        private long jitterSeconds = 10L;
 
         /** Realtime warming — short-range queries (raw DB) refreshed every minute. */
         private Job realtime =

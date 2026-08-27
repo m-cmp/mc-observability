@@ -3,6 +3,14 @@ import useBasePath from '../hooks/useBasePath';
 import useFollowParentNamespace from '../hooks/useFollowParentNamespace';
 import InfraOverview from './InfraOverview';
 import MonitoringDashboard from './MonitoringDashboard';
+import NotFound from './NotFound';
+
+// `embed` is a base path, never a namespace. `/embed/{bad-section}/{ns}` has three segments and
+// so matches `/:nsId/:infraId/:nodeId` here, which used to bind nsId to the literal 'embed' and
+// render a plausible-looking dashboard that queried a namespace called "embed". A blank panel is
+// obvious; a wrong-but-convincing one is not, which is exactly the shape a console produces when
+// a sub-menu link is mis-wired.
+const RESERVED_NS = 'embed';
 
 // Idle = black text (no color). Active = per-feature colored background + white
 // text. Explicit class strings so Tailwind keeps them.
@@ -31,8 +39,11 @@ const navItems = [
 export default function NsScopedApp() {
   const { nsId, infraId, nodeId } = useParams();
   const navigate = useNavigate();
+  const reserved = String(nsId || '').toLowerCase() === RESERVED_NS;
   const base = useBasePath();
   useFollowParentNamespace(); // follow parent-page namespace changes for the whole session
+
+  if (reserved) return <NotFound />;
 
   return (
     <div className="flex flex-col h-screen">

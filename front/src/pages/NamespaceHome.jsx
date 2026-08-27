@@ -3,16 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import { getNsList, getInfraList } from '../api/tumblebug';
 import { getK8sClusters } from '../api/k8sAgent';
 import useParentNamespace from '../hooks/useParentNamespace';
+import useBasePath from '../hooks/useBasePath';
 import { getLastSection } from '../lib/lastSection';
 
+// Only differs from the section key for `trace`; used for the picker's subtitle.
+const SECTION_LABELS = {
+  monitoring: 'monitoring', logs: 'logs', config: 'config',
+  insight: 'insight', alerts: 'alerts', trace: 'tracing',
+};
+
 /**
- * Landing shown at `/` when no namespace is passed in the path.
- * Lets the user pick a namespace; selecting one navigates to `/:nsId`,
- * which renders the full menu-driven app scoped to that namespace.
+ * Landing shown when no namespace is in the path.
+ * Lets the user pick a namespace; selecting one opens that namespace's section.
  * Designed so an iframe can point at `/` (no ns) and still drive everything.
+ *
+ * `section` pins the destination to one section - that's what the console's per-section
+ * sub-menus point at (`/embed/logs` and friends), where the URL names the section and the
+ * namespace arrives over postMessage. Without it we fall back to the remembered section.
  */
-export default function NamespaceHome() {
+export default function NamespaceHome({ section = '' }) {
   const navigate = useNavigate();
+  const base = useBasePath();
   const parentNs = useParentNamespace(); // namespace from the embedding page (if any)
   const [nsList, setNsList] = useState([]);
   const [counts, setCounts] = useState({}); // ns -> { infra, k8s }
@@ -24,16 +35,15 @@ export default function NamespaceHome() {
   parentNsRef.current = parentNs;
 
   // If the parent page exposes a selected project, reflect it automatically by opening that
-  // namespace's Monitoring view (the landing section). When it can't be read, parentNs is ''
-  // and we just show the picker below.
+  // namespace's section. When it can't be read, parentNs is '' and we just show the picker below.
   useEffect(() => {
     if (!parentNs || loading) return;
     const match = nsList.find((n) => n.id === parentNs || (n.name && n.name === parentNs));
-    // Land on the last section the user was on (survives the iframe reload a parent namespace
-    // switch triggers); default to Monitoring on the very first visit.
-    const sec = getLastSection() || 'monitoring';
-    navigate(`/${sec}/${match ? match.id : parentNs}`, { replace: true });
-  }, [parentNs, loading, nsList, navigate]);
+    // A pinned section wins; otherwise land on the last section the user was on (survives the
+    // iframe reload a parent namespace switch triggers), defaulting to Monitoring.
+    const sec = section || getLastSection() || 'monitoring';
+    navigate(`${base}/${sec}/${match ? match.id : parentNs}`, { replace: true });
+  }, [parentNs, loading, nsList, navigate, section, base]);
 
   useEffect(() => {
     let alive = true;
@@ -88,7 +98,9 @@ export default function NamespaceHome() {
       <div className="mb-6">
         <h1 className="text-lg font-bold text-gray-800">Select a Namespace</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Choose a namespace to open its monitoring, logs, config, insight, alerts and tracing.
+          {section
+            ? `Choose a namespace to open its ${SECTION_LABELS[section] || section}.`
+            : 'Choose a namespace to open its monitoring, logs, config, insight, alerts and tracing.'}
         </p>
       </div>
 
@@ -101,7 +113,7 @@ export default function NamespaceHome() {
           {nsList.map((ns) => (
             <button
               key={ns.id}
-              onClick={() => navigate(`/monitoring/${ns.id}`)}
+              onClick={() => navigate(`${base}/${section || 'monitoring'}/${ns.id}`)}
               className="text-left bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow-sm transition-colors"
             >
               <div className="font-semibold text-gray-800 break-all">{ns.name || ns.id}</div>
