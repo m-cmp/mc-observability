@@ -74,55 +74,75 @@ export async function getPredictionMeasurements() {
   return res.data?.data || [];
 }
 
-// Server Error Analysis (#300) — LLM-based 5xx analysis over Tempo traces.
-export async function getServerErrorRecords({ status, from, to, page = 1, size = 20 } = {}) {
+// RCA — LLM-based root cause analysis over observability evidence.
+export async function getRcaRecords({ status, from, to, page = 1, size = 20 } = {}) {
   const params = { page, size };
   if (status) params.status = status;
   if (from) params.from = from;
   if (to) params.to = to;
-  const res = await client.get('/api/o11y/insight/server-error-analysis/records', { params });
+  const res = await client.get('/api/o11y/insight/rca/records', { params });
   return res.data?.data || {};
 }
 
-export async function getServerErrorRecord(analysisId) {
-  const res = await client.get(`/api/o11y/insight/server-error-analysis/records/${analysisId}`);
+// Answers 202 with the record; the analysis runs on the server. Poll getRcaRecord for the result.
+export async function queryRca(body) {
+  const res = await client.post('/api/o11y/insight/rca/query', body);
   return res.data?.data || res.data;
 }
 
-export async function detectServerError(body) {
-  const res = await client.post('/api/o11y/insight/server-error-analysis/detect', body);
+export async function getRcaRecord(analysisId) {
+  const res = await client.get(`/api/o11y/insight/rca/records/${analysisId}`);
   return res.data?.data || res.data;
 }
 
-export async function queryServerError(body) {
-  const res = await client.post('/api/o11y/insight/server-error-analysis/query', body);
+// RCA schedules — the saved request body is replayed verbatim by Airflow.
+export async function getRcaSchedules() {
+  const res = await client.get('/api/o11y/insight/rca/schedules');
+  return res.data?.data || [];
+}
+
+export async function createRcaSchedule(body) {
+  const res = await client.post('/api/o11y/insight/rca/schedules', body);
   return res.data?.data || res.data;
 }
 
-export async function rerunServerErrorAnalysis(analysisId) {
-  const res = await client.post(
-    `/api/o11y/insight/server-error-analysis/records/${analysisId}/rerun`,
-  );
+export async function updateRcaSchedule(scheduleId, body) {
+  const res = await client.patch(`/api/o11y/insight/rca/schedules/${scheduleId}`, body);
   return res.data?.data || res.data;
+}
+
+export async function deleteRcaSchedule(scheduleId) {
+  return client.delete(`/api/o11y/insight/rca/schedules/${scheduleId}`);
 }
 
 // LLM
-export async function getLlmModels() {
-  const res = await client.get('/api/o11y/insight/llm/model');
+export async function getLlmConnections() {
+  const res = await client.get('/api/o11y/insight/llm/connections');
   return res.data?.data || [];
 }
 
-export async function getLlmSessions() {
-  const res = await client.get('/api/o11y/insight/llm/session');
-  return res.data?.data || [];
-}
-
-export async function createLlmSession(body) {
-  const res = await client.post('/api/o11y/insight/llm/session', body);
+export async function createLlmConnection(body) {
+  const res = await client.post('/api/o11y/insight/llm/connections', body);
   return res.data?.data || res.data;
 }
 
-export async function getLlmHistory(sessionId) {
-  const res = await client.get(`/api/o11y/insight/llm/session/${sessionId}/history`);
-  return res.data?.data || [];
+// Partial update: send only the changed fields. Changing provider/base_url drops the
+// stored API key server-side, so the caller must resend api_key with that change.
+export async function updateLlmConnection(connectionId, body) {
+  const res = await client.patch(`/api/o11y/insight/llm/connections/${connectionId}`, body);
+  return res.data?.data || res.data;
+}
+
+export async function setDefaultLlmConnection(connectionId, modelName) {
+  const res = await client.put(`/api/o11y/insight/llm/connections/${connectionId}/default`, { model_name: modelName });
+  return res.data?.data || res.data;
+}
+
+export async function deleteLlmConnection(connectionId) {
+  return client.delete(`/api/o11y/insight/llm/connections/${connectionId}`);
+}
+
+export async function getLlmConnectionModels(connectionId) {
+  const res = await client.get(`/api/o11y/insight/llm/connections/${connectionId}/models`);
+  return res.data?.data || { connection_id: connectionId, models: [] };
 }

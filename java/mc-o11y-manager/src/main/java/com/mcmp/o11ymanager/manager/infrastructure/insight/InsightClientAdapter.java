@@ -129,8 +129,38 @@ public class InsightClientAdapter implements InsightPort {
 
     /* ===================== LLM ===================== */
     @Override
-    public Object getLLMModelOptions() {
-        return insightClient.getLLMModelOptions();
+    public Object getLLMConnections() {
+        return insightClient.getLLMConnections();
+    }
+
+    @Override
+    public Object getLLMConnection(int connectionId) {
+        return insightClient.getLLMConnection(connectionId);
+    }
+
+    @Override
+    public Object postLLMConnection(Object body) {
+        return insightClient.postLLMConnection(body);
+    }
+
+    @Override
+    public Object patchLLMConnection(int connectionId, Object body) {
+        return insightClient.patchLLMConnection(connectionId, body);
+    }
+
+    @Override
+    public Object deleteLLMConnection(int connectionId) {
+        return insightClient.deleteLLMConnection(connectionId);
+    }
+
+    @Override
+    public Object getLLMConnectionModels(int connectionId) {
+        return insightClient.getLLMConnectionModels(connectionId);
+    }
+
+    @Override
+    public Object setDefaultLLMConnection(int connectionId, Object body) {
+        return insightClient.setDefaultLLMConnection(connectionId, body);
     }
 
     @Override
@@ -158,21 +188,6 @@ public class InsightClientAdapter implements InsightPort {
         return insightClient.getLLMSessionHistory(sessionId);
     }
 
-    @Override
-    public Object getLLMApiKeys(String provider) {
-        return insightClient.getLLMApiKeys(provider);
-    }
-
-    @Override
-    public Object postLLMApiKeys(Object body) {
-        return insightClient.postLLMApiKeys(body);
-    }
-
-    @Override
-    public Object deleteLLMApiKeys(String provider) {
-        return insightClient.deleteLLMApiKey(provider);
-    }
-
     /* ===================== Alert Analysis ===================== */
     @Override
     public Object queryAlertAnalysis(Object body) {
@@ -185,30 +200,40 @@ public class InsightClientAdapter implements InsightPort {
         return insightClient.queryLogAnalysis(body);
     }
 
-    /* ===================== Server Error Analysis ===================== */
+    /* ===================== RCA ===================== */
     @Override
-    public Object detectServerError(Object body) {
-        return insightClient.detectServerError(body);
+    public Object queryRca(Object body) {
+        return insightClient.queryRca(body);
     }
 
     @Override
-    public Object queryServerError(Object body) {
-        return insightClient.queryServerError(body);
-    }
-
-    @Override
-    public Object listServerErrorRecords(
+    public Object listRcaRecords(
             String status, String fromDt, String toDt, Integer page, Integer size) {
-        return insightClient.listServerErrorRecords(status, fromDt, toDt, page, size);
+        return insightClient.listRcaRecords(status, fromDt, toDt, page, size);
     }
 
     @Override
-    public Object getServerErrorRecord(int analysisId) {
-        return insightClient.getServerErrorRecord(analysisId);
+    public Object getRcaRecord(int analysisId) {
+        return insightClient.getRcaRecord(analysisId);
     }
 
     @Override
-    public Object rerunServerErrorAnalysis(int analysisId) {
-        return insightClient.rerunServerErrorAnalysis(analysisId);
+    public Object listRcaSchedules() {
+        return insightClient.listRcaSchedules();
+    }
+
+    @Override
+    public Object postRcaSchedule(Object body) {
+        return insightClient.postRcaSchedule(body);
+    }
+
+    @Override
+    public Object patchRcaSchedule(int scheduleId, Object body) {
+        return insightClient.patchRcaSchedule(scheduleId, body);
+    }
+
+    @Override
+    public Object deleteRcaSchedule(int scheduleId) {
+        return insightClient.deleteRcaSchedule(scheduleId);
     }
 }

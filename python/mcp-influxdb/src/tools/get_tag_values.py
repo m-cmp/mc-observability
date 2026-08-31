@@ -30,6 +30,7 @@ def register_tool(mcp, client: InfluxDBClient):
         query = f'SHOW TAG VALUES FROM "{measurement_name}" WITH KEY = "{tag_key}"'
         response = client.execute_query(query=query, database=database_name)
         data = json.loads(response)
+        data = data.get("data", data)
 
         try:
             values = [item[1] for item in data["results"][0]["series"][0]["values"]]

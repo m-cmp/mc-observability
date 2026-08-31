@@ -156,21 +156,47 @@ public class InsightController {
     }
 
     /* ===================== LLM ===================== */
-    @Operation(
-            summary = "GetLLMModelOptions",
-            operationId = "GetLLMModelOptions",
-            description =
-                    "Retrieve available LLM model options and configurations for log analysis.")
-    @GetMapping("/llm/model")
-    public Object getLLMModelOptions() {
-        return insightPort.getLLMModelOptions();
+    @GetMapping("/llm/connections")
+    public Object getLLMConnections() {
+        return insightPort.getLLMConnections();
+    }
+
+    @GetMapping("/llm/connections/{connectionId}")
+    public Object getLLMConnection(@PathVariable int connectionId) {
+        return insightPort.getLLMConnection(connectionId);
+    }
+
+    @PostMapping("/llm/connections")
+    public Object postLLMConnection(@RequestBody Object body) {
+        return insightPort.postLLMConnection(body);
+    }
+
+    @PatchMapping("/llm/connections/{connectionId}")
+    public Object patchLLMConnection(@PathVariable int connectionId, @RequestBody Object body) {
+        return insightPort.patchLLMConnection(connectionId, body);
+    }
+
+    @DeleteMapping("/llm/connections/{connectionId}")
+    public Object deleteLLMConnection(@PathVariable int connectionId) {
+        return insightPort.deleteLLMConnection(connectionId);
+    }
+
+    @GetMapping("/llm/connections/{connectionId}/models")
+    public Object getLLMConnectionModels(@PathVariable int connectionId) {
+        return insightPort.getLLMConnectionModels(connectionId);
+    }
+
+    @PutMapping("/llm/connections/{connectionId}/default")
+    public Object setDefaultLLMConnection(
+            @PathVariable int connectionId, @RequestBody Object body) {
+        return insightPort.setDefaultLLMConnection(connectionId, body);
     }
 
     @Operation(
             summary = "GetLLMChatSessions",
             operationId = "GetLLMChatSessions",
             description = "Retrieve all active LLM chat sessions for log analysis.")
-    @GetMapping("/llm/session")
+    @GetMapping("/llm/sessions")
     public Object getLLMChatSessions() {
         return insightPort.getLLMChatSessions();
     }
@@ -178,9 +204,8 @@ public class InsightController {
     @Operation(
             summary = "PostLLMChatSession",
             operationId = "PostLLMChatSession",
-            description =
-                    "Create a new LLM chat session for log analysis with specified provider and model.")
-    @PostMapping("/llm/session")
+            description = "Create a new LLM chat session with a configured connection and model.")
+    @PostMapping("/llm/sessions")
     public Object postLLMChatSession(@RequestBody Object body) {
         return insightPort.postLLMChatSession(body);
     }
@@ -189,8 +214,8 @@ public class InsightController {
             summary = "DeleteLLMChatSession",
             operationId = "DeleteLLMChatSession",
             description = "Delete a specific LLM chat session and its conversation history.")
-    @DeleteMapping("/llm/session")
-    public Object deleteLLMChatSession(@RequestParam String sessionId) {
+    @DeleteMapping("/llm/sessions/{sessionId}")
+    public Object deleteLLMChatSession(@PathVariable String sessionId) {
         return insightPort.deleteLLMChatSession(sessionId);
     }
 
@@ -207,36 +232,9 @@ public class InsightController {
             summary = "GetLLMSessionHistory",
             operationId = "GetLLMSessionHistory",
             description = "Retrieve the conversation history for a specific LLM chat session.")
-    @GetMapping("/llm/session/{sessionId}/history")
+    @GetMapping("/llm/sessions/{sessionId}/history")
     public Object getLLMSessionHistory(@PathVariable String sessionId) {
         return insightPort.getLLMSessionHistory(sessionId);
-    }
-
-    @Operation(
-            summary = "GetLLMAPIKeys",
-            operationId = "GetLLMAPIKeys",
-            description = "Retrieve the current API key configuration.")
-    @GetMapping("/llm/api-keys")
-    public Object getLLMApiKeys(String provider) {
-        return insightPort.getLLMApiKeys(provider);
-    }
-
-    @Operation(
-            summary = "PostLLMAPIKeys",
-            operationId = "PostLLMAPIKeys",
-            description = "Save or update the API key configuration.")
-    @PostMapping("/llm/api-keys")
-    public Object postLLMApiKeys(@RequestBody Object body) {
-        return insightPort.postLLMApiKeys(body);
-    }
-
-    @Operation(
-            summary = "DeleteLLMAPIKeys",
-            operationId = "DeleteLLMAPIKeys",
-            description = "Delete the API key configuration.")
-    @DeleteMapping("/llm/api-Keys")
-    public Object deleteLLMApiKeys(@RequestParam String provider) {
-        return insightPort.deleteLLMApiKeys(provider);
     }
 
     /* ===================== LOG ===================== */
@@ -333,34 +331,44 @@ public class InsightController {
                 nsId, infraId, nodeId, measurement, startTime, endTime);
     }
 
-    /* ===================== Server Error Analysis ===================== */
-    @PostMapping("/server-error-analysis/detect")
-    public Object detectServerError(@RequestBody Object body) {
-        return insightPort.detectServerError(body);
+    /* ===================== RCA ===================== */
+    @PostMapping("/rca/query")
+    public Object queryRca(@RequestBody Object body) {
+        return insightPort.queryRca(body);
     }
 
-    @PostMapping("/server-error-analysis/query")
-    public Object queryServerError(@RequestBody Object body) {
-        return insightPort.queryServerError(body);
-    }
-
-    @GetMapping("/server-error-analysis/records")
-    public Object listServerErrorRecords(
+    @GetMapping("/rca/records")
+    public Object listRcaRecords(
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "from", required = false) String fromDt,
             @RequestParam(value = "to", required = false) String toDt,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size) {
-        return insightPort.listServerErrorRecords(status, fromDt, toDt, page, size);
+        return insightPort.listRcaRecords(status, fromDt, toDt, page, size);
     }
 
-    @GetMapping("/server-error-analysis/records/{analysisId}")
-    public Object getServerErrorRecord(@PathVariable int analysisId) {
-        return insightPort.getServerErrorRecord(analysisId);
+    @GetMapping("/rca/records/{analysisId}")
+    public Object getRcaRecord(@PathVariable int analysisId) {
+        return insightPort.getRcaRecord(analysisId);
     }
 
-    @PostMapping("/server-error-analysis/records/{analysisId}/rerun")
-    public Object rerunServerErrorAnalysis(@PathVariable int analysisId) {
-        return insightPort.rerunServerErrorAnalysis(analysisId);
+    @GetMapping("/rca/schedules")
+    public Object listRcaSchedules() {
+        return insightPort.listRcaSchedules();
+    }
+
+    @PostMapping("/rca/schedules")
+    public Object postRcaSchedule(@RequestBody Object body) {
+        return insightPort.postRcaSchedule(body);
+    }
+
+    @PatchMapping("/rca/schedules/{scheduleId}")
+    public Object patchRcaSchedule(@PathVariable int scheduleId, @RequestBody Object body) {
+        return insightPort.patchRcaSchedule(scheduleId, body);
+    }
+
+    @DeleteMapping("/rca/schedules/{scheduleId}")
+    public Object deleteRcaSchedule(@PathVariable int scheduleId) {
+        return insightPort.deleteRcaSchedule(scheduleId);
     }
 }

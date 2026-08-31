@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cryptography>=45,<46",
     "fastapi==0.111.0",
     "gunicorn==22.0.0",
     "influxdb==5.3.2",
@@ -13,7 +14,7 @@ dependencies = [
     "langchain-mcp-adapters>=0.2.2,<1.0",
     "langchain-ollama>=1.0,<2.0",
     "langchain-openai>=1.0,<2.0",
-    "langgraph>=1.0,<2.0",
+    "langgraph==1.2.8",
     "langgraph-checkpoint>=4.1.1,<5.0.0",
     "langgraph-checkpoint-sqlite>=3.0.3,<4.0.0",
     "langgraph-prebuilt>=1.0,<2.0",
@@ -36,6 +37,7 @@ dependencies = [
     "rrcf==0.4.4",
     "setuptools==72.1.0",
     "sqlalchemy==2.0.34",
+    "tiktoken>=0.9,<1.0",
     "uvicorn==0.30.6",
 ]
 

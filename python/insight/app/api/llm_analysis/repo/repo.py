@@ -1,10 +1,13 @@
-from sqlalchemy import func
+from datetime import datetime, timedelta
+
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.api.llm_analysis.model.models import (
-    LLMAPIKey,
+    LLMConnection,
     LogAnalysisChatSession,
-    ServerErrorAnalysis,
+    RcaAnalysis,
+    RcaSchedule,
 )
 
 
@@ -34,131 +37,152 @@ class LogAnalysisRepository:
         return None
 
     def delete_all_sessions(self):
+        sessions = self.get_all_sessions()
         self.db.query(LogAnalysisChatSession).delete()
         self.db.commit()
+        return sessions
 
-    def get_api_key(self, provider=None):
-        if provider:
-            return self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
-        else:
-            return self.db.query(LLMAPIKey).all()
+    def get_all_connections(self):
+        return self.db.query(LLMConnection).order_by(LLMConnection.SEQ).all()
 
-    def post_api_key(self, provider: str, api_key: str | None, base_url: str | None = None):
-        record = self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
-        if record:
-            record.API_KEY = api_key
-            record.BASE_URL = base_url
-        else:
-            record = LLMAPIKey(PROVIDER=provider, API_KEY=api_key, BASE_URL=base_url)
-            self.db.add(record)
+    def get_connection_by_id(self, connection_id: int):
+        return self.db.query(LLMConnection).filter_by(SEQ=connection_id).first()
+
+    def get_default_connection(self):
+        return self.db.query(LLMConnection).filter_by(IS_DEFAULT=True, ENABLED=True).first()
+
+    def create_connection(self, connection_data: dict):
+        connection = LLMConnection(**connection_data)
+        self.db.add(connection)
         self.db.commit()
-        return record
+        self.db.refresh(connection)
+        return connection
 
-    def delete_api_key(self, provider: str):
-        session = self.db.query(LLMAPIKey).filter_by(PROVIDER=provider).first()
-        if session:
-            self.db.delete(session)
-            self.db.commit()
-            return session
-        return None
+    def update_connection(self, connection, connection_data: dict):
+        for field, value in connection_data.items():
+            setattr(connection, field, value)
+        self.db.commit()
+        self.db.refresh(connection)
+        return connection
+
+    def delete_connection(self, connection):
+        self.db.delete(connection)
+        self.db.commit()
+
+    def count_sessions_by_connection(self, connection_id: int):
+        return (
+            self.db.query(func.count(LogAnalysisChatSession.SEQ))
+            .filter_by(CONNECTION_ID=connection_id)
+            .scalar()
+            or 0
+        )
+
+    def set_default_connection(self, connection_id: int, model_name: str):
+        connection = self.get_connection_by_id(connection_id)
+        if not connection:
+            return None
+        self.db.query(LLMConnection).update({LLMConnection.IS_DEFAULT: False})
+        connection.IS_DEFAULT = True
+        connection.DEFAULT_MODEL = model_name
+        self.db.commit()
+        self.db.refresh(connection)
+        return connection
 
 
-class ServerErrorAnalysisRepository:
+class RcaAnalysisRepository:
     def __init__(self, db: Session):
         self.db = db
 
     def get_by_id(self, analysis_id: int):
-        return self.db.query(ServerErrorAnalysis).filter_by(ID=analysis_id).first()
+        return self.db.query(RcaAnalysis).filter_by(ID=analysis_id).first()
 
-    def get_by_trace_id(self, trace_id: str | None):
-        if not trace_id:
-            return None
-        return self.db.query(ServerErrorAnalysis).filter_by(TRACE_ID=trace_id).first()
-
-    def load_or_create(self, trace_id: str | None, session_id: str, detail: dict):
-        if trace_id:
-            existing = self.get_by_trace_id(trace_id)
-            if existing:
-                return existing, False
-
-        record = ServerErrorAnalysis(
+    def create_record(
+        self,
+        *,
+        trace_id: str | None,
+        session_id: str,
+        request_json: dict,
+        detail: dict | None = None,
+        status: str = "RUNNING",
+    ):
+        record = RcaAnalysis(
             TRACE_ID=trace_id,
             SESSION_ID=session_id,
-            STATUS="PENDING",
+            STATUS=status,
+            REQUEST_JSON=request_json or {},
             DETAIL_JSON=detail or {},
         )
         self.db.add(record)
         self.db.commit()
         self.db.refresh(record)
-        return record, True
+        return record
 
-    def mark_running(self, analysis_id: int, allow_succeeded: bool = False) -> bool:
-        allowed_statuses = ["PENDING", "FAILED"]
-        if allow_succeeded:
-            allowed_statuses.append("SUCCEEDED")
+    def update_status(self, analysis_id: int, status: str) -> None:
+        self.db.query(RcaAnalysis).filter_by(ID=analysis_id).update(
+            {RcaAnalysis.STATUS: status, RcaAnalysis.UPDATED_AT: func.now()},
+            synchronize_session=False,
+        )
+        self.db.commit()
 
+    def list_active(self):
+        """Analyses that are queued or running, newest first."""
+        return (
+            self.db.query(RcaAnalysis)
+            .filter(RcaAnalysis.STATUS.in_(("PENDING", "RUNNING")))
+            .order_by(RcaAnalysis.ID.desc())
+            .all()
+        )
+
+    def now(self):
+        """The database's clock, which is what UPDATED_AT is stamped with (func.now()).
+
+        The service and the database may run in different time zones, so age is never
+        computed against the process clock.
+        """
+        value = self.db.execute(select(func.now())).scalar()
+        if isinstance(value, str):  # SQLite returns CURRENT_TIMESTAMP as text
+            value = datetime.fromisoformat(value)
+        return value
+
+    def fail_stale(self, *, older_than_seconds: int, summary: str) -> int:
+        """Close analyses a dead worker left PENDING/RUNNING; returns how many."""
+        updated_before = self.now() - timedelta(seconds=older_than_seconds)
         updated = (
-            self.db.query(ServerErrorAnalysis)
-            .filter(ServerErrorAnalysis.ID == analysis_id)
-            .filter(ServerErrorAnalysis.STATUS.in_(allowed_statuses))
+            self.db.query(RcaAnalysis)
+            .filter(RcaAnalysis.STATUS.in_(("PENDING", "RUNNING")), RcaAnalysis.UPDATED_AT < updated_before)
             .update(
                 {
-                    ServerErrorAnalysis.STATUS: "RUNNING",
-                    ServerErrorAnalysis.UPDATED_AT: func.now(),
+                    RcaAnalysis.STATUS: "FAILED",
+                    RcaAnalysis.SUMMARY: summary,
+                    RcaAnalysis.UPDATED_AT: func.now(),
                 },
                 synchronize_session=False,
             )
         )
-        if not updated:
-            return False
         self.db.commit()
-        return True
+        return int(updated or 0)
 
-    def save_success(self, analysis_id: int, summary: str, detail: dict):
-        return self._save_result(
-            analysis_id=analysis_id,
-            status="SUCCEEDED",
-            summary=summary,
-            detail=detail,
-        )
-
-    def save_partial(self, analysis_id: int, summary: str, detail: dict):
-        return self._save_result(
-            analysis_id=analysis_id,
-            status="PARTIAL",
-            summary=summary,
-            detail=detail,
-        )
-
-    def save_failed(
+    def finalize(
         self,
         analysis_id: int,
-        error_message: str,
-        detail: dict | None = None,
+        *,
+        status: str,
+        summary: str,
+        detail: dict,
     ):
-        record = self.get_by_id(analysis_id)
-        if not record:
+        updated = self.db.query(RcaAnalysis).filter_by(ID=analysis_id).update(
+            {
+                RcaAnalysis.STATUS: status,
+                RcaAnalysis.SUMMARY: summary,
+                RcaAnalysis.DETAIL_JSON: detail or {},
+                RcaAnalysis.UPDATED_AT: func.now(),
+            },
+            synchronize_session=False,
+        )
+        if not updated:
             return None
-
-        record.STATUS = "FAILED"
-        record.SUMMARY = error_message
-        record.DETAIL_JSON = detail or {"error_message": error_message}
         self.db.commit()
-        self.db.refresh(record)
-        return record
-
-    def reset_for_rerun(self, analysis_id: int, session_id: str | None = None):
-        record = self.get_by_id(analysis_id)
-        if not record:
-            return None
-
-        record.STATUS = "PENDING"
-        record.SUMMARY = None
-        if session_id is not None:
-            record.SESSION_ID = session_id
-        self.db.commit()
-        self.db.refresh(record)
-        return record
+        return self.get_by_id(analysis_id)
 
     def list_records(
         self,
@@ -171,31 +195,48 @@ class ServerErrorAnalysisRepository:
         page = max(page, 1)
         size = max(size, 1)
 
-        query = self.db.query(ServerErrorAnalysis)
+        query = self.db.query(RcaAnalysis)
         if status:
-            query = query.filter(ServerErrorAnalysis.STATUS == status)
+            query = query.filter(RcaAnalysis.STATUS == status)
         if from_dt:
-            query = query.filter(ServerErrorAnalysis.UPDATED_AT >= from_dt)
+            query = query.filter(RcaAnalysis.UPDATED_AT >= from_dt)
         if to_dt:
-            query = query.filter(ServerErrorAnalysis.UPDATED_AT <= to_dt)
+            query = query.filter(RcaAnalysis.UPDATED_AT <= to_dt)
 
-        total = query.with_entities(func.count(ServerErrorAnalysis.ID)).scalar() or 0
+        total = query.with_entities(func.count(RcaAnalysis.ID)).scalar() or 0
         items = (
-            query.order_by(ServerErrorAnalysis.UPDATED_AT.desc(), ServerErrorAnalysis.ID.desc())
+            query.order_by(RcaAnalysis.UPDATED_AT.desc(), RcaAnalysis.ID.desc())
             .offset((page - 1) * size)
             .limit(size)
             .all()
         )
         return total, items
 
-    def _save_result(self, analysis_id: int, status: str, summary: str, detail: dict):
-        record = self.get_by_id(analysis_id)
-        if not record:
-            return None
 
-        record.STATUS = status
-        record.SUMMARY = summary
-        record.DETAIL_JSON = detail or {}
+class RcaScheduleRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def list_schedules(self):
+        return self.db.query(RcaSchedule).order_by(RcaSchedule.ID.desc()).all()
+
+    def get_by_id(self, schedule_id: int):
+        return self.db.query(RcaSchedule).filter_by(ID=schedule_id).first()
+
+    def create(self, **values):
+        schedule = RcaSchedule(**values)
+        self.db.add(schedule)
         self.db.commit()
-        self.db.refresh(record)
-        return record
+        self.db.refresh(schedule)
+        return schedule
+
+    def update(self, schedule, values: dict):
+        for field, value in values.items():
+            setattr(schedule, field, value)
+        self.db.commit()
+        self.db.refresh(schedule)
+        return schedule
+
+    def delete(self, schedule) -> None:
+        self.db.delete(schedule)
+        self.db.commit()

@@ -1,41 +1,68 @@
-import os
-from typing import ClassVar
+from fastapi import HTTPException, status
+from langchain_core.language_models import BaseChatModel
+from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 
-from sqlalchemy.orm import Session
-
-from app.api.llm_analysis.repo.repo import LogAnalysisRepository
-from app.api.llm_analysis.response.res import LLMModel
+from app.api.llm_analysis.request.req import is_official_openai_base_url
+from app.api.llm_analysis.utils.llm_connection import LLMConnectionService
 
 
-class CommonModelService:
-    PROVIDER_ENV_MAP: ClassVar[dict[str, str]] = {
-        "ollama": "OLLAMA_BASE_URL",
-        "openai": "OPENAI_API_KEY",
-        "openai-compatible": "OPENAI_COMPATIBLE_API_KEY",
-        "google": "GOOGLE_API_KEY",
-        "anthropic": "ANTHROPIC_API_KEY",
-    }
+def create_chat_model(repo, model_name: str, connection_id: int | None) -> BaseChatModel:
+    if connection_id is None:
+        raise HTTPException(
+            detail="Session is not associated with an LLM connection",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    connection = repo.get_connection_by_id(connection_id)
+    if not connection:
+        raise HTTPException(
+            detail="LLM connection not found",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    if not connection.ENABLED:
+        raise HTTPException(
+            detail="LLM connection is disabled",
+            status_code=status.HTTP_409_CONFLICT,
+        )
 
-    def __init__(self, db: Session = None):
-        self.repo = LogAnalysisRepository(db=db)
+    provider = connection.PROVIDER
+    base_url = connection.BASE_URL
+    if provider not in ("ollama", "openai"):
+        raise HTTPException(
+            detail=f"Unsupported provider: {provider}",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
-    def get_model_list(self, model_info_config):
-        result = []
-        for model_info in model_info_config:
-            provider = model_info["provider"]
-            api_key = self.repo.get_api_key(provider=provider)
-            if provider == "ollama" and (
-                os.getenv(self.PROVIDER_ENV_MAP[provider]) or (api_key and getattr(api_key, "BASE_URL", None))
-            ):
-                result.append(self.map_model_to_res(model_info))
-            elif provider == "openai-compatible" and api_key and api_key.API_KEY and getattr(api_key, "BASE_URL", None):
-                result.append(self.map_model_to_res(model_info))
-            elif provider in ("openai", "google", "anthropic") and api_key:
-                result.append(self.map_model_to_res(model_info))
-            else:
-                pass
-        return result
+    if provider == "ollama":
+        if not base_url:
+            raise HTTPException(
+                detail="ollama base_url is not configured",
+                status_code=status.HTTP_409_CONFLICT,
+            )
+        # num_ctx is per-request and never reported back, so a declared window has to be
+        # sent to be real. Unset: Ollama sizes from VRAM and callers fall back.
+        return ChatOllama(
+            model=model_name,
+            base_url=base_url,
+            temperature=0,
+            **({"num_ctx": connection.CONTEXT_LENGTH} if connection.CONTEXT_LENGTH else {}),
+        )
 
-    @staticmethod
-    def map_model_to_res(model_info):
-        return LLMModel(provider=model_info["provider"], model_name=model_info["model_name"])
+    api_key = LLMConnectionService(repo.db).decrypt_api_key(connection)
+    if not api_key and is_official_openai_base_url(base_url):
+        raise HTTPException(
+            detail="API key is required for the default OpenAI endpoint",
+            status_code=status.HTTP_409_CONFLICT,
+        )
+    model_options = {}
+    if not model_name.lower().startswith(("gpt-3", "gpt-4")):
+        model_options = {
+            "reasoning": {"effort": "high"},
+            "use_responses_api": True,
+        }
+    return ChatOpenAI(
+        model=model_name,
+        api_key=api_key or "not-required",
+        base_url=base_url,
+        **model_options,
+    )

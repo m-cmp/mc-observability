@@ -244,8 +244,6 @@ winrm:
   connection-timeout: ${WINRM_CONNECTION_TIMEOUT:30000}
 
 feign:
-  okhttp:
-    enabled: true
   client:
     config:
       default:

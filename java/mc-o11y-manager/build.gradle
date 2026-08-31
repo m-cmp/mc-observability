@@ -17,7 +17,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'io.github.openfeign:feign-core'
-    implementation 'io.github.openfeign:feign-httpclient'
+    implementation 'io.github.openfeign:feign-hc5'
     implementation 'com.jcraft:jsch:0.1.55'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'

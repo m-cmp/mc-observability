@@ -6,6 +6,7 @@ networks:
 
 volumes:
   grafana_shared_config:
+  insight_secrets:
   shared_logs:
 
 services:
@@ -399,9 +400,11 @@ services:
       - 9001:9001
     environment:
       - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://210.207.104.224:11434}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - LLM_CREDENTIAL_KEY=${LLM_CREDENTIAL_KEY:-}
     volumes:
       - shared_logs:/mc-insight/log:rw
+      - insight_secrets:/mc-insight/secrets:rw
     depends_on:
       mc-observability-maria:
         condition: service_healthy
@@ -423,6 +426,8 @@ services:
       - 9002:9002
     depends_on:
       mc-observability-maria:
+        condition: service_healthy
+      mc-observability-insight:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul
@@ -451,10 +456,17 @@ services:
 
         airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        # Server error watch: the RCA worker searches Tempo before running an analysis
+        airflow connections add --conn-type http --conn-host mc-observability-tempo --conn-schema http --conn-port 3200 tempo_url
+        # Bound how many scheduled RCA analyses run at once; each one is long and LLM-backed
+        airflow pools set rca_analysis 4 'Concurrent scheduled RCA analyses'
+
         # Reload & Run dags
         airflow dags reserialize
         airflow dags unpause anomaly_detection
         airflow dags unpause down_sampling
+        airflow dags unpause rca_schedule_dispatcher
+        airflow dags unpause rca_schedule_worker
 
         # Start airflow
         airflow scheduler & airflow webserver -p 9002

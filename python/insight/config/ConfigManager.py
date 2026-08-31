@@ -1,3 +1,5 @@
+import logging
+
 import yaml
 
 
@@ -74,17 +76,23 @@ class ConfigManager:
         o11y = self.config.get("common", {}).get("MC-O11Y", {})
         return {"url": o11y.get("URL", ""), "port": o11y.get("PORT", "")}
 
-    def get_llm_model_config(self):
-        model = self.config.get("llm", {}).get("model", [])
-        return model
-
     def get_mcp_config(self):
+        """Return the declarative MCP server map: {name: {url, transport, enabled?, ...}}."""
+        mcp = self.config.get("llm", {}).get("mcp", {})
+        servers = mcp.get("mcp_servers", {}) or {}
+        if not servers and any(key.startswith("mcp_") and key.endswith("_url") for key in mcp):
+            logging.error(
+                "config llm.mcp still uses legacy flat mcp_*_url keys; migrate to the "
+                "mcp_servers map ({name: {url, transport}}) — no MCP servers will be connected."
+            )
+        return servers
+
+    def get_mcp_lifecycle_config(self):
         mcp = self.config.get("llm", {}).get("mcp", {})
         return {
-            "mcp_grafana_url": mcp.get("mcp_grafana_url", ""),
-            "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
-            "mcp_influxdb_url": mcp.get("mcp_influxdb_url", ""),
-            "mcp_tempo_url": mcp.get("mcp_tempo_url", ""),
+            "startup_timeout_seconds": mcp.get("startup_timeout_seconds", 15),
+            "cleanup_timeout_seconds": mcp.get("cleanup_timeout_seconds", 5),
+            "sse_read_timeout_seconds": mcp.get("sse_read_timeout_seconds", 900),
         }
 
     def get_log_system_prompt_config(self):
@@ -92,14 +100,6 @@ class ConfigManager:
         return {
             "system_prompt_first": log_analysis.get("system_prompt_first", ""),
             "system_prompt_default": log_analysis.get("system_prompt_default", ""),
-        }
-
-    def get_alarm_mcp_config(self):
-        mcp = self.config.get("alarm_analysis", {}).get("mcp", {})
-        return {
-            "mcp_grafana_url": mcp.get("mcp_grafana_url", ""),
-            "mcp_mariadb_url": mcp.get("mcp_mariadb_url", ""),
-            "mcp_influxdb_url": mcp.get("mcp_influxdb_url", ""),
         }
 
     def get_alarm_system_prompt_config(self):
@@ -112,25 +112,28 @@ class ConfigManager:
             "system_prompt_default": alarm_analysis.get("system_prompt_default", ""),
         }
 
-    def get_server_error_analysis_config(self):
-        server_error = self.config.get("server_error_analysis", {})
+    def get_rca_analysis_config(self):
+        rca = self.config.get("rca_analysis", {})
         return {
-            "default_provider": server_error.get("default_provider", "openai"),
-            "default_model_name": server_error.get("default_model_name", "gpt-5-mini"),
-            "detection_lookback_minutes": server_error.get("detection_lookback_minutes", 30),
-            "supervisor_recursion_limit": server_error.get("supervisor_recursion_limit", 30),
-            "supervisor_model_call_limit": server_error.get("supervisor_model_call_limit", 10),
-            "supervisor_tool_call_limit": server_error.get("supervisor_tool_call_limit", 12),
-            "subagent_model_call_limit": server_error.get("subagent_model_call_limit", 8),
-            "subagent_tool_call_limit": server_error.get("subagent_tool_call_limit", 10),
-            "subagent_tool_retry_max_retries": server_error.get("subagent_tool_retry_max_retries", 2),
-        }
-
-    def get_server_error_system_prompt_config(self):
-        server_error = self.config.get("server_error_analysis", {})
-        return {
-            "system_prompt_first": server_error.get("system_prompt_first", ""),
-            "system_prompt_default": server_error.get("system_prompt_default", ""),
+            "partial_confidence_threshold": rca.get("partial_confidence_threshold", 0.4),
+            # Request-wide budgets for the central investigation agent. Provisional values —
+            # see the design's open items; tune once operational data exists.
+            "investigation_model_call_limit": rca.get("investigation_model_call_limit", 24),
+            "investigation_tool_call_limit": rca.get("investigation_tool_call_limit", 24),
+            "analysis_timeout_seconds": rca.get("analysis_timeout_seconds", 300),
+            # POST /rca/query answers at once and runs the analysis in the background of the
+            # worker process; these bound how many run and how many wait per process.
+            "max_concurrent_analyses": rca.get("max_concurrent_analyses", 4),
+            "max_queued_analyses": rca.get("max_queued_analyses", 20),
+            # Optimistic on purpose (matches config.yaml): an under-guess wastes a large model's
+            # capacity silently, while an over-guess surfaces as a visible provider error.
+            "fallback_context_window_tokens": rca.get("fallback_context_window_tokens", 200000),
+            "tool_result_context_window_pct": rca.get("tool_result_context_window_pct", 15),
+            "tool_result_absolute_max_tokens": rca.get("tool_result_absolute_max_tokens", 25000),
+            "synthesis_system_prompt": rca.get("synthesis_system_prompt", ""),
+            "datasources": {
+                "influx_database": rca.get("datasources", {}).get("influx_database", ""),
+            },
         }
 
     def get_chat_summarization_config(self):

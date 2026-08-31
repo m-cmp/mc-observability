@@ -4,11 +4,11 @@ import time
 
 # from langgraph.checkpoint.mysql.aio import AIOMySQLSaver
 import aiosqlite
+from langchain.agents import create_agent
+from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from app.core.graph import create_conversation_graph
-from app.core.llm.ollama_client import OllamaClient
-from app.core.llm.openai_client import OpenAIClient
 from app.core.prompts.prompt_factory import PromptFactory
 from config.ConfigManager import ConfigManager
 
@@ -21,8 +21,6 @@ class MCPContext:
         self.memory = AsyncSqliteSaver(aiosqlite.connect("checkpoints/checkpoints.sqlite", check_same_thread=False))
         self.mcp_manager = mcp_manager
         self.analysis_type = analysis_type
-        self.llm_client = None
-        self.llm_with_tools = None
         self.tools = None
         self.agent = None
         self.query_metadata = {
@@ -66,59 +64,18 @@ class MCPContext:
             "databases_accessed": list(self.query_metadata["databases_accessed"]),
         }
 
-    async def get_agent(self, provider: str, model_name: str, provider_credential: str, streaming: bool = False):
+    async def get_agent(self, llm: BaseChatModel):
         try:
-            provider_value = getattr(provider, "value", provider)
-            api_key = getattr(provider_credential, "api_key", provider_credential)
-            base_url = getattr(provider_credential, "base_url", None)
-            if provider_value == "ollama" and base_url is None:
-                base_url = provider_credential
-            if provider_value == "ollama":
-                credential = base_url
-            elif provider_value == "openai-compatible":
-                credential = api_key and base_url
-            else:
-                credential = api_key
-            if not credential:
-                msg = f"Missing credential for provider '{provider}'."
-                logger.error(msg)
-                raise ValueError(msg)
-
-            if provider_value == "ollama":
-                self.llm_client = OllamaClient(base_url)
-            elif provider_value == "openai-compatible":
-                self.llm_client = OpenAIClient(api_key, base_url=base_url)
-            elif provider_value == "openai":
-                self.llm_client = OpenAIClient(api_key)
-            elif provider_value == "google":
-                self.llm_client = OpenAIClient(
-                    api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai"
-                )
-            elif provider_value == "anthropic":
-                self.llm_client = OpenAIClient(api_key, base_url="https://api.anthropic.com/v1/")
-            else:
-                msg = f"Unsupported provider: {provider}"
-                logger.error(msg)
-                raise ValueError(msg)
             self.tools = self.mcp_manager.get_all_tools() or []
             logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
 
             if self.analysis_type == "log":
-                self.llm_client.setup_graph_llm(model=model_name)
-                self.llm_with_tools = self.llm_client.llm.bind_tools(tools=self.tools)
-                self.agent = await create_conversation_graph(
-                    llm=self.llm_with_tools, tools=self.tools, config=self.config
-                )
+                llm_with_tools = llm.bind_tools(tools=self.tools)
+                self.agent = await create_conversation_graph(llm=llm_with_tools, tools=self.tools, config=self.config)
             else:
-                # Pass streaming parameter only to OpenAI-based clients
-                if hasattr(self.llm_client, "setup"):
-                    if provider_value in ["openai", "openai-compatible", "google", "anthropic"]:
-                        self.llm_client.setup(model=model_name, streaming=streaming)
-                    else:
-                        self.llm_client.setup(model=model_name)
-                self.agent = self.llm_client.bind_tools(self.tools, self.memory)
+                self.agent = create_agent(model=llm, tools=self.tools, checkpointer=self.memory)
         except Exception as e:
-            logger.error(f"Failed to initialize agent for provider={provider}, model={model_name}: {e}")
+            logger.error(f"Failed to initialize agent: {e}")
             raise
 
     async def _build_prompt(self, session_id: str, user_message: str):
@@ -146,70 +103,6 @@ class MCPContext:
         self._extract_tool_calls_from_response(response)
 
         return response
-
-    # async def astream_query(self, session_id, messages):
-    #     """Stream tokens as SSE while tracking metadata.
-    #     Yields bytes formatted as Server-Sent Events (text/event-stream):
-    #     - token events:  data: {"delta": "..."}\n\n
-    #     - end event:    event: end\n data: {"metadata": {...}}\n\n
-    #     """
-    #     self.reset_metadata()
-    #     start_time = time.time()
-    #
-    #     config = self.create_config(session_id)
-    #     prompt = await self._build_prompt(session_id, messages)
-    #
-    #     yield b":ok\n\n"
-    #
-    #     try:
-    #         async for event in self.agent.astream_events({"messages": prompt}, config=config, version="v1"):
-    #             et = event.get("event", "")
-    #             data = event.get("data", {})
-    #
-    #             if et in ("on_chat_model_stream", "on_llm_stream"):
-    #                 chunk = data.get("chunk")
-    #                 text = None
-    #                 try:
-    #                     if hasattr(chunk, "content"):
-    #                         c = getattr(chunk, "content")
-    #                         if isinstance(c, str):
-    #                             text = c
-    #                         elif isinstance(c, list):
-    #                             parts = []
-    #                             for p in c:
-    #                                 if isinstance(p, dict) and isinstance(p.get("text"), str):
-    #                                     parts.append(p["text"])
-    #                                 elif hasattr(p, "text") and isinstance(getattr(p, "text"), str):
-    #                                     parts.append(getattr(p, "text"))
-    #                             if parts:
-    #                                 text = "".join(parts)
-    #                     elif hasattr(chunk, "text") and isinstance(getattr(chunk, "text"), str):
-    #                         text = getattr(chunk, "text")
-    #                 except Exception:
-    #                     text = None
-    #
-    #                 if text:
-    #                     payload = json.dumps({"delta": text}, ensure_ascii=False)
-    #                     yield (f"data: {payload}\n\n").encode("utf-8")
-    #
-    #             elif et == "on_chain_end":
-    #                 try:
-    #                     output = data.get("output")
-    #                     if output:
-    #                         self._extract_tool_calls_from_response(output)
-    #                 except Exception:
-    #                     pass
-    #
-    #         total_time = time.time() - start_time
-    #         self.query_metadata["total_execution_time"] = round(total_time, 3)
-    #
-    #         meta = self.get_metadata_summary()
-    #         yield (f"event: end\ndata: {json.dumps({'metadata': meta}, ensure_ascii=False)}\n\n").encode("utf-8")
-    #
-    #     except Exception as e:
-    #         logger.error(f"Streaming error: {e}")
-    #         err = json.dumps({"error": str(e)})
-    #         yield (f"event: error\ndata: {err}\n\n").encode("utf-8")
 
     def _extract_tool_calls_from_response(self, response):
         """Extract tool call information from LangGraph response.

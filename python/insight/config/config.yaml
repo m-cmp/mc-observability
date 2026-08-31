@@ -104,37 +104,28 @@ prediction:
       - multiplicative_terms_upper
 
 llm:
-  model:
-    - provider: ollama
-      model_name:
-        - qwen3:30b-a3b
-        - qwen3.6:27b
-        - gemma4:26b
-    - provider: openai
-      model_name:
-        - gpt-5
-        - gpt-5-mini
-        - gpt-5-nano
-    - provider: openai-compatible
-      model_name:
-        - google/gemma-4-12B-it
-        - lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF
-    - provider: google
-      model_name:
-        - gemini-2.5-flash
-        - gemini-2.5-pro
-    - provider: anthropic
-      model_name:
-        - claude-3-5-haiku-latest
-        - claude-3-7-sonnet-latest
-        - claude-sonnet-4-0
-        - claude-opus-4-0
-        - claude-opus-4-1
   mcp:
-    mcp_grafana_url: http://mc-observability-mcp-grafana:8000/sse
-    mcp_mariadb_url: http://mc-observability-mcp-maria:8001/sse
-    mcp_influxdb_url: http://mc-observability-mcp-influx:8002/sse
-    mcp_tempo_url: http://mc-observability-tempo:3200/api/mcp
+    startup_timeout_seconds: 15
+    cleanup_timeout_seconds: 5
+    sse_read_timeout_seconds: 900
+    # Declarative MCP server map — adding a server here is the only step needed
+    # to make its tools loadable (transport: sse | streamable_http | stdio | websocket).
+    mcp_servers:
+      grafana:
+        url: http://mc-observability-mcp-grafana:8000/sse
+        transport: sse
+        # Some mcp-grafana builds 403 non-loopback Host headers (DNS-rebind allowlist).
+        headers:
+          Host: 127.0.0.1:8000
+      mariadb:
+        url: http://mc-observability-mcp-maria:8001/sse
+        transport: sse
+      influxdb:
+        url: http://mc-observability-mcp-influx:8002/sse
+        transport: sse
+      tempo:
+        url: http://mc-observability-tempo:3200/api/mcp
+        transport: streamable_http
   chat_summarization:
     max_tokens_before_summary: 5000
     summary_prompt: |
@@ -199,52 +190,90 @@ alarm_analysis:
     No guessing, answer based only on MCP tool results.
     Current time: {current_time}
 
-server_error_analysis:
-  default_provider: ollama
-  default_model_name: qwen3:30b-a3b
-  detection_lookback_minutes: 15
-  supervisor_recursion_limit: 30
-  supervisor_model_call_limit: 15
-  supervisor_tool_call_limit: 12
-  subagent_model_call_limit: 12
-  subagent_tool_call_limit: 10
-  subagent_tool_retry_max_retries: 2
-  system_prompt_first: |
+rca_analysis:
+  partial_confidence_threshold: 0.4
+  # Code owns the telemetry target: the platform provisions every InfluxDB with this
+  # database, so callers cannot pick another one.
+  datasources:
+    influx_database: mc-observability
+  # Central investigation agent budgets, shared by every round of one request. Provisional
+  # (잠정): 300s keeps today's effective ceiling (120s per source, in parallel, plus planning
+  # and synthesis). e2e with gpt-5.6 showed the agent fans out ~9 independent calls in its
+  # first turn, so 10 tool calls left no room for follow-ups; 24 covers two such turns plus
+  # a re-investigation.
+  investigation_model_call_limit: 24
+  investigation_tool_call_limit: 24
+  analysis_timeout_seconds: 300
+  # POST /rca/query returns the record immediately (202) and runs the analysis in the
+  # background of the worker process. Per process: how many run at once, how many may wait.
+  max_concurrent_analyses: 4
+  max_queued_analyses: 20
+  # Used only when neither the LLM connection's context_length nor the provider knows the
+  # window. Optimistic on purpose: an under-guess wastes a large model's capacity silently,
+  # while an over-guess is announced by a warning log naming the connection to fix.
+  fallback_context_window_tokens: 200000
+  tool_result_context_window_pct: 15
+  tool_result_absolute_max_tokens: 25000
+  synthesis_system_prompt: |
     <system_prompt>
-    You are an HTTP 5xx incident analysis assistant for the MC-Observability platform.
-    Use only read-only MCP tools and follow the investigation plan provided by the graph.
+    You are a root cause analysis assistant for the MC-Observability platform.
+    Analyze only the evidence supplied by the graph. Do not call tools.
 
     Investigation rules:
-    1. First identify the analysis scope: trace_id, service, endpoint, status_code, and time range.
-    2. If trace_id exists, prioritize Tempo trace evidence before Loki logs.
-    3. Use logs to confirm the exact exception, failing component, request path, and dependency errors.
-    4. Use metrics only to determine blast radius or whether this is isolated vs systemic.
-    5. Follow the graph-provided required_evidence_sources order. Do not call metric before trace/log scope is checked.
-    6. Produce at least one hypothesis when evidence allows it, and explicitly list evidence that supports or weakens it.
-    7. Do not claim root cause if evidence only shows symptoms.
-    8. If trace/log/metric evidence is missing, mark limitations and lower confidence.
-    9. Never include raw logs verbatim. Summarize only.
+    1. Use the supplied query and scope to understand the observed problem.
+    2. Treat every claim as tentative until it is supported by the supplied evidence.
+    3. Evaluate competing hypotheses against supporting and contradicting evidence.
+    4. If probable_cause is non-empty, produce at least one ranked hypothesis and make the first hypothesis
+       the canonical cause. Explicitly list evidence that supports or weakens each hypothesis.
+    5. Do not claim root cause if evidence only shows symptoms.
+    6. If an unresolved evidence gap prevents a causal claim, mark it in limitations and next_checks.
+    7. Do not copy large raw payloads into summary or probable_cause; cite their evidence_id instead.
+    8. Cite only evidence_id values present in merged_evidence.evidence_catalog.
+    9. In hypotheses, supporting_evidence and contradicting_evidence contain only evidence_id strings from
+       the catalog. The validator restores source and observation from raw evidence.
+    10. Set conclusion_strength to CONFIRMED, LIKELY, or INCONCLUSIVE; use INCONCLUSIVE for sparse,
+        indirect, or conflicting causal evidence.
+    11. Healthy evidence stays healthy. If the collected evidence shows normal operation, report that:
+        leave probable_cause empty, return no hypotheses, set risk_level to LOW, and use summary to state
+        what was checked and why it looks healthy. Routine INFO messages, zero-valued error counters,
+        successful status codes, and normal-latency spans are not faults and must never be presented as
+        the cause of one.
+    12. Absence is not a fault. A NO_DATA source means the query ran and the window was empty; an empty or
+        unmatched result means the same. Record that as a coverage limitation in limitations and
+        next_checks. Never explain missing data as if the missing data were itself the incident.
+    13. Answer the question that the evidence supports, not the one the query assumes. A query phrased as
+        "find the cause of X" does not establish that X happened; if the evidence does not show X, say so.
 
     Risk/confidence scoring:
     - risk_level means operational impact, not evidence certainty.
-      CRITICAL: widespread or sustained 5xx, critical user journey affected, cascading failure, or data-loss risk.
-      HIGH: confirmed user-facing 5xx on a critical path or dependency, with a concrete failing component.
-      MEDIUM: confirmed 5xx but limited, isolated, non-critical, or impact is unclear.
-      LOW: weak/transient signal or insufficient evidence for active user impact.
-    - confidence means how strongly the evidence supports the conclusion.
-      0.85-1.00: trace, log, and metric evidence align; causal chain is directly supported.
-      0.70-0.84: at least two evidence sources support the cause; one source may be partial or missing.
-      0.50-0.69: one strong source supports the cause, but blast radius or exact mechanism is incomplete.
-      0.00-0.49: evidence is sparse, indirect, or conflicting; keep conclusions tentative.
+      Derive it from the observed impact in the supplied scope and evidence.
+    - confidence means how likely the stated probable_cause is the real cause. Judge the causal argument,
+      not the amount of telemetry: how much was collected is already reported separately in
+      evidence_status and limitations.
+      Weigh these:
+        * mechanism: the evidence names how the failure happens (error, exception, timeout, exhausted
+          limit, rejected connection), not merely that two signals moved together
+        * timing: the cause appears before the effect and inside the incident window
+        * contrast: the same signal is normal outside the window, or on comparable peers
+        * elimination: plausible alternatives were checked and are contradicted by the evidence
+        * specificity: the evidence points at this service, endpoint, or node rather than at the
+          platform in general
+      0.85-1.00: mechanism directly evidenced, timing fits, and at least one alternative is excluded.
+      0.40-0.84: mechanism evidenced or strongly implied and timing fits, but alternatives stay open.
+      0.00-0.39: correlation only, a single indirect signal, conflicting evidence, or a cause inferred
+                 from missing data.
+    - Keep confidence consistent with conclusion_strength: CONFIRMED sits in 0.85-1.00, LIKELY in
+      0.40-0.84, and INCONCLUSIVE below 0.40.
+    - Do not lower confidence because a source was not collected or a window came back empty. Record that
+      in limitations. Lower confidence only when the causal argument itself is weak.
+    - When probable_cause is empty, confidence states how sure you are that nothing in the scope is
+      wrong: high when the signals you did check are complete and healthy, low when coverage was thin.
     - Keep risk_level and confidence independent. Do not increase confidence just because risk is high.
+    - risk_level LOW with an empty probable_cause is the correct, complete answer for a scope that looks
+      healthy. Do not inflate risk_level or invent a cause to justify having run an analysis.
 
-    Return a concise operational analysis with risk_level, confidence, summary, affected_service, affected_endpoint,
-    probable_cause, hypotheses, evidence, mitigation, next_checks, and limitations.
-    evidence should be a list of objects with source, signal, observation, and supports_cause.
+    Return a concise operational analysis with risk_level, confidence, conclusion_strength, summary, affected_service,
+    affected_endpoint, probable_cause, hypotheses, evidence, mitigation, next_checks, and limitations.
+    evidence should be a list of objects with evidence_id, source, signal, observation, and supports_cause.
     Current time: {current_time}
     </system_prompt>
-  system_prompt_default: |
-    Continue as the HTTP 5xx analysis assistant.
-    Use the same read-only MCP tool set and graph-provided investigation plan.
-    Answer from tool evidence and existing analysis context only. Do not infer root cause beyond the evidence.
-    Current time: {current_time}

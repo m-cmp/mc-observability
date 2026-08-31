@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mcmp.o11ymanager.manager.global.util.CookieJar;
 import feign.*;
-import java.io.IOException;
+import feign.hc5.ApacheHttp5Client;
 import java.util.Collection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,25 +40,33 @@ public class SemaphoreFeignConfig {
         return mapper;
     }
 
+    /**
+     * Cookie-capturing client shared by every Feign client in the app.
+     *
+     * <p>This bean is picked up by component scan, so it wins over Spring Cloud's
+     * {@code @ConditionalOnMissingBean} client auto-configuration for all Feign clients, not just
+     * Semaphore. It therefore must support every method the other clients use: delegating to {@link
+     * ApacheHttp5Client} instead of extending {@code Client.Default} is what makes PATCH work —
+     * {@code Client.Default} runs on {@code HttpURLConnection}, which rejects PATCH with "Invalid
+     * HTTP method" and broke the Insight proxy's PATCH endpoints.
+     */
     @Bean
     public Client feignClient(CookieJar cookieJar) {
-        return new Client.Default(null, null) {
-            @Override
-            public Response execute(Request request, Request.Options options) throws IOException {
-                Response response = super.execute(request, options);
+        Client delegate = new ApacheHttp5Client();
+        return (request, options) -> {
+            Response response = delegate.execute(request, options);
 
-                Collection<String> setCookieHeaders = response.headers().get("Set-Cookie");
-                if (setCookieHeaders != null) {
-                    for (String header : setCookieHeaders) {
-                        String[] cookieParts = header.split(";")[0].split("=");
-                        if (cookieParts.length == 2) {
-                            cookieJar.addCookie(cookieParts[0], cookieParts[1]);
-                        }
+            Collection<String> setCookieHeaders = response.headers().get("Set-Cookie");
+            if (setCookieHeaders != null) {
+                for (String header : setCookieHeaders) {
+                    String[] cookieParts = header.split(";")[0].split("=");
+                    if (cookieParts.length == 2) {
+                        cookieJar.addCookie(cookieParts[0], cookieParts[1]);
                     }
                 }
-
-                return response;
             }
+
+            return response;
         };
     }
 

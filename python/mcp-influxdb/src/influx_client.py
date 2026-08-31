@@ -67,7 +67,7 @@ class InfluxDBClient:
         self.password = os.getenv("INFLUXDB_PASSWORD") or "mc-agent"
         self.database = os.getenv("INFLUXDB_DATABASE") or "mc-observability"
 
-    def execute_query(self, query: str) -> str:
+    def execute_query(self, query: str, database: str | None = None) -> str:
         """
         Executes a query on InfluxDB and returns the result as a JSON formatted string.
 
@@ -76,6 +76,7 @@ class InfluxDBClient:
 
         Args:
             query (str): The InfluxQL query to execute.
+            database (str, optional): Database for this query. Uses the configured default when omitted.
 
         Returns:
             str: A JSON-formatted string containing the query result or an error message.
@@ -85,7 +86,7 @@ class InfluxDBClient:
             Exception: For other unexpected errors (handled internally and returned as JSON).
         """
         try:
-            params = {"u": self.user, "p": self.password, "q": query, "db": self.database}
+            params = {"u": self.user, "p": self.password, "q": query, "db": database or self.database}
 
             response = requests.get(f"{self.base_url}/query", params=params, headers={"Accept": "application/json"})
             response.raise_for_status()

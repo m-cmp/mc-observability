@@ -9,19 +9,43 @@ class BaseResponse(BaseModel):
     rs_msg: str = "Success"
 
 
-class LLMModel(BaseModel):
-    provider: Literal["ollama", "openai", "openai-compatible", "google", "anthropic"]
-    model_name: list[str]
+class LLMConnection(BaseModel):
+    id: int
+    name: str
+    provider: str
+    base_url: str | None
+    api_key_configured: bool
+    default_model: str | None
+    context_length: int | None = None
+    is_default: bool
+    enabled: bool
+    regdate: datetime
 
 
-class ResBodyLLMModel(BaseResponse):
-    data: list[LLMModel]
+class ResBodyLLMConnection(BaseResponse):
+    data: LLMConnection
+
+
+class ResBodyLLMConnections(BaseResponse):
+    data: list[LLMConnection]
+
+
+class LLMConnectionModels(BaseModel):
+    connection_id: int
+    models: list[str]
+
+
+class ResBodyLLMConnectionModels(BaseResponse):
+    data: LLMConnectionModels
 
 
 class LLMChatSession(BaseModel):
     seq: int
     user_id: str
     session_id: str
+    connection_id: int | None
+    connection_name: str | None
+    analysis_type: str
     provider: str
     model_name: str
     regdate: datetime
@@ -59,6 +83,9 @@ class SessionHistory(BaseModel):
     seq: int
     user_id: str
     session_id: str
+    connection_id: int | None
+    connection_name: str | None
+    analysis_type: str
     provider: str
     model_name: str
     regdate: datetime
@@ -68,64 +95,71 @@ class ResBodySessionHistory(BaseResponse):
     data: SessionHistory
 
 
+class LLMQueryResult(Message):
+    session_id: str
+
+
 class ResBodyQuery(BaseResponse):
-    data: Message
+    data: LLMQueryResult
 
 
-class LLMAPIKey(BaseModel):
-    seq: int
-    provider: str
-    api_key: str | None = None
-    base_url: str | None = None
-
-
-class ResBodyLLMAPIKey(BaseResponse):
-    data: LLMAPIKey
-
-
-class ResBodyLLMAPIKeys(BaseResponse):
-    data: list[LLMAPIKey]
-
-
-class ServerErrorAnalysisRecord(BaseModel):
+class RcaAnalysisRecord(BaseModel):
     id: int
     trace_id: str | None
     session_id: str
     status: Literal["PENDING", "RUNNING", "SUCCEEDED", "FAILED", "PARTIAL"]
     summary: str | None
+    request: dict = Field(default_factory=dict)
     detail: dict | None
     created_at: datetime
     updated_at: datetime
 
 
-class ServerErrorDetectResult(BaseModel):
-    accepted: bool
-    analysis_ids: list[int]
+class ResBodyRcaRecord(BaseResponse):
+    data: RcaAnalysisRecord
 
 
-class ResBodyServerErrorDetect(BaseResponse):
-    data: ServerErrorDetectResult
-
-
-class ResBodyServerErrorRecord(BaseResponse):
-    data: ServerErrorAnalysisRecord
-
-
-class ServerErrorRecordPage(BaseModel):
+class RcaRecordPage(BaseModel):
     total: int
     page: int
     size: int
-    items: list[ServerErrorAnalysisRecord]
+    items: list[RcaAnalysisRecord]
 
 
-class ResBodyServerErrorRecords(BaseResponse):
-    data: ServerErrorRecordPage
+class ResBodyRcaRecords(BaseResponse):
+    data: RcaRecordPage
 
 
-class ServerErrorQueryResult(BaseModel):
+class RcaQueryResult(BaseModel):
+    session_id: str
     message: Message
-    analysis: ServerErrorAnalysisRecord | None = None
+    analysis: RcaAnalysisRecord | None = None
 
 
-class ResBodyServerErrorQuery(BaseResponse):
-    data: ServerErrorQueryResult
+class ResBodyRcaQuery(BaseResponse):
+    data: RcaQueryResult
+
+
+class RcaScheduleRecord(BaseModel):
+    id: int
+    name: str
+    enabled: bool
+    interval_minutes: int
+    trigger: Literal["server_error"] | None = None
+    request: dict = Field(default_factory=dict)
+    # SKIPPED: a server-error watch found no 5xx in the slot, so no analysis ran.
+    status: Literal["IDLE", "RUNNING", "SUCCEEDED", "FAILED", "PARTIAL", "SKIPPED"]
+    last_execution: datetime | None
+    next_execution: datetime | None
+    last_analysis_id: int | None
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ResBodyRcaSchedule(BaseResponse):
+    data: RcaScheduleRecord
+
+
+class ResBodyRcaSchedules(BaseResponse):
+    data: list[RcaScheduleRecord]

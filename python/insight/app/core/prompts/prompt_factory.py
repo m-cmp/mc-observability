@@ -3,7 +3,6 @@ from config.ConfigManager import ConfigManager
 from .alert_prompt_service import AlertPromptService
 from .base_prompt_service import BasePromptService
 from .log_prompt_service import LogPromptService
-from .server_error_prompt_service import ServerErrorPromptService
 
 
 class PromptFactory:
@@ -15,7 +14,7 @@ class PromptFactory:
         Create a prompt service instance based on analysis type.
 
         Args:
-            analysis_type: Type of analysis ('log', 'alert', or 'server_error')
+            analysis_type: Type of analysis ('log' or 'alert')
             config_manager: Optional configuration manager instance
 
         Returns:
@@ -29,7 +28,6 @@ class PromptFactory:
         service_map = {
             "log": LogPromptService,
             "alert": AlertPromptService,
-            "server_error": ServerErrorPromptService,
         }
 
         service_class = service_map.get(analysis_type)

@@ -36,6 +36,8 @@ def register_tool(mcp, client: InfluxDBClient):
         try:
             fields_data = json.loads(fields_result_text)
             tags_data = json.loads(tags_result_text)
+            fields_data = fields_data.get("data", fields_data)
+            tags_data = tags_data.get("data", tags_data)
             schema = {
                 "fields": fields_data.get("results", [{}])[0].get("series", [{}])[0].get("values", []),
                 "tags": tags_data.get("results", [{}])[0].get("series", [{}])[0].get("values", []),

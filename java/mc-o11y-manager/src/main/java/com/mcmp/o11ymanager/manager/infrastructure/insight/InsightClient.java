@@ -11,7 +11,7 @@ public interface InsightClient {
     String LLM = "/api/o11y/insight/llm";
     String LOG = "/api/o11y/insight/log-analysis";
     String PREDICTION = "/api/o11y/insight/predictions";
-    String SERVER_ERROR = "/api/o11y/insight/server-error-analysis";
+    String RCA = "/api/o11y/insight/rca";
 
     @GetMapping(ANOMALY + "/measurement")
     Object getMeasurements();
@@ -68,32 +68,43 @@ public interface InsightClient {
     @PostMapping(ALERT + "/query")
     Object queryAlertAnalysis(@RequestBody Object body);
 
-    @GetMapping(LLM + "/model")
-    Object getLLMModelOptions();
+    @GetMapping(LLM + "/connections")
+    Object getLLMConnections();
 
-    @GetMapping(LLM + "/session")
+    @GetMapping(LLM + "/connections/{connectionId}")
+    Object getLLMConnection(@PathVariable("connectionId") int connectionId);
+
+    @PostMapping(LLM + "/connections")
+    Object postLLMConnection(@RequestBody Object body);
+
+    @PatchMapping(LLM + "/connections/{connectionId}")
+    Object patchLLMConnection(
+            @PathVariable("connectionId") int connectionId, @RequestBody Object body);
+
+    @DeleteMapping(LLM + "/connections/{connectionId}")
+    Object deleteLLMConnection(@PathVariable("connectionId") int connectionId);
+
+    @GetMapping(LLM + "/connections/{connectionId}/models")
+    Object getLLMConnectionModels(@PathVariable("connectionId") int connectionId);
+
+    @PutMapping(LLM + "/connections/{connectionId}/default")
+    Object setDefaultLLMConnection(
+            @PathVariable("connectionId") int connectionId, @RequestBody Object body);
+
+    @GetMapping(LLM + "/sessions")
     Object getLLMChatSessions();
 
-    @PostMapping(LLM + "/session")
+    @PostMapping(LLM + "/sessions")
     Object postLLMChatSession(@RequestBody Object body);
 
-    @DeleteMapping(LLM + "/session")
-    Object deleteLLMChatSession(@RequestParam("sessionId") String sessionId);
+    @DeleteMapping(LLM + "/sessions/{sessionId}")
+    Object deleteLLMChatSession(@PathVariable("sessionId") String sessionId);
 
     @DeleteMapping(LLM + "/sessions")
     Object deleteAllLLMChatSessions();
 
-    @GetMapping(LLM + "/session/{sessionId}/history")
+    @GetMapping(LLM + "/sessions/{sessionId}/history")
     Object getLLMSessionHistory(@PathVariable("sessionId") String sessionId);
-
-    @GetMapping(LLM + "/api-keys")
-    Object getLLMApiKeys(@RequestParam("provider") String provider);
-
-    @PostMapping(LLM + "/api-keys")
-    Object postLLMApiKeys(@RequestBody Object body);
-
-    @DeleteMapping(LLM + "/api-keys")
-    Object deleteLLMApiKey(@RequestParam("provider") String provider);
 
     @PostMapping(LOG + "/query")
     Object queryLogAnalysis(@RequestBody Object body);
@@ -143,24 +154,30 @@ public interface InsightClient {
             @RequestParam(value = "start_time", required = false) String startTime,
             @RequestParam(value = "end_time", required = false) String endTime);
 
-    /* ===================== Server Error Analysis ===================== */
-    @PostMapping(SERVER_ERROR + "/detect")
-    Object detectServerError(@RequestBody Object body);
+    /* ===================== RCA ===================== */
+    @PostMapping(RCA + "/query")
+    Object queryRca(@RequestBody Object body);
 
-    @PostMapping(SERVER_ERROR + "/query")
-    Object queryServerError(@RequestBody Object body);
-
-    @GetMapping(SERVER_ERROR + "/records")
-    Object listServerErrorRecords(
+    @GetMapping(RCA + "/records")
+    Object listRcaRecords(
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "from", required = false) String fromDt,
             @RequestParam(value = "to", required = false) String toDt,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size);
 
-    @GetMapping(SERVER_ERROR + "/records/{analysisId}")
-    Object getServerErrorRecord(@PathVariable("analysisId") int analysisId);
+    @GetMapping(RCA + "/records/{analysisId}")
+    Object getRcaRecord(@PathVariable("analysisId") int analysisId);
 
-    @PostMapping(SERVER_ERROR + "/records/{analysisId}/rerun")
-    Object rerunServerErrorAnalysis(@PathVariable("analysisId") int analysisId);
+    @GetMapping(RCA + "/schedules")
+    Object listRcaSchedules();
+
+    @PostMapping(RCA + "/schedules")
+    Object postRcaSchedule(@RequestBody Object body);
+
+    @PatchMapping(RCA + "/schedules/{scheduleId}")
+    Object patchRcaSchedule(@PathVariable("scheduleId") int scheduleId, @RequestBody Object body);
+
+    @DeleteMapping(RCA + "/schedules/{scheduleId}")
+    Object deleteRcaSchedule(@PathVariable("scheduleId") int scheduleId);
 }

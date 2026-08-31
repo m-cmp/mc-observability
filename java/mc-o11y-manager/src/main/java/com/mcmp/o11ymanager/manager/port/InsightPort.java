@@ -57,7 +57,19 @@ public interface InsightPort {
             String endTime);
 
     /* ===================== LLM ===================== */
-    Object getLLMModelOptions();
+    Object getLLMConnections();
+
+    Object getLLMConnection(int connectionId);
+
+    Object postLLMConnection(Object body);
+
+    Object patchLLMConnection(int connectionId, Object body);
+
+    Object deleteLLMConnection(int connectionId);
+
+    Object getLLMConnectionModels(int connectionId);
+
+    Object setDefaultLLMConnection(int connectionId, Object body);
 
     Object getLLMChatSessions();
 
@@ -69,27 +81,24 @@ public interface InsightPort {
 
     Object getLLMSessionHistory(String sessionId);
 
-    Object getLLMApiKeys(String provider);
-
-    Object postLLMApiKeys(Object body);
-
-    Object deleteLLMApiKeys(String provider);
-
     /* ===================== Alert Analysis ===================== */
     Object queryAlertAnalysis(Object body);
 
     /* ===================== Log Analysis ===================== */
     Object queryLogAnalysis(Object body);
 
-    /* ===================== Server Error Analysis ===================== */
-    Object detectServerError(Object body);
+    /* ===================== RCA ===================== */
+    Object queryRca(Object body);
 
-    Object queryServerError(Object body);
+    Object listRcaRecords(String status, String fromDt, String toDt, Integer page, Integer size);
 
-    Object listServerErrorRecords(
-            String status, String fromDt, String toDt, Integer page, Integer size);
+    Object getRcaRecord(int analysisId);
 
-    Object getServerErrorRecord(int analysisId);
+    Object listRcaSchedules();
 
-    Object rerunServerErrorAnalysis(int analysisId);
+    Object postRcaSchedule(Object body);
+
+    Object patchRcaSchedule(int scheduleId, Object body);
+
+    Object deleteRcaSchedule(int scheduleId);
 }
