@@ -23,7 +23,7 @@ public class VMRequestDTO {
 
     @Schema(
             description =
-                    "Enable GPU monitoring (installs DCGM Exporter and collects dcgm metrics via Telegraf)",
+                    "Enable GPU monitoring (Telegraf reads nvidia-smi and stores dcgm metrics; needs only the NVIDIA driver)",
             example = "false")
     private Boolean gpu;
 }

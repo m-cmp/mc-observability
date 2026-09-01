@@ -11,11 +11,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * DCGM Exporter 기반 GPU 메트릭 정의 (o11y-manager GpuMetricKeyField 포팅).
+ * GPU 메트릭 정의.
  *
- * <p>telegraf의 prometheus input이 DCGM Exporter(:9400/metrics)를 스크랩하고 starlark processor가
- * DCGM_FI_*&#47;DCGM_EXP_* 메트릭명을 InfluxDB `dcgm` measurement의 필드로 변환한다. 여기 정의된 필드명은 변환 후 InfluxDB에
- * 저장되는 필드명과 1:1로 대응한다.
+ * <p>telegraf의 nvidia_smi input이 `nvidia-smi -q -x`를 읽고 starlark processor가 그 필드를 InfluxDB `dcgm`
+ * measurement의 필드명으로 변환한다. 여기서 "DCGM"은 수집 데몬이 아니라 <b>스키마 이름</b>이다 - 수집기는 바뀌었지만 필드명은 그대로라
+ * 조회·대시보드·알람은 영향을 받지 않는다.
+ *
+ * <p>여기 정의된 필드는 전부 {@code telegraf_processors_nvidia_smi_to_dcgm}이 실제로 만들어낼 수 있는 것이다. 패치된 telegraf
+ * 플러그인이나 커널 로그가 있어야 하는 항목(PCIe replay, vGPU 라이선스, XID, NVLink, 누적 에너지)은 수집 경로가 없어 정의에서 제외했다.
  */
 public class GpuMetricKeyField {
 
@@ -30,13 +33,10 @@ public class GpuMetricKeyField {
         CLOCKS("clocks", GpuMetricField.CLOCKS),
         TEMPERATURE("temperature", GpuMetricField.TEMPERATURE),
         POWER("power", GpuMetricField.POWER),
-        PCIE("pcie", GpuMetricField.PCIE),
         UTILIZATION("utilization", GpuMetricField.UTILIZATION),
         ERRORS("errors", GpuMetricField.ERRORS),
         MEMORY_USAGE("memory_usage", GpuMetricField.MEMORY_USAGE),
         ECC("ecc", GpuMetricField.ECC),
-        NV_LINK("nv_link", GpuMetricField.NV_LINK),
-        VGPU_LICENSE("vgpu_license", GpuMetricField.VGPU_LICENSE),
         REMAPPED_ROWS("remapped_rows", GpuMetricField.REMAPPED_ROWS),
 
         // 통합 관리용
@@ -70,13 +70,10 @@ public class GpuMetricKeyField {
                     CLOCKS,
                     TEMPERATURE,
                     POWER,
-                    PCIE,
                     UTILIZATION,
                     ERRORS,
                     MEMORY_USAGE,
                     ECC,
-                    NV_LINK,
-                    VGPU_LICENSE,
                     REMAPPED_ROWS);
         }
     }
@@ -96,13 +93,7 @@ public class GpuMetricKeyField {
 
         // Power
         POWER_USAGE("전력 사용량", "power_usage", "W"),
-        TOTAL_ENERGY_CONSUMPTION("부팅 이후 누적 에너지 소비량", "total_energy_consumption", "mJ"),
         P_STATE("GPU 성능 상태 단계", "p_state", "level"),
-
-        // PCIE
-        PCIE_TX_THROUGHPUT("PCIe TX를 통해 전송된 총 데이터 양", "pcie_tx_throughput", "KB"),
-        PCIE_RX_THROUGHPUT("PCIe RX를 통해 수신된 총 데이터 양", "pcie_rx_throughput", "KB"),
-        PCIE_REPLAY_COUNTER("PCIe 재시도 횟수", "pcie_replay_counter", "count"),
 
         // Utilization
         GPU_UTIL("GPU 사용률", "gpu_util", "%"),
@@ -111,9 +102,7 @@ public class GpuMetricKeyField {
         DEC_UTIL("디코더 사용률", "dec_util", "%"),
 
         // Errors And Violations
-        XID_ERRORS("마지막으로 발생한 XID 에러 코드", "xid_errors", "code"),
         CLOCKS_EVENT_REASONS("클럭 스로틀링 발생 사유", "clocks_event_reasons", "bitmask"),
-        XID_ERRORS_COUNT("지정된 시간 창 내 XID 에러 발생 횟수", "xid_errors_count", "count"),
 
         // Memory Usage
         FB_TOTAL("전체 프레임 버퍼 메모리", "fb_total", "MB"),
@@ -125,12 +114,6 @@ public class GpuMetricKeyField {
         ECC_DBE_VOL_TOTAL("이중 비트 휘발성 ECC 오류 누적 횟수", "ecc_dbe_vol_total", "count"),
         ECC_SBE_AGG_TOTAL("단일 비트 영구 ECC 오류 누적 횟수", "ecc_sbe_agg_total", "count"),
         ECC_DBE_AGG_TOTAL("이중 비트 영구 ECC 오류 누적 횟수", "ecc_dbe_agg_total", "count"),
-
-        // NVLink
-        NVLINK_BANDWIDTH_TOTAL("전체 NVLink 레인에 대한 총 대역폭 카운터 수", "nvlink_bandwidth_total", "count"),
-
-        // VGPU License status
-        VGPU_LICENSE_STATUS("vGPU 라이선스 상태", "vgpu_license_status", "status"),
 
         // Remapped rows
         UNCORRECTABLE_REMAPPED_ROWS(
@@ -165,17 +148,12 @@ public class GpuMetricKeyField {
         private static final List<GpuMetricField> TEMPERATURE =
                 Arrays.asList(MEMORY_TEMP, GPU_TEMP, FAN_SPEED);
 
-        private static final List<GpuMetricField> POWER =
-                Arrays.asList(POWER_USAGE, TOTAL_ENERGY_CONSUMPTION, P_STATE);
-
-        private static final List<GpuMetricField> PCIE =
-                Arrays.asList(PCIE_TX_THROUGHPUT, PCIE_RX_THROUGHPUT, PCIE_REPLAY_COUNTER);
+        private static final List<GpuMetricField> POWER = Arrays.asList(POWER_USAGE, P_STATE);
 
         private static final List<GpuMetricField> UTILIZATION =
                 Arrays.asList(GPU_UTIL, MEM_COPY_UTIL, ENC_UTIL, DEC_UTIL);
 
-        private static final List<GpuMetricField> ERRORS =
-                Arrays.asList(XID_ERRORS, CLOCKS_EVENT_REASONS, XID_ERRORS_COUNT);
+        private static final List<GpuMetricField> ERRORS = Arrays.asList(CLOCKS_EVENT_REASONS);
 
         private static final List<GpuMetricField> MEMORY_USAGE =
                 Arrays.asList(FB_TOTAL, FB_FREE, FB_USED);
@@ -183,10 +161,6 @@ public class GpuMetricKeyField {
         private static final List<GpuMetricField> ECC =
                 Arrays.asList(
                         ECC_SBE_VOL_TOTAL, ECC_DBE_VOL_TOTAL, ECC_SBE_AGG_TOTAL, ECC_DBE_AGG_TOTAL);
-
-        private static final List<GpuMetricField> NV_LINK = Arrays.asList(NVLINK_BANDWIDTH_TOTAL);
-
-        private static final List<GpuMetricField> VGPU_LICENSE = Arrays.asList(VGPU_LICENSE_STATUS);
 
         private static final List<GpuMetricField> REMAPPED_ROWS =
                 Arrays.asList(
@@ -199,13 +173,10 @@ public class GpuMetricKeyField {
                                 CLOCKS,
                                 TEMPERATURE,
                                 POWER,
-                                PCIE,
                                 UTILIZATION,
                                 ERRORS,
                                 MEMORY_USAGE,
                                 ECC,
-                                NV_LINK,
-                                VGPU_LICENSE,
                                 REMAPPED_ROWS)
                         .flatMap(Collection::stream)
                         .toList();

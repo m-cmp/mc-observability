@@ -577,7 +577,7 @@ services:
 
   # CB-Tumblebug
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.12
+    image: cloudbaristaorg/cb-tumblebug:0.13.2
     container_name: mc-infra-manager
     restart: always
     networks:
@@ -716,7 +716,7 @@ services:
 
   # CB-Spider
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.24
+    image: cloudbaristaorg/cb-spider:0.13.2
     container_name: mc-infra-connector
     restart: always
     networks:

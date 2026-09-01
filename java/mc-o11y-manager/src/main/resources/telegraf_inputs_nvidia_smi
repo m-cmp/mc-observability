@@ -1,0 +1,17 @@
+[[inputs.nvidia_smi]]
+  ## Reads GPU telemetry straight from `nvidia-smi -q -x`.
+  ##
+  ## nvidia-smi ships with the NVIDIA driver itself (Linux /usr/bin/nvidia-smi,
+  ## Windows nvidia-smi.exe), so a GPU node needs nothing installed beyond the
+  ## driver it already has. Only set bin_path when it is not on PATH.
+  ##
+  ## The raw measurement is "nvidia_smi"; telegraf_processors_nvidia_smi_to_dcgm
+  ## renames the fields and rewrites the measurement to "dcgm", which is the
+  ## schema every consumer downstream already reads.
+  ## The plugin also emits a per-process "nvidia_smi_process" measurement
+  ## (one point per process holding GPU memory). Nothing reads it, and left
+  ## alone it writes an unbounded series per process name, so drop it here.
+  namedrop = ["nvidia_smi_process"]
+
+  # bin_path = "/usr/bin/nvidia-smi"
+  # timeout = "5s"

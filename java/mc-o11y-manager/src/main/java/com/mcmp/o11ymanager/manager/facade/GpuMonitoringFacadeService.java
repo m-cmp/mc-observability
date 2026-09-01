@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 /**
  * GPU(DCGM) 메트릭 조회 facade (o11y-manager GpuMonitoringFacadeService 포팅).
  *
- * <p>GPU 메트릭은 telegraf가 DCGM Exporter를 스크랩해 InfluxDB의 `dcgm` measurement로 저장하며, 조회는 기존
+ * <p>GPU 메트릭은 telegraf가 nvidia-smi를 직접 읽어 InfluxDB의 `dcgm` measurement로 저장하며, 조회는 기존
  * InfluxDbService 경로(ns/infra/node 태그 필터)를 그대로 사용한다.
  */
 @Service

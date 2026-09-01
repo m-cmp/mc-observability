@@ -1,0 +1,15 @@
+[[inputs.nvidia_gpm]]
+  ## GPU utilization for MIG-backed vGPU guests, read through the NVML GPM API.
+  ##
+  ## Turning MIG on disables NVML's device-level utilization counters, so inside
+  ## such a guest nvidia-smi reports N/A for utilization at every level. GPM is
+  ## the API NVIDIA provides instead, and it works from inside the guest.
+  ##
+  ## Every other case is already covered by inputs.nvidia_smi, which reports
+  ## utilization directly. This plugin only fills the gap, and the paired
+  ## processor drops its output when nvidia-smi already produced a value.
+  ##
+  ## NVML is loaded at runtime, so on a node without it the plugin quietly
+  ## collects nothing rather than failing the agent.
+  sample_interval = "1s"
+  interval = "30s"

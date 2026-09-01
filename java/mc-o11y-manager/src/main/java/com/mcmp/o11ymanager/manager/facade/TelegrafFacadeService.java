@@ -45,7 +45,7 @@ public class TelegrafFacadeService {
     }
 
     // gpu: true면 telegraf config에 GPU(DCGM) 수집 블록을 포함하고,
-    // Ansible enable_gpu 변수로 DCGM Exporter 설치까지 함께 수행한다.
+    // Ansible enable_gpu 변수로 telegraf config에 GPU 수집을 포함시킨다.
     public void install(
             String nsId,
             String infraId,

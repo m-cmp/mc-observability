@@ -1,0 +1,77 @@
+[[processors.starlark]]
+  ## Folds nvidia_gpm utilization into the dcgm series, but only where
+  ## nvidia-smi could not supply it.
+  ##
+  ## This project monitors VMs, never hypervisors, which makes the job much
+  ## smaller than it looks. On a hypervisor one GPM point has to be matched to
+  ## whichever VM is using that GPU instance, and that needs a host-side
+  ## mapping table. Inside a VM there is nothing to match: the GPU the agent
+  ## can see is the GPU the VM was given.
+  ##
+  ## So the only real question per point is whether nvidia-smi already answered
+  ## it:
+  ##
+  ##   passthrough / ordinary vGPU guest - nvidia_smi reports gpu_util, and a
+  ##       second writer would make the field alternate between two different
+  ##       measurements from one poll to the next. GPM is dropped.
+  ##   MIG-backed vGPU guest - MIG switches off the device-level counters, so
+  ##       nvidia_smi reports no gpu_util at all. GPM's sm_util becomes it.
+  ##
+  ## Only sm_util is kept. GPM also reports occupancy and per-precision
+  ## pipeline utilization, which describe what is happening inside the GPU
+  ## rather than how busy the rented VM's GPU is, and nothing here queries them.
+  namepass = ["dcgm", "nvidia_gpm"]
+  source = '''
+# GPU uuid -> {"tags": <tag set of its dcgm series>, "smi_util": <bool>}
+# Top-level globals survive for the lifetime of the processor instance.
+state = {}
+
+def apply(metric):
+    if metric.name != "nvidia_gpm":
+        # A dcgm point from telegraf_processors_nvidia_smi_to_dcgm. Pass it
+        # through untouched, but remember how its series is tagged and whether
+        # nvidia-smi managed to produce a utilization value for this GPU.
+        uuid = metric.tags.get("uuid")
+        if uuid != None:
+            tags = {}
+            for k, v in metric.tags.items():
+                tags[k] = v
+            state[uuid.lower()] = {
+                "tags": tags,
+                "smi_util": metric.fields.get("gpu_util") != None,
+            }
+        return metric
+
+    value = metric.fields.get("sm_util")
+    if value == None:
+        return None
+
+    # GPM tags the physical GPU as "UUID"; nvidia_smi uses "uuid".
+    uuid = metric.tags.get("UUID")
+    if uuid == None:
+        return None
+    known = state.get(uuid.lower())
+
+    if known != None:
+        if known["smi_util"]:
+            # nvidia-smi is already reporting utilization for this GPU.
+            return None
+        # Adopt the existing series so the value lands on the same one the
+        # dashboards already read, instead of beside it.
+        for k in metric.tags.keys():
+            metric.tags.pop(k)
+        for k, v in known["tags"].items():
+            metric.tags[k] = v
+    else:
+        # No dcgm point seen for this GPU yet. Keep the point rather than drop
+        # it - in a VM it can only be this VM's GPU, and on a MIG guest it is
+        # the one utilization signal there is. Normalise the tag name so it
+        # merges with the series once nvidia_smi points start arriving.
+        metric.tags.pop("UUID")
+        metric.tags["uuid"] = uuid
+
+    metric.fields.clear()
+    metric.fields["gpu_util"] = float(value)
+    metric.name = "dcgm"
+    return metric
+'''

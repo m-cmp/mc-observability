@@ -65,7 +65,7 @@ public class SemaphoreDomainService {
         return install(accessInfo, method, configContent, agent, templateCount, false);
     }
 
-    // enableGpu: telegraf 설치 시 DCGM Exporter를 함께 설치할지 여부.
+    // enableGpu: telegraf config에 GPU 수집(nvidia_smi)을 넣을지 여부.
     // Ansible playbook의 `enable_gpu` 변수로 전달되어 dcgm role 실행을 결정한다.
     public Task install(
             AccessInfoDTO accessInfo,
@@ -92,7 +92,7 @@ public class SemaphoreDomainService {
 
             env.addVariable("install_method", methodStr);
 
-            // enable_gpu: Ansible playbook이 이 값으로 dcgm role(DCGM Exporter 설치) 실행을 분기.
+            // enable_gpu: telegraf config 조립 시 GPU 수집 조각을 넣을지 분기하는 값.
             // telegraf 이외 에이전트에서는 playbook 조건(agent == 'telegraf')에 의해 무시된다.
             env.addVariable("enable_gpu", String.valueOf(enableGpu));
 

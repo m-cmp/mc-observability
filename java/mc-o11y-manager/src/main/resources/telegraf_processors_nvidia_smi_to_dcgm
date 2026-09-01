@@ -1,0 +1,112 @@
+[[processors.starlark]]
+  namepass = ["nvidia_smi"]
+  source = '''
+# Rewrites nvidia_smi points into the "dcgm" schema.
+#
+# "DCGM" here is the name of the field schema, not the daemon. Every consumer
+# (GpuMetricKeyField, the dashboards, the alert rules) reads measurement "dcgm"
+# with DCGM field names, so keeping that schema is what lets the collector be
+# swapped without touching anything downstream.
+#
+# Only fields nvidia-smi actually reports are mapped. Fields that need a patched
+# telegraf plugin or a kernel-log source (PCIe replay counter, vGPU license
+# state, XID errors, NVLink counters, total energy) are not collected at all and
+# have been dropped from GpuMetricKeyField as well.
+
+FIELD_MAP = {
+    # Utilization
+    "utilization_gpu":       "gpu_util",
+    "utilization_memory":    "mem_copy_util",
+    "utilization_encoder":   "enc_util",
+    "utilization_decoder":   "dec_util",
+    # Temperature / fan
+    "temperature_gpu":       "gpu_temp",
+    "memory_temp":           "memory_temp",
+    "fan_speed":             "fan_speed",
+    # Power
+    "power_draw":            "power_usage",
+    # Frame buffer memory
+    "memory_total":          "fb_total",
+    "memory_used":           "fb_used",
+    "memory_free":           "fb_free",
+    # Clocks
+    "clocks_current_sm":     "sm_clock",
+    "clocks_current_memory": "mem_clock",
+    "clocks_event_reasons":  "clocks_event_reasons",
+    # Remapped rows
+    "remapped_rows_correctable":   "correctable_remapped_rows",
+    "remapped_rows_uncorrectable": "uncorrectable_remapped_rows",
+}
+
+# ECC field names differ by GPU generation, so sum whichever set is present:
+#   newer drivers: dram/sram correctable and uncorrectable (+parity/secded)
+#   older drivers: single_bit / double_bit totals
+# The dcgm schema has one SBE and one DBE total per scope. A single GPU never
+# reports both generations, so nothing is double counted.
+#
+# Consumer GPUs have no ECC hardware at all and report N/A for every one of
+# these, which the input plugin drops rather than emitting. That is expected,
+# not a mapping failure - datacenter cards (A100/L40S/H100) populate them.
+ECC_SBE_KEYS = ["dram_correctable", "sram_correctable", "single_bit"]
+ECC_DBE_KEYS = ["dram_uncorrectable", "sram_uncorrectable",
+                "sram_uncorrectable_parity", "sram_uncorrectable_secded", "double_bit"]
+
+def ecc_total(metric, scope, keys):
+    total = 0.0
+    seen = False
+    for suffix in keys:
+        v = metric.fields.get("ecc_errors_" + scope + "_" + suffix)
+        if v != None:
+            total += float(v)
+            seen = True
+    return total if seen else None
+
+def apply(metric):
+    new_fields = {}
+
+    # Everything is written as float. The previous collector reached InfluxDB
+    # through a Prometheus gauge, so every existing dcgm field is a float; a
+    # point that writes an integer into one of them is rejected with a 400 and
+    # the metric silently disappears instead of erroring visibly.
+
+    # 1) plain renames
+    for k, v in metric.fields.items():
+        dst = FIELD_MAP.get(k)
+        if dst != None:
+            new_fields[dst] = float(v)
+
+    # 2) "Yes"/"No" -> 1.0/0.0. A pending or failed row remap means the GPU has
+    #    already been acted on for a memory fault, which is the one durable
+    #    signal left now that XID events are not collected.
+    raw = metric.fields.get("remapped_rows_failure")
+    if raw != None:
+        new_fields["row_remap_failure"] = 1.0 if raw == "Yes" else 0.0
+
+    # 3) performance state arrives as the tag "P2", not as a field.
+    pstate = metric.tags.get("pstate")
+    if pstate != None and pstate.startswith("P"):
+        digits = pstate[1:]
+        if digits.isdigit():
+            new_fields["p_state"] = float(int(digits))
+
+    # 4) ECC totals, per scope, generation agnostic.
+    for scope in ["volatile", "aggregate"]:
+        short = "vol" if scope == "volatile" else "agg"
+        sbe = ecc_total(metric, scope, ECC_SBE_KEYS)
+        if sbe != None:
+            new_fields["ecc_sbe_" + short + "_total"] = sbe
+        dbe = ecc_total(metric, scope, ECC_DBE_KEYS)
+        if dbe != None:
+            new_fields["ecc_dbe_" + short + "_total"] = dbe
+
+    # Drop the point entirely when nothing mapped, rather than writing an empty
+    # dcgm series that looks like a live GPU reporting nothing.
+    if len(new_fields) == 0:
+        return None
+
+    metric.name = "dcgm"
+    metric.fields.clear()
+    for k, v in new_fields.items():
+        metric.fields[k] = v
+    return metric
+'''

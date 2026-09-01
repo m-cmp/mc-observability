@@ -73,7 +73,7 @@ public class AgentFacadeService {
         return install(nsId, infraId, nodeId, false);
     }
 
-    // gpu: NVIDIA GPU 노드 여부. true면 telegraf 설치 시 DCGM Exporter 설치 +
+    // gpu: NVIDIA GPU 노드 여부. true면 telegraf 설치 시
     // GPU 메트릭 수집(prometheus input + starlark processor) 설정이 포함된다.
     public List<ResultDTO> install(String nsId, String infraId, String nodeId, boolean gpu) {
 

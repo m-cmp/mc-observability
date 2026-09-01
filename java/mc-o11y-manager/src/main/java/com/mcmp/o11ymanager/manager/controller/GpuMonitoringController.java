@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * GPU(DCGM Exporter) 메트릭 조회 API (o11y-manager GpuMonitoringController 포팅).
+ * GPU 메트릭 조회 API.
  *
- * <p>대상 노드에 DCGM Exporter가 설치되어 있고 telegraf가 GPU 수집 설정(prometheus input + starlark)을 포함해야 데이터가
- * 존재한다. (VM 등록 시 gpu=true 또는 Ansible enable_gpu=true)
+ * <p>대상 노드에 NVIDIA 드라이버가 있고 telegraf가 GPU 수집 설정(nvidia_smi input + starlark)을 포함해야 데이터가 존재한다. (VM
+ * 등록 시 gpu=true 또는 Ansible enable_gpu=true)
  */
 @RestController
 @RequiredArgsConstructor
@@ -64,7 +64,7 @@ public class GpuMonitoringController {
             summary = "GetGpuMetrics",
             operationId = "GetGpuMetrics",
             description =
-                    "Retrieve GPU(DCGM) metrics. The measurement is fixed to `dcgm`; requested fields are validated against the GPU metric field definitions. Use group_by/conditions with DCGM tags (e.g., gpu, UUID, modelName) to query per-GPU series.")
+                    "Retrieve GPU metrics. The measurement is fixed to `dcgm`; requested fields are validated against the GPU metric field definitions. Use group_by/conditions with the tags nvidia-smi reports (e.g., uuid, index, name) to query per-GPU series.")
     public ResBody<List<MetricDTO>> getGpuMetrics(
             @Parameter(description = "nsId (e.g., ns-1)", example = "ns-1") @PathVariable
                     String nsId,
