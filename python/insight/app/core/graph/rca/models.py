@@ -113,12 +113,10 @@ class EvidenceTask(BaseModel):
 class DraftEvidencePlan(BaseModel):
     hypotheses: list[str] = Field(default_factory=list, max_length=5)
     tasks: list[EvidenceTask] = Field(default_factory=list)
-    reasoning: str = ""
 
 
 class RcaAnalysisState(TypedDict, total=False):
     query: str | None
-    available_sources: list[str]
     hypotheses: list[str]
     evidence_gaps: list[str]
     investigation_round: int
@@ -126,9 +124,7 @@ class RcaAnalysisState(TypedDict, total=False):
     filters: dict[str, Any]
     evidence_plan: dict[str, Any]
     merged_evidence: dict[str, Any]
-    investigation_budget: dict[str, Any]
     result_validation: dict[str, Any]
-    session_id: str
     analysis_result: dict | None
     error_message: str | None
 
@@ -195,6 +191,5 @@ class RcaRunContext:
     llm: BaseChatModel | None = None
     budget: RequestBudget | None = None
     # Built once per request and reused by every investigation round.
-    evidence_store: Any = None
     investigation_toolset: Any = None
     investigation_runner: Any = None

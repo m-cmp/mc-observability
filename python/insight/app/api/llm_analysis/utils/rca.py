@@ -312,7 +312,6 @@ class RcaAnalysisService:
                 with get_usage_metadata_callback() as usage_callback:
                     graph_result = await self._get_rca_graph().ainvoke(
                         {
-                            "session_id": session_id,
                             "query": resolved.query,
                             "scope": resolved.scope.model_dump(mode="json"),
                             "filters": resolved.filters,
@@ -475,7 +474,6 @@ class RcaAnalysisService:
             },
             llm=llm,
             budget=budget,
-            evidence_store=evidence_store,
             investigation_toolset=toolset,
             investigation_runner=runner,
         )

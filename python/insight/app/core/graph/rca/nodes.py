@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 _DEFAULT_QUERY = "Analyze the incident and identify the most probable evidence-backed cause."
 _MAX_INVESTIGATION_ROUNDS = 1
 _TRIM_NOTE_TOKENS = 64
-_MAX_NOTE_CHARS = 2_000
 # A source the agent chose not to query is not a gap; a source that could not be offered is.
 _NOT_QUERIED = "not_queried"
 
@@ -42,14 +41,13 @@ class RcaGraphNodes:
     ) -> dict[str, Any]:
         context = runtime.context
         scope = IncidentScope.model_validate(state.get("scope") or {})
-        scope = _scope_with_discovered_trace(scope, state.get("merged_evidence"))
+        scope = _scope_with_discovered_trace(scope, context.investigation_toolset.discovered_trace_ids)
         available = list(context.investigation_toolset.queryable_sources)
         reinvestigating = bool(state.get("evidence_gaps"))
         draft = await _draft_plan(context.llm, state, scope, available, context.investigation_toolset.ledger())
         hypotheses = list(dict.fromkeys([*state.get("hypotheses", []), *draft.hypotheses]))[:5]
         return {
             "query": state.get("query") or _DEFAULT_QUERY,
-            "available_sources": available,
             "hypotheses": hypotheses,
             "investigation_round": (int(state.get("investigation_round", 0)) + 1 if reinvestigating else 0),
             "scope": scope.model_dump(mode="json"),
@@ -68,9 +66,7 @@ class RcaGraphNodes:
         config = context.analysis_config
         plan = state.get("evidence_plan") or {}
         limitations: list[dict[str, Any]] = []
-        error_message: str | None = None
         blocked_reason: str | None = None
-        notes: str | None = None
 
         runner = context.investigation_runner
         budget = context.budget
@@ -102,11 +98,10 @@ class RcaGraphNodes:
                         model_name=model_name,
                     )
                 except RequestContextTooLargeError as exc:
-                    blocked_reason = error_message = exc.code
+                    blocked_reason = exc.code
                 else:
                     try:
-                        result = await runner.ainvoke({"messages": [{"role": "user", "content": fitted["text"]}]})
-                        notes = _final_note(result)
+                        await runner.ainvoke({"messages": [{"role": "user", "content": fitted["text"]}]})
                     except InvestigationBudgetExhaustedError:
                         limitations.append({"source": "investigation", "reason": "investigation_budget_exhausted"})
                     except Exception as exc:
@@ -118,19 +113,7 @@ class RcaGraphNodes:
         merged["limitations"].extend(entry for entry in limitations if entry not in merged["limitations"])
         if blocked_reason:
             merged["synthesis_blocked_reason"] = blocked_reason
-        if notes:
-            merged["investigation_notes"] = notes[:_MAX_NOTE_CHARS]
-        update: dict[str, Any] = {
-            "merged_evidence": merged,
-            "investigation_budget": {
-                "model_calls": budget.remaining_model_calls if budget is not None else None,
-                "tool_calls": budget.remaining_tool_calls if budget is not None else None,
-                "expired": budget.expired if budget is not None else False,
-            },
-        }
-        if error_message:
-            update["error_message"] = error_message
-        return update
+        return {"merged_evidence": merged}
 
     async def synthesize(
         self,
@@ -218,21 +201,6 @@ class RcaGraphNodes:
         )
 
 
-def _final_note(result: Any) -> str | None:
-    messages = result.get("messages") if isinstance(result, dict) else None
-    for message in reversed(messages or []):
-        content = getattr(message, "content", None)
-        if getattr(message, "type", "") == "ai" and isinstance(content, str) and content.strip():
-            return content.strip()
-        if isinstance(content, list):
-            text = " ".join(
-                part.get("text", "") for part in content if isinstance(part, dict) and part.get("type") == "text"
-            ).strip()
-            if text:
-                return text
-    return None
-
-
 def _build_merged_evidence(toolset) -> dict[str, Any]:
     """Project the store into what synthesis and validation read.
 
@@ -250,7 +218,6 @@ def _build_merged_evidence(toolset) -> dict[str, Any]:
             if item.status in {"OK", "PARTIAL"}
             for record in toolset.evidence_store.records_for(item.source)
         ],
-        "discovered_trace_ids": sorted(set(toolset.discovered_trace_ids)),
     }
 
 
@@ -414,7 +381,6 @@ def _validate_result(result: dict | None, merged_evidence: dict | None, analysis
         if item.get("source") in usable_sources
     }
     threshold = analysis_config.get("partial_confidence_threshold", 0.4)
-    confidence = result.get("confidence") if isinstance(result, dict) else None
     execution_reasons = _execution_reasons(result, sources, limitations)
     # An empty catalog because every queried source ran and found nothing is a finding, not
     # a broken analysis. Only a source that actually failed makes the run unusable.
@@ -452,13 +418,7 @@ def _validate_result(result: dict | None, merged_evidence: dict | None, analysis
             "no_telemetry": not catalog and no_telemetry,
             "reasons": execution_reasons,
             "conclusion_reasons": conclusion_reasons,
-            "confidence": result.get("confidence") if isinstance(result, dict) else confidence,
-            "confidence_threshold": threshold,
-            "evidence_count": len(sources),
             "usable_evidence_count": len(catalog),
-            "conclusion_strength": (
-                result.get("conclusion_strength") if isinstance(result, dict) else "INCONCLUSIVE"
-            ),
         },
     }
 
@@ -573,29 +533,19 @@ def _assess_conclusion(
     )
 
 
-def route_after_validation(state: RcaAnalysisState) -> str:
+def route_after_validation(state: RcaAnalysisState, runtime: Runtime[RcaRunContext]) -> str:
     """Re-investigate only when the validator asked for evidence and the request can afford it."""
     if int(state.get("investigation_round", 0)) >= _MAX_INVESTIGATION_ROUNDS:
         return END
     if not state.get("evidence_gaps"):
         return END
-    if not state.get("available_sources"):
-        return END
-    budget = state.get("investigation_budget") or {}
-    for key in ("model_calls", "tool_calls"):
-        remaining = budget.get(key)
-        if remaining is not None and remaining <= 0:
-            return END
-    if budget.get("expired"):
+    budget = runtime.context.budget
+    if budget is not None and (budget.expired or not budget.remaining_model_calls or not budget.remaining_tool_calls):
         return END
     return "plan_evidence"
 
 
-def _scope_with_discovered_trace(
-    scope: IncidentScope,
-    merged_evidence: dict[str, Any] | None,
-) -> IncidentScope:
-    discovered = (merged_evidence or {}).get("discovered_trace_ids") or []
+def _scope_with_discovered_trace(scope: IncidentScope, discovered: list[str]) -> IncidentScope:
     if scope.trace_id or not discovered:
         return scope
     return scope.model_copy(update={"trace_id": str(discovered[0])})
