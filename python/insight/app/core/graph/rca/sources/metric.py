@@ -169,7 +169,10 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
 
         async def execute():
             raw = await context.invoke(tag_values_tool, "get_tag_values", backend_args)
-            return {"measurement": measurement, "tag_key": tag_key, "values": tabular_values(raw)}
+            result = {"measurement": measurement, "tag_key": tag_key, "values": tabular_values(raw)}
+            if isinstance(raw, dict) and raw.get("status") == "partial":
+                result.update(status="partial", servers=raw.get("servers"))
+            return result
 
         return await context.run(
             name="get_tag_values",

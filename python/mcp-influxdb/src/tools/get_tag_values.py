@@ -29,11 +29,16 @@ def register_tool(mcp, client: InfluxDBClient):
 
         query = f'SHOW TAG VALUES FROM "{measurement_name}" WITH KEY = "{tag_key}"'
         response = client.execute_query(query=query, database=database_name)
-        data = json.loads(response)
-        data = data.get("data", data)
+        answer = json.loads(response)
+        if answer.get("status") == "error":
+            return response
+        data = answer.get("data", answer)
 
         try:
             values = [item[1] for item in data["results"][0]["series"][0]["values"]]
-            return json.dumps({"tag_values": values})
+            result = {"tag_values": values}
+            if answer.get("status") == "partial":
+                result.update(status="partial", servers=answer["servers"])
+            return json.dumps(result)
         except (KeyError, IndexError):
             return json.dumps({"error": f"Could not retrieve tag values for tag '{tag_key}' in measurement '{measurement_name}'."})

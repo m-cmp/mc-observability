@@ -1,8 +1,10 @@
 # influx_client.py
-import requests
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, urlunparse
+
+import requests
 from dotenv import load_dotenv
 
 # Ensure environment variables from .env are loaded even if config isn't imported yet
@@ -27,6 +29,7 @@ class InfluxDBClient:
         If environment variables are not set, fallback defaults are used.
 
         Environment Variables:
+            INFLUXDB_URLS: Comma-separated InfluxDB server URLs queried together when set.
             INFLUXDB_URL: The URL of the InfluxDB server.
             INFLUXDB_USER: The username for authentication.
             INFLUXDB_PASSWORD: The password for authentication.
@@ -63,46 +66,74 @@ class InfluxDBClient:
 
         # Remove trailing slash to avoid double slashes in requests
         self.base_url = raw_url.rstrip("/")
+        # Infra and node metrics can reside on different servers, so query every
+        # configured endpoint. The single-URL setting above remains the fallback.
+        listed = [url.strip().rstrip("/") for url in (os.getenv("INFLUXDB_URLS") or "").split(",") if url.strip()]
+        self.endpoints = listed or [self.base_url]
         self.user = os.getenv("INFLUXDB_USER") or "mc-agent"
         self.password = os.getenv("INFLUXDB_PASSWORD") or "mc-agent"
         self.database = os.getenv("INFLUXDB_DATABASE") or "mc-observability"
 
     def execute_query(self, query: str, database: str | None = None) -> str:
-        """
-        Executes a query on InfluxDB and returns the result as a JSON formatted string.
+        """Query every configured server; keep SELECT series separate by server."""
+        params = {"u": self.user, "p": self.password, "q": query, "db": database or self.database}
 
-        This method sends a GET request to the InfluxDB query endpoint with the provided query.
-        Authentication is handled using the configured username and password.
+        def fetch(endpoint):
+            index, url = endpoint
+            server = urlparse(url).netloc.rsplit("@", 1)[-1] or f"influxdb-{index}"
+            try:
+                response = requests.get(
+                    f"{url}/query", params=params, headers={"Accept": "application/json"}, timeout=20
+                )
+                response.raise_for_status()
+                payload = response.json()
+                error = payload.get("error") or next(
+                    (result.get("error") for result in payload.get("results") or [] if result.get("error")), None
+                )
+                if error:
+                    return {"server": server, "status": "error", "error": str(error)[:200]}, None
+                has_series = any(result.get("series") for result in payload.get("results") or [])
+                return {"server": server, "status": "success" if has_series else "no_data"}, payload
+            except requests.exceptions.HTTPError as exc:
+                return {"server": server, "status": "error", "error": f"HTTP {exc.response.status_code}"}, None
+            except Exception as exc:
+                return {"server": server, "status": "error", "error": type(exc).__name__}, None
 
-        Args:
-            query (str): The InfluxQL query to execute.
-            database (str, optional): Database for this query. Uses the configured default when omitted.
+        with ThreadPoolExecutor(max_workers=len(self.endpoints)) as executor:
+            answers = list(executor.map(fetch, enumerate(self.endpoints, start=1)))
+        servers = [status for status, _ in answers]
+        failures = [status for status in servers if status["status"] == "error"]
+        payloads = [(status["server"], payload) for status, payload in answers if payload is not None]
+        # With a server missing, an empty answer is not proof of an empty window.
+        if failures and not any(status["status"] == "success" for status in servers):
+            return json.dumps({"status": "error", "error": "; ".join(
+                f'{status["server"]}: {status["error"]}' for status in failures
+            ), "servers": servers})
+        merged = merge_results(payloads, deduplicate=query.lstrip().upper().startswith("SHOW"))
+        return json.dumps({"status": "partial" if failures else "success", "data": merged, "servers": servers})
 
-        Returns:
-            str: A JSON-formatted string containing the query result or an error message.
 
-        Raises:
-            requests.exceptions.HTTPError: If the HTTP request fails (handled internally and returned as JSON).
-            Exception: For other unexpected errors (handled internally and returned as JSON).
-        """
-        try:
-            params = {"u": self.user, "p": self.password, "q": query, "db": database or self.database}
-
-            response = requests.get(f"{self.base_url}/query", params=params, headers={"Accept": "application/json"})
-            response.raise_for_status()
-
-            # Parse response from InfluxDB as JSON
-            # Create JSON structure representing successful response
-            return json.dumps({"status": "success", "data": response.json()})
-
-        except requests.exceptions.HTTPError as http_err:
-            return json.dumps(
-                {
-                    "status": "error",
-                    "error": "HTTP Error",
-                    "message": f"Status Code: {http_err.response.status_code}",
-                    "response_body": http_err.response.text,
-                }
-            )
-        except Exception as e:
-            return json.dumps({"status": "error", "error": "Exception", "message": str(e)})
+def merge_results(payloads: list[tuple[str, dict]], *, deduplicate: bool) -> dict:
+    """Union SHOW rows, but retain each server's independent SELECT result."""
+    series: dict = {}
+    separate: list = []
+    for server, payload in payloads:
+        for result in payload.get("results") or []:
+            for item in result.get("series") or []:
+                if not deduplicate:
+                    separate.append({**item, "server": server})
+                    continue
+                key = (
+                    item.get("name"),
+                    tuple(item.get("columns") or []),
+                    tuple(sorted((item.get("tags") or {}).items())),
+                )
+                rows = series.setdefault(key, {**item, "values": {}})["values"]
+                for row in item.get("values") or []:
+                    rows.setdefault(tuple(row), row)
+    merged = {"statement_id": 0}
+    if separate:
+        merged["series"] = separate
+    elif series:
+        merged["series"] = [{**item, "values": list(item["values"].values())} for item in series.values()]
+    return {"results": [merged]}

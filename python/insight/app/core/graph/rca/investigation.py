@@ -222,6 +222,10 @@ class InvestigationToolset:
         except Exception as exc:
             return fail("tool_invocation_failed", detail=str(exc)[:500])
 
+        if source == "metric" and evidence_query and isinstance(value, dict):
+            envelopes = (value, value.get("incident"), value.get("baseline"))
+            if any(isinstance(item, dict) and item.get("status") == "partial" for item in envelopes):
+                self._mark_failure(source, "backend_partial_failure")
         if not capture:
             return finish("OK", value)
         if not evidence_query:
