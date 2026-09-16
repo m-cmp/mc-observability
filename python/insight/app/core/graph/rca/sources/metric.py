@@ -190,9 +190,11 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
                 "most one interval such as 1m. compare_baseline=true also runs the equal-length window before "
                 "the incident. Examples: node overview -> "
                 '{"measurements": ["cpu","mem","system","disk","net"], "fields": ["*"], "aggregation": "max", '
-                '"tag_filters": {"node_id": "node-1"}, "compare_baseline": true}; one signal over time -> '
+                '"tag_filters": {"ns_id": "ns-demo", "infra_id": "infra-demo", "node_id": "node-1"}, '
+                '"compare_baseline": true}; one signal over time -> '
                 '{"measurements": ["cpu"], "fields": ["usage_idle"], "aggregation": "min", '
-                '"tag_filters": {"node_id": "node-1"}, "group_by": ["1m"]}. '
+                '"tag_filters": {"ns_id": "ns-demo", "infra_id": "infra-demo", "node_id": "node-1"}, '
+                '"group_by": ["1m"]}. '
                 f"limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — raise it only when a grouped "
                 "result was truncated. The database and time window are fixed by code."
             ),

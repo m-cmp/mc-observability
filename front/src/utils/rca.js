@@ -23,6 +23,7 @@ export function buildRcaRequest(form = {}, context = {}) {
   if (context.nsId) attributes.ns_id = context.nsId;
   if (context.infraId) attributes.infra_id = context.infraId;
   if (context.nodeId) attributes.node_id = context.nodeId;
+  if (['platform', 'vm', 'k8s'].includes(context.targetKind)) attributes.target_kind = context.targetKind;
   if (trimmed(form.measurement)) attributes.measurement = trimmed(form.measurement);
 
   const scope = { attributes };
@@ -76,7 +77,7 @@ export function getRcaRecordView(record = {}) {
     result,
     validation,
     noUsableEvidence,
-    cause: noUsableEvidence ? '' : result.probable_cause || record.summary || '',
+    cause: noUsableEvidence ? '' : result.probable_cause || '',
     summary: result.summary || record.summary || '',
     service: result.affected_service || scope.service_name || '',
     endpoint: result.affected_endpoint || scope.endpoint || '',
@@ -86,13 +87,19 @@ export function getRcaRecordView(record = {}) {
     confidenceLabel: formatRcaConfidence(result.confidence),
     conclusionStrength: result.conclusion_strength || '',
     evidence: result.evidence || [],
-    hypotheses: result.hypotheses || [],
-    mitigation: result.mitigation || [],
-    limitations: result.limitations || [],
     nextChecks: result.next_checks || [],
-    errors: detail.errors || (detail.error_message ? [detail.error_message] : []),
+    errors: validation.no_telemetry ? [] : detail.errors || (detail.error_message ? [detail.error_message] : []),
     sources: detail.evidence_status || {},
   };
+}
+
+// An evidence record is the tool output the validator restored; show JSON indented.
+export function formatRawRecord(observation) {
+  try {
+    return JSON.stringify(JSON.parse(observation), null, 2);
+  } catch {
+    return String(observation);
+  }
 }
 
 export function formatRcaConfidence(confidence) {

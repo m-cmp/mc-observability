@@ -13,7 +13,7 @@ import useScopeTargets, { loadScopeNodes } from '../hooks/useScopeTargets';
 import MetricChart from '../components/MetricChart';
 import { formatLocalTime, toEpochMillis } from '../utils/time';
 import { apiError } from '../utils/error';
-import { buildRcaRequest, formatRcaDuration, getRcaRecordView } from '../utils/rca';
+import { buildRcaRequest, formatRawRecord, formatRcaDuration, getRcaRecordView } from '../utils/rca';
 
 const TABS = ['Anomaly Detection', 'Prediction', 'RCA'];
 
@@ -465,6 +465,9 @@ function preferredConnectionId(connections) {
 }
 
 function RcaTab({ nsId, infraId, nodeId }) {
+  const { infras, clusters } = useScopeTargets(nsId);
+  const targetKind = clusters.some((cluster) => cluster.id === infraId)
+    ? 'k8s' : infras.some((infra) => infra.id === infraId) ? 'vm' : '';
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState('');
   const [listFrom, setListFrom] = useState('');
@@ -624,12 +627,12 @@ function RcaTab({ nsId, infraId, nodeId }) {
       // No timeStart/timeEnd: a schedule's window comes from the slot being run, and the
       // API rejects a stored time_range outright.
       request = mode === 'watch'
-        ? buildRcaRequest({ connectionId, modelName, serviceName, measurement, filters: additionalFilters }, { nsId, infraId, nodeId })
+        ? buildRcaRequest({ connectionId, modelName, serviceName, measurement, filters: additionalFilters }, { nsId, infraId, nodeId, targetKind })
         : buildRcaRequest({
           query, traceId, connectionId, modelName,
           serviceName, endpoint, statusCode, measurement,
           filters: additionalFilters,
-        }, { nsId, infraId, nodeId });
+        }, { nsId, infraId, nodeId, targetKind });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -718,7 +721,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
         statusCode,
         measurement,
         filters: additionalFilters,
-      }, { nsId, infraId, nodeId });
+      }, { nsId, infraId, nodeId, targetKind });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -1098,8 +1101,8 @@ function RcaTab({ nsId, infraId, nodeId }) {
               <div className="space-y-3 p-3">
                 <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
                   <div className="pt-1">
-                    <span className="block text-xs font-medium text-slate-700">Log · Trace</span>
-                    <span className="block text-[11px] text-slate-500">applies to both sources</span>
+                    <span className="block text-xs font-medium text-slate-700">Service hint</span>
+                    <span className="block text-[11px] text-slate-500">checked against each source's stored names</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
@@ -1299,7 +1302,6 @@ function RcaDetail({ record }) {
   const timeRange = scope.time_range || {};
   const attributes = scope.attributes || {};
   const filters = view.request.filters || {};
-
   return (
     <div className="space-y-4">
       {view.errors.length > 0 && (
@@ -1309,11 +1311,13 @@ function RcaDetail({ record }) {
       )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <section className="lg:col-span-2 rounded border border-slate-200 bg-white p-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Probable cause</h4>
-          <p className="mt-2 text-base font-semibold text-slate-900 whitespace-pre-wrap">
-            {view.noUsableEvidence ? 'No evidence-based conclusion' : view.cause || 'No conclusion is available.'}
-          </p>
-          {view.summary && view.summary !== view.cause && (
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {view.cause ? 'Probable cause' : 'Analysis result'}
+          </h4>
+          {view.cause && (
+            <p className="mt-2 text-base font-semibold text-slate-900 whitespace-pre-wrap">{view.cause}</p>
+          )}
+          {view.summary && (
             <p className="mt-3 text-sm leading-6 text-slate-600 whitespace-pre-wrap">{view.summary}</p>
           )}
         </section>
@@ -1353,13 +1357,23 @@ function RcaDetail({ record }) {
         <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Evidence</h4>
         <div className="mt-3 space-y-2">
           {view.evidence.map((item, index) => (
-            <div key={item.evidence_id || index} className="rounded bg-slate-50 px-3 py-2 text-xs">
-              <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-slate-500">
-                <span>{item.source || 'evidence'}</span>
-                {item.evidence_id && <span>{item.evidence_id}</span>}
-                {item.signal && <span>{item.signal}</span>}
+            <div key={`${item.evidence_id || 'evidence'}-${index}`} className="rounded bg-slate-50 px-3 py-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                <span className="font-semibold uppercase tracking-wide">{item.source || 'evidence'}</span>
+                {item.evidence_id && <span className="font-mono">{item.evidence_id}</span>}
+                {item.supports_cause && (
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700">Supports cause</span>
+                )}
               </div>
-              <p className="mt-1 text-slate-700">{item.observation || String(item)}</p>
+              <p className="mt-1 text-slate-700 whitespace-pre-wrap">{item.signal || item.observation}</p>
+              {item.signal && item.observation && (
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-[11px] text-slate-500">Raw record</summary>
+                  <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 font-mono text-[11px] text-slate-600">
+                    {formatRawRecord(item.observation)}
+                  </pre>
+                </details>
+              )}
             </div>
           ))}
           {view.evidence.length === 0 && (
@@ -1368,32 +1382,7 @@ function RcaDetail({ record }) {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hypotheses</h4>
-        {view.hypotheses.length === 0 ? (
-          <p className="mt-2 text-xs text-gray-400">No ranked hypotheses are available.</p>
-        ) : (
-          <ol className="mt-3 space-y-2">
-            {view.hypotheses.map((hypothesis, index) => (
-              <li key={index} className="flex gap-3 text-sm text-slate-700">
-                <span className="font-mono text-xs text-slate-400">{index + 1}</span>
-                <span className="flex-1">{hypothesis.cause || String(hypothesis)}</span>
-                {typeof hypothesis.confidence === 'number' && (
-                  <span className="text-xs font-semibold text-slate-500">
-                    {Math.round(hypothesis.confidence * 100)}%
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <RcaTextList title="Mitigation" items={view.mitigation} empty="No mitigation was proposed." />
-        <RcaTextList title="Next checks" items={view.nextChecks} empty="No follow-up checks were proposed." />
-        <RcaTextList title="Limitations" items={view.limitations} empty="No limitations were reported." />
-      </div>
+      <RcaTextList title="Next checks" items={view.nextChecks} empty="No follow-up checks were proposed." />
 
       <details className="rounded border border-slate-200 bg-white">
         <summary className="cursor-pointer px-4 py-3 text-xs font-semibold text-slate-600">Request scope</summary>

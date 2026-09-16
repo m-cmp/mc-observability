@@ -35,6 +35,13 @@ class RcaHypothesis(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class EvidenceTask(BaseModel):
+    """One source and question for the investigation agent."""
+
+    source: str
+    focus: str = ""
+
+
 class RcaResult(BaseModel):
     risk_level: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
     confidence: float = Field(ge=0.0, le=1.0)
@@ -42,12 +49,12 @@ class RcaResult(BaseModel):
     summary: str
     probable_cause: str
     evidence: list[RcaEvidenceItem]
-    mitigation: list[str]
-    limitations: list[str]
     affected_service: str | None = None
     affected_endpoint: str | None = None
     hypotheses: list[RcaHypothesis] = Field(default_factory=list)
     next_checks: list[str] = Field(default_factory=list)
+    # A private follow-up decision, never included in the stored result JSON.
+    retry_task: EvidenceTask | None = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
     def canonicalize_probable_cause(self):
@@ -87,14 +94,6 @@ class IncidentScope(BaseModel):
     attributes: dict[str, Any] = Field(default_factory=dict)
 
 
-class ToolTraceEntry(BaseModel):
-    tool: str
-    args: dict[str, Any] = Field(default_factory=dict)
-    output_preview: str = ""
-    error: str | None = None
-    duration_ms: float = Field(default=0.0, ge=0.0)
-
-
 class EvidenceRecord(BaseModel):
     evidence_id: str
     source: Literal["trace", "log", "metric"]
@@ -103,26 +102,28 @@ class EvidenceRecord(BaseModel):
     query: dict[str, Any] = Field(default_factory=dict)
 
 
-class EvidenceTask(BaseModel):
-    """A planner hint for the central agent: which source to look at, and for what."""
+class PlannedHypothesis(BaseModel):
+    """A candidate cause and the one check that would support or refute it."""
 
-    source: str
-    focus: str = ""
+    statement: str
+    check: EvidenceTask | None = None
 
 
 class DraftEvidencePlan(BaseModel):
-    hypotheses: list[str] = Field(default_factory=list, max_length=5)
-    tasks: list[EvidenceTask] = Field(default_factory=list)
+    """The planner's output, the graph state and the agent's plan: one model for all three."""
+
+    hypotheses: list[PlannedHypothesis] = Field(default_factory=list)
 
 
 class RcaAnalysisState(TypedDict, total=False):
     query: str | None
-    hypotheses: list[str]
-    evidence_gaps: list[str]
+    plan: DraftEvidencePlan
+    retry_task: dict[str, str] | None
+    # The retry_task a second investigation round ran, kept for the record.
+    retried_task: dict[str, str] | None
     investigation_round: int
     scope: dict[str, Any]
     filters: dict[str, Any]
-    evidence_plan: dict[str, Any]
     merged_evidence: dict[str, Any]
     result_validation: dict[str, Any]
     analysis_result: dict | None

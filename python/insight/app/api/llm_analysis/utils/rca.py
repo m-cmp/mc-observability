@@ -37,7 +37,6 @@ from config.ConfigManager import ConfigManager
 logger = logging.getLogger(__name__)
 
 _EVIDENCE_RECORD_CONTEXT_RATIO = 0.60
-_SYNTHESIS_EVIDENCE_CONTEXT_RATIO = 0.80
 # The tool-call ledger is bounded by the request budget, but a model that keeps issuing
 # blocked calls can still grow it; the record keeps the head and says what was cut.
 _MAX_PERSISTED_TOOL_CALLS = 100
@@ -128,9 +127,6 @@ def _derive_token_budgets(
         "evidence_record_budget_tokens": int(
             context_window * _EVIDENCE_RECORD_CONTEXT_RATIO
         ),
-        "synthesis_evidence_max_tokens": int(
-            context_window * _SYNTHESIS_EVIDENCE_CONTEXT_RATIO
-        ),
     }
 
 
@@ -159,12 +155,6 @@ def _analysis_slots(limit: int) -> asyncio.Semaphore:
     return _ANALYSIS_SLOTS[key]
 
 
-async def wait_for_analyses() -> None:
-    """Await every background analysis of this process (tests and graceful shutdown)."""
-    while _ANALYSIS_TASKS:
-        await asyncio.gather(*list(_ANALYSIS_TASKS), return_exceptions=True)
-
-
 def fail_stale_analyses(db: Session, *, older_than_seconds: int) -> int:
     """Close PENDING/RUNNING records nobody can still be working on (a worker died)."""
     swept = RcaAnalysisRepository(db).fail_stale(older_than_seconds=older_than_seconds, summary=_STALE_SUMMARY)
@@ -187,7 +177,7 @@ def start_stale_analysis_sweeper(*, older_than_seconds: int, interval_seconds: f
             try:
                 with factory() as db:
                     fail_stale_analyses(db, older_than_seconds=older_than_seconds)
-            except Exception as exc:  # noqa: BLE001 - the sweeper must survive a DB hiccup
+            except Exception as exc:  # the sweeper must survive a DB hiccup
                 logger.warning("rca: stale-analysis sweep failed: %s", exc)
 
     return asyncio.create_task(_loop(), name="rca-stale-analysis-sweeper")
@@ -263,21 +253,10 @@ class RcaAnalysisService:
                     )
                     runner.analysis_config = self.analysis_config
                     await runner._execute(record_id, session_id, model_name, connection_id, resolved, time.perf_counter())
-            except Exception as exc:  # noqa: BLE001 - _execute finalized the record; nobody else can observe this
+            except Exception as exc:  # _execute finalized the record; nobody else can observe this
                 logger.warning("rca: background analysis %s failed: %s", record_id, exc)
             finally:
                 db.close()
-
-    async def query_rca(self, body: PostRcaQueryBody) -> RcaQueryResult:
-        """Run RCA to completion in the caller's task (tests and in-process callers)."""
-        started_at = time.perf_counter()
-        session, resolved, request_json = self._resolve(body)
-        record = self.analysis_repo.create_record(
-            trace_id=resolved.scope.trace_id,
-            session_id=session.SESSION_ID,
-            request_json=request_json,
-        )
-        return await self._execute(record.ID, session.SESSION_ID, session.MODEL_NAME, session.CONNECTION_ID, resolved, started_at)
 
     def _resolve(self, body: PostRcaQueryBody):
         session = CommonSessionService(self.db).get_or_create_session(
@@ -341,35 +320,34 @@ class RcaAnalysisService:
             raise
 
         merged_evidence = graph_result.get("merged_evidence") or {}
+        validation = graph_result.get("result_validation") or {}
+        plan = graph_result.get("plan")
         detail = {
             "analysis_result": graph_result.get("analysis_result"),
             "result_validation": graph_result.get("result_validation"),
             "evidence_status": merged_evidence.get("sources") or {},
-            "errors": [graph_result["error_message"]] if graph_result.get("error_message") else [],
+            "errors": [graph_result["error_message"]] if graph_result.get("error_message") and not validation.get("no_telemetry") else [],
+            # What the graph set out to check and whether a second round ran. It sits beside
+            # analysis_result, not in it, so a FAILED analysis (whose result is dropped) keeps it.
+            "investigation": {
+                "plan": [item.model_dump(mode="json", exclude_none=True) for item in plan.hypotheses] if plan else [],
+                "rounds": int(graph_result.get("investigation_round", 0)) + 1,
+                "retry": graph_result.get("retried_task"),
+            },
             # Every wrapped tool call of the request — including empty, blocked and failed
             # ones — so the record explains what was looked at, not only what was cited.
             **_persisted_tool_calls(context),
         }
         analysis_result = graph_result.get("analysis_result") or {}
         summary = analysis_result.get("summary") or graph_result.get("error_message") or ""
-        validation = graph_result.get("result_validation") or {}
-        validation_status = validation.get("status")
-        if validation_status == "FAILED":
+        final_status = validation.get("status") or "FAILED"
+        if final_status == "FAILED":
             detail["analysis_result"] = None
-            final_status = "FAILED"
             summary = graph_result.get("error_message") or "RCA failed"
         elif validation.get("no_telemetry"):
             # Every source ran and the window was empty. Reporting that as a failed
             # analysis tells an operator to go fix a pipeline that is working.
-            final_status = "PARTIAL"
             summary = "No telemetry data was found in the requested scope and time window."
-        elif not analysis_result:
-            final_status = "FAILED"
-            summary = summary or "RCA failed"
-        elif validation_status == "PARTIAL":
-            final_status = "PARTIAL"
-        else:
-            final_status = "SUCCEEDED"
         updated_record = self.analysis_repo.finalize(
             record_id,
             status=final_status,

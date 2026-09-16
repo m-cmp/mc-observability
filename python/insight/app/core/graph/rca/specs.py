@@ -1,9 +1,4 @@
-"""Per-source specs for the central RCA investigation agent.
-
-One toolset per source (log, trace, metric): which MCP tools it needs, what the agent is
-told about it, its timeout and result limits, and — for metric — the static catalog of
-measurements, fields and tag keys fixed by the Telegraf templates.
-"""
+"""RCA tool specs and the fixed Telegraf metric catalog."""
 
 # Common Telegraf tags: [global_tags] in telegraf_global plus the agent host tag.
 _COMMON_METRIC_TAG_KEYS = ("ns_id", "infra_id", "node_id", "host")
@@ -151,91 +146,10 @@ METRIC_CATALOG = {
 }
 
 
-def render_metric_catalog() -> str:
-    lines = []
-    for measurement, entry in METRIC_CATALOG.items():
-        lines.append(f"- {measurement}: fields [{', '.join(entry['fields'])}]; tags [{', '.join(entry['tag_keys'])}]")
-    return "\n".join(lines)
-
-
-_LOG_SOURCE_INSTRUCTIONS = """
-Log source (Loki).
-Answers: what each service logged in the window, which lines describe the failure, and the
-identifiers to follow into other sources (traceID=..., request ids, error classes, hosts).
-The datasource and the time window are fixed by code; every log tool already runs inside them.
-The service of a line is its `component` label; `severity_text` is the level.
-Workflow: 1) One selector for every service you care about: {component=~"payment-api|checkout"},
-   optionally with severity_text=~"ERROR|WARN". 2) Narrow with a line filter built from literals
-   you actually saw: |= "timeout", |~ "(?i)pool exhausted|connection reset". 3) Follow a traceID=
-   you find into get_trace. Discover label names or values only when you do not know them.
-Patterns: {component="payment-api", severity_text="ERROR"} ; {component=~"a|b"} |~ "5\\d\\d|timeout" ;
-   {system="mc-observability"} |= "OutOfMemory"
-Empty result: relax one constraint once (drop the line filter, then widen the selector), then
-   move on. Absence of logs is a finding, never a cause.
-query_log_volume takes a bare selector and counts flushed chunks only, so it can read zero for
-   very recent logs: use it to compare volumes, and query_logs to establish that logs exist.
-Do not: one call per service; parsers, formatters, aggregations, ranges or offsets (rejected);
-   guess label names; put time in the query.
-"""
-
-_TRACE_SOURCE_INSTRUCTIONS = """
-Trace source (Tempo).
-Answers: which requests failed or were slow, on which node and route, and where one request
-spent its time. Spans come from the platform's collectors (Beyla, otel-java): resource.service.name
-is the collector's identity (one value per site, e.g. cmp-beyla-<site>), so the node of a span is
-resource.host.name (or resource.node_id) and the request is span.http.route / span.url.path.
-Scope fields: status_code -> span.http.response.status_code, endpoint -> span.http.route,
-   node_id -> resource.host.name; service_name has no trace field — match it through the route or
-   a trace_id found in the logs. The time window is fixed by code.
-Workflow: 1) search_traces with ONE spanset: { resource.host.name = "node-payment-1" && status = error }.
-   The result already lists the matched spans (host, name, duration, status, attributes): read
-   them before opening anything. 2) get_trace only for ONE representative trace when you need the
-   full span tree — a trace_id from a log line or from the search. 3) list_trace_attribute_values
-   ("resource.host.name") only when you do not know the node names.
-Patterns: { kind = server && span.http.response.status_code >= 500 } ;
-   { span.http.route = "/pay" && duration > 2s } ;
-   { resource.host.name = "node-inventory-1" && duration > 1s && status != error } ;
-   { span.db.system = "postgresql" && status = error }
-Scope rule: span attributes are span.x (span.db.system, span.http.response.status_code), resource
-   attributes are resource.x (resource.host.name); bare names are intrinsics only (status,
-   duration, name, kind, rootServiceName). Unscoped "db.system" is rejected.
-Empty result: drop the strictest comparison first (status before duration before route), then
-   move on. Do not set an error status and a duration bound together on a first search.
-Do not: open every trace from a search; pipelines, aggregates or structural operators (rejected);
-   put time in the query; treat resource.service.name as an application name.
-"""
-
-_METRIC_SOURCE_INSTRUCTIONS = (
-    """
-Metric source (InfluxDB, Telegraf).
-Answers: whether an infrastructure signal moved on a node during the window, and how it compares
-with the equal-length window just before it. The node of a series is its node_id tag. The database and
-time window are fixed by code.
-Catalog (fixed — pick names verbatim; the plugin may be off on a given node, which reads as NO_DATA):
-"""
-    + render_metric_catalog()
-    + """
-Workflow: 1) Take node_id from the scope, or from a trace/log (host.name, node=...). 2) ONE call
-   for the node's picture: {"measurements": ["cpu","mem","system","disk","net"], "fields": ["*"],
-   "aggregation": "max", "tag_filters": {"node_id": "..."}, "compare_baseline": true}. 3) Narrow to
-   the one signal that moved to see its shape: {"measurements": ["cpu"], "fields": ["usage_idle"],
-   "aggregation": "min", "tag_filters": {...}, "group_by": ["1m"]}.
-Patterns: max for spikes and saturation, mean for sustained load, last for the final state, count
-   to see whether the node reported at all. group_by ["1m"] shows the shape; omit it for one number
-   per window. Tag values (node_id, device, interface, pid) vary per node: get_tag_values only when
-   the scope does not name them.
-Empty result: the plugin is off on that node or the node_id is wrong — check
-   get_tag_values("cpu", "node_id") once, then move on.
-Do not: one call per measurement; query nodes the incident does not involve; repeat a query with
-   the same arguments; treat a missing measurement on one node as an error.
-"""
-)
-
-
 SOURCE_SPECS = {
     "log": {
         "mcp": "grafana",
-        "summary": "What the service logged in the window and how much; Loki via LogQL.",
+        "summary": "What the target logged in the window: platform application logs, VM syslog or Event Log, K8s node files; Loki via LogQL.",
         # list_datasources is called by code once per request to resolve the Loki UID; it
         # is never exposed to the agent.
         "required_tools": (
@@ -246,7 +160,6 @@ SOURCE_SPECS = {
             "query_loki_stats",
         ),
         "optional_tools": (),
-        "llm_instructions": _LOG_SOURCE_INSTRUCTIONS,
         "timeout_seconds": 120,
         "default_limit": 50,
         "max_limit": 200,
@@ -256,7 +169,6 @@ SOURCE_SPECS = {
         "summary": "Which requests failed or were slow and where one request spent its time; Tempo via TraceQL.",
         "required_tools": ("traceql-search", "get-trace"),
         "optional_tools": ("get-attribute-values",),
-        "llm_instructions": _TRACE_SOURCE_INSTRUCTIONS,
         "timeout_seconds": 120,
         "default_limit": 20,
         # Also bounds the flattened span table returned by get_trace.
@@ -267,7 +179,6 @@ SOURCE_SPECS = {
         "summary": "Whether an infrastructure signal (cpu, mem, disk, net, ...) moved versus the preceding baseline.",
         "required_tools": ("get_tag_values", "execute_influxql"),
         "optional_tools": (),
-        "llm_instructions": _METRIC_SOURCE_INSTRUCTIONS,
         "timeout_seconds": 120,
         "default_limit": 50,
         "max_limit": 500,
