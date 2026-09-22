@@ -145,7 +145,7 @@ class RcaScheduleRecord(BaseModel):
     name: str
     enabled: bool
     interval_minutes: int
-    trigger: Literal["server_error"] | None = None
+    trigger: Literal["server_error", "metric_anomaly"] | None = None
     request: dict = Field(default_factory=dict)
     # SKIPPED: a server-error watch found no 5xx in the slot, so no analysis ran.
     status: Literal["IDLE", "RUNNING", "SUCCEEDED", "FAILED", "PARTIAL", "SKIPPED"]

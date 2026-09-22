@@ -124,13 +124,15 @@ swap: no pod metrics, procstat or dcgm.
 Catalog (fixed — pick names verbatim; an unavailable input reads as NO_DATA):
 """ + render_metric_catalog() + """
 Workflow: 1) Take the node from scope, a trace or a log. 2) ONE overview call: measurements cpu, mem,
-   system, disk and net, fields ["*"], aggregation max, the node's three tags, compare_baseline true.
+   system, disk and net, fields ["*"], aggregation max (min for usage_idle), the node's three
+   tags, compare_baseline true.
    3) Narrow to the signal that moved with group_by ["1m"] to see when it moved.
 Patterns: max for spikes, mean for sustained load, last for the final state, count for whether
-   the node reported at all; get_tag_values only when scope does not name a tag value.
+   the node reported at all; a busy CPU is a falling usage_idle, so read it with min; the node
+   total is tag_filters cpu="cpu-total"; get_tag_values only when scope does not name a tag value.
 Empty result: the input may be absent, the identifier wrong, or no points arrived;
    get_tag_values lists historical values, not current coverage.
-Do not: query unrelated nodes; treat a missing measurement on one node as an error.
+Do not: query nodes outside the scope; treat a missing measurement on one node as an error.
 """,
 }
 

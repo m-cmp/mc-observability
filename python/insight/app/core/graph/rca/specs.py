@@ -16,7 +16,6 @@ METRIC_CATALOG = {
             "usage_user",
             "usage_system",
             "usage_idle",
-            "usage_active",
             "usage_nice",
             "usage_iowait",
             "usage_irq",

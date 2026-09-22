@@ -176,6 +176,15 @@ class RcaAnalysisIdPath(BaseModel):
     analysis_id: int = Field(..., ge=1)
 
 
+METRIC_ANOMALY_TRIGGER = "metric_anomaly"
+
+
+def anomaly_setting_seq(request: dict | None) -> int | None:
+    """The anomaly-detection setting a metric_anomaly watch follows, if its request names one."""
+    value = (((request or {}).get("scope") or {}).get("attributes") or {}).get("anomaly_setting_seq")
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 1 else None
+
+
 MIN_SCHEDULE_INTERVAL_MINUTES = 5
 MAX_SCHEDULE_INTERVAL_MINUTES = 10_080
 
@@ -212,14 +221,18 @@ class PostRcaScheduleBody(BaseModel):
     )
     request: dict
     # "server_error": the worker searches Tempo for HTTP 5xx server spans in the slot and
-    # runs the analysis only when it finds some. None: run every slot.
-    trigger: Literal["server_error"] | None = None
+    # runs the analysis only when it finds some. "metric_anomaly": no timer; each
+    # anomaly-detection scoring of request.scope.attributes.anomaly_setting_seq checks it.
+    # None: run every slot.
+    trigger: Literal["server_error", "metric_anomaly"] | None = None
 
     @model_validator(mode="after")
     def validate_body(self):
         if not self.name.strip():
             raise ValueError("name must not be blank")
         _validated_rca_request(self.request)
+        if self.trigger == METRIC_ANOMALY_TRIGGER and anomaly_setting_seq(self.request) is None:
+            raise ValueError("a metric_anomaly watch needs request.scope.attributes.anomaly_setting_seq")
         return self
 
 

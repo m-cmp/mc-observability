@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.llm_analysis.repo.repo import RcaScheduleRepository
-from app.api.llm_analysis.request.req import PatchRcaScheduleBody, PostRcaScheduleBody
+from app.api.llm_analysis.request.req import METRIC_ANOMALY_TRIGGER, PatchRcaScheduleBody, PostRcaScheduleBody
 from app.api.llm_analysis.response.res import RcaScheduleRecord
 
 
@@ -30,7 +30,12 @@ class RcaScheduleService:
             TRIGGER_TYPE=body.trigger,
             REQUEST_JSON=body.request,
             STATUS="IDLE",
-            NEXT_EXECUTION=_next_execution(body.interval_minutes) if body.enabled else None,
+            # A metric_anomaly watch has no timer: anomaly-detection scoring runs it.
+            NEXT_EXECUTION=(
+                _next_execution(body.interval_minutes)
+                if body.enabled and body.trigger != METRIC_ANOMALY_TRIGGER
+                else None
+            ),
         )
         return _to_record(schedule)
 
@@ -52,7 +57,7 @@ class RcaScheduleService:
         # A renamed schedule keeps its place in the queue; anything that changes what or
         # how often we run restarts the interval from the edit.
         reschedules = bool(fields & {"enabled", "interval_minutes", "request"})
-        if not enabled:
+        if not enabled or schedule.TRIGGER_TYPE == METRIC_ANOMALY_TRIGGER:
             values["NEXT_EXECUTION"] = None
         elif reschedules:
             values["NEXT_EXECUTION"] = _next_execution(interval)

@@ -126,3 +126,50 @@ export function formatRcaDuration(createdAt, updatedAt, status, now = Date.now()
   if (minutes) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
 }
+
+export const METRIC_ANOMALY_TRIGGER = 'metric_anomaly';
+
+// Anomaly detection writes its interval as "5m" or "1h".
+export function intervalMinutes(interval) {
+  const match = /^(\d+)([mh])$/.exec(trimmed(interval));
+  return match ? Number(match[1]) * (match[2] === 'h' ? 60 : 1) : null;
+}
+
+export function anomalySettingLabel(setting = {}) {
+  return `#${setting.seq} · ${setting.ns_id}/${setting.infra_id}/${setting.node_id || 'all nodes'}`
+    + ` · ${setting.measurement} · every ${setting.execution_interval}`;
+}
+
+// POST /rca/schedules body for a watch that follows one anomaly detection setting. It runs
+// on each scoring of that setting; interval_minutes is only the API's required field.
+export function buildAnomalyWatchSchedule({ name, setting, connectionId, modelName }) {
+  if (!setting) throw new Error('Choose an anomaly detection setting.');
+  return {
+    name: trimmed(name),
+    enabled: true,
+    interval_minutes: Math.max(5, intervalMinutes(setting.execution_interval) || 5),
+    trigger: METRIC_ANOMALY_TRIGGER,
+    request: {
+      connection_id: Number(connectionId),
+      model_name: trimmed(modelName),
+      scope: { attributes: { anomaly_setting_seq: Number(setting.seq) } },
+    },
+  };
+}
+
+// The Every, Trigger and Last status cells of the Automatic RCA list.
+export function rcaScheduleCells(schedule = {}) {
+  if (schedule.trigger === METRIC_ANOMALY_TRIGGER) {
+    const seq = schedule.request?.scope?.attributes?.anomaly_setting_seq;
+    const status = { SKIPPED: 'No anomaly', SUCCEEDED: 'Analysis started' }[schedule.status] || schedule.status;
+    return { every: 'on each scoring', trigger: `Metric anomaly #${seq}`, status };
+  }
+  if (schedule.trigger === 'server_error') {
+    return {
+      every: `${schedule.interval_minutes}m`,
+      trigger: 'Server error',
+      status: schedule.status === 'SKIPPED' ? 'No server errors' : schedule.status,
+    };
+  }
+  return { every: `${schedule.interval_minutes}m`, trigger: '-', status: schedule.status };
+}

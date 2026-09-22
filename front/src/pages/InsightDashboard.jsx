@@ -13,7 +13,10 @@ import useScopeTargets, { loadScopeNodes } from '../hooks/useScopeTargets';
 import MetricChart from '../components/MetricChart';
 import { formatLocalTime, toEpochMillis } from '../utils/time';
 import { apiError } from '../utils/error';
-import { buildRcaRequest, formatRawRecord, formatRcaDuration, getRcaRecordView } from '../utils/rca';
+import {
+  anomalySettingLabel, buildAnomalyWatchSchedule, buildRcaRequest, formatRawRecord, formatRcaDuration,
+  getRcaRecordView, rcaScheduleCells,
+} from '../utils/rca';
 
 const TABS = ['Anomaly Detection', 'Prediction', 'RCA'];
 
@@ -496,8 +499,11 @@ function RcaTab({ nsId, infraId, nodeId }) {
   const [scheduleName, setScheduleName] = useState('');
   const [scheduleInterval, setScheduleInterval] = useState(15);
   const [scheduleBusyId, setScheduleBusyId] = useState(null);
-  // What the form produces: one analysis now, a repeating schedule, or a server-error watch.
+  // What the form produces: one analysis now, a repeating schedule, a server-error watch, or a
+  // metric anomaly watch that follows one anomaly detection setting.
   const [mode, setMode] = useState('once');
+  const [anomalySettings, setAnomalySettings] = useState([]);
+  const [anomalySettingSeq, setAnomalySettingSeq] = useState('');
   // Bumped on unmount so a poll loop that outlives the page stops touching state.
   const pollToken = useRef(0);
   useEffect(() => () => { pollToken.current += 1; }, []);
@@ -619,9 +625,40 @@ function RcaTab({ nsId, infraId, nodeId }) {
     loadSchedules().catch(() => { /* surfaced when a schedule action runs */ });
   }, [loadSchedules]);
 
+  useEffect(() => {
+    getAnomalySettings()
+      .then((data) => setAnomalySettings(Array.isArray(data) ? data : []))
+      .catch(() => setAnomalySettings([]));
+  }, []);
+
   // Schedules and watches are the same object (POST /rca/schedules); a watch adds
   // trigger="server_error" and needs no question, time range or status code.
+  async function handleSaveAnomalyWatch() {
+    const setting = anomalySettings.find((item) => String(item.seq) === String(anomalySettingSeq));
+    let body;
+    try {
+      body = buildAnomalyWatchSchedule({ name: scheduleName, setting, connectionId, modelName });
+    } catch (e) {
+      setMsg(e.message);
+      return;
+    }
+    setBusy(true);
+    setMsg('');
+    try {
+      await createRcaSchedule(body);
+      setScheduleName('');
+      setShowAnalysisForm(false);
+      await loadSchedules();
+      setMsg(`Watch "${body.name}" saved. Each anomaly detection run of ${anomalySettingLabel(setting)} is checked, and the anomalies it finds are analysed.`);
+    } catch (e) {
+      setMsg('Saving failed: ' + apiError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSaveSchedule() {
+    if (mode === 'anomaly') return handleSaveAnomalyWatch();
     let request;
     try {
       // No timeStart/timeEnd: a schedule's window comes from the slot being run, and the
@@ -876,13 +913,12 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 {schedules.map((schedule) => {
                   const running = schedule.status === 'RUNNING';
                   const busyRow = running || scheduleBusyId === schedule.id;
+                  const cells = rcaScheduleCells(schedule);
                   return (
                     <tr key={schedule.id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b font-medium break-words">{schedule.name}</td>
-                      <td className="px-3 py-2 border-b">{schedule.interval_minutes}m</td>
-                      <td className="px-3 py-2 border-b text-xs text-gray-600">
-                        {schedule.trigger === 'server_error' ? 'Server error' : '-'}
-                      </td>
+                      <td className="px-3 py-2 border-b">{cells.every}</td>
+                      <td className="px-3 py-2 border-b text-xs text-gray-600">{cells.trigger}</td>
                       <td className="px-3 py-2 border-b">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${schedule.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                           {schedule.enabled ? 'On' : 'Off'}
@@ -890,7 +926,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                       </td>
                       <td className="px-3 py-2 border-b">
                         {/* A watch that found nothing did its job; it is not a skipped run. */}
-                        <SeBadge status={schedule.status === 'SKIPPED' ? 'No server errors' : schedule.status} />
+                        <SeBadge status={cells.status} />
                       </td>
                       <td className="px-3 py-2 border-b text-xs text-gray-500">{fmt(schedule.last_execution)}</td>
                       <td className="px-3 py-2 border-b text-xs text-gray-500">{fmt(schedule.next_execution)}</td>
@@ -985,6 +1021,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                   ['once', 'Run once', 'Analyse a question now'],
                   ['schedule', 'Repeat on a schedule', 'Re-ask the question every N minutes'],
                   ['watch', 'Watch for server errors', 'Every N minutes, analyse HTTP 5xx server errors if any occurred'],
+                  ['anomaly', 'Watch metric anomalies', 'On each anomaly detection run, analyse the anomalies it found'],
                 ].map(([value, label, hint]) => (
                   <button key={value} type="button" role="radio" aria-checked={mode === value}
                     onClick={() => setMode(value)}
@@ -998,20 +1035,36 @@ function RcaTab({ nsId, infraId, nodeId }) {
               </div>
               {mode !== 'once' && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-3">
+                  <div className={mode === 'anomaly' ? 'md:col-span-2' : 'md:col-span-3'}>
                     <label htmlFor="rca-schedule-name" className="block text-xs text-gray-600 mb-1">Name</label>
                     <input id="rca-schedule-name" value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} maxLength={100}
                       placeholder={mode === 'watch' ? 'payment 5xx' : 'checkout errors'}
                       className="border rounded px-3 py-1.5 text-sm w-full" />
                   </div>
-                  <div>
-                    <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)</label>
-                    <input id="rca-schedule-interval" type="number" min={5} max={10080} value={scheduleInterval}
-                      onChange={(e) => setScheduleInterval(e.target.value)}
-                      className="border rounded px-3 py-1.5 text-sm w-full" />
-                  </div>
+                  {mode === 'anomaly' ? (
+                    <div className="md:col-span-2">
+                      <label htmlFor="rca-anomaly-setting" className="block text-xs text-gray-600 mb-1">Anomaly detection setting</label>
+                      <select id="rca-anomaly-setting" value={anomalySettingSeq}
+                        onChange={(e) => setAnomalySettingSeq(e.target.value)}
+                        className="border rounded px-3 py-1.5 text-sm w-full">
+                        <option value="">{anomalySettings.length ? 'Select a setting' : 'No anomaly detection settings'}</option>
+                        {anomalySettings.map((setting) => (
+                          <option key={setting.seq} value={setting.seq}>{anomalySettingLabel(setting)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)</label>
+                      <input id="rca-schedule-interval" type="number" min={5} max={10080} value={scheduleInterval}
+                        onChange={(e) => setScheduleInterval(e.target.value)}
+                        className="border rounded px-3 py-1.5 text-sm w-full" />
+                    </div>
+                  )}
                   <p className="md:col-span-4 text-[11px] text-slate-500">
-                    {mode === 'watch'
+                    {mode === 'anomaly'
+                      ? 'Each anomaly detection run of the setting is checked; when the minutes it just scored include an anomaly, one root-cause analysis runs. Create settings in the Anomaly Detection tab.'
+                      : mode === 'watch'
                       ? 'Each run checks the interval that just ended for HTTP 5xx server errors and runs a root-cause analysis only when some are found; otherwise it is marked "No server errors".'
                       : 'Each run analyses the interval that just ended; a schedule ignores Start and End.'}
                   </p>
@@ -1021,7 +1074,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
 
             {/* 2. The request: question, time and model. */}
             <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
-              {mode !== 'watch' && (
+              {(mode === 'once' || mode === 'schedule') && (
                 <div>
                   <label htmlFor="rca-query" className="block text-xs font-medium text-gray-700 mb-1">Analysis request</label>
                   <textarea id="rca-query" value={query} onChange={(e) => setQuery(e.target.value)}
@@ -1085,7 +1138,9 @@ function RcaTab({ nsId, infraId, nodeId }) {
               )}
             </div>
 
-            {/* 3. Where to look: the route context plus per-source scope. */}
+            {/* 3. Where to look: the route context plus per-source scope. A metric anomaly
+                watch takes its scope from the anomaly detection setting. */}
+            {mode !== 'anomaly' && (
             <div className="rounded-lg border border-slate-200 bg-white">
               <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2">
                 <span className="text-sm font-medium text-slate-800">Investigation scope</span>
@@ -1188,6 +1243,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 </div>
               </div>
             </div>
+            )}
 
             {/* 4. One action, named after what it creates. */}
             <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1201,7 +1257,8 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 )}
               </div>
               <button type="submit" aria-busy={busy}
-                disabled={busy || !connectionId || !modelName || (mode !== 'once' && !scheduleName.trim())}
+                disabled={busy || !connectionId || !modelName || (mode !== 'once' && !scheduleName.trim())
+                  || (mode === 'anomaly' && !anomalySettingSeq)}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 {busy && (
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin">
