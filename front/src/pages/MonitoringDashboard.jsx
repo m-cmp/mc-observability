@@ -77,6 +77,7 @@ export default function MonitoringDashboard() {
   const [chartMeasurement, setChartMeasurement] = useState('');
   const [chartMetric, setChartMetric] = useState('');
   const [detectionSeries, setDetectionSeries] = useState([]);
+  const [detectionAnnotations, setDetectionAnnotations] = useState({ points: [] });
   const [loading, setLoading] = useState(false);
 
   // Auto-loaded overview charts (always shown when Node is selected). null = not loaded yet
@@ -282,11 +283,18 @@ export default function MonitoringDashboard() {
       if (detectionEnabled) {
         try {
           const det = await getDetectionHistory(nsId, infraId, selectedNodeId, selectedMeasurement);
-          if (det && det.values && det.values.length > 0) {
+          const scored = (det?.values || []).filter((v) => v.anomaly_score != null);
+          if (scored.length > 0) {
             setDetectionSeries([{
               name: 'Anomaly Score',
-              data: det.values.map((v) => ({ x: toEpochMillis(v.timestamp), y: v.anomaly_score })),
+              data: scored.map((v) => ({ x: toEpochMillis(v.timestamp), y: v.anomaly_score })),
             }]);
+            // Anomalous minutes as point annotations: a second series would break the shared hover tooltip.
+            setDetectionAnnotations({
+              points: scored.filter((v) => v.is_anomaly > 0).map((v) => ({
+                x: toEpochMillis(v.timestamp), y: v.anomaly_score, marker: { size: 4, fillColor: '#ef4444', strokeWidth: 0 },
+              })),
+            });
           } else {
             setDetectionSeries([]);
           }
@@ -492,7 +500,7 @@ export default function MonitoringDashboard() {
               <div className="mt-4">
                 <div className="text-xs text-gray-500 mb-2">Detection Graph</div>
                 <div className="bg-white rounded border p-3">
-                  <MetricChart title="Anomaly Score Over Time" series={detectionSeries} height={240} chartType="line" />
+                  <MetricChart title="Anomaly Score Over Time" series={detectionSeries} annotations={detectionAnnotations} height={240} chartType="line" />
                 </div>
               </div>
             )}

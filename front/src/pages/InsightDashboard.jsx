@@ -97,12 +97,18 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
     loadSettings();
   }
 
-  const chartSeries = history.length > 0 ? [{
+  // Only scored minutes: the raw metric value is in another unit and must not stand in for a score.
+  const scored = history.filter((h) => h.anomaly_score != null);
+  const chartSeries = scored.length > 0 ? [{
     name: 'Anomaly Score',
-    data: history
-      .map((h) => ({ x: toEpochMillis(h.timestamp), y: h.anomaly_score ?? (h.value == null ? null : parseFloat(h.value)) }))
-      .filter((p) => p.y != null && !Number.isNaN(p.y)),
+    data: scored.map((h) => ({ x: toEpochMillis(h.timestamp), y: h.anomaly_score })),
   }] : [];
+  // Anomalous minutes as point annotations: a second series would break the shared hover tooltip.
+  const chartAnnotations = {
+    points: scored.filter((h) => h.is_anomaly > 0).map((h) => ({
+      x: toEpochMillis(h.timestamp), y: h.anomaly_score, marker: { size: 4, fillColor: '#ef4444', strokeWidth: 0 },
+    })),
+  };
 
   return (
     <div className="space-y-4">
@@ -186,7 +192,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
               {loading ? 'Loading...' : 'Load History'}
             </button>
           </div>
-          <MetricChart title="Anomaly Score" series={chartSeries} height={240} chartType="line" />
+          <MetricChart title="Anomaly Score" series={chartSeries} annotations={chartAnnotations} height={240} chartType="line" />
         </div>
       </div>
     </div>
