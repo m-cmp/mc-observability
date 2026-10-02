@@ -63,7 +63,7 @@ async def _check(db: Session, watch: RcaSchedule, setting, score_df: pd.DataFram
     previous = watch.LAST_EXECUTION
     if previous is not None and latest <= previous:
         return  # nothing newer than what this watch has already looked at
-    start = previous or latest - _interval(setting.EXECUTION_INTERVAL)
+    start = max(previous or latest - _interval(setting.EXECUTION_INTERVAL), latest - _MAX_WINDOW)
     new = (times > start) & (times <= latest)
     anomalous = sorted(t.to_pydatetime() for t in times[new & (score_df["isAnomaly"] == 1)])
 
@@ -79,17 +79,23 @@ async def _check(db: Session, watch: RcaSchedule, setting, score_df: pd.DataFram
     if claimed != 1 or not anomalous:
         return
 
+    where = [RcaSchedule.ID == watch_id]
     try:
         result = await submit(build_anomaly_request(watch.REQUEST_JSON, setting, anomalous, latest))
         values = {"STATUS": "SUCCEEDED", "LAST_ANALYSIS_ID": result.analysis.id, "LAST_ERROR": None}
-    except Exception as exc:  # the window is not retried; the next one is analysed
+    except Exception as exc:  # the next scoring retries this window
         # A database error inside the submission leaves the shared session needing a rollback
         # before FAILED can be written.
         db.rollback()
-        values = {"STATUS": "FAILED", "LAST_ERROR": f"rca submit failed: {getattr(exc, 'detail', None) or exc}"[:500]}
+        values = {
+            "STATUS": "FAILED",
+            "LAST_ERROR": f"rca submit failed: {getattr(exc, 'detail', None) or exc}"[:500],
+            "LAST_EXECUTION": start,
+        }
+        where.append(RcaSchedule.LAST_EXECUTION == latest)
     db.execute(
         update(RcaSchedule)
-        .where(RcaSchedule.ID == watch_id)
+        .where(*where)
         .values(**values)
         .execution_options(synchronize_session=False)
     )
