@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.api.anomaly.description.description import (
@@ -37,6 +37,7 @@ from app.api.anomaly.response.res import (
 from app.api.anomaly.utils.history import AnomalyHistoryService
 from app.api.anomaly.utils.setting import AnomalySettingsService
 from app.api.anomaly.utils.utils import AnomalyService
+from app.api.llm_analysis.utils.rca_anomaly_trigger import trigger_rca_for_anomaly
 from app.core.dependencies.db import get_db
 from config.ConfigManager import ConfigManager
 
@@ -197,8 +198,10 @@ async def get_anomaly_detection_vm_history(
     response_model=ResBodyVoid,
     operation_id="PostAnomalyDetection",
 )
-async def post_anomaly_detection(settingSeq: int, db: Session = Depends(get_db)):
+async def post_anomaly_detection(settingSeq: int, request: Request, db: Session = Depends(get_db)):
     service = AnomalyService(db=db, seq=settingSeq)
-    service.anomaly_detection()
+    score_df = service.anomaly_detection()
+    # A metric_anomaly RCA watch on this setting checks the minutes this scoring added.
+    await trigger_rca_for_anomaly(db, settingSeq, score_df, rca_graph=request.app.state.rca_graph)
 
     return ResBodyVoid(rs_msg="Anomaly Detection Success")

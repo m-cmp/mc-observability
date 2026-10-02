@@ -130,7 +130,6 @@ class ConfigManager:
             "fallback_context_window_tokens": rca.get("fallback_context_window_tokens", 200000),
             "tool_result_context_window_pct": rca.get("tool_result_context_window_pct", 15),
             "tool_result_absolute_max_tokens": rca.get("tool_result_absolute_max_tokens", 25000),
-            "synthesis_system_prompt": rca.get("synthesis_system_prompt", ""),
             "datasources": {
                 "influx_database": rca.get("datasources", {}).get("influx_database", ""),
             },

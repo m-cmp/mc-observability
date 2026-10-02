@@ -23,6 +23,7 @@ export function buildRcaRequest(form = {}, context = {}) {
   if (context.nsId) attributes.ns_id = context.nsId;
   if (context.infraId) attributes.infra_id = context.infraId;
   if (context.nodeId) attributes.node_id = context.nodeId;
+  if (['platform', 'vm', 'k8s'].includes(context.targetKind)) attributes.target_kind = context.targetKind;
   if (trimmed(form.measurement)) attributes.measurement = trimmed(form.measurement);
 
   const scope = { attributes };
@@ -76,7 +77,7 @@ export function getRcaRecordView(record = {}) {
     result,
     validation,
     noUsableEvidence,
-    cause: noUsableEvidence ? '' : result.probable_cause || record.summary || '',
+    cause: noUsableEvidence ? '' : result.probable_cause || '',
     summary: result.summary || record.summary || '',
     service: result.affected_service || scope.service_name || '',
     endpoint: result.affected_endpoint || scope.endpoint || '',
@@ -86,13 +87,19 @@ export function getRcaRecordView(record = {}) {
     confidenceLabel: formatRcaConfidence(result.confidence),
     conclusionStrength: result.conclusion_strength || '',
     evidence: result.evidence || [],
-    hypotheses: result.hypotheses || [],
-    mitigation: result.mitigation || [],
-    limitations: result.limitations || [],
     nextChecks: result.next_checks || [],
-    errors: detail.errors || (detail.error_message ? [detail.error_message] : []),
+    errors: validation.no_telemetry ? [] : detail.errors || (detail.error_message ? [detail.error_message] : []),
     sources: detail.evidence_status || {},
   };
+}
+
+// An evidence record is the tool output the validator restored; show JSON indented.
+export function formatRawRecord(observation) {
+  try {
+    return JSON.stringify(JSON.parse(observation), null, 2);
+  } catch {
+    return String(observation);
+  }
 }
 
 export function formatRcaConfidence(confidence) {
@@ -118,4 +125,51 @@ export function formatRcaDuration(createdAt, updatedAt, status, now = Date.now()
   if (hours) return `${hours}h ${minutes}m`;
   if (minutes) return `${minutes}m ${seconds}s`;
   return `${seconds}s`;
+}
+
+export const METRIC_ANOMALY_TRIGGER = 'metric_anomaly';
+
+// Anomaly detection writes its interval as "5m" or "1h".
+export function intervalMinutes(interval) {
+  const match = /^(\d+)([mh])$/.exec(trimmed(interval));
+  return match ? Number(match[1]) * (match[2] === 'h' ? 60 : 1) : null;
+}
+
+export function anomalySettingLabel(setting = {}) {
+  return `#${setting.seq} · ${setting.ns_id}/${setting.infra_id}/${setting.node_id || 'all nodes'}`
+    + ` · ${setting.measurement} · every ${setting.execution_interval}`;
+}
+
+// POST /rca/schedules body for a watch that follows one anomaly detection setting. It runs
+// on each scoring of that setting; interval_minutes is only the API's required field.
+export function buildAnomalyWatchSchedule({ name, setting, connectionId, modelName }) {
+  if (!setting) throw new Error('Choose an anomaly detection setting.');
+  return {
+    name: trimmed(name),
+    enabled: true,
+    interval_minutes: Math.max(5, intervalMinutes(setting.execution_interval) || 5),
+    trigger: METRIC_ANOMALY_TRIGGER,
+    request: {
+      connection_id: Number(connectionId),
+      model_name: trimmed(modelName),
+      scope: { attributes: { anomaly_setting_seq: Number(setting.seq) } },
+    },
+  };
+}
+
+// The Every, Trigger and Last status cells of the Automatic RCA list.
+export function rcaScheduleCells(schedule = {}) {
+  if (schedule.trigger === METRIC_ANOMALY_TRIGGER) {
+    const seq = schedule.request?.scope?.attributes?.anomaly_setting_seq;
+    const status = { SKIPPED: 'No anomaly', SUCCEEDED: 'Analysis started' }[schedule.status] || schedule.status;
+    return { every: 'on each scoring', trigger: `Metric anomaly #${seq}`, status };
+  }
+  if (schedule.trigger === 'server_error') {
+    return {
+      every: `${schedule.interval_minutes}m`,
+      trigger: 'Server error',
+      status: schedule.status === 'SKIPPED' ? 'No server errors' : schedule.status,
+    };
+  }
+  return { every: `${schedule.interval_minutes}m`, trigger: '-', status: schedule.status };
 }

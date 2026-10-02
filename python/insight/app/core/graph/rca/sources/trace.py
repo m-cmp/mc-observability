@@ -124,8 +124,11 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
                 "Search traces in the incident window with ONE selection-only TraceQL spanset; the result lists "
                 "the matched spans, so read it before opening a trace. Scope attributes: span.x for span "
                 "attributes, resource.x for resource attributes, bare names only for intrinsics (status, "
-                'duration, name, kind). Examples: { resource.host.name = "node-payment-1" && status = error } ; '
-                '{ span.http.route = "/pay" && duration > 2s } ; { kind = server && span.http.response.status_code >= 500 }. '
+                'duration, name, kind). Examples: { resource.node_id = "node-1" && status = error } ; '
+                '{ resource.service.name = "mc-observability-insight" } ; '
+                '{ span.http.route = "/pay" && duration > 2s } ; '
+                "{ kind = server && status = error } for 5xx on any collector. "
+                'A service name alone does not identify a VM node; verify resource attributes before attribution. '
                 "Pipelines and "
                 f"aggregates are rejected. limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — "
                 "raise it only when the first page was not enough."
@@ -136,7 +139,7 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             name="get_trace",
             description=(
                 "Open one trace by trace_id and get a bounded span table: error spans first, then the slowest, "
-                "with service, duration and key HTTP/DB attributes."
+                "with service, duration, resource ns_id/infra_id/node_id when present, and key HTTP/DB attributes."
             ),
         ),
     ]
@@ -209,7 +212,11 @@ def _otlp_spans(raw: Any) -> list[dict[str, Any]]:
                 rows.append(
                     {
                         "service": str(resource.get("service.name") or ""),
-                        # Beyla's service.name is one value per site; the node is the identity that matters.
+                        "resource": {
+                            key: str(resource[key])
+                            for key in ("ns_id", "infra_id", "node_id")
+                            if key in resource
+                        },
                         "host": str(resource.get("host.name") or resource.get("node_id") or ""),
                         "name": str(span.get("name") or ""),
                         "span_id": str(span.get("spanId") or ""),

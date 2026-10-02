@@ -13,7 +13,10 @@ import useScopeTargets, { loadScopeNodes } from '../hooks/useScopeTargets';
 import MetricChart from '../components/MetricChart';
 import { formatLocalTime, toEpochMillis } from '../utils/time';
 import { apiError } from '../utils/error';
-import { buildRcaRequest, formatRcaDuration, getRcaRecordView } from '../utils/rca';
+import {
+  anomalySettingLabel, buildAnomalyWatchSchedule, buildRcaRequest, formatRawRecord, formatRcaDuration,
+  getRcaRecordView, rcaScheduleCells,
+} from '../utils/rca';
 
 const TABS = ['Anomaly Detection', 'Prediction', 'RCA'];
 
@@ -465,6 +468,9 @@ function preferredConnectionId(connections) {
 }
 
 function RcaTab({ nsId, infraId, nodeId }) {
+  const { infras, clusters } = useScopeTargets(nsId);
+  const targetKind = clusters.some((cluster) => cluster.id === infraId)
+    ? 'k8s' : infras.some((infra) => infra.id === infraId) ? 'vm' : '';
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState('');
   const [listFrom, setListFrom] = useState('');
@@ -493,8 +499,11 @@ function RcaTab({ nsId, infraId, nodeId }) {
   const [scheduleName, setScheduleName] = useState('');
   const [scheduleInterval, setScheduleInterval] = useState(15);
   const [scheduleBusyId, setScheduleBusyId] = useState(null);
-  // What the form produces: one analysis now, a repeating schedule, or a server-error watch.
+  // What the form produces: one analysis now, a repeating schedule, a server-error watch, or a
+  // metric anomaly watch that follows one anomaly detection setting.
   const [mode, setMode] = useState('once');
+  const [anomalySettings, setAnomalySettings] = useState([]);
+  const [anomalySettingSeq, setAnomalySettingSeq] = useState('');
   // Bumped on unmount so a poll loop that outlives the page stops touching state.
   const pollToken = useRef(0);
   useEffect(() => () => { pollToken.current += 1; }, []);
@@ -616,20 +625,51 @@ function RcaTab({ nsId, infraId, nodeId }) {
     loadSchedules().catch(() => { /* surfaced when a schedule action runs */ });
   }, [loadSchedules]);
 
+  useEffect(() => {
+    getAnomalySettings()
+      .then((data) => setAnomalySettings(Array.isArray(data) ? data : []))
+      .catch(() => setAnomalySettings([]));
+  }, []);
+
   // Schedules and watches are the same object (POST /rca/schedules); a watch adds
   // trigger="server_error" and needs no question, time range or status code.
+  async function handleSaveAnomalyWatch() {
+    const setting = anomalySettings.find((item) => String(item.seq) === String(anomalySettingSeq));
+    let body;
+    try {
+      body = buildAnomalyWatchSchedule({ name: scheduleName, setting, connectionId, modelName });
+    } catch (e) {
+      setMsg(e.message);
+      return;
+    }
+    setBusy(true);
+    setMsg('');
+    try {
+      await createRcaSchedule(body);
+      setScheduleName('');
+      setShowAnalysisForm(false);
+      await loadSchedules();
+      setMsg(`Watch "${body.name}" saved. Each anomaly detection run of ${anomalySettingLabel(setting)} is checked, and the anomalies it finds are analysed.`);
+    } catch (e) {
+      setMsg('Saving failed: ' + apiError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSaveSchedule() {
+    if (mode === 'anomaly') return handleSaveAnomalyWatch();
     let request;
     try {
       // No timeStart/timeEnd: a schedule's window comes from the slot being run, and the
       // API rejects a stored time_range outright.
       request = mode === 'watch'
-        ? buildRcaRequest({ connectionId, modelName, serviceName, measurement, filters: additionalFilters }, { nsId, infraId, nodeId })
+        ? buildRcaRequest({ connectionId, modelName, serviceName, measurement, filters: additionalFilters }, { nsId, infraId, nodeId, targetKind })
         : buildRcaRequest({
           query, traceId, connectionId, modelName,
           serviceName, endpoint, statusCode, measurement,
           filters: additionalFilters,
-        }, { nsId, infraId, nodeId });
+        }, { nsId, infraId, nodeId, targetKind });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -718,7 +758,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
         statusCode,
         measurement,
         filters: additionalFilters,
-      }, { nsId, infraId, nodeId });
+      }, { nsId, infraId, nodeId, targetKind });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -873,13 +913,12 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 {schedules.map((schedule) => {
                   const running = schedule.status === 'RUNNING';
                   const busyRow = running || scheduleBusyId === schedule.id;
+                  const cells = rcaScheduleCells(schedule);
                   return (
                     <tr key={schedule.id} className="hover:bg-gray-50">
                       <td className="px-3 py-2 border-b font-medium break-words">{schedule.name}</td>
-                      <td className="px-3 py-2 border-b">{schedule.interval_minutes}m</td>
-                      <td className="px-3 py-2 border-b text-xs text-gray-600">
-                        {schedule.trigger === 'server_error' ? 'Server error' : '-'}
-                      </td>
+                      <td className="px-3 py-2 border-b">{cells.every}</td>
+                      <td className="px-3 py-2 border-b text-xs text-gray-600">{cells.trigger}</td>
                       <td className="px-3 py-2 border-b">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${schedule.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                           {schedule.enabled ? 'On' : 'Off'}
@@ -887,7 +926,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                       </td>
                       <td className="px-3 py-2 border-b">
                         {/* A watch that found nothing did its job; it is not a skipped run. */}
-                        <SeBadge status={schedule.status === 'SKIPPED' ? 'No server errors' : schedule.status} />
+                        <SeBadge status={cells.status} />
                       </td>
                       <td className="px-3 py-2 border-b text-xs text-gray-500">{fmt(schedule.last_execution)}</td>
                       <td className="px-3 py-2 border-b text-xs text-gray-500">{fmt(schedule.next_execution)}</td>
@@ -982,6 +1021,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                   ['once', 'Run once', 'Analyse a question now'],
                   ['schedule', 'Repeat on a schedule', 'Re-ask the question every N minutes'],
                   ['watch', 'Watch for server errors', 'Every N minutes, analyse HTTP 5xx server errors if any occurred'],
+                  ['anomaly', 'Watch metric anomalies', 'On each anomaly detection run, analyse the anomalies it found'],
                 ].map(([value, label, hint]) => (
                   <button key={value} type="button" role="radio" aria-checked={mode === value}
                     onClick={() => setMode(value)}
@@ -995,20 +1035,36 @@ function RcaTab({ nsId, infraId, nodeId }) {
               </div>
               {mode !== 'once' && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-3">
+                  <div className={mode === 'anomaly' ? 'md:col-span-2' : 'md:col-span-3'}>
                     <label htmlFor="rca-schedule-name" className="block text-xs text-gray-600 mb-1">Name</label>
                     <input id="rca-schedule-name" value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} maxLength={100}
                       placeholder={mode === 'watch' ? 'payment 5xx' : 'checkout errors'}
                       className="border rounded px-3 py-1.5 text-sm w-full" />
                   </div>
-                  <div>
-                    <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)</label>
-                    <input id="rca-schedule-interval" type="number" min={5} max={10080} value={scheduleInterval}
-                      onChange={(e) => setScheduleInterval(e.target.value)}
-                      className="border rounded px-3 py-1.5 text-sm w-full" />
-                  </div>
+                  {mode === 'anomaly' ? (
+                    <div className="md:col-span-2">
+                      <label htmlFor="rca-anomaly-setting" className="block text-xs text-gray-600 mb-1">Anomaly detection setting</label>
+                      <select id="rca-anomaly-setting" value={anomalySettingSeq}
+                        onChange={(e) => setAnomalySettingSeq(e.target.value)}
+                        className="border rounded px-3 py-1.5 text-sm w-full">
+                        <option value="">{anomalySettings.length ? 'Select a setting' : 'No anomaly detection settings'}</option>
+                        {anomalySettings.map((setting) => (
+                          <option key={setting.seq} value={setting.seq}>{anomalySettingLabel(setting)}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div>
+                      <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)</label>
+                      <input id="rca-schedule-interval" type="number" min={5} max={10080} value={scheduleInterval}
+                        onChange={(e) => setScheduleInterval(e.target.value)}
+                        className="border rounded px-3 py-1.5 text-sm w-full" />
+                    </div>
+                  )}
                   <p className="md:col-span-4 text-[11px] text-slate-500">
-                    {mode === 'watch'
+                    {mode === 'anomaly'
+                      ? 'Each anomaly detection run of the setting is checked; when the minutes it just scored include an anomaly, one root-cause analysis runs. Create settings in the Anomaly Detection tab.'
+                      : mode === 'watch'
                       ? 'Each run checks the interval that just ended for HTTP 5xx server errors and runs a root-cause analysis only when some are found; otherwise it is marked "No server errors".'
                       : 'Each run analyses the interval that just ended; a schedule ignores Start and End.'}
                   </p>
@@ -1018,7 +1074,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
 
             {/* 2. The request: question, time and model. */}
             <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
-              {mode !== 'watch' && (
+              {(mode === 'once' || mode === 'schedule') && (
                 <div>
                   <label htmlFor="rca-query" className="block text-xs font-medium text-gray-700 mb-1">Analysis request</label>
                   <textarea id="rca-query" value={query} onChange={(e) => setQuery(e.target.value)}
@@ -1082,7 +1138,9 @@ function RcaTab({ nsId, infraId, nodeId }) {
               )}
             </div>
 
-            {/* 3. Where to look: the route context plus per-source scope. */}
+            {/* 3. Where to look: the route context plus per-source scope. A metric anomaly
+                watch takes its scope from the anomaly detection setting. */}
+            {mode !== 'anomaly' && (
             <div className="rounded-lg border border-slate-200 bg-white">
               <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2">
                 <span className="text-sm font-medium text-slate-800">Investigation scope</span>
@@ -1098,8 +1156,8 @@ function RcaTab({ nsId, infraId, nodeId }) {
               <div className="space-y-3 p-3">
                 <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
                   <div className="pt-1">
-                    <span className="block text-xs font-medium text-slate-700">Log · Trace</span>
-                    <span className="block text-[11px] text-slate-500">applies to both sources</span>
+                    <span className="block text-xs font-medium text-slate-700">Service hint</span>
+                    <span className="block text-[11px] text-slate-500">checked against each source's stored names</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div>
@@ -1185,6 +1243,7 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 </div>
               </div>
             </div>
+            )}
 
             {/* 4. One action, named after what it creates. */}
             <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1198,7 +1257,8 @@ function RcaTab({ nsId, infraId, nodeId }) {
                 )}
               </div>
               <button type="submit" aria-busy={busy}
-                disabled={busy || !connectionId || !modelName || (mode !== 'once' && !scheduleName.trim())}
+                disabled={busy || !connectionId || !modelName || (mode !== 'once' && !scheduleName.trim())
+                  || (mode === 'anomaly' && !anomalySettingSeq)}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 {busy && (
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin">
@@ -1299,7 +1359,6 @@ function RcaDetail({ record }) {
   const timeRange = scope.time_range || {};
   const attributes = scope.attributes || {};
   const filters = view.request.filters || {};
-
   return (
     <div className="space-y-4">
       {view.errors.length > 0 && (
@@ -1309,11 +1368,13 @@ function RcaDetail({ record }) {
       )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <section className="lg:col-span-2 rounded border border-slate-200 bg-white p-4">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Probable cause</h4>
-          <p className="mt-2 text-base font-semibold text-slate-900 whitespace-pre-wrap">
-            {view.noUsableEvidence ? 'No evidence-based conclusion' : view.cause || 'No conclusion is available.'}
-          </p>
-          {view.summary && view.summary !== view.cause && (
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {view.cause ? 'Probable cause' : 'Analysis result'}
+          </h4>
+          {view.cause && (
+            <p className="mt-2 text-base font-semibold text-slate-900 whitespace-pre-wrap">{view.cause}</p>
+          )}
+          {view.summary && (
             <p className="mt-3 text-sm leading-6 text-slate-600 whitespace-pre-wrap">{view.summary}</p>
           )}
         </section>
@@ -1353,13 +1414,23 @@ function RcaDetail({ record }) {
         <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Evidence</h4>
         <div className="mt-3 space-y-2">
           {view.evidence.map((item, index) => (
-            <div key={item.evidence_id || index} className="rounded bg-slate-50 px-3 py-2 text-xs">
-              <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wide text-slate-500">
-                <span>{item.source || 'evidence'}</span>
-                {item.evidence_id && <span>{item.evidence_id}</span>}
-                {item.signal && <span>{item.signal}</span>}
+            <div key={`${item.evidence_id || 'evidence'}-${index}`} className="rounded bg-slate-50 px-3 py-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+                <span className="font-semibold uppercase tracking-wide">{item.source || 'evidence'}</span>
+                {item.evidence_id && <span className="font-mono">{item.evidence_id}</span>}
+                {item.supports_cause && (
+                  <span className="rounded bg-emerald-100 px-1.5 py-0.5 font-medium text-emerald-700">Supports cause</span>
+                )}
               </div>
-              <p className="mt-1 text-slate-700">{item.observation || String(item)}</p>
+              <p className="mt-1 text-slate-700 whitespace-pre-wrap">{item.signal || item.observation}</p>
+              {item.signal && item.observation && (
+                <details className="mt-1">
+                  <summary className="cursor-pointer text-[11px] text-slate-500">Raw record</summary>
+                  <pre className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-2 font-mono text-[11px] text-slate-600">
+                    {formatRawRecord(item.observation)}
+                  </pre>
+                </details>
+              )}
             </div>
           ))}
           {view.evidence.length === 0 && (
@@ -1368,32 +1439,7 @@ function RcaDetail({ record }) {
         </div>
       </section>
 
-      <section className="rounded border border-slate-200 bg-white p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Hypotheses</h4>
-        {view.hypotheses.length === 0 ? (
-          <p className="mt-2 text-xs text-gray-400">No ranked hypotheses are available.</p>
-        ) : (
-          <ol className="mt-3 space-y-2">
-            {view.hypotheses.map((hypothesis, index) => (
-              <li key={index} className="flex gap-3 text-sm text-slate-700">
-                <span className="font-mono text-xs text-slate-400">{index + 1}</span>
-                <span className="flex-1">{hypothesis.cause || String(hypothesis)}</span>
-                {typeof hypothesis.confidence === 'number' && (
-                  <span className="text-xs font-semibold text-slate-500">
-                    {Math.round(hypothesis.confidence * 100)}%
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <RcaTextList title="Mitigation" items={view.mitigation} empty="No mitigation was proposed." />
-        <RcaTextList title="Next checks" items={view.nextChecks} empty="No follow-up checks were proposed." />
-        <RcaTextList title="Limitations" items={view.limitations} empty="No limitations were reported." />
-      </div>
+      <RcaTextList title="Next checks" items={view.nextChecks} empty="No follow-up checks were proposed." />
 
       <details className="rounded border border-slate-200 bg-white">
         <summary className="cursor-pointer px-4 py-3 text-xs font-semibold text-slate-600">Request scope</summary>

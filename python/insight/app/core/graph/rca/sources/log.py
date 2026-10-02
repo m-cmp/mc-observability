@@ -42,21 +42,27 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             return rejected("query_not_allowed", reason=reason)
         return None
 
-    async def query_logs(logql: str, limit: int = _SPEC["default_limit"]) -> Any:
+    async def query_logs(logql: str, limit: int = _SPEC["default_limit"], direction: str = "backward") -> Any:
         logql = logql.strip()
         if error := _check_query(logql):
             return error
         bounded = clamp_limit(limit, _SPEC)
         if bounded is None:
             return rejected("invalid_limit", min=1, max=_SPEC["max_limit"])
-        backend_args = {"datasourceUid": datasource_uid, "logql": logql, **window, "limit": bounded}
+        if direction not in ("backward", "forward"):
+            return rejected("invalid_direction", allowed=["backward", "forward"])
+        args = {"logql": logql, "limit": bounded}
+        # Backward is Loki's default, so only an explicit forward read changes the call.
+        if direction == "forward":
+            args["direction"] = direction
+        backend_args = {"datasourceUid": datasource_uid, **window, **args}
 
         async def execute():
             return await context.invoke(logs_tool, "query_loki_logs", backend_args)
 
         return await context.run(
             name="query_logs",
-            args={"logql": logql, "limit": bounded},
+            args=args,
             evidence_query=True,
             execute=execute,
         )
@@ -112,11 +118,13 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             name="query_logs",
             description=(
                 "Fetch log lines for a selection-only LogQL query: a stream selector {label=\"value\"} "
-                "followed by optional line filters (|=, !=, |~, !~). Cover several services in one call with "
-                'a regex matcher. Examples: {component=~"payment-api|checkout", severity_text="ERROR"} ; '
-                '{component="payment-api"} |~ "(?i)timeout|pool exhausted". The datasource and the incident '
-                f"time window are fixed by code. limit: default {_SPEC['default_limit']}, max "
-                f"{_SPEC['max_limit']} — raise it only when a result was truncated."
+                "followed by optional line filters (|=, !=, |~, !~); each line comes with its stream labels. "
+                'Examples: {NS_ID="ns-demo", INFRA_ID="infra-demo", NODE_ID="node-1"} |~ "(?i)error|fail" ; '
+                '{NS_ID="ns-demo", INFRA_ID="infra-demo", NODE_ID="node-1", service=~"kernel|sshd"} ; '
+                '{system="mc-observability", component="mc-observability-manager"} |= "timeout". '
+                "direction: backward (newest first, default) or forward (oldest first, to find when "
+                f"errors began). limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — "
+                "raise it only when a result was truncated."
             ),
         ),
         StructuredTool.from_function(

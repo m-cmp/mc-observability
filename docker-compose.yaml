@@ -539,6 +539,8 @@ services:
     environment:
       - TZ=Asia/Seoul
       - INFLUXDB_URL=http://mc-observability-influx:8086
+      # Infra and node metrics can reside on either server; the MCP queries both.
+      - INFLUXDB_URLS=http://mc-observability-influx:8086,http://mc-observability-influx-2:8086
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
       - INFLUXDB_DATABASE=mc-observability

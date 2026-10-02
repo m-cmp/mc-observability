@@ -156,6 +156,23 @@ def is_empty_payload(value: Any) -> bool:
     return False
 
 
+def error_envelope(value: Any) -> str | None:
+    """The reason a backend failed inside a success envelope, else None.
+
+    InfluxDB answers an HTTP failure with ``{"status": "error"}`` and a bad statement with
+    ``results[*].error`` under HTTP 200; neither is empty, so both would become evidence.
+    Only the envelope is read, never an ``error`` field inside a log line or a span.
+    """
+    if not isinstance(value, dict):
+        return None
+    if value.get("status") == "error":
+        return str(value.get("message") or value.get("error") or "backend error")[:500]
+    for result in value.get("results") or []:
+        if isinstance(result, dict) and result.get("error"):
+            return str(result["error"])[:500]
+    return error_envelope(value.get("data")) if "data" in value else None
+
+
 def tabular_values(value: Any) -> list[str]:
     """Flatten the assorted 'list of values' shapes MCP servers return."""
     if isinstance(value, dict):
