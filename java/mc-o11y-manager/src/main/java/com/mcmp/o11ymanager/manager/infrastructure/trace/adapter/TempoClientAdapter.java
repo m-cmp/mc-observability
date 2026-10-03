@@ -4,6 +4,8 @@ import com.mcmp.o11ymanager.manager.dto.trace.TraceResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.client.TempoFeignClient;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoSearchResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoServiceValuesDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTagScopesDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTagValuesDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTraceDto;
 import com.mcmp.o11ymanager.manager.port.TempoPort;
 import java.util.ArrayList;
@@ -12,14 +14,15 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Maps Tempo's HTTP responses to the trace domain. Tempo failures (404 for unknown trace IDs,
- * connectivity issues) degrade to empty results rather than propagating 500s to the UI.
+ * Maps Tempo's HTTP responses to the trace domain. Trace search/detail/service failures degrade to
+ * empty results; attribute discovery failures propagate to the caller.
  */
 @Slf4j
 @Component
@@ -120,6 +123,53 @@ public class TempoClientAdapter implements TempoPort {
             log.warn("tempo getServiceNames failed err={}", e.getMessage());
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public List<String> getAttributeNames(String traceQl, Long startSec, Long endSec) {
+        List<TempoTagScopesDto.Scope> scopes =
+                tempoFeignClient
+                        .getTagNames(traceQl, startSec, endSec)
+                        .map(TempoTagScopesDto::getScopes)
+                        .orElseThrow(
+                                () -> new RuntimeException("Tempo tag names response is missing"));
+        TreeSet<String> names = new TreeSet<>();
+        for (TempoTagScopesDto.Scope scope : scopes) {
+            if (scope == null || scope.getTags() == null) {
+                continue;
+            }
+            // TraceQL writes intrinsics bare (status, kind); every other scope is a prefix.
+            boolean bare = scope.getName() == null || "intrinsic".equals(scope.getName());
+            for (String tag : scope.getTags()) {
+                if (tag != null && !tag.isBlank()) {
+                    names.add(bare ? tag : scope.getName() + "." + tag);
+                }
+            }
+        }
+        return new ArrayList<>(names);
+    }
+
+    @Override
+    public List<TraceResponseDto.AttributeValue> getAttributeValues(
+            String attribute, String traceQl, Long startSec, Long endSec) {
+        List<TempoTagValuesDto.TagValue> raw =
+                tempoFeignClient
+                        .getTagValues(attribute, traceQl, startSec, endSec)
+                        .map(TempoTagValuesDto::getTagValues)
+                        .orElseThrow(
+                                () -> new RuntimeException("Tempo tag values response is missing"));
+        // status, kind: Tempo appends the stored int codes (2 = error) to the keyword list, and
+        // TraceQL accepts only the keyword, so a keyword answer drops its int codes.
+        boolean keywords = raw.stream().anyMatch(v -> v != null && "keyword".equals(v.getType()));
+        // The same text can come back as int and as string (500 vs "500"); both stay, since
+        // TraceQL only matches the one written with the right type.
+        return raw.stream()
+                .filter(v -> v != null && v.getValue() != null && !v.getValue().isBlank())
+                .filter(v -> !keywords || "keyword".equals(v.getType()))
+                .map(v -> new TraceResponseDto.AttributeValue(v.getValue(), v.getType()))
+                .distinct()
+                .sorted(Comparator.comparing(TraceResponseDto.AttributeValue::getValue))
+                .toList();
     }
 
     // ---------- helpers ----------

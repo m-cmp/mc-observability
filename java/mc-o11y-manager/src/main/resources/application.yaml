@@ -85,6 +85,8 @@ tempo:
     search: /api/search
     trace: /api/traces
     serviceValues: /api/search/tag/service.name/values
+    tags: /api/v2/search/tags
+    tagValues: /api/v2/search/tag
   # service.name prefix that identifies the o11y platform's own (framework) traces.
   # Everything else is treated as VM/application trace (Beyla / OTel agents).
   framework-service-prefix: ${TEMPO_FRAMEWORK_PREFIX:mc-observability}

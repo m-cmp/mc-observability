@@ -8,6 +8,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.VmRef;
 import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import java.util.List;
+import java.util.Map;
 
 public interface InfluxDbService {
 
@@ -20,6 +21,9 @@ public interface InfluxDbService {
     ResBody<List<FieldDTO>> getFields();
 
     ResBody<List<TagDTO>> getTags();
+
+    /** Sorted union, over every InfluxDB server, of the values {@code tagKey} takes. */
+    List<String> getTagValues(String measurement, String tagKey, Map<String, String> filters);
 
     String fetchDefaultRp(InfluxDTO influxDTO);
 

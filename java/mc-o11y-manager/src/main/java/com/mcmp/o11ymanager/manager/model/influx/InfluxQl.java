@@ -2,11 +2,39 @@ package com.mcmp.o11ymanager.manager.model.influx;
 
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO.FieldInfo;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 import org.springframework.util.StringUtils;
 
 public class InfluxQl {
+
+    /**
+     * Values one tag takes, narrowed by equality filters on other tags. No time bound: InfluxDB 1.x
+     * answers SHOW TAG VALUES from the series index, so this lists every value ever written.
+     */
+    public static String showTagValues(
+            String measurement, String tagKey, Map<String, String> filters) {
+        if (!StringUtils.hasText(tagKey)) {
+            throw new IllegalArgumentException("tag_key is required.");
+        }
+        StringBuilder q = new StringBuilder("SHOW TAG VALUES");
+        if (StringUtils.hasText(measurement)) {
+            q.append(" FROM ").append(quoteIdent(measurement));
+        }
+        q.append(" WITH KEY = ").append(quoteIdent(tagKey));
+        List<String> where = new ArrayList<>();
+        for (var e : (filters == null ? Map.<String, String>of() : filters).entrySet()) {
+            if (StringUtils.hasText(e.getKey()) && StringUtils.hasText(e.getValue())) {
+                where.add(quoteIdent(e.getKey()) + "='" + escapeString(e.getValue()) + "'");
+            }
+        }
+        if (!where.isEmpty()) {
+            q.append(" WHERE ").append(String.join(" AND ", where));
+        }
+        return q.toString();
+    }
 
     // -----------------------------------generate
     // query--------------------------------------------------//
@@ -160,7 +188,12 @@ public class InfluxQl {
         return s.replaceAll("[^A-Za-z0-9_\\-\\.]", "");
     }
 
+    private static String quoteIdent(String s) {
+        return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+    }
+
     private static String escapeString(String s) {
-        return s.replace("'", "\\'");
+        // Backslash first: a value ending in \ would otherwise escape the closing quote.
+        return s.replace("\\", "\\\\").replace("'", "\\'");
     }
 }

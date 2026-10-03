@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -539,6 +540,23 @@ public class InfluxDbServiceImpl implements InfluxDbService {
         }
         res.setData(out);
         return res;
+    }
+
+    @Override
+    public List<String> getTagValues(
+            String measurement, String tagKey, Map<String, String> filters) {
+        String q = InfluxQl.showTagValues(measurement, tagKey, filters);
+        var values = new TreeSet<String>();
+        for (var s : rawServers()) {
+            values.addAll(
+                    exec(s, q)
+                            .map(QueryMapper::toTagValues)
+                            .orElseThrow(
+                                    () ->
+                                            new RuntimeException(
+                                                    "InfluxDB tag value discovery failed")));
+        }
+        return new ArrayList<>(values);
     }
 
     // ------------------------------------getField--------------------------------------------------//

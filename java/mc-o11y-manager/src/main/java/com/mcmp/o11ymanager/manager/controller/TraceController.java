@@ -70,6 +70,57 @@ public class TraceController {
         return new ResBody<>(traceFacadeService.getServiceNames(scope));
     }
 
+    @GetMapping("/attributes")
+    @Operation(
+            summary = "TraceAttributeList",
+            operationId = "TraceAttributeList",
+            description =
+                    "List the attribute names Tempo saw in a window, written as TraceQL uses them"
+                            + " (resource.x, span.x, intrinsics bare). Drives the RCA trace scope picker.")
+    public ResBody<List<String>> getAttributeNames(
+            @Parameter(
+                            description =
+                                    "TraceQL spanset narrowing the spans (e.g. { resource.ns_id=\"ns-1\" })")
+                    @RequestParam(required = false)
+                    String query,
+            @Parameter(description = "Start time (RFC3339 or unix epoch). Defaults to 1h ago.")
+                    @RequestParam(required = false)
+                    String start,
+            @Parameter(description = "End time (RFC3339 or unix epoch). Defaults to now.")
+                    @RequestParam(required = false)
+                    String end) {
+
+        return new ResBody<>(traceFacadeService.getAttributeNames(query, start, end));
+    }
+
+    @GetMapping("/attributes/{attribute}/values")
+    @Operation(
+            summary = "TraceAttributeValueList",
+            operationId = "TraceAttributeValueList",
+            description =
+                    "List the values one attribute takes in a window, each with its Tempo type,"
+                            + " optionally narrowed by a spanset.")
+    public ResBody<List<TraceResponseDto.AttributeValue>> getAttributeValues(
+            @Parameter(
+                            description =
+                                    "Qualified attribute (e.g. resource.service.name, span.http.route, status)")
+                    @PathVariable
+                    String attribute,
+            @Parameter(
+                            description =
+                                    "TraceQL spanset narrowing the spans (e.g. { resource.ns_id=\"ns-1\" })")
+                    @RequestParam(required = false)
+                    String query,
+            @Parameter(description = "Start time (RFC3339 or unix epoch). Defaults to 1h ago.")
+                    @RequestParam(required = false)
+                    String start,
+            @Parameter(description = "End time (RFC3339 or unix epoch). Defaults to now.")
+                    @RequestParam(required = false)
+                    String end) {
+
+        return new ResBody<>(traceFacadeService.getAttributeValues(attribute, query, start, end));
+    }
+
     @GetMapping("/{traceId}")
     @Operation(
             summary = "TraceDetail",
