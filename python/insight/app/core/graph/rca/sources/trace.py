@@ -4,11 +4,13 @@ The agent writes a single selection-only TraceQL spanset and picks a limit or a 
 Code owns the time window and flattens OTLP traces into a bounded span table.
 """
 
+import json
 import re
 from typing import Any
 
 from langchain_core.tools import StructuredTool
 
+from ..models import TraceScopeValue
 from ..query_grammar import validate_traceql
 from ..specs import SOURCE_SPECS
 from .base import (
@@ -53,6 +55,18 @@ _SPAN_ATTRIBUTE_KEYS = (
 )
 
 
+def scoped_traceql(traceql: str, scope: dict[str, TraceScopeValue]) -> str:
+    if not scope:
+        return traceql
+    comparisons = []
+    for key, typed in sorted(scope.items()):
+        literal = json.dumps(typed.value, ensure_ascii=False) if typed.type == "string" else typed.value
+        comparisons.append(f"{key} = {literal}")
+    original = traceql.strip()[1:-1].strip()
+    parts = [*([f"({original})"] if original else []), *comparisons]
+    return "{ " + " && ".join(parts) + " }"
+
+
 def build_tools(context: SourceContext) -> list[StructuredTool]:
     search_tool = required_tool(context, "traceql-search")
     trace_tool = required_tool(context, "get-trace")
@@ -60,16 +74,21 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
     start, end = incident_window(context.scope)
     window = {"start": start, "end": end}
 
-    async def search_traces(traceql: str, limit: int = _SPEC["default_limit"]) -> Any:
+    async def search_traces(traceql: str, limit: int = _SPEC["default_limit"], outside_scope: bool = False) -> Any:
         traceql = traceql.strip()
         if len(traceql) > _MAX_QUERY_CHARS:
             return rejected("query_too_long", max_chars=_MAX_QUERY_CHARS)
         if reason := validate_traceql(traceql):
             return rejected("query_not_allowed", reason=reason)
+        effective = scoped_traceql(traceql, {} if outside_scope else context.scope.trace)
+        if len(effective) > _MAX_QUERY_CHARS:
+            return rejected("query_too_long", max_chars=_MAX_QUERY_CHARS)
+        if reason := validate_traceql(effective):
+            return rejected("query_not_allowed", reason=reason)
         bounded = clamp_limit(limit, _SPEC)
         if bounded is None:
             return rejected("invalid_limit", min=1, max=_SPEC["max_limit"])
-        backend_args = {"query": traceql, **window}
+        backend_args = {"query": effective, **window}
         if tool_accepts_argument(search_tool, "limit"):
             backend_args["limit"] = bounded
 
@@ -78,15 +97,17 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
 
         return await context.run(
             name="search_traces",
-            args={"traceql": traceql, "limit": bounded},
+            args={"traceql": effective, "limit": bounded, "outside_scope": outside_scope, **window},
             evidence_query=True,
             execute=execute,
         )
 
-    async def get_trace(trace_id: str) -> Any:
+    async def get_trace(trace_id: str, outside_scope: bool = False) -> Any:
         trace_id = trace_id.strip()
         if not _TRACE_ID.fullmatch(trace_id):
             return rejected("invalid_trace_id")
+        if context.scope.trace and not outside_scope:
+            return rejected("direct_trace_requires_outside_scope", hint="get_trace cannot apply TraceQL scope; set outside_scope=true for this ID lookup")
         backend_args = {"trace_id": trace_id}
 
         async def execute():
@@ -95,7 +116,7 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
 
         return await context.run(
             name="get_trace",
-            args=backend_args,
+            args={**backend_args, "outside_scope": outside_scope},
             evidence_query=True,
             execute=execute,
         )
@@ -131,7 +152,8 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
                 'A service name alone does not identify a VM node; verify resource attributes before attribution. '
                 "Pipelines and "
                 f"aggregates are rejected. limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — "
-                "raise it only when the first page was not enough."
+                "raise it only when the first page was not enough. Request trace scope is added by default; "
+                "set outside_scope=true to omit it for an expanded search."
             ),
         ),
         StructuredTool.from_function(
@@ -139,7 +161,9 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             name="get_trace",
             description=(
                 "Open one trace by trace_id and get a bounded span table: error spans first, then the slowest, "
-                "with service, duration, resource ns_id/infra_id/node_id when present, and key HTTP/DB attributes."
+                "with service, duration, resource ns_id/infra_id/node_id when present, and key HTTP/DB attributes. "
+                "Direct ID lookup cannot apply TraceQL scope; when trace scope is set, explicitly use "
+                "outside_scope=true. This records the scope-free lookup without claiming the trace lies outside scope."
             ),
         ),
     ]

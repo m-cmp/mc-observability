@@ -52,7 +52,6 @@ class RcaGraphNodes:
                                     "query": state.get("query"),
                                     "sources": {source: SOURCE_SPECS[source]["summary"] for source in available},
                                     "scope": state.get("scope") or {},
-                                    "filters": state.get("filters") or {},
                                 },
                                 ensure_ascii=False,
                                 default=str,
@@ -94,7 +93,6 @@ class RcaGraphNodes:
                 payload = build_investigation_payload(
                     query=state.get("query"),
                     scope=scope,
-                    filters=state.get("filters"),
                     # The retry round's plan is its retry_task.
                     plan=[] if retry_task else [item.model_dump(mode="json", exclude_none=True) for item in plan.hypotheses],
                     prior_evidence_catalog=list(previous.get("evidence_catalog") or []),
@@ -167,18 +165,6 @@ class RcaGraphNodes:
                     ]
                 )
                 result = RcaResult.model_validate(result)
-                scope = IncidentScope.model_validate(state.get("scope") or {})
-                scope_defaults = {
-                    "affected_service": scope.service_name,
-                    "affected_endpoint": scope.endpoint,
-                }
-                result = result.model_copy(
-                    update={
-                        field: value
-                        for field, value in scope_defaults.items()
-                        if getattr(result, field) is None and value is not None
-                    }
-                )
                 return {
                     "analysis_result": result.model_dump(mode="json"),
                     "retry_task": result.retry_task.model_dump(mode="json") if result.retry_task else None,

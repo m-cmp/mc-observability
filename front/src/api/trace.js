@@ -31,3 +31,13 @@ export async function getTrace(traceId) {
   const res = await client.get(`/api/o11y/trace/${traceId}`);
   return res.data?.data || null;
 }
+
+export async function getTraceAttributes(params = {}) {
+  const res = await client.get('/api/o11y/trace/attributes', { params });
+  return res.data?.data || [];
+}
+
+export async function getTraceAttributeValues(attribute, params = {}) {
+  const res = await client.get(`/api/o11y/trace/attributes/${encodeURIComponent(attribute)}/values`, { params });
+  return res.data?.data || [];
+}

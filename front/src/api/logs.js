@@ -79,12 +79,12 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
   });
 }
 
-export async function getLogLabels() {
-  const res = await client.get('/api/o11y/log/labels');
-  return res.data?.data || [];
+export async function getLogLabels(params = {}) {
+  const res = await client.get('/api/o11y/log/labels', { params });
+  return res.data?.data?.labels || [];
 }
 
-export async function getLogLabelValues(label) {
-  const res = await client.get(`/api/o11y/log/labels/${label}/values`);
-  return res.data?.data || [];
+export async function getLogLabelValues(label, params = {}) {
+  const res = await client.get(`/api/o11y/log/labels/${label}/values`, { params });
+  return res.data?.data?.data || [];
 }

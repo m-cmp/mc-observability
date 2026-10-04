@@ -117,22 +117,24 @@ def build_anomaly_request(stored: dict, setting, anomalous: list[datetime], late
         f"between {first:%H:%M} and {last:%H:%M} UTC. Find what caused it — processes, other resources and "
         f"logs at or before {first:%H:%M} UTC.{locate} If the telemetry shows no material change, say so."
     )
-    attributes = {
+    scope = dict(stored.get("scope") or {})
+    metric = {
+        **(scope.get("metric") or {}),
         "ns_id": setting.NAMESPACE_ID,
         "infra_id": setting.INFRA_ID,
-        "measurement": setting.MEASUREMENT,
-        "anomaly_setting_seq": setting.SEQ,
     }
     if setting.NODE_ID:
-        attributes["node_id"] = setting.NODE_ID
+        metric["node_id"] = setting.NODE_ID
+    else:
+        metric.pop("node_id", None)
+    scope["metric"] = metric
+    scope["time_range"] = {"start": start.replace(tzinfo=UTC), "end": end.replace(tzinfo=UTC)}
     return PostRcaQueryBody(
         connection_id=stored.get("connection_id"),
         model_name=stored.get("model_name"),
         query=query,
-        scope={
-            "time_range": {"start": start.replace(tzinfo=UTC), "end": end.replace(tzinfo=UTC)},
-            "attributes": attributes,
-        },
+        scope=scope,
+        anomaly_setting_seq=setting.SEQ,
     )
 
 

@@ -4,11 +4,12 @@ The agent writes selection-only LogQL and picks a result limit. Code owns the da
 UID (resolved once per request by the toolset builder) and the time window.
 """
 
+import json
 from typing import Any
 
 from langchain_core.tools import StructuredTool
 
-from ..query_grammar import validate_logql
+from ..query_grammar import logql_selector_end, validate_logql
 from ..specs import SOURCE_SPECS
 from .base import (
     SourceContext,
@@ -22,6 +23,17 @@ from .base import (
 
 _SPEC = SOURCE_SPECS["log"]
 _MAX_QUERY_CHARS = 4_000
+
+
+def scoped_logql(logql: str, scope: dict[str, str]) -> str:
+    if not scope:
+        return logql
+    end = logql_selector_end(logql)
+    if end is None:
+        return logql
+    matchers = ", ".join(f"{key}={json.dumps(value, ensure_ascii=False)}" for key, value in sorted(scope.items()))
+    separator = ", " if logql[1:end - 1].strip() else ""
+    return logql[:end - 1] + separator + matchers + logql[end - 1:]
 
 
 def build_tools(context: SourceContext) -> list[StructuredTool]:
@@ -42,20 +54,23 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             return rejected("query_not_allowed", reason=reason)
         return None
 
-    async def query_logs(logql: str, limit: int = _SPEC["default_limit"], direction: str = "backward") -> Any:
+    async def query_logs(logql: str, limit: int = _SPEC["default_limit"], direction: str = "backward", outside_scope: bool = False) -> Any:
         logql = logql.strip()
-        if error := _check_query(logql):
+        effective = scoped_logql(logql, {} if outside_scope else context.scope.log)
+        if error := _check_query(effective):
             return error
         bounded = clamp_limit(limit, _SPEC)
         if bounded is None:
             return rejected("invalid_limit", min=1, max=_SPEC["max_limit"])
         if direction not in ("backward", "forward"):
             return rejected("invalid_direction", allowed=["backward", "forward"])
-        args = {"logql": logql, "limit": bounded}
+        args = {"logql": effective, "limit": bounded, "outside_scope": outside_scope, **window}
         # Backward is Loki's default, so only an explicit forward read changes the call.
         if direction == "forward":
             args["direction"] = direction
-        backend_args = {"datasourceUid": datasource_uid, **window, **args}
+        backend_args = {"datasourceUid": datasource_uid, **window, "logql": effective, "limit": bounded}
+        if direction == "forward":
+            backend_args["direction"] = direction
 
         async def execute():
             return await context.invoke(logs_tool, "query_loki_logs", backend_args)
@@ -67,18 +82,19 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             execute=execute,
         )
 
-    async def query_log_volume(logql: str) -> Any:
+    async def query_log_volume(logql: str, outside_scope: bool = False) -> Any:
         logql = logql.strip()
-        if error := _check_query(logql, allow_line_filters=False):
+        effective = scoped_logql(logql, {} if outside_scope else context.scope.log)
+        if error := _check_query(effective, allow_line_filters=False):
             return error
-        backend_args = {"datasourceUid": datasource_uid, "logql": logql, **window}
+        backend_args = {"datasourceUid": datasource_uid, "logql": effective, **window}
 
         async def execute():
             return await context.invoke(stats_tool, "query_loki_stats", backend_args)
 
         return await context.run(
             name="query_log_volume",
-            args={"logql": logql},
+            args={"logql": effective, "outside_scope": outside_scope, **window},
             evidence_query=True,
             execute=execute,
         )
@@ -124,7 +140,8 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
                 '{system="mc-observability", component="mc-observability-manager"} |= "timeout". '
                 "direction: backward (newest first, default) or forward (oldest first, to find when "
                 f"errors began). limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — "
-                "raise it only when a result was truncated."
+                "raise it only when a result was truncated. Request log scope is added by default; "
+                "set outside_scope=true to omit it for an expanded search."
             ),
         ),
         StructuredTool.from_function(
@@ -133,7 +150,8 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             description=(
                 "Measure how many log bytes/lines a stream selector {label=\"value\"} produced in the incident "
                 "window (selector only, no line filters). Counts cover flushed chunks, so very recent logs may "
-                "read as zero; confirm presence with query_logs."
+                "read as zero; confirm presence with query_logs. Request log scope is added by default; "
+                "set outside_scope=true to omit it."
             ),
         ),
         StructuredTool.from_function(
