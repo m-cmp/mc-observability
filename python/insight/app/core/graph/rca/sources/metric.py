@@ -1,10 +1,4 @@
-"""Metric source: InfluxDB (Telegraf measurements) through its MCP.
-
-The agent never writes InfluxQL. It picks measurements, fields, an aggregation, tag filters
-and grouping from the static catalog in SOURCE_SPECS; code validates every value against
-that catalog, assembles one query over all selected measurements, and injects the database
-and time window.
-"""
+"""Metric source: bounded InfluxDB queries and optional schema discovery through MCP."""
 
 import re
 from typing import Any
@@ -15,6 +9,7 @@ from ..specs import SOURCE_SPECS
 from .base import (
     SourceContext,
     SourceUnavailableError,
+    ToolRejectedError,
     baseline_window,
     clamp_limit,
     escape_identifier,
@@ -26,13 +21,15 @@ from .base import (
 )
 
 _SPEC = SOURCE_SPECS["metric"]
-_CATALOG: dict[str, dict[str, tuple[str, ...]]] = _SPEC["catalog"]
 AGGREGATIONS = ("mean", "max", "min", "last", "count")
 _INTERVAL = re.compile(r"\d+(?:ns|u|µ|ms|s|m|h|d|w)")
 _MAX_FIELDS = 8
+_MAX_MEASUREMENTS = 10
 
 
 def build_tools(context: SourceContext) -> list[StructuredTool]:
+    measurements_tool = required_tool(context, "list_measurements")
+    schema_tool = required_tool(context, "get_measurement_schema")
     tag_values_tool = required_tool(context, "get_tag_values")
     query_tool = required_tool(context, "execute_influxql")
     database = str(context.datasources.get("influx_database") or "").strip()
@@ -49,53 +46,41 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
         group_by: list[str] | None = None,
         limit: int = _SPEC["default_limit"],
         compare_baseline: bool = False,
+        outside_scope: bool = False,
     ) -> Any:
         wanted_measurements = list(dict.fromkeys(str(m).strip() for m in measurements or [] if str(m).strip()))
         if not wanted_measurements:
-            return rejected("measurements_required", allowed_measurements=sorted(_CATALOG))
-        if unknown := [m for m in wanted_measurements if m not in _CATALOG]:
-            return rejected("unknown_measurement", unknown=unknown, allowed_measurements=sorted(_CATALOG))
-        entries = [_CATALOG[m] for m in wanted_measurements]
-        # Tags and groupings must mean the same thing in every selected measurement.
-        common_tags = [tag for tag in entries[0]["tag_keys"] if all(tag in entry["tag_keys"] for entry in entries)]
-        # Explicit fields must exist in every selected measurement; ["*"] takes each one's own.
-        common_fields = [field for field in entries[0]["fields"] if all(field in entry["fields"] for entry in entries)]
+            return rejected("measurements_required")
+        if len(wanted_measurements) > _MAX_MEASUREMENTS:
+            return rejected("too_many_measurements", max_measurements=_MAX_MEASUREMENTS)
 
         wanted_fields = list(dict.fromkeys(str(field).strip() for field in fields or [] if str(field).strip()))
         if not wanted_fields:
-            return rejected("fields_required", allowed_fields=common_fields, hint='use ["*"] for every field')
+            return rejected("fields_required", hint='use ["*"] for every field')
         star = "*" in wanted_fields
-        if not star:
-            if len(wanted_fields) > _MAX_FIELDS:
-                return rejected("too_many_fields", max_fields=_MAX_FIELDS, hint='use ["*"] instead')
-            if unknown := [field for field in wanted_fields if field not in common_fields]:
-                return rejected("unknown_field", unknown=unknown, allowed_fields=common_fields, hint='use ["*"] across measurements')
+        if not star and len(wanted_fields) > _MAX_FIELDS:
+            return rejected("too_many_fields", max_fields=_MAX_FIELDS, hint='use ["*"] instead')
         aggregation = aggregation.strip().lower()
         if aggregation not in AGGREGATIONS:
             return rejected("unknown_aggregation", allowed_aggregations=list(AGGREGATIONS))
         filters: dict[str, str] = {}
         for key, value in (tag_filters or {}).items():
-            if key not in common_tags:
-                return rejected("unknown_tag_key", unknown=key, allowed_tag_keys=common_tags)
             if not isinstance(value, (str, int, float, bool)):
                 return rejected("invalid_tag_value", tag_key=key)
             filters[key] = str(value)
+        if not outside_scope:
+            for key, value in context.scope.metric.items():
+                filters[key] = value
         interval: str | None = None
         group_tags: list[str] = []
         for item in group_by or []:
             item = str(item).strip()
-            if item in common_tags:
-                if item not in group_tags:
-                    group_tags.append(item)
-            elif _INTERVAL.fullmatch(item) and interval is None:
+            if _INTERVAL.fullmatch(item) and interval is None:
                 interval = item
+            elif item and item not in group_tags:
+                group_tags.append(item)
             else:
-                return rejected(
-                    "unknown_group_by",
-                    unknown=item,
-                    allowed_tag_keys=common_tags,
-                    hint="use a tag key shared by every selected measurement, or at most one interval such as 1m",
-                )
+                return rejected("invalid_group_by", unknown=item)
         bounded = clamp_limit(limit, _SPEC)
         if bounded is None:
             return rejected("invalid_limit", min=1, max=_SPEC["max_limit"])
@@ -111,6 +96,20 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             group_tags=group_tags,
             limit=bounded,
         )
+        baseline_influxql = (
+            build_influxql(
+                wanted_measurements,
+                selected_fields,
+                aggregation,
+                filters,
+                baseline,
+                interval=interval,
+                group_tags=group_tags,
+                limit=bounded,
+            )
+            if compare_baseline
+            else None
+        )
         public_args = {
             "measurements": wanted_measurements,
             "fields": selected_fields,
@@ -119,7 +118,11 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             "group_by": [*([interval] if interval else []), *group_tags],
             "limit": bounded,
             "compare_baseline": bool(compare_baseline),
+            "outside_scope": outside_scope,
+            "influxql": influxql,
         }
+        if baseline_influxql:
+            public_args["baseline_influxql"] = baseline_influxql
 
         async def execute():
             result: dict[str, Any] = {
@@ -131,17 +134,7 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
                     {"influxql_query": influxql, "database_name": database},
                 ),
             }
-            if compare_baseline:
-                baseline_influxql = build_influxql(
-                    wanted_measurements,
-                    selected_fields,
-                    aggregation,
-                    filters,
-                    baseline,
-                    interval=interval,
-                    group_tags=group_tags,
-                    limit=bounded,
-                )
+            if baseline_influxql:
                 result["baseline_influxql"] = baseline_influxql
                 result["baseline"] = await context.invoke(
                     query_tool,
@@ -157,18 +150,60 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
             execute=execute,
         )
 
+    async def list_metric_measurements() -> Any:
+        async def execute():
+            raw = await context.invoke(measurements_tool, "list_measurements", {"database_name": database})
+            result = {"measurements": tabular_values(raw)}
+            if isinstance(raw, dict) and raw.get("status") == "partial":
+                result.update(status="partial", servers=raw.get("servers"))
+            return result
+
+        return await context.run(name="list_metric_measurements", args={}, evidence_query=False, execute=execute)
+
+    async def get_metric_schema(measurement: str) -> Any:
+        measurement = measurement.strip()
+        if not measurement:
+            return rejected("measurement_required")
+        # The raw MCP tool inserts this value into a quoted InfluxQL identifier.
+        if '"' in measurement or "\\" in measurement:
+            return rejected("unsupported_measurement_name")
+
+        async def execute():
+            schema = await context.invoke(
+                schema_tool,
+                "get_measurement_schema",
+                {"database_name": database, "measurement_name": measurement},
+            )
+            if (
+                not isinstance(schema, dict)
+                or not isinstance(schema.get("fields"), list)
+                or not isinstance(schema.get("tags"), list)
+                or not schema["fields"]
+            ):
+                raise ToolRejectedError("measurement_schema_unavailable", measurement=measurement)
+            return {"measurement": measurement, "fields": schema["fields"], "tags": schema["tags"]}
+
+        return await context.run(
+            name="get_metric_schema",
+            args={"measurement": measurement},
+            evidence_query=False,
+            execute=execute,
+        )
+
     async def get_tag_values(measurement: str, tag_key: str) -> Any:
         measurement = measurement.strip()
         tag_key = tag_key.strip()
-        entry = _CATALOG.get(measurement)
-        if entry is None:
-            return rejected("unknown_measurement", allowed_measurements=sorted(_CATALOG))
-        if tag_key not in entry["tag_keys"]:
-            return rejected("unknown_tag_key", unknown=tag_key, allowed_tag_keys=list(entry["tag_keys"]))
+        if not measurement or not tag_key:
+            return rejected("measurement_and_tag_key_required")
+        # The raw MCP tool does not escape either quoted identifier.
+        if any('"' in value or "\\" in value for value in (measurement, tag_key)):
+            return rejected("unsupported_identifier")
         backend_args = {"database_name": database, "measurement_name": measurement, "tag_key": tag_key}
 
         async def execute():
             raw = await context.invoke(tag_values_tool, "get_tag_values", backend_args)
+            if isinstance(raw, dict) and raw.get("error"):
+                raise ToolRejectedError("tag_values_unavailable", detail=str(raw["error"])[:500])
             result = {"measurement": measurement, "tag_key": tag_key, "values": tabular_values(raw)}
             if isinstance(raw, dict) and raw.get("status") == "partial":
                 result.update(status="partial", servers=raw.get("servers"))
@@ -183,31 +218,39 @@ def build_tools(context: SourceContext) -> list[StructuredTool]:
 
     return [
         StructuredTool.from_function(
+            coroutine=list_metric_measurements,
+            name="list_metric_measurements",
+            description="List the measurements currently stored in the configured InfluxDB database.",
+        ),
+        StructuredTool.from_function(
+            coroutine=get_metric_schema,
+            name="get_metric_schema",
+            description="Inspect one stored measurement's live fields (with types) and tag keys when unknown.",
+        ),
+        StructuredTool.from_function(
             coroutine=query_metrics,
             name="query_metrics",
             description=(
-                "Aggregate one or more Telegraf measurements over the incident window in ONE call. Names must "
-                "come from the metric catalog in your instructions. fields [\"*\"] means every field. "
+                f"Aggregate up to {_MAX_MEASUREMENTS} stored InfluxDB measurements over the incident window in ONE call. "
+                "Use known Telegraf names directly; list_metric_measurements and get_metric_schema "
+                "can discover other stored names, fields and tags. "
+                'fields ["*"] means every field. '
                 f"aggregation: {', '.join(AGGREGATIONS)} (max for spikes/saturation, mean for sustained load, "
-                "last for the final state). group_by takes tag keys shared by every selected measurement and at "
-                "most one interval such as 1m. compare_baseline=true also runs the equal-length window before "
-                "the incident. Examples: node overview -> "
-                '{"measurements": ["cpu","mem","system","disk","net"], "fields": ["*"], "aggregation": "max", '
-                '"tag_filters": {"ns_id": "ns-demo", "infra_id": "infra-demo", "node_id": "node-1"}, '
-                '"compare_baseline": true}; one signal over time -> '
-                '{"measurements": ["cpu"], "fields": ["usage_idle"], "aggregation": "min", '
-                '"tag_filters": {"ns_id": "ns-demo", "infra_id": "infra-demo", "node_id": "node-1"}, '
-                '"group_by": ["1m"]}. '
+                "last for the final state). Use group_by tag keys shared by every selected measurement and at "
+                "most one interval such as 1m. For meaningful scoped results, select measurements supporting "
+                "all request metric scope tags; inspect unknown schemas when needed. compare_baseline=true also runs the "
+                "equal-length window before the incident. "
                 f"limit: default {_SPEC['default_limit']}, max {_SPEC['max_limit']} — raise it only when a grouped "
-                "result was truncated. The database and time window are fixed by code."
+                "result was truncated. The database and time window are fixed by code. Request metric "
+                "scope tags are added by default; set outside_scope=true to omit them for an expanded search."
             ),
         ),
         StructuredTool.from_function(
             coroutine=get_tag_values,
             name="get_tag_values",
             description=(
-                "List the values one catalog tag key (node_id, device, interface, pid, ...) takes in a "
-                "measurement, to choose exact tag_filters for query_metrics."
+                "List values for a stored measurement's tag key (node_id, device, interface, pid, ...), "
+                "to choose exact tag_filters for query_metrics."
             ),
         ),
     ]
@@ -227,7 +270,7 @@ def build_influxql(
     start, end = window
     clauses = [f"time >= '{start}'", f"time <= '{end}'"]
     clauses.extend(
-        f'"{escape_identifier(key)}" = \'{escape_influx_value(value)}\'' for key, value in sorted(tag_filters.items())
+        f"\"{escape_identifier(key)}\" = '{escape_influx_value(value)}'" for key, value in sorted(tag_filters.items())
     )
     if fields == ["*"]:
         selects = f"{aggregation.upper()}(*)"
@@ -236,8 +279,7 @@ def build_influxql(
     if len(measurements) == 1:
         source = f'"{escape_identifier(measurements[0])}"'
     else:
-        # Catalog names are identifiers, so the alternation needs no further escaping.
-        source = "/^(" + "|".join(re.escape(name) for name in measurements) + ")$/"
+        source = "/^(" + "|".join(re.escape(name).replace("/", r"\/") for name in measurements) + ")$/"
     groups = [*([f"time({interval})"] if interval else []), *(f'"{escape_identifier(tag)}"' for tag in group_tags)]
     group_clause = f" GROUP BY {', '.join(groups)}" if groups else ""
     return f"SELECT {selects} FROM {source} WHERE {' AND '.join(clauses)}{group_clause} LIMIT {limit}"

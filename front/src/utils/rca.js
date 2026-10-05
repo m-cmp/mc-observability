@@ -1,17 +1,25 @@
 const trimmed = (value) => String(value || '').trim();
-const DEDICATED_FILTER_KEYS = new Set([
-  'trace_id',
-  'service_name',
-  'endpoint',
-  'status_code',
-  'measurement',
-  'ns_id',
-  'infra_id',
-  'node_id',
-]);
 
-export function buildRcaRequest(form = {}, context = {}) {
-  const traceId = trimmed(form.traceId);
+export function metricKeysByMeasurement(discovered) {
+  const byKey = new Map();
+  for (const { measurement, tags } of discovered) {
+    for (const tag of tags || []) {
+      if (!byKey.has(tag)) byKey.set(tag, new Set());
+      byKey.get(tag).add(measurement);
+    }
+  }
+  return Object.fromEntries([...byKey].sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, measurements]) => [key, [...measurements].sort()]));
+}
+
+export function compatibleMetricMeasurements(byKey, keys) {
+  const selected = keys.filter(Boolean);
+  if (!selected.length) return [];
+  return (byKey[selected[0]] || []).filter((measurement) =>
+    selected.every((key) => byKey[key]?.includes(measurement)));
+}
+
+export function buildRcaRequest(form = {}) {
   const timeStart = trimmed(form.timeStart);
   const timeEnd = trimmed(form.timeEnd);
 
@@ -19,18 +27,24 @@ export function buildRcaRequest(form = {}, context = {}) {
     throw new Error('Start and end must be provided together.');
   }
 
-  const attributes = {};
-  if (context.nsId) attributes.ns_id = context.nsId;
-  if (context.infraId) attributes.infra_id = context.infraId;
-  if (context.nodeId) attributes.node_id = context.nodeId;
-  if (['platform', 'vm', 'k8s'].includes(context.targetKind)) attributes.target_kind = context.targetKind;
-  if (trimmed(form.measurement)) attributes.measurement = trimmed(form.measurement);
-
-  const scope = { attributes };
-  if (traceId) scope.trace_id = traceId;
-  if (trimmed(form.serviceName)) scope.service_name = trimmed(form.serviceName);
-  if (trimmed(form.endpoint)) scope.endpoint = trimmed(form.endpoint);
-  if (trimmed(form.statusCode)) scope.status_code = trimmed(form.statusCode);
+  const scope = {};
+  for (const source of ['log', 'trace', 'metric']) {
+    const values = {};
+    for (const row of form.scopeRows?.[source] || []) {
+      const key = trimmed(row.key);
+      const value = trimmed(row.value);
+      if (!key && !value) continue;
+      if (!key || !value) throw new Error(`Choose both a ${source} key and value.`);
+      if (Object.hasOwn(values, key)) throw new Error(`${source} keys must be unique.`);
+      if (source === 'trace') {
+        if (!trimmed(row.type)) throw new Error('Choose a trace value from the list.');
+        values[key] = { value, type: row.type };
+      } else {
+        values[key] = value;
+      }
+    }
+    if (Object.keys(values).length) scope[source] = values;
+  }
   if (timeStart) {
     const start = new Date(timeStart);
     const end = new Date(timeEnd);
@@ -40,24 +54,7 @@ export function buildRcaRequest(form = {}, context = {}) {
     scope.time_range = { start: start.toISOString(), end: end.toISOString() };
   }
 
-  const filters = {};
-  for (const filter of form.filters || []) {
-    const key = trimmed(filter.key);
-    const value = trimmed(filter.value);
-    if (!key && !value) continue;
-    if (!key || !value) {
-      throw new Error('Each additional filter requires both a key and value.');
-    }
-    if (DEDICATED_FILTER_KEYS.has(key)) {
-      throw new Error(`Use the dedicated field for "${key}".`);
-    }
-    if (Object.hasOwn(filters, key)) {
-      throw new Error('Additional filter keys must be unique.');
-    }
-    filters[key] = value;
-  }
-
-  const request = { scope, filters };
+  const request = { scope };
   if (trimmed(form.query)) request.query = trimmed(form.query);
   if (form.connectionId) request.connection_id = Number(form.connectionId);
   if (trimmed(form.modelName)) request.model_name = trimmed(form.modelName);
@@ -68,7 +65,6 @@ export function getRcaRecordView(record = {}) {
   const detail = record.detail || {};
   const result = detail.analysis_result || {};
   const request = record.request || {};
-  const scope = request.scope || {};
   const validation = detail.result_validation || {};
   const noUsableEvidence = validation.usable_evidence_count === 0;
 
@@ -79,9 +75,9 @@ export function getRcaRecordView(record = {}) {
     noUsableEvidence,
     cause: noUsableEvidence ? '' : result.probable_cause || '',
     summary: result.summary || record.summary || '',
-    service: result.affected_service || scope.service_name || '',
-    endpoint: result.affected_endpoint || scope.endpoint || '',
-    traceId: record.trace_id || scope.trace_id || '',
+    service: result.affected_service || '',
+    endpoint: result.affected_endpoint || '',
+    traceId: record.trace_id || '',
     riskLevel: result.risk_level || '',
     confidence: result.confidence,
     confidenceLabel: formatRcaConfidence(result.confidence),
@@ -152,7 +148,8 @@ export function buildAnomalyWatchSchedule({ name, setting, connectionId, modelNa
     request: {
       connection_id: Number(connectionId),
       model_name: trimmed(modelName),
-      scope: { attributes: { anomaly_setting_seq: Number(setting.seq) } },
+      anomaly_setting_seq: Number(setting.seq),
+      scope: {},
     },
   };
 }
@@ -160,14 +157,16 @@ export function buildAnomalyWatchSchedule({ name, setting, connectionId, modelNa
 // The Every, Trigger and Last status cells of the Automatic RCA list.
 export function rcaScheduleCells(schedule = {}) {
   if (schedule.trigger === METRIC_ANOMALY_TRIGGER) {
-    const seq = schedule.request?.scope?.attributes?.anomaly_setting_seq;
+    const seq = schedule.request?.anomaly_setting_seq;
     const status = { SKIPPED: 'No anomaly', SUCCEEDED: 'Analysis started' }[schedule.status] || schedule.status;
     return { every: 'on each scoring', trigger: `Metric anomaly #${seq}`, status };
   }
   if (schedule.trigger === 'server_error') {
+    const traceScope = Object.entries(schedule.request?.scope?.trace || {})
+      .map(([key, value]) => `${key}=${value.value}`).join(', ');
     return {
       every: `${schedule.interval_minutes}m`,
-      trigger: 'Server error',
+      trigger: traceScope ? `Server error · ${traceScope}` : 'Server error · all traces',
       status: schedule.status === 'SKIPPED' ? 'No server errors' : schedule.status,
     };
   }

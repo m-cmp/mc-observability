@@ -1,14 +1,9 @@
-"""RCA tool specs and the fixed Telegraf metric catalog."""
+"""RCA tool specs and known Telegraf metric schemas."""
 
-# Common Telegraf tags: [global_tags] in telegraf_global plus the agent host tag.
+# Known schemas come from Telegraf templates. Stored measurements and new fields
+# are discoverable and queryable even when absent from this catalog.
 _COMMON_METRIC_TAG_KEYS = ("ns_id", "infra_id", "node_id", "host")
 
-# Metric measurement/field/tag keys are fixed by the Telegraf templates the manager renders
-# (java/mc-o11y-manager/src/main/resources/telegraf_inputs_*). Each entry is the plugin's
-# default field set minus that template's `fieldexclude`/`fieldinclude`, so there is nothing
-# to discover per request. `dcgm` is the starlark conversion of DCGM exporter metrics
-# (telegraf_processors_starlark; field names from GpuMetricKeyField.java) and exists only on
-# GPU nodes. Tag *values* stay dynamic and are discovered with get_tag_values.
 METRIC_CATALOG = {
     # inputs.cpu: percpu + totalcpu, collect_cpu_time = false, fieldexclude usage_guest*
     "cpu": {
@@ -175,8 +170,8 @@ SOURCE_SPECS = {
     },
     "metric": {
         "mcp": "influxdb",
-        "summary": "Whether an infrastructure signal (cpu, mem, disk, net, ...) moved versus the preceding baseline.",
-        "required_tools": ("get_tag_values", "execute_influxql"),
+        "summary": "Whether a stored metric signal moved versus the preceding baseline.",
+        "required_tools": ("list_measurements", "get_measurement_schema", "get_tag_values", "execute_influxql"),
         "optional_tools": (),
         "timeout_seconds": 120,
         "default_limit": 50,

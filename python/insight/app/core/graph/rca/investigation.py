@@ -26,7 +26,7 @@ from .evidence_store import EvidenceStore
 from .models import EVIDENCE_SOURCES, IncidentScope, RequestBudget
 from .prompts import INVESTIGATION_USER_PREFIX, investigation_system_prompt
 from .sources import SOURCE_ADAPTERS, SourceUnavailableError
-from .sources.base import error_envelope, is_empty_payload, unwrap_mcp_output, walk_dicts
+from .sources.base import ToolRejectedError, error_envelope, is_empty_payload, unwrap_mcp_output, walk_dicts
 from .specs import SOURCE_SPECS
 
 _DUPLICATE_HINT = (
@@ -215,6 +215,8 @@ class InvestigationToolset:
             self._attempted[source] += 1
         try:
             value = await asyncio.wait_for(execute(), timeout=timeout)
+        except ToolRejectedError as exc:
+            return fail(exc.code, **exc.details)
         except TimeoutError:
             if self.budget is not None and self.budget.expired:
                 return fail("request_deadline_exceeded")
@@ -501,7 +503,6 @@ def build_investigation_payload(
     *,
     query: str | None,
     scope: IncidentScope,
-    filters: dict[str, Any] | None = None,
     plan: list[dict[str, Any]] | None = None,
     prior_evidence_catalog: list[dict[str, Any]] | None = None,
     prior_tool_calls: list[dict[str, Any]] | None = None,
@@ -512,7 +513,6 @@ def build_investigation_payload(
     body: dict[str, Any] = {
         "query": query,
         "scope": scope.model_dump(mode="json", exclude_none=True, exclude={"time_range"}),
-        "filters": dict(filters or {}),
         "authoritative_time_range": {
             "start": start.isoformat().replace("+00:00", "Z") if start else None,
             "end": end.isoformat().replace("+00:00", "Z") if end else None,

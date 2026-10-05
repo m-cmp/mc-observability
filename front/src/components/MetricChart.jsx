@@ -6,8 +6,9 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 /**
  * @param {string} measurement - e.g. "cpu", "disk", "mem", "net", "system"
  * @param {string} metric - e.g. "used", "used_percent", "usage_idle", "bytes_recv"
+ * @param {object} annotations - optional ApexCharts annotations, e.g. { points: [...] }
  */
-export default function MetricChart({ title, series, height = 240, chartType = 'area', measurement, metric }) {
+export default function MetricChart({ title, series, height = 240, chartType = 'area', measurement, metric, annotations }) {
   const hasData = series && series.length > 0 && series.some(s => s.data && s.data.length > 0);
   if (!hasData) {
     return (
@@ -55,6 +56,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
     },
     grid: { strokeDashArray: 4 },
     dataLabels: { enabled: false },
+    ...(annotations ? { annotations } : {}),
   };
 
   return <Chart options={options} series={series} type={chartType} height={height} />;

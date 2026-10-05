@@ -3,6 +3,8 @@ package com.mcmp.o11ymanager.manager.infrastructure.trace.client;
 import com.mcmp.o11ymanager.manager.infrastructure.log.client.FeignLogConfig;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoSearchResponseDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoServiceValuesDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTagScopesDto;
+import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTagValuesDto;
 import com.mcmp.o11ymanager.manager.infrastructure.trace.dto.TempoTraceDto;
 import java.util.Optional;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -36,4 +38,21 @@ public interface TempoFeignClient {
     /** Distinct service.name values ingested by Tempo — drives the UI service dropdown. */
     @GetMapping(value = "${tempo.endpoints.serviceValues}")
     Optional<TempoServiceValuesDto> getServiceNames();
+
+    /**
+     * Attribute names per scope seen in the window; {@code q} is a TraceQL spanset narrowing it.
+     */
+    @GetMapping(value = "${tempo.endpoints.tags}")
+    Optional<TempoTagScopesDto> getTagNames(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end);
+
+    /** Values of one scoped attribute (e.g. {@code resource.service.name}) seen in the window. */
+    @GetMapping(value = "${tempo.endpoints.tagValues}/{tag}/values")
+    Optional<TempoTagValuesDto> getTagValues(
+            @PathVariable("tag") String tag,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "start", required = false) Long start,
+            @RequestParam(value = "end", required = false) Long end);
 }

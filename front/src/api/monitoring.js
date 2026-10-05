@@ -8,6 +8,17 @@ export async function getMeasurementFields() {
   return res.data?.data || [];
 }
 
+export async function getMetricMeasurementTags() {
+  const res = await client.get('/api/o11y/monitoring/influxdb/tag');
+  return res.data?.data || [];
+}
+
+export async function getMetricTagValues(tagKey, measurements) {
+  const results = await Promise.all(measurements.map((measurement) =>
+    client.post('/api/o11y/monitoring/influxdb/tag/values', { measurement, tag_key: tagKey })));
+  return [...new Set(results.flatMap((res) => res.data?.data || []))].sort();
+}
+
 export async function getPlugins() {
   const res = await client.get('/api/o11y/monitoring/plugins');
   return res.data?.data || [];

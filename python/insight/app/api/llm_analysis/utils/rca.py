@@ -224,7 +224,7 @@ class RcaAnalysisService:
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="too many analyses queued")
 
         record = self.analysis_repo.create_record(
-            trace_id=resolved.scope.trace_id,
+            trace_id=None,
             session_id=session.SESSION_ID,
             request_json=request_json,
             status="PENDING",
@@ -293,7 +293,6 @@ class RcaAnalysisService:
                         {
                             "query": resolved.query,
                             "scope": resolved.scope.model_dump(mode="json"),
-                            "filters": resolved.filters,
                         },
                         context=context,
                     )

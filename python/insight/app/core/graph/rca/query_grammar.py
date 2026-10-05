@@ -97,6 +97,19 @@ def validate_traceql(query: str) -> str | None:
     return _only_whitespace_follows(text, pos + 1)
 
 
+def logql_selector_end(query: str) -> int | None:
+    """Return the position after a complete selector, including quoted braces."""
+    if not query.startswith("{"):
+        return None
+    end, _, error = _parse_matchers(query, 1)
+    return None if error else end
+
+
+def is_traceql_field(field: str) -> bool:
+    """Whether a scope key is exactly one allowed TraceQL field."""
+    return bool(_TRACE_FIELD.fullmatch(field)) and _traceql_field_is_scoped(field)
+
+
 # --- LogQL ---------------------------------------------------------------------------
 
 

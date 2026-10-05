@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -6,17 +7,18 @@ from datetime import datetime
 from typing import Any, Literal, TypedDict
 
 from langchain_core.language_models import BaseChatModel
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from .query_grammar import is_traceql_field
 
 EVIDENCE_SOURCES = ("trace", "log", "metric")
 
-# Upper bound on the caller-supplied hint maps (scope.attributes + filters) as UTF-8 JSON.
-# They are prompt input for the investigation agent, not query text, so a generous fixed
-# size keeps one request from crowding out its own evidence.
-RCA_HINT_MAPS_MAX_BYTES = 16_384
+# Limit the source selectors included in a request and in the agent context.
+RCA_SCOPE_MAX_BYTES = 16_384
+_LABEL_KEY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
-def rca_hint_maps_json_bytes(*values: dict[str, Any]) -> int:
+def rca_scope_json_bytes(*values: dict[str, Any]) -> int:
     return len(json.dumps(values, ensure_ascii=False, separators=(",", ":"), default=str).encode("utf-8"))
 
 
@@ -68,6 +70,8 @@ class RcaResult(BaseModel):
 
 
 class IncidentTimeRange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     start: datetime | None = None
     end: datetime | None = None
 
@@ -84,14 +88,63 @@ class IncidentTimeRange(BaseModel):
         return self
 
 
+class TraceScopeValue(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    value: str = Field(min_length=1, max_length=2048)
+    type: Literal["string", "int", "float", "bool", "keyword", "duration"]
+
+    @model_validator(mode="after")
+    def validate_literal(self):
+        patterns = {
+            "int": r"-?\d+",
+            "float": r"-?\d+(?:\.\d+)?",
+            "bool": r"true|false",
+            "keyword": r"[A-Za-z_][A-Za-z0-9_]*",
+            "duration": r"-?\d+(?:\.\d+)?(?:ns|us|µs|ms|s|m|h)",
+        }
+        if self.type in patterns and not re.fullmatch(patterns[self.type], self.value):
+            raise ValueError(f"invalid {self.type} TraceQL value")
+        return self
+
+
 class IncidentScope(BaseModel):
-    trace_id: str | None = Field(default=None, min_length=1, max_length=256)
-    service_name: str | None = Field(default=None, min_length=1, max_length=255)
-    # One HTTP code ("503") or one class ("5xx"); lists and ranges are not part of the contract.
-    status_code: str | None = Field(default=None, pattern=r"^[1-5](\d{2}|xx)$")
-    endpoint: str | None = Field(default=None, min_length=1, max_length=2048)
+    model_config = ConfigDict(extra="forbid")
+
     time_range: IncidentTimeRange = Field(default_factory=IncidentTimeRange)
-    attributes: dict[str, Any] = Field(default_factory=dict)
+    log: dict[str, str] = Field(default_factory=dict)
+    trace: dict[str, TraceScopeValue] = Field(default_factory=dict)
+    metric: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("log")
+    @classmethod
+    def validate_label_map(cls, values: dict[str, str]) -> dict[str, str]:
+        for key, value in values.items():
+            if not _LABEL_KEY.fullmatch(key) or not value or len(value) > 2048:
+                raise ValueError("scope keys must be label identifiers with nonempty values up to 2048 characters")
+        return values
+
+    @field_validator("metric")
+    @classmethod
+    def validate_metric_map(cls, values: dict[str, str]) -> dict[str, str]:
+        for key, value in values.items():
+            if not key.strip() or not value or len(value) > 2048:
+                raise ValueError("metric scope keys and values must be nonempty; values have a 2048-character limit")
+        return values
+
+    @field_validator("trace")
+    @classmethod
+    def validate_trace_map(cls, values: dict[str, TraceScopeValue]) -> dict[str, TraceScopeValue]:
+        for key in values:
+            if len(key) > 256 or not is_traceql_field(key):
+                raise ValueError(f"invalid TraceQL scope attribute: {key}")
+        return values
+
+    @model_validator(mode="after")
+    def validate_size(self):
+        if rca_scope_json_bytes(self.log, self.trace, self.metric) > RCA_SCOPE_MAX_BYTES:
+            raise ValueError(f"scope selectors must fit within {RCA_SCOPE_MAX_BYTES} UTF-8 JSON bytes")
+        return self
 
 
 class EvidenceRecord(BaseModel):
@@ -123,7 +176,6 @@ class RcaAnalysisState(TypedDict, total=False):
     retried_task: dict[str, str] | None
     investigation_round: int
     scope: dict[str, Any]
-    filters: dict[str, Any]
     merged_evidence: dict[str, Any]
     result_validation: dict[str, Any]
     analysis_result: dict | None

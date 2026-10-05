@@ -58,6 +58,31 @@ public class QueryMapper {
         return out;
     }
 
+    /** SHOW TAG VALUES: one series per measurement with columns [key, value]. */
+    public static List<String> toTagValues(QueryResult qr) {
+        var out = new ArrayList<String>();
+        if (qr == null || qr.getResults() == null) {
+            return out;
+        }
+        for (var r : qr.getResults()) {
+            if (r == null || r.getSeries() == null) {
+                continue;
+            }
+            for (var s : r.getSeries()) {
+                int i = s.getColumns() == null ? -1 : s.getColumns().indexOf("value");
+                if (i < 0 || s.getValues() == null) {
+                    continue;
+                }
+                for (var row : s.getValues()) {
+                    if (i < row.size() && row.get(i) != null) {
+                        out.add(String.valueOf(row.get(i)));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
     public static List<FieldDTO> toFieldDTOs(QueryResult qr) {
         var out = new ArrayList<FieldDTO>();
         if (qr == null || qr.getResults() == null || qr.getResults().isEmpty()) {

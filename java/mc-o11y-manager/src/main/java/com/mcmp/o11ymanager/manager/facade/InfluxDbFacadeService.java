@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.manager.dto.influx.TagValuesRequestDTO;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class InfluxDbFacadeService {
 
     public List<TagDTO> getTags() {
         return influxDbService.getTags().getData();
+    }
+
+    public List<String> getTagValues(TagValuesRequestDTO req) {
+        return influxDbService.getTagValues(
+                req.getMeasurement(), req.getTagKey(), req.getFilters());
     }
 
     public List<FieldDTO> getFields() {

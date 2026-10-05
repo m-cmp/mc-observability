@@ -30,4 +30,15 @@ public class TraceServiceImpl implements TraceService {
     public List<String> getServiceNames() {
         return tempoPort.getServiceNames();
     }
+
+    @Override
+    public List<String> getAttributeNames(String traceQl, Long startSec, Long endSec) {
+        return tempoPort.getAttributeNames(traceQl, startSec, endSec);
+    }
+
+    @Override
+    public List<TraceResponseDto.AttributeValue> getAttributeValues(
+            String attribute, String traceQl, Long startSec, Long endSec) {
+        return tempoPort.getAttributeValues(attribute, traceQl, startSec, endSec);
+    }
 }

@@ -11,4 +11,9 @@ public interface TraceService {
     TraceResponseDto.TraceDetail getTraceDetail(String traceId);
 
     List<String> getServiceNames();
+
+    List<String> getAttributeNames(String traceQl, Long startSec, Long endSec);
+
+    List<TraceResponseDto.AttributeValue> getAttributeValues(
+            String attribute, String traceQl, Long startSec, Long endSec);
 }

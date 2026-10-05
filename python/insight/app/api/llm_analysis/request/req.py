@@ -1,16 +1,11 @@
 from datetime import UTC, datetime, timedelta
 from enum import Enum
-from typing import Any, Literal
+from typing import Literal
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.core.graph.rca.models import (
-    RCA_HINT_MAPS_MAX_BYTES,
-    IncidentScope,
-    IncidentTimeRange,
-    rca_hint_maps_json_bytes,
-)
+from app.core.graph.rca.models import IncidentScope, IncidentTimeRange
 
 # Callers that name no window still expect an answer about "now". Materialising the
 # default here — rather than inside the graph — keeps the stored canonical request an
@@ -137,7 +132,7 @@ class PostRcaQueryBody(BaseModel):
         description="Natural-language RCA request",
     )
     scope: IncidentScope = Field(default_factory=IncidentScope)
-    filters: dict[str, Any] = Field(default_factory=dict)
+    anomaly_setting_seq: int | None = Field(default=None, ge=1)
     model_name: str | None = Field(
         default=None,
         min_length=1,
@@ -149,13 +144,7 @@ class PostRcaQueryBody(BaseModel):
     def validate_request(self):
         if self.session_id and (self.connection_id is not None or self.model_name is not None):
             raise ValueError("connection_id and model_name cannot override an existing session")
-        if "database_name" in self.scope.attributes or "database_name" in self.filters:
-            raise ValueError("database_name is configured by the server")
-        if rca_hint_maps_json_bytes(self.scope.attributes, self.filters) > RCA_HINT_MAPS_MAX_BYTES:
-            raise ValueError(f"attributes and filters must fit within {RCA_HINT_MAPS_MAX_BYTES} UTF-8 JSON bytes")
         if self.scope.time_range.start is None:
-            # Every source tool is window-bound, so materialise the default even when a
-            # trace_id is already known.
             end = datetime.now(UTC)
             self.scope.time_range = IncidentTimeRange(
                 start=end - timedelta(minutes=DEFAULT_RCA_WINDOW_MINUTES),
@@ -181,7 +170,7 @@ METRIC_ANOMALY_TRIGGER = "metric_anomaly"
 
 def anomaly_setting_seq(request: dict | None) -> int | None:
     """The anomaly-detection setting a metric_anomaly watch follows, if its request names one."""
-    value = (((request or {}).get("scope") or {}).get("attributes") or {}).get("anomaly_setting_seq")
+    value = (request or {}).get("anomaly_setting_seq")
     return value if isinstance(value, int) and not isinstance(value, bool) and value >= 1 else None
 
 
@@ -222,7 +211,7 @@ class PostRcaScheduleBody(BaseModel):
     request: dict
     # "server_error": the worker searches Tempo for HTTP 5xx server spans in the slot and
     # runs the analysis only when it finds some. "metric_anomaly": no timer; each
-    # anomaly-detection scoring of request.scope.attributes.anomaly_setting_seq checks it.
+    # anomaly-detection scoring of request.anomaly_setting_seq checks it.
     # None: run every slot.
     trigger: Literal["server_error", "metric_anomaly"] | None = None
 
@@ -232,7 +221,7 @@ class PostRcaScheduleBody(BaseModel):
             raise ValueError("name must not be blank")
         _validated_rca_request(self.request)
         if self.trigger == METRIC_ANOMALY_TRIGGER and anomaly_setting_seq(self.request) is None:
-            raise ValueError("a metric_anomaly watch needs request.scope.attributes.anomaly_setting_seq")
+            raise ValueError("a metric_anomaly watch needs request.anomaly_setting_seq")
         return self
 
 

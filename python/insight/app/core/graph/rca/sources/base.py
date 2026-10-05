@@ -27,6 +27,15 @@ class SourceUnavailableError(RuntimeError):
         self.reason = reason
 
 
+class ToolRejectedError(Exception):
+    """Invalid tool arguments discovered while the bounded tool call is running."""
+
+    def __init__(self, code: str, **details: Any):
+        super().__init__(code)
+        self.code = code
+        self.details = details
+
+
 class SourceContext(Protocol):
     scope: IncidentScope
     tools: Mapping[str, Any]
@@ -92,7 +101,7 @@ def baseline_window(scope: IncidentScope) -> tuple[str, str]:
 
 
 def escape_identifier(value: Any) -> str:
-    return str(value).replace('"', '\\"')
+    return str(value).replace("\\", "\\\\").replace('"', '\\"')
 
 
 def escape_influx_value(value: Any) -> str:

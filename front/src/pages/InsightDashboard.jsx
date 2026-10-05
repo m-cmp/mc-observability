@@ -13,8 +13,12 @@ import useScopeTargets, { loadScopeNodes } from '../hooks/useScopeTargets';
 import MetricChart from '../components/MetricChart';
 import { formatLocalTime, toEpochMillis } from '../utils/time';
 import { apiError } from '../utils/error';
+import { getLogLabels, getLogLabelValues } from '../api/logs';
+import { getTraceAttributes, getTraceAttributeValues } from '../api/trace';
+import { getMetricMeasurementTags, getMetricTagValues } from '../api/monitoring';
 import {
-  anomalySettingLabel, buildAnomalyWatchSchedule, buildRcaRequest, formatRawRecord, formatRcaDuration,
+  anomalySettingLabel, buildAnomalyWatchSchedule, buildRcaRequest, compatibleMetricMeasurements,
+  formatRawRecord, formatRcaDuration, metricKeysByMeasurement,
   getRcaRecordView, rcaScheduleCells,
 } from '../utils/rca';
 
@@ -36,7 +40,7 @@ export default function InsightDashboard() {
       </div>
       {tab === 0 && <AnomalyTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
       {tab === 1 && <PredictionTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
-      {tab === 2 && <RcaTab nsId={nsId} infraId={infraId} nodeId={nodeId} />}
+      {tab === 2 && <RcaTab />}
     </div>
   );
 }
@@ -97,12 +101,18 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
     loadSettings();
   }
 
-  const chartSeries = history.length > 0 ? [{
+  // Only scored minutes: the raw metric value is in another unit and must not stand in for a score.
+  const scored = history.filter((h) => h.anomaly_score != null);
+  const chartSeries = scored.length > 0 ? [{
     name: 'Anomaly Score',
-    data: history
-      .map((h) => ({ x: toEpochMillis(h.timestamp), y: h.anomaly_score ?? (h.value == null ? null : parseFloat(h.value)) }))
-      .filter((p) => p.y != null && !Number.isNaN(p.y)),
+    data: scored.map((h) => ({ x: toEpochMillis(h.timestamp), y: h.anomaly_score })),
   }] : [];
+  // Anomalous minutes as point annotations: a second series would break the shared hover tooltip.
+  const chartAnnotations = {
+    points: scored.filter((h) => h.is_anomaly > 0).map((h) => ({
+      x: toEpochMillis(h.timestamp), y: h.anomaly_score, marker: { size: 4, fillColor: '#ef4444', strokeWidth: 0 },
+    })),
+  };
 
   return (
     <div className="space-y-4">
@@ -186,7 +196,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
               {loading ? 'Loading...' : 'Load History'}
             </button>
           </div>
-          <MetricChart title="Anomaly Score" series={chartSeries} height={240} chartType="line" />
+          <MetricChart title="Anomaly Score" series={chartSeries} annotations={chartAnnotations} height={240} chartType="line" />
         </div>
       </div>
     </div>
@@ -467,10 +477,7 @@ function preferredConnectionId(connections) {
   return chosen ? String(chosen.id) : '';
 }
 
-function RcaTab({ nsId, infraId, nodeId }) {
-  const { infras, clusters } = useScopeTargets(nsId);
-  const targetKind = clusters.some((cluster) => cluster.id === infraId)
-    ? 'k8s' : infras.some((infra) => infra.id === infraId) ? 'vm' : '';
+function RcaTab() {
   const [records, setRecords] = useState([]);
   const [status, setStatus] = useState('');
   const [listFrom, setListFrom] = useState('');
@@ -483,14 +490,9 @@ function RcaTab({ nsId, infraId, nodeId }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState('');
   const [query, setQuery] = useState('');
-  const [traceId, setTraceId] = useState('');
   const [timeStart, setTimeStart] = useState('');
   const [timeEnd, setTimeEnd] = useState('');
-  const [serviceName, setServiceName] = useState('');
-  const [endpoint, setEndpoint] = useState('');
-  const [statusCode, setStatusCode] = useState('');
-  const [measurement, setMeasurement] = useState('');
-  const [additionalFilters, setAdditionalFilters] = useState([{ key: '', value: '' }]);
+  const [scopeRows, setScopeRows] = useState({ log: [{ key: '', value: '' }], trace: [{ key: '', value: '' }], metric: [{ key: '', value: '' }] });
   const [llmConnections, setLlmConnections] = useState([]);
   const [connectionId, setConnectionId] = useState('');
   const [connectionModels, setConnectionModels] = useState([]);
@@ -663,13 +665,10 @@ function RcaTab({ nsId, infraId, nodeId }) {
     try {
       // No timeStart/timeEnd: a schedule's window comes from the slot being run, and the
       // API rejects a stored time_range outright.
-      request = mode === 'watch'
-        ? buildRcaRequest({ connectionId, modelName, serviceName, measurement, filters: additionalFilters }, { nsId, infraId, nodeId, targetKind })
-        : buildRcaRequest({
-          query, traceId, connectionId, modelName,
-          serviceName, endpoint, statusCode, measurement,
-          filters: additionalFilters,
-        }, { nsId, infraId, nodeId, targetKind });
+      request = buildRcaRequest({
+        query: mode === 'watch' ? '' : query,
+        connectionId, modelName, scopeRows,
+      });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -747,18 +746,8 @@ function RcaTab({ nsId, infraId, nodeId }) {
     let body;
     try {
       body = buildRcaRequest({
-        query,
-        traceId,
-        timeStart,
-        timeEnd,
-        connectionId,
-        modelName,
-        serviceName,
-        endpoint,
-        statusCode,
-        measurement,
-        filters: additionalFilters,
-      }, { nsId, infraId, nodeId, targetKind });
+        query, timeStart, timeEnd, connectionId, modelName, scopeRows,
+      });
     } catch (e) {
       setMsg(e.message);
       return;
@@ -1138,111 +1127,11 @@ function RcaTab({ nsId, infraId, nodeId }) {
               )}
             </div>
 
-            {/* 3. Where to look: the route context plus per-source scope. A metric anomaly
-                watch takes its scope from the anomaly detection setting. */}
+            {/* A metric anomaly watch takes its scope from the anomaly detection setting. */}
             {mode !== 'anomaly' && (
-            <div className="rounded-lg border border-slate-200 bg-white">
-              <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2">
-                <span className="text-sm font-medium text-slate-800">Investigation scope</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">Optional</span>
-                <span className="ml-auto flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-slate-500">Context</span>
-                  {nsId && <span className="text-xs rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">NS {nsId}</span>}
-                  {infraId && <span className="text-xs rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">Infra {infraId}</span>}
-                  {nodeId && <span className="text-xs rounded-full bg-slate-100 text-slate-600 px-2 py-0.5">Node {nodeId}</span>}
-                  {!nsId && !infraId && !nodeId && <span className="text-xs text-gray-400">all namespaces</span>}
-                </span>
-              </div>
-              <div className="space-y-3 p-3">
-                <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
-                  <div className="pt-1">
-                    <span className="block text-xs font-medium text-slate-700">Service hint</span>
-                    <span className="block text-[11px] text-slate-500">checked against each source's stored names</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label htmlFor="rca-service-name" className="block text-xs text-gray-600 mb-1">Service</label>
-                      <input id="rca-service-name" value={serviceName} onChange={(e) => setServiceName(e.target.value)}
-                        className="border rounded px-3 py-1.5 text-sm w-full" placeholder="checkout-api" />
-                    </div>
-                  </div>
-                </div>
-                {mode !== 'watch' && (
-                  <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
-                    <div className="pt-1">
-                      <span className="block text-xs font-medium text-slate-700">Trace</span>
-                      <span className="block text-[11px] text-slate-500">span route, status, one trace</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div>
-                        <label htmlFor="rca-endpoint" className="block text-xs text-gray-600 mb-1">Endpoint (route)</label>
-                        <input id="rca-endpoint" value={endpoint} onChange={(e) => setEndpoint(e.target.value)}
-                          className="border rounded px-3 py-1.5 text-sm w-full" placeholder="POST /checkout" />
-                      </div>
-                      <div>
-                        <label htmlFor="rca-status-code" className="block text-xs text-gray-600 mb-1">HTTP status code</label>
-                        <input id="rca-status-code" value={statusCode} onChange={(e) => setStatusCode(e.target.value)}
-                          className="border rounded px-3 py-1.5 text-sm w-full" placeholder="500 or 5xx" />
-                      </div>
-                      {mode === 'once' && (
-                        <div>
-                          <label htmlFor="rca-trace-id" className="block text-xs text-gray-600 mb-1">Trace ID</label>
-                          <input id="rca-trace-id" value={traceId} onChange={(e) => setTraceId(e.target.value)}
-                            className="border rounded px-3 py-1.5 text-sm w-full" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
-                  <div className="pt-1">
-                    <span className="block text-xs font-medium text-slate-700">Metric</span>
-                    <span className="block text-[11px] text-slate-500">Telegraf measurement</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                      <label htmlFor="rca-measurement" className="block text-xs text-gray-600 mb-1">Measurement</label>
-                      <input id="rca-measurement" value={measurement} onChange={(e) => setMeasurement(e.target.value)}
-                        className="border rounded px-3 py-1.5 text-sm w-full" placeholder="cpu" />
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-[9rem_1fr] gap-3 items-start">
-                  <div className="pt-1">
-                    <span className="block text-xs font-medium text-slate-700">Filters</span>
-                    <span className="block text-[11px] text-slate-500">custom labels or tags, every source</span>
-                  </div>
-                  <div>
-                    <div className="space-y-2">
-                      {additionalFilters.map((filter, index) => (
-                        <div key={index} className="flex gap-2">
-                          <input aria-label={`Additional filter ${index + 1} key`} value={filter.key}
-                            onChange={(e) => setAdditionalFilters((current) => current.map((item, itemIndex) => (
-                              itemIndex === index ? { ...item, key: e.target.value } : item
-                            )))}
-                            className="border rounded px-3 py-1.5 text-sm flex-1 min-w-0" placeholder="Key, e.g. region" />
-                          <input aria-label={`Additional filter ${index + 1} value`} value={filter.value}
-                            onChange={(e) => setAdditionalFilters((current) => current.map((item, itemIndex) => (
-                              itemIndex === index ? { ...item, value: e.target.value } : item
-                            )))}
-                            className="border rounded px-3 py-1.5 text-sm flex-1 min-w-0" placeholder="Value" />
-                          <button type="button" aria-label={`Remove additional filter ${index + 1}`}
-                            onClick={() => setAdditionalFilters((current) => (
-                              current.length === 1
-                                ? [{ key: '', value: '' }]
-                                : current.filter((_, itemIndex) => itemIndex !== index)
-                            ))}
-                            className="px-2 text-gray-400 hover:text-red-600">×</button>
-                        </div>
-                      ))}
-                    </div>
-                    <button type="button"
-                      onClick={() => setAdditionalFilters((current) => [...current, { key: '', value: '' }])}
-                      className="mt-2 text-xs text-blue-600 hover:text-blue-800">+ Add filter</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+              <RcaScopePicker rows={scopeRows} onChange={setScopeRows}
+                timeStart={mode === 'once' ? timeStart : ''} timeEnd={mode === 'once' ? timeEnd : ''}
+                watch={mode === 'watch'} />
             )}
 
             {/* 4. One action, named after what it creates. */}
@@ -1353,12 +1242,199 @@ function RcaTab({ nsId, infraId, nodeId }) {
   );
 }
 
+function RcaScopePicker({ rows, onChange, timeStart, timeEnd, watch }) {
+  const startDate = new Date(timeStart);
+  const endDate = new Date(timeEnd);
+  const useWindow = timeStart && timeEnd && startDate < endDate;
+  const start = useWindow ? startDate.toISOString() : undefined;
+  const end = useWindow ? endDate.toISOString() : undefined;
+  const [discovery, setDiscovery] = useState({ log: [], trace: [], metric: {} });
+  const [keyErrors, setKeyErrors] = useState({});
+  const [loadingKeys, setLoadingKeys] = useState({ log: true, trace: true, metric: true });
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingKeys((current) => ({ ...current, log: true, trace: true }));
+    Promise.allSettled([
+      getLogLabels({ start, end }),
+      getTraceAttributes({ start, end }),
+    ]).then((results) => {
+      if (!active) return;
+      setDiscovery((current) => ({
+        ...current,
+        log: results[0].status === 'fulfilled' ? results[0].value : [],
+        trace: results[1].status === 'fulfilled' ? results[1].value : [],
+      }));
+      setKeyErrors((current) => ({
+        ...current,
+        log: results[0].status === 'rejected' ? apiError(results[0].reason) : undefined,
+        trace: results[1].status === 'rejected' ? apiError(results[1].reason) : undefined,
+      }));
+      setLoadingKeys((current) => ({ ...current, log: false, trace: false }));
+    });
+    return () => { active = false; };
+  }, [start, end, retry]);
+
+  useEffect(() => {
+    let active = true;
+    setLoadingKeys((current) => ({ ...current, metric: true }));
+    getMetricMeasurementTags()
+      .then((discovered) => {
+        if (!active) return;
+        setDiscovery((current) => ({ ...current, metric: metricKeysByMeasurement(discovered) }));
+        setKeyErrors((current) => ({ ...current, metric: undefined }));
+      }).catch((cause) => {
+        if (!active) return;
+        setDiscovery((current) => ({ ...current, metric: {} }));
+        setKeyErrors((current) => ({ ...current, metric: apiError(cause) }));
+      }).finally(() => {
+        if (active) setLoadingKeys((current) => ({ ...current, metric: false }));
+      });
+    return () => { active = false; };
+  }, [retry]);
+
+  function updateRow(source, index, patch) {
+    onChange((current) => ({
+      ...current,
+      [source]: current[source].map((row, rowIndex) => rowIndex === index ? { ...row, ...patch } : row),
+    }));
+  }
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-3 py-2">
+        <span className="text-sm font-medium text-slate-800">Investigation scope</span>
+        <span className="ml-2 text-xs text-slate-500">Optional · select stored keys and values for each source</span>
+      </div>
+      <div className="space-y-4 p-3">
+        {['log', 'trace', 'metric'].map((source) => (
+          <section key={source}>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium capitalize text-slate-700">{source}</span>
+              {keyErrors[source] && (
+                <span className="text-xs text-red-600">Could not load keys: {keyErrors[source]}
+                  <button type="button" onClick={() => setRetry((value) => value + 1)} className="ml-2 underline">Retry</button>
+                </span>
+              )}
+            </div>
+            <div className="mt-2 space-y-2">
+              {rows[source].map((row, index) => (
+                <RcaScopeRow key={index} source={source} row={row}
+                  keys={source === 'metric'
+                    ? Object.keys(discovery.metric).filter((key) => compatibleMetricMeasurements(discovery.metric, [
+                      key, ...rows.metric.filter((_, otherIndex) => otherIndex !== index).map((other) => other.key),
+                    ]).length > 0)
+                    : discovery[source]}
+                  metricMeasurements={source === 'metric' ? discovery.metric : undefined}
+                  selectedMetricKeys={source === 'metric' ? rows.metric.map((item) => item.key).filter(Boolean).sort().join('\0') : ''}
+                  start={source === 'metric' ? undefined : start}
+                  end={source === 'metric' ? undefined : end}
+                  loadingKeys={loadingKeys[source]} onChange={(patch) => updateRow(source, index, patch)}
+                  onRemove={() => onChange((current) => ({
+                    ...current,
+                    [source]: current[source].length === 1
+                      ? [{ key: '', value: '' }]
+                      : current[source].filter((_, rowIndex) => rowIndex !== index),
+                  }))} />
+              ))}
+            </div>
+            <button type="button" onClick={() => onChange((current) => ({
+              ...current, [source]: [...current[source], { key: '', value: '' }],
+            }))} className="mt-2 text-xs text-blue-600 hover:text-blue-800">+ Add {source} condition</button>
+          </section>
+        ))}
+        {watch && (
+          <p className="rounded bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Server errors are detected in {rows.trace.some((row) => row.key && row.value)
+              ? rows.trace.filter((row) => row.key && row.value).map((row) => `${row.key}=${row.value}`).join(', ')
+              : 'all traces'}.
+            Log and metric conditions apply only to the following RCA analysis.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RcaScopeRow({ source, row, keys, metricMeasurements, selectedMetricKeys, start, end, loadingKeys, onChange, onRemove }) {
+  const [values, setValues] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [retry, setRetry] = useState(0);
+
+  useEffect(() => {
+    if (!row.key) { setValues([]); setError(''); return undefined; }
+    let active = true;
+    setLoading(true);
+    const request = source === 'log'
+      ? getLogLabelValues(row.key, { start, end })
+      : source === 'trace'
+        ? getTraceAttributeValues(row.key, { start, end })
+        : getMetricTagValues(row.key, compatibleMetricMeasurements(
+          metricMeasurements, selectedMetricKeys.split('\0')));
+    request.then((nextValues) => {
+      if (!active) return;
+      setValues(nextValues);
+      setError('');
+      if (row.value && !nextValues.some((item) => (
+        source === 'trace' ? item.value === row.value && item.type === row.type : item === row.value
+      ))) onChange({ value: '', type: undefined });
+    }).catch((cause) => {
+      if (active) {
+        setValues([]);
+        setError(apiError(cause));
+        if (row.value) onChange({ value: '', type: undefined });
+      }
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [source, row.key, selectedMetricKeys, metricMeasurements, start, end, retry]);
+
+  const selectedIndex = values.findIndex((item) => (
+    source === 'trace' ? item.value === row.value && item.type === row.type : item === row.value
+  ));
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        <select aria-label={`${source} key`} value={row.key}
+          onChange={(event) => onChange({ key: event.target.value, value: '', type: undefined })}
+          className="min-w-0 flex-1 rounded border px-3 py-1.5 text-sm" disabled={loadingKeys || !keys.length}>
+          <option value="">{loadingKeys ? 'Loading keys…' : 'Choose key'}</option>
+          {keys.map((key) => <option key={key} value={key}>{key}</option>)}
+        </select>
+        <select aria-label={`${source} value`} value={selectedIndex < 0 ? '' : String(selectedIndex)}
+          onChange={(event) => {
+            if (event.target.value === '') {
+              onChange({ value: '', type: undefined });
+              return;
+            }
+            const item = values[Number(event.target.value)];
+            onChange(source === 'trace'
+              ? { value: item?.value || '', type: item?.type }
+              : { value: item || '' });
+          }}
+          className="min-w-0 flex-1 rounded border px-3 py-1.5 text-sm" disabled={!row.key || loading || !!error}>
+          <option value="">{loading ? 'Loading values…' : 'Choose value'}</option>
+          {values.map((item, index) => (
+            <option key={index} value={index}>
+              {source === 'trace' ? `${item.value}${values.some((other) => other !== item && other.value === item.value) ? ` (${item.type})` : ''}` : item}
+            </option>
+          ))}
+        </select>
+        <button type="button" aria-label={`Remove ${source} condition`} onClick={onRemove}
+          className="px-2 text-gray-400 hover:text-red-600">×</button>
+      </div>
+      {error && <p className="mt-1 text-xs text-red-600">Could not load values: {error}
+        <button type="button" onClick={() => setRetry((value) => value + 1)} className="ml-2 underline">Retry</button>
+      </p>}
+    </div>
+  );
+}
+
 function RcaDetail({ record }) {
   const view = getRcaRecordView(record);
   const scope = view.request.scope || {};
   const timeRange = scope.time_range || {};
-  const attributes = scope.attributes || {};
-  const filters = view.request.filters || {};
   return (
     <div className="space-y-4">
       {view.errors.length > 0 && (
@@ -1445,16 +1521,12 @@ function RcaDetail({ record }) {
         <summary className="cursor-pointer px-4 py-3 text-xs font-semibold text-slate-600">Request scope</summary>
         <div className="border-t p-4 text-xs">
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div><dt className="text-gray-400">Trace ID</dt><dd className="mt-1 font-mono break-all">{view.traceId || '-'}</dd></div>
-            <div><dt className="text-gray-400">Service</dt><dd className="mt-1">{view.service || '-'}</dd></div>
-            <div><dt className="text-gray-400">Endpoint</dt><dd className="mt-1">{view.endpoint || '-'}</dd></div>
-            <div><dt className="text-gray-400">HTTP status</dt><dd className="mt-1">{scope.status_code || filters.status_code || '-'}</dd></div>
             <div><dt className="text-gray-400">Start</dt><dd className="mt-1">{fmt(timeRange.start)}</dd></div>
             <div><dt className="text-gray-400">End</dt><dd className="mt-1">{fmt(timeRange.end)}</dd></div>
           </dl>
-          {(Object.keys(attributes).length > 0 || Object.keys(filters).length > 0) && (
+          {['log', 'trace', 'metric'].some((source) => Object.keys(scope[source] || {}).length > 0) && (
             <pre className="mt-3 max-h-48 overflow-auto rounded bg-slate-50 p-3 text-[11px]">
-              {JSON.stringify({ attributes, filters }, null, 2)}
+              {JSON.stringify({ log: scope.log || {}, trace: scope.trace || {}, metric: scope.metric || {} }, null, 2)}
             </pre>
           )}
         </div>

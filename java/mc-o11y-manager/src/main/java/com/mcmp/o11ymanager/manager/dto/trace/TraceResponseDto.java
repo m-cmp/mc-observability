@@ -76,4 +76,21 @@ public class TraceResponseDto {
         @Schema(description = "Spans in the trace, sorted by start time")
         private List<SpanRow> spans;
     }
+
+    /** One attribute value as Tempo typed it; the type decides how TraceQL writes the value. */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AttributeValue {
+        @Schema(description = "Value as text", example = "500")
+        private String value;
+
+        @Schema(
+                description =
+                        "Tempo value type. TraceQL quotes string values; int, float, bool, duration"
+                                + " and keyword (status, kind) values are written bare.",
+                example = "int")
+        private String type;
+    }
 }

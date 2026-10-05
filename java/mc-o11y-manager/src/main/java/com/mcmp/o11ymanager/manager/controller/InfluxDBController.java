@@ -5,6 +5,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.MetricRequestDTO;
 import com.mcmp.o11ymanager.manager.dto.influx.TagDTO;
+import com.mcmp.o11ymanager.manager.dto.influx.TagValuesRequestDTO;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
 import com.mcmp.o11ymanager.manager.global.vm.ResBody;
 import com.mcmp.o11ymanager.manager.service.cache.MonitoringCacheService;
@@ -12,6 +13,7 @@ import com.mcmp.o11ymanager.manager.service.cache.MonitoringCacheWarmScheduler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +66,17 @@ public class InfluxDBController {
             description = "Retrieve InfluxDB tags")
     public ResBody<List<TagDTO>> tag() {
         return new ResBody<>(influxDbFacadeService.getTags());
+    }
+
+    @PostMapping("/tag/values")
+    @Operation(
+            summary = "GetTagValues",
+            operationId = "GetTagValues",
+            description =
+                    "List the values one tag takes across every InfluxDB server, narrowed by"
+                            + " equality filters on other tags. Drives the RCA metric scope picker.")
+    public ResBody<List<String>> tagValues(@Valid @RequestBody TagValuesRequestDTO req) {
+        return new ResBody<>(influxDbFacadeService.getTagValues(req));
     }
 
     @PostMapping("/metric/{nsId}/{infraId}")

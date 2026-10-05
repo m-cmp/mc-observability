@@ -35,4 +35,21 @@ public interface TempoPort {
      * @return service.name values
      */
     List<String> getServiceNames();
+
+    /**
+     * Attribute names seen in a window, written the way TraceQL uses them: {@code resource.x},
+     * {@code span.x}, and intrinsics ({@code status}, {@code kind}, ...) bare.
+     *
+     * @param traceQl spanset narrowing the spans looked at (optional)
+     */
+    List<String> getAttributeNames(String traceQl, Long startSec, Long endSec);
+
+    /**
+     * Distinct values one attribute takes in a window, each with the type Tempo reported for it.
+     *
+     * @param attribute qualified attribute name (e.g. {@code resource.service.name})
+     * @param traceQl spanset narrowing the spans looked at (optional)
+     */
+    List<TraceResponseDto.AttributeValue> getAttributeValues(
+            String attribute, String traceQl, Long startSec, Long endSec);
 }

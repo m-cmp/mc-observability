@@ -15,6 +15,7 @@ something to explain.
 
 import json
 import logging
+import re
 from datetime import UTC, datetime, timedelta
 
 import requests
@@ -34,13 +35,17 @@ POLL_MAX_CONSECUTIVE_FAILURES = 8  # ~2 minutes of insight being unreachable bef
 MAX_WAIT_MINUTES = 60  # an analysis still not finished after this is reported, not awaited
 
 # Server error watch. Only server spans: a client span's 5xx is the upstream's failure and
-# would count the same incident twice. The trailing host.name match is not a filter — it
-# makes Tempo return host.name with each matched span, which is how the request learns
-# where the errors happened without a second call.
+# would count the same incident twice.
 TRACEQL_5XX = (
-    "{ kind = server && span.http.response.status_code >= 500"
-    ' && span.http.response.status_code < 600 && resource.host.name =~ ".*" }'
+    "{ kind = server && ((span.http.response.status_code >= 500"
+    " && span.http.response.status_code < 600)"
+    " || (span.http.status_code >= 500 && span.http.status_code < 600)) }"
 )
+TRACE_FIELD = re.compile(r"\.?[A-Za-z_][A-Za-z0-9_]*(?:[.:][A-Za-z_][A-Za-z0-9_]*)*")
+TRACE_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+TRACE_INTEGER = re.compile(r"-?\d+")
+TRACE_DURATION = re.compile(r"-?\d+(?:\.\d+)?(?:ns|us|µs|ms|s|m|h)")
+TRACE_KEYWORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 TEMPO_SEARCH_LIMIT = 100
 TEMPO_TIMEOUT = 10
 
@@ -162,10 +167,36 @@ def _tempo_url() -> str:
     return f"{host}/api/search"
 
 
-def _server_errors(start: str, end: str) -> list:
+def _server_error_traceql(trace_scope: dict) -> str:
+    if not trace_scope:
+        return TRACEQL_5XX
+    conditions = []
+    for field, selected in sorted(trace_scope.items()):
+        if not TRACE_FIELD.fullmatch(field):
+            raise ValueError(f"invalid trace scope field: {field!r}")
+        value, value_type = selected["value"], selected["type"]
+        if value_type == "string":
+            literal = json.dumps(value, ensure_ascii=False)
+        elif value_type == "keyword" and TRACE_KEYWORD.fullmatch(value):
+            literal = value
+        elif value_type == "int" and TRACE_INTEGER.fullmatch(value):
+            literal = value
+        elif value_type == "float" and TRACE_NUMBER.fullmatch(value):
+            literal = value
+        elif value_type == "duration" and TRACE_DURATION.fullmatch(value):
+            literal = value
+        elif value_type == "bool" and value in ("true", "false"):
+            literal = value
+        else:
+            raise ValueError(f"invalid trace scope value for {field!r}")
+        conditions.append(f"{field} = {literal}")
+    return TRACEQL_5XX[:-2] + " && " + " && ".join(conditions) + " }"
+
+
+def _server_errors(start: str, end: str, trace_scope: dict) -> list:
     """Traces with an HTTP 5xx server span inside [start, end] (RFC3339), at most TEMPO_SEARCH_LIMIT."""
     params = {
-        "q": TRACEQL_5XX,
+        "q": _server_error_traceql(trace_scope),
         "start": int(datetime.fromisoformat(start.replace("Z", "+00:00")).timestamp()),
         "end": int(datetime.fromisoformat(end.replace("Z", "+00:00")).timestamp()),
         "limit": TEMPO_SEARCH_LIMIT,
@@ -176,7 +207,7 @@ def _server_errors(start: str, end: str) -> list:
 
 
 def _triggered_request(request: dict, traces: list) -> dict:
-    """Fill the stored request with what the search found, without overriding what the user set."""
+    """Add observed trace identifiers to the analysis question without changing its scope."""
     hosts, trace_ids = [], []
     for trace in traces:
         if trace.get("traceID") and trace["traceID"] not in trace_ids:
@@ -188,15 +219,16 @@ def _triggered_request(request: dict, traces: list) -> dict:
                     if attribute.get("key") == "host.name" and value and value not in hosts:
                         hosts.append(value)
     count = f"at least {len(traces)}" if len(traces) >= TEMPO_SEARCH_LIMIT else str(len(traces))
-    where = f" on {', '.join(hosts[:10])}" if hosts else ""
-    scope = dict(request.get("scope") or {})
-    scope.setdefault("status_code", "5xx")
-    scope["attributes"] = {**(scope.get("attributes") or {}), "trace_ids": trace_ids[:5], "hosts": hosts[:10]}
+    observed = f"The trigger found {count} HTTP 5xx server traces in this window."
+    if trace_ids:
+        observed += f" Trace IDs: {', '.join(str(value)[:256] for value in trace_ids[:5])}."
+    if hosts:
+        observed += f" Hosts: {', '.join(str(value)[:256] for value in hosts[:10])}."
+    question = (request.get("query") or "Find the root cause.").strip()
+    question = question[: max(0, 8000 - len(observed) - 1)].rstrip()
     return {
         **request,
-        "query": request.get("query")
-        or f"{count} HTTP 5xx server responses{where} in the window. Find the root cause.",
-        "scope": scope,
+        "query": f"{question}\n{observed}".strip(),
     }
 
 
@@ -279,7 +311,7 @@ def run_analysis(**context) -> None:
     try:
         if trigger == "server_error":
             window = request["scope"]["time_range"]
-            traces = _server_errors(window["start"], window["end"])
+            traces = _server_errors(window["start"], window["end"], request["scope"].get("trace") or {})
             if not traces:
                 raise _NoServerErrors()
             request = _triggered_request(request, traces)

@@ -63,6 +63,26 @@ public class TraceFacadeService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Attribute names Tempo saw in the window, ready to use in TraceQL. {@code query} is a spanset
+     * that narrows the spans looked at (e.g. {@code { resource.ns_id = "ns-1" }}).
+     */
+    public List<String> getAttributeNames(String query, String start, String end) {
+        long[] window = resolveWindow(start, end);
+        return traceService.getAttributeNames(blankToNull(query), window[0], window[1]);
+    }
+
+    /** Values one attribute takes in the window, narrowed by the optional spanset {@code query}. */
+    public List<TraceResponseDto.AttributeValue> getAttributeValues(
+            String attribute, String query, String start, String end) {
+        long[] window = resolveWindow(start, end);
+        return traceService.getAttributeValues(attribute, blankToNull(query), window[0], window[1]);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
     private boolean isFrameworkService(String serviceName) {
         return serviceName.startsWith(frameworkServicePrefix);
     }
