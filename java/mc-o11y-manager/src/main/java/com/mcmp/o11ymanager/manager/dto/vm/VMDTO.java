@@ -93,6 +93,14 @@ public class VMDTO {
     @JsonProperty("trace_agent_status")
     private AgentStatus traceAgentStatus;
 
+    @Schema(description = "Why the last monitoring agent install failed, if it did")
+    @JsonProperty("monitoring_agent_error")
+    private String monitoringAgentError;
+
+    @Schema(description = "Why the last log agent install failed, if it did")
+    @JsonProperty("log_agent_error")
+    private String logAgentError;
+
     public static VMDTO fromEntity(VMEntity entity) {
         return VMDTO.builder()
                 .nodeId(entity.getNodeId())

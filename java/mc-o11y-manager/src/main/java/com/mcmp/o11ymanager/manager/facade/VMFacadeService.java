@@ -6,14 +6,20 @@ import com.mcmp.o11ymanager.manager.dto.vm.VMDTO;
 import com.mcmp.o11ymanager.manager.dto.vm.VMRequestDTO;
 import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.enums.AgentStatus;
+import com.mcmp.o11ymanager.manager.enums.ResponseStatus;
+import com.mcmp.o11ymanager.manager.exception.host.HostAgentTaskProcessingException;
+import com.mcmp.o11ymanager.manager.global.aspect.request.DetachedRequestAttributes;
+import com.mcmp.o11ymanager.manager.global.aspect.request.RequestInfo;
 import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.host.VMStatus;
+import com.mcmp.o11ymanager.manager.service.AgentInstallFailureService;
 import com.mcmp.o11ymanager.manager.service.interfaces.InfluxDbService;
 import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,20 +39,26 @@ public class VMFacadeService {
 
     private ExecutorService executor;
 
+    // Runs agent installs after the install request has returned.
+    private ExecutorService installExecutor;
+
     @PostConstruct
     public void init() {
         this.executor = Executors.newFixedThreadPool(10);
+        this.installExecutor = Executors.newFixedThreadPool(4);
     }
 
     private final VMService vmService;
     private final AgentFacadeService agentFacadeService;
     private final TumblebugService tumblebugService;
     private final InfluxDbService influxDbService;
+    private final AgentInstallFailureService agentInstallFailureService;
+    private final RequestInfo requestInfo;
 
-    // Agent installs whose request is still running. The node's INSTALLING task status is only
+    // Agent installs still running in the background. The node's INSTALLING task status is only
     // committed when the install transaction ends, and a first install has no node row at all
     // until registration (InfluxDB resolution) finishes, so until then the status reads report
-    // INSTALLING from here. Otherwise a page that reloads mid-request sees the agent as not
+    // INSTALLING from here. Otherwise a page that reloads mid-install sees the agent as not
     // installed and offers Install again.
     private final Set<String> installsInFlight = ConcurrentHashMap.newKeySet();
 
@@ -57,9 +70,23 @@ public class VMFacadeService {
         return installsInFlight.contains(inFlightKey(nsId, infraId, nodeId, agent));
     }
 
+    // An install in flight wins, then a recorded install failure, then the stored task status.
     private AgentStatus withInFlight(
             String nsId, String infraId, String nodeId, Agent agent, AgentStatus status) {
-        return isInstallInFlight(nsId, infraId, nodeId, agent) ? AgentStatus.INSTALLING : status;
+        if (isInstallInFlight(nsId, infraId, nodeId, agent)) {
+            return AgentStatus.INSTALLING;
+        }
+        if (agentInstallFailureService.find(nsId, infraId, nodeId, agent).isPresent()) {
+            return AgentStatus.FAILED;
+        }
+        return status;
+    }
+
+    private String installError(String nsId, String infraId, String nodeId, Agent agent) {
+        if (isInstallInFlight(nsId, infraId, nodeId, agent)) {
+            return null;
+        }
+        return agentInstallFailureService.find(nsId, infraId, nodeId, agent).orElse(null);
     }
 
     public VMDTO postVM(String nsId, String infraId, String nodeId, VMRequestDTO dto) {
@@ -117,40 +144,105 @@ public class VMFacadeService {
     // install registers the node; the node record stays even when both agents are uninstalled
     // (both then show NOT_INSTALLED -> Install button).
 
+    // Installs are accepted and then run in the background: registering the node resolves an
+    // InfluxDB (each unreachable candidate costs a connect timeout) and the Semaphore request
+    // follows, which together can outlast the client's request timeout. Progress and failures are
+    // reported through the node status (INSTALLING / FAILED + *_agent_error).
     public List<ResultDTO> installMonitoringAgent(String nsId, String infraId, String nodeId) {
-        String key = inFlightKey(nsId, infraId, nodeId, Agent.TELEGRAF);
-        installsInFlight.add(key);
-        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
-        try {
-            hostLock.lock();
-            ensureRegistered(nsId, infraId, nodeId, Agent.TELEGRAF);
-            return agentFacadeService.installMonitoringAgent(nsId, infraId, nodeId);
-        } finally {
-            hostLock.unlock();
-            installsInFlight.remove(key);
-        }
+        return submitInstall(
+                nsId,
+                infraId,
+                nodeId,
+                Agent.TELEGRAF,
+                () -> agentFacadeService.installMonitoringAgent(nsId, infraId, nodeId));
     }
 
     public List<ResultDTO> uninstallMonitoringAgent(String nsId, String infraId, String nodeId) {
+        agentInstallFailureService.clear(nsId, infraId, nodeId, Agent.TELEGRAF);
         return agentFacadeService.uninstallMonitoringAgent(nsId, infraId, nodeId);
     }
 
     public List<ResultDTO> installLogAgent(String nsId, String infraId, String nodeId) {
-        String key = inFlightKey(nsId, infraId, nodeId, Agent.FLUENT_BIT);
-        installsInFlight.add(key);
-        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
-        try {
-            hostLock.lock();
-            ensureRegistered(nsId, infraId, nodeId, Agent.FLUENT_BIT);
-            return agentFacadeService.installLogAgent(nsId, infraId, nodeId);
-        } finally {
-            hostLock.unlock();
-            installsInFlight.remove(key);
-        }
+        return submitInstall(
+                nsId,
+                infraId,
+                nodeId,
+                Agent.FLUENT_BIT,
+                () -> agentFacadeService.installLogAgent(nsId, infraId, nodeId));
     }
 
     public List<ResultDTO> uninstallLogAgent(String nsId, String infraId, String nodeId) {
+        agentInstallFailureService.clear(nsId, infraId, nodeId, Agent.FLUENT_BIT);
         return agentFacadeService.uninstallLogAgent(nsId, infraId, nodeId);
+    }
+
+    private List<ResultDTO> submitInstall(
+            String nsId,
+            String infraId,
+            String nodeId,
+            Agent agent,
+            Supplier<List<ResultDTO>> install) {
+        String key = inFlightKey(nsId, infraId, nodeId, agent);
+        if (!installsInFlight.add(key)) {
+            throw new HostAgentTaskProcessingException(
+                    requestInfo.getRequestId(), nodeId, agent.name(), VMAgentTaskStatus.INSTALLING);
+        }
+        String requestId = requestInfo.getRequestId();
+        try {
+            agentInstallFailureService.clear(nsId, infraId, nodeId, agent);
+            installExecutor.execute(
+                    () ->
+                            DetachedRequestAttributes.run(
+                                    requestInfo,
+                                    requestId,
+                                    () -> runInstall(nsId, infraId, nodeId, agent, key, install)));
+        } catch (RuntimeException e) {
+            installsInFlight.remove(key);
+            throw e;
+        }
+        return List.of(
+                ResultDTO.builder()
+                        .nsId(nsId)
+                        .infraId(infraId)
+                        .nodeId(nodeId)
+                        .status(ResponseStatus.SUCCESS)
+                        .build());
+    }
+
+    private void runInstall(
+            String nsId,
+            String infraId,
+            String nodeId,
+            Agent agent,
+            String key,
+            Supplier<List<ResultDTO>> install) {
+        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
+        String failure = null;
+        try {
+            hostLock.lock();
+            ensureRegistered(nsId, infraId, nodeId, agent);
+            failure =
+                    install.get().stream()
+                            .filter(r -> r.getStatus() == ResponseStatus.ERROR)
+                            .map(r -> String.valueOf(r.getErrorMessage()))
+                            .findFirst()
+                            .orElse(null);
+        } catch (Exception e) {
+            log.error("Agent install failed: {}/{}/{} {}", nsId, infraId, nodeId, agent, e);
+            failure = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        } finally {
+            hostLock.unlock();
+            // Record the failure before leaving the in-flight set, so a status read never sees
+            // the gap between INSTALLING and FAILED as "not installed".
+            if (failure != null) {
+                try {
+                    agentInstallFailureService.record(nsId, infraId, nodeId, agent, failure);
+                } catch (Exception e) {
+                    log.error("Recording the agent install failure failed: {}", key, e);
+                }
+            }
+            installsInFlight.remove(key);
+        }
     }
 
     private void ensureRegistered(String nsId, String infraId, String nodeId, Agent installing) {
@@ -250,6 +342,8 @@ public class VMFacadeService {
                                         Agent.FLUENT_BIT,
                                         AgentStatus.NOT_INSTALLED))
                         .traceAgentStatus(AgentStatus.NOT_INSTALLED)
+                        .monitoringAgentError(installError(nsId, infraId, nodeId, Agent.TELEGRAF))
+                        .logAgentError(installError(nsId, infraId, nodeId, Agent.FLUENT_BIT))
                         .build();
             }
             TumblebugInfra.Node node = tumblebugService.getNode(nsId, infraId, nodeId);
@@ -299,6 +393,8 @@ public class VMFacadeService {
                     .monitoringAgentStatus(monitoringAgentStatus)
                     .logAgentStatus(logAgentStatus)
                     .traceAgentStatus(traceAgentStatus)
+                    .monitoringAgentError(installError(nsId, infraId, nodeId, Agent.TELEGRAF))
+                    .logAgentError(installError(nsId, infraId, nodeId, Agent.FLUENT_BIT))
                     .build();
         } catch (Exception e) {
             log.error(">>> getVM() failed", e);
@@ -352,15 +448,20 @@ public class VMFacadeService {
 
         List<VMDTO> result = fetchVM(rawList);
 
-        // A first install has no node row until registration finishes; list the node anyway so
-        // the page shows it as installing rather than not installed.
+        // A first install has no node row until registration finishes, and one that failed before
+        // that never gets one; list those nodes anyway so the page shows them as installing or
+        // failed rather than not installed.
         Set<String> listed = new HashSet<>();
         result.forEach(vm -> listed.add(vm.getNodeId()));
+        Set<String> unlisted = new LinkedHashSet<>();
         installsInFlight.stream()
                 .map(key -> key.split("/", 4))
                 .filter(k -> k[0].equals(nsId) && k[1].equals(infraId))
-                .map(k -> k[2])
-                .distinct()
+                .forEach(k -> unlisted.add(k[2]));
+        agentInstallFailureService
+                .findByNsInfra(nsId, infraId)
+                .forEach(f -> unlisted.add(f.getNodeId()));
+        unlisted.stream()
                 .filter(id -> !listed.contains(id))
                 .forEach(
                         id -> {

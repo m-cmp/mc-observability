@@ -50,7 +50,7 @@ export default function MonitoringConfig() {
         o11yNodes.forEach((n) => { o11yMap[n.node_id || n.id] = n; });
         const merged = tbNodes.map((node) => {
           const o = o11yMap[node.id] || {};
-          return { ...node, infraId, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
+          return { ...node, infraId, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, monitoring_agent_error: o.monitoring_agent_error || null, log_agent_error: o.log_agent_error || null, registered: !!o11yMap[node.id] };
         });
         setNodes(merged);
         setAllInfras([{ id: infraId, name: infraId, node: merged, status: infraData.status }]);
@@ -64,7 +64,7 @@ export default function MonitoringConfig() {
           o11yNodes.forEach((n) => { o11yMap[n.node_id || n.id] = n; });
           const merged = (infra.node || []).map((node) => {
             const o = o11yMap[node.id] || {};
-            return { ...node, infraId: infra.id, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, registered: !!o11yMap[node.id] };
+            return { ...node, infraId: infra.id, monitoring_agent_status: o.monitoring_agent_status || null, log_agent_status: o.log_agent_status || null, monitoring_agent_error: o.monitoring_agent_error || null, log_agent_error: o.log_agent_error || null, registered: !!o11yMap[node.id] };
           });
           return { ...infra, node: merged };
         }));
@@ -141,7 +141,7 @@ export default function MonitoringConfig() {
   async function handleAgent(e, node, kind, op) {
     e.stopPropagation();
     const a = AGENT_API[kind];
-    const verb = op === 'install' ? 'Install' : 'Uninstall';
+    const verb = op === 'install' ? (node[a.field] === 'FAILED' ? 'Retry installing' : 'Install') : 'Uninstall';
     if (!confirm(`${verb} ${a.label} on "${node.name || node.id}"?`)) return;
     const infra = node.infraId || infraId;
     const key = `${infra}/${node.id}/${kind}`;
@@ -190,7 +190,9 @@ export default function MonitoringConfig() {
   }
 
   // An agent column shows Install when its status is missing/NOT_INSTALLED, Uninstall otherwise.
-  const isAgentInstalled = (status) => !!status && status !== 'NOT_INSTALLED';
+  // FAILED is a failed install: the agent may not be there at all (it can fail before the node is
+  // registered), so it is not treated as installed.
+  const isAgentInstalled = (status) => !!status && status !== 'NOT_INSTALLED' && status !== 'FAILED';
 
   // --- Metric toggle with confirmation + overlay ---
   async function handleToggle(plugin, isActive) {
@@ -263,7 +265,7 @@ export default function MonitoringConfig() {
                 : infraNodes.map((node) => {
                   const run = nodeRunState(node.status);
                   // Monitoring (telegraf) and Log (fluent-bit) agents are installed independently.
-                  const agentControl = (kind, status) => {
+                  const agentControl = (kind, status, error) => {
                     const localOp = pending[`${node.infraId || infraId}/${node.id}/${kind}`];
                     const installed = isAgentInstalled(status);
                     // Show the pending label from either the just-clicked local op (before the server
@@ -276,6 +278,17 @@ export default function MonitoringConfig() {
                     if (run !== 'running') {
                       return <span className="text-xs text-gray-400" title={`Node is not running (${node.status || 'unknown'})`}>{installed ? 'installed' : '—'}</span>;
                     }
+                    // Installs run in the background on the server, so a failure comes back as the
+                    // FAILED status with its reason rather than as an error on the install request.
+                    if (status === 'FAILED') {
+                      return (
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          {error && <span className="text-xs text-red-600 truncate max-w-[16rem]" title={error}>{error}</span>}
+                          <button onClick={(e) => handleAgent(e, node, kind, 'install')} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Retry</button>
+                          {node.registered && <button onClick={(e) => handleAgent(e, node, kind, 'uninstall')} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                        </span>
+                      );
+                    }
                     if (installed) return <button onClick={(e) => handleAgent(e, node, kind, 'uninstall')} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>;
                     return <button onClick={(e) => handleAgent(e, node, kind, 'install')} className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50">Install</button>;
                   };
@@ -286,10 +299,10 @@ export default function MonitoringConfig() {
                     <td className="px-4 py-2.5 border-b text-gray-500">{node.id}</td>
                     <td className="px-4 py-2.5 border-b"><Badge status={node.status} /></td>
                     <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{agentControl('monitoring', node.monitoring_agent_status)}</div>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.monitoring_agent_status} run={run} />{agentControl('monitoring', node.monitoring_agent_status, node.monitoring_agent_error)}</div>
                     </td>
                     <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2"><AgentBadge status={node.log_agent_status} run={run} />{agentControl('log', node.log_agent_status)}</div>
+                      <div className="flex items-center gap-2"><AgentBadge status={node.log_agent_status} run={run} />{agentControl('log', node.log_agent_status, node.log_agent_error)}</div>
                     </td>
                   </tr>
                   );

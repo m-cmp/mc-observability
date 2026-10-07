@@ -6,6 +6,7 @@ import com.mcmp.o11ymanager.manager.model.host.VMAgentTaskStatus;
 import com.mcmp.o11ymanager.manager.model.semaphore.Project;
 import com.mcmp.o11ymanager.manager.model.semaphore.Task;
 import com.mcmp.o11ymanager.manager.port.SemaphorePort;
+import com.mcmp.o11ymanager.manager.service.AgentInstallFailureService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -48,6 +49,7 @@ public class SchedulerFacadeService {
 
     private final SemaphorePort semaphorePort;
     private final VMService vmService;
+    private final AgentInstallFailureService agentInstallFailureService;
 
     @Value("${feign.semaphore.project-name}")
     private String projectName;
@@ -176,6 +178,19 @@ public class SchedulerFacadeService {
                                         || "failed".equals(status)
                                         || "stopped".equals(status)) {
                                     log.debug("Task failed for agent {}", agent);
+
+                                    if (method != SemaphoreInstallMethod.UNINSTALL
+                                            && (agent == Agent.TELEGRAF
+                                                    || agent == Agent.FLUENT_BIT)) {
+                                        agentInstallFailureService.record(
+                                                nsId,
+                                                infraId,
+                                                nodeId,
+                                                agent,
+                                                String.format(
+                                                        "Semaphore task %s ended with status '%s'",
+                                                        currentTask.getId(), status));
+                                    }
 
                                     if (agent == Agent.TELEGRAF) {
                                         vmService.updateMonitoringAgentTaskStatus(
