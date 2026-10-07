@@ -13,7 +13,10 @@ import com.mcmp.o11ymanager.manager.service.interfaces.TumblebugService;
 import com.mcmp.o11ymanager.manager.service.interfaces.VMService;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,6 +41,26 @@ public class VMFacadeService {
     private final AgentFacadeService agentFacadeService;
     private final TumblebugService tumblebugService;
     private final InfluxDbService influxDbService;
+
+    // Agent installs whose request is still running. The node's INSTALLING task status is only
+    // committed when the install transaction ends, and a first install has no node row at all
+    // until registration (InfluxDB resolution) finishes, so until then the status reads report
+    // INSTALLING from here. Otherwise a page that reloads mid-request sees the agent as not
+    // installed and offers Install again.
+    private final Set<String> installsInFlight = ConcurrentHashMap.newKeySet();
+
+    private static String inFlightKey(String nsId, String infraId, String nodeId, Agent agent) {
+        return nsId + "/" + infraId + "/" + nodeId + "/" + agent;
+    }
+
+    private boolean isInstallInFlight(String nsId, String infraId, String nodeId, Agent agent) {
+        return installsInFlight.contains(inFlightKey(nsId, infraId, nodeId, agent));
+    }
+
+    private AgentStatus withInFlight(
+            String nsId, String infraId, String nodeId, Agent agent, AgentStatus status) {
+        return isInstallInFlight(nsId, infraId, nodeId, agent) ? AgentStatus.INSTALLING : status;
+    }
 
     public VMDTO postVM(String nsId, String infraId, String nodeId, VMRequestDTO dto) {
 
@@ -95,6 +118,8 @@ public class VMFacadeService {
     // (both then show NOT_INSTALLED -> Install button).
 
     public List<ResultDTO> installMonitoringAgent(String nsId, String infraId, String nodeId) {
+        String key = inFlightKey(nsId, infraId, nodeId, Agent.TELEGRAF);
+        installsInFlight.add(key);
         ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
         try {
             hostLock.lock();
@@ -102,6 +127,7 @@ public class VMFacadeService {
             return agentFacadeService.installMonitoringAgent(nsId, infraId, nodeId);
         } finally {
             hostLock.unlock();
+            installsInFlight.remove(key);
         }
     }
 
@@ -110,6 +136,8 @@ public class VMFacadeService {
     }
 
     public List<ResultDTO> installLogAgent(String nsId, String infraId, String nodeId) {
+        String key = inFlightKey(nsId, infraId, nodeId, Agent.FLUENT_BIT);
+        installsInFlight.add(key);
         ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
         try {
             hostLock.lock();
@@ -117,6 +145,7 @@ public class VMFacadeService {
             return agentFacadeService.installLogAgent(nsId, infraId, nodeId);
         } finally {
             hostLock.unlock();
+            installsInFlight.remove(key);
         }
     }
 
@@ -183,11 +212,9 @@ public class VMFacadeService {
         log.info(
                 ">>> getVM() called with nsId: {}, infraId: {}, nodeId: {}", nsId, infraId, nodeId);
 
-        ReentrantLock hostLock = vmService.getHostLock(nsId, infraId, nodeId);
-
+        // No host lock here: it is held for the whole agent install request, and this read would
+        // stall the status poll until the install request returns.
         try {
-            hostLock.lock();
-
             VMDTO savedVM;
             try {
                 savedVM = vmService.get(nsId, infraId, nodeId);
@@ -208,8 +235,20 @@ public class VMFacadeService {
                         .name(name != null ? name : nodeId)
                         .nsId(nsId)
                         .infraId(infraId)
-                        .monitoringAgentStatus(AgentStatus.NOT_INSTALLED)
-                        .logAgentStatus(AgentStatus.NOT_INSTALLED)
+                        .monitoringAgentStatus(
+                                withInFlight(
+                                        nsId,
+                                        infraId,
+                                        nodeId,
+                                        Agent.TELEGRAF,
+                                        AgentStatus.NOT_INSTALLED))
+                        .logAgentStatus(
+                                withInFlight(
+                                        nsId,
+                                        infraId,
+                                        nodeId,
+                                        Agent.FLUENT_BIT,
+                                        AgentStatus.NOT_INSTALLED))
                         .traceAgentStatus(AgentStatus.NOT_INSTALLED)
                         .build();
             }
@@ -231,10 +270,22 @@ public class VMFacadeService {
             // Agent.FLUENT_BIT);
 
             AgentStatus monitoringAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.TELEGRAF);
+                    withInFlight(
+                            nsId,
+                            infraId,
+                            nodeId,
+                            Agent.TELEGRAF,
+                            agentFacadeService.getAgentStatus(
+                                    nsId, infraId, nodeId, Agent.TELEGRAF));
 
             AgentStatus logAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.FLUENT_BIT);
+                    withInFlight(
+                            nsId,
+                            infraId,
+                            nodeId,
+                            Agent.FLUENT_BIT,
+                            agentFacadeService.getAgentStatus(
+                                    nsId, infraId, nodeId, Agent.FLUENT_BIT));
 
             AgentStatus traceAgentStatus =
                     agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.BEYLA);
@@ -252,8 +303,6 @@ public class VMFacadeService {
         } catch (Exception e) {
             log.error(">>> getVM() failed", e);
             throw e;
-        } finally {
-            hostLock.unlock();
         }
     }
 
@@ -301,7 +350,28 @@ public class VMFacadeService {
 
         List<VMDTO> rawList = vmService.getByNsMci(nsId, infraId);
 
-        return fetchVM(rawList);
+        List<VMDTO> result = fetchVM(rawList);
+
+        // A first install has no node row until registration finishes; list the node anyway so
+        // the page shows it as installing rather than not installed.
+        Set<String> listed = new HashSet<>();
+        result.forEach(vm -> listed.add(vm.getNodeId()));
+        installsInFlight.stream()
+                .map(key -> key.split("/", 4))
+                .filter(k -> k[0].equals(nsId) && k[1].equals(infraId))
+                .map(k -> k[2])
+                .distinct()
+                .filter(id -> !listed.contains(id))
+                .forEach(
+                        id -> {
+                            try {
+                                result.add(getVM(nsId, infraId, id));
+                            } catch (Exception e) {
+                                log.error(">>> getVM() failed for in-flight node: {}", id, e);
+                            }
+                        });
+
+        return result;
     }
 
     public List<VMDTO> getVMs() {
