@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.manager.dto.tumblebug;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -17,6 +18,12 @@ public class TumblebugK8sCluster {
     private String connectionName;
     private String status;
     private AccessInfo accessInfo;
+
+    /**
+     * The cb-spider cluster detail cb-tumblebug fetched for this cluster (node groups and their
+     * nodes), so callers need not ask cb-spider again. May be absent on older cb-tumblebug.
+     */
+    private SpiderClusterInfo spiderViewK8sClusterDetail;
 
     /** cb-tumblebug system labels; carries {@code sys.cspResourceName} among others. */
     private Map<String, String> label;

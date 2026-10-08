@@ -2,6 +2,7 @@ package com.mcmp.o11ymanager.manager.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.mcmp.o11ymanager.manager.dto.SpiderClusterInfo;
 import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
@@ -32,8 +33,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -88,15 +92,52 @@ public class K8sAgentService {
     private final HttpClient http =
             HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
-    // Per-node status is expensive: a live cb-spider getCluster (CSP round-trip) plus InfluxDB
-    // cardinality/last-seen queries, run once per cluster. The UI polls every cluster's agent and
-    // log-agent status on a short interval, so without caching those slow calls pile up in the
-    // Tomcat queue and the whole UI stalls behind them. A short TTL collapses a burst of polls into
-    // a single backend pass while keeping status fresh enough to be useful.
-    private final Cache<String, List<NodeStatus>> statusCache =
-            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(500).build();
-    private final Cache<String, List<NodeStatus>> logStatusCache =
-            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(15)).maximumSize(500).build();
+    // Per-node status is expensive: the cluster's node list comes from a live CSP round-trip
+    // (cb-tumblebug -> cb-spider, 1s on AWS and 10-15s on IBM IKS), plus InfluxDB/Loki queries.
+    // The UI polls every cluster's agent and log-agent status every 10s. Entries are refreshed in
+    // the background once older than STATUS_REFRESH, and a poll meanwhile gets the previous value
+    // at once, so only the very first request for a cluster waits on the CSP.
+    private static final Duration STATUS_REFRESH = Duration.ofSeconds(10);
+    private static final Duration STATUS_EXPIRE = Duration.ofMinutes(2);
+    private final ExecutorService statusRefreshExecutor =
+            Executors.newFixedThreadPool(
+                    4,
+                    r -> {
+                        Thread t = new Thread(r, "k8s-status-refresh");
+                        t.setDaemon(true);
+                        return t;
+                    });
+    private final LoadingCache<String, List<NodeStatus>> statusCache =
+            Caffeine.newBuilder()
+                    .refreshAfterWrite(STATUS_REFRESH)
+                    .expireAfterWrite(STATUS_EXPIRE)
+                    .maximumSize(500)
+                    .executor(statusRefreshExecutor)
+                    .build(key -> computeStatus(nsOf(key), clusterOf(key)));
+    private final LoadingCache<String, List<NodeStatus>> logStatusCache =
+            Caffeine.newBuilder()
+                    .refreshAfterWrite(STATUS_REFRESH)
+                    .expireAfterWrite(STATUS_EXPIRE)
+                    .maximumSize(500)
+                    .executor(statusRefreshExecutor)
+                    .build(key -> computeLogStatus(nsOf(key), clusterOf(key)));
+
+    // The cluster's node groups, shared by the agent and log-agent status so one refresh of both
+    // costs one CSP round-trip instead of two.
+    private final Cache<String, Optional<SpiderClusterInfo>> clusterInfoCache =
+            Caffeine.newBuilder().expireAfterWrite(Duration.ofSeconds(30)).maximumSize(500).build();
+
+    private static String cacheKey(String nsId, String clusterId) {
+        return nsId + "/" + clusterId;
+    }
+
+    private static String nsOf(String key) {
+        return key.substring(0, key.indexOf('/'));
+    }
+
+    private static String clusterOf(String key) {
+        return key.substring(key.indexOf('/') + 1);
+    }
 
     // Per-node lock: serialize install/uninstall on a single k8s node so concurrent requests (e.g.
     // two browser tabs) don't launch two Jobs that, sharing a name, delete each other mid-run.
@@ -494,8 +535,7 @@ public class K8sAgentService {
 
     /** Per-node log agent status (running = node logs present in Loki recently). */
     public List<NodeStatus> logStatus(String nsId, String clusterId) {
-        List<NodeStatus> base =
-                logStatusCache.get(nsId + "/" + clusterId, k -> computeLogStatus(nsId, clusterId));
+        List<NodeStatus> base = logStatusCache.get(cacheKey(nsId, clusterId));
         return overlayTaskStatus(nsId, clusterId, base, true);
     }
 
@@ -669,8 +709,7 @@ public class K8sAgentService {
     }
 
     public List<NodeStatus> status(String nsId, String clusterId) {
-        List<NodeStatus> base =
-                statusCache.get(nsId + "/" + clusterId, k -> computeStatus(nsId, clusterId));
+        List<NodeStatus> base = statusCache.get(cacheKey(nsId, clusterId));
         return overlayTaskStatus(nsId, clusterId, base, false);
     }
 
@@ -776,38 +815,57 @@ public class K8sAgentService {
      * old names left over from a previous cluster generation don't pile up). Any shortfall against
      * {@code DesiredNodeSize} is filled with powered-off placeholder rows.
      */
+    /**
+     * The cluster's cb-spider detail. cb-tumblebug already fetches it from cb-spider to answer
+     * getK8sCluster and returns it as {@code spiderViewK8sClusterDetail}; asking cb-spider again
+     * doubled the CSP round-trip. cb-spider is only called when that field is missing.
+     */
+    private Optional<SpiderClusterInfo> fetchClusterInfo(String nsId, String clusterId) {
+        TumblebugK8sCluster cluster = tumblebugClient.getK8sCluster(nsId, clusterId);
+        if (cluster == null) {
+            return Optional.empty();
+        }
+        if (cluster.getSpiderViewK8sClusterDetail() != null) {
+            return Optional.of(cluster.getSpiderViewK8sClusterDetail());
+        }
+        String conn = cluster.getConnectionName();
+        String cspName = cluster.getCspResourceName();
+        if (conn == null || cspName == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(spiderClient.getCluster(cspName, conn));
+    }
+
     private List<NodeRef> discoverNodes(
             String nsId, String clusterId, Map<String, String> historyLastSeen) {
         Set<String> running = new LinkedHashSet<>();
         List<String> ngNames = new ArrayList<>();
         int desired = 0;
         try {
-            TumblebugK8sCluster cluster = tumblebugClient.getK8sCluster(nsId, clusterId);
-            String conn = cluster == null ? null : cluster.getConnectionName();
-            String cspName = cluster == null ? null : cluster.getCspResourceName();
-            if (conn != null && cspName != null) {
-                SpiderClusterInfo info = spiderClient.getCluster(cspName, conn);
-                if (info != null && info.getNodeGroupList() != null) {
-                    for (SpiderClusterInfo.NodeGroup ng : info.getNodeGroupList()) {
-                        if (ng.getIId() != null && ng.getIId().getNameId() != null) {
-                            ngNames.add(ng.getIId().getNameId());
-                        }
-                        if (ng.getNodes() != null) {
-                            for (SpiderClusterInfo.IId n : ng.getNodes()) {
-                                String key = nodeKey(n, ng.getNodes());
-                                if (key != null) {
-                                    running.add(key);
-                                }
+            SpiderClusterInfo info =
+                    clusterInfoCache
+                            .get(cacheKey(nsId, clusterId), k -> fetchClusterInfo(nsId, clusterId))
+                            .orElse(null);
+            if (info != null && info.getNodeGroupList() != null) {
+                for (SpiderClusterInfo.NodeGroup ng : info.getNodeGroupList()) {
+                    if (ng.getIId() != null && ng.getIId().getNameId() != null) {
+                        ngNames.add(ng.getIId().getNameId());
+                    }
+                    if (ng.getNodes() != null) {
+                        for (SpiderClusterInfo.IId n : ng.getNodes()) {
+                            String key = nodeKey(n, ng.getNodes());
+                            if (key != null) {
+                                running.add(key);
                             }
                         }
-                        if (ng.getDesiredNodeSize() != null) {
-                            desired += ng.getDesiredNodeSize();
-                        }
+                    }
+                    if (ng.getDesiredNodeSize() != null) {
+                        desired += ng.getDesiredNodeSize();
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("k8s node discovery via cb-spider failed cluster={}/{}", nsId, clusterId, e);
+            log.warn("k8s node discovery failed cluster={}/{}", nsId, clusterId, e);
         }
 
         LinkedHashMap<String, NodeRef> ordered = new LinkedHashMap<>();
