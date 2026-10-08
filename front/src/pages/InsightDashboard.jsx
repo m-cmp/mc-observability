@@ -1244,6 +1244,10 @@ function RcaTab() {
   );
 }
 
+// Durations differ on nearly every span, so their value list runs to tens of thousands of
+// options and freezes the browser. The API still accepts them in a trace scope.
+const UNLISTABLE_TRACE_KEYS = new Set(['duration', 'traceDuration', 'span:duration', 'trace:duration']);
+
 function RcaScopePicker({ rows, onChange, timeStart, timeEnd, watch }) {
   const startDate = new Date(timeStart);
   const endDate = new Date(timeEnd);
@@ -1266,7 +1270,9 @@ function RcaScopePicker({ rows, onChange, timeStart, timeEnd, watch }) {
       setDiscovery((current) => ({
         ...current,
         log: results[0].status === 'fulfilled' ? results[0].value : [],
-        trace: results[1].status === 'fulfilled' ? results[1].value : [],
+        trace: results[1].status === 'fulfilled'
+          ? results[1].value.filter((key) => !UNLISTABLE_TRACE_KEYS.has(key))
+          : [],
       }));
       setKeyErrors((current) => ({
         ...current,
