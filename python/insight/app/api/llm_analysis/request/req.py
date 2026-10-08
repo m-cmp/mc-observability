@@ -31,7 +31,6 @@ class PostConnectionBody(BaseModel):
     provider: ConnectionProviderType
     base_url: str | None = Field(default=None, min_length=1, pattern=r"^https?://")
     api_key: str | None = Field(default=None, min_length=1)
-    default_model: str | None = Field(default=None, min_length=1, max_length=255)
     context_length: int | None = Field(
         default=None,
         ge=MIN_CONTEXT_LENGTH,
@@ -55,15 +54,9 @@ class PostConnectionBody(BaseModel):
             and not self.api_key
         ):
             raise ValueError("api_key is required for the default OpenAI endpoint")
-        if self.is_default and not self.default_model:
-            raise ValueError("default_model is required for the default connection")
         if self.is_default and not self.enabled:
             raise ValueError("the default connection must be enabled")
         return self
-
-
-class SetDefaultConnectionBody(BaseModel):
-    model_name: str = Field(..., min_length=1, max_length=255)
 
 
 class PatchConnectionBody(BaseModel):
@@ -71,7 +64,6 @@ class PatchConnectionBody(BaseModel):
     provider: ConnectionProviderType | None = None
     base_url: str | None = Field(default=None, min_length=1, pattern=r"^https?://")
     api_key: str | None = Field(default=None, min_length=1)
-    default_model: str | None = Field(default=None, min_length=1, max_length=255)
     context_length: int | None = Field(
         default=None,
         ge=MIN_CONTEXT_LENGTH,
@@ -144,6 +136,8 @@ class PostRcaQueryBody(BaseModel):
     def validate_request(self):
         if self.session_id and (self.connection_id is not None or self.model_name is not None):
             raise ValueError("connection_id and model_name cannot override an existing session")
+        if not self.session_id and not self.model_name:
+            raise ValueError("model_name is required for a new session")
         if self.scope.time_range.start is None:
             end = datetime.now(UTC)
             self.scope.time_range = IncidentTimeRange(

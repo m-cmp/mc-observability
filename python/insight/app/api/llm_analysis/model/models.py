@@ -32,7 +32,6 @@ class LLMConnection(Base):
     PROVIDER = Column(String(20), nullable=False)
     BASE_URL = Column(Text, nullable=True)
     API_KEY_ENCRYPTED = Column(Text, nullable=True)
-    DEFAULT_MODEL = Column(String(255), nullable=True)
     # Input context window this endpoint actually serves. Belongs to the connection, not the
     # model name: Ollama sizes the window from the host's VRAM, so the same model is 4k on one
     # server and 256k on another. NULL means "unknown" and callers fall back with a warning.

@@ -24,6 +24,11 @@ import {
 
 const TABS = ['Anomaly Detection', 'Prediction', 'RCA'];
 
+// Red asterisk after the label of a field that must be filled in.
+function RequiredMark() {
+  return <span className="text-red-500"> *</span>;
+}
+
 export default function InsightDashboard() {
   const { nsId, infraId, nodeId } = useParams();
   const [tab, setTab] = useState(0);
@@ -257,7 +262,7 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
         {/* Infra selector only when not already fixed by the path */}
         {!infraId && (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
+            <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster<RequiredMark /></label>
             <select value={infra} onChange={(e) => { setInfra(e.target.value); setNode(''); }} className="w-full border rounded px-3 py-1.5 text-sm">
               <option value="">{scopeLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
               {scopeLoading && <option disabled>Loading infras / clusters…</option>}
@@ -282,14 +287,14 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-600 mb-1">Measurement</label>
+          <label className="block text-xs text-gray-600 mb-1">Measurement<RequiredMark /></label>
           <select value={measurement} onChange={(e) => setMeasurement(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
             <option value="">Select</option>
             {measurements.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-600 mb-1">Execution Interval</label>
+          <label className="block text-xs text-gray-600 mb-1">Execution Interval<RequiredMark /></label>
           <select value={interval} onChange={(e) => setInterval(e.target.value)} className="w-full border rounded px-3 py-1.5 text-sm">
             <option value="">Select</option>
             {intervals.map((i) => <option key={i} value={i}>{i}</option>)}
@@ -400,7 +405,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
           {/* Infra selector only when not already fixed by the path */}
           {!infraId && (
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster</label>
+              <label className="block text-xs text-gray-600 mb-1">Scope — Infra / Cluster<RequiredMark /></label>
               <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={pInfra} onChange={(e) => { setPInfra(e.target.value); setPNode(''); }}>
                 <option value="">{scopeLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
                 {scopeLoading && <option disabled>Loading infras / clusters…</option>}
@@ -425,14 +430,14 @@ function PredictionTab({ nsId, infraId, nodeId }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Measurement</label>
+            <label className="block text-xs text-gray-600 mb-1">Measurement<RequiredMark /></label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={measurement} onChange={(e) => setMeasurement(e.target.value)}>
               <option value="">Select</option>
               {(options.measurements || []).map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Prediction Range</label>
+            <label className="block text-xs text-gray-600 mb-1">Prediction Range<RequiredMark /></label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
               {RANGE_PRESETS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
@@ -466,7 +471,7 @@ const RCA_COLUMNS = [
 ];
 
 const LLM_COLUMNS = [
-  { label: 'Name' }, { label: 'Provider' }, { label: 'Endpoint' }, { label: 'Default Model' },
+  { label: 'Name' }, { label: 'Provider' }, { label: 'Endpoint' },
   { label: 'Default' }, { label: 'Status' }, { label: 'Actions', className: 'text-right' },
 ];
 
@@ -542,21 +547,20 @@ function RcaTab() {
       return undefined;
     }
     let active = true;
-    setModelName(connection.default_model || '');
+    // No model is preselected: the user picks one from what the endpoint serves, and an
+    // endpoint that cannot list its models cannot run an analysis.
     getLlmConnectionModels(connection.id)
       .then((data) => {
         if (!active) return;
         const models = data.models || [];
-        const options = connection.default_model && !models.includes(connection.default_model)
-          ? [connection.default_model, ...models]
-          : models;
-        setConnectionModels(options);
-        setModelName((current) => (
-          options.includes(current) ? current : connection.default_model || options[0] || ''
-        ));
+        setConnectionModels(models);
+        setModelName((current) => (models.includes(current) ? current : ''));
       })
-      .catch(() => {
-        if (active) setConnectionModels(connection.default_model ? [connection.default_model] : []);
+      .catch((e) => {
+        if (!active) return;
+        setConnectionModels([]);
+        setModelName('');
+        setMsg('Failed to load models: ' + apiError(e));
       });
     return () => { active = false; };
   }, [connectionId, llmConnections]);
@@ -608,7 +612,7 @@ function RcaTab() {
     setDefaultingId(connection.id);
     setMsg('');
     try {
-      await setDefaultLlmConnection(connection.id, connection.default_model);
+      await setDefaultLlmConnection(connection.id);
       await loadConnections();
       setMsg(`"${connection.name}" is now the default connection.`);
     } catch (e) {
@@ -816,7 +820,6 @@ function RcaTab() {
                     <td className="px-3 py-2 border-b font-medium">{connection.name}</td>
                     <td className="px-3 py-2 border-b uppercase text-xs">{connection.provider}</td>
                     <td className="px-3 py-2 border-b text-xs break-all">{connection.base_url || 'OpenAI default'}</td>
-                    <td className="px-3 py-2 border-b">{connection.default_model || '-'}</td>
                     <td className="px-3 py-2 border-b">
                       {connection.is_default ? <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Default</span> : '-'}
                     </td>
@@ -828,9 +831,8 @@ function RcaTab() {
                     <td className="px-3 py-2 border-b text-right whitespace-nowrap space-x-3">
                       {!connection.is_default && (
                         <button type="button"
-                          disabled={!connection.enabled || !connection.default_model || defaultingId === connection.id}
-                          title={!connection.enabled ? 'Enable the connection first'
-                            : !connection.default_model ? 'Set a default model first' : ''}
+                          disabled={!connection.enabled || defaultingId === connection.id}
+                          title={!connection.enabled ? 'Enable the connection first' : ''}
                           onClick={() => handleSetDefault(connection)}
                           className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-300 disabled:cursor-not-allowed">
                           {defaultingId === connection.id ? 'Setting…' : 'Set default'}
@@ -1025,14 +1027,14 @@ function RcaTab() {
               {mode !== 'once' && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <div className={mode === 'anomaly' ? 'md:col-span-2' : 'md:col-span-3'}>
-                    <label htmlFor="rca-schedule-name" className="block text-xs text-gray-600 mb-1">Name</label>
+                    <label htmlFor="rca-schedule-name" className="block text-xs text-gray-600 mb-1">Name<RequiredMark /></label>
                     <input id="rca-schedule-name" value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} maxLength={100}
                       placeholder={mode === 'watch' ? 'payment 5xx' : 'checkout errors'}
                       className="border rounded px-3 py-1.5 text-sm w-full" />
                   </div>
                   {mode === 'anomaly' ? (
                     <div className="md:col-span-2">
-                      <label htmlFor="rca-anomaly-setting" className="block text-xs text-gray-600 mb-1">Anomaly detection setting</label>
+                      <label htmlFor="rca-anomaly-setting" className="block text-xs text-gray-600 mb-1">Anomaly detection setting<RequiredMark /></label>
                       <select id="rca-anomaly-setting" value={anomalySettingSeq}
                         onChange={(e) => setAnomalySettingSeq(e.target.value)}
                         className="border rounded px-3 py-1.5 text-sm w-full">
@@ -1044,7 +1046,7 @@ function RcaTab() {
                     </div>
                   ) : (
                     <div>
-                      <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)</label>
+                      <label htmlFor="rca-schedule-interval" className="block text-xs text-gray-600 mb-1">Every (min)<RequiredMark /></label>
                       <input id="rca-schedule-interval" type="number" min={5} max={10080} value={scheduleInterval}
                         onChange={(e) => setScheduleInterval(e.target.value)}
                         className="border rounded px-3 py-1.5 text-sm w-full" />
@@ -1065,7 +1067,7 @@ function RcaTab() {
             <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
               {(mode === 'once' || mode === 'schedule') && (
                 <div>
-                  <label htmlFor="rca-query" className="block text-xs font-medium text-gray-700 mb-1">Analysis request</label>
+                  <label htmlFor="rca-query" className="block text-xs font-medium text-gray-700 mb-1">Analysis request<RequiredMark /></label>
                   <textarea id="rca-query" value={query} onChange={(e) => setQuery(e.target.value)}
                     maxLength={8000}
                     className="border rounded px-3 py-2 text-sm w-full h-20"
@@ -1088,17 +1090,15 @@ function RcaTab() {
                   </>
                 )}
                 <div>
-                  <label htmlFor="rca-connection" className="block text-xs text-gray-600 mb-1">Connection</label>
+                  <label htmlFor="rca-connection" className="block text-xs text-gray-600 mb-1">Connection<RequiredMark /></label>
                   <select
                     id="rca-connection"
                     value={connectionId}
                     disabled={enabledConnections.length === 0}
                     onChange={(e) => {
-                      const nextId = e.target.value;
-                      const connection = enabledConnections.find((item) => String(item.id) === nextId);
-                      setConnectionId(nextId);
-                      setConnectionModels(connection?.default_model ? [connection.default_model] : []);
-                      setModelName(connection?.default_model || '');
+                      setConnectionId(e.target.value);
+                      setConnectionModels([]);
+                      setModelName('');
                     }}
                     className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100"
                   >
@@ -1111,11 +1111,11 @@ function RcaTab() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="rca-model" className="block text-xs text-gray-600 mb-1">Model</label>
+                  <label htmlFor="rca-model" className="block text-xs text-gray-600 mb-1">Model<RequiredMark /></label>
                   <select id="rca-model" value={modelName} disabled={connectionModels.length === 0}
                     onChange={(e) => setModelName(e.target.value)}
                     className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100">
-                    {connectionModels.length === 0 && <option value="">No model</option>}
+                    <option value="">{connectionModels.length === 0 ? 'No model' : 'Select a model'}</option>
                     {connectionModels.map((mn) => <option key={mn} value={mn}>{mn}</option>)}
                   </select>
                 </div>
@@ -1147,6 +1147,8 @@ function RcaTab() {
               </div>
               <button type="submit" aria-busy={busy}
                 disabled={busy || !connectionId || !modelName || (mode !== 'once' && !scheduleName.trim())
+                  // Watches build their own question from what triggered them; the API keeps query optional.
+                  || ((mode === 'once' || mode === 'schedule') && !query.trim())
                   || (mode === 'anomaly' && !anomalySettingSeq)}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-purple-600 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 {busy && (
@@ -1242,6 +1244,10 @@ function RcaTab() {
   );
 }
 
+// Durations differ on nearly every span, so their value list runs to tens of thousands of
+// options and freezes the browser. The API still accepts them in a trace scope.
+const UNLISTABLE_TRACE_KEYS = new Set(['duration', 'traceDuration', 'span:duration', 'trace:duration']);
+
 function RcaScopePicker({ rows, onChange, timeStart, timeEnd, watch }) {
   const startDate = new Date(timeStart);
   const endDate = new Date(timeEnd);
@@ -1264,7 +1270,9 @@ function RcaScopePicker({ rows, onChange, timeStart, timeEnd, watch }) {
       setDiscovery((current) => ({
         ...current,
         log: results[0].status === 'fulfilled' ? results[0].value : [],
-        trace: results[1].status === 'fulfilled' ? results[1].value : [],
+        trace: results[1].status === 'fulfilled'
+          ? results[1].value.filter((key) => !UNLISTABLE_TRACE_KEYS.has(key))
+          : [],
       }));
       setKeyErrors((current) => ({
         ...current,
@@ -1567,13 +1575,13 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
       <div>
-        <label htmlFor={`${idPrefix}-name`} className="block text-xs text-gray-600 mb-1">Name</label>
+        <label htmlFor={`${idPrefix}-name`} className="block text-xs text-gray-600 mb-1">Name<RequiredMark /></label>
         <input id={`${idPrefix}-name`} required maxLength={100} value={value.name}
           onChange={(e) => set({ name: e.target.value })}
           className="w-full border rounded px-3 py-1.5 text-sm" placeholder="Production LLM" />
       </div>
       <div>
-        <label htmlFor={`${idPrefix}-provider`} className="block text-xs text-gray-600 mb-1">Provider</label>
+        <label htmlFor={`${idPrefix}-provider`} className="block text-xs text-gray-600 mb-1">Provider<RequiredMark /></label>
         <select id={`${idPrefix}-provider`} value={value.provider} onChange={(e) => set({ provider: e.target.value })}
           className="w-full border rounded px-3 py-1.5 text-sm">
           <option value="openai">OpenAI</option>
@@ -1581,26 +1589,26 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
         </select>
       </div>
       <div>
-        <label htmlFor={`${idPrefix}-base-url`} className="block text-xs text-gray-600 mb-1">Base URL</label>
+        <label htmlFor={`${idPrefix}-base-url`} className="block text-xs text-gray-600 mb-1">
+          Base URL{value.provider === 'ollama' && <RequiredMark />}
+        </label>
         <input id={`${idPrefix}-base-url`} type="url" required={value.provider === 'ollama'} value={value.baseUrl}
           onChange={(e) => set({ baseUrl: e.target.value })}
           className="w-full border rounded px-3 py-1.5 text-sm"
           placeholder={value.provider === 'ollama' ? 'http://ollama:11434' : 'OpenAI default'} />
       </div>
-      <div>
-        <label htmlFor={`${idPrefix}-api-key`} className="block text-xs text-gray-600 mb-1">API Key</label>
-        <input id={`${idPrefix}-api-key`} type="password" autoComplete="new-password" value={value.apiKey}
-          onChange={(e) => set({ apiKey: e.target.value })}
-          className="w-full border rounded px-3 py-1.5 text-sm"
-          placeholder={apiKeyPlaceholder ?? (value.provider === 'openai' ? 'Required for OpenAI' : 'Optional')} />
-      </div>
-      <div>
-        <label htmlFor={`${idPrefix}-default-model`} className="block text-xs text-gray-600 mb-1">Default Model</label>
-        <input id={`${idPrefix}-default-model`} required maxLength={255} value={value.defaultModel}
-          onChange={(e) => set({ defaultModel: e.target.value })}
-          className="w-full border rounded px-3 py-1.5 text-sm"
-          placeholder={value.provider === 'ollama' ? 'llama3.1' : 'gpt-4o-mini'} />
-      </div>
+      {/* Ollama is called without credentials, so a key would be stored and never used. */}
+      {value.provider !== 'ollama' && (
+        <div>
+          <label htmlFor={`${idPrefix}-api-key`} className="block text-xs text-gray-600 mb-1">
+            API Key{!value.baseUrl.trim() && <RequiredMark />}
+          </label>
+          <input id={`${idPrefix}-api-key`} type="password" autoComplete="new-password" value={value.apiKey}
+            onChange={(e) => set({ apiKey: e.target.value })}
+            className="w-full border rounded px-3 py-1.5 text-sm"
+            placeholder={apiKeyPlaceholder ?? 'Required for OpenAI'} />
+        </div>
+      )}
       <div>
         <label htmlFor={`${idPrefix}-context-length`} className="block text-xs text-gray-600 mb-1">Context Length</label>
         <input id={`${idPrefix}-context-length`} type="number" min={1024} max={10000000} step={1024}
@@ -1609,9 +1617,7 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
           className="w-full border rounded px-3 py-1.5 text-sm"
           placeholder="Leave empty to use the server default" />
         <p className="mt-1 text-xs text-gray-500">
-          Input tokens this endpoint actually serves. Ollama sizes it from host VRAM, so the same
-          model differs per server. If left empty and the window cannot be detected, analysis
-          budgets assume a large window and the server may silently drop the oldest messages.
+          Leave empty for OpenAI. For Ollama or vLLM, enter the window the server actually serves.
         </p>
       </div>
     </div>
@@ -1627,7 +1633,7 @@ function parseContextLength(raw) {
 }
 
 function CreateLlmConnectionForm({ makeDefault, onCreated }) {
-  const [value, setValue] = useState({ name: '', provider: 'openai', baseUrl: '', apiKey: '', defaultModel: '', contextLength: '' });
+  const [value, setValue] = useState({ name: '', provider: 'openai', baseUrl: '', apiKey: '', contextLength: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -1639,8 +1645,7 @@ function CreateLlmConnectionForm({ makeDefault, onCreated }) {
       name: value.name.trim(),
       provider: value.provider,
       base_url: value.baseUrl.trim() || null,
-      api_key: value.apiKey.trim() || null,
-      default_model: value.defaultModel.trim(),
+      api_key: (value.provider !== 'ollama' && value.apiKey.trim()) || null,
       context_length: parseContextLength(value.contextLength),
       enabled: true,
       is_default: makeDefault,
@@ -1671,7 +1676,6 @@ function EditLlmConnectionForm({ connection, onUpdated, onCancel }) {
     provider: connection.provider || 'openai',
     baseUrl: connection.base_url || '',
     apiKey: '',
-    defaultModel: connection.default_model || '',
     contextLength: connection.context_length == null ? '' : String(connection.context_length),
   });
   const [enabled, setEnabled] = useState(Boolean(connection.enabled));
@@ -1691,8 +1695,7 @@ function EditLlmConnectionForm({ connection, onUpdated, onCancel }) {
     if (value.name.trim() !== connection.name) body.name = value.name.trim();
     if (value.provider !== connection.provider) body.provider = value.provider;
     if (nextBaseUrl !== (connection.base_url || null)) body.base_url = nextBaseUrl;
-    if (value.apiKey.trim()) body.api_key = value.apiKey.trim();
-    if (value.defaultModel.trim() !== connection.default_model) body.default_model = value.defaultModel.trim();
+    if (value.provider !== 'ollama' && value.apiKey.trim()) body.api_key = value.apiKey.trim();
     const nextContextLength = parseContextLength(value.contextLength);
     if (nextContextLength !== (connection.context_length ?? null)) body.context_length = nextContextLength;
     if (enabled !== Boolean(connection.enabled)) body.enabled = enabled;

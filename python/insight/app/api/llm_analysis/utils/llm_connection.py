@@ -31,16 +31,10 @@ class LLMConnectionService:
         provider,
         base_url: str | None,
         api_key: str | None,
-        default_model: str | None,
         context_length: int | None = None,
         enabled: bool,
         is_default: bool,
     ):
-        if is_default and not default_model:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="default_model is required for the default connection",
-            )
         if is_default and not enabled:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -53,7 +47,6 @@ class LLMConnectionService:
                     "PROVIDER": getattr(provider, "value", provider),
                     "BASE_URL": base_url,
                     "API_KEY_ENCRYPTED": self._encrypt_api_key(api_key),
-                    "DEFAULT_MODEL": default_model,
                     "CONTEXT_LENGTH": context_length,
                     "ENABLED": enabled,
                 }
@@ -65,7 +58,7 @@ class LLMConnectionService:
                 detail="An LLM connection with this name already exists",
             ) from exc
         if is_default:
-            connection = self.repo.set_default_connection(connection.SEQ, default_model)
+            connection = self.repo.set_default_connection(connection.SEQ)
         return self.map_connection_to_res(connection)
 
     def get_connections(self):
@@ -101,7 +94,6 @@ class LLMConnectionService:
             "name": "NAME",
             "provider": "PROVIDER",
             "base_url": "BASE_URL",
-            "default_model": "DEFAULT_MODEL",
             "context_length": "CONTEXT_LENGTH",
             "enabled": "ENABLED",
         }
@@ -116,11 +108,6 @@ class LLMConnectionService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="The default LLM connection cannot be disabled",
-            )
-        if connection.IS_DEFAULT and "DEFAULT_MODEL" in updates and not updates["DEFAULT_MODEL"]:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="The default LLM connection must have a default model",
             )
         try:
             updated = self.repo.update_connection(connection, updates)
@@ -186,11 +173,11 @@ class LLMConnectionService:
             ]
         return [item["id"] for item in items if isinstance(item, dict) and item.get("id")]
 
-    def set_default_connection(self, connection_id: int, model_name: str):
+    def set_default_connection(self, connection_id: int):
         connection = self._get_connection(connection_id)
         if not connection.ENABLED:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="LLM connection is disabled")
-        return self.map_connection_to_res(self.repo.set_default_connection(connection_id, model_name))
+        return self.map_connection_to_res(self.repo.set_default_connection(connection_id))
 
     def decrypt_api_key(self, connection) -> str | None:
         if not connection.API_KEY_ENCRYPTED:
@@ -232,7 +219,6 @@ class LLMConnectionService:
             provider=connection.PROVIDER,
             base_url=connection.BASE_URL,
             api_key_configured=bool(connection.API_KEY_ENCRYPTED),
-            default_model=connection.DEFAULT_MODEL,
             context_length=connection.CONTEXT_LENGTH,
             is_default=connection.IS_DEFAULT,
             enabled=connection.ENABLED,

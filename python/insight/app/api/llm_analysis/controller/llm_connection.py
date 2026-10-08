@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.llm_analysis.request.req import PatchConnectionBody, PostConnectionBody, SetDefaultConnectionBody
+from app.api.llm_analysis.request.req import PatchConnectionBody, PostConnectionBody
 from app.api.llm_analysis.response.res import (
     LLMConnectionModels,
     ResBodyLLMConnection,
@@ -77,10 +77,6 @@ async def get_llm_connection_models(connection_id: int, db: Session = Depends(ge
     response_model=ResBodyLLMConnection,
     operation_id="PutDefaultLLMConnection",
 )
-async def put_default_llm_connection(
-    connection_id: int,
-    body: SetDefaultConnectionBody,
-    db: Session = Depends(get_db),
-):
-    result = LLMConnectionService(db).set_default_connection(connection_id, body.model_name)
+async def put_default_llm_connection(connection_id: int, db: Session = Depends(get_db)):
+    result = LLMConnectionService(db).set_default_connection(connection_id)
     return ResBodyLLMConnection(data=result)
