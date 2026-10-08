@@ -134,6 +134,9 @@ export default function K8sAgentPanel({ nsId }) {
                     const monPending = monTask === 'INSTALLING' || monTask === 'UNINSTALLING';
                     const logNode = (logMap[c.id] || []).find((x) => x.node === n.node);
                     const logInstalled = logNode?.installed;
+                    // Log status loads after the monitoring status and can take several seconds on a
+                    // cold cache; until it arrives the log column is unknown, not "not installed".
+                    const logLoaded = logMap[c.id] !== undefined;
                     const logTask = logNode?.taskStatus;
                     const logPending = logTask === 'INSTALLING' || logTask === 'UNINSTALLING';
                     // Per-node in-flight ops — independent so multiple nodes install at once.
@@ -163,6 +166,7 @@ export default function K8sAgentPanel({ nsId }) {
                         </td>
                         <td className="px-4 py-2.5 border-b" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
+                            {!logLoaded ? <span className="text-xs text-gray-400 animate-pulse">Checking…</span> : <>
                             <AgentBadge running={logOn} installed={logInstalled} powered={powered} pending={logTask} />
                             {!actionable
                               ? <span className="text-xs text-gray-400">{powered ? '' : 'start cluster to manage'}</span>
@@ -171,6 +175,7 @@ export default function K8sAgentPanel({ nsId }) {
                               : !logInstalled
                               ? <button onClick={() => run(logKey, 'INSTALLING', () => installK8sLogNode(nsId, c.id, n.node), c.id)} className="text-xs bg-emerald-600 text-white px-2 py-1 rounded hover:bg-emerald-700 disabled:opacity-50">Install</button>
                               : <button onClick={() => run(logKey, 'UNINSTALLING', () => uninstallK8sLogNode(nsId, c.id, n.node), c.id)} className="text-xs text-red-500 hover:text-red-700 disabled:opacity-50">Uninstall</button>}
+                            </>}
                           </div>
                         </td>
                       </tr>
