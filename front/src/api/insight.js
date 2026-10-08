@@ -133,8 +133,8 @@ export async function updateLlmConnection(connectionId, body) {
   return res.data?.data || res.data;
 }
 
-export async function setDefaultLlmConnection(connectionId, modelName) {
-  const res = await client.put(`/api/o11y/insight/llm/connections/${connectionId}/default`, { model_name: modelName });
+export async function setDefaultLlmConnection(connectionId) {
+  const res = await client.put(`/api/o11y/insight/llm/connections/${connectionId}/default`);
   return res.data?.data || res.data;
 }
 

@@ -466,7 +466,7 @@ const RCA_COLUMNS = [
 ];
 
 const LLM_COLUMNS = [
-  { label: 'Name' }, { label: 'Provider' }, { label: 'Endpoint' }, { label: 'Default Model' },
+  { label: 'Name' }, { label: 'Provider' }, { label: 'Endpoint' },
   { label: 'Default' }, { label: 'Status' }, { label: 'Actions', className: 'text-right' },
 ];
 
@@ -542,21 +542,20 @@ function RcaTab() {
       return undefined;
     }
     let active = true;
-    setModelName(connection.default_model || '');
+    // No model is preselected: the user picks one from what the endpoint serves, and an
+    // endpoint that cannot list its models cannot run an analysis.
     getLlmConnectionModels(connection.id)
       .then((data) => {
         if (!active) return;
         const models = data.models || [];
-        const options = connection.default_model && !models.includes(connection.default_model)
-          ? [connection.default_model, ...models]
-          : models;
-        setConnectionModels(options);
-        setModelName((current) => (
-          options.includes(current) ? current : connection.default_model || options[0] || ''
-        ));
+        setConnectionModels(models);
+        setModelName((current) => (models.includes(current) ? current : ''));
       })
-      .catch(() => {
-        if (active) setConnectionModels(connection.default_model ? [connection.default_model] : []);
+      .catch((e) => {
+        if (!active) return;
+        setConnectionModels([]);
+        setModelName('');
+        setMsg('Failed to load models: ' + apiError(e));
       });
     return () => { active = false; };
   }, [connectionId, llmConnections]);
@@ -608,7 +607,7 @@ function RcaTab() {
     setDefaultingId(connection.id);
     setMsg('');
     try {
-      await setDefaultLlmConnection(connection.id, connection.default_model);
+      await setDefaultLlmConnection(connection.id);
       await loadConnections();
       setMsg(`"${connection.name}" is now the default connection.`);
     } catch (e) {
@@ -816,7 +815,6 @@ function RcaTab() {
                     <td className="px-3 py-2 border-b font-medium">{connection.name}</td>
                     <td className="px-3 py-2 border-b uppercase text-xs">{connection.provider}</td>
                     <td className="px-3 py-2 border-b text-xs break-all">{connection.base_url || 'OpenAI default'}</td>
-                    <td className="px-3 py-2 border-b">{connection.default_model || '-'}</td>
                     <td className="px-3 py-2 border-b">
                       {connection.is_default ? <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Default</span> : '-'}
                     </td>
@@ -828,9 +826,8 @@ function RcaTab() {
                     <td className="px-3 py-2 border-b text-right whitespace-nowrap space-x-3">
                       {!connection.is_default && (
                         <button type="button"
-                          disabled={!connection.enabled || !connection.default_model || defaultingId === connection.id}
-                          title={!connection.enabled ? 'Enable the connection first'
-                            : !connection.default_model ? 'Set a default model first' : ''}
+                          disabled={!connection.enabled || defaultingId === connection.id}
+                          title={!connection.enabled ? 'Enable the connection first' : ''}
                           onClick={() => handleSetDefault(connection)}
                           className="text-xs text-blue-600 hover:text-blue-800 disabled:text-gray-300 disabled:cursor-not-allowed">
                           {defaultingId === connection.id ? 'Setting…' : 'Set default'}
@@ -1094,11 +1091,9 @@ function RcaTab() {
                     value={connectionId}
                     disabled={enabledConnections.length === 0}
                     onChange={(e) => {
-                      const nextId = e.target.value;
-                      const connection = enabledConnections.find((item) => String(item.id) === nextId);
-                      setConnectionId(nextId);
-                      setConnectionModels(connection?.default_model ? [connection.default_model] : []);
-                      setModelName(connection?.default_model || '');
+                      setConnectionId(e.target.value);
+                      setConnectionModels([]);
+                      setModelName('');
                     }}
                     className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100"
                   >
@@ -1115,7 +1110,7 @@ function RcaTab() {
                   <select id="rca-model" value={modelName} disabled={connectionModels.length === 0}
                     onChange={(e) => setModelName(e.target.value)}
                     className="border rounded px-2 py-1.5 text-sm w-full disabled:bg-gray-100">
-                    {connectionModels.length === 0 && <option value="">No model</option>}
+                    <option value="">{connectionModels.length === 0 ? 'No model' : 'Select a model'}</option>
                     {connectionModels.map((mn) => <option key={mn} value={mn}>{mn}</option>)}
                   </select>
                 </div>
@@ -1595,13 +1590,6 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
           placeholder={apiKeyPlaceholder ?? (value.provider === 'openai' ? 'Required for OpenAI' : 'Optional')} />
       </div>
       <div>
-        <label htmlFor={`${idPrefix}-default-model`} className="block text-xs text-gray-600 mb-1">Default Model</label>
-        <input id={`${idPrefix}-default-model`} required maxLength={255} value={value.defaultModel}
-          onChange={(e) => set({ defaultModel: e.target.value })}
-          className="w-full border rounded px-3 py-1.5 text-sm"
-          placeholder={value.provider === 'ollama' ? 'llama3.1' : 'gpt-4o-mini'} />
-      </div>
-      <div>
         <label htmlFor={`${idPrefix}-context-length`} className="block text-xs text-gray-600 mb-1">Context Length</label>
         <input id={`${idPrefix}-context-length`} type="number" min={1024} max={10000000} step={1024}
           value={value.contextLength}
@@ -1609,9 +1597,7 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
           className="w-full border rounded px-3 py-1.5 text-sm"
           placeholder="Leave empty to use the server default" />
         <p className="mt-1 text-xs text-gray-500">
-          Input tokens this endpoint actually serves. Ollama sizes it from host VRAM, so the same
-          model differs per server. If left empty and the window cannot be detected, analysis
-          budgets assume a large window and the server may silently drop the oldest messages.
+          Leave empty for OpenAI. For Ollama or vLLM, enter the window the server actually serves.
         </p>
       </div>
     </div>
@@ -1627,7 +1613,7 @@ function parseContextLength(raw) {
 }
 
 function CreateLlmConnectionForm({ makeDefault, onCreated }) {
-  const [value, setValue] = useState({ name: '', provider: 'openai', baseUrl: '', apiKey: '', defaultModel: '', contextLength: '' });
+  const [value, setValue] = useState({ name: '', provider: 'openai', baseUrl: '', apiKey: '', contextLength: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -1640,7 +1626,6 @@ function CreateLlmConnectionForm({ makeDefault, onCreated }) {
       provider: value.provider,
       base_url: value.baseUrl.trim() || null,
       api_key: value.apiKey.trim() || null,
-      default_model: value.defaultModel.trim(),
       context_length: parseContextLength(value.contextLength),
       enabled: true,
       is_default: makeDefault,
@@ -1671,7 +1656,6 @@ function EditLlmConnectionForm({ connection, onUpdated, onCancel }) {
     provider: connection.provider || 'openai',
     baseUrl: connection.base_url || '',
     apiKey: '',
-    defaultModel: connection.default_model || '',
     contextLength: connection.context_length == null ? '' : String(connection.context_length),
   });
   const [enabled, setEnabled] = useState(Boolean(connection.enabled));
@@ -1692,7 +1676,6 @@ function EditLlmConnectionForm({ connection, onUpdated, onCancel }) {
     if (value.provider !== connection.provider) body.provider = value.provider;
     if (nextBaseUrl !== (connection.base_url || null)) body.base_url = nextBaseUrl;
     if (value.apiKey.trim()) body.api_key = value.apiKey.trim();
-    if (value.defaultModel.trim() !== connection.default_model) body.default_model = value.defaultModel.trim();
     const nextContextLength = parseContextLength(value.contextLength);
     if (nextContextLength !== (connection.context_length ?? null)) body.context_length = nextContextLength;
     if (enabled !== Boolean(connection.enabled)) body.enabled = enabled;

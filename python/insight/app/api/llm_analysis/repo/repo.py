@@ -77,13 +77,12 @@ class LogAnalysisRepository:
             or 0
         )
 
-    def set_default_connection(self, connection_id: int, model_name: str):
+    def set_default_connection(self, connection_id: int):
         connection = self.get_connection_by_id(connection_id)
         if not connection:
             return None
         self.db.query(LLMConnection).update({LLMConnection.IS_DEFAULT: False})
         connection.IS_DEFAULT = True
-        connection.DEFAULT_MODEL = model_name
         self.db.commit()
         self.db.refresh(connection)
         return connection

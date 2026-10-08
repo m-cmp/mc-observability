@@ -19,13 +19,12 @@ class CommonSessionService:
         return results
 
     def create_chat_session(self, body: PostSessionBody):
-        connection = self.resolve_connection(body.connection_id)
-        model_name = body.model_name or connection.DEFAULT_MODEL
-        if not model_name:
+        if not body.model_name:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="No model is configured for the selected LLM connection",
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="model_name is required for a new session",
             )
+        connection = self.resolve_connection(body.connection_id)
         session_id = str(uuid.uuid4())
 
         session_info = {
@@ -34,7 +33,7 @@ class CommonSessionService:
             "CONNECTION_ID": connection.SEQ,
             "ANALYSIS_TYPE": body.analysis_type,
             "PROVIDER": connection.PROVIDER,
-            "MODEL_NAME": model_name,
+            "MODEL_NAME": body.model_name,
         }
         new_session = self.repo.create_session(session_info)
 
