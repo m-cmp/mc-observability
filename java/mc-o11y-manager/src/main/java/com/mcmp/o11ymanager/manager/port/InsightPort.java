@@ -69,7 +69,7 @@ public interface InsightPort {
 
     Object getLLMConnectionModels(int connectionId);
 
-    Object setDefaultLLMConnection(int connectionId, Object body);
+    Object setDefaultLLMConnection(int connectionId);
 
     Object getLLMChatSessions();
 

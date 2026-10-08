@@ -159,8 +159,8 @@ public class InsightClientAdapter implements InsightPort {
     }
 
     @Override
-    public Object setDefaultLLMConnection(int connectionId, Object body) {
-        return insightClient.setDefaultLLMConnection(connectionId, body);
+    public Object setDefaultLLMConnection(int connectionId) {
+        return insightClient.setDefaultLLMConnection(connectionId);
     }
 
     @Override

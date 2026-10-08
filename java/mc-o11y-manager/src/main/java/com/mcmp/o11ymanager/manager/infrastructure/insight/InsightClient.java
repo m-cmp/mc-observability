@@ -88,8 +88,7 @@ public interface InsightClient {
     Object getLLMConnectionModels(@PathVariable("connectionId") int connectionId);
 
     @PutMapping(LLM + "/connections/{connectionId}/default")
-    Object setDefaultLLMConnection(
-            @PathVariable("connectionId") int connectionId, @RequestBody Object body);
+    Object setDefaultLLMConnection(@PathVariable("connectionId") int connectionId);
 
     @GetMapping(LLM + "/sessions")
     Object getLLMChatSessions();

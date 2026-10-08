@@ -187,9 +187,8 @@ public class InsightController {
     }
 
     @PutMapping("/llm/connections/{connectionId}/default")
-    public Object setDefaultLLMConnection(
-            @PathVariable int connectionId, @RequestBody Object body) {
-        return insightPort.setDefaultLLMConnection(connectionId, body);
+    public Object setDefaultLLMConnection(@PathVariable int connectionId) {
+        return insightPort.setDefaultLLMConnection(connectionId);
     }
 
     @Operation(
