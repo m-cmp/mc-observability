@@ -31,6 +31,10 @@ public class TriggerVM extends BaseEntity {
 
     private String targetId;
 
+    // Node IDs are only unique within an infra; null on targets added before this was recorded,
+    // which keep matching the node in every infra.
+    private String infraId;
+
     private boolean isActive;
 
     @JoinColumn(name = "trigger_policy_id")
@@ -45,6 +49,7 @@ public class TriggerVM extends BaseEntity {
         entity.namespaceId = dto.namespaceId();
         entity.targetScope = dto.targetScope();
         entity.targetId = dto.targetId();
+        entity.infraId = blankToNull(dto.infraId());
         entity.isActive = dto.isActive();
         entity.setupKey();
         return entity;
@@ -69,12 +74,23 @@ public class TriggerVM extends BaseEntity {
                 .namespaceId(namespaceId)
                 .targetScope(targetScope)
                 .targetId(targetId)
+                .infraId(infraId)
                 .isActive(isActive)
                 .build();
     }
 
     public void setupKey() {
-        key = namespaceId + "_" + targetScope + "-" + targetId;
+        key =
+                namespaceId
+                        + "_"
+                        + targetScope
+                        + "-"
+                        + targetId
+                        + (infraId == null ? "" : "@" + infraId);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     public void setTriggerPolicy(TriggerPolicy triggerPolicy) {

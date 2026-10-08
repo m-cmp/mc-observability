@@ -30,6 +30,16 @@ const RECIPIENT_HINTS = {
 };
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const nodeIdOf = (n) => n.node_id ?? n.id ?? n.name;
+// A node target is identified by (infra, node): node IDs repeat across infras. Targets saved
+// before the infra was recorded have no infraId and match the node in every infra.
+const targetKey = (t) => `${t.targetScope}-${t.infraId || '*'}-${t.targetId}`;
+const targetText = (t) => (t.targetScope === 'node'
+  ? `${t.infraName || t.infraId || '(all infras)'} / ${t.label || t.targetId}`
+  : (t.label || t.targetId));
+// Nodes a picker should hide: exact (infra, node) targets, plus every infra's node of that ID
+// for targets without an infra.
+const excludedNodeKeys = (targets) => new Set(targets.filter((t) => t.targetScope === 'node')
+  .map((t) => `${t.infraId || '*'}/${t.targetId}`));
 const nodeLabelOf = (n) => n.name ?? n.node_id ?? n.id;
 const parseRecipients = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
 
@@ -217,7 +227,7 @@ function ManagePanel({ p, nsId, infraId, channels, infras, infrasLoading, onChan
   async function removeTarget(vm) {
     setBusy(true);
     try {
-      await removeNodeFromPolicy(p.id, { namespaceId: vm.namespaceId, targetScope: vm.targetScope, targetId: vm.targetId });
+      await removeNodeFromPolicy(p.id, { namespaceId: vm.namespaceId, targetScope: vm.targetScope, targetId: vm.targetId, infraId: vm.infraId || undefined });
       onChanged();
     } catch (e) { alert('Remove failed: ' + (e?.message || e)); }
     finally { setBusy(false); }
@@ -228,7 +238,7 @@ function ManagePanel({ p, nsId, infraId, channels, infras, infrasLoading, onChan
     setBusy(true);
     try {
       for (const t of targets) {
-        await addNodeToPolicy(p.id, { namespaceId: nsId, targetScope: t.targetScope, targetId: t.targetId });
+        await addNodeToPolicy(p.id, { namespaceId: nsId, targetScope: t.targetScope, targetId: t.targetId, infraId: t.infraId });
       }
       onChanged();
     } catch (e) { alert('Add target failed: ' + (e?.message || e)); }
@@ -254,15 +264,15 @@ function ManagePanel({ p, nsId, infraId, channels, infras, infrasLoading, onChan
         {vms.length === 0 ? <p className="text-xs text-gray-400 mb-2">No targets</p> : (
           <div className="flex flex-wrap gap-2 mb-2">
             {vms.map(vm => (
-              <span key={`${vm.targetScope}-${vm.targetId}`} className="inline-flex items-center gap-1 text-xs bg-white border rounded px-2 py-1">
-                <span className="text-gray-400">{vm.targetScope}</span> {vm.targetId}
+              <span key={targetKey(vm)} className="inline-flex items-center gap-1 text-xs bg-white border rounded px-2 py-1">
+                <span className="text-gray-400">{vm.targetScope}</span> {targetText(vm)}
                 <button disabled={busy} onClick={() => removeTarget(vm)} className="text-red-500 hover:text-red-700 ml-1">×</button>
               </span>
             ))}
           </div>
         )}
         <TargetPicker nsId={nsId} defaultInfraId={infraId} infras={infras} infrasLoading={infrasLoading} busy={busy} onAdd={addTargets} addLabel="Add targets"
-          excludeIds={new Set((p.vms || []).map((v) => v.targetId))} />
+          excludeKeys={excludedNodeKeys(p.vms || [])} />
       </div>
 
       <div>
@@ -374,8 +384,8 @@ function CreatePolicyForm({ nsId, infraId, channels, infras, infrasLoading, onCr
 
   function addPending(targets) {
     setPendingTargets(prev => {
-      const map = new Map(prev.map(t => [`${t.targetScope}-${t.targetId}`, t]));
-      targets.forEach(t => map.set(`${t.targetScope}-${t.targetId}`, t));
+      const map = new Map(prev.map(t => [targetKey(t), t]));
+      targets.forEach(t => map.set(targetKey(t), t));
       return [...map.values()];
     });
   }
@@ -396,7 +406,7 @@ function CreatePolicyForm({ nsId, infraId, channels, infras, infrasLoading, onCr
       if (channelPayload.length) await updatePolicyChannels(policyId, channelPayload);
 
       for (const t of pendingTargets) {
-        await addNodeToPolicy(policyId, { namespaceId: nsId, targetScope: t.targetScope, targetId: t.targetId });
+        await addNodeToPolicy(policyId, { namespaceId: nsId, targetScope: t.targetScope, targetId: t.targetId, infraId: t.infraId });
       }
       onCreated();
     } catch (err) {
@@ -453,16 +463,16 @@ function CreatePolicyForm({ nsId, infraId, channels, infras, infrasLoading, onCr
         {pendingTargets.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {pendingTargets.map(t => (
-              <span key={`${t.targetScope}-${t.targetId}`} className="inline-flex items-center gap-1 text-xs bg-white border rounded px-2 py-1">
-                <span className="text-gray-400">{t.targetScope}</span> {t.label || t.targetId}
-                <button type="button" onClick={() => setPendingTargets(prev => prev.filter(x => !(x.targetScope === t.targetScope && x.targetId === t.targetId)))}
+              <span key={targetKey(t)} className="inline-flex items-center gap-1 text-xs bg-white border rounded px-2 py-1">
+                <span className="text-gray-400">{t.targetScope}</span> {targetText(t)}
+                <button type="button" onClick={() => setPendingTargets(prev => prev.filter(x => targetKey(x) !== targetKey(t)))}
                   className="text-red-500 hover:text-red-700 ml-1">×</button>
               </span>
             ))}
           </div>
         )}
         <TargetPicker nsId={nsId} defaultInfraId={infraId} infras={infras} infrasLoading={infrasLoading} onAdd={addPending} addLabel="Add"
-          excludeIds={new Set(pendingTargets.map((t) => t.targetId))} />
+          excludeKeys={excludedNodeKeys(pendingTargets)} />
       </div>
 
       {/* Notification channels */}
@@ -565,7 +575,7 @@ function ChannelPicker({ channels, value, onChange }) {
 // Pick an Infra/Cluster, then check one or more of its nodes. All selections are added as
 // `node` targets. Works at namespace-level (route has no infraId) by letting the user choose
 // the infra/cluster from the dropdown.
-function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel, infrasLoading, excludeIds }) {
+function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel, infrasLoading, excludeKeys }) {
   const matchInfra = (i) => i.id === defaultInfraId || i.name === defaultInfraId;
   const [selInfra, setSelInfra] = useState(() => {
     const m = (infras || []).find(matchInfra);
@@ -585,16 +595,17 @@ function TargetPicker({ nsId, defaultInfraId, infras, busy, onAdd, addLabel, inf
 
   const infra = infras.find(i => String(i.id ?? i.name) === String(selInfra)) || infras[0];
   // Hide nodes already added as targets (e.g. when editing an existing policy).
-  const exclude = excludeIds || new Set();
+  const exclude = excludeKeys || new Set();
+  const infraKey = String(infra?.id ?? infra?.name ?? '');
   const allNodes = infra?.node || [];
-  const nodes = allNodes.filter((n) => !exclude.has(nodeIdOf(n)));
+  const nodes = allNodes.filter((n) => !exclude.has(`${infraKey}/${nodeIdOf(n)}`) && !exclude.has(`*/${nodeIdOf(n)}`));
 
   const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
   const commit = () => {
     const targets = nodes
       .filter(n => checked[nodeIdOf(n)])
-      .map(n => ({ targetScope: 'node', targetId: nodeIdOf(n), label: nodeLabelOf(n) }));
+      .map(n => ({ targetScope: 'node', targetId: nodeIdOf(n), label: nodeLabelOf(n), infraId: infraKey, infraName: infra?.name ?? infraKey }));
     if (!targets.length) { alert('Select at least one node.'); return; }
     onAdd(targets);
     setChecked({});
