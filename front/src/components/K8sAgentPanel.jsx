@@ -85,7 +85,12 @@ export default function K8sAgentPanel({ nsId }) {
   // server's own task status takes over. Keyed per node so other nodes' ops run independently.
   async function run(key, kind, fn, clusterId) {
     setBusy((b) => ({ ...b, [key]: kind }));
-    try { await fn(); await loadStatus(clusterId); }
+    try {
+      const r = await fn();
+      // A failed node op still answers 200 with { ok: false, message }; surface the reason.
+      if (r && r.ok === false) alert(`${kind === 'UNINSTALLING' ? 'Uninstall' : 'Install'} failed on ${r.node || 'node'}: ${r.message || 'unknown error'}`);
+      await loadStatus(clusterId);
+    }
     catch (e) { alert((e.response?.data?.error_message || e.response?.data?.message || e.message)); }
     setBusy((b) => { const n = { ...b }; delete n[key]; return n; });
   }
@@ -179,6 +184,15 @@ export default function K8sAgentPanel({ nsId }) {
             {sel?.clusterId === c.id && (
               <div className="border-t bg-gray-50 p-4">
                 <div className="font-semibold text-sm mb-3">Monitoring Metrics — {sel.node}</div>
+                {[
+                  ['Monitoring agent', (statusMap[c.id] || []).find((x) => x.node === sel.node)],
+                  ['Log agent', (logMap[c.id] || []).find((x) => x.node === sel.node)],
+                ].filter(([, st]) => st?.taskStatus === 'FAILED').map(([label, st]) => (
+                  <div key={label} className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2">
+                    <p className="text-sm font-medium text-red-700">{label} failed</p>
+                    <p className="mt-1 text-xs text-red-700 whitespace-pre-wrap break-words">{st.error || 'No reason was recorded.'}</p>
+                  </div>
+                ))}
                 {metricLoading ? <p className="text-sm text-gray-400 animate-pulse">Loading metrics…</p> : (
                   <>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
@@ -194,7 +208,8 @@ export default function K8sAgentPanel({ nsId }) {
                       })}
                     </div>
                     <button onClick={() => run(`${c.id}/${sel.node}/mon`, 'INSTALLING', async () => {
-                        await installK8sNode(nsId, c.id, sel.node, [...picked]);
+                        const r = await installK8sNode(nsId, c.id, sel.node, [...picked]);
+                        if (r && r.ok === false) return r;
                         // Keep the user's selection visible. Refresh the available list but do NOT
                         // reset `picked` from InfluxDB-derived "active" — metrics take ~1 min to
                         // start flowing after install, so active would be empty and wrongly clear

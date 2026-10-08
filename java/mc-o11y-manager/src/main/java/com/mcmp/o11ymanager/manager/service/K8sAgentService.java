@@ -7,6 +7,7 @@ import com.mcmp.o11ymanager.manager.dto.influx.InfluxDTO;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sCluster;
 import com.mcmp.o11ymanager.manager.dto.tumblebug.TumblebugK8sToken;
 import com.mcmp.o11ymanager.manager.entity.K8sAgentTaskEntity;
+import com.mcmp.o11ymanager.manager.enums.Agent;
 import com.mcmp.o11ymanager.manager.facade.InfluxDbFacadeService;
 import com.mcmp.o11ymanager.manager.infrastructure.spider.SpiderClient;
 import com.mcmp.o11ymanager.manager.infrastructure.tumblebug.TumblebugClient;
@@ -55,6 +56,7 @@ public class K8sAgentService {
     private final InfluxDbFacadeService influxDbFacadeService;
     private final SpiderClient spiderClient;
     private final K8sAgentTaskJpaRepository agentTaskRepo;
+    private final AgentInstallFailureService agentInstallFailureService;
 
     private static final String JOB_NS = "default";
     private static final String TELEGRAF_VERSION = "1.29.5";
@@ -166,6 +168,7 @@ public class K8sAgentService {
         private PowerState powerState; // node host power state
         private boolean placeholder; // synthesized stopped node (real name not retrievable)
         private String taskStatus; // durable agent task state (INSTALLING/UNINSTALLING/...) or null
+        private String error; // why the last install/uninstall failed, when taskStatus is FAILED
     }
 
     /** One node discovered for a cluster, with whether its host is currently up. */
@@ -277,6 +280,7 @@ public class K8sAgentService {
         lock.lock();
         try {
             assertNotBusy(taskRow(nsId, clusterId, nodeName).getMonitoringTaskStatus());
+            agentInstallFailureService.clear(nsId, clusterId, nodeName, Agent.TELEGRAF);
             setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.INSTALLING);
             InfluxDTO influx = influxDbFacadeService.resolveForVM(nsId, clusterId);
             NodeResult r;
@@ -288,9 +292,15 @@ public class K8sAgentService {
                     clusterId,
                     nodeName,
                     r.isOk() ? VMAgentTaskStatus.FINISHED : VMAgentTaskStatus.FAILED);
+            if (!r.isOk()) {
+                agentInstallFailureService.record(
+                        nsId, clusterId, nodeName, Agent.TELEGRAF, r.getMessage());
+            }
             return r;
         } catch (RuntimeException e) {
             setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            agentInstallFailureService.record(
+                    nsId, clusterId, nodeName, Agent.TELEGRAF, e.getMessage());
             throw e;
         } finally {
             lock.unlock();
@@ -312,6 +322,7 @@ public class K8sAgentService {
         lock.lock();
         try {
             assertNotBusy(taskRow(nsId, clusterId, nodeName).getMonitoringTaskStatus());
+            agentInstallFailureService.clear(nsId, clusterId, nodeName, Agent.TELEGRAF);
             setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.UNINSTALLING);
             NodeResult r;
             try (KubernetesClient k8s = client(nsId, clusterId)) {
@@ -322,9 +333,15 @@ public class K8sAgentService {
                     clusterId,
                     nodeName,
                     r.isOk() ? VMAgentTaskStatus.NOT_INSTALLED : VMAgentTaskStatus.FAILED);
+            if (!r.isOk()) {
+                agentInstallFailureService.record(
+                        nsId, clusterId, nodeName, Agent.TELEGRAF, r.getMessage());
+            }
             return r;
         } catch (RuntimeException e) {
             setMonitoringTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            agentInstallFailureService.record(
+                    nsId, clusterId, nodeName, Agent.TELEGRAF, e.getMessage());
             throw e;
         } finally {
             lock.unlock();
@@ -407,6 +424,7 @@ public class K8sAgentService {
         lock.lock();
         try {
             assertNotBusy(taskRow(nsId, clusterId, nodeName).getLogTaskStatus());
+            agentInstallFailureService.clear(nsId, clusterId, nodeName, Agent.FLUENT_BIT);
             setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.INSTALLING);
             String lokiHost = lokiHost(nsId, clusterId);
             NodeResult r;
@@ -418,9 +436,15 @@ public class K8sAgentService {
                     clusterId,
                     nodeName,
                     r.isOk() ? VMAgentTaskStatus.FINISHED : VMAgentTaskStatus.FAILED);
+            if (!r.isOk()) {
+                agentInstallFailureService.record(
+                        nsId, clusterId, nodeName, Agent.FLUENT_BIT, r.getMessage());
+            }
             return r;
         } catch (RuntimeException e) {
             setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            agentInstallFailureService.record(
+                    nsId, clusterId, nodeName, Agent.FLUENT_BIT, e.getMessage());
             throw e;
         } finally {
             lock.unlock();
@@ -442,6 +466,7 @@ public class K8sAgentService {
         lock.lock();
         try {
             assertNotBusy(taskRow(nsId, clusterId, nodeName).getLogTaskStatus());
+            agentInstallFailureService.clear(nsId, clusterId, nodeName, Agent.FLUENT_BIT);
             setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.UNINSTALLING);
             NodeResult r;
             try (KubernetesClient k8s = client(nsId, clusterId)) {
@@ -452,9 +477,15 @@ public class K8sAgentService {
                     clusterId,
                     nodeName,
                     r.isOk() ? VMAgentTaskStatus.NOT_INSTALLED : VMAgentTaskStatus.FAILED);
+            if (!r.isOk()) {
+                agentInstallFailureService.record(
+                        nsId, clusterId, nodeName, Agent.FLUENT_BIT, r.getMessage());
+            }
             return r;
         } catch (RuntimeException e) {
             setLogTask(nsId, clusterId, nodeName, VMAgentTaskStatus.FAILED);
+            agentInstallFailureService.record(
+                    nsId, clusterId, nodeName, Agent.FLUENT_BIT, e.getMessage());
             throw e;
         } finally {
             lock.unlock();
@@ -489,7 +520,9 @@ public class K8sAgentService {
                             && !ref.placeholder
                             && lokiHasRecent(lokiHost, nsId, clusterId, ref.name);
             PowerState power = PowerState.of(ref.running || logging);
-            out.add(new NodeStatus(ref.name, logging, logging, null, power, ref.placeholder, null));
+            out.add(
+                    new NodeStatus(
+                            ref.name, logging, logging, null, power, ref.placeholder, null, null));
         }
         return out;
     }
@@ -662,6 +695,15 @@ public class K8sAgentService {
         if (byNode.isEmpty()) {
             return base;
         }
+        Map<String, String> errors = new java.util.HashMap<>();
+        try {
+            Agent agent = log ? Agent.FLUENT_BIT : Agent.TELEGRAF;
+            agentInstallFailureService.findByNsInfra(nsId, clusterId).stream()
+                    .filter(f -> f.getAgent() == agent)
+                    .forEach(f -> errors.put(f.getNodeId(), f.getReason()));
+        } catch (Exception ignore) {
+            // reasons are best-effort; the FAILED status itself still shows
+        }
         List<NodeStatus> out = new ArrayList<>(base.size());
         for (NodeStatus s : base) {
             K8sAgentTaskEntity e = byNode.get(s.getNode());
@@ -681,7 +723,8 @@ public class K8sAgentService {
                             s.getLastSeen(),
                             s.getPowerState(),
                             s.isPlaceholder(),
-                            taskStatus));
+                            taskStatus,
+                            t == VMAgentTaskStatus.FAILED ? errors.get(s.getNode()) : null));
         }
         return out;
     }
@@ -710,7 +753,14 @@ public class K8sAgentService {
             boolean installed = ts != null;
             out.add(
                     new NodeStatus(
-                            ref.name, installed, reporting, ts, power, ref.placeholder, null));
+                            ref.name,
+                            installed,
+                            reporting,
+                            ts,
+                            power,
+                            ref.placeholder,
+                            null,
+                            null));
         }
         return out;
     }
@@ -744,8 +794,9 @@ public class K8sAgentService {
                         }
                         if (ng.getNodes() != null) {
                             for (SpiderClusterInfo.IId n : ng.getNodes()) {
-                                if (n.getNameId() != null) {
-                                    running.add(n.getNameId());
+                                String key = nodeKey(n, ng.getNodes());
+                                if (key != null) {
+                                    running.add(key);
                                 }
                             }
                         }
@@ -803,6 +854,26 @@ public class K8sAgentService {
      * aws:///<az>/<instance-id>}) links the two. Returns {@code nodeName} unchanged when it already
      * matches a k8s node (e.g. Azure AKS) or no mapping is found.
      */
+    /**
+     * The identifier a cb-spider node is tracked by: its name, or its system id when the name
+     * cannot tell it apart. IBM IKS reports every worker's name as the same "Not visible in IBM",
+     * which would collapse the workers into one row and is not a schedulable node name; the system
+     * id ({@code kube-<cluster>-<pool>-<n>}) is unique and is the tail of the node's providerID, so
+     * {@link #resolveK8sNodeName} can still map it to the k8s node.
+     */
+    private static String nodeKey(SpiderClusterInfo.IId node, List<SpiderClusterInfo.IId> group) {
+        String name = node.getNameId();
+        String systemId = node.getSystemId();
+        boolean nameUsable =
+                name != null
+                        && !name.isBlank()
+                        && group.stream().filter(o -> name.equals(o.getNameId())).count() == 1;
+        if (nameUsable || systemId == null || systemId.isBlank()) {
+            return name == null || name.isBlank() ? null : name;
+        }
+        return systemId;
+    }
+
     private String resolveK8sNodeName(KubernetesClient k8s, String nodeName) {
         try {
             List<Node> nodes = k8s.nodes().list().getItems();
