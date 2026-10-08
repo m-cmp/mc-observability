@@ -194,6 +194,26 @@ export default function MonitoringConfig() {
   // registered), so it is not treated as installed.
   const isAgentInstalled = (status) => !!status && status !== 'NOT_INSTALLED' && status !== 'FAILED';
 
+  // The metric panel follows the live node list (re-polled every 10s) rather than the snapshot
+  // taken on click, so an install that finishes or fails while the panel is open shows up there.
+  const panelNode = selectedNode
+    ? nodes.find((n) => n.id === selectedNode.id && (n.infraId || infraId) === (selectedNode.infraId || selectedNodeInfraId)) || selectedNode
+    : null;
+  const panelMonitoringInstalled = isAgentInstalled(panelNode?.monitoring_agent_status)
+    && panelNode?.monitoring_agent_status !== 'INSTALLING';
+  const panelWasInstalledRef = useRef(panelMonitoringInstalled);
+  useEffect(() => {
+    // Load the metric items once the monitoring agent becomes installed while the panel is open.
+    if (panelMonitoringInstalled && !panelWasInstalledRef.current && selectedNode) {
+      const infra = selectedNode.infraId || selectedNodeInfraId || infraId;
+      setItemLoading(true);
+      getNodeItems(nsId, infra, selectedNode.id)
+        .then(setItems).catch(() => setItems([]))
+        .finally(() => setItemLoading(false));
+    }
+    panelWasInstalledRef.current = panelMonitoringInstalled;
+  }, [panelMonitoringInstalled, selectedNode?.id]);
+
   // --- Metric toggle with confirmation + overlay ---
   async function handleToggle(plugin, isActive) {
     if (!selectedNode || busy) return;
@@ -269,8 +289,10 @@ export default function MonitoringConfig() {
                     const localOp = pending[`${node.infraId || infraId}/${node.id}/${kind}`];
                     const installed = isAgentInstalled(status);
                     // Show the pending label from either the just-clicked local op (before the server
-                    // status flips) or the server's own INSTALLING/UNINSTALLING state.
-                    if (status === 'INSTALLING' || localOp === 'install') return <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>;
+                    // status flips) or the server's own INSTALLING/UNINSTALLING state. A finished
+                    // install in the list wins over the local op, which clears on its next poll.
+                    const installFinished = status === 'SUCCESS' || status === 'SERVICE_INACTIVE';
+                    if (status === 'INSTALLING' || (localOp === 'install' && !installFinished)) return <span className="text-xs text-yellow-600 animate-pulse">Installing…</span>;
                     if (status === 'UNINSTALLING' || localOp === 'uninstall') return <span className="text-xs text-yellow-600 animate-pulse">Uninstalling…</span>;
                     // Install AND uninstall both connect to the host over SSH, which fails ("FAILED
                     // TO CONNECT VM") on a VM that isn't running (suspended/failed/stopped). Don't
@@ -320,6 +342,10 @@ export default function MonitoringConfig() {
 
   function renderMetricPanel() {
     if (!selectedNode) return null;
+    const failures = [
+      ['Monitoring agent', panelNode.monitoring_agent_status, panelNode.monitoring_agent_error],
+      ['Log agent', panelNode.log_agent_status, panelNode.log_agent_error],
+    ].filter(([, status]) => status === 'FAILED');
     return (
         <div className="bg-white rounded-lg shadow mt-3">
           <div className="px-4 py-3 border-b font-semibold">Monitoring Metrics — {selectedNode.name || selectedNode.id}</div>
@@ -333,17 +359,28 @@ export default function MonitoringConfig() {
                 </div>
               </div>
             )}
-            {!isAgentInstalled(selectedNode.monitoring_agent_status) ? (
-              nodeRunState(selectedNode.status) === 'running' ? (
+            {failures.map(([label, , error]) => (
+              <div key={label} className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2">
+                <p className="text-sm font-medium text-red-700">{label} install failed</p>
+                <p className="mt-1 text-xs text-red-700 whitespace-pre-wrap break-words">{error || 'No reason was recorded.'}</p>
+              </div>
+            ))}
+            {!panelMonitoringInstalled ? (
+              panelNode.monitoring_agent_status === 'INSTALLING'
+                || pending[`${panelNode.infraId || infraId}/${panelNode.id}/monitoring`] === 'install' ? (
+                <p className="text-center py-6 text-sm text-yellow-600 animate-pulse">Installing monitoring agent…</p>
+              ) : nodeRunState(panelNode.status) === 'running' ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-gray-500 mb-3">Monitoring agent not installed.</p>
-                  <button onClick={(e) => handleAgent(e, selectedNode, 'monitoring', 'install')} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">Install Monitoring Agent</button>
+                  <p className="text-sm text-gray-500 mb-3">{panelNode.monitoring_agent_status === 'FAILED' ? 'Monitoring agent is not installed.' : 'Monitoring agent not installed.'}</p>
+                  <button onClick={(e) => handleAgent(e, panelNode, 'monitoring', 'install')} disabled={busy} className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50">
+                    {panelNode.monitoring_agent_status === 'FAILED' ? 'Retry Monitoring Agent' : 'Install Monitoring Agent'}
+                  </button>
                 </div>
               ) : (
                 <div className="text-center py-6 text-sm text-gray-500">
-                  {nodeRunState(selectedNode.status) === 'unknown'
-                    ? `Agent state unknown (node status: ${selectedNode.status || 'N/A'}).`
-                    : `Node is not running (${selectedNode.status}). Start the node before installing the agent.`}
+                  {nodeRunState(panelNode.status) === 'unknown'
+                    ? `Agent state unknown (node status: ${panelNode.status || 'N/A'}).`
+                    : `Node is not running (${panelNode.status}). Start the node before installing the agent.`}
                 </div>
               )
             ) : itemLoading ? (
