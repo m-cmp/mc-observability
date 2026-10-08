@@ -102,7 +102,7 @@ services:
           tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
         fi && \
         chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
-        chown -R 132:141 /var/lib/rabbitmq /var/log/rabbitmq
+        chown -R 100:101 /var/lib/rabbitmq /var/log/rabbitmq
     volumes:
       - /docker/rabbitmq_data:/var/lib/rabbitmq
     user: root
