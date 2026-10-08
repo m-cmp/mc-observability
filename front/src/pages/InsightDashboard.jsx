@@ -1582,13 +1582,16 @@ function LlmConnectionFields({ idPrefix, value, onChange, apiKeyPlaceholder }) {
           className="w-full border rounded px-3 py-1.5 text-sm"
           placeholder={value.provider === 'ollama' ? 'http://ollama:11434' : 'OpenAI default'} />
       </div>
-      <div>
-        <label htmlFor={`${idPrefix}-api-key`} className="block text-xs text-gray-600 mb-1">API Key</label>
-        <input id={`${idPrefix}-api-key`} type="password" autoComplete="new-password" value={value.apiKey}
-          onChange={(e) => set({ apiKey: e.target.value })}
-          className="w-full border rounded px-3 py-1.5 text-sm"
-          placeholder={apiKeyPlaceholder ?? (value.provider === 'openai' ? 'Required for OpenAI' : 'Optional')} />
-      </div>
+      {/* Ollama is called without credentials, so a key would be stored and never used. */}
+      {value.provider !== 'ollama' && (
+        <div>
+          <label htmlFor={`${idPrefix}-api-key`} className="block text-xs text-gray-600 mb-1">API Key</label>
+          <input id={`${idPrefix}-api-key`} type="password" autoComplete="new-password" value={value.apiKey}
+            onChange={(e) => set({ apiKey: e.target.value })}
+            className="w-full border rounded px-3 py-1.5 text-sm"
+            placeholder={apiKeyPlaceholder ?? 'Required for OpenAI'} />
+        </div>
+      )}
       <div>
         <label htmlFor={`${idPrefix}-context-length`} className="block text-xs text-gray-600 mb-1">Context Length</label>
         <input id={`${idPrefix}-context-length`} type="number" min={1024} max={10000000} step={1024}
@@ -1625,7 +1628,7 @@ function CreateLlmConnectionForm({ makeDefault, onCreated }) {
       name: value.name.trim(),
       provider: value.provider,
       base_url: value.baseUrl.trim() || null,
-      api_key: value.apiKey.trim() || null,
+      api_key: (value.provider !== 'ollama' && value.apiKey.trim()) || null,
       context_length: parseContextLength(value.contextLength),
       enabled: true,
       is_default: makeDefault,
@@ -1675,7 +1678,7 @@ function EditLlmConnectionForm({ connection, onUpdated, onCancel }) {
     if (value.name.trim() !== connection.name) body.name = value.name.trim();
     if (value.provider !== connection.provider) body.provider = value.provider;
     if (nextBaseUrl !== (connection.base_url || null)) body.base_url = nextBaseUrl;
-    if (value.apiKey.trim()) body.api_key = value.apiKey.trim();
+    if (value.provider !== 'ollama' && value.apiKey.trim()) body.api_key = value.apiKey.trim();
     const nextContextLength = parseContextLength(value.contextLength);
     if (nextContextLength !== (connection.context_length ?? null)) body.context_length = nextContextLength;
     if (enabled !== Boolean(connection.enabled)) body.enabled = enabled;
