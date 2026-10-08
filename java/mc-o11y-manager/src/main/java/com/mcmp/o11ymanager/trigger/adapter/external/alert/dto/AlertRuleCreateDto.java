@@ -14,6 +14,7 @@ public record AlertRuleCreateDto(
         String aggregation,
         String field,
         String targetId,
+        String infraId,
         String namespaceId,
         String title,
         String holdDuration,
@@ -31,6 +32,7 @@ public record AlertRuleCreateDto(
                 .targetScope(triggerVMDto.targetScope())
                 .namespaceId(triggerVMDto.namespaceId())
                 .targetId(triggerVMDto.targetId())
+                .infraId(triggerVMDto.infraId())
                 .title(triggerPolicyDto.title())
                 .measurement(resourceType.getMeasurement())
                 .field(resourceType.getField())

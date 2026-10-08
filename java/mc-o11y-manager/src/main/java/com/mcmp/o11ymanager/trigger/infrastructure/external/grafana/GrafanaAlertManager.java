@@ -88,6 +88,7 @@ public class GrafanaAlertManager implements AlertManager {
                         // not this title, so making it policy-specific is safe.
                         dto.namespaceId()
                                 + "-"
+                                + (dto.infraId() == null ? "" : dto.infraId() + "-")
                                 + dto.targetScope()
                                 + "-"
                                 + dto.targetId()

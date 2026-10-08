@@ -9,4 +9,5 @@ public record TriggerVMDetailDto(
         String namespaceId,
         String targetScope,
         String targetId,
+        String infraId,
         boolean isActive) {}

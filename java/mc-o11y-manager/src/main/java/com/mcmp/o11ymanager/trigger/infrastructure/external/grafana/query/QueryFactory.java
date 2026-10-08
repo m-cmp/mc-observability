@@ -55,6 +55,18 @@ public class QueryFactory {
      * @param dto Alert rule creation data containing resource type and query parameters
      * @return FluxQL query string for the specified resource type
      */
+    // The target tag, narrowed to the node's infra when one is recorded: node IDs repeat across
+    // infras, so a node ID alone would also match same-named nodes in other infras.
+    private static Restrictions targetRestriction(AlertRuleCreateDto dto, String tagName) {
+        Restrictions target = Restrictions.tag(tagName).equal(dto.targetId());
+        if ("node".equalsIgnoreCase(dto.targetScope())
+                && dto.infraId() != null
+                && !dto.infraId().isBlank()) {
+            return Restrictions.and(target, Restrictions.tag("infra_id").equal(dto.infraId()));
+        }
+        return target;
+    }
+
     public static String fluxQL(AlertRuleCreateDto dto) {
         String tagName = dto.targetScope() + "_id";
 
@@ -81,7 +93,7 @@ public class QueryFactory {
                                 Restrictions.measurement().equal(dto.measurement()),
                                 Restrictions.field().equal(dto.field()),
                                 Restrictions.tag("cpu").equal("cpu-total"),
-                                Restrictions.tag(tagName).equal(dto.targetId()),
+                                targetRestriction(dto, tagName),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .map("({ r with _value: 100.0 - r._value })")
                 .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
@@ -106,7 +118,7 @@ public class QueryFactory {
                         Restrictions.and(
                                 Restrictions.measurement().equal(dto.measurement()),
                                 Restrictions.field().equal(dto.field()),
-                                Restrictions.tag(tagName).equal(dto.targetId()),
+                                targetRestriction(dto, tagName),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
                 .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})
@@ -129,7 +141,7 @@ public class QueryFactory {
                         Restrictions.and(
                                 Restrictions.measurement().equal(dto.measurement()),
                                 Restrictions.field().equal(dto.field()),
-                                Restrictions.tag(tagName).equal(dto.targetId()),
+                                targetRestriction(dto, tagName),
                                 Restrictions.tag("ns_id").equal(dto.namespaceId())))
                 .aggregateWindow(1L, ChronoUnit.MINUTES, fluxFn(dto.aggregation()))
                 .keep(new String[] {"_time", "_value", "ns_id", "infra_id", "node_id"})

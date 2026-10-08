@@ -19,7 +19,7 @@ public class ManagerAdapter implements ManagerPort {
     private final InfluxDbService influxDbService;
 
     @Override
-    public String getInfluxUid(String nsId, String vmScope, String nodeId) {
+    public String getInfluxUid(String nsId, String vmScope, String nodeId, String nodeInfraId) {
 
         Long influxId;
 
@@ -40,7 +40,10 @@ public class ManagerAdapter implements ManagerPort {
             // 3. Map infra id using ns and node
             VMDTO t = null;
             try {
-                t = vmService.getByNsVm(nsId, nodeId);
+                t =
+                        nodeInfraId != null && !nodeInfraId.isBlank()
+                                ? vmService.get(nsId, nodeInfraId, nodeId)
+                                : vmService.getByNsVm(nsId, nodeId);
             } catch (Exception ignore) {
                 // Not a Tumblebug VM (e.g. a K8s agent node) — fall through to InfluxDB resolve.
             }
@@ -59,7 +62,12 @@ public class ManagerAdapter implements ManagerPort {
                 // K8s node: metrics live in the shared InfluxDB; resolve by namespace.
                 // resolveInfluxDb falls back to a reachable DB when the exact tag combo
                 // isn't matched, so a bare nodeId is sufficient here.
-                influxId = influxDbService.resolveInfluxDb(nsId, nodeId);
+                influxId =
+                        influxDbService.resolveInfluxDb(
+                                nsId,
+                                nodeInfraId != null && !nodeInfraId.isBlank()
+                                        ? nodeInfraId
+                                        : nodeId);
             }
 
         } else {

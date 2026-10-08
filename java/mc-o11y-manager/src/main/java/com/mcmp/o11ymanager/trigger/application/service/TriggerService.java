@@ -45,7 +45,8 @@ public class TriggerService implements TriggerServiceInternal {
                 managerPort.getInfluxUid(
                         triggerVMDto.namespaceId(),
                         triggerVMDto.targetScope(),
-                        triggerVMDto.targetId());
+                        triggerVMDto.targetId(),
+                        triggerVMDto.infraId());
 
         TriggerVM triggerVM = TriggerVM.create(triggerVMDto);
         boolean isAdded = triggerPolicy.addIfNotContains(triggerVM);
@@ -102,7 +103,8 @@ public class TriggerService implements TriggerServiceInternal {
                     managerPort.getInfluxUid(
                             triggerVM.getNamespaceId(),
                             triggerVM.getTargetScope(),
-                            triggerVM.getTargetId());
+                            triggerVM.getTargetId(),
+                            triggerVM.getInfraId());
             try {
                 alertManager.deleteAlertRule(triggerVM.getUuid());
             } catch (Exception ignored) {
