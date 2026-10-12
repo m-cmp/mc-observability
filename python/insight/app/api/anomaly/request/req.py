@@ -38,7 +38,7 @@ class GetMeasurementPath(BaseModel):
 class AnomalyDetectionTargetRegistration(BaseModel):
     ns_id: str
     infra_id: str
-    node_id: str | None = None
+    node_id: str = Field(..., min_length=1)
     measurement: AnomalyMetricType = Field(
         ..., description="The type of metric being monitored for anomalies (cpu or mem)", example="cpu"
     )
