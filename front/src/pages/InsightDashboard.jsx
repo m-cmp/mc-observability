@@ -91,10 +91,10 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
   }, [loadSettings]);
 
   async function loadHistory() {
-    if (!histInfra || !selectedMeasurement) return;
+    if (!histInfra || !histNode || !selectedMeasurement) return;
     setLoading(true);
     try {
-      const data = await getAnomalyHistory(nsId, histInfra, histNode || undefined, selectedMeasurement);
+      const data = await getAnomalyHistory(nsId, histInfra, histNode, selectedMeasurement);
       setHistory(data.values || []);
     } catch { setHistory([]); }
     setLoading(false);
@@ -167,7 +167,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
             {/* Infra/Cluster selector (hidden when the route already fixes the Infra) */}
             {!infraId && (
               <div>
-                <label className="block text-xs text-gray-600 mb-1">Infra / Cluster</label>
+                <label className="block text-xs text-gray-600 mb-1">Infra / Cluster<RequiredMark /></label>
                 <select value={histInfra} onChange={(e) => { setHistInfra(e.target.value); setHistNode(''); }} className="border border-gray-300 rounded px-3 py-1.5 text-sm">
                   <option value="">{scopeLoading ? 'Loading…' : 'Select Infra / Cluster'}</option>
                   {infras.length > 0 && (
@@ -184,20 +184,20 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
               </div>
             )}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Node</label>
+              <label className="block text-xs text-gray-600 mb-1">Node<RequiredMark /></label>
               <select value={histNode} onChange={(e) => setHistNode(e.target.value)} disabled={!histInfra} className="border border-gray-300 rounded px-3 py-1.5 text-sm disabled:bg-gray-100">
-                <option value="">{nodesLoading ? 'Loading nodes…' : 'All nodes'}</option>
+                <option value="">{nodesLoading ? 'Loading nodes…' : 'Select Node'}</option>
                 {!nodesLoading && nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Measurement</label>
+              <label className="block text-xs text-gray-600 mb-1">Measurement<RequiredMark /></label>
               <select className="border border-gray-300 rounded px-3 py-1.5 text-sm" value={selectedMeasurement} onChange={(e) => setSelectedMeasurement(e.target.value)}>
                 <option value="">Select Measurement</option>
                 {(measurements.length ? measurements : options.measurements || []).map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <button onClick={loadHistory} disabled={loading || !histInfra || !selectedMeasurement} className="px-4 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50">
+            <button onClick={loadHistory} disabled={loading || !histInfra || !histNode || !selectedMeasurement} className="px-4 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50">
               {loading ? 'Loading...' : 'Load History'}
             </button>
           </div>
@@ -211,7 +211,7 @@ function AnomalyTab({ nsId, infraId, nodeId }) {
 function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
   const [measurement, setMeasurement] = useState('');
   const [interval, setInterval] = useState('');
-  // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
+  // Scope: pick Infra/Cluster, then a Node.
   const [infra, setInfra] = useState(infraId || '');
   const [node, setNode] = useState(nodeId || '');
   const { infras, clusters, loading: scopeLoading } = useScopeTargets(nsId);
@@ -237,14 +237,14 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
 
   async function submit(e) {
     e.preventDefault();
-    if (!infra) { setErr('Infra is required.'); return; }
+    if (!infra || !node) { setErr('Infra and node are required.'); return; }
     if (!measurement || !interval) { setErr('Measurement and interval are required.'); return; }
     setBusy(true); setErr('');
     try {
       const body = {
         ns_id: nsId,
         infra_id: infra,
-        node_id: node || null,
+        node_id: node,
         measurement,
         execution_interval: interval,
       };
@@ -280,9 +280,9 @@ function CreateAnomalyForm({ nsId, infraId, nodeId, options, onCreated }) {
           </div>
         )}
         <div>
-          <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
+          <label className="block text-xs text-gray-600 mb-1">Scope — Node<RequiredMark /></label>
           <select value={node} onChange={(e) => setNode(e.target.value)} disabled={!infra} className="w-full border rounded px-3 py-1.5 text-sm disabled:bg-gray-100">
-            <option value="">{nodesLoading ? 'Loading nodes…' : 'All nodes'}</option>
+            <option value="">{nodesLoading ? 'Loading nodes…' : 'Select Node'}</option>
             {nodesLoading ? <option disabled>Loading nodes…</option> : nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
           </select>
         </div>
@@ -330,7 +330,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   const [loadedMeasurement, setLoadedMeasurement] = useState('');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState('');
-  // Scope: pick Infra/Cluster, then optionally a Node (empty = all nodes).
+  // Scope: pick Infra/Cluster, then a Node.
   const [pInfra, setPInfra] = useState(infraId || '');
   const [pNode, setPNode] = useState(nodeId || '');
   const { infras, clusters, loading: scopeLoading } = useScopeTargets(nsId);
@@ -354,7 +354,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   }, [nsId, pInfra, isK8s]);
 
   async function loadHistory() {
-    if (!pInfra) { setMsg('Select an Infra first.'); return; }
+    if (!pInfra || !pNode) { setMsg('Select an Infra and a Node first.'); return; }
     if (!measurement) return;
     setLoading(true); setMsg('');
     try {
@@ -366,7 +366,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
   }
 
   async function handleRun() {
-    if (!pInfra) { setMsg('Select an Infra first.'); return; }
+    if (!pInfra || !pNode) { setMsg('Select an Infra and a Node first.'); return; }
     if (!measurement || !range) { setMsg('Measurement and range are required.'); return; }
     setLoading(true); setMsg('');
     try {
@@ -423,9 +423,9 @@ function PredictionTab({ nsId, infraId, nodeId }) {
             </div>
           )}
           <div>
-            <label className="block text-xs text-gray-600 mb-1">Scope — Node</label>
+            <label className="block text-xs text-gray-600 mb-1">Scope — Node<RequiredMark /></label>
             <select className="border border-gray-300 rounded px-3 py-1.5 text-sm disabled:bg-gray-100" value={pNode} onChange={(e) => setPNode(e.target.value)} disabled={!pInfra}>
-              <option value="">{nodesLoading ? 'Loading nodes…' : 'All nodes'}</option>
+              <option value="">{nodesLoading ? 'Loading nodes…' : 'Select Node'}</option>
               {nodesLoading ? <option disabled>Loading nodes…</option> : nodeList.map((n) => <option key={n.id} value={n.id}>{n.name || n.id}</option>)}
             </select>
           </div>
