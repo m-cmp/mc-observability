@@ -8,6 +8,29 @@
 - name: Begin Agent Common Tasks
   include_tasks: agent_common_begin.yaml
 
+# fluent-bit reads host logs from /var/log/syslog, which rsyslog writes. The common install
+# script tries to install rsyslog; if that failed (e.g. no access to the package repo), fail
+# the log agent here so it shows as FAILED instead of installing and collecting nothing.
+- name: Check rsyslog is running for Fluent Bit
+  become: true
+  become_method: sudo
+  become_user: root
+  vars:
+    ansible_connection: ssh
+    ansible_host: "{{ target_host }}"
+    ansible_port: "{{ target_port }}"
+    ansible_user: "{{ target_user }}"
+    ansible_ssh_private_key_file: "{{ target_sshkey_path }}"
+  raw: "systemctl is-active rsyslog"
+  register: rsyslog_active
+  changed_when: false
+  failed_when: false
+
+- name: Fail when rsyslog is not running
+  fail:
+    msg: "rsyslog is not running on this VM and could not be installed (check that the VM can reach its OS package repository). Fluent Bit collects host logs from /var/log/syslog written by rsyslog."
+  when: rsyslog_active.stdout | trim != 'active'
+
 - name: Compress agent files
   raw: "cd {{ role_path }}/agent-install-files/{{ arch }} && sudo rm -f cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz && sudo chown -R root:root fluent-bit/ && sudo ../amd64/busybox tar cvfz cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz fluent-bit/ && sudo chmod 644 cmp-agent/cmp-fluent-bit_{{ request_id }}.tar.gz"
   delegate_to: 127.0.0.1

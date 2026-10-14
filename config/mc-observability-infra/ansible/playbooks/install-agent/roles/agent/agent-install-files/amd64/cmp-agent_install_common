@@ -21,47 +21,76 @@ chcon -Rt bin_t /cmp-agent/common/iptables/bin/
 echo "[*] Fixing permission for '/cmp-agent/common/iptables/sbin/'..."
 chcon -Rt bin_t /cmp-agent/common/iptables/sbin/
 
+# fluent-bit tails /var/log/syslog, which rsyslog writes. Some CSP images (e.g. minimal
+# Ubuntu/Rocky) ship without rsyslog, so install it first. If the package repo is unreachable
+# the install fails; skip the rsyslog steps then so the metric agent still installs - the
+# fluent-bit playbook checks rsyslog itself and fails the log agent with a clear message.
+install_rsyslog() {
+  if command -v apt-get >/dev/null 2>&1; then
+    # A freshly created VM may still hold the apt lock (cloud-init, unattended-upgrades).
+    DEBIAN_FRONTEND=noninteractive timeout 900 apt-get -o DPkg::Lock::Timeout=300 update -q < /dev/null &&
+      DEBIAN_FRONTEND=noninteractive timeout 900 apt-get -o DPkg::Lock::Timeout=300 install -y -q rsyslog < /dev/null
+  elif command -v dnf >/dev/null 2>&1; then
+    timeout 900 dnf install -y -q rsyslog < /dev/null
+  elif command -v yum >/dev/null 2>&1; then
+    timeout 900 yum install -y -q rsyslog < /dev/null
+  elif command -v zypper >/dev/null 2>&1; then
+    timeout 900 zypper --non-interactive install rsyslog < /dev/null
+  else
+    echo "[!] No supported package manager found (apt-get/dnf/yum/zypper)."
+    return 1
+  fi
+}
+
 echo "[*] Getting rsyslog service configuration path..."
+# Without rsyslog, systemctl show prints an empty FragmentPath and still exits 0, so check the
+# value itself. Running the steps below with an empty path makes grep wait on stdin forever.
 RSYSLOG_PATH=`systemctl show rsyslog -p FragmentPath | cut -d= -f2`
-STATUS=`echo $?`
-if [ "$STATUS" != 0 ]; then
-  echo "[!] ERROR: Failed to get rsyslog service configuration path."
-  exit 1;
+if [ -z "$RSYSLOG_PATH" ]; then
+  echo "[*] rsyslog service not found - installing rsyslog..."
+  if install_rsyslog; then
+    systemctl enable --now rsyslog
+    RSYSLOG_PATH=`systemctl show rsyslog -p FragmentPath | cut -d= -f2`
+  fi
 fi
 
-echo "[*] Removing existing TZ environment variable if exists in rsyslog.service..."
-TZ_EXISTS=`grep -c "Environment=TZ" $RSYSLOG_PATH`
-if [ "$TZ_EXISTS" != "" ]; then
-  sed -i '/^Environment=TZ.*/d' $RSYSLOG_PATH | true
-fi
-STATUS=`echo $?`
-if [ "$STATUS" != 0 ]; then
-  echo "[!] ERROR: Failed to remove existing TZ environment variable if exists in rsyslog.service."
-  exit 1;
-fi
+if [ -z "$RSYSLOG_PATH" ]; then
+  echo "[!] rsyslog install failed - skipping rsyslog TZ configuration. Host logs will not be collected."
+else
+  echo "[*] Removing existing TZ environment variable if exists in rsyslog.service..."
+  TZ_EXISTS=`grep -c "Environment=TZ" "$RSYSLOG_PATH"`
+  if [ "$TZ_EXISTS" != "" ]; then
+    sed -i '/^Environment=TZ.*/d' "$RSYSLOG_PATH" | true
+  fi
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to remove existing TZ environment variable if exists in rsyslog.service."
+    exit 1;
+  fi
 
-echo "[*] Adding new TZ environment variable to rsyslog.service..."
-sed -i '/^\[Service\]/a Environment=TZ=Asia/Seoul' $RSYSLOG_PATH
-STATUS=`echo $?`
-if [ "$STATUS" != 0 ]; then
-  echo "[!] ERROR: Failed to add new TZ environment variable to rsyslog.service."
-  exit 1;
-fi
+  echo "[*] Adding new TZ environment variable to rsyslog.service..."
+  sed -i '/^\[Service\]/a Environment=TZ=Asia/Seoul' "$RSYSLOG_PATH"
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to add new TZ environment variable to rsyslog.service."
+    exit 1;
+  fi
 
-echo "[*] Reloading systemctl daemon..."
-systemctl daemon-reload
-STATUS=`echo $?`
-if [ "$STATUS" != 0 ]; then
-  echo "[!] ERROR: Failed to reload systemctl daemon."
-  exit 1;
-fi
+  echo "[*] Reloading systemctl daemon..."
+  systemctl daemon-reload
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to reload systemctl daemon."
+    exit 1;
+  fi
 
-echo "[*] Restarting rsyslog service..."
-systemctl restart rsyslog
-STATUS=`echo $?`
-if [ "$STATUS" != 0 ]; then
-  echo "[!] ERROR: Failed to restart rsyslog service."
-  exit 1;
+  echo "[*] Restarting rsyslog service..."
+  systemctl restart rsyslog
+  STATUS=`echo $?`
+  if [ "$STATUS" != 0 ]; then
+    echo "[!] ERROR: Failed to restart rsyslog service."
+    exit 1;
+  fi
 fi
 
 echo "[*] Creating syslog symbolic link file for RHEL based OS..."
