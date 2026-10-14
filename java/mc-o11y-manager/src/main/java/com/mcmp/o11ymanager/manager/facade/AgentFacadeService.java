@@ -192,6 +192,13 @@ public class AgentFacadeService {
     }
 
     public AgentStatus getAgentStatus(String nsId, String infraId, String nodeId, Agent agent) {
+        return getAgentStatus(nsId, infraId, nodeId, agent, true);
+    }
+
+    // probeService=false: 전원이 꺼진 VM 처럼 SSH 로 물어볼 수 없는 노드. 서비스 확인을 건너뛰고
+    // SERVICE_INACTIVE 로 답한다. (설치 중/실패/미설치는 DB 상태 그대로 돌려준다.)
+    public AgentStatus getAgentStatus(
+            String nsId, String infraId, String nodeId, Agent agent, boolean probeService) {
         VMAgentTaskStatus taskStatus;
 
         if (agent == Agent.TELEGRAF) {
@@ -217,6 +224,10 @@ public class AgentFacadeService {
         // so fall through to the live service probe as before.)
         if (taskStatus == VMAgentTaskStatus.NOT_INSTALLED) {
             return AgentStatus.NOT_INSTALLED;
+        }
+
+        if (!probeService) {
+            return AgentStatus.SERVICE_INACTIVE;
         }
 
         AgentServiceStatus serviceStatus = getAgentServiceStatus(nsId, infraId, nodeId, agent);

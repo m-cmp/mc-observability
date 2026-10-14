@@ -9,7 +9,9 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
  * @param {object} annotations - optional ApexCharts annotations, e.g. { points: [...] }
  */
 export default function MetricChart({ title, series, height = 240, chartType = 'area', measurement, metric, annotations }) {
-  const hasData = series && series.length > 0 && series.some(s => s.data && s.data.length > 0);
+  // Points may carry y:null for empty buckets (drawn as gaps); only real values count as data.
+  const pointCount = (s) => (s.data ? s.data.filter((p) => p.y != null).length : 0);
+  const hasData = series && series.length > 0 && series.some(s => pointCount(s) > 0);
   if (!hasData) {
     return (
       <div style={{ height }} className="flex items-center justify-center text-gray-400 text-sm">
@@ -24,7 +26,7 @@ export default function MetricChart({ title, series, height = 240, chartType = '
 
   // A line/area needs >=2 points to draw anything; show point markers when data
   // is sparse so a single isolated sample is still visible (not just on hover).
-  const maxPoints = Math.max(0, ...series.map(s => (s.data ? s.data.length : 0)));
+  const maxPoints = Math.max(0, ...series.map(pointCount));
   const markerSize = maxPoints <= 2 ? 5 : 0;
 
   const options = {

@@ -82,6 +82,11 @@ public class VMFacadeService {
         return status;
     }
 
+    // cb-tumblebug node status: Running 만 켜진 것으로 본다 (Suspended/Terminated/Undefined 등은 꺼짐).
+    private static boolean isPowered(String status) {
+        return status != null && status.toLowerCase().contains("running");
+    }
+
     private String installError(String nsId, String infraId, String nodeId, Agent agent) {
         if (isInstallInFlight(nsId, infraId, nodeId, agent)) {
             return null;
@@ -354,6 +359,10 @@ public class VMFacadeService {
                     node.getName(),
                     userName);
 
+            // 전원이 꺼진 VM 은 SSH 로 agent 상태를 물으면 실패해 노드가 목록에서 빠지고, 화면이
+            // InfluxDB 에 남은 지난 데이터까지 못 보여준다. 꺼진 VM 은 서비스 확인을 건너뛴다.
+            boolean powered = isPowered(node.getStatus());
+
             //        log.info(">>> start checking monitoring agent status");
             //        AgentServiceStatus monitoringStatus =
             //                agentFacadeService.getAgentServiceStatus(nsId, infraId, nodeId,
@@ -370,7 +379,7 @@ public class VMFacadeService {
                             nodeId,
                             Agent.TELEGRAF,
                             agentFacadeService.getAgentStatus(
-                                    nsId, infraId, nodeId, Agent.TELEGRAF));
+                                    nsId, infraId, nodeId, Agent.TELEGRAF, powered));
 
             AgentStatus logAgentStatus =
                     withInFlight(
@@ -379,10 +388,10 @@ public class VMFacadeService {
                             nodeId,
                             Agent.FLUENT_BIT,
                             agentFacadeService.getAgentStatus(
-                                    nsId, infraId, nodeId, Agent.FLUENT_BIT));
+                                    nsId, infraId, nodeId, Agent.FLUENT_BIT, powered));
 
             AgentStatus traceAgentStatus =
-                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.BEYLA);
+                    agentFacadeService.getAgentStatus(nsId, infraId, nodeId, Agent.BEYLA, powered);
 
             return VMDTO.builder()
                     .nodeId(node.getId())

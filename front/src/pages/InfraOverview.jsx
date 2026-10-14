@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { toEpochMillis } from '../utils/time';
+import { toEpochMillis, formatLocalTime } from '../utils/time';
 import { useParams, useNavigate } from 'react-router-dom';
 import useBasePath from '../hooks/useBasePath';
 import { getInfraList } from '../api/tumblebug';
@@ -11,6 +11,7 @@ import { getK8sClusters } from '../api/k8sAgent';
 import MetricChart from '../components/MetricChart';
 import ProviderBadge from '../components/ProviderBadge';
 import AgentNotInstalled from '../components/AgentNotInstalled';
+import { nodeRunState } from '../utils/nodeState';
 import K8sAgentMonitor from '../components/K8sAgentMonitor';
 
 // Mirrors the full telegraf input set the host agent collects (cpu/mem/disk/diskio/
@@ -38,10 +39,24 @@ function fmtAgentValue(v, unit) {
 }
 
 // A VM/node host is "powered on" when its (cb-tumblebug) status is Running. Anything else
-// (Suspended/Suspending/Terminated/…) means the host is down, so — like stopped K8s nodes —
-// we show a "powered off" state instead of empty charts.
+// (Suspended/Suspending/Terminated/...) means the host is down. Its past metrics stay in
+// InfluxDB, so the card still draws them (the off span shows as a gap) and flags the VM as off.
 function isPowered(status) {
   return String(status || '').toLowerCase().includes('running');
+}
+
+const LAST_SEEN_RANGE = '7d';
+
+// Shown above a powered-off node's chart: the VM is off, and when its agent last sent data.
+function PoweredOffNotice({ lastSeen }) {
+  let when = 'checking last data...';
+  if (lastSeen === null) when = `no data in the last ${LAST_SEEN_RANGE}`;
+  else if (lastSeen !== undefined) when = `last data ${formatLocalTime(lastSeen)}`;
+  return (
+    <div className="px-4 py-1.5 text-xs text-amber-700 bg-amber-50 border-b">
+      VM is powered off - no new metrics are collected ({when}).
+    </div>
+  );
 }
 
 export default function InfraOverview() {
@@ -148,6 +163,17 @@ export default function InfraOverview() {
 
     nodeList.forEach(async (node) => {
       const nodeInfraId = nodeInfraMap[node.id] || infraId;
+      // A powered-off VM may have stopped reporting long before the 1h window, so look back
+      // further to tell the user when its agent last sent data.
+      if (!isPowered(node.status)) {
+        getMetricsByNode(nsId, nodeInfraId, node.id, {
+          measurement: 'cpu', range: LAST_SEEN_RANGE, groupTime: '1h',
+          fields: [{ function: 'mean', field: 'usage_idle' }],
+        }, signal).then((res) => {
+          if (signal?.aborted) return;
+          setNodeData(prev => ({ ...prev, [node.id]: { ...(prev[node.id] || {}), lastSeen: getLastTimestamp(res) } }));
+        }).catch(() => {});
+      }
       await Promise.allSettled(
         AGENT_METRICS.map(async (m) => {
           try {
@@ -577,16 +603,6 @@ function NodeCard({ node, nodeMetrics, dataSource, metricsLoading, selectedChart
 function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
   const { nsId } = useParams();
 
-  // Powered off → nothing to collect; show the stopped state (same as stopped K8s nodes).
-  if (!isPowered(node.status)) {
-    return (
-      <div className="bg-white rounded-lg shadow">
-        <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
-        <div className="p-8 text-center text-sm text-gray-400">Node is powered off — start the VM to collect metrics.</div>
-      </div>
-    );
-  }
-
   const gauges = AGENT_METRICS.map((m) => {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
@@ -612,6 +628,11 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
   return (
     <div className="bg-white rounded-lg shadow">
       <NodeHeader node={node} showCspBadge={false} cspAvailable={cspSupported} />
+      {nodeRunState(node.status) === 'stopped' && (
+        // The 1h window has per-minute samples; fall back to the hourly look-back only when
+        // the VM went quiet before that window.
+        <PoweredOffNotice lastSeen={getLastTimestamp(metrics.cpu?.res) ?? metrics.lastSeen} />
+      )}
       <div className="flex">
         <div className="flex flex-col justify-start gap-2 px-4 py-3 w-52 shrink-0 border-r max-h-[380px] overflow-auto">
           {gauges.map((g) => (
@@ -631,15 +652,6 @@ function AgentNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectC
 }
 
 function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectChart, onClickChart, cspSupported }) {
-  if (!isPowered(node.status)) {
-    return (
-      <div className="bg-white rounded-lg shadow">
-        <NodeHeader node={node} showCspBadge={cspSupported} cspAvailable={cspSupported} />
-        <div className="p-8 text-center text-sm text-gray-400">Node is powered off — start the VM to collect metrics.</div>
-      </div>
-    );
-  }
-
   if (!cspSupported) {
     return (
       <div className="bg-white rounded-lg shadow">
@@ -657,6 +669,9 @@ function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectCha
   return (
     <div className="bg-white rounded-lg shadow">
       <NodeHeader node={node} showCspBadge={true} cspAvailable={true} />
+      {nodeRunState(node.status) === 'stopped' && (
+        <div className="px-4 py-1.5 text-xs text-amber-700 bg-amber-50 border-b">VM is powered off - no new metrics are collected.</div>
+      )}
       <div className="flex">
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {cspKeys.map((key) => {
@@ -692,6 +707,7 @@ function NodeHeader({ node, showCspBadge, cspAvailable }) {
         <ProviderBadge connectionName={node.connectionName} />
         <span className="font-semibold text-sm">{node.name || node.id}</span>
         <span className={`text-xs px-2 py-0.5 rounded-full ${node.status === 'Running' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{node.status || '-'}</span>
+        {nodeRunState(node.status) === 'stopped' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">VM off</span>}
         {showCspBadge && cspAvailable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" title="CSP API Based">API</span>}
         {cspAvailable && !showCspBadge && <span className="text-xs text-gray-400" title="CSP API Based">(API available)</span>}
       </div>
@@ -754,6 +770,22 @@ function getLastValue(metricDTOs) {
   return bestVal;
 }
 
+// Newest timestamp (epoch ms) with a non-null value, or null when there is none.
+function getLastTimestamp(metricDTOs) {
+  let best = null;
+  for (const m of metricDTOs || []) {
+    const timeIdx = (m.columns || []).indexOf('timestamp');
+    const tIdx = timeIdx < 0 ? 0 : timeIdx;
+    const valIdx = tIdx === 0 ? 1 : 0;
+    for (const row of m.values || []) {
+      if (row[valIdx] == null) continue;
+      const ts = toEpochMillis(row[tIdx]);
+      if (best == null || ts > best) best = ts;
+    }
+  }
+  return best;
+}
+
 function toSeries(metricDTOs, name, invert) {
   if (!metricDTOs || metricDTOs.length === 0) return [];
   return metricDTOs.map((m) => {
@@ -761,10 +793,12 @@ function toSeries(metricDTOs, name, invert) {
     const valIdx = timeIdx === 0 ? 1 : 0;
     return {
       name: name || 'value',
-      data: (m.values || []).filter((row) => row[valIdx] != null).map((row) => ({
-        x: toEpochMillis(row[timeIdx]),
-        y: invert ? 100 - parseFloat(row[valIdx]) : parseFloat(row[valIdx]),
-      })),
+      // Empty buckets stay as y:null so the span the VM was off shows as a gap.
+      data: (m.values || []).map((row) => {
+        if (row[valIdx] == null) return { x: toEpochMillis(row[timeIdx]), y: null };
+        const v = parseFloat(row[valIdx]);
+        return { x: toEpochMillis(row[timeIdx]), y: invert ? 100 - v : v };
+      }),
     };
   });
 }

@@ -8,6 +8,7 @@ import { getAllCspMetrics, CSP_METRICS, isCspSupported } from '../api/csp';
 import { getNodeItems, getNodeList } from '../api/node';
 import MetricChart from '../components/MetricChart';
 import AgentNotInstalled from '../components/AgentNotInstalled';
+import { nodeRunState } from '../utils/nodeState';
 
 const RANGE_OPTIONS = [
   { value: '1h', label: '1H' },
@@ -216,7 +217,7 @@ export default function MonitoringDashboard() {
         });
         const series = toChartSeries(data, m.field);
         if (m.invert) {
-          series.forEach((s) => { s.name = m.title; s.data = s.data.map((d) => ({ ...d, y: 100 - d.y })); });
+          series.forEach((s) => { s.name = m.title; s.data = s.data.map((d) => ({ ...d, y: d.y == null ? null : 100 - d.y })); });
         }
         return { ...m, series };
       })
@@ -257,7 +258,7 @@ export default function MonitoringDashboard() {
         series = series.map((s) => ({
           ...s,
           name: 'usage_percent',
-          data: s.data.map((d) => ({ ...d, y: 100 - d.y })),
+          data: s.data.map((d) => ({ ...d, y: d.y == null ? null : 100 - d.y })),
         }));
       }
       setChartSeries(series);
@@ -466,8 +467,13 @@ export default function MonitoringDashboard() {
         {/* Overview charts — always shown when Node selected (agent mode only) */}
         {dataSource === 'agent' && selectedNodeId && (
           <div className="p-4 border-t">
-            <div className="mb-2 text-sm font-medium">
+            <div className="mb-2 text-sm font-medium flex items-center gap-2">
               Node: {nodes.find(n => n.id === selectedNodeId)?.name || selectedNodeId}
+              {nodeRunState(nodes.find(n => n.id === selectedNodeId)?.status) === 'stopped' && (
+                <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  VM off ({nodes.find(n => n.id === selectedNodeId)?.status}) - no new metrics are collected
+                </span>
+              )}
             </div>
             {agentInstalled === false ? (
               <AgentNotInstalled nsId={nsId} infraId={infraId} nodeId={selectedNodeId} height={160}
@@ -518,12 +524,12 @@ function toChartSeries(metricDTOs, metricName) {
     const valIdx = timeIdx === 0 ? 1 : 0;
     return {
       name: metricName || m.columns?.[valIdx] || m.name || 'value',
-      data: (m.values || [])
-        .filter((row) => row[valIdx] !== null && row[valIdx] !== undefined)
-        .map((row) => ({
-          x: toEpochMillis(row[timeIdx]),
-          y: parseFloat(row[valIdx]),
-        })),
+      // Keep empty buckets as y:null so a span with no samples (e.g. the VM was off) shows as
+      // a gap instead of a line drawn straight across it.
+      data: (m.values || []).map((row) => ({
+        x: toEpochMillis(row[timeIdx]),
+        y: row[valIdx] == null ? null : parseFloat(row[valIdx]),
+      })),
     };
   });
 }
