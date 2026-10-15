@@ -1,0 +1,43 @@
+%%{init: {'htmlLabels': false, 'flowchart': {'nodeSpacing': 50, 'rankSpacing': 70, 'curve': 'basis', 'htmlLabels': false}}}%%
+graph TD
+    USER([노드 등록<br/>gpu = true]) --> CFG
+
+    subgraph MGR ["manager"]
+        CFG[Telegraf config<br/>GPU 입력 4종 추가]
+        GAPI[GPU API<br/>/api/o11y/monitoring/gpu]
+    end
+
+    CFG -- "설치 · 설정 배포<br/>Semaphore + Ansible" --> TEL
+
+    subgraph VM ["GPU VM - passthrough · vGPU · MIG guest"]
+        DRV{{NVIDIA driver<br/>nvidia-smi · NVML}}
+        subgraph TEL ["cmp-telegraf"]
+            SMI[/inputs.nvidia_smi<br/>nvidia-smi -q -x\]
+            GPM[/inputs.nvidia_gpm<br/>NVML GPM sm_util\]
+            P1[processor<br/>nvidia_smi → dcgm<br/>필드 이름 변환]
+            P2[processor<br/>gpm → dcgm<br/>MIG 일 때만 gpu_util 채움]
+        end
+    end
+
+    DRV -.-> SMI
+    DRV -.-> GPM
+    SMI --> P1 --> P2
+    GPM --> P2
+
+    P2 -- "measurement dcgm<br/>tags ns_id · infra_id · node_id · uuid · index · name" --> INFLUX[(InfluxDB)]
+
+    GAPI -- "필드 목록 · 데이터 유무 · 조회" --> INFLUX
+    CLIENT([API client]) -- 조회 --> GAPI
+
+    %% ========== STYLES ==========
+    classDef portal fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#0d47a1
+    classDef manager fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#e65100
+    classDef db fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    classDef agent fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#b71c1c
+    classDef gpu fill:#ffe082,stroke:#ff6f00,stroke-width:2px,color:#e65100
+
+    class USER,CLIENT portal
+    class CFG,GAPI manager
+    class INFLUX db
+    class SMI,GPM,P1,P2 agent
+    class DRV gpu

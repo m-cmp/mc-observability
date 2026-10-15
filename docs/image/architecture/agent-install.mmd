@@ -1,0 +1,40 @@
+%%{init: {'htmlLabels': false, 'flowchart': {'nodeSpacing': 45, 'rankSpacing': 70, 'curve': 'basis', 'htmlLabels': false}}}%%
+graph LR
+    USER([Browser<br/>Config 화면]) -- 설치 요청 --> AGT[manager<br/>에이전트 설치 · 설정]
+
+    TB([CB-Tumblebug]) -- "노드 정보 · SSH 키<br/>kubeconfig · 토큰" --> AGT
+    AGT -- "InfluxDB 선택<br/>resolveForVM" --> INFLUX[(InfluxDB x2)]
+
+    AGT -- "작업 생성<br/>install-agent 템플릿" --> SEMAPHORE[/Semaphore + Ansible\]
+
+    subgraph VM ["VM"]
+        TEL_V[/cmp-telegraf\]
+        FB_V[/fluent-bit<br/>podman\]
+        BEYLA[/beyla · otel-java\]
+    end
+
+    SEMAPHORE -- "SSH (Linux)<br/>WinRM (Windows)" --> VM
+
+    AGT -- "특권 Job<br/>hostPID · nsenter" --> JOB[/K8s Job<br/>alpine\]
+
+    subgraph K8S ["K8s node"]
+        TEL_K[/telegraf<br/>host systemd\]
+        FB_K[/fluent-bit<br/>host systemd\]
+    end
+
+    JOB -- 호스트에 설치 --> K8S
+
+    %% ========== STYLES ==========
+    classDef portal fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#0d47a1
+    classDef platform fill:#b3e5fc,stroke:#01579b,stroke-width:2px,color:#01579b
+    classDef manager fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#e65100
+    classDef db fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    classDef infra fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#4a148c
+    classDef agent fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#b71c1c
+
+    class USER portal
+    class TB platform
+    class AGT manager
+    class INFLUX db
+    class SEMAPHORE,JOB infra
+    class TEL_V,FB_V,BEYLA,TEL_K,FB_K agent

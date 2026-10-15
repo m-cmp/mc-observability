@@ -1,0 +1,73 @@
+%%{init: {'htmlLabels': false, 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 80, 'curve': 'basis', 'htmlLabels': false}}}%%
+graph LR
+    subgraph VM ["VM"]
+        TEL_V[/cmp-telegraf\]
+        FB_V[/fluent-bit<br/>podman\]
+        BEYLA[/beyla eBPF<br/>otel-java\]
+    end
+
+    subgraph K8S ["K8s node"]
+        TEL_K[/telegraf<br/>host systemd\]
+        FB_K[/fluent-bit<br/>host systemd\]
+    end
+
+    LOGC[/log-collector<br/>스택 자체 로그\]
+
+    subgraph MON ["Storage"]
+        INFLUX[(InfluxDB x2<br/>메트릭)]
+        LOKI[(Loki<br/>로그)]
+        TEMPO[(Tempo<br/>트레이스)]
+    end
+
+    TEL_V -- 메트릭 --> INFLUX
+    TEL_K -- 메트릭 --> INFLUX
+    FB_V -- "로그 :3100" --> LOKI
+    FB_K -- "로그 :3100" --> LOKI
+    LOGC --> LOKI
+    BEYLA -- "OTLP :4317" --> TEMPO
+
+    SPIDER([CB-Spider<br/>CSP 모니터링 API])
+
+    API[manager<br/>조회 API · 메트릭 캐시]
+
+    INFLUX -- 메트릭 조회 --> API
+    LOKI -- 로그 조회 --> API
+    TEMPO -- 트레이스 조회 --> API
+    SPIDER -- CSP 지표 --> API
+
+    FRONT[front<br/>React + nginx] --> USER([Browser])
+    API -- "/api/o11y" --> FRONT
+
+    subgraph AI ["Insight"]
+        INSIGHT[insight<br/>이상탐지 · 예측 · RCA]
+        SCH{{insight-scheduler<br/>Airflow}}
+        MCP[MCP servers<br/>grafana · mariadb · influxdb]
+    end
+
+    API -- 메트릭 --> INSIGHT
+    SCH -- 이상탐지 실행 --> INSIGHT
+    INSIGHT -- RCA 도구 --> MCP
+    TEMPO -. "5xx 검색" .-> SCH
+    INFLUX -. 데이터소스 .-> GRAFANA{Grafana}
+    LOKI -. 데이터소스 .-> GRAFANA
+    TEMPO -. 데이터소스 .-> GRAFANA
+    GRAFANA -. 조회 .-> MCP
+
+    %% ========== STYLES ==========
+    classDef portal fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#0d47a1
+    classDef platform fill:#b3e5fc,stroke:#01579b,stroke-width:2px,color:#01579b
+    classDef manager fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#e65100
+    classDef scheduler fill:#ffcc80,stroke:#ef6c00,stroke-width:2px,color:#bf360c
+    classDef db fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    classDef infra fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#4a148c
+    classDef monitoring fill:#c5cae9,stroke:#1a237e,stroke-width:2px,color:#1a237e
+    classDef agent fill:#ffcdd2,stroke:#b71c1c,stroke-width:2px,color:#b71c1c
+
+    class USER,FRONT portal
+    class SPIDER platform
+    class API,INSIGHT manager
+    class SCH scheduler
+    class INFLUX,LOKI,TEMPO db
+    class MCP infra
+    class GRAFANA monitoring
+    class TEL_V,FB_V,BEYLA,TEL_K,FB_K,LOGC agent

@@ -1,0 +1,69 @@
+%%{init: {'htmlLabels': false, 'flowchart': {'nodeSpacing': 50, 'rankSpacing': 70, 'curve': 'basis', 'htmlLabels': false}}}%%
+graph TD
+    USER([Browser<br/>Alerts 화면]) -- "정책 · 대상 · 채널" --> TRG
+
+    subgraph MGR ["manager"]
+        TRG[Trigger API<br/>/api/o11y/trigger]
+        GAM[GrafanaAlertManager<br/>대상마다 규칙 1개]
+        CONS>AlertEventConsumer]
+        NOTI[Notification sender<br/>정책별 채널로 발송]
+    end
+
+    TRG -- 정책 · 대상 · 채널 저장 --> MARIA[(MariaDB)]
+    TRG --> GAM
+    GAM -- "알람 규칙 등록<br/>provisioning API" --> GRAFANA{Grafana<br/>unified alerting}
+    GRAFANA -- "Flux 쿼리 평가<br/>조회 → 마지막 값 → 단계 1~3" --> INFLUX[(InfluxDB)]
+
+    subgraph MQ ["RabbitMQ"]
+        MQTT[[mqtt.topic]]
+        AEX[[alert.exchange]]
+        AQ[[alert.queue]]
+        DLQ[[alert.dlq]]
+        MEX[[alert-manual.exchange]]
+        MQQ[[alert-manual.queue]]
+    end
+
+    GRAFANA -- "MQTT topic alert" --> MQTT
+    MQTT -- "key alert" --> AEX --> AQ
+    AQ -. 처리 실패 .-> DLQ
+    TRG -- 테스트 발송 --> MEX --> MQQ
+
+    AQ --> CONS
+    DLQ --> CONS
+    MQQ --> CONS
+    CONS -- "firing 이력<br/>trigger_history" --> MARIA
+    CONS --> NOTI
+    NOTI -- "발송 결과<br/>noti_history" --> MARIA
+
+    subgraph CH ["Channels"]
+        MAIL([Email<br/>SMTP])
+        SMS([SMS<br/>NCP])
+        KAKAO([Kakao 알림톡<br/>NCP])
+        SLACK([Slack])
+        TEAMS([Teams])
+        DISCORD([Discord])
+    end
+
+    NOTI --> MAIL
+    NOTI --> SMS
+    NOTI --> KAKAO
+    NOTI --> SLACK
+    NOTI --> TEAMS
+    NOTI --> DISCORD
+
+    %% ========== STYLES ==========
+    classDef portal fill:#bbdefb,stroke:#0d47a1,stroke-width:2px,color:#0d47a1
+    classDef platform fill:#b3e5fc,stroke:#01579b,stroke-width:2px,color:#01579b
+    classDef manager fill:#ffe0b2,stroke:#e65100,stroke-width:2px,color:#e65100
+    classDef db fill:#c8e6c9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    classDef infra fill:#e1bee7,stroke:#4a148c,stroke-width:2px,color:#4a148c
+    classDef monitoring fill:#c5cae9,stroke:#1a237e,stroke-width:2px,color:#1a237e
+    classDef webhook fill:#f8bbd0,stroke:#880e4f,stroke-width:2px,color:#880e4f
+
+    class USER portal
+    class TRG,GAM manager
+    class CONS,NOTI webhook
+    class MARIA,INFLUX db
+    class MQTT,AEX,AQ,DLQ,MEX,MQQ infra
+    class GRAFANA monitoring
+    class MAIL,SMS,KAKAO,SLACK,TEAMS,DISCORD platform
