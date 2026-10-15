@@ -117,8 +117,9 @@ function PoliciesTab({ nsId, infraId }) {
         try {
           const st = await getK8sAgentStatus(nsId, c.id);
           // List every cluster node (not only ones currently "running") so a target can be set
-          // even right after install, before the agent's InfluxDB data has started flowing.
-          node = (Array.isArray(st) ? st : []).map((n) => ({ id: n.node, name: n.node }));
+          // even right after install, before the agent's InfluxDB data has started flowing. A node
+          // that left the cluster will never report again, so it is no alert target.
+          node = (Array.isArray(st) ? st : []).filter((n) => !n.removed).map((n) => ({ id: n.node, name: n.node }));
         } catch { node = []; }
         return { id: c.id, name: `[K8s] ${c.name || c.id}`, node, isK8s: true };
       }));

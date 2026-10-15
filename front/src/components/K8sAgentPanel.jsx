@@ -103,7 +103,8 @@ export default function K8sAgentPanel({ nsId }) {
   return (
     <>
       {clusters.map((c) => {
-        const nodes = statusMap[c.id] || [];
+        // A node that left the cluster has no agent to manage; it stays only for its past data.
+        const nodes = (statusMap[c.id] || []).filter((n) => !n.removed);
         return (
           <div key={c.id} className="bg-white rounded-lg shadow">
             <div className="px-4 py-3 border-b flex items-center gap-3">

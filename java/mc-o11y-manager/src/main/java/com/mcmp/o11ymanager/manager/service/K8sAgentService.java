@@ -69,6 +69,11 @@ public class K8sAgentService {
     /** Node considered "running" if it reported within this window. */
     private static final long FRESH_SECONDS = 180;
 
+    /**
+     * A node that left the cluster stays listed (as removed) while its last data is this recent.
+     */
+    private static final Duration REMOVED_RETENTION = Duration.ofHours(24);
+
     /** Host telegraf input plugins selectable per node, with their measurement name. */
     public static final java.util.LinkedHashMap<String, String> INPUTS =
             new java.util.LinkedHashMap<>();
@@ -210,6 +215,7 @@ public class K8sAgentService {
         private boolean placeholder; // synthesized stopped node (real name not retrievable)
         private String taskStatus; // durable agent task state (INSTALLING/UNINSTALLING/...) or null
         private String error; // why the last install/uninstall failed, when taskStatus is FAILED
+        private boolean removed; // left the cluster (scaled in/replaced); shown for its past data
     }
 
     /** One node discovered for a cluster, with whether its host is currently up. */
@@ -217,11 +223,29 @@ public class K8sAgentService {
         final String name;
         final boolean running; // host powered on (present in cb-spider node list or reporting)
         final boolean placeholder;
+        final boolean removed; // no longer in the cluster; known only from recent metric history
 
-        NodeRef(String name, boolean running, boolean placeholder) {
+        private NodeRef(String name, boolean running, boolean placeholder, boolean removed) {
             this.name = name;
             this.running = running;
             this.placeholder = placeholder;
+            this.removed = removed;
+        }
+
+        static NodeRef up(String name) {
+            return new NodeRef(name, true, false, false);
+        }
+
+        static NodeRef stopped(String name) {
+            return new NodeRef(name, false, false, false);
+        }
+
+        static NodeRef placeholder(String name) {
+            return new NodeRef(name, false, true, false);
+        }
+
+        static NodeRef removed(String name) {
+            return new NodeRef(name, false, false, true);
         }
     }
 
@@ -562,7 +586,15 @@ public class K8sAgentService {
             PowerState power = PowerState.of(ref.running || logging);
             out.add(
                     new NodeStatus(
-                            ref.name, logging, logging, null, power, ref.placeholder, null, null));
+                            ref.name,
+                            logging,
+                            logging,
+                            null,
+                            power,
+                            ref.placeholder,
+                            null,
+                            null,
+                            ref.removed && !logging));
         }
         return out;
     }
@@ -763,7 +795,8 @@ public class K8sAgentService {
                             s.getPowerState(),
                             s.isPlaceholder(),
                             taskStatus,
-                            t == VMAgentTaskStatus.FAILED ? errors.get(s.getNode()) : null));
+                            t == VMAgentTaskStatus.FAILED ? errors.get(s.getNode()) : null,
+                            s.isRemoved()));
         }
         return out;
     }
@@ -799,7 +832,8 @@ public class K8sAgentService {
                             power,
                             ref.placeholder,
                             null,
-                            null));
+                            null,
+                            ref.removed && !reporting));
         }
         return out;
     }
@@ -811,9 +845,10 @@ public class K8sAgentService {
      *
      * <p>When the cluster is up, cb-spider's live node list is authoritative. When it is down,
      * nodes are recovered by their real names from InfluxDB history ({@code historyLastSeen}: node
-     * -> last-seen ISO time), keeping only the {@code DesiredNodeSize} most-recently-seen ones (so
-     * old names left over from a previous cluster generation don't pile up). Any shortfall against
-     * {@code DesiredNodeSize} is filled with powered-off placeholder rows.
+     * -> last-seen ISO time), the {@code DesiredNodeSize} most-recently-seen ones as stopped. Any
+     * shortfall against {@code DesiredNodeSize} is filled with powered-off placeholder rows. Other
+     * nodes seen within {@code REMOVED_RETENTION} have left the cluster and are listed as removed,
+     * so their past data stays reachable; older names are dropped.
      */
     /**
      * The cluster's cb-spider detail. cb-tumblebug already fetches it from cb-spider to answer
@@ -868,23 +903,34 @@ public class K8sAgentService {
             log.warn("k8s node discovery failed cluster={}/{}", nsId, clusterId, e);
         }
 
+        // History names reported within REMOVED_RETENTION, most-recently-seen first. Older names
+        // are dropped so nodes from an earlier cluster generation don't pile up.
+        List<String> recent = new ArrayList<>();
+        for (Map.Entry<String, String> e : historyLastSeen.entrySet()) {
+            if (isWithin(e.getValue(), REMOVED_RETENTION)) {
+                recent.add(e.getKey());
+            }
+        }
+        recent.sort(
+                (a, b) ->
+                        nullSafe(historyLastSeen.get(b))
+                                .compareTo(nullSafe(historyLastSeen.get(a))));
+
         LinkedHashMap<String, NodeRef> ordered = new LinkedHashMap<>();
         if (!running.isEmpty()) {
-            // Cluster is up: cb-spider's node list is authoritative (ignore stale history names).
+            // Cluster is up: cb-spider's node list is authoritative, so a node it no longer lists
+            // has left the group (scaled in or replaced). Keep it as removed while its data is
+            // recent, so its past metrics stay reachable from the overview and Insight.
             for (String n : running) {
-                ordered.put(n, new NodeRef(n, true, false));
+                ordered.put(n, NodeRef.up(n));
             }
         } else {
-            // Cluster is down: recover names from history, most-recently-seen first, capped to the
-            // desired node count so dead nodes from an earlier generation don't accumulate.
-            List<String> recent = new ArrayList<>(historyLastSeen.keySet());
-            recent.sort(
-                    (a, b) ->
-                            nullSafe(historyLastSeen.get(b))
-                                    .compareTo(nullSafe(historyLastSeen.get(a))));
-            int limit = desired > 0 ? Math.min(desired, recent.size()) : recent.size();
-            for (int i = 0; i < limit; i++) {
-                ordered.put(recent.get(i), new NodeRef(recent.get(i), false, false));
+            // Cluster is down: cb-spider lists no nodes, so recover the most recently seen
+            // DesiredNodeSize names from history as stopped. When DesiredNodeSize is 0 the group
+            // was
+            // scaled to zero and every node left is removed.
+            for (int i = 0; i < Math.min(desired, recent.size()); i++) {
+                ordered.put(recent.get(i), NodeRef.stopped(recent.get(i)));
             }
         }
         // Fill the remaining (desired - known) nodes as powered-off placeholders.
@@ -893,8 +939,11 @@ public class K8sAgentService {
         while (ordered.size() < desired) {
             String ph = prefix + " #" + idx++;
             if (!ordered.containsKey(ph)) {
-                ordered.put(ph, new NodeRef(ph, false, true));
+                ordered.put(ph, NodeRef.placeholder(ph));
             }
+        }
+        for (String n : recent) {
+            ordered.putIfAbsent(n, NodeRef.removed(n));
         }
         return new ArrayList<>(ordered.values());
     }
@@ -1238,6 +1287,14 @@ public class K8sAgentService {
         try {
             java.time.Instant t = java.time.Instant.parse(iso);
             return java.time.Instant.now().minusSeconds(FRESH_SECONDS).isBefore(t);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static boolean isWithin(String iso, Duration window) {
+        try {
+            return java.time.Instant.now().minus(window).isBefore(java.time.Instant.parse(iso));
         } catch (Exception e) {
             return false;
         }

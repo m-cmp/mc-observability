@@ -44,7 +44,7 @@ export async function loadScopeNodes(nsId, targetId, isK8s) {
     const st = await getK8sAgentStatus(nsId, targetId);
     return (Array.isArray(st) ? st : [])
       .filter((n) => !n.placeholder)
-      .map((n) => ({ id: n.node, name: n.running ? n.node : `${n.node} (stopped)` }));
+      .map((n) => ({ id: n.node, name: n.running ? n.node : `${n.node} (${n.removed ? 'removed' : 'stopped'})` }));
   }
   const d = await getInfra(nsId, targetId);
   return d.node || [];

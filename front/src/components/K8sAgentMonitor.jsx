@@ -100,8 +100,9 @@ export default function K8sAgentMonitor({ nsId }) {
           if (!alive) return;
           setNodesMap((m) => ({ ...m, [c.id]: statuses }));
           setStatusLoaded((m) => ({ ...m, [c.id]: true }));
-          // Only nodes with the agent actually running have metrics to load.
-          for (const s of statuses.filter((n) => n.running)) {
+          // Nodes whose agent has reported have metrics to load, including ones that are off
+          // now (their past data is still in InfluxDB).
+          for (const s of statuses.filter(hasMetrics)) {
             const node = s.node;
             METRICS.forEach(async (mt) => {
               try {
@@ -150,7 +151,8 @@ export default function K8sAgentMonitor({ nsId }) {
       {clusters.map((c) => {
         const statuses = nodesMap[c.id] || [];
         const reporting = statuses.filter((n) => n.running);
-        const idle = statuses.filter((n) => !n.running); // off or agent not reporting
+        const charted = statuses.filter(hasMetrics);
+        const idle = statuses.filter((n) => !hasMetrics(n)); // agent never reported, or placeholder
         const loaded = statusLoaded[c.id];
         return (
           <div key={c.id} className="bg-white rounded-lg shadow">
@@ -170,8 +172,9 @@ export default function K8sAgentMonitor({ nsId }) {
                 ? <div className="p-6 text-center text-xs text-gray-400">No nodes found for this cluster.</div>
                 : (
                   <>
-                    {reporting.map((s) => (
+                    {charted.map((s) => (
                       <NodeCard key={s.node} node={s.node} metrics={data[`${c.id}/${s.node}`] || {}}
+                        offline={!s.running} removed={s.removed} lastSeen={s.lastSeen}
                         selectedChart={selectedChart} onSelectChart={setSelectedChart}
                         onOpen={() => openNode(c.id, s.node)} />
                     ))}
@@ -197,7 +200,12 @@ function fmtLastSeen(iso) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-// Compact row for nodes that have no live metrics (powered off, or agent not reporting).
+// A node whose agent has reported at least once has metrics in InfluxDB, even when it is off now.
+function hasMetrics(s) {
+  return s.running || (s.installed && !s.placeholder);
+}
+
+// Compact row for nodes that have no metrics to chart (agent never reported, or placeholder).
 function NodeStatusRow({ s }) {
   const powered = String(s.powerState || '').toUpperCase() === 'RUNNING';
   const last = fmtLastSeen(s.lastSeen);
@@ -216,7 +224,7 @@ function NodeStatusRow({ s }) {
   );
 }
 
-function NodeCard({ node, metrics, selectedChart, onSelectChart, onOpen }) {
+function NodeCard({ node, metrics, offline, removed, lastSeen, selectedChart, onSelectChart, onOpen }) {
   const gauges = METRICS.map((m) => {
     const d = metrics[m.key];
     const last = d?.res ? getLastValue(d.res) : null;
@@ -229,9 +237,21 @@ function NodeCard({ node, metrics, selectedChart, onSelectChart, onOpen }) {
   return (
     <div className="bg-white rounded-lg border">
       <div className="px-4 py-2 border-b flex items-center justify-between">
-        <span className="font-mono text-sm text-gray-700">{node}</span>
+        <span className="inline-flex items-center gap-2">
+          <span className="font-mono text-sm text-gray-700">{node}</span>
+          {offline && (
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">{removed ? 'Removed' : 'Stopped'}</span>
+          )}
+        </span>
         <button onClick={onOpen} className="text-xs text-blue-600 hover:underline">Detail →</button>
       </div>
+      {offline && (
+        <div className="px-4 py-1.5 text-xs text-amber-700 bg-amber-50 border-b">
+          {removed
+            ? 'Node was removed from the cluster - showing the metrics collected until it left'
+            : 'Node is not reporting - no new metrics are collected'} (last data {fmtLastSeen(lastSeen) || '-'}).
+        </div>
+      )}
       <div className="flex">
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {gauges.map((g) => (
