@@ -4,11 +4,35 @@
 
 mkdir -p /cmp-agent/
 
+# Another agent's install on this VM may be running podman (e.g. loading its image) while this
+# runs, and the log agent's service runs podman too. Extracting straight over the binaries leaves
+# them missing or half-written for a moment, so exec fails with "Text file busy". Extract to a
+# staging directory on the same filesystem and rename each file into place: rename swaps the
+# file in one step, so podman is always either the old or the new complete binary.
+STAGE=/cmp-agent/.common-stage_"$1"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+
 echo "[*] Extracting agent common files..."
-/tmp/busybox_"$1" tar xvf /tmp/cmp-agent-common_"$1.tar.gz" -C /cmp-agent/
+/tmp/busybox_"$1" tar xvf /tmp/cmp-agent-common_"$1.tar.gz" -C "$STAGE"
 STATUS=`echo $?`
 if [ "$STATUS" != 0 ]; then
   echo "[!] ERROR: Failed to extract agent common files!"
+  rm -rf "$STAGE"
+  exit 1;
+fi
+
+echo "[*] Moving agent common files into place..."
+(cd "$STAGE" && find . -mindepth 1 -type d) | while read -r d; do
+  mkdir -p "/cmp-agent/$d" && chmod --reference="$STAGE/$d" "/cmp-agent/$d"
+done &&
+(cd "$STAGE" && find . ! -type d) | while read -r f; do
+  mv -f "$STAGE/$f" "/cmp-agent/$f" || exit 1
+done
+STATUS=`echo $?`
+rm -rf "$STAGE"
+if [ "$STATUS" != 0 ]; then
+  echo "[!] ERROR: Failed to move agent common files into place!"
   exit 1;
 fi
 
