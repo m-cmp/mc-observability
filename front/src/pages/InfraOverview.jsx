@@ -131,7 +131,7 @@ export default function InfraOverview() {
         if (allNodes.length > 0) {
           setMetricsLoading(true);
           const signal = nextSignal();
-          if (dataSource === 'agent') await loadAgentData(allNodes, enriched, signal);
+          if (dataSource === 'agent') await loadAgentData(allNodes, signal);
           else await loadCspData(allNodes, signal);
           setMetricsLoading(false);
         }
@@ -150,19 +150,17 @@ export default function InfraOverview() {
     setNodeData({});
     setMetricsLoading(true);
     const signal = nextSignal();
-    const p = dataSource === 'agent' ? loadAgentData(nodes, allInfras, signal) : loadCspData(nodes, signal);
+    const p = dataSource === 'agent' ? loadAgentData(nodes, signal) : loadCspData(nodes, signal);
     p.finally(() => setMetricsLoading(false));
   }, [dataSource]);
 
-  async function loadAgentData(nodeList, infrasArg, signal) {
-    // Find which Infra each Node belongs to. Caller must pass the current infras
-    // since the allInfras state may still be stale (setState is async).
-    const infras = infrasArg || allInfras;
-    const nodeInfraMap = {};
-    infras.forEach(i => (i.node || []).forEach(n => { nodeInfraMap[n.id] = i.id; }));
+  // Node ids are unique only within an Infra, so results are keyed by Infra and Node.
+  const nodeKey = (node) => `${node.infraId}/${node.id}`;
 
+  async function loadAgentData(nodeList, signal) {
     nodeList.forEach(async (node) => {
-      const nodeInfraId = nodeInfraMap[node.id] || infraId;
+      const nodeInfraId = node.infraId;
+      const key = nodeKey(node);
       // A powered-off VM may have stopped reporting long before the 1h window, so look back
       // further to tell the user when its agent last sent data.
       if (!isPowered(node.status)) {
@@ -171,7 +169,7 @@ export default function InfraOverview() {
           fields: [{ function: 'mean', field: 'usage_idle' }],
         }, signal).then((res) => {
           if (signal?.aborted) return;
-          setNodeData(prev => ({ ...prev, [node.id]: { ...(prev[node.id] || {}), lastSeen: getLastTimestamp(res) } }));
+          setNodeData(prev => ({ ...prev, [key]: { ...(prev[key] || {}), lastSeen: getLastTimestamp(res) } }));
         }).catch(() => {});
       }
       await Promise.allSettled(
@@ -182,7 +180,7 @@ export default function InfraOverview() {
               fields: [{ function: 'mean', field: m.field }],
             }, signal);
             if (signal?.aborted) return;
-            setNodeData(prev => ({ ...prev, [node.id]: { ...(prev[node.id] || {}), [m.key]: { res, ...m } } }));
+            setNodeData(prev => ({ ...prev, [key]: { ...(prev[key] || {}), [m.key]: { res, ...m } } }));
           } catch {}
         })
       );
@@ -195,7 +193,7 @@ export default function InfraOverview() {
       try {
         const cspData = await getAllCspMetrics(node.connectionName, node.cspResourceName, '1', signal);
         if (signal?.aborted) return;
-        setNodeData(prev => ({ ...prev, [node.id]: cspData }));
+        setNodeData(prev => ({ ...prev, [nodeKey(node)]: cspData }));
       } catch {}
     });
   }
@@ -477,7 +475,7 @@ export default function InfraOverview() {
               <NodeCard
                 key={node.id}
                 node={node}
-                nodeMetrics={nodeData[node.id] || {}}
+                nodeMetrics={nodeData[nodeKey(node)] || {}}
                 dataSource={dataSource}
                 metricsLoading={metricsLoading}
                 selectedChart={selectedChart}
