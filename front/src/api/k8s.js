@@ -1,6 +1,6 @@
 import client from './client';
 import { toEpochMillis } from '../utils/time';
-import { CSP_METRICS } from './csp';
+import { CSP_METRICS, withGaps } from './csp';
 
 export async function getClusters(connectionName) {
   const res = await client.get('/spider/cluster', { params: { ConnectionName: connectionName } });
@@ -36,10 +36,10 @@ export async function getAllClusterNodeMetrics(connectionName, clusterName, node
       const data = await getClusterNodeMetric(connectionName, clusterName, nodeGroupName, nodeNumber, m.key, '5', timeBeforeHour);
       const metricName = data.metricName || m.label;
       const metricUnit = data.metricUnit || m.unit;
-      const points = (data.timestampValues || []).map((v) => ({
+      const points = withGaps((data.timestampValues || []).map((v) => ({
         x: toEpochMillis(v.timestamp),
         y: parseFloat(v.value),
-      }));
+      })), '5', timeBeforeHour);
       results[m.key] = {
         ...m,
         metricName,

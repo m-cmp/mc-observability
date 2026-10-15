@@ -56,9 +56,10 @@ function toSeries(res, name, invert) {
     const vIdx = tIdx === 0 ? 1 : 0;
     return {
       name: name || 'value',
-      data: (m.values || []).filter((row) => row[vIdx] != null).map((row) => ({
+      // Empty buckets stay as y:null so a span without data (node off) shows as a gap.
+      data: (m.values || []).map((row) => ({
         x: toEpochMillis(row[tIdx]),
-        y: invert ? 100 - parseFloat(row[vIdx]) : parseFloat(row[vIdx]),
+        y: row[vIdx] == null ? null : (invert ? 100 - parseFloat(row[vIdx]) : parseFloat(row[vIdx])),
       })),
     };
   });

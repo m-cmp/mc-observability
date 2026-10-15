@@ -16,6 +16,28 @@ const CSP_METRICS = [
 
 export { CSP_METRICS };
 
+/**
+ * cb-spider returns only the points that have data, so a span without data (the VM was off)
+ * would be drawn as a line joining its two ends. Put a null wherever two points are further apart
+ * than 1.5 periods, and at the window's start and end when the data stops short of them, so the
+ * chart shows those spans empty.
+ */
+export function withGaps(points, periodMinute, timeBeforeHour) {
+  const step = Number(periodMinute) * 60 * 1000;
+  const sorted = points.filter((p) => !Number.isNaN(p.x)).sort((a, b) => a.x - b.x);
+  const end = Date.now();
+  const start = end - Number(timeBeforeHour) * 60 * 60 * 1000;
+  const out = [];
+  let prev = start;
+  for (const p of sorted) {
+    if (p.x - prev > step * 1.5) out.push({ x: prev + step, y: null });
+    out.push(p);
+    prev = p.x;
+  }
+  if (end - prev > step * 1.5) out.push({ x: prev + step, y: null }, { x: end, y: null });
+  return out;
+}
+
 export async function getCspMetric(connectionName, cspResourceName, metricType, periodMinute = '5', timeBeforeHour = '1', signal) {
   const res = await client.get(`/api/o11y/monitoring/csp/node/${cspResourceName}/${metricType}`, {
     params: { ConnectionName: connectionName, periodMinute, timeBeforeHour },
@@ -32,10 +54,10 @@ export async function getAllCspMetrics(connectionName, cspResourceName, timeBefo
       const data = await getCspMetric(connectionName, cspResourceName, m.key, '5', timeBeforeHour, signal);
       const metricName = data.metricName || m.label;
       const metricUnit = data.metricUnit || m.unit;
-      const points = (data.timestampValues || []).map((v) => ({
+      const points = withGaps((data.timestampValues || []).map((v) => ({
         x: toEpochMillis(v.timestamp),
         y: parseFloat(v.value),
-      }));
+      })), '5', timeBeforeHour);
       results[m.key] = {
         ...m,
         metricName,

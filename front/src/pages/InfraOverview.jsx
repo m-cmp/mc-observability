@@ -565,7 +565,7 @@ function K8sNodeCard({ info, metrics, dataSource, metricsLoading, selectedChart,
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {cspKeys.map((key) => {
             const m = metrics[key];
-            const lastVal = m?.series?.[0]?.data?.length > 0 ? m.series[0].data[m.series[0].data.length - 1].y : null;
+            const lastVal = m?.series?.[0]?.data?.findLast((p) => p.y != null)?.y ?? null;
             const display = lastVal != null ? formatCspValue(lastVal, m.metricUnit) : '-';
             return (
               <GaugeItem key={key} g={{ key, label: m?.metricName || key, display }}
@@ -674,7 +674,7 @@ function CspNodeCard({ node, metrics, metricsLoading, selectedChart, onSelectCha
         <div className="flex flex-col justify-center gap-2 px-4 py-3 w-52 shrink-0 border-r">
           {cspKeys.map((key) => {
             const m = metrics[key];
-            const lastVal = m?.series?.[0]?.data?.length > 0 ? m.series[0].data[m.series[0].data.length - 1].y : null;
+            const lastVal = m?.series?.[0]?.data?.findLast((p) => p.y != null)?.y ?? null;
             const display = lastVal != null ? formatCspValue(lastVal, m.metricUnit) : '-';
             return (
               <GaugeItem key={key} g={{ key, label: m?.metricName || key, display }}
