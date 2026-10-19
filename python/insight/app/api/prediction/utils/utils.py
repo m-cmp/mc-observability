@@ -197,6 +197,7 @@ class PredictionService:
             measurement=query_params.measurement,
             start_time=query_params.start_time,
             end_time=query_params.end_time,
+            nodeId=getattr(path_params, "nodeId", None),
         )
 
         values = []

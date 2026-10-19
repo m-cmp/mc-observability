@@ -57,9 +57,11 @@ class InfluxDBRepository:
             tags = {"ns_id": nsId, "infra_id": infraId}
         # Replace this target's previous prediction so earlier runs with a different
         # range/frequency (e.g. daily points from a long range) don't linger and mix
-        # with the new run in the history view. Scoped to this series only.
+        # with the new run in the history view. Scoped to this series only: an Infra-level
+        # run must not drop its nodes' series, so it matches node_id = '' (tag absent).
         try:
-            self.client.delete_series(measurement=measurement.lower(), tags=tags)
+            where = " AND ".join(f"\"{k}\" = '{v}'" for k, v in {**tags, "node_id": nodeId or ""}.items())
+            self.client.query(f'DROP SERIES FROM "{measurement.lower()}" WHERE {where}')
         except Exception as exc:
             logger.warning("Failed to clear previous prediction series for %s: %s", measurement, exc)
         for _, row in df.iterrows():
@@ -83,8 +85,8 @@ class InfluxDBRepository:
         conditions = []
         conditions.append(f"\"ns_id\" = '{nsId}'")
         conditions.append(f"\"infra_id\" = '{infraId}'")
-        if nodeId:
-            conditions.append(f"\"node_id\" = '{nodeId}'")
+        # An Infra-level query reads only the Infra series, not its nodes' series.
+        conditions.append(f"\"node_id\" = '{nodeId or ''}'")
         conditions.append(f"time >= '{start_time}'")
         conditions.append(f"time <= '{end_time}'")
 
