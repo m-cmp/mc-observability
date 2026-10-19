@@ -379,8 +379,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
     setLoading(false);
   }
 
-  // Backend predicts the cpu measurement's `usage_idle` field. Show it as usage (100 - idle),
-  // matching the Monitoring dashboard's "CPU Used" convention.
+  // Backend already reports cpu as usage (100 - usage_idle).
   const isCpu = loadedMeasurement === 'cpu';
   const chartSeries = history.length > 0 ? [{
     name: isCpu ? 'Predicted CPU Usage (%)' : 'Prediction',
@@ -388,7 +387,7 @@ function PredictionTab({ nsId, infraId, nodeId }) {
       .map((h) => {
         if (h.value == null) return { x: toEpochMillis(h.timestamp), y: null };
         const v = parseFloat(h.value);
-        return { x: toEpochMillis(h.timestamp), y: isCpu ? 100 - v : v };
+        return { x: toEpochMillis(h.timestamp), y: v };
       })
       .filter((p) => p.y != null && !Number.isNaN(p.y)),
   }] : [];

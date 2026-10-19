@@ -65,11 +65,14 @@ class InfluxDBRepository:
         except Exception as exc:
             logger.warning("Failed to clear previous prediction series for %s: %s", measurement, exc)
         for _, row in df.iterrows():
+            fields = {"prediction_metric": row["value"]}
+            if measurement.lower() == "cpu":
+                fields["is_usage"] = 1
             point = {
                 "measurement": measurement.lower(),
                 "tags": tags,
                 "time": row["timestamp"],
-                "fields": {"prediction_metric": row["value"]},
+                "fields": fields,
             }
             points.append(point)
 
@@ -80,7 +83,10 @@ class InfluxDBRepository:
         self, nsId: str, infraId: str, measurement: str, start_time: str, end_time: str, nodeId=None
     ):
         measurement = measurement.lower()
-        query = f'SELECT mean("prediction_metric") as "prediction_metric" FROM "insight"."autogen".f"{measurement}"'
+        query = (
+            f'SELECT mean("prediction_metric") as "prediction_metric", max("is_usage") as "is_usage" '
+            f'FROM "insight"."autogen".f"{measurement}"'
+        )
 
         conditions = []
         conditions.append(f"\"ns_id\" = '{nsId}'")

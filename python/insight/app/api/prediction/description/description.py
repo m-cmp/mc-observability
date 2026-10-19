@@ -21,7 +21,7 @@ get_options_description = {
 }
 
 post_prediction_mci_description = {
-    "api_description": "Predict future metrics (cpu, mem, disk, system) for a given mci group.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system) for a given mci group. For cpu, value is CPU usage percent (100 - usage_idle).",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -48,7 +48,7 @@ post_prediction_mci_description = {
 }
 
 post_prediction_vm_description = {
-    "api_description": "Predict future metrics (cpu, mem, disk, system) for a given vm.",
+    "api_description": "Predict future metrics (cpu, mem, disk, system) for a given vm. For cpu, value is CPU usage percent (100 - usage_idle).",
     "response": {
         "200": {
             "description": "Successful prediction response",
@@ -76,7 +76,7 @@ post_prediction_vm_description = {
 }
 
 get_history_mci_description = {
-    "api_description": "Get previously stored prediction data for a specific mci group.",
+    "api_description": "Get previously stored prediction data for a specific mci group. For cpu, value is CPU usage percent (100 - usage_idle).",
     "response": {
         "200": {
             "description": "Successfully retrieved prediction history",
@@ -103,7 +103,7 @@ get_history_mci_description = {
 }
 
 get_history_vm_description = {
-    "api_description": "Get previously stored prediction data for a specific vm.",
+    "api_description": "Get previously stored prediction data for a specific vm. For cpu, value is CPU usage percent (100 - usage_idle).",
     "response": {
         "200": {
             "description": "Successfully retrieved prediction history",
