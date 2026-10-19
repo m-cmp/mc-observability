@@ -42,7 +42,7 @@ RabbitMQ provides different exchange types for various routing patterns:
 
 ### 1. Direct Exchange
 
-![Direct Exchange](etc/image/rabbit-direct-exchange.png)
+![Direct Exchange](../image/trigger-module/rabbit-direct-exchange.png)
 
 **How it works**:
 - Routes messages to queues based on exact routing key match
@@ -62,7 +62,7 @@ Routing Key: "info.user"     → Queue: "user-info-queue"
 
 ### 2. Fanout Exchange
 
-![Fanout Exchange](etc/image/rabbit-fanout-exchange.png)
+![Fanout Exchange](../image/trigger-module/rabbit-fanout-exchange.png)
 
 **How it works**:
 - Broadcasts messages to ALL bound queues
@@ -83,7 +83,7 @@ Message → Fanout Exchange → Queue A (Email Service)
 
 ### 3. Topic Exchange
 
-![Topic Exchange](etc/image/rabbit-topic-exchange.png)
+![Topic Exchange](../image/trigger-module/rabbit-topic-exchange.png)
 
 **How it works**:
 - Routes messages based on wildcard pattern matching
@@ -107,7 +107,7 @@ Patterns:
 
 ### 4. Headers Exchange
 
-![Headers Exchange](etc/image/rabbit-header-exchange.png)
+![Headers Exchange](../image/trigger-module/rabbit-header-exchange.png)
 
 **How it works**:
 - Routes messages based on message headers instead of routing key
@@ -128,7 +128,7 @@ Binding Headers: { "type": "alert", "severity": "high", "x-match": "all" }
 
 ## MQTT Integration
 
-![RabbitMQ MQTT Relation](etc/image/rabbit-mqtt-relation.png)
+![RabbitMQ MQTT Relation](../image/trigger-module/rabbit-mqtt-relation.png)
 
 ### MQTT Plugin Benefits
 - **Protocol Bridge**: Enables MQTT clients to publish to AMQP infrastructure
