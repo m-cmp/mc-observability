@@ -138,12 +138,12 @@ class PredictionService:
         prediction = model.predict(future)
         prediction = prediction.drop(columns=self.prophet_config["remove_columns"], errors="ignore")
         prediction = prediction[prediction["ds"] > last_datetime]
-        prediction = prediction.rename(columns={"ds": "timestamp", "yhat": "value"})
+        prediction = prediction.rename(columns={"ds": "timestamp", "yhat": "predicted_value"})
 
         # cpu is trained on usage_idle; report it as usage (100 - idle) like the other percent measurements.
         if measurement == "cpu":
-            prediction["value"] = 100 - prediction["value"]
-        prediction["value"] = np.clip(prediction["value"], 0, 100).round(2)
+            prediction["predicted_value"] = 100 - prediction["predicted_value"]
+        prediction["predicted_value"] = np.clip(prediction["predicted_value"], 0, 100).round(2)
         prediction["timestamp"] = prediction["timestamp"].apply(self.insert_timezone)
         logger.info("start prediction result saving")
         self.save_prediction_result(prediction, nsId, infraId, nodeId, measurement)
@@ -208,7 +208,7 @@ class PredictionService:
             # cpu points saved before v0.7.2 hold usage_idle and carry no is_usage marker.
             if is_cpu and value is not None and not point.get("is_usage"):
                 value = round(100 - value, 2)
-            value_dict = {"timestamp": point["time"], "value": value}
+            value_dict = {"timestamp": point["time"], "predicted_value": value}
             values.append(value_dict)
 
         start_time_dt = datetime.strptime(query_params.start_time, "%Y-%m-%dT%H:%M:%SZ")

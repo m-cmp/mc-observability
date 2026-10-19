@@ -160,11 +160,11 @@ GetPredictionMCIHistory:
     ns_id: string
     values:
     - timestamp: 2024-08-22 00:00:00+00:00
-      value: 50
+      predicted_value: 50
     - timestamp: 2024-08-22 01:00:00+00:00
-      value: 55
+      predicted_value: 55
     - timestamp: 2024-08-22 02:00:00+00:00
-      value: 60
+      predicted_value: 60
   rs_code: '200'
   rs_msg: Success
 GetPredictionOptions:
@@ -189,11 +189,11 @@ GetPredictionVMHistory:
     ns_id: string
     values:
     - timestamp: 2024-08-22 00:00:00+00:00
-      value: 50
+      predicted_value: 50
     - timestamp: 2024-08-22 01:00:00+00:00
-      value: 55
+      predicted_value: 55
     - timestamp: 2024-08-22 02:00:00+00:00
-      value: 60
+      predicted_value: 60
     node_id: string
   rs_code: '200'
   rs_msg: Success
@@ -270,11 +270,11 @@ PostPredictionMCI:
     ns_id: string
     values:
     - timestamp: 2024-08-22 00:00:00+00:00
-      value: 75
+      predicted_value: 75
     - timestamp: 2024-08-22 01:00:00+00:00
-      value: 78
+      predicted_value: 78
     - timestamp: 2024-08-22 02:00:00+00:00
-      value: 80
+      predicted_value: 80
   rs_code: '200'
   rs_msg: Success
 PostPredictionVM:
@@ -284,11 +284,11 @@ PostPredictionVM:
     ns_id: string
     values:
     - timestamp: 2024-08-22 00:00:00+00:00
-      value: 75
+      predicted_value: 75
     - timestamp: 2024-08-22 01:00:00+00:00
-      value: 78
+      predicted_value: 78
     - timestamp: 2024-08-22 02:00:00+00:00
-      value: 80
+      predicted_value: 80
     node_id: string
   rs_code: '200'
   rs_msg: Success

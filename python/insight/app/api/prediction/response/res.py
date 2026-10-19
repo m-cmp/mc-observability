@@ -36,7 +36,7 @@ class ResBodyPredictionOptions(BaseModel):
 # POST /predictions/ns/{nsId}/infra/{infraId}
 class PredictValue(BaseModel):
     timestamp: str
-    value: float | None
+    predicted_value: float | None
 
 
 class PredictionMCIResult(BaseModel):
@@ -70,7 +70,7 @@ class ResBodyPredictionMCIResult(BaseModel):
 # GET /predictions/ns/{nsId}/infra/{infraId}/history
 class HistoryValue(BaseModel):
     timestamp: str
-    value: float | None
+    predicted_value: float | None
 
 
 class PredictionMCIHistory(BaseModel):

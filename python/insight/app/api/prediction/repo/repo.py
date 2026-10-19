@@ -65,7 +65,7 @@ class InfluxDBRepository:
         except Exception as exc:
             logger.warning("Failed to clear previous prediction series for %s: %s", measurement, exc)
         for _, row in df.iterrows():
-            fields = {"prediction_metric": row["value"]}
+            fields = {"prediction_metric": row["predicted_value"]}
             if measurement.lower() == "cpu":
                 fields["is_usage"] = 1
             point = {

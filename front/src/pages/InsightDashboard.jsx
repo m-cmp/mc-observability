@@ -385,8 +385,8 @@ function PredictionTab({ nsId, infraId, nodeId }) {
     name: isCpu ? 'Predicted CPU Usage (%)' : 'Prediction',
     data: history
       .map((h) => {
-        if (h.value == null) return { x: toEpochMillis(h.timestamp), y: null };
-        const v = parseFloat(h.value);
+        if (h.predicted_value == null) return { x: toEpochMillis(h.timestamp), y: null };
+        const v = parseFloat(h.predicted_value);
         return { x: toEpochMillis(h.timestamp), y: v };
       })
       .filter((p) => p.y != null && !Number.isNaN(p.y)),
