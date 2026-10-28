@@ -31,10 +31,19 @@ class RcaEvidenceItem(BaseModel):
 
 
 class RcaHypothesis(BaseModel):
-    cause: str = Field(min_length=1, max_length=4000)
+    cause: str = Field(min_length=1)
     supporting_evidence: list[str] = Field(default_factory=list, max_length=20)
     contradicting_evidence: list[str] = Field(default_factory=list, max_length=20)
     confidence: float = Field(ge=0.0, le=1.0)
+
+    # Checked here rather than as Field(max_length=...): this schema is sent to the model as
+    # the output format, and Ollama cannot build a grammar for a 4000-character limit.
+    @field_validator("cause")
+    @classmethod
+    def limit_cause_length(cls, value: str) -> str:
+        if len(value) > 4000:
+            raise ValueError("cause must be at most 4000 characters")
+        return value
 
 
 class EvidenceTask(BaseModel):
