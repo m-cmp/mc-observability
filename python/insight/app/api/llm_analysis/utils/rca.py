@@ -145,7 +145,7 @@ def _persisted_tool_calls(context) -> dict:
 # they finish; the semaphore is per event loop because tests run one loop per case.
 _ANALYSIS_TASKS: set[asyncio.Task] = set()
 _ANALYSIS_SLOTS: dict[int, asyncio.Semaphore] = {}
-_STALE_SUMMARY = "interrupted by restart"
+_STALE_SUMMARY = "not finished within the analysis time limit, or interrupted by a restart"
 
 
 def _analysis_slots(limit: int) -> asyncio.Semaphore:

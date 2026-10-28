@@ -1,4 +1,5 @@
 import logging
+import os
 
 import yaml
 
@@ -120,7 +121,11 @@ class ConfigManager:
             # see the design's open items; tune once operational data exists.
             "investigation_model_call_limit": rca.get("investigation_model_call_limit", 24),
             "investigation_tool_call_limit": rca.get("investigation_tool_call_limit", 24),
-            "analysis_timeout_seconds": rca.get("analysis_timeout_seconds", 300),
+            # RCA_ANALYSIS_TIMEOUT_SECONDS overrides the file so a slow (e.g. local) model can get
+            # more time without rebuilding the image.
+            "analysis_timeout_seconds": int(
+                os.getenv("RCA_ANALYSIS_TIMEOUT_SECONDS") or rca.get("analysis_timeout_seconds", 300)
+            ),
             # POST /rca/query answers at once and runs the analysis in the background of the
             # worker process; these bound how many run and how many wait per process.
             "max_concurrent_analyses": rca.get("max_concurrent_analyses", 4),
