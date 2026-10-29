@@ -11,6 +11,12 @@ from config.ConfigManager import ConfigManager
 logger = logging.getLogger(__name__)
 
 
+def prediction_measurement(measurement: str) -> str:
+    # Anomaly detection writes its scores to "cpu"/"mem" with the same tags, so predictions
+    # keep their own measurement: dropping a prediction series must not drop those scores.
+    return f"{measurement.lower()}_prediction"
+
+
 class PredictionRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -61,7 +67,7 @@ class InfluxDBRepository:
         # run must not drop its nodes' series, so it matches node_id = '' (tag absent).
         try:
             where = " AND ".join(f"\"{k}\" = '{v}'" for k, v in {**tags, "node_id": nodeId or ""}.items())
-            self.client.query(f'DROP SERIES FROM "{measurement.lower()}" WHERE {where}')
+            self.client.query(f'DROP SERIES FROM "{prediction_measurement(measurement)}" WHERE {where}')
         except Exception as exc:
             logger.warning("Failed to clear previous prediction series for %s: %s", measurement, exc)
         for _, row in df.iterrows():
@@ -69,7 +75,7 @@ class InfluxDBRepository:
             if measurement.lower() == "cpu":
                 fields["is_usage"] = 1
             point = {
-                "measurement": measurement.lower(),
+                "measurement": prediction_measurement(measurement),
                 "tags": tags,
                 "time": row["timestamp"],
                 "fields": fields,
@@ -82,10 +88,9 @@ class InfluxDBRepository:
     def query_prediction_history(
         self, nsId: str, infraId: str, measurement: str, start_time: str, end_time: str, nodeId=None
     ):
-        measurement = measurement.lower()
         query = (
             f'SELECT mean("prediction_metric") as "prediction_metric", max("is_usage") as "is_usage" '
-            f'FROM "insight"."autogen".f"{measurement}"'
+            f'FROM "insight"."autogen"."{prediction_measurement(measurement)}"'
         )
 
         conditions = []
