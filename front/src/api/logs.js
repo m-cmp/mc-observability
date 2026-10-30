@@ -66,7 +66,9 @@ export async function queryLogs({ nsId, infraId, nodeId, keyword, limit = 50, ra
     }
     message = (message || '').replace(/\s+$/, '');
     return {
-      timestamp: parsed.time || (e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : ''),
+      // The Loki entry time comes first: the VM agent's `time` is the syslog stamp ("Oct 30 12:08:55")
+      // with no year, which the browser parses as 2001.
+      timestamp: e.timestamp ? new Date(e.timestamp / 1e6).toISOString() : (parsed.time || ''),
       message,
       level: e.labels?.level || parsed.level || deriveLevel(message) || 'UNKNOWN',
       node_id: e.labels?.NODE_ID || '',
