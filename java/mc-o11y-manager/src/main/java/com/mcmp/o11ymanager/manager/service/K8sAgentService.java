@@ -784,13 +784,18 @@ public class K8sAgentService {
                 out.add(s);
                 continue;
             }
-            boolean installed = s.isInstalled() || t == VMAgentTaskStatus.FINISHED;
+            // The live status counts a node as installed once it has ever reported, so a finished
+            // uninstall must win over it; otherwise the node keeps showing Uninstall and can't be
+            // installed again.
+            boolean uninstalled = t == VMAgentTaskStatus.NOT_INSTALLED;
+            boolean installed =
+                    !uninstalled && (s.isInstalled() || t == VMAgentTaskStatus.FINISHED);
             String taskStatus = (t.isBusy() || t == VMAgentTaskStatus.FAILED) ? t.name() : null;
             out.add(
                     new NodeStatus(
                             s.getNode(),
                             installed,
-                            s.isRunning(),
+                            !uninstalled && s.isRunning(),
                             s.getLastSeen(),
                             s.getPowerState(),
                             s.isPlaceholder(),
