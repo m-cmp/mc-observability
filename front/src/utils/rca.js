@@ -1,3 +1,5 @@
+import { toDate } from './time';
+
 const trimmed = (value) => String(value || '').trim();
 
 export function metricKeysByMeasurement(discovered) {
@@ -108,10 +110,11 @@ export function formatRcaConfidence(confidence) {
 }
 
 export function formatRcaDuration(createdAt, updatedAt, status, now = Date.now()) {
-  const start = new Date(createdAt).getTime();
+  // Naive backend timestamps are UTC; new Date() would read them as local time.
+  const start = toDate(createdAt)?.getTime();
   const end = ['PENDING', 'RUNNING'].includes(status)
     ? now
-    : new Date(updatedAt).getTime();
+    : toDate(updatedAt)?.getTime();
   if (!Number.isFinite(start) || !Number.isFinite(end)) return '-';
 
   const totalSeconds = Math.max(0, Math.floor((end - start) / 1000));
