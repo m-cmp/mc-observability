@@ -34,7 +34,7 @@ class AlertQueryService:
         await self.mcp_context.get_agent(llm)
 
         query_result = await self.mcp_context.aquery(session_id, message)
-        result = query_result["messages"][-1].content
+        result = query_result["messages"][-1].text
 
         metadata_model = self._get_metadata_model()
         return LLMQueryResult(

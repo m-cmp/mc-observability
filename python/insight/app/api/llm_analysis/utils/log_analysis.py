@@ -34,7 +34,7 @@ class LogQueryService:
         await self.mcp_context.get_agent(llm)
 
         query_result = await self.mcp_context.aquery(session_id, message)
-        result = query_result["messages"][-1].content
+        result = query_result["messages"][-1].text
 
         return LLMQueryResult(
             session_id=session_id,

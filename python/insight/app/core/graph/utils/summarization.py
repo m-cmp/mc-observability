@@ -60,8 +60,8 @@ class ConversationSummarizer:
         # Convert messages to text
         messages_text = ""
         for i, msg in enumerate(messages_to_summarize):
-            if hasattr(msg, "content"):
-                content = msg.content
+            if hasattr(msg, "text"):
+                content = msg.text
             elif isinstance(msg, dict):
                 content = msg.get("content", str(msg))
             else:
@@ -73,7 +73,7 @@ class ConversationSummarizer:
         try:
             # Generate summary using LLM directly
             summary_response = await llm.ainvoke([{"role": "user", "content": formatted_prompt}])
-            summary = summary_response.content.strip()
+            summary = summary_response.text.strip()
 
             logger.info(f"Summary created successfully (length: {len(summary)} characters)")
             logger.debug(f"Summary preview: {summary[:100]}...")
