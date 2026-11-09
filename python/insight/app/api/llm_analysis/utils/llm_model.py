@@ -54,15 +54,8 @@ def create_chat_model(repo, model_name: str, connection_id: int | None) -> BaseC
             detail="API key is required for the default OpenAI endpoint",
             status_code=status.HTTP_409_CONFLICT,
         )
-    model_options = {}
-    if not model_name.lower().startswith(("gpt-3", "gpt-4")):
-        model_options = {
-            "reasoning": {"effort": "high"},
-            "use_responses_api": True,
-        }
     return ChatOpenAI(
         model=model_name,
         api_key=api_key or "not-required",
         base_url=base_url,
-        **model_options,
     )

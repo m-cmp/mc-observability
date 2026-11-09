@@ -134,12 +134,12 @@ class CommonSessionService:
             channel_values = history.get("channel_values") or {}
             for message in channel_values.get("messages", []):
                 if self.filter_message(message):
-                    result.append(Message(message_type=message.type, message=message.content))
+                    result.append(Message(message_type=message.type, message=message.text))
         return self.map_history_to_res(session_info, result)
 
     @staticmethod
     def filter_message(element):
-        return element.type == "human" or (element.type == "ai" and element.content)
+        return element.type == "human" or (element.type == "ai" and element.text)
 
     def map_history_to_res(self, session, messages):
         connection = self.repo.get_connection_by_id(session.CONNECTION_ID) if session.CONNECTION_ID else None
