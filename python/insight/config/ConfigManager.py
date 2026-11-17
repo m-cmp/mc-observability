@@ -102,7 +102,6 @@ class ConfigManager:
         mcp = self.config.get("llm", {}).get("mcp", {})
         return {
             "startup_timeout_seconds": mcp.get("startup_timeout_seconds", 15),
-            "cleanup_timeout_seconds": mcp.get("cleanup_timeout_seconds", 5),
             "sse_read_timeout_seconds": mcp.get("sse_read_timeout_seconds", 900),
         }
 

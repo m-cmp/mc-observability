@@ -106,7 +106,6 @@ prediction:
 llm:
   mcp:
     startup_timeout_seconds: 15
-    cleanup_timeout_seconds: 5
     sse_read_timeout_seconds: 900
     # Declarative MCP server map — adding a server here is the only step needed
     # to make its tools loadable (transport: sse | streamable_http | stdio | websocket).

@@ -31,7 +31,6 @@ def build_mcp_manager(server_names=None) -> MCPManager:
     return MCPManager(
         selected,
         startup_timeout_seconds=lifecycle["startup_timeout_seconds"],
-        cleanup_timeout_seconds=lifecycle["cleanup_timeout_seconds"],
     )
 
 
