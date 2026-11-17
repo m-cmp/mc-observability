@@ -22,17 +22,17 @@ import requests
 from airflow import DAG
 from airflow.api.common.trigger_dag import trigger_dag
 from airflow.hooks.base import BaseHook
+from airflow.models import DagRun
 from airflow.operators.python import PythonOperator
 from airflow.providers.mysql.hooks.mysql import MySqlHook
+from airflow.utils.state import DagRunState
 
 TABLE = "mc_o11y_insight_rca_schedule"
 WORKER_DAG_ID = "rca_schedule_worker"
 POOL = "rca_analysis"
-STALE_MINUTES = 120
 TIMEOUTS = (10, 30)  # connect, read: POST /rca/query only records the request now
 POLL_SECONDS = 15  # how often the worker asks whether the analysis has finished
 POLL_MAX_CONSECUTIVE_FAILURES = 8  # ~2 minutes of insight being unreachable before giving up
-MAX_WAIT_MINUTES = 60  # an analysis still not finished after this is reported, not awaited
 
 # Server error watch. Only server spans: a client span's 5xx is the upstream's failure and
 # would count the same incident twice.
@@ -66,9 +66,9 @@ DUE_SQL = f"""
      WHERE ENABLED = 1 AND NEXT_EXECUTION <= UTC_TIMESTAMP() AND STATUS <> 'RUNNING'
 """
 
-# A killed worker cannot report back, so RUNNING that stopped moving is released here.
-# NEXT_EXECUTION still holds the slot that was being run, so recovery keeps the phase
-# instead of restarting the cadence from the moment we noticed.
+# A killed worker cannot report back, so a RUNNING schedule with no worker run left in
+# Airflow is released here. NEXT_EXECUTION still holds the slot that was being run, so
+# recovery keeps the phase instead of restarting the cadence from the moment we noticed.
 RECOVER_SQL = f"""
     UPDATE {TABLE}
        SET STATUS = 'FAILED',
@@ -84,7 +84,7 @@ RECOVER_SQL = f"""
                ) * INTERVAL_MINUTES MINUTE,
                NULL),
            UPDATED_AT = UTC_TIMESTAMP()
-     WHERE STATUS = 'RUNNING' AND UPDATED_AT < UTC_TIMESTAMP() - INTERVAL %s MINUTE
+     WHERE STATUS = 'RUNNING' AND NOT FIND_IN_SET(ID, %s)
 """
 
 # The next slot is measured from this run's slot, never from when the run happened to
@@ -132,14 +132,15 @@ def _rca_url() -> str:
     return _insight_url("query")
 
 
-def _wait_for_analysis(analysis_id: int, max_wait_minutes: int) -> str:
-    """Poll the record until it leaves PENDING/RUNNING; returns the final status."""
+def _wait_for_analysis(analysis_id: int) -> str:
+    """Poll the record until it leaves PENDING/RUNNING; returns the final status.
+
+    No time limit of its own: insight closes every record (analysis limit, stale sweep).
+    """
     import time
 
-    deadline = time.monotonic() + max_wait_minutes * 60
-    status = "RUNNING"
     failures = 0
-    while time.monotonic() < deadline:
+    while True:
         try:
             response = requests.get(_insight_url(f"records/{analysis_id}"), timeout=TIMEOUTS)
             response.raise_for_status()
@@ -156,7 +157,6 @@ def _wait_for_analysis(analysis_id: int, max_wait_minutes: int) -> str:
         if status not in ("PENDING", "RUNNING"):
             return status
         time.sleep(POLL_SECONDS)
-    raise TimeoutError(f"analysis {analysis_id} still {status} after {max_wait_minutes} minutes")
 
 
 def _tempo_url() -> str:
@@ -233,7 +233,10 @@ def _triggered_request(request: dict, traces: list) -> dict:
 
 
 def dispatch(**_context) -> None:
-    released = _execute(RECOVER_SQL, (STALE_MINUTES,))
+    # Queued is read before running, so a run that starts in between is seen at least once.
+    alive = DagRun.find(dag_id=WORKER_DAG_ID, state=DagRunState.QUEUED)
+    alive += DagRun.find(dag_id=WORKER_DAG_ID, state=DagRunState.RUNNING)
+    released = _execute(RECOVER_SQL, (",".join(str((run.conf or {}).get("schedule_id")) for run in alive),))
     if released:
         LOGGER.warning("released %s schedule(s) stuck in RUNNING", released)
 
@@ -322,8 +325,7 @@ def run_analysis(**context) -> None:
         analysis_id = analysis.get("id")
         if analysis_id is None:
             raise ValueError("analysis id missing in response")
-        # The record is ours from here on; a slot may not wait longer than its interval.
-        result_status = _wait_for_analysis(int(analysis_id), min(int(interval_minutes), MAX_WAIT_MINUTES))
+        result_status = _wait_for_analysis(int(analysis_id))
     except _NoServerErrors:
         result_status = "SKIPPED"
     except Exception as exc:  # noqa: BLE001 - every failure must still free the schedule
