@@ -197,13 +197,16 @@ rca_analysis:
   datasources:
     influx_database: mc-observability
   # Central investigation agent budgets, shared by every round of one request. Provisional
-  # (잠정): 300s keeps today's effective ceiling (120s per source, in parallel, plus planning
-  # and synthesis). e2e with gpt-5.6 showed the agent fans out ~9 independent calls in its
+  # (잠정): e2e with gpt-5.6 showed the agent fans out ~9 independent calls in its
   # first turn, so 10 tool calls left no room for follow-ups; 24 covers two such turns plus
   # a re-investigation.
   investigation_model_call_limit: 24
   investigation_tool_call_limit: 24
-  analysis_timeout_seconds: 300
+  # Limits for one whole analysis and for one LLM request. Investigating stops one LLM
+  # request before the analysis limit so the analysis can still conclude.
+  # Environment: RCA_ANALYSIS_TIMEOUT_SECONDS, RCA_LLM_REQUEST_TIMEOUT_SECONDS.
+  analysis_timeout_seconds: 3600
+  llm_request_timeout_seconds: 900
   # POST /rca/query returns the record immediately (202) and runs the analysis in the
   # background of the worker process. Per process: how many run at once, how many may wait.
   max_concurrent_analyses: 4

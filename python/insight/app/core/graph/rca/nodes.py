@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import Any
@@ -84,9 +85,7 @@ class RcaGraphNodes:
         budget = context.budget
         previous = state.get("merged_evidence") or {}
         if runner is not None and toolset.queryable_sources:
-            if budget is not None and budget.expired:
-                limitations.append({"source": "investigation", "reason": "request_deadline_exceeded"})
-            elif budget is not None and budget.remaining_model_calls == 0:
+            if budget is not None and budget.remaining_model_calls == 0:
                 limitations.append({"source": "investigation", "reason": "investigation_budget_exhausted"})
             else:
                 scope = IncidentScope.model_validate(state.get("scope") or {})
@@ -111,14 +110,17 @@ class RcaGraphNodes:
                 except RequestContextTooLargeError as exc:
                     blocked_reason = exc.code
                 else:
+                    work_time = asyncio.timeout(context.work_seconds_left())
                     try:
-                        await runner.ainvoke({"messages": [{"role": "user", "content": fitted["text"]}]})
+                        async with work_time:
+                            await runner.ainvoke({"messages": [{"role": "user", "content": fitted["text"]}]})
                     except InvestigationBudgetExhaustedError:
                         limitations.append({"source": "investigation", "reason": "investigation_budget_exhausted"})
                     except Exception as exc:
                         # Evidence already in the store survives; only this round's remainder is lost.
-                        logger.warning("RCA investigation runner failed: %s", exc)
-                        limitations.append({"source": "investigation", "reason": "investigation_runner_failed"})
+                        reason = "request_deadline_exceeded" if work_time.expired() else "investigation_runner_failed"
+                        logger.warning("RCA investigation ended early (%s): %s", reason, exc)
+                        limitations.append({"source": "investigation", "reason": reason})
 
         merged = _build_merged_evidence(toolset)
         merged["limitations"].extend(entry for entry in limitations if entry not in merged["limitations"])
@@ -403,7 +405,9 @@ def route_after_validation(state: RcaAnalysisState, runtime: Runtime[RcaRunConte
     if not task or not toolset or task.get("source") not in toolset.queryable_sources or not task.get("focus", "").strip():
         return END
     budget = runtime.context.budget
-    if budget is not None and (budget.expired or not budget.remaining_model_calls or not budget.remaining_tool_calls):
+    if budget is not None and (not budget.remaining_model_calls or not budget.remaining_tool_calls):
+        return END
+    if runtime.context.work_seconds_left() == 0:
         return END
     return "investigate_evidence"
 
