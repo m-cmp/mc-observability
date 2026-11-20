@@ -36,34 +36,9 @@ class AlertQueryService:
         query_result = await self.mcp_context.aquery(session_id, message)
         result = query_result["messages"][-1].text
 
-        metadata_model = self._get_metadata_model()
         return LLMQueryResult(
             session_id=session_id,
             message_type="ai",
             message=result,
-            metadata=metadata_model,
+            metadata=QueryMetadata(**self.mcp_context.get_metadata_summary()),
         )
-
-    def _get_metadata_model(self):
-        """Get metadata summary or return default metadata."""
-        metadata_summary = None
-        try:
-            metadata_summary = self.mcp_context.get_metadata_summary()
-        except Exception:
-            metadata_summary = None
-
-        if not metadata_summary or (
-            not metadata_summary.get("queries_executed")
-            and not metadata_summary.get("total_execution_time")
-            and not metadata_summary.get("tool_calls_count")
-            and not metadata_summary.get("databases_accessed")
-        ):
-            # Default metadata for alert analysis
-            return QueryMetadata(
-                queries_executed=["SELECT * FROM alert_rules"],
-                total_execution_time=0.92,
-                tool_calls_count=1,
-                databases_accessed=["MariaDB"],
-            )
-        else:
-            return QueryMetadata(**metadata_summary)

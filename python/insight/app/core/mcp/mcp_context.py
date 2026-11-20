@@ -118,16 +118,18 @@ class MCPContext:
         """
         try:
             messages = response.get("messages", [])
+            # The checkpointer returns the whole session, so count only this turn: the
+            # messages after the last user message.
+            last_human = max((i for i, m in enumerate(messages) if getattr(m, "type", None) == "human"), default=-1)
+            messages = messages[last_human + 1 :]
             logger.debug(f"Extracting from {len(messages)} messages")
 
             for message in messages:
                 logger.debug(f"Message type: {getattr(message, 'type', 'unknown')}")
 
-                if hasattr(message, "type") and message.type == "tool":
-                    self.query_metadata["tool_calls_count"] += 1
-                    logger.debug(f"Found tool call, count: {self.query_metadata['tool_calls_count']}")
-
-                elif hasattr(message, "type") and message.type == "ai":
+                # Each call is counted once, from the AI message that requested it; its tool
+                # reply is not counted again.
+                if hasattr(message, "type") and message.type == "ai":
                     if hasattr(message, "tool_calls") and message.tool_calls:
                         tool_calls = message.tool_calls
                         try:
@@ -164,7 +166,10 @@ class MCPContext:
                                     "execute_sql",
                                     "query_sql",
                                     "list_databases",
+                                    "list_mariadb_databases",
                                     "list_tables",
+                                    "get_table_schema",
+                                    "get_table_schema_with_relations",
                                 }
                                 grafana_tools = {
                                     "query_loki_logs",
@@ -205,24 +210,23 @@ class MCPContext:
                                 except Exception:
                                     args_dict = None
 
+                            # A schema or listing call reads the database too, not only a query.
+                            if inferred_db:
+                                self.query_metadata["databases_accessed"].add(inferred_db)
+
                             if isinstance(args_dict, dict):
-                                captured_any_query_for_call = False
                                 for key, value in args_dict.items():
                                     if (
                                         key
                                         and isinstance(key, str)
-                                        and key.lower() in ("query", "influxql_query", "sql_query")
+                                        and key.lower() in ("query", "influxql_query", "sql_query", "logql")
                                         and isinstance(value, str)
                                     ):
                                         q = value.strip()
                                         q = re.sub(r"\s+", " ", q)
                                         if q and q not in self.query_metadata["queries_executed"]:
                                             self.query_metadata["queries_executed"].append(q)
-                                            captured_any_query_for_call = True
                                             logger.debug(f"Captured query: {q[:160]}...")
-
-                                if captured_any_query_for_call and inferred_db:
-                                    self.query_metadata["databases_accessed"].add(inferred_db)
 
             logger.debug(f"Final metadata: {self.query_metadata}")
 

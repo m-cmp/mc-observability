@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.api.llm_analysis.repo.repo import LogAnalysisRepository
 from app.api.llm_analysis.request.req import PostQueryBody
-from app.api.llm_analysis.response.res import LLMQueryResult
+from app.api.llm_analysis.response.res import LLMQueryResult, QueryMetadata
 from app.api.llm_analysis.utils.llm_model import create_chat_model
 from app.api.llm_analysis.utils.session import CommonSessionService
 from app.core.mcp.mcp_context import MCPContext
@@ -40,4 +40,5 @@ class LogQueryService:
             session_id=session_id,
             message_type="ai",
             message=result,
+            metadata=QueryMetadata(**self.mcp_context.get_metadata_summary()),
         )
