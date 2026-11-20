@@ -66,7 +66,12 @@ class MCPContext:
 
     async def get_agent(self, llm: BaseChatModel):
         try:
-            self.tools = self.mcp_manager.get_all_tools() or []
+            # A failing tool call (e.g. a table the model guessed wrong) goes back to the model
+            # as the tool's reply so it can correct itself, instead of failing the whole request.
+            # Copies keep the cached tools that RCA uses unchanged.
+            self.tools = [
+                tool.model_copy(update={"handle_tool_error": True}) for tool in (self.mcp_manager.get_all_tools() or [])
+            ]
             logger.info(f"Using {len(self.tools)} tools from multi-MCP environment")
 
             if self.analysis_type == "log":
