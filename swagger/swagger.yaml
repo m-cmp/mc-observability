@@ -14,6 +14,54 @@ consumes:
 produces:
 - application/json
 paths:
+  /api/o11y/trigger/policy/{id}:
+    put:
+      tags:
+      - '[Trigger] Monitoring Measurement Trigger'
+      summary: UpdateTriggerPolicy
+      description: Update trigger policy (title, thresholds, resource, aggregation, etc.)
+      operationId: UpdateTriggerPolicy
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+        format: int64
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/TriggerPolicyCreateRequest'
+      responses:
+        '202':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+    delete:
+      tags:
+      - '[Trigger] Monitoring Measurement Trigger'
+      summary: DeleteTriggerPolicy
+      description: Delete trigger policy
+      operationId: DeleteTriggerPolicy
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: trigger policy id
+        required: true
+        type: integer
+        format: int64
+      responses:
+        '202':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
   /api/o11y/trigger/policy/{id}/channel:
     put:
       tags:
@@ -72,10 +120,10 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/ResBodyVoid'
-  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}:
     get:
       tags:
-      - '[Manager] Monitoring VM Management'
+      - '[Manager] Monitoring Node Management'
       summary: GetVM
       description: Get target (VM)
       operationId: GetVM
@@ -87,14 +135,14 @@ paths:
         description: Namespace ID (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: MCI ID (e.g., mci-1)
+        description: Infra ID (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: VM ID (e.g., vm-1)
+        description: Node ID (e.g., node-1)
         required: true
         type: string
       responses:
@@ -104,12 +152,12 @@ paths:
             $ref: '#/definitions/ResBodyVMDTO'
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"name\" : \"\
-              mcmp-vm\",\n    \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\"\
-              \ : \"ns-1\",\n    \"mci_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
+              mcmp-vm\",\n    \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"\
+              ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
               \ : \"SUCCESS\"\n  },\n  \"error_message\" : \"\"\n}"
     put:
       tags:
-      - '[Manager] Monitoring VM Management'
+      - '[Manager] Monitoring Node Management'
       summary: PutVM
       description: Update target
       operationId: PutVM
@@ -123,14 +171,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       - in: body
@@ -145,12 +193,12 @@ paths:
             $ref: '#/definitions/ResBodyVMDTO'
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"name\" : \"\
-              mcmp-vm\",\n    \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"ns_id\"\
-              \ : \"ns-1\",\n    \"mci_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
+              mcmp-vm\",\n    \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"\
+              ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
               \ : \"SUCCESS\"\n  },\n  \"error_message\" : \"\"\n}"
     post:
       tags:
-      - '[Manager] Monitoring VM Management'
+      - '[Manager] Monitoring Node Management'
       summary: PostVM
       description: Create target (VM)
       operationId: PostVM
@@ -164,14 +212,14 @@ paths:
         description: Namespace ID (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: MCI ID (e.g., mci-1)
+        description: Infra ID (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: VM ID (e.g., vm-1)
+        description: Node ID (e.g., node-1)
         required: true
         type: string
       - in: body
@@ -189,7 +237,7 @@ paths:
               \ : \"\"\n}"
     delete:
       tags:
-      - '[Manager] Monitoring VM Management'
+      - '[Manager] Monitoring Node Management'
       summary: DeleteVM
       description: Delete target
       operationId: DeleteVM
@@ -201,14 +249,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       responses:
@@ -219,7 +267,36 @@ paths:
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : null,\n  \"error_message\"\
               \ : \"\"\n}"
-  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/update:
+    put:
+      tags:
+      - '[Manager] Windows Trace Agent Management'
+      summary: "Update Windows OTel Java agent (jar ì\x9E¬ë\x8B¤ì\x9A´ë¡\x9Cë\x93\x9C)"
+      operationId: UpdateWindowsTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/item:
     get:
       tags:
       - '[Manager] Monitoring VM Item Management'
@@ -234,14 +311,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       responses:
@@ -270,14 +347,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       - in: body
@@ -309,14 +386,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       - in: body
@@ -332,6 +409,53 @@ paths:
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : null,\n  \"error_message\"\
               \ : \"\"\n}"
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/update:
+    put:
+      tags:
+      - '[Manager] Beyla Agent Management'
+      summary: Update Beyla trace agent (Linux only)
+      operationId: UpdateTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+  /api/o11y/insight/llm/connections/{connectionId}/default:
+    put:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: setDefaultLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
   /api/o11y/insight/anomaly-detection/settings/{settingSeq}:
     put:
       tags:
@@ -464,7 +588,7 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/ResBodyMapStringLong'
-  /api/o11y/trigger/policy/{id}/vm:
+  /api/o11y/trigger/policy/{id}/node:
     post:
       tags:
       - '[Trigger] Monitoring Measurement Trigger'
@@ -519,13 +643,496 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/ResBodyVoid'
-  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/restart:
+    post:
+      tags:
+      - '[Manager] Windows Trace Agent Management'
+      summary: "Restart Windows OTel Java agent (ë¯¸ì§\x80ì\x9B\x90)"
+      description: "Windowsì\x97\x90ì\x84  í\x98¸ì\x8A¤í\x8A¸ í\x99\x98ê²½ë³\x80ì\x88\x98 ì£¼ì\x9E\N ë°©ì\x8B\x9Dì\x9D´ë\x9D\
+        ¼ ë³\x84ë\x8F\x84 restart ì\x9D\x98ë¯¸ ì\x97\x86ì\x9D\x8C. í\x95­ì\x83\x81 ERROR ì\x9D\x91ë\x8Bµ."
+      operationId: RestartWindowsTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/install:
+    post:
+      tags:
+      - '[Manager] Windows Trace Agent Management'
+      summary: Install Windows OTel Java Auto-Instrumentation agent
+      description: "Windows VMì\x97\x90 OpenTelemetry Java Auto-Instrumentation jar ë°\x8F í\x99\x98ê²½ë³\x80ì\x88\x98ë¥¼\
+        \ ì\x84¤ì¹\x98í\x95\x9Cë\x8B¤. Linux VMì\x97\x90 í\x98¸ì¶\x9Cí\x95\x98ë©´ throwí\x95\x98ë¯\x80ë¡\x9C, Linuxì\x97\x90\
+        ë\x8A\x94 /beyla/installì\x9D\x84 ì\x82¬ì\x9A©í\x95\x98ë\x9D¼."
+      operationId: InstallWindowsTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/monitoring-agent:
+    post:
+      tags:
+      - '[Manager] Monitoring Node Management'
+      summary: InstallMonitoringAgent
+      description: Install only the monitoring agent (telegraf) on the node
+      operationId: installMonitoringAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+    delete:
+      tags:
+      - '[Manager] Monitoring Node Management'
+      summary: UninstallMonitoringAgent
+      description: Uninstall only the monitoring agent (telegraf) from the node
+      operationId: uninstallMonitoringAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/log-agent:
+    post:
+      tags:
+      - '[Manager] Monitoring Node Management'
+      summary: InstallLogAgent
+      description: Install only the log agent (fluent-bit) on the node
+      operationId: installLogAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+    delete:
+      tags:
+      - '[Manager] Monitoring Node Management'
+      summary: UninstallLogAgent
+      description: Uninstall only the log agent (fluent-bit) from the node
+      operationId: uninstallLogAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/restart:
+    post:
+      tags:
+      - '[Manager] Beyla Agent Management'
+      summary: Restart Beyla trace agent (Linux only)
+      operationId: RestartTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListResultDTO'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/install:
+    post:
+      tags:
+      - '[Manager] Beyla Agent Management'
+      summary: Install Beyla trace agent (Linux only)
+      description: "Linux VMì\x97\x90 Beyla eBPF trace agentë¥¼ ì\x84¤ì¹\x98í\x95\x9Cë\x8B¤. Windows VMì\x97\x90 í\x98¸ì¶\x9C\
+        í\x95\x98ë©´ throwí\x95\x98ë¯\x80ë¡\x9C, Windowsì\x97\x90ë\x8A\x94 /windows-trace-agent/installì\x9D\x84 ì\x82¬ì\x9A\
+        ©í\x95\x98ë\x9D¼."
+      operationId: InstallTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+  /api/o11y/monitoring/k8s/{nsId}/{clusterId}/node/{nodeName}/log-agent:
+    post:
+      tags:
+      - K8s Node Agent
+      summary: Install fluent-bit log agent on a single node
+      operationId: installLogNode
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      - name: nodeName
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyNodeResult'
+    delete:
+      tags:
+      - K8s Node Agent
+      summary: Uninstall fluent-bit log agent from a single node
+      operationId: uninstallLogNode
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      - name: nodeName
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyNodeResult'
+  /api/o11y/monitoring/k8s/{nsId}/{clusterId}/node/{nodeName}/agent:
+    post:
+      tags:
+      - K8s Node Agent
+      summary: Install host Telegraf agent on a single node (optional metric selection)
+      operationId: installNode
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      - name: nodeName
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyNodeResult'
+    delete:
+      tags:
+      - K8s Node Agent
+      summary: Uninstall host Telegraf agent from a single node
+      operationId: uninstallNode
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      - name: nodeName
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyNodeResult'
+  /api/o11y/monitoring/k8s/{nsId}/{clusterId}/log-agent:
+    get:
+      tags:
+      - K8s Node Agent
+      summary: Per-node log agent status (running = node logs in Loki recently)
+      operationId: logStatus
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeStatus'
+    post:
+      tags:
+      - K8s Node Agent
+      summary: Install fluent-bit log agent on every node of the cluster
+      operationId: installLog
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeResult'
+    delete:
+      tags:
+      - K8s Node Agent
+      summary: Uninstall fluent-bit log agent from every node of the cluster
+      operationId: uninstallLog
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeResult'
+  /api/o11y/monitoring/k8s/{nsId}/{clusterId}/agent:
+    get:
+      tags:
+      - K8s Node Agent
+      summary: Per-node agent status (running = reported to InfluxDB recently)
+      operationId: status
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeStatus'
+    post:
+      tags:
+      - K8s Node Agent
+      summary: Install host Telegraf agent on every node of the cluster
+      operationId: install
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeResult'
+    delete:
+      tags:
+      - K8s Node Agent
+      summary: Uninstall host Telegraf agent from every node of the cluster
+      operationId: uninstall
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListNodeResult'
+  /api/o11y/monitoring/influxdb/tag/values:
     post:
       tags:
       - '[Manager] Monitoring Metric'
-      summary: GetMetricsByNsIdAndMciId
+      summary: GetTagValues
+      description: List the values one tag takes across every InfluxDB server, narrowed by equality filters on other tags.
+        Drives the RCA metric scope picker.
+      operationId: GetTagValues
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/TagValuesRequestDTO'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListString'
+  /api/o11y/monitoring/influxdb/metric/{nsId}/{infraId}:
+    post:
+      tags:
+      - '[Manager] Monitoring Metric'
+      summary: GetMetricsByNsIdAndInfraId
       description: Retrieve InfluxDB metrics
-      operationId: GetMetricsByNsIdAndMciId
+      operationId: GetMetricsByNsIdAndInfraId
       produces:
       - application/json
       consumes:
@@ -536,9 +1143,9 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
       - in: body
@@ -551,11 +1158,7 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/ResBodyListMetricDTO'
-          examples:
-            application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" :\
-              \ \"cpu\",\n    \"columns\" : [ \"cpu\", \"ns_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\"\
-              , 0 ] ]\n  } ],\n  \"error_message\" : \"\"\n}"
-  /api/o11y/monitoring/influxdb/metric/{nsId}/{mciId}/{vmId}:
+  /api/o11y/monitoring/influxdb/metric/{nsId}/{infraId}/{nodeId}:
     post:
       tags:
       - '[Manager] Monitoring Metric'
@@ -572,14 +1175,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       - in: body
@@ -594,14 +1197,133 @@ paths:
             $ref: '#/definitions/ResBodyListMetricDTO'
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" :\
-              \ \"cpu\",\n    \"columns\" : [ \"cpu\", \"vm_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\"\
+              \ \"cpu\",\n    \"columns\" : [ \"cpu\", \"node_id\" ],\n    \"tags\" : null,\n    \"values\" : [ [ \"string\"\
               , 0 ] ]\n  } ],\n  \"error_message\" : \"\"\n}"
-  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}:
+  /api/o11y/monitoring/influxdb/cache/warm:
+    post:
+      tags:
+      - '[Manager] Monitoring Metric'
+      summary: WarmMonitoringCache
+      description: Trigger an immediate cache-warming pass over the current top-N targets.
+      operationId: WarmMonitoringCache
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyMapStringObject'
+  /api/o11y/monitoring/gpu/metric/{nsId}/{infraId}/{nodeId}:
+    post:
+      tags:
+      - '[Manager] GPU Monitoring Metric'
+      summary: GetGpuMetrics
+      description: Retrieve GPU metrics. The measurement is fixed to `dcgm`; requested fields are validated against the GPU
+        metric field definitions. Use group_by/conditions with the tags nvidia-smi reports (e.g., uuid, index, name) to query
+        per-GPU series.
+      operationId: GetGpuMetrics
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: nsId (e.g., ns-1)
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: infraId (e.g., infra-1)
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: nodeId (e.g., node-1)
+        required: true
+        type: string
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/MetricRequestDTO'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListMetricDTO'
+  /api/o11y/insight/rca/schedules:
+    get:
+      tags:
+      - '[Insight] RCA'
+      summary: Get Rca Schedules
+      operationId: GetRcaSchedules
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaSchedules'
+    post:
+      tags:
+      - '[Insight] RCA'
+      summary: Post Rca Schedule
+      operationId: PostRcaSchedule
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/PostRcaScheduleBody'
+      responses:
+        '201':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaSchedule'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/rca/query:
+    post:
+      tags:
+      - '[Insight] RCA'
+      summary: Query Rca
+      description: Run RCA with bounded trace, log, and metric evidence collection.
+      operationId: PostRcaQuery
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/PostRcaQueryBody'
+      responses:
+        '202':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaQuery'
+        '200':
+          description: ''
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/predictions/ns/{nsId}/infra/{infraId}:
     post:
       tags:
       - '[Insight] Prediction'
       summary: Predict Mci
-      description: Predict future metrics (cpu, mem, disk, system) for a given mci group.
+      description: Predict future metrics (cpu, mem, disk, system) for a given mci group. For cpu, predicted_value is CPU
+        usage percent (100 - usage_idle).
       operationId: PostPredictionMCI
       produces:
       - application/json
@@ -613,7 +1335,7 @@ paths:
         description: The Namespace ID for the prediction.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for the prediction.
         required: true
@@ -631,16 +1353,16 @@ paths:
           examples:
             application/json: &id001
               data:
-                mci_id: string
+                infra_id: string
                 measurement: cpu
                 ns_id: string
                 values:
                 - timestamp: 2024-08-22 00:00:00+00:00
-                  value: 75
+                  predicted_value: 75
                 - timestamp: 2024-08-22 01:00:00+00:00
-                  value: 78
+                  predicted_value: 78
                 - timestamp: 2024-08-22 02:00:00+00:00
-                  value: 80
+                  predicted_value: 80
               rs_code: '200'
               rs_msg: Success
         '422':
@@ -649,12 +1371,13 @@ paths:
             $ref: '#/definitions/HTTPValidationError'
           examples:
             application/json: *id001
-  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}:
+  /api/o11y/insight/predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}:
     post:
       tags:
       - '[Insight] Prediction'
       summary: Predict Vm
-      description: Predict future metrics (cpu, mem, disk, system) for a given vm.
+      description: Predict future metrics (cpu, mem, disk, system) for a given vm. For cpu, predicted_value is CPU usage percent
+        (100 - usage_idle).
       operationId: PostPredictionVM
       produces:
       - application/json
@@ -666,12 +1389,12 @@ paths:
         description: The Namespace ID for the prediction.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for the prediction.
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
         description: The VM ID for the prediction.
         required: true
@@ -689,17 +1412,17 @@ paths:
           examples:
             application/json: &id002
               data:
-                mci_id: string
+                infra_id: string
                 measurement: cpu
                 ns_id: string
                 values:
                 - timestamp: 2024-08-22 00:00:00+00:00
-                  value: 75
+                  predicted_value: 75
                 - timestamp: 2024-08-22 01:00:00+00:00
-                  value: 78
+                  predicted_value: 78
                 - timestamp: 2024-08-22 02:00:00+00:00
-                  value: 80
-                vm_id: string
+                  predicted_value: 80
+                node_id: string
               rs_code: '200'
               rs_msg: Success
         '422':
@@ -746,13 +1469,12 @@ paths:
             $ref: '#/definitions/HTTPValidationError'
           examples:
             application/json: *id003
-  /api/o11y/insight/llm/session:
+  /api/o11y/insight/llm/sessions:
     get:
       tags:
       - '[Insight] LLM Session Management'
-      summary: Get Llm Chat Sessions
-      description: Retrieve all active LLM chat sessions for log analysis.
-      operationId: GetLLMChatSessions
+      summary: Get Llm Sessions
+      operationId: GetLLMSessions
       produces:
       - application/json
       responses:
@@ -760,29 +1482,11 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/ResBodyLLMChatSessions'
-          examples:
-            application/json:
-              data:
-              - model_name: gpt-5-mini
-                provider: openai
-                regdate: 2025-09-17 14:12:36
-                seq: 1
-                session_id: 986ef65f-e425-478a-b84c-03fa80682f36
-                user_id: '1'
-              - model_name: llama3.1:8b
-                provider: ollama
-                regdate: 2025-09-18 11:46:49
-                seq: 2
-                session_id: 40dadcfa-98d6-4d5b-9745-669928c496b7
-                user_id: '1'
-              rs_code: '200'
-              rs_msg: Success
     post:
       tags:
       - '[Insight] LLM Session Management'
-      summary: Post Llm Chat Session
-      description: Create a new LLM chat session for log analysis with specified provider and model.
-      operationId: PostLLMChatSession
+      summary: Post Llm Session
+      operationId: PostLLMSession
       produces:
       - application/json
       consumes:
@@ -794,103 +1498,49 @@ paths:
         schema:
           $ref: '#/definitions/PostSessionBody'
       responses:
-        '200':
+        '201':
           description: ''
           schema:
             $ref: '#/definitions/ResBodyLLMChatSession'
-          examples:
-            application/json: &id004
-              data:
-                model_name: gpt-5-mini
-                provider: openai
-                regdate: 2025-09-18 14:54:04
-                seq: 3
-                session_id: 5e0f421b-7f88-4c1d-9132-f468ec9c557b
-                user_id: '1'
-              rs_code: '200'
-              rs_msg: Success
         '422':
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id004
     delete:
       tags:
       - '[Insight] LLM Session Management'
-      summary: Delete Llm Chat Session
-      description: Delete a specific LLM chat session and its conversation history.
-      operationId: DeleteLLMChatSession
+      summary: Delete All Llm Chat Sessions
+      operationId: DeleteAllLLMChatSessions
       produces:
       - application/json
-      parameters:
-      - name: sessionId
-        in: query
-        description: ''
-        required: true
-        type: string
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyLLMChatSession'
+            $ref: '#/definitions/ResBodyLLMChatSessions'
           examples:
-            application/json: &id005
-              data:
-                model_name: gpt-5-mini
-                provider: openai
-                regdate: 2025-09-18 14:54:04
-                seq: 4
-                session_id: 5e0f421b-7f88-4c1d-9132-f468ec9c557b
-                user_id: '1'
+            application/json:
+              data: []
               rs_code: '200'
               rs_msg: Success
-        '422':
-          description: ''
-          schema:
-            $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id005
-  /api/o11y/insight/llm/api-keys:
+  /api/o11y/insight/llm/connections:
     get:
       tags:
-      - '[Insight] LLM API Key Management'
-      summary: Get Llm Api Key
-      description: Retrieve the current API key configuration.
-      operationId: GetLLMAPIKeys
+      - '[Insight] LLM Connection Management'
+      summary: Get Llm Connections
+      operationId: GetLLMConnections
       produces:
       - application/json
-      parameters:
-      - name: provider
-        in: query
-        description: The LLM provider to use
-        required: false
-        type: string
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyLLMAPIKeys'
-          examples:
-            application/json: &id006
-              data:
-              - api_key: api_key
-                provider: openai
-                seq: 1
-              rs_code: '200'
-              rs_msg: Success
-        '422':
-          description: ''
-          schema:
-            $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id006
+            $ref: '#/definitions/ResBodyLLMConnections'
     post:
       tags:
-      - '[Insight] LLM API Key Management'
-      summary: Post Llm Api Key
-      description: Save or update the API key configuration.
-      operationId: PostLLMAPIKeys
+      - '[Insight] LLM Connection Management'
+      summary: Post Llm Connection
+      operationId: PostLLMConnection
       produces:
       - application/json
       consumes:
@@ -900,59 +1550,16 @@ paths:
         name: ''
         required: true
         schema:
-          $ref: '#/definitions/PostAPIKeyBody'
+          $ref: '#/definitions/PostConnectionBody'
       responses:
-        '200':
+        '201':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyLLMAPIKey'
-          examples:
-            application/json: &id007
-              data:
-                api_key: api_key
-                provider: openai
-                seq: 2
-              rs_code: '200'
-              rs_msg: Success
+            $ref: '#/definitions/ResBodyLLMConnection'
         '422':
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id007
-    delete:
-      tags:
-      - '[Insight] LLM API Key Management'
-      summary: Delete Llm Api Key
-      description: Delete the API key configuration.
-      operationId: DeleteLLMAPIKeys
-      produces:
-      - application/json
-      parameters:
-      - name: provider
-        in: query
-        description: The LLM provider to use
-        required: true
-        type: string
-      responses:
-        '200':
-          description: ''
-          schema:
-            $ref: '#/definitions/ResBodyLLMAPIKey'
-          examples:
-            application/json: &id008
-              data:
-                api_key: api_key
-                provider: openai
-                seq: 3
-              rs_code: '200'
-              rs_msg: Success
-        '422':
-          description: ''
-          schema:
-            $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id008
   /api/o11y/insight/anomaly-detection/{settingSeq}:
     post:
       tags:
@@ -1039,7 +1646,7 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyQuery'
           examples:
-            application/json: &id009
+            application/json: &id004
               data:
                 message: 'Based on the alert analysis, I found that the CPU usage spike is related to a memory leak in the
                   application service. Here are the recommended actions: 1) Restart the affected service, 2) Check application
@@ -1061,7 +1668,108 @@ paths:
           schema:
             $ref: '#/definitions/HTTPValidationError'
           examples:
-            application/json: *id009
+            application/json: *id004
+  /api/o11y/insight/rca/schedules/{scheduleId}:
+    delete:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: deleteRcaSchedule
+      produces:
+      - application/json
+      parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+    patch:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: patchRcaSchedule
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: scheduleId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      - in: body
+        name: ''
+        required: true
+        schema:
+          type: object
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+  /api/o11y/insight/llm/connections/{connectionId}:
+    get:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: getLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+    delete:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: deleteLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
+    patch:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: patchLLMConnection
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      - in: body
+        name: ''
+        required: true
+        schema:
+          type: object
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
   /api/o11y/trigger/noti/history:
     get:
       tags:
@@ -1304,6 +2012,165 @@ paths:
             type: object
           examples:
             application/json: '[ ]'
+  /api/o11y/trace/{traceId}:
+    get:
+      tags:
+      - '[Manager] Monitoring Trace'
+      summary: TraceDetail
+      description: Retrieve the flattened span list of a single trace (no flame graph).
+      operationId: TraceDetail
+      produces:
+      - application/json
+      parameters:
+      - name: traceId
+        in: path
+        description: Trace ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyTraceDetail'
+  /api/o11y/trace/services:
+    get:
+      tags:
+      - '[Manager] Monitoring Trace'
+      summary: TraceServiceList
+      description: List service.name values in Tempo, optionally narrowed by scope (framework | vm | all). Drives the UI service
+        dropdown.
+      operationId: TraceServiceList
+      produces:
+      - application/json
+      parameters:
+      - name: scope
+        in: query
+        description: 'Trace scope: framework | vm | all'
+        required: false
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListString'
+  /api/o11y/trace/search:
+    get:
+      tags:
+      - '[Manager] Monitoring Trace'
+      summary: TraceSearch
+      description: Search Tempo trace summaries. Provide a raw TraceQL `query`, or filter with `service` / `keyword` over
+        a time window.
+      operationId: TraceSearch
+      produces:
+      - application/json
+      parameters:
+      - name: query
+        in: query
+        description: Raw TraceQL (e.g. { resource.service.name="svc" }). Overrides service/keyword.
+        required: false
+        type: string
+      - name: service
+        in: query
+        description: Service name filter (resource.service.name)
+        required: false
+        type: string
+      - name: keyword
+        in: query
+        description: Free-text keyword (matches span name or service name)
+        required: false
+        type: string
+      - name: scope
+        in: query
+        description: 'Trace scope: framework (o11y platform) | vm (target VMs) | all'
+        required: false
+        type: string
+      - name: start
+        in: query
+        description: Start time (RFC3339 or unix epoch). Defaults to 1h ago.
+        required: false
+        type: string
+      - name: end
+        in: query
+        description: End time (RFC3339 or unix epoch). Defaults to now.
+        required: false
+        type: string
+      - name: limit
+        in: query
+        description: Maximum number of traces
+        required: false
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListTraceSummary'
+  /api/o11y/trace/attributes:
+    get:
+      tags:
+      - '[Manager] Monitoring Trace'
+      summary: TraceAttributeList
+      description: List the attribute names Tempo saw in a window, written as TraceQL uses them (resource.x, span.x, intrinsics
+        bare). Drives the RCA trace scope picker.
+      operationId: TraceAttributeList
+      produces:
+      - application/json
+      parameters:
+      - name: query
+        in: query
+        description: TraceQL spanset narrowing the spans (e.g. { resource.ns_id="ns-1" })
+        required: false
+        type: string
+      - name: start
+        in: query
+        description: Start time (RFC3339 or unix epoch). Defaults to 1h ago.
+        required: false
+        type: string
+      - name: end
+        in: query
+        description: End time (RFC3339 or unix epoch). Defaults to now.
+        required: false
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListString'
+  /api/o11y/trace/attributes/{attribute}/values:
+    get:
+      tags:
+      - '[Manager] Monitoring Trace'
+      summary: TraceAttributeValueList
+      description: List the values one attribute takes in a window, each with its Tempo type, optionally narrowed by a spanset.
+      operationId: TraceAttributeValueList
+      produces:
+      - application/json
+      parameters:
+      - name: attribute
+        in: path
+        description: Qualified attribute (e.g. resource.service.name, span.http.route, status)
+        required: true
+        type: string
+      - name: query
+        in: query
+        description: TraceQL spanset narrowing the spans (e.g. { resource.ns_id="ns-1" })
+        required: false
+        type: string
+      - name: start
+        in: query
+        description: Start time (RFC3339 or unix epoch). Defaults to 1h ago.
+        required: false
+        type: string
+      - name: end
+        in: query
+        description: End time (RFC3339 or unix epoch). Defaults to now.
+        required: false
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListAttributeValue'
   /api/o11y/readyz:
     get:
       tags:
@@ -1320,10 +2187,10 @@ paths:
             type: object
             additionalProperties:
               type: object
-  /api/o11y/monitoring/{nsId}/{mciId}/vm:
+  /api/o11y/monitoring/{nsId}/{infraId}/node:
     get:
       tags:
-      - '[Manager] Monitoring VM Management'
+      - '[Manager] Monitoring Node Management'
       summary: GetVMByNsMci
       description: Retrieve target list by NS/MCI
       operationId: GetVMByNsMci
@@ -1335,9 +2202,9 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
       responses:
@@ -1347,28 +2214,98 @@ paths:
             $ref: '#/definitions/ResBodyListVMDTO'
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" :\
-              \ \"mcmp-vm\",\n    \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"\
-              ns_id\" : \"ns-1\",\n    \"mci_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
-              \ : \"SUCCESS\"\n  } ],\n  \"error_message\" : \"\"\n}"
-  /api/o11y/monitoring/vm:
+              \ \"mcmp-vm\",\n    \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n  \
+              \  \"ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n  \
+              \  \"log_agent_status\" : \"SUCCESS\"\n  } ],\n  \"error_message\" : \"\"\n}"
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/status:
     get:
       tags:
-      - '[Manager] Monitoring VM Management'
-      summary: GetAllVMs
-      description: Retrieve all targets
-      operationId: GetAllVMs
+      - '[Manager] Windows Trace Agent Management'
+      summary: Get Windows OTel Java agent status
+      operationId: GetWindowsTraceAgentStatus
       produces:
       - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyListVMDTO'
-          examples:
-            application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" :\
-              \ \"mcmp-vm\",\n    \"description\" : \"string\",\n    \"vm_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n    \"\
-              ns_id\" : \"ns-1\",\n    \"mci_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n    \"log_agent_status\"\
-              \ : \"SUCCESS\"\n  } ],\n  \"error_message\" : \"\"\n}"
+            $ref: '#/definitions/ResBodyAgentStatus'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/system-check:
+    get:
+      tags:
+      - '[Manager] Beyla Agent Management'
+      summary: Check Beyla System Requirements (Linux only)
+      description: Check if the target VM meets Beyla system requirements (kernel version, BTF support)
+      operationId: CheckBeylaSystemRequirements
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyBeylaSystemCheckResult'
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/status:
+    get:
+      tags:
+      - '[Manager] Beyla Agent Management'
+      summary: Get Beyla Agent Status
+      description: Get Beyla APM/Trace agent status on the target VM
+      operationId: GetBeylaAgentStatus
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyAgentStatus'
   /api/o11y/monitoring/plugins:
     get:
       tags:
@@ -1387,6 +2324,51 @@ paths:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"seq\" :\
               \ 0,\n    \"name\" : \"string\",\n    \"pluginId\" : \"string\",\n    \"pluginType\" : \"string\"\n  } ],\n\
               \  \"error_message\" : \"\"\n}"
+  /api/o11y/monitoring/node:
+    get:
+      tags:
+      - '[Manager] Monitoring Node Management'
+      summary: GetAllVMs
+      description: Retrieve all targets
+      operationId: GetAllVMs
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListVMDTO'
+          examples:
+            application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"name\" :\
+              \ \"mcmp-vm\",\n    \"description\" : \"string\",\n    \"node_id\" : \"vm-1\",\n    \"influx_seq\" : 0,\n  \
+              \  \"ns_id\" : \"ns-1\",\n    \"infra_id\" : \"mci-1\",\n    \"monitoring_agent_status\" : \"SUCCESS\",\n  \
+              \  \"log_agent_status\" : \"SUCCESS\"\n  } ],\n  \"error_message\" : \"\"\n}"
+  /api/o11y/monitoring/k8s/{nsId}/{clusterId}/node/{nodeName}/agent/metrics:
+    get:
+      tags:
+      - K8s Node Agent
+      summary: Available metric inputs and the ones currently active on the node
+      operationId: nodeMetrics
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        required: true
+        type: string
+      - name: clusterId
+        in: path
+        required: true
+        type: string
+      - name: nodeName
+        in: path
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyMapStringObject'
   /api/o11y/monitoring/influxdb:
     get:
       tags:
@@ -1422,7 +2404,7 @@ paths:
             $ref: '#/definitions/ResBodyListTagDTO'
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"measurement\"\
-              \ : \"cpu\",\n    \"tags\" : [ \"host\", \"mci_id\" ]\n  } ],\n  \"error_message\" : \"\"\n}"
+              \ : \"cpu\",\n    \"tags\" : [ \"host\", \"infra_id\" ]\n  } ],\n  \"error_message\" : \"\"\n}"
   /api/o11y/monitoring/influxdb/measurement:
     get:
       tags:
@@ -1441,6 +2423,195 @@ paths:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : [ {\n    \"measurement\"\
               \ : \"string\",\n    \"fields\" : [ {\n      \"key\" : \"cpu\",\n      \"type\" : \"Integer\"\n    } ]\n  }\
               \ ],\n  \"error_message\" : \"\"\n}"
+  /api/o11y/monitoring/influxdb/cache/stats:
+    get:
+      tags:
+      - '[Manager] Monitoring Metric'
+      summary: GetMonitoringCacheStats
+      description: Retrieve in-memory monitoring metric cache statistics
+      operationId: GetMonitoringCacheStats
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyMapStringObject'
+  /api/o11y/monitoring/gpu/list:
+    get:
+      tags:
+      - '[Manager] GPU Monitoring Metric'
+      summary: GetGpuMetricFields
+      description: Retrieve GPU(DCGM) metric categories and field definitions (name, description, unit)
+      operationId: GetGpuMetricFields
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListGpuMetricKeyDTO'
+  /api/o11y/monitoring/gpu/field/check/{nsId}/{infraId}/{nodeId}:
+    get:
+      tags:
+      - '[Manager] GPU Monitoring Metric'
+      summary: CheckGpuMetricFields
+      description: Check whether each GPU metric field has data within the recent 5 minutes
+      operationId: CheckGpuMetricFields
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: nsId (e.g., ns-1)
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: infraId (e.g., infra-1)
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: nodeId (e.g., node-1)
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyListGpuMetricFieldCheckDTO'
+  /api/o11y/monitoring/csp/node/{nodeName}/{measurement}:
+    get:
+      tags:
+      - '[Manager] CSP Monitoring (Cached)'
+      summary: GetVMMonitoring
+      description: Proxy cb-spider /spider/monitoring/vm/{vmName}/{measurement} with Caffeine caching.
+      operationId: GetVMMonitoringCached
+      produces:
+      - application/json
+      parameters:
+      - name: nodeName
+        in: path
+        description: CSP resource name of the VM
+        required: true
+        type: string
+      - name: measurement
+        in: path
+        description: Metric type (e.g. cpu_usage, memory_usage)
+        required: true
+        type: string
+      - name: ConnectionName
+        in: query
+        required: true
+        type: string
+      - name: TimeBeforeHour
+        in: query
+        required: false
+        type: string
+      - name: timeBeforeHour
+        in: query
+        required: false
+        type: string
+      - name: IntervalMinute
+        in: query
+        required: false
+        type: string
+      - name: periodMinute
+        in: query
+        required: false
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Data'
+  /api/o11y/monitoring/csp/clusters:
+    get:
+      tags:
+      - '[Manager] CSP Monitoring (Cached)'
+      summary: GetK8sClusters (cached)
+      description: List K8s clusters (with node-group detail) for a connection, cached ~30s to avoid hitting cb-spider on
+        every page load.
+      operationId: getClusters
+      produces:
+      - application/json
+      parameters:
+      - name: ConnectionName
+        in: query
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/SpiderClusterInfo'
+  /api/o11y/monitoring/csp/cluster/{clusterName}/{nodeGroupName}/{nodeNumber}/{measurement}:
+    get:
+      tags:
+      - '[Manager] CSP Monitoring (Cached)'
+      summary: GetClusterNodeMonitoring
+      description: Proxy cb-spider /spider/monitoring/clusternode/{...} with Caffeine caching.
+      operationId: GetClusterNodeMonitoringCached
+      produces:
+      - application/json
+      parameters:
+      - name: clusterName
+        in: path
+        required: true
+        type: string
+      - name: nodeGroupName
+        in: path
+        required: true
+        type: string
+      - name: nodeNumber
+        in: path
+        required: true
+        type: string
+      - name: measurement
+        in: path
+        required: true
+        type: string
+      - name: ConnectionName
+        in: query
+        required: true
+        type: string
+      - name: TimeBeforeHour
+        in: query
+        required: false
+        type: string
+      - name: timeBeforeHour
+        in: query
+        required: false
+        type: string
+      - name: IntervalMinute
+        in: query
+        required: false
+        type: string
+      - name: periodMinute
+        in: query
+        required: false
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/Data'
+  /api/o11y/monitoring/csp/cache/stats:
+    get:
+      tags:
+      - '[Manager] CSP Monitoring (Cached)'
+      summary: GetCspCacheStats
+      operationId: cacheStats
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyMapStringObject'
   /api/o11y/log/query_range:
     get:
       tags:
@@ -1589,7 +2760,7 @@ paths:
       parameters:
       - name: label
         in: path
-        description: Label key (e.g., NS_ID, MCI_ID, service)
+        description: Label key (e.g., NS_ID, INFRA_ID, service)
         required: true
         type: string
       - name: start
@@ -1620,6 +2791,78 @@ paths:
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : {\n    \"data\" : [\
               \ \"string\", \"string\" ]\n  },\n  \"error_message\" : \"\"\n}"
+  /api/o11y/insight/rca/records:
+    get:
+      tags:
+      - '[Insight] RCA'
+      summary: Get Rca Records
+      description: List RCA records.
+      operationId: GetRcaRecords
+      produces:
+      - application/json
+      parameters:
+      - name: status
+        in: query
+        description: ''
+        required: false
+        type: string
+        enum:
+        - PENDING
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - PARTIAL
+      - name: from_dt
+        in: query
+        description: ''
+        required: false
+        type: string
+        format: date-time
+      - name: to
+        in: query
+        description: ''
+        required: false
+        type: string
+        format: date-time
+      - name: page
+        in: query
+        description: ''
+        required: false
+        type: integer
+        default: 1
+      - name: size
+        in: query
+        description: ''
+        required: false
+        type: integer
+        default: 20
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaRecords'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/rca/records/{analysisId}:
+    get:
+      tags:
+      - '[Insight] Observability Intelligence'
+      operationId: getRcaRecord
+      produces:
+      - application/json
+      parameters:
+      - name: analysisId
+        in: path
+        required: true
+        type: integer
+        format: int32
+      responses:
+        '200':
+          description: ''
+          schema:
+            type: object
   /api/o11y/insight/predictions/options:
     get:
       tags:
@@ -1650,12 +2893,13 @@ paths:
                 - mci
               rs_code: '200'
               rs_msg: Success
-  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history:
+  /api/o11y/insight/predictions/ns/{nsId}/infra/{infraId}/node/{nodeId}/history:
     get:
       tags:
       - '[Insight] Prediction'
       summary: Get Prediction Vm History
-      description: Get previously stored prediction data for a specific vm.
+      description: Get previously stored prediction data for a specific vm. For cpu, predicted_value is CPU usage percent
+        (100 - usage_idle).
       operationId: GetPredictionVMHistory
       produces:
       - application/json
@@ -1665,12 +2909,12 @@ paths:
         description: The Namespace ID for retrieving predictions.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for retrieving predictions.
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
         description: The VM ID for retrieving predictions.
         required: true
@@ -1698,19 +2942,19 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyPredictionVMHistory'
           examples:
-            application/json: &id010
+            application/json: &id005
               data:
-                mci_id: string
+                infra_id: string
                 measurement: cpu
                 ns_id: string
                 values:
                 - timestamp: 2024-08-22 00:00:00+00:00
-                  value: 50
+                  predicted_value: 50
                 - timestamp: 2024-08-22 01:00:00+00:00
-                  value: 55
+                  predicted_value: 55
                 - timestamp: 2024-08-22 02:00:00+00:00
-                  value: 60
-                vm_id: string
+                  predicted_value: 60
+                node_id: string
               rs_code: '200'
               rs_msg: Success
         '422':
@@ -1718,13 +2962,14 @@ paths:
           schema:
             $ref: '#/definitions/HTTPValidationError'
           examples:
-            application/json: *id010
-  /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/history:
+            application/json: *id005
+  /api/o11y/insight/predictions/ns/{nsId}/infra/{infraId}/history:
     get:
       tags:
       - '[Insight] Prediction'
       summary: Get Prediction Mci History
-      description: Get previously stored prediction data for a specific mci group.
+      description: Get previously stored prediction data for a specific mci group. For cpu, predicted_value is CPU usage percent
+        (100 - usage_idle).
       operationId: GetPredictionMCIHistory
       produces:
       - application/json
@@ -1734,7 +2979,7 @@ paths:
         description: The Namespace ID for retrieving predictions.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for retrieving predictions.
         required: true
@@ -1762,18 +3007,18 @@ paths:
           schema:
             $ref: '#/definitions/ResBodyPredictionMCIHistory'
           examples:
-            application/json: &id011
+            application/json: &id006
               data:
-                mci_id: string
+                infra_id: string
                 measurement: cpu
                 ns_id: string
                 values:
                 - timestamp: 2024-08-22 00:00:00+00:00
-                  value: 50
+                  predicted_value: 50
                 - timestamp: 2024-08-22 01:00:00+00:00
-                  value: 55
+                  predicted_value: 55
                 - timestamp: 2024-08-22 02:00:00+00:00
-                  value: 60
+                  predicted_value: 60
               rs_code: '200'
               rs_msg: Success
         '422':
@@ -1781,7 +3026,7 @@ paths:
           schema:
             $ref: '#/definitions/HTTPValidationError'
           examples:
-            application/json: *id011
+            application/json: *id006
   /api/o11y/insight/predictions/measurement:
     get:
       tags:
@@ -1820,11 +3065,11 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-  /api/o11y/insight/llm/session/{sessionId}/history:
+  /api/o11y/insight/llm/sessions/{sessionId}/history:
     get:
       tags:
-      - '[Insight] LLM Session Management'
-      summary: Get Llm Session History
+      - '[Insight] Observability Intelligence'
+      summary: GetLLMSessionHistory
       description: Retrieve the conversation history for a specific LLM chat session.
       operationId: GetLLMSessionHistory
       produces:
@@ -1832,16 +3077,15 @@ paths:
       parameters:
       - name: sessionId
         in: path
-        description: ''
         required: true
         type: string
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodySessionHistory'
+            type: object
           examples:
-            application/json: &id012
+            application/json: &id007
               data:
                 messages:
                 - message: Analyze these error logs and find the root cause
@@ -1856,41 +3100,25 @@ paths:
                 user_id: '1'
               rs_code: '200'
               rs_msg: Success
-        '422':
-          description: ''
-          schema:
-            $ref: '#/definitions/HTTPValidationError'
-          examples:
-            application/json: *id012
-  /api/o11y/insight/llm/model:
+  /api/o11y/insight/llm/connections/{connectionId}/models:
     get:
       tags:
-      - '[Insight] LLM Model Options'
-      summary: Get Llm Model Options
-      description: Retrieve available LLM model options and configurations for log analysis.
-      operationId: GetLLMModelOptions
+      - '[Insight] Observability Intelligence'
+      operationId: getLLMConnectionModels
       produces:
       - application/json
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        type: integer
+        format: int32
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyLLMModel'
-          examples:
-            application/json:
-              data:
-              - model_name:
-                - llama3.1:8b
-                - mistral:7b
-                provider: ollama
-              - model_name:
-                - gpt-5
-                - gpt-5-mini
-                - gpt-5-nano
-                provider: openai
-              rs_code: '200'
-              rs_msg: Success
-  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/mci/{mciId}:
+            type: object
+  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/infra/{infraId}:
     get:
       tags:
       - '[Insight] Anomaly Detection'
@@ -1905,7 +3133,7 @@ paths:
         description: ''
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: ''
         required: true
@@ -1919,7 +3147,7 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/mci/{mciId}/vm/{vmId}:
+  /api/o11y/insight/anomaly-detection/settings/ns/{nsId}/infra/{infraId}/node/{nodeId}:
     get:
       tags:
       - '[Insight] Anomaly Detection'
@@ -1934,12 +3162,12 @@ paths:
         description: ''
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: ''
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
         description: ''
         required: true
@@ -1982,7 +3210,7 @@ paths:
                 - mci
               rs_code: '200'
               rs_msg: Success
-  /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history:
+  /api/o11y/insight/anomaly-detection/ns/{nsId}/infra/{infraId}/node/{nodeId}/history:
     get:
       tags:
       - '[Insight] Anomaly Detection'
@@ -1997,12 +3225,12 @@ paths:
         description: The Namespace ID for anomaly detection.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for anomaly detection.
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
         description: The VM ID for anomaly detection
         required: true
@@ -2033,7 +3261,7 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-  /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/history:
+  /api/o11y/insight/anomaly-detection/ns/{nsId}/infra/{infraId}/history:
     get:
       tags:
       - '[Insight] Anomaly Detection'
@@ -2048,7 +3276,7 @@ paths:
         description: The Namespace ID for anomaly detection.
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
         description: The MCI ID for anomaly detection.
         required: true
@@ -2117,28 +3345,39 @@ paths:
           description: ''
           schema:
             $ref: '#/definitions/HTTPValidationError'
-  /api/o11y/trigger/policy/{id}:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/windows-trace-agent/uninstall:
     delete:
       tags:
-      - '[Trigger] Monitoring Measurement Trigger'
-      summary: DeleteTriggerPolicy
-      description: Delete trigger policy
-      operationId: DeleteTriggerPolicy
+      - '[Manager] Windows Trace Agent Management'
+      summary: Uninstall Windows OTel Java agent
+      description: "í\x99\x98ê²½ë³\x80ì\x88\x98 ì \x9Cê±° + jar ì\x82­ì \x9C + ì\x82¬ì\x9D´í\x8A¸ í\x8F´ë\x8D\x94 ì \x95ë¦¬.\
+        \ í\x98¸ì\x8A¤í\x8A¸ì\x9D\x98 Java ì\x95±ì\x9D\x80 ì\x9E¬ì\x8B\x9Cì\x9E\x91í\x95´ì\x95¼ trace ì\x86¡ì\x8B ì\x9D´ ì\x99\
+        \x84ì \x84í\x9E\x88 ì¤\x91ì§\x80ë\x90\x9Cë\x8B¤."
+      operationId: UninstallWindowsTraceAgent
       produces:
       - application/json
       parameters:
-      - name: id
+      - name: nsId
         in: path
-        description: trigger policy id
+        description: Namespace ID
         required: true
-        type: integer
-        format: int64
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
       responses:
-        '202':
+        '200':
           description: ''
           schema:
             $ref: '#/definitions/ResBodyVoid'
-  /api/o11y/monitoring/{nsId}/{mciId}/vm/{vmId}/item/{itemSeq}:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/item/{itemSeq}:
     delete:
       tags:
       - '[Manager] Monitoring VM Item Management'
@@ -2153,14 +3392,14 @@ paths:
         description: nsId (e.g., ns-1)
         required: true
         type: string
-      - name: mciId
+      - name: infraId
         in: path
-        description: mciId (e.g., mci-1)
+        description: infraId (e.g., infra-1)
         required: true
         type: string
-      - name: vmId
+      - name: nodeId
         in: path
-        description: vmId (e.g., vm-1)
+        description: nodeId (e.g., node-1)
         required: true
         type: string
       - name: itemSeq
@@ -2177,37 +3416,74 @@ paths:
           examples:
             application/json: "{\n  \"rs_code\" : \"0000\",\n  \"rs_msg\" : \"success\",\n  \"data\" : null,\n  \"error_message\"\
               \ : \"\"\n}"
-  /api/o11y/insight/llm/sessions:
+  /api/o11y/monitoring/{nsId}/{infraId}/node/{nodeId}/beyla/uninstall:
     delete:
       tags:
-      - '[Insight] LLM Session Management'
-      summary: Delete All Llm Chat Sessions
-      description: Delete all LLM chat sessions and their conversation histories.
-      operationId: DeleteAllLLMChatSessions
+      - '[Manager] Beyla Agent Management'
+      summary: Uninstall Beyla trace agent (Linux only)
+      operationId: UninstallTraceAgent
+      produces:
+      - application/json
+      parameters:
+      - name: nsId
+        in: path
+        description: Namespace ID
+        required: true
+        type: string
+      - name: infraId
+        in: path
+        description: Infra ID
+        required: true
+        type: string
+      - name: nodeId
+        in: path
+        description: Node ID
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyVoid'
+  /api/o11y/monitoring/influxdb/cache:
+    delete:
+      tags:
+      - '[Manager] Monitoring Metric'
+      summary: InvalidateMonitoringCache
+      description: Invalidate all entries in the monitoring metric cache
+      operationId: InvalidateMonitoringCache
       produces:
       - application/json
       responses:
         '200':
           description: ''
           schema:
-            $ref: '#/definitions/ResBodyLLMChatSessions'
-          examples:
-            application/json:
-              data: []
-              rs_code: '200'
-              rs_msg: Success
-  /api/o11y/insight/llm/api-Keys:
+            $ref: '#/definitions/ResBodyString'
+  /api/o11y/monitoring/csp/cache:
+    delete:
+      tags:
+      - '[Manager] CSP Monitoring (Cached)'
+      summary: InvalidateCspCache
+      operationId: invalidateCache
+      produces:
+      - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyString'
+  /api/o11y/insight/llm/sessions/{sessionId}:
     delete:
       tags:
       - '[Insight] Observability Intelligence'
-      summary: DeleteLLMAPIKeys
-      description: Delete the API key configuration.
-      operationId: DeleteLLMAPIKeys
+      summary: DeleteLLMChatSession
+      description: Delete a specific LLM chat session and its conversation history.
+      operationId: DeleteLLMChatSession
       produces:
       - application/json
       parameters:
-      - name: provider
-        in: query
+      - name: sessionId
+        in: path
         required: true
         type: string
       responses:
@@ -2216,7 +3492,256 @@ paths:
           schema:
             type: object
           examples:
-            application/json: *id008
+            application/json:
+              data:
+                model_name: gpt-5-mini
+                provider: openai
+                regdate: 2025-09-18 14:54:04
+                seq: 4
+                session_id: 5e0f421b-7f88-4c1d-9132-f468ec9c557b
+                user_id: '1'
+              rs_code: '200'
+              rs_msg: Success
+  /api/o11y/insight/llm/sessions/{session_id}:
+    delete:
+      tags:
+      - '[Insight] LLM Session Management'
+      summary: Delete Llm Session
+      operationId: DeleteLLMSession
+      produces:
+      - application/json
+      parameters:
+      - name: session_id
+        in: path
+        description: ''
+        required: true
+        type: string
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/llm/sessions/{session_id}/history:
+    get:
+      tags:
+      - '[Insight] LLM Session Management'
+      summary: Get Llm Session History
+      operationId: GetLLMSessionHistory
+      produces:
+      - application/json
+      parameters:
+      - name: session_id
+        in: path
+        description: ''
+        required: true
+        type: string
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodySessionHistory'
+          examples:
+            application/json: *id007
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+          examples:
+            application/json: *id007
+  /api/o11y/insight/llm/connections/{connection_id}:
+    get:
+      tags:
+      - '[Insight] LLM Connection Management'
+      summary: Get Llm Connection
+      operationId: GetLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connection_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyLLMConnection'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+    patch:
+      tags:
+      - '[Insight] LLM Connection Management'
+      summary: Patch Llm Connection
+      operationId: PatchLLMConnection
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: connection_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/PatchConnectionBody'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyLLMConnection'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+    delete:
+      tags:
+      - '[Insight] LLM Connection Management'
+      summary: Delete Llm Connection
+      operationId: DeleteLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connection_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/llm/connections/{connection_id}/models:
+    get:
+      tags:
+      - '[Insight] LLM Connection Management'
+      summary: Get Llm Connection Models
+      operationId: GetLLMConnectionModels
+      produces:
+      - application/json
+      parameters:
+      - name: connection_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyLLMConnectionModels'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/llm/connections/{connection_id}/default:
+    put:
+      tags:
+      - '[Insight] LLM Connection Management'
+      summary: Put Default Llm Connection
+      operationId: PutDefaultLLMConnection
+      produces:
+      - application/json
+      parameters:
+      - name: connection_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyLLMConnection'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/rca/records/{analysis_id}:
+    get:
+      tags:
+      - '[Insight] RCA'
+      summary: Get Rca Record
+      description: Get RCA detail by analysis ID.
+      operationId: GetRcaRecord
+      produces:
+      - application/json
+      parameters:
+      - name: analysis_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaRecord'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /api/o11y/insight/rca/schedules/{schedule_id}:
+    patch:
+      tags:
+      - '[Insight] RCA'
+      summary: Patch Rca Schedule
+      operationId: PatchRcaSchedule
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - name: schedule_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      - in: body
+        name: ''
+        required: true
+        schema:
+          $ref: '#/definitions/PatchRcaScheduleBody'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/ResBodyRcaSchedule'
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+    delete:
+      tags:
+      - '[Insight] RCA'
+      summary: Delete Rca Schedule
+      operationId: DeleteRcaSchedule
+      produces:
+      - application/json
+      parameters:
+      - name: schedule_id
+        in: path
+        description: ''
+        required: true
+        type: integer
+      responses:
+        '204':
+          description: ''
+        '422':
+          description: ''
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
   /readyz:
     get:
       tags:
@@ -2233,145 +3758,6 @@ paths:
           description: ''
           schema: {}
 definitions:
-  TriggerPolicyNotiChannelUpdateRequest:
-    required:
-    - channelName
-    - recipients
-    type: object
-    properties:
-      channelName:
-        type: string
-        description: Notification channel name
-        example: email_smtp.gmail.com
-      recipients:
-        type: array
-        items:
-          type: string
-  ResBodyVoid:
-    type: object
-    properties:
-      rs_code:
-        type: string
-        description: Response code
-        example: '0000'
-      rs_msg:
-        type: string
-        description: Response message
-        example: success
-      data:
-        type: object
-      error_message:
-        type: string
-        description: Error message
-  TriggerHistoryCommentUpdateRequest:
-    required:
-    - comment
-    type: object
-    properties:
-      comment:
-        type: string
-        description: Comment for trigger history
-        example: Alert resolved - false positive
-  VMRequestDTO:
-    required:
-    - name
-    type: object
-    properties:
-      name:
-        type: string
-        description: VM name
-        example: mcmp-vm
-      description:
-        type: string
-        description: VM description
-        example: string
-  ResBodyVMDTO:
-    type: object
-    properties:
-      rs_code:
-        type: string
-        description: Response code
-        example: '0000'
-      rs_msg:
-        type: string
-        description: Response message
-        example: success
-      data:
-        $ref: '#/definitions/VMDTO'
-      error_message:
-        type: string
-        description: Error message
-  VMDTO:
-    type: object
-    properties:
-      name:
-        type: string
-        description: VM name
-        example: mcmp-vm
-      description:
-        type: string
-        description: VM description
-        example: string
-      vm_id:
-        type: string
-        description: VM ID
-        example: vm-1
-      influx_seq:
-        type: integer
-        format: int64
-      vm_status:
-        type: string
-        enum:
-        - RUNNING
-        - FAILED
-      monitoring_service_status:
-        type: string
-        enum:
-        - ACTIVE
-        - INACTIVE
-        - NOT_EXIST
-        - FAILED
-      log_service_status:
-        type: string
-        enum:
-        - ACTIVE
-        - INACTIVE
-        - NOT_EXIST
-        - FAILED
-      ns_id:
-        type: string
-        description: Namespace ID
-        example: ns-1
-      mci_id:
-        type: string
-        description: MCI ID
-        example: mci-1
-      monitoring_agent_status:
-        type: string
-        description: Monitoring agent status
-        example: SUCCESS
-        enum:
-        - INSTALLING
-        - SERVICE_INACTIVE
-        - SUCCESS
-        - FAILED
-      log_agent_status:
-        type: string
-        description: Log agent status
-        example: SUCCESS
-        enum:
-        - INSTALLING
-        - SERVICE_INACTIVE
-        - SUCCESS
-        - FAILED
-  MonitoringItemUpdateDTO:
-    type: object
-    properties:
-      seq:
-        type: integer
-        format: int64
-      pluginConfig:
-        type: string
   ThresholdCondition:
     type: object
     properties:
@@ -2390,7 +3776,6 @@ definitions:
   TriggerPolicyCreateRequest:
     required:
     - aggregationType
-    - description
     - holdDuration
     - repeatInterval
     - resourceType
@@ -2404,7 +3789,7 @@ definitions:
         example: CPU Alert Policy
       description:
         type: string
-        description: Policy description
+        description: Policy description (optional)
         example: Alert when CPU usage is high
       thresholdCondition:
         $ref: '#/definitions/ThresholdCondition'
@@ -2435,6 +3820,219 @@ definitions:
         type: string
         description: Repeat interval
         example: 1h
+  ResBodyVoid:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: object
+      error_message:
+        type: string
+        description: Error message
+  TriggerPolicyNotiChannelUpdateRequest:
+    required:
+    - channelName
+    - recipients
+    type: object
+    properties:
+      channelName:
+        type: string
+        description: Notification channel name
+        example: email_smtp.gmail.com
+      recipients:
+        type: array
+        items:
+          type: string
+  TriggerHistoryCommentUpdateRequest:
+    required:
+    - comment
+    type: object
+    properties:
+      comment:
+        type: string
+        description: Comment for trigger history
+        example: Alert resolved - false positive
+  VMRequestDTO:
+    required:
+    - name
+    type: object
+    properties:
+      name:
+        type: string
+        description: VM name
+        example: mcmp-vm
+      description:
+        type: string
+        description: VM description
+        example: string
+      gpu:
+        type: boolean
+        description: Enable GPU monitoring (Telegraf reads nvidia-smi and stores dcgm metrics; needs only the NVIDIA driver)
+        example: false
+  ResBodyVMDTO:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        $ref: '#/definitions/VMDTO'
+      error_message:
+        type: string
+        description: Error message
+  VMDTO:
+    type: object
+    properties:
+      node_id:
+        type: string
+        description: Node ID
+        example: node-1
+      influx_seq:
+        type: integer
+        format: int64
+      vm_status:
+        type: string
+        enum:
+        - RUNNING
+        - FAILED
+      monitoring_agent_task_status:
+        type: string
+        enum:
+        - PREPARING
+        - INSTALLING
+        - UPDATING
+        - UPDATING_CONFIG
+        - UNINSTALLING
+        - RESTARTING
+        - FAILED
+        - FINISHED
+        - NOT_INSTALLED
+        - IDLE
+      log_agent_task_status:
+        type: string
+        enum:
+        - PREPARING
+        - INSTALLING
+        - UPDATING
+        - UPDATING_CONFIG
+        - UNINSTALLING
+        - RESTARTING
+        - FAILED
+        - FINISHED
+        - NOT_INSTALLED
+        - IDLE
+      trace_agent_task_status:
+        type: string
+        enum:
+        - PREPARING
+        - INSTALLING
+        - UPDATING
+        - UPDATING_CONFIG
+        - UNINSTALLING
+        - RESTARTING
+        - FAILED
+        - FINISHED
+        - NOT_INSTALLED
+        - IDLE
+      vm_monitoring_agent_task_id:
+        type: string
+      vm_log_agent_task_id:
+        type: string
+      vm_trace_agent_task_id:
+        type: string
+      monitoring_service_status:
+        type: string
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - NOT_EXIST
+        - FAILED
+      log_service_status:
+        type: string
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - NOT_EXIST
+        - FAILED
+      trace_service_status:
+        type: string
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - NOT_EXIST
+        - FAILED
+      ns_id:
+        type: string
+        description: Namespace ID
+        example: ns-1
+      infra_id:
+        type: string
+        description: Infra ID
+        example: infra-1
+      monitoring_agent_status:
+        type: string
+        description: Monitoring agent status
+        example: SUCCESS
+        enum:
+        - INSTALLING
+        - SERVICE_INACTIVE
+        - SUCCESS
+        - FAILED
+        - NOT_INSTALLED
+      log_agent_status:
+        type: string
+        description: Log agent status
+        example: SUCCESS
+        enum:
+        - INSTALLING
+        - SERVICE_INACTIVE
+        - SUCCESS
+        - FAILED
+        - NOT_INSTALLED
+      trace_agent_status:
+        type: string
+        description: Trace agent status
+        example: SUCCESS
+        enum:
+        - INSTALLING
+        - SERVICE_INACTIVE
+        - SUCCESS
+        - FAILED
+        - NOT_INSTALLED
+      monitoring_agent_error:
+        type: string
+        description: Why the last monitoring agent install failed, if it did
+      log_agent_error:
+        type: string
+        description: Why the last log agent install failed, if it did
+      name:
+        type: string
+        description: VM name
+        example: mcmp-vm
+      description:
+        type: string
+        description: VM description
+        example: string
+  MonitoringItemUpdateDTO:
+    type: object
+    properties:
+      seq:
+        type: integer
+        format: int64
+      pluginConfig:
+        type: string
   ResBodyMapStringLong:
     type: object
     properties:
@@ -2468,11 +4066,51 @@ definitions:
       targetScope:
         type: string
         description: Target scope
-        example: mci
+        example: infra
       targetId:
         type: string
         description: Target ID
         example: test01
+      infraId:
+        type: string
+        description: Infra the node belongs to. Node IDs are only unique within an infra, so without it a node target matches
+          every infra that has a node with this ID
+        example: infra-1
+  ResBodyListResultDTO:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/ResultDTO'
+      error_message:
+        type: string
+        description: Error message
+  ResultDTO:
+    type: object
+    properties:
+      nsId:
+        type: string
+      infraId:
+        type: string
+      nodeId:
+        type: string
+      status:
+        type: string
+        enum:
+        - SUCCESS
+        - ERROR
+      errorMessage:
+        type: string
+    description: API response object
   MonitoringItemRequestDTO:
     type: object
     properties:
@@ -2485,6 +4123,90 @@ definitions:
         type: string
         description: Plugin configuration
         example: string
+  NodeResult:
+    type: object
+    properties:
+      node:
+        type: string
+      ok:
+        type: boolean
+      message:
+        type: string
+  ResBodyNodeResult:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        $ref: '#/definitions/NodeResult'
+      error_message:
+        type: string
+        description: Error message
+  ResBodyListNodeResult:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/NodeResult'
+      error_message:
+        type: string
+        description: Error message
+  TagValuesRequestDTO:
+    required:
+    - tag_key
+    type: object
+    properties:
+      measurement:
+        type: string
+        description: Measurement to read; omit to search every measurement
+        example: cpu
+      filters:
+        type: object
+        additionalProperties:
+          type: string
+          description: Equality filters on other tags
+          example: '{"ns_id":"ns-1","infra_id":"infra-1"}'
+        description: Equality filters on other tags
+        example:
+          ns_id: ns-1
+          infra_id: infra-1
+      tag_key:
+        type: string
+        description: Tag key whose values are listed
+        example: node_id
+  ResBodyListString:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          type: string
+      error_message:
+        type: string
+        description: Error message
   ConditionInfo:
     type: object
     properties:
@@ -2606,6 +4328,24 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/MetricDTO'
+      error_message:
+        type: string
+        description: Error message
+  ResBodyMapStringObject:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: object
+        additionalProperties:
+          type: object
       error_message:
         type: string
         description: Error message
@@ -2737,6 +4477,8 @@ definitions:
       targetScope:
         type: string
       targetId:
+        type: string
+      infraId:
         type: string
       isActive:
         type: boolean
@@ -2875,9 +4617,9 @@ definitions:
         type: string
       namespaceId:
         type: string
-      mciId:
+      infraId:
         type: string
-      vmId:
+      nodeId:
         type: string
       threshold:
         type: string
@@ -3005,6 +4747,134 @@ definitions:
     properties:
       insecureSkipVerify:
         type: boolean
+  ResBodyTraceDetail:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        $ref: '#/definitions/TraceDetail'
+      error_message:
+        type: string
+        description: Error message
+  SpanRow:
+    type: object
+    properties:
+      spanId:
+        type: string
+        description: Span ID
+      parentSpanId:
+        type: string
+        description: Parent span ID
+      service:
+        type: string
+        description: Service name
+      name:
+        type: string
+        description: Span name
+      kind:
+        type: string
+        description: Span kind
+      startTimeMs:
+        type: integer
+        description: Span start time (epoch ms)
+        format: int64
+      durationMs:
+        type: number
+        description: Span duration (ms, fractional)
+        format: double
+      attributes:
+        type: object
+        additionalProperties:
+          type: string
+          description: Span attributes
+        description: Span attributes
+    description: Spans in the trace, sorted by start time
+  TraceDetail:
+    type: object
+    properties:
+      traceId:
+        type: string
+        description: Trace ID
+      spans:
+        type: array
+        description: Spans in the trace, sorted by start time
+        items:
+          $ref: '#/definitions/SpanRow'
+  ResBodyListTraceSummary:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/TraceSummary'
+      error_message:
+        type: string
+        description: Error message
+  TraceSummary:
+    type: object
+    properties:
+      traceId:
+        type: string
+        description: Trace ID
+      rootService:
+        type: string
+        description: Root span service name
+      rootName:
+        type: string
+        description: Root span name
+      startTimeMs:
+        type: integer
+        description: Trace start time (epoch ms)
+        format: int64
+      durationMs:
+        type: integer
+        description: Trace duration (ms)
+        format: int64
+  AttributeValue:
+    type: object
+    properties:
+      value:
+        type: string
+        description: Value as text
+        example: 500
+      type:
+        type: string
+        description: Tempo value type. TraceQL quotes string values; int, float, bool, duration and keyword (status, kind)
+          values are written bare.
+        example: int
+  ResBodyListAttributeValue:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/AttributeValue'
+      error_message:
+        type: string
+        description: Error message
   ResBodyListVMDTO:
     type: object
     properties:
@@ -3023,6 +4893,28 @@ definitions:
       error_message:
         type: string
         description: Error message
+  ResBodyAgentStatus:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: string
+        enum:
+        - INSTALLING
+        - SERVICE_INACTIVE
+        - SUCCESS
+        - FAILED
+        - NOT_INSTALLED
+      error_message:
+        type: string
+        description: Error message
   MonitoringItemDTO:
     type: object
     properties:
@@ -3035,14 +4927,14 @@ definitions:
         type: string
         description: Namespace ID
         example: ns-1
-      mciId:
+      infraId:
         type: string
-        description: MCI ID
-        example: mci-1
-      vmId:
+        description: Infra ID
+        example: infra-1
+      nodeId:
         type: string
-        description: VM ID
-        example: vm-1
+        description: Node ID
+        example: node-1
       name:
         type: string
         description: VM name
@@ -3086,6 +4978,35 @@ definitions:
       error_message:
         type: string
         description: Error message
+  BeylaSystemCheckResult:
+    type: object
+    properties:
+      kernelVersion:
+        type: string
+      btfSupported:
+        type: boolean
+      kernelVersionValid:
+        type: boolean
+      minimumKernelVersion:
+        type: string
+      eligible:
+        type: boolean
+  ResBodyBeylaSystemCheckResult:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        $ref: '#/definitions/BeylaSystemCheckResult'
+      error_message:
+        type: string
+        description: Error message
   PluginDefDTO:
     type: object
     properties:
@@ -3121,6 +5042,48 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/PluginDefDTO'
+      error_message:
+        type: string
+        description: Error message
+  NodeStatus:
+    type: object
+    properties:
+      node:
+        type: string
+      installed:
+        type: boolean
+      running:
+        type: boolean
+      lastSeen:
+        type: string
+      powerState:
+        type: string
+        enum:
+        - RUNNING
+        - STOPPED
+      placeholder:
+        type: boolean
+      taskStatus:
+        type: string
+      error:
+        type: string
+      removed:
+        type: boolean
+  ResBodyListNodeStatus:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/NodeStatus'
       error_message:
         type: string
         description: Error message
@@ -3228,6 +5191,135 @@ definitions:
       error_message:
         type: string
         description: Error message
+  GpuMetricFieldDTO:
+    type: object
+    properties:
+      name:
+        type: string
+        description: InfluxDB field name
+        example: gpu_util
+      description:
+        type: string
+        description: Field description
+        example: "GPU ì\x82¬ì\x9A©ë¥ "
+      unit:
+        type: string
+        description: Field unit
+        example: '%'
+    description: GPU metric fields of this category
+  GpuMetricKeyDTO:
+    type: object
+    properties:
+      key:
+        type: string
+        description: GPU metric category key
+        example: utilization
+      measurement:
+        type: string
+        description: InfluxDB measurement name
+        example: dcgm
+      fields:
+        type: array
+        description: GPU metric fields of this category
+        items:
+          $ref: '#/definitions/GpuMetricFieldDTO'
+  ResBodyListGpuMetricKeyDTO:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/GpuMetricKeyDTO'
+      error_message:
+        type: string
+        description: Error message
+  GpuMetricFieldCheckDTO:
+    type: object
+    properties:
+      field:
+        type: string
+        description: InfluxDB field name
+        example: gpu_util
+      has_data:
+        type: boolean
+        description: Whether data exists within the recent window
+        example: true
+  ResBodyListGpuMetricFieldCheckDTO:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: array
+        items:
+          $ref: '#/definitions/GpuMetricFieldCheckDTO'
+      error_message:
+        type: string
+        description: Error message
+  Data:
+    type: object
+    properties:
+      metricName:
+        type: string
+      metricUnit:
+        type: string
+      timestampValues:
+        type: array
+        items:
+          $ref: '#/definitions/TimestampValue'
+      unsupported:
+        type: boolean
+  TimestampValue:
+    type: object
+    properties:
+      timestamp:
+        type: string
+      value:
+        type: string
+  IId:
+    type: object
+    properties:
+      NameId:
+        type: string
+      SystemId:
+        type: string
+  NodeGroup:
+    type: object
+    properties:
+      IId:
+        $ref: '#/definitions/IId'
+      Nodes:
+        type: array
+        items:
+          $ref: '#/definitions/IId'
+      DesiredNodeSize:
+        type: integer
+        format: int32
+  SpiderClusterInfo:
+    type: object
+    properties:
+      IId:
+        $ref: '#/definitions/IId'
+      Status:
+        type: string
+      NodeGroupList:
+        type: array
+        items:
+          $ref: '#/definitions/NodeGroup'
   LogEntryDto:
     type: object
     properties:
@@ -3384,33 +5476,46 @@ definitions:
       targetScope:
         type: string
         description: Target scope
-        example: vm
+        example: node
       targetId:
         type: string
         description: Target ID
-        example: vm-1
-  APIProviderType:
-    type: string
-    enum:
-    - openai
-    - google
-    - anthropic
-    title: APIProviderType
+        example: node-1
+      infraId:
+        type: string
+        description: Infra the node belongs to, as it was added
+        example: infra-1
+  ResBodyString:
+    type: object
+    properties:
+      rs_code:
+        type: string
+        description: Response code
+        example: '0000'
+      rs_msg:
+        type: string
+        description: Response message
+        example: success
+      data:
+        type: string
+      error_message:
+        type: string
+        description: Error message
   AnomalyDetectionHistoryResponse:
     properties:
       ns_id:
         type: string
         title: Ns Id
         description: The Namespace ID.
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
+        title: Infra Id
         description: The ID of the mci group.
-      vm_id:
+      node_id:
         anyOf:
         - type: string
         - type: 'null'
-        title: Vm Id
+        title: Node Id
         description: The ID of the vm.
       measurement:
         type: string
@@ -3426,8 +5531,8 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
-    - vm_id
+    - infra_id
+    - node_id
     - measurement
     - values
     title: AnomalyDetectionHistoryResponse
@@ -3516,14 +5621,14 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
-      vm_id:
+        title: Infra Id
+      node_id:
         anyOf:
         - type: string
         - type: 'null'
-        title: Vm Id
+        title: Node Id
       measurement:
         type: string
         title: Measurement
@@ -3548,8 +5653,8 @@ definitions:
     required:
     - seq
     - ns_id
-    - mci_id
-    - vm_id
+    - infra_id
+    - node_id
     - measurement
     - execution_interval
     - create_at
@@ -3559,14 +5664,13 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
-      vm_id:
-        anyOf:
-        - type: string
-        - type: 'null'
-        title: Vm Id
+        title: Infra Id
+      node_id:
+        type: string
+        minLength: 1
+        title: Node Id
       measurement:
         $ref: '#/definitions/MetricType'
         description: The type of metric being monitored for anomalies (cpu or mem)
@@ -3578,7 +5682,8 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
+    - infra_id
+    - node_id
     - measurement
     - execution_interval
     title: AnomalyDetectionTargetRegistration
@@ -3592,6 +5697,12 @@ definitions:
     required:
     - execution_interval
     title: AnomalyDetectionTargetUpdate
+  ConnectionProviderType:
+    type: string
+    enum:
+    - openai
+    - ollama
+    title: ConnectionProviderType
   ExecutionInterval:
     type: string
     enum:
@@ -3613,33 +5724,55 @@ definitions:
       timestamp:
         type: string
         title: Timestamp
-      value:
+      predicted_value:
         anyOf:
         - type: number
         - type: 'null'
-        title: Value
+        title: Predicted Value
     type: object
     required:
     - timestamp
-    - value
+    - predicted_value
     title: HistoryValue
-  LLMAPIKey:
+  IncidentScope:
     properties:
-      seq:
-        type: integer
-        title: Seq
-      provider:
-        type: string
-        title: Provider
-      api_key:
-        type: string
-        title: Api Key
+      time_range:
+        $ref: '#/definitions/IncidentTimeRange'
+      log:
+        additionalProperties:
+          type: string
+        type: object
+        title: Log
+      trace:
+        additionalProperties:
+          $ref: '#/definitions/TraceScopeValue'
+        type: object
+        title: Trace
+      metric:
+        additionalProperties:
+          type: string
+        type: object
+        title: Metric
+    additionalProperties: false
     type: object
-    required:
-    - seq
-    - provider
-    - api_key
-    title: LLMAPIKey
+    title: IncidentScope
+  IncidentTimeRange:
+    properties:
+      start:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: Start
+      end:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: End
+    additionalProperties: false
+    type: object
+    title: IncidentTimeRange
   LLMChatSession:
     properties:
       seq:
@@ -3651,6 +5784,19 @@ definitions:
       session_id:
         type: string
         title: Session Id
+      connection_id:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Connection Id
+      connection_name:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Connection Name
+      analysis_type:
+        type: string
+        title: Analysis Type
       provider:
         type: string
         title: Provider
@@ -3666,30 +5812,95 @@ definitions:
     - seq
     - user_id
     - session_id
+    - connection_id
+    - connection_name
+    - analysis_type
     - provider
     - model_name
     - regdate
     title: LLMChatSession
-  LLMModel:
+  LLMConnection:
     properties:
+      id:
+        type: integer
+        title: Id
+      name:
+        type: string
+        title: Name
       provider:
         type: string
-        enum:
-        - ollama
-        - openai
-        - google
-        - anthropic
         title: Provider
-      model_name:
+      base_url:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Base Url
+      api_key_configured:
+        type: boolean
+        title: Api Key Configured
+      context_length:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Context Length
+      is_default:
+        type: boolean
+        title: Is Default
+      enabled:
+        type: boolean
+        title: Enabled
+      regdate:
+        type: string
+        format: date-time
+        title: Regdate
+    type: object
+    required:
+    - id
+    - name
+    - provider
+    - base_url
+    - api_key_configured
+    - is_default
+    - enabled
+    - regdate
+    title: LLMConnection
+  LLMConnectionModels:
+    properties:
+      connection_id:
+        type: integer
+        title: Connection Id
+      models:
         items:
           type: string
         type: array
-        title: Model Name
+        title: Models
     type: object
     required:
-    - provider
-    - model_name
-    title: LLMModel
+    - connection_id
+    - models
+    title: LLMConnectionModels
+  LLMQueryResult:
+    properties:
+      message_type:
+        type: string
+        title: Message Type
+      message:
+        type: string
+        title: Message
+      metadata:
+        anyOf:
+        - $ref: '#/definitions/QueryMetadata'
+        - type: 'null'
+        description: Query execution metadata
+      session_id:
+        type: string
+        title: Session Id
+    type: object
+    required:
+    - message_type
+    - message
+    - session_id
+    title: LLMQueryResult
   Message:
     properties:
       message_type:
@@ -3714,28 +5925,143 @@ definitions:
     - cpu
     - mem
     title: MetricType
-  PostAPIKeyBody:
+  PatchConnectionBody:
     properties:
+      name:
+        anyOf:
+        - type: string
+          maxLength: 100
+          minLength: 1
+        - type: 'null'
+        title: Name
       provider:
-        $ref: '#/definitions/APIProviderType'
-        description: The LLM provider to use
+        anyOf:
+        - $ref: '#/definitions/ConnectionProviderType'
+        - type: 'null'
+      base_url:
+        anyOf:
+        - type: string
+          minLength: 1
+          pattern: ^https?://
+        - type: 'null'
+        title: Base Url
       api_key:
-        type: string
-        minLength: 20
+        anyOf:
+        - type: string
+          minLength: 1
+        - type: 'null'
         title: Api Key
-        description: API key for the LLM provider
+      context_length:
+        anyOf:
+        - type: integer
+          maximum: 10000000.0
+          minimum: 1024.0
+        - type: 'null'
+        title: Context Length
+        description: Input context window in tokens; send null to clear it and use the fallback.
+      enabled:
+        anyOf:
+        - type: boolean
+        - type: 'null'
+        title: Enabled
+    type: object
+    title: PatchConnectionBody
+  PatchRcaScheduleBody:
+    properties:
+      name:
+        anyOf:
+        - type: string
+          maxLength: 100
+          minLength: 1
+        - type: 'null'
+        title: Name
+      enabled:
+        anyOf:
+        - type: boolean
+        - type: 'null'
+        title: Enabled
+      interval_minutes:
+        anyOf:
+        - type: integer
+          maximum: 10080.0
+          minimum: 5.0
+        - type: 'null'
+        title: Interval Minutes
+      request:
+        anyOf:
+        - additionalProperties: true
+          type: object
+        - type: 'null'
+        title: Request
+    additionalProperties: false
+    type: object
+    title: PatchRcaScheduleBody
+  PostConnectionBody:
+    properties:
+      name:
+        type: string
+        maxLength: 100
+        minLength: 1
+        title: Name
+      provider:
+        $ref: '#/definitions/ConnectionProviderType'
+      base_url:
+        anyOf:
+        - type: string
+          minLength: 1
+          pattern: ^https?://
+        - type: 'null'
+        title: Base Url
+      api_key:
+        anyOf:
+        - type: string
+          minLength: 1
+        - type: 'null'
+        title: Api Key
+      context_length:
+        anyOf:
+        - type: integer
+          maximum: 10000000.0
+          minimum: 1024.0
+        - type: 'null'
+        title: Context Length
+        description: Input context window this endpoint actually serves, in tokens. Ollama sizes the window from host VRAM,
+          so the same model differs per server — set it to what this server really allocates. Leave unset to use the configured
+          fallback.
+      enabled:
+        type: boolean
+        title: Enabled
+        default: true
+      is_default:
+        type: boolean
+        title: Is Default
+        default: false
     type: object
     required:
+    - name
     - provider
-    - api_key
-    title: PostAPIKeyBody
+    title: PostConnectionBody
   PostQueryBody:
     properties:
       session_id:
-        type: string
+        anyOf:
+        - type: string
+        - type: 'null'
         title: Session Id
-        description: The session ID to send the message to
-        example: session_123
+        description: Existing session ID
+      connection_id:
+        anyOf:
+        - type: integer
+          minimum: 1.0
+        - type: 'null'
+        title: Connection Id
+      model_name:
+        anyOf:
+        - type: string
+          maxLength: 255
+          minLength: 1
+        - type: 'null'
+        title: Model Name
       message:
         type: string
         title: Message
@@ -3743,39 +6069,126 @@ definitions:
         example: Analyze these error logs and find the root cause
     type: object
     required:
-    - session_id
     - message
     title: PostQueryBody
-  PostSessionBody:
+  PostRcaQueryBody:
     properties:
-      provider:
-        $ref: '#/definitions/ProviderType'
-        description: The LLM provider to use
-        example: openai
+      session_id:
+        anyOf:
+        - type: string
+          maxLength: 255
+          minLength: 1
+        - type: 'null'
+        title: Session Id
+        description: Existing chat session ID
+      connection_id:
+        anyOf:
+        - type: integer
+          minimum: 1.0
+        - type: 'null'
+        title: Connection Id
+        description: LLM connection for a new session
+      query:
+        anyOf:
+        - type: string
+          maxLength: 8000
+        - type: 'null'
+        title: Query
+        description: Natural-language RCA request
+      scope:
+        $ref: '#/definitions/IncidentScope'
+      anomaly_setting_seq:
+        anyOf:
+        - type: integer
+          minimum: 1.0
+        - type: 'null'
+        title: Anomaly Setting Seq
       model_name:
-        type: string
+        anyOf:
+        - type: string
+          maxLength: 255
+          minLength: 1
+        - type: 'null'
         title: Model Name
-        description: The specific model name to use for analysis
-        example: gpt-5-mini
+        description: LLM model when a new session is needed
+    additionalProperties: false
+    type: object
+    title: PostRcaQueryBody
+  PostRcaScheduleBody:
+    properties:
+      name:
+        type: string
+        maxLength: 100
+        minLength: 1
+        title: Name
+      enabled:
+        type: boolean
+        title: Enabled
+        default: true
+      interval_minutes:
+        type: integer
+        maximum: 10080.0
+        minimum: 5.0
+        title: Interval Minutes
+      request:
+        additionalProperties: true
+        type: object
+        title: Request
+      trigger:
+        anyOf:
+        - type: string
+          enum:
+          - server_error
+          - metric_anomaly
+        - type: 'null'
+        title: Trigger
+    additionalProperties: false
     type: object
     required:
-    - provider
-    - model_name
+    - name
+    - interval_minutes
+    - request
+    title: PostRcaScheduleBody
+  PostSessionBody:
+    properties:
+      analysis_type:
+        type: string
+        enum:
+        - log
+        - alert
+        - rca
+        title: Analysis Type
+        default: log
+      connection_id:
+        anyOf:
+        - type: integer
+          minimum: 1.0
+        - type: 'null'
+        title: Connection Id
+      model_name:
+        anyOf:
+        - type: string
+          maxLength: 255
+          minLength: 1
+        - type: 'null'
+        title: Model Name
+    additionalProperties: false
+    type: object
     title: PostSessionBody
   PredictValue:
     properties:
       timestamp:
         type: string
         title: Timestamp
-      value:
+      predicted_value:
         anyOf:
         - type: number
         - type: 'null'
-        title: Value
+        title: Predicted Value
     type: object
     required:
     - timestamp
-    - value
+    - predicted_value
     title: PredictValue
   PredictionBody:
     properties:
@@ -3798,9 +6211,9 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
+        title: Infra Id
       measurement:
         type: string
         title: Measurement
@@ -3812,7 +6225,7 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
+    - infra_id
     - measurement
     - values
     title: PredictionMCIHistory
@@ -3821,9 +6234,9 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
+        title: Infra Id
       measurement:
         type: string
         title: Measurement
@@ -3835,7 +6248,7 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
+    - infra_id
     - measurement
     - values
     title: PredictionMCIResult
@@ -3896,12 +6309,12 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
-      vm_id:
+        title: Infra Id
+      node_id:
         type: string
-        title: Vm Id
+        title: Node Id
       measurement:
         type: string
         title: Measurement
@@ -3913,8 +6326,8 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
-    - vm_id
+    - infra_id
+    - node_id
     - measurement
     - values
     title: PredictionVMHistory
@@ -3923,12 +6336,12 @@ definitions:
       ns_id:
         type: string
         title: Ns Id
-      mci_id:
+      infra_id:
         type: string
-        title: Mci Id
-      vm_id:
+        title: Infra Id
+      node_id:
         type: string
-        title: Vm Id
+        title: Node Id
       measurement:
         type: string
         title: Measurement
@@ -3940,19 +6353,11 @@ definitions:
     type: object
     required:
     - ns_id
-    - mci_id
-    - vm_id
+    - infra_id
+    - node_id
     - measurement
     - values
     title: PredictionVMResult
-  ProviderType:
-    type: string
-    enum:
-    - openai
-    - ollama
-    - google
-    - anthropic
-    title: ProviderType
   QueryMetadata:
     properties:
       queries_executed:
@@ -3980,6 +6385,181 @@ definitions:
     type: object
     title: QueryMetadata
     description: Query execution metadata
+  RcaAnalysisRecord:
+    properties:
+      id:
+        type: integer
+        title: Id
+      trace_id:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Trace Id
+      session_id:
+        type: string
+        title: Session Id
+      status:
+        type: string
+        enum:
+        - PENDING
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - PARTIAL
+        title: Status
+      summary:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Summary
+      request:
+        additionalProperties: true
+        type: object
+        title: Request
+      detail:
+        anyOf:
+        - additionalProperties: true
+          type: object
+        - type: 'null'
+        title: Detail
+      created_at:
+        type: string
+        format: date-time
+        title: Created At
+      updated_at:
+        type: string
+        format: date-time
+        title: Updated At
+    type: object
+    required:
+    - id
+    - trace_id
+    - session_id
+    - status
+    - summary
+    - detail
+    - created_at
+    - updated_at
+    title: RcaAnalysisRecord
+  RcaQueryResult:
+    properties:
+      session_id:
+        type: string
+        title: Session Id
+      message:
+        $ref: '#/definitions/Message'
+      analysis:
+        anyOf:
+        - $ref: '#/definitions/RcaAnalysisRecord'
+        - type: 'null'
+    type: object
+    required:
+    - session_id
+    - message
+    title: RcaQueryResult
+  RcaRecordPage:
+    properties:
+      total:
+        type: integer
+        title: Total
+      page:
+        type: integer
+        title: Page
+      size:
+        type: integer
+        title: Size
+      items:
+        items:
+          $ref: '#/definitions/RcaAnalysisRecord'
+        type: array
+        title: Items
+    type: object
+    required:
+    - total
+    - page
+    - size
+    - items
+    title: RcaRecordPage
+  RcaScheduleRecord:
+    properties:
+      id:
+        type: integer
+        title: Id
+      name:
+        type: string
+        title: Name
+      enabled:
+        type: boolean
+        title: Enabled
+      interval_minutes:
+        type: integer
+        title: Interval Minutes
+      trigger:
+        anyOf:
+        - type: string
+          enum:
+          - server_error
+          - metric_anomaly
+        - type: 'null'
+        title: Trigger
+      request:
+        additionalProperties: true
+        type: object
+        title: Request
+      status:
+        type: string
+        enum:
+        - IDLE
+        - RUNNING
+        - SUCCEEDED
+        - FAILED
+        - PARTIAL
+        - SKIPPED
+        title: Status
+      last_execution:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: Last Execution
+      next_execution:
+        anyOf:
+        - type: string
+          format: date-time
+        - type: 'null'
+        title: Next Execution
+      last_analysis_id:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Last Analysis Id
+      last_error:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Last Error
+      created_at:
+        type: string
+        format: date-time
+        title: Created At
+      updated_at:
+        type: string
+        format: date-time
+        title: Updated At
+    type: object
+    required:
+    - id
+    - name
+    - enabled
+    - interval_minutes
+    - status
+    - last_execution
+    - next_execution
+    - last_analysis_id
+    - last_error
+    - created_at
+    - updated_at
+    title: RcaScheduleRecord
   ResBodyAnomalyDetectionHistoryResponse:
     properties:
       data:
@@ -4068,41 +6648,6 @@ definitions:
     required:
     - data
     title: ResBodyAnomalyDetectionSpecificMeasurement
-  ResBodyLLMAPIKey:
-    properties:
-      rs_code:
-        type: string
-        title: Rs Code
-        default: '200'
-      rs_msg:
-        type: string
-        title: Rs Msg
-        default: Success
-      data:
-        $ref: '#/definitions/LLMAPIKey'
-    type: object
-    required:
-    - data
-    title: ResBodyLLMAPIKey
-  ResBodyLLMAPIKeys:
-    properties:
-      rs_code:
-        type: string
-        title: Rs Code
-        default: '200'
-      rs_msg:
-        type: string
-        title: Rs Msg
-        default: Success
-      data:
-        items:
-          $ref: '#/definitions/LLMAPIKey'
-        type: array
-        title: Data
-    type: object
-    required:
-    - data
-    title: ResBodyLLMAPIKeys
   ResBodyLLMChatSession:
     properties:
       rs_code:
@@ -4138,7 +6683,39 @@ definitions:
     required:
     - data
     title: ResBodyLLMChatSessions
-  ResBodyLLMModel:
+  ResBodyLLMConnection:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/LLMConnection'
+    type: object
+    required:
+    - data
+    title: ResBodyLLMConnection
+  ResBodyLLMConnectionModels:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/LLMConnectionModels'
+    type: object
+    required:
+    - data
+    title: ResBodyLLMConnectionModels
+  ResBodyLLMConnections:
     properties:
       rs_code:
         type: string
@@ -4150,13 +6727,13 @@ definitions:
         default: Success
       data:
         items:
-          $ref: '#/definitions/LLMModel'
+          $ref: '#/definitions/LLMConnection'
         type: array
         title: Data
     type: object
     required:
     - data
-    title: ResBodyLLMModel
+    title: ResBodyLLMConnections
   ResBodyPredictionMCIHistory:
     properties:
       data:
@@ -4283,11 +6860,94 @@ definitions:
         title: Rs Msg
         default: Success
       data:
-        $ref: '#/definitions/Message'
+        $ref: '#/definitions/LLMQueryResult'
     type: object
     required:
     - data
     title: ResBodyQuery
+  ResBodyRcaQuery:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/RcaQueryResult'
+    type: object
+    required:
+    - data
+    title: ResBodyRcaQuery
+  ResBodyRcaRecord:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/RcaAnalysisRecord'
+    type: object
+    required:
+    - data
+    title: ResBodyRcaRecord
+  ResBodyRcaRecords:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/RcaRecordPage'
+    type: object
+    required:
+    - data
+    title: ResBodyRcaRecords
+  ResBodyRcaSchedule:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        $ref: '#/definitions/RcaScheduleRecord'
+    type: object
+    required:
+    - data
+    title: ResBodyRcaSchedule
+  ResBodyRcaSchedules:
+    properties:
+      rs_code:
+        type: string
+        title: Rs Code
+        default: '200'
+      rs_msg:
+        type: string
+        title: Rs Msg
+        default: Success
+      data:
+        items:
+          $ref: '#/definitions/RcaScheduleRecord'
+        type: array
+        title: Data
+    type: object
+    required:
+    - data
+    title: ResBodyRcaSchedules
   ResBodySessionHistory:
     properties:
       rs_code:
@@ -4320,6 +6980,19 @@ definitions:
       session_id:
         type: string
         title: Session Id
+      connection_id:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        title: Connection Id
+      connection_name:
+        anyOf:
+        - type: string
+        - type: 'null'
+        title: Connection Name
+      analysis_type:
+        type: string
+        title: Analysis Type
       provider:
         type: string
         title: Provider
@@ -4336,10 +7009,36 @@ definitions:
     - seq
     - user_id
     - session_id
+    - connection_id
+    - connection_name
+    - analysis_type
     - provider
     - model_name
     - regdate
     title: SessionHistory
+  TraceScopeValue:
+    properties:
+      value:
+        type: string
+        maxLength: 2048
+        minLength: 1
+        title: Value
+      type:
+        type: string
+        enum:
+        - string
+        - int
+        - float
+        - bool
+        - keyword
+        - duration
+        title: Type
+    additionalProperties: false
+    type: object
+    required:
+    - value
+    - type
+    title: TraceScopeValue
   ValidationError:
     properties:
       loc:
