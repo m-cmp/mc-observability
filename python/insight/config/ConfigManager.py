@@ -4,6 +4,16 @@ import os
 import yaml
 
 
+def _seconds(env_name: str, file_value, default: int) -> int:
+    """A positive whole number of seconds: the environment, else the file. Any other value
+    falls back to the default; a bad setting must not stop the service."""
+    value = os.getenv(env_name) or file_value
+    try:
+        return int(value) if int(value) > 0 else default
+    except (TypeError, ValueError):
+        return default
+
+
 class ConfigManager:
     def __init__(self, file_path: str = "config/config.yaml"):
         self.config = self._read_yaml(file_path)
@@ -92,8 +102,7 @@ class ConfigManager:
         mcp = self.config.get("llm", {}).get("mcp", {})
         return {
             "startup_timeout_seconds": mcp.get("startup_timeout_seconds", 15),
-            "cleanup_timeout_seconds": mcp.get("cleanup_timeout_seconds", 5),
-            "sse_read_timeout_seconds": mcp.get("sse_read_timeout_seconds", 900),
+            "sse_read_timeout_seconds": mcp.get("sse_read_timeout_seconds", 120),
         }
 
     def get_log_system_prompt_config(self):
@@ -115,17 +124,22 @@ class ConfigManager:
 
     def get_rca_analysis_config(self):
         rca = self.config.get("rca_analysis", {})
+        # The environment overrides the file so a slow (e.g. local) model can get more time
+        # without rebuilding the image.
+        analysis_timeout = _seconds("RCA_ANALYSIS_TIMEOUT_SECONDS", rca.get("analysis_timeout_seconds"), 3600)
+        llm_request_timeout = _seconds("RCA_LLM_REQUEST_TIMEOUT_SECONDS", rca.get("llm_request_timeout_seconds"), 900)
+        if llm_request_timeout >= analysis_timeout:
+            # Investigating stops one LLM request before the limit, so a request must be shorter
+            # than the limit. The limit is kept; investigating and concluding get half of it each.
+            llm_request_timeout = analysis_timeout // 2
         return {
             "partial_confidence_threshold": rca.get("partial_confidence_threshold", 0.4),
             # Request-wide budgets for the central investigation agent. Provisional values —
             # see the design's open items; tune once operational data exists.
             "investigation_model_call_limit": rca.get("investigation_model_call_limit", 24),
             "investigation_tool_call_limit": rca.get("investigation_tool_call_limit", 24),
-            # RCA_ANALYSIS_TIMEOUT_SECONDS overrides the file so a slow (e.g. local) model can get
-            # more time without rebuilding the image.
-            "analysis_timeout_seconds": int(
-                os.getenv("RCA_ANALYSIS_TIMEOUT_SECONDS") or rca.get("analysis_timeout_seconds", 300)
-            ),
+            "analysis_timeout_seconds": analysis_timeout,
+            "llm_request_timeout_seconds": llm_request_timeout,
             # POST /rca/query answers at once and runs the analysis in the background of the
             # worker process; these bound how many run and how many wait per process.
             "max_concurrent_analyses": rca.get("max_concurrent_analyses", 4),

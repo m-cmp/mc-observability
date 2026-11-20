@@ -1,7 +1,6 @@
 import json
 import re
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, TypedDict
@@ -197,20 +196,13 @@ class RequestBudget:
 
     langchain's ModelCallLimit/ToolCallLimit middleware count per ``invoke``; the central
     agent is invoked once per round, so a re-investigation would reset them. These counters
-    belong to the request, and the deadline clamps every tool timeout.
+    belong to the request.
     """
 
     tool_call_limit: int
     model_call_limit: int
-    deadline_seconds: float | None = None
-    clock: Callable[[], float] = time.perf_counter
-    started_at: float | None = None
     tool_calls: int = 0
     model_calls: int = 0
-
-    def __post_init__(self) -> None:
-        if self.started_at is None:
-            self.started_at = self.clock()
 
     def reserve_tool_call(self) -> bool:
         if self.tool_calls >= self.tool_call_limit:
@@ -232,20 +224,6 @@ class RequestBudget:
     def remaining_model_calls(self) -> int:
         return max(self.model_call_limit - self.model_calls, 0)
 
-    def remaining_seconds(self) -> float | None:
-        if self.deadline_seconds is None:
-            return None
-        return max(self.started_at + self.deadline_seconds - self.clock(), 0.0)
-
-    @property
-    def expired(self) -> bool:
-        remaining = self.remaining_seconds()
-        return remaining is not None and remaining <= 0
-
-    def clamp_timeout(self, timeout_seconds: float) -> float:
-        remaining = self.remaining_seconds()
-        return timeout_seconds if remaining is None else min(timeout_seconds, remaining)
-
 
 @dataclass(slots=True)
 class RcaRunContext:
@@ -255,3 +233,8 @@ class RcaRunContext:
     # Built once per request and reused by every investigation round.
     investigation_toolset: Any = None
     investigation_runner: Any = None
+    # time.monotonic() value after which investigating stops; None means no limit.
+    work_deadline: float | None = None
+
+    def work_seconds_left(self) -> float | None:
+        return None if self.work_deadline is None else max(self.work_deadline - time.monotonic(), 0.0)

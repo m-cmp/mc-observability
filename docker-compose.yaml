@@ -403,6 +403,7 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
       - LLM_CREDENTIAL_KEY=${LLM_CREDENTIAL_KEY:-}
       - RCA_ANALYSIS_TIMEOUT_SECONDS=${RCA_ANALYSIS_TIMEOUT_SECONDS:-}
+      - RCA_LLM_REQUEST_TIMEOUT_SECONDS=${RCA_LLM_REQUEST_TIMEOUT_SECONDS:-}
     volumes:
       - shared_logs:/mc-insight/log:rw
       - insight_secrets:/mc-insight/secrets:rw

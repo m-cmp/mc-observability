@@ -183,6 +183,45 @@ def start_stale_analysis_sweeper(*, older_than_seconds: int, interval_seconds: f
     return asyncio.create_task(_loop(), name="rca-stale-analysis-sweeper")
 
 
+def _failure(message: str, context) -> dict:
+    """What a record is closed with when the analysis could not produce a result."""
+    return {"status": "FAILED", "summary": message, "detail": {"error_message": message, **_persisted_tool_calls(context)}}
+
+
+def _outcome(graph_result: dict, context) -> dict:
+    """What a record is closed with when the graph ran to its end."""
+    merged_evidence = graph_result.get("merged_evidence") or {}
+    validation = graph_result.get("result_validation") or {}
+    plan = graph_result.get("plan")
+    detail = {
+        "analysis_result": graph_result.get("analysis_result"),
+        "result_validation": graph_result.get("result_validation"),
+        "evidence_status": merged_evidence.get("sources") or {},
+        "errors": [graph_result["error_message"]] if graph_result.get("error_message") and not validation.get("no_telemetry") else [],
+        # What the graph set out to check and whether a second round ran. It sits beside
+        # analysis_result, not in it, so a FAILED analysis (whose result is dropped) keeps it.
+        "investigation": {
+            "plan": [item.model_dump(mode="json", exclude_none=True) for item in plan.hypotheses] if plan else [],
+            "rounds": int(graph_result.get("investigation_round", 0)) + 1,
+            "retry": graph_result.get("retried_task"),
+        },
+        # Every wrapped tool call of the request — including empty, blocked and failed
+        # ones — so the record explains what was looked at, not only what was cited.
+        **_persisted_tool_calls(context),
+    }
+    analysis_result = graph_result.get("analysis_result") or {}
+    summary = analysis_result.get("summary") or graph_result.get("error_message") or ""
+    final_status = validation.get("status") or "FAILED"
+    if final_status == "FAILED":
+        detail["analysis_result"] = None
+        summary = graph_result.get("error_message") or "RCA failed"
+    elif validation.get("no_telemetry"):
+        # Every source ran and the window was empty. Reporting that as a failed
+        # analysis tells an operator to go fix a pipeline that is working.
+        summary = "No telemetry data was found in the requested scope and time window."
+    return {"status": final_status, "summary": summary, "detail": detail}
+
+
 def _comparable_request(request_json: dict) -> dict:
     """The request without its session: a proxy retrying the same POST gets a new session."""
     return {key: value for key, value in request_json.items() if key != "session_id"}
@@ -191,11 +230,9 @@ def _comparable_request(request_json: dict) -> dict:
 class RcaAnalysisService:
     """Coordinate RCA API operations, agents, graph execution, and persistence."""
 
-    def __init__(self, db: Session, mcp_manager=None, rca_graph=None, *, session_factory=None, mcp_factory=None):
+    def __init__(self, db: Session, rca_graph=None, *, session_factory=None, mcp_factory=None):
         self.db = db
-        self.session_repo = LogAnalysisRepository(db)
         self.analysis_repo = RcaAnalysisRepository(db)
-        self.mcp_manager = mcp_manager
         self.rca_graph = rca_graph
         self.config = ConfigManager()
         self.analysis_config = self.config.get_rca_analysis_config()
@@ -230,7 +267,7 @@ class RcaAnalysisService:
             status="PENDING",
         )
         task = asyncio.create_task(
-            self._run_in_background(record.ID, session.SESSION_ID, session.MODEL_NAME, session.CONNECTION_ID, resolved, limit),
+            self._run_in_background(record.ID, session.MODEL_NAME, session.CONNECTION_ID, resolved, limit),
             name=f"rca-analysis-{record.ID}",
         )
         _ANALYSIS_TASKS.add(task)
@@ -241,22 +278,58 @@ class RcaAnalysisService:
             analysis=self._to_record(record),
         )
 
-    async def _run_in_background(self, record_id, session_id, model_name, connection_id, resolved, limit):
-        async with _analysis_slots(limit):
-            db = self._session_factory()
-            try:
-                RcaAnalysisRepository(db).update_status(record_id, "RUNNING")
-                async with self._mcp_factory() as manager:
-                    runner = RcaAnalysisService(
-                        db=db, mcp_manager=manager, rca_graph=self.rca_graph,
-                        session_factory=self._session_factory, mcp_factory=self._mcp_factory,
-                    )
-                    runner.analysis_config = self.analysis_config
-                    await runner._execute(record_id, session_id, model_name, connection_id, resolved, time.perf_counter())
-            except Exception as exc:  # _execute finalized the record; nobody else can observe this
-                logger.warning("rca: background analysis %s failed: %s", record_id, exc)
-            finally:
-                db.close()
+    async def _run_in_background(self, record_id, model_name, connection_id, resolved, limit):
+        """Own one record: however the analysis ends, it is closed here and nowhere else."""
+        seconds = self.analysis_config["analysis_timeout_seconds"]
+        started_at = time.perf_counter()
+        db = self._session_factory()
+        repo = RcaAnalysisRepository(db)
+        context, time_limit, graph_result, closing = None, None, {}, None
+        try:
+            async with _analysis_slots(limit):
+                # False: the stale sweep closed the record while it waited for a slot.
+                if not repo.update_status(record_id, "RUNNING"):
+                    return
+                # Investigating stops one LLM request early, so the analysis can still conclude.
+                work_deadline = time.monotonic() + seconds - self.analysis_config["llm_request_timeout_seconds"]
+                async with asyncio.timeout(seconds) as time_limit, self._mcp_factory() as manager:
+                    with TemporaryDirectory(prefix=f"rca-{record_id}-") as directory:
+                        context = await self._create_rca_context(
+                            db,
+                            manager,
+                            model_name,
+                            connection_id,
+                            storage_dir=Path(directory),
+                            scope=resolved.scope,
+                            work_deadline=work_deadline,
+                        )
+                        db.close()
+                        graph_result = await self._run_graph(context, resolved)
+            closing = _outcome(graph_result, context)
+        except Exception as exc:
+            if time_limit is not None and time_limit.expired():
+                message = f"analysis did not finish within {seconds}s"
+            else:
+                message = str(exc) or type(exc).__name__
+            logger.warning("rca: analysis %s failed: %s", record_id, message)
+            graph_result, closing = {"result_validation": {"status": "FAILED"}}, _failure(message, context)
+        finally:
+            if closing is not None:
+                try:
+                    if not repo.finalize(record_id, **closing):
+                        logger.warning("rca: analysis %s was already closed; its result is dropped", record_id)
+                except Exception as exc:
+                    logger.warning("rca: analysis %s could not be closed, the stale sweep will: %s", record_id, exc)
+                self._log_operational_summary(record_id, started_at, graph_result, context)
+            db.close()
+
+    async def _run_graph(self, context: RcaRunContext, resolved: PostRcaQueryBody) -> dict:
+        with get_usage_metadata_callback() as usage_callback:
+            graph_result = await self._get_rca_graph().ainvoke(
+                {"query": resolved.query, "scope": resolved.scope.model_dump(mode="json")},
+                context=context,
+            )
+        return {**graph_result, "llm_token_usage": _summarize_token_usage(usage_callback.usage_metadata)}
 
     def _resolve(self, body: PostRcaQueryBody):
         session = CommonSessionService(self.db).get_or_create_session(
@@ -275,91 +348,6 @@ class RcaAnalysisService:
             }
         )
         return session, resolved, resolved.model_dump(mode="json", exclude_none=True)
-
-    async def _execute(self, record_id: int, session_id: str, model_name, connection_id, resolved: PostRcaQueryBody, started_at: float) -> RcaQueryResult:
-        """Run the graph for an existing record and finalize it; raises after finalizing on failure."""
-        context = None
-        try:
-            with TemporaryDirectory(prefix=f"rca-{record_id}-") as directory:
-                context = await self._create_rca_context(
-                    model_name,
-                    connection_id,
-                    storage_dir=Path(directory),
-                    scope=resolved.scope,
-                )
-                self.db.close()
-                with get_usage_metadata_callback() as usage_callback:
-                    graph_result = await self._get_rca_graph().ainvoke(
-                        {
-                            "query": resolved.query,
-                            "scope": resolved.scope.model_dump(mode="json"),
-                        },
-                        context=context,
-                    )
-                graph_result = {
-                    **graph_result,
-                    "llm_token_usage": _summarize_token_usage(
-                        usage_callback.usage_metadata
-                    ),
-                }
-        except Exception as exc:
-            error_message = str(exc)
-            self.analysis_repo.finalize(
-                record_id,
-                status="FAILED",
-                summary=error_message,
-                detail={"error_message": error_message, **_persisted_tool_calls(context)},
-            )
-            self._log_operational_summary(
-                record_id,
-                started_at,
-                {"result_validation": {"status": "FAILED"}, "error_message": error_message},
-                context,
-            )
-            raise
-
-        merged_evidence = graph_result.get("merged_evidence") or {}
-        validation = graph_result.get("result_validation") or {}
-        plan = graph_result.get("plan")
-        detail = {
-            "analysis_result": graph_result.get("analysis_result"),
-            "result_validation": graph_result.get("result_validation"),
-            "evidence_status": merged_evidence.get("sources") or {},
-            "errors": [graph_result["error_message"]] if graph_result.get("error_message") and not validation.get("no_telemetry") else [],
-            # What the graph set out to check and whether a second round ran. It sits beside
-            # analysis_result, not in it, so a FAILED analysis (whose result is dropped) keeps it.
-            "investigation": {
-                "plan": [item.model_dump(mode="json", exclude_none=True) for item in plan.hypotheses] if plan else [],
-                "rounds": int(graph_result.get("investigation_round", 0)) + 1,
-                "retry": graph_result.get("retried_task"),
-            },
-            # Every wrapped tool call of the request — including empty, blocked and failed
-            # ones — so the record explains what was looked at, not only what was cited.
-            **_persisted_tool_calls(context),
-        }
-        analysis_result = graph_result.get("analysis_result") or {}
-        summary = analysis_result.get("summary") or graph_result.get("error_message") or ""
-        final_status = validation.get("status") or "FAILED"
-        if final_status == "FAILED":
-            detail["analysis_result"] = None
-            summary = graph_result.get("error_message") or "RCA failed"
-        elif validation.get("no_telemetry"):
-            # Every source ran and the window was empty. Reporting that as a failed
-            # analysis tells an operator to go fix a pipeline that is working.
-            summary = "No telemetry data was found in the requested scope and time window."
-        updated_record = self.analysis_repo.finalize(
-            record_id,
-            status=final_status,
-            summary=summary,
-            detail=detail,
-        )
-        self._log_operational_summary(record_id, started_at, graph_result, context)
-
-        return RcaQueryResult(
-            session_id=session_id,
-            message=Message(message_type="ai", message=summary),
-            analysis=self._to_record(updated_record),
-        )
 
     def list_records(self, params: RcaRecordFilter) -> RcaRecordPage:
         """Return paginated RCA records with normalized detail envelopes."""
@@ -395,20 +383,25 @@ class RcaAnalysisService:
 
     async def _create_rca_context(
         self,
+        db: Session,
+        mcp_manager,
         model_name,
         connection_id=None,
         *,
         storage_dir: Path | None = None,
         scope: IncidentScope | None = None,
+        work_deadline: float | None = None,
     ) -> RcaRunContext:
         """Build everything one request shares: budget, store, toolset and the single agent."""
+        connections = LogAnalysisRepository(db)
         llm = create_chat_model(
-            self.session_repo,
+            connections,
             model_name,
             connection_id=connection_id,
+            request_timeout=self.analysis_config["llm_request_timeout_seconds"],
         )
         connection = (
-            self.session_repo.get_connection_by_id(connection_id)
+            connections.get_connection_by_id(connection_id)
             if connection_id is not None
             else None
         )
@@ -419,11 +412,9 @@ class RcaAnalysisService:
             model_name=model_name,
         )
         config = self.analysis_config
-        timeout_seconds = float(config["analysis_timeout_seconds"] or 0)
         budget = RequestBudget(
             tool_call_limit=int(config["investigation_tool_call_limit"]),
             model_call_limit=int(config["investigation_model_call_limit"]),
-            deadline_seconds=timeout_seconds if timeout_seconds > 0 else None,
         )
         evidence_store = EvidenceStore(
             storage_dir=storage_dir,
@@ -433,7 +424,7 @@ class RcaAnalysisService:
         )
         toolset = await build_investigation_toolset(
             scope=scope or IncidentScope(),
-            source_tools=self._source_tools(),
+            source_tools=self._source_tools(mcp_manager),
             datasources=config.get("datasources", {}),
             evidence_store=evidence_store,
             budget=budget,
@@ -453,18 +444,20 @@ class RcaAnalysisService:
             budget=budget,
             investigation_toolset=toolset,
             investigation_runner=runner,
+            work_deadline=work_deadline,
         )
 
-    def _source_tools(self) -> dict[str, dict]:
+    @staticmethod
+    def _source_tools(mcp_manager) -> dict[str, dict]:
         """Allowlisted raw MCP tools per source, for the sources whose required tools are all present."""
-        if not self.mcp_manager or not hasattr(self.mcp_manager, "get_tools_for_mcp"):
+        if not mcp_manager or not hasattr(mcp_manager, "get_tools_for_mcp"):
             return {}
         available = {}
         for source, spec in SOURCE_SPECS.items():
             allowed = {*spec["required_tools"], *spec["optional_tools"]}
             by_name = {
                 tool.name: tool
-                for tool in self.mcp_manager.get_tools_for_mcp(spec["mcp"])
+                for tool in mcp_manager.get_tools_for_mcp(spec["mcp"])
                 if getattr(tool, "name", "") in allowed
             }
             if set(spec["required_tools"]).issubset(by_name):

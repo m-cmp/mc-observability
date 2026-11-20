@@ -2,8 +2,8 @@
 
 One ``InvestigationToolset`` lives for the whole request. Every agent-facing tool — the
 source adapters' query and discovery tools and ``inspect_evidence`` — goes through
-``run``: reserve the request budget, block duplicates, clamp the timeout to the request
-deadline, turn any failure into a structured tool error, capture the result in the shared
+``run``: reserve the request budget, block duplicates, apply the source's timeout, turn any
+failure into a structured tool error, capture the result in the shared
 ``EvidenceStore`` and record the outcome. The graph reads source status, the evidence
 catalog and the call ledger back out of it; the agent's own words never decide status.
 """
@@ -206,10 +206,6 @@ class InvestigationToolset:
         self._seen_calls.add(key)
 
         timeout = self._timeout_for(source)
-        if self.budget is not None:
-            if self.budget.expired:
-                return fail("request_deadline_exceeded")
-            timeout = self.budget.clamp_timeout(timeout)
 
         if evidence_query:
             self._attempted[source] += 1
@@ -218,8 +214,6 @@ class InvestigationToolset:
         except ToolRejectedError as exc:
             return fail(exc.code, **exc.details)
         except TimeoutError:
-            if self.budget is not None and self.budget.expired:
-                return fail("request_deadline_exceeded")
             return fail("tool_timeout", timeout_seconds=timeout)
         except Exception as exc:
             return fail("tool_invocation_failed", detail=str(exc)[:500])
@@ -314,9 +308,7 @@ class InvestigationToolset:
             summary[source] = {
                 "calls": len(records),
                 "failures": sum(record.status.startswith("ERROR:") for record in records),
-                "timeouts": sum(
-                    record.status in ("ERROR:tool_timeout", "ERROR:request_deadline_exceeded") for record in records
-                ),
+                "timeouts": sum(record.status == "ERROR:tool_timeout" for record in records),
                 "max_ms": round(durations[-1], 1),
                 "p50_ms": round(durations[len(durations) // 2], 1),
             }
@@ -437,11 +429,11 @@ async def _resolve_loki_datasource_uid(toolset: InvestigationToolset, tools: Map
 
 
 class InvestigationBudgetMiddleware(AgentMiddleware):
-    """Request-wide model-call budget, deadline and stagnation guard for the agent loop.
+    """Request-wide model-call budget and stagnation guard for the agent loop.
 
     Reserves one model call per turn from the request budget; on the last permitted call,
-    on an expired deadline, or after two turns whose tool calls produced nothing new, the
-    tools are taken away so the turn is spent on a final answer instead of ending mid-loop.
+    or after two turns whose tool calls produced nothing new, the tools are taken away so
+    the turn is spent on a final answer instead of ending mid-loop.
     """
 
     tools = ()
@@ -464,7 +456,7 @@ class InvestigationBudgetMiddleware(AgentMiddleware):
             self._stagnant = self._stagnant + 1 if productive == self._last_productive else 0
         self._last_ledger_size, self._last_productive = ledger_size, productive
         final = (
-            (budget is not None and (budget.remaining_model_calls == 0 or budget.expired))
+            (budget is not None and budget.remaining_model_calls == 0)
             or self._stagnant >= self._stagnant_turns
         )
         return request.override(tools=[]) if final and request.tools else request

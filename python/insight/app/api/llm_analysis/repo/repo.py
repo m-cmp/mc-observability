@@ -116,12 +116,19 @@ class RcaAnalysisRepository:
         self.db.refresh(record)
         return record
 
-    def update_status(self, analysis_id: int, status: str) -> None:
-        self.db.query(RcaAnalysis).filter_by(ID=analysis_id).update(
+    def _open(self, analysis_id: int):
+        return self.db.query(RcaAnalysis).filter(
+            RcaAnalysis.ID == analysis_id, RcaAnalysis.STATUS.in_(("PENDING", "RUNNING"))
+        )
+
+    def update_status(self, analysis_id: int, status: str) -> bool:
+        """Move an open record to ``status``; False when it was already closed."""
+        updated = self._open(analysis_id).update(
             {RcaAnalysis.STATUS: status, RcaAnalysis.UPDATED_AT: func.now()},
             synchronize_session=False,
         )
         self.db.commit()
+        return bool(updated)
 
     def list_active(self):
         """Analyses that are queued or running, newest first."""
@@ -169,7 +176,8 @@ class RcaAnalysisRepository:
         summary: str,
         detail: dict,
     ):
-        updated = self.db.query(RcaAnalysis).filter_by(ID=analysis_id).update(
+        """Close an open record; None when it was already closed, which is left as it is."""
+        updated = self._open(analysis_id).update(
             {
                 RcaAnalysis.STATUS: status,
                 RcaAnalysis.SUMMARY: summary,

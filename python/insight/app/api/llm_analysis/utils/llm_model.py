@@ -7,7 +7,11 @@ from app.api.llm_analysis.request.req import is_official_openai_base_url
 from app.api.llm_analysis.utils.llm_connection import LLMConnectionService
 
 
-def create_chat_model(repo, model_name: str, connection_id: int | None) -> BaseChatModel:
+def create_chat_model(
+    repo, model_name: str, connection_id: int | None, *, request_timeout: float | None = None
+) -> BaseChatModel:
+    """``request_timeout`` caps one LLM request in seconds (on Ollama, which streams: the gap
+    between chunks) and turns client retries off."""
     if connection_id is None:
         raise HTTPException(
             detail="Session is not associated with an LLM connection",
@@ -46,6 +50,7 @@ def create_chat_model(repo, model_name: str, connection_id: int | None) -> BaseC
             base_url=base_url,
             temperature=0,
             **({"num_ctx": connection.CONTEXT_LENGTH} if connection.CONTEXT_LENGTH else {}),
+            **({"client_kwargs": {"timeout": request_timeout}} if request_timeout else {}),
         )
 
     api_key = LLMConnectionService(repo.db).decrypt_api_key(connection)
@@ -58,4 +63,5 @@ def create_chat_model(repo, model_name: str, connection_id: int | None) -> BaseC
         model=model_name,
         api_key=api_key or "not-required",
         base_url=base_url,
+        **({"timeout": request_timeout, "max_retries": 0} if request_timeout else {}),
     )
