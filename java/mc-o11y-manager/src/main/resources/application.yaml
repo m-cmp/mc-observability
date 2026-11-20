@@ -9,6 +9,14 @@ deploy:
 spring:
   application:
     name: ${SPRING_APP_NAME:mc-o11y-manager}
+  cloud:
+    openfeign:
+      client:
+        config:
+          insight:
+            # Log and alert analysis answer after the LLM finishes, which takes minutes.
+            # Spring Cloud OpenFeign 4 reads spring.cloud.openfeign.client.*, not feign.client.*.
+            read-timeout: ${FEIGN_INSIGHT_READ_TIMEOUT:1200000}
   task:
     scheduling:
       # Several @Scheduled jobs fire on the same minute boundary. With the Spring default of a
