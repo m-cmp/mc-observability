@@ -156,5 +156,7 @@ grafana:
     execErrState: Error
 
 logging:
+  file:
+    path: build/swaggergen-log
   level:
     root: WARN
