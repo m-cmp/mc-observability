@@ -116,8 +116,8 @@ class BeylaControllerTest {
         ResultDTO result =
                 ResultDTO.builder()
                         .nsId("ns-1")
-                        .mciId("mci-1")
-                        .vmId("vm-1")
+                        .infraId("mci-1")
+                        .nodeId("vm-1")
                         .status(ResponseStatus.SUCCESS)
                         .build();
         when(beylaFacadeService.restart("ns-1", "mci-1", "vm-1")).thenReturn(List.of(result));

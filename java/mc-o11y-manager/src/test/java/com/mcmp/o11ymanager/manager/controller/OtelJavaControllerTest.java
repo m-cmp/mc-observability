@@ -120,8 +120,8 @@ class OtelJavaControllerTest {
         ResultDTO err =
                 ResultDTO.builder()
                         .nsId("testns01")
-                        .mciId("win2019-os01")
-                        .vmId("win-1")
+                        .infraId("win2019-os01")
+                        .nodeId("win-1")
                         .status(ResponseStatus.ERROR)
                         .errorMessage("Restart is not supported")
                         .build();

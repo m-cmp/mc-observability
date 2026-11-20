@@ -38,8 +38,8 @@ class VMServiceImplTest {
     private VMEntity createVMEntity(VMAgentTaskStatus traceStatus) {
         return VMEntity.builder()
                 .nsId(NS_ID)
-                .mciId(INFRA_ID)
-                .vmId(NODE_ID)
+                .infraId(INFRA_ID)
+                .nodeId(NODE_ID)
                 .name("test-vm")
                 .influxSeq(1L)
                 .traceAgentTaskStatus(traceStatus)
@@ -56,7 +56,7 @@ class VMServiceImplTest {
         @DisplayName("IDLE 상태 -> 예외 없음")
         void idle_noException() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.IDLE);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
 
             assertThatNoException()
@@ -67,7 +67,7 @@ class VMServiceImplTest {
         @DisplayName("NULL 상태 -> 예외 없음 (기존 레코드 호환)")
         void nullStatus_noException() {
             VMEntity vm = createVMEntity(null);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
 
             assertThatNoException()
@@ -78,7 +78,7 @@ class VMServiceImplTest {
         @DisplayName("INSTALLING 상태 -> VMAgentTaskProcessingException")
         void installing_throwsException() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.INSTALLING);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
@@ -90,7 +90,7 @@ class VMServiceImplTest {
         @DisplayName("UPDATING 상태 -> VMAgentTaskProcessingException")
         void updating_throwsException() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.UPDATING);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
@@ -102,7 +102,7 @@ class VMServiceImplTest {
         @DisplayName("FINISHED 상태 -> VMAgentTaskProcessingException (IDLE이 아니므로)")
         void finished_throwsException() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.FINISHED);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
@@ -113,7 +113,7 @@ class VMServiceImplTest {
         @Test
         @DisplayName("VM이 존재하지 않으면 ResourceNotExistsException")
         void vmNotFound_throwsException() {
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.empty());
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
@@ -131,7 +131,7 @@ class VMServiceImplTest {
         void setIdle_clearsTaskId() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.INSTALLING);
             vm.setVmTraceAgentTaskId("42");
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(vmJpaRepository.save(any(VMEntity.class))).thenReturn(vm);
 
@@ -147,7 +147,7 @@ class VMServiceImplTest {
         void setInstalling_keepsTaskId() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.IDLE);
             vm.setVmTraceAgentTaskId("42");
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(vmJpaRepository.save(any(VMEntity.class))).thenReturn(vm);
 
@@ -167,7 +167,7 @@ class VMServiceImplTest {
         @DisplayName("상태와 taskId를 동시에 업데이트")
         void updatesStatusAndTaskId() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.IDLE);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
             when(vmJpaRepository.save(any(VMEntity.class))).thenReturn(vm);
 
@@ -210,7 +210,7 @@ class VMServiceImplTest {
         @Test
         @DisplayName("존재하지 않는 VM 조회 시 ResourceNotExistsException")
         void notFound_throwsException() {
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.empty());
             when(requestInfo.getRequestId()).thenReturn("req-123");
 
@@ -222,12 +222,12 @@ class VMServiceImplTest {
         @DisplayName("존재하는 VM 조회 시 VMDTO 반환")
         void found_returnsDTO() {
             VMEntity vm = createVMEntity(VMAgentTaskStatus.IDLE);
-            when(vmJpaRepository.findByNsIdAndMciIdAndVmId(NS_ID, INFRA_ID, NODE_ID))
+            when(vmJpaRepository.findByNsIdAndInfraIdAndNodeId(NS_ID, INFRA_ID, NODE_ID))
                     .thenReturn(Optional.of(vm));
 
             var result = vmService.get(NS_ID, INFRA_ID, NODE_ID);
 
-            assertThat(result.getVmId()).isEqualTo(NODE_ID);
+            assertThat(result.getNodeId()).isEqualTo(NODE_ID);
             assertThat(result.getName()).isEqualTo("test-vm");
         }
     }
