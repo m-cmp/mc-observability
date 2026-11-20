@@ -9,9 +9,8 @@ on:
       - "python/insight/**"
       - "scripts/**"
       - "Makefile"
-    paths-ignore:
-      - "swagger/**"
-      - "**.md"
+      - "!swagger/**"
+      - "!**.md"
   workflow_dispatch:
 
 jobs:
