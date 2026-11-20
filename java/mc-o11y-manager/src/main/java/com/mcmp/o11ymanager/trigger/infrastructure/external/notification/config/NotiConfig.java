@@ -24,13 +24,18 @@ import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.channel.teams.TeamsProperties;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiFactory;
 import com.mcmp.o11ymanager.trigger.infrastructure.external.notification.defaults.DefaultNotiSender;
-import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.Properties;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.web.client.RestClient;
@@ -197,15 +202,37 @@ public class NotiConfig {
      */
     @Bean
     public RestClient restClient(RestClient.Builder builder) {
-        // Use the JDK HttpClient-based factory. Unlike SimpleClientHttpRequestFactory
-        // (HttpURLConnection), it returns error responses (e.g. 401) instead of throwing
-        // "HttpRetryException: cannot retry due to server authentication, in streaming
-        // mode", so onStatus handlers can read and log the body.
-        HttpClient httpClient =
-                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
-        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+        // Use Apache HttpClient. Unlike SimpleClientHttpRequestFactory (HttpURLConnection), it
+        // returns error responses (e.g. 401) instead of throwing "HttpRetryException: cannot
+        // retry due to server authentication, in streaming mode", so onStatus handlers can read
+        // and log the body.
+        // Alerts are minutes or hours apart, and a NAT or load balancer on the way can drop an
+        // idle connection without telling either end. The JDK HttpClient kept such an HTTP/2
+        // connection and sent the next alert on it until the read timed out. Close idle
+        // connections well before such a drop and recheck a connection idle for more than a
+        // second before reusing it.
+        ConnectionConfig connectionConfig =
+                ConnectionConfig.custom()
+                        .setConnectTimeout(Timeout.ofSeconds(10))
+                        .setSocketTimeout(Timeout.ofSeconds(30))
+                        .setValidateAfterInactivity(TimeValue.ofSeconds(1))
+                        .setTimeToLive(TimeValue.ofMinutes(1))
+                        .build();
+        CloseableHttpClient httpClient =
+                HttpClients.custom()
+                        .setConnectionManager(
+                                PoolingHttpClientConnectionManagerBuilder.create()
+                                        .setDefaultConnectionConfig(connectionConfig)
+                                        .build())
+                        .setDefaultRequestConfig(
+                                RequestConfig.custom()
+                                        .setResponseTimeout(Timeout.ofSeconds(30))
+                                        .build())
+                        .evictIdleConnections(TimeValue.ofSeconds(30))
+                        .evictExpiredConnections()
+                        .build();
 
-        return builder.requestFactory(requestFactory).build();
+        return builder.requestFactory(new HttpComponentsClientHttpRequestFactory(httpClient))
+                .build();
     }
 }
