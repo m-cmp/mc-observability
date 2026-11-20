@@ -1153,7 +1153,13 @@ public class K8sAgentService {
                 cd /tmp
                 curl -sL -o cmp-tg.tar.gz https://dl.influxdata.com/telegraf/releases/telegraf-%s_linux_amd64.tar.gz
                 tar xzf cmp-tg.tar.gz
-                install -m0755 telegraf-%s/usr/bin/telegraf /usr/local/bin/cmp-telegraf
+                # GKE Container-Optimized OS mounts / read-only (no /usr/local/bin) and /var, /tmp
+                # noexec. /home/kubernetes/bin is the writable, executable place there.
+                BIN=/usr/local/bin
+                if ! mkdir -p "$BIN" 2>/dev/null || [ ! -w "$BIN" ]; then
+                  BIN=/home/kubernetes/bin
+                fi
+                install -m0755 telegraf-%s/usr/bin/telegraf "$BIN/cmp-telegraf"
                 mkdir -p /etc/cmp-telegraf
                 cat > /etc/cmp-telegraf/telegraf.conf <<'CONF'
                 [global_tags]
@@ -1170,12 +1176,12 @@ public class K8sAgentService {
                   password = "%s"
                 %s
                 CONF
-                cat > /etc/systemd/system/cmp-telegraf.service <<'SVC'
+                cat > /etc/systemd/system/cmp-telegraf.service <<SVC
                 [Unit]
                 Description=CMP Telegraf (k8s node host agent)
                 After=network.target
                 [Service]
-                ExecStart=/usr/local/bin/cmp-telegraf --config /etc/cmp-telegraf/telegraf.conf
+                ExecStart=$BIN/cmp-telegraf --config /etc/cmp-telegraf/telegraf.conf
                 Restart=always
                 [Install]
                 WantedBy=multi-user.target
@@ -1214,7 +1220,8 @@ public class K8sAgentService {
     private String uninstallScript() {
         return """
                 systemctl disable --now cmp-telegraf 2>/dev/null || true
-                rm -f /etc/systemd/system/cmp-telegraf.service /usr/local/bin/cmp-telegraf
+                rm -f /etc/systemd/system/cmp-telegraf.service /usr/local/bin/cmp-telegraf \\
+                  /home/kubernetes/bin/cmp-telegraf
                 rm -rf /etc/cmp-telegraf
                 systemctl daemon-reload 2>/dev/null || true
                 echo UNINSTALLED
